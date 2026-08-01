@@ -29,9 +29,16 @@ compared.
     - `inline-structure.md`: emphasis, strong emphasis, inline code,
       backslash escapes, a nested list with a task between two text nodes,
       root-relative and external links, root-relative and external images.
-- Avoid `~~strikethrough~~`: the server emits `<del>` (commonmark-java) and
-  the legacy pipeline emits `<s>` (markdown-it). That is a real, unclosed
-  divergence, not something the parity gate should be taught to ignore.
+- Two known open divergences must stay out of the corpus, because the gate
+  would fail on them. Both are held by executable tests in the
+  "deliberate divergences from the legacy task component" block of
+  `problem-statement-parity.spec.ts`, which turn red when either pipeline
+  changes; this list is only navigation, the tests are the record.
+    - `~~strikethrough~~`: the server emits `<del>` (commonmark-java, which
+      matches GFM) and the legacy pipeline emits `<s>` (markdown-it).
+    - `[task][name](refs)` inside a fenced code block: the legacy pipeline
+      escapes the marker in the raw markdown and shows the backslashes, the
+      server masks code blocks first and shows the block verbatim.
 - Adding a new `.md` file here automatically extends the guardrail: both the
   server test (`@MethodSource` over this directory) and the client spec
   (`readdirSync` over this directory) pick up every `.md` file without any

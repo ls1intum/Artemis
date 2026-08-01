@@ -51,6 +51,11 @@ const EXACT_TEXT_ATTRIBUTE = 'data-exact-text';
  * `attributes` are compared verbatim; of an element's classes only those in `classes`, plus everything starting with
  * `classPrefix` (the `markdown-alert-<type>` family), take part. Sentinel payloads produced by the canonicalizers are
  * compared in full, since they *are* the comparison for the subtree they replaced.
+ *
+ * `artemis-task` is defensive and unreachable by construction: the task canonicalizer replaces every element carrying
+ * it before tokenization, so no such element can reach the class comparison. It is listed so that a future change
+ * narrowing that canonicalizer does not silently make the marker class uncompared. `hljs` is reachable only outside
+ * `pre > code`, for the same reason.
  */
 const COMPARED_MARKUP = {
     attributes: ['href', 'src', 'alt', 'title', 'colspan', 'rowspan', 'start', 'type'],
@@ -396,9 +401,13 @@ function tokenize(root: Element): string[] {
 
 function canonicalRoot(html: string): Element {
     const root = problemStatementRoot(html);
+    // Order matters: the code canonicalizer must consume fenced blocks before the task walk, which rewrites every text
+    // node that matches the task syntax. The other way round, a statement documenting `[task][name](refs)` inside a
+    // fenced block would have that text replaced by a sentinel element, and the code canonicalizer's `textContent`
+    // would then silently drop it from the compared token.
+    canonicalizeCodeBlocks(root);
     canonicalizeTasks(root);
     canonicalizeDiagrams(root);
-    canonicalizeCodeBlocks(root);
     canonicalizeFormulas(root);
     canonicalizeUrls(root);
     return root;
@@ -705,6 +714,15 @@ describe('problem statement parity canonicalizers', () => {
 
             expect(canonicalTokens(withAuthoredBreak)).toEqual(canonicalTokens(legacyTask.replace(' suffix', '<br> suffix')));
         });
+
+        it('does not reach into a fenced code block that documents the task syntax', () => {
+            // The code canonicalizer runs first for exactly this reason: rewriting the marker here would remove it from
+            // the code element's `textContent`, and the region would drop out of the comparison on both sides at once.
+            const documented = '<pre><code class="language-markdown">[task][Sort](testSort())\n</code></pre>';
+
+            expect(canonicalTokens(server(documented))).toEqual(['<pre>', '#code(language=markdown)', 'text-exact:[task][Sort](testSort())\n', '</pre>']);
+            expect(canonicalTokens(server(documented))).not.toEqual(canonicalTokens(server(documented.replace('[task][Sort](testSort())', '[task][Sort](testOther())'))));
+        });
     });
 
     describe('diagram', () => {
@@ -831,7 +849,8 @@ describe('problem statement parity canonicalizers', () => {
             expect(canonicalTokens('<div class="markdown-alert"><p class="markdown-alert-title">a</p></div>')).not.toEqual(
                 canonicalTokens('<div class="markdown-alert"><p>a</p></div>'),
             );
-            expect(canonicalTokens('<pre><code class="hljs">a</code></pre>')).not.toEqual(canonicalTokens('<pre>a</pre>'));
+            // Outside `pre > code`, which the code canonicalizer consumes before any class is compared.
+            expect(canonicalTokens('<p><span class="hljs">a</span></p>')).not.toEqual(canonicalTokens('<p><span>a</span></p>'));
         });
     });
 
@@ -854,13 +873,13 @@ describe('problem statement parity canonicalizers', () => {
 // -------------------------------------------------------------------------------------------------------------
 
 describe('problem statement rendering: deliberate divergences from the legacy task component', () => {
-    /**
-     * The server's status for the two inputs D1 keeps a divergence on. Pinned server-side by
-     * ProblemStatementRenderingIntegrationTest.shouldShowSuccessWhenAllTestsPassedWithoutFeedback and
-     * ...shouldKeepNoTestsWhenAllTestsPassedAndTaskHasNoRefs, which assert the rendered task metadata directly.
-     */
-    const SERVER_STATUS_FOR_SUCCESSFUL_RESULT_WITHOUT_FEEDBACK = 'success';
-    const SERVER_STATUS_FOR_TASK_WITHOUT_REFERENCES = 'no-tests';
+    // The server half of each divergence below is measured, not restated here: a client spec cannot invoke the server
+    // renderer, and an expectation written as a local constant would only compare itself. The two tests that do measure
+    // it live in src/test/java/de/tum/cit/aet/artemis/exercise/ProblemStatementRenderingIntegrationTest.java:
+    // shouldShowSuccessWhenAllTestsPassedWithoutFeedback (success plus "n of n tests passed", never the "No results"
+    // text) and shouldKeepNoTestsWhenAllTestsPassedAndTaskHasNoRefs (no-tests, never success). What these tests add is
+    // the other side: they fail the moment the *legacy* behaviour changes, which is what forces the divergence record
+    // to be revisited rather than quietly going stale.
 
     const renderLegacyTask = (testIds: number[], latestResult: Result) => {
         const fixture = TestBed.createComponent(ProgrammingExerciseInstructionTaskStatusComponent);
@@ -873,14 +892,18 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         return fixture.nativeElement as HTMLElement;
     };
 
+    let taskExtension: PluginSimple;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
                 ProgrammingExerciseInstructionService,
+                ProgrammingExerciseTaskExtensionWrapper,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         });
+        taskExtension = TestBed.inject(ProgrammingExerciseTaskExtensionWrapper).getExtension();
     });
 
     it('divergence 1: legacy has no "no tests" concept for a task without references, the server does', () => {
@@ -888,8 +911,8 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         const successfulWithoutFeedback = { id: 1, successful: true, feedbacks: [] } as Result;
 
         // `testIds` is `[]`-truthy in the legacy engine, so a reference-less task takes the "everything passed" arm.
+        // The server returns `no-tests` for the same input, a status the legacy vocabulary does not even contain.
         expect(instructionService.testStatusForTask([], successfulWithoutFeedback).testCaseState).toBe(TestCaseState.SUCCESS);
-        expect(LEGACY_TO_SERVER[instructionService.testStatusForTask([], successfulWithoutFeedback).testCaseState]).not.toBe(SERVER_STATUS_FOR_TASK_WITHOUT_REFERENCES);
 
         const element = renderLegacyTask([], successfulWithoutFeedback);
         // Legacy renders a reference-less task as passed, and labels it "no tests" only through the same else-branch it
@@ -909,9 +932,27 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         expect(element.querySelector('.test-icon.text-success')).not.toBeNull();
         expect(element.textContent).toContain('artemisApp.editor.testStatusLabels.noResult');
         expect(element.textContent).not.toContain('artemisApp.editor.testStatusLabels.totalTestsPassing');
+    });
 
-        // The server resolves the same input to a plain success plus the "n of n tests passed" stats line, and never
-        // emits the "no result" text for it. Reproducing the contradiction server-side is explicitly not wanted.
-        expect(SERVER_STATUS_FOR_SUCCESSFUL_RESULT_WITHOUT_FEEDBACK).toBe('success');
+    it('divergence 3: the legacy pipeline renders strikethrough as <s>, the server as <del>', () => {
+        // Open, not intended: GFM specifies `<del>`, so the server (commonmark StrikethroughExtension) is right and the
+        // legacy pipeline (markdown-it) is the outlier. Recorded here rather than in the corpus because the parity gate
+        // would fail on it, and recorded as a test rather than as a README note so that closing it on either side turns
+        // this red instead of leaving a stale prohibition behind. Aligning the two is a follow-up.
+        expect(htmlForMarkdown('~~gone~~')).toContain('<s>gone</s>');
+        expect(htmlForMarkdown('~~gone~~')).not.toContain('<del>gone</del>');
+    });
+
+    it('divergence 4: the legacy pipeline escapes task syntax inside a fenced code block, the server does not', () => {
+        // Open, not intended: the legacy task extension rewrites the raw markdown before markdown-it tokenizes
+        // (ArtemisTextReplacementPlugin), so it escapes the marker even inside a fenced block, and the backslashes are
+        // then visible to the reader. The server masks code blocks before task expansion
+        // (ProblemStatementRenderingService.maskCodeBlocks) and keeps the block verbatim, which is the correct
+        // behaviour for a statement that documents the syntax. The corpus deliberately contains no such block, since
+        // the gate would fail on it. Aligning the two is a follow-up.
+        const fenced = '```\n[task][Sort](testSort())\n```';
+        const code = problemStatementRoot(htmlForMarkdown(fenced, [taskExtension])).querySelector('pre > code');
+
+        expect(code?.textContent).toBe('\\[task\\]\\[Sort\\]\\(testSort\\(\\)\\)\n');
     });
 });
