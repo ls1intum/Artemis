@@ -1,0 +1,82 @@
+package de.tum.cit.aet.artemis.assessment.repository;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+
+/**
+ * Repository for loading and replacing results during manual assessment uploads.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Repository
+public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<Result, Long> {
+
+    /**
+     * Bulk-deletes results after all referencing rows have been removed.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and all dependent rows have been deleted or cleared.
+     * <p>
+     * <b>Postcondition:</b> none of the supplied result ids exists.
+     *
+     * @param resultIds result ids to delete
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM Result r WHERE r.id IN :resultIds")
+    void deleteAllByIds(@Param("resultIds") final Collection<Long> resultIds);
+
+    /**
+     * Finds only manual results belonging to the imported participations. Automatic results are intentionally excluded.
+     * <p>
+     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
+     * <p>
+     * <b>Postcondition:</b> every returned id identifies a manual result belonging to the supplied exercise and one of the supplied participations.
+     *
+     * @param exerciseId       target exercise id
+     * @param participationIds participations included in the upload
+     * @return ids of existing manual results to replace
+     */
+    @Query("""
+            SELECT r.id
+            FROM Result r
+            WHERE r.exerciseId = :exerciseId
+                AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                AND r.submission.participation.id IN :participationIds
+            """)
+    List<Long> findManualResultIds(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
+
+    /**
+     * Loads newly imported results with the relationships required by LTI and websocket notifications in one query.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
+     * <p>
+     * <b>Postcondition:</b> every matching result is returned with its submission, feedback, participation, team, and team students initialized.
+     *
+     * @param resultIds ids of the newly imported results
+     * @return results with their notification relationships initialized
+     */
+    @Query("""
+            SELECT DISTINCT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH TREAT (s.participation AS StudentParticipation) p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE r.id IN :resultIds
+            """)
+    List<Result> findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(@Param("resultIds") final Collection<Long> resultIds);
+}

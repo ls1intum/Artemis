@@ -36,12 +36,12 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -81,38 +81,38 @@ public class AssessmentUploadService {
     private static final String TEXT_FILE_EXTENSION = ".txt";
 
     /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository;
 
     /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final SubmissionRepository submissionRepository;
 
     /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
-    private final ResultService resultService;
+    private final AssessmentUploadResultService assessmentUploadResultService;
 
     /**
      * Creates a service for validating and storing uploaded manual assessments.
      * <p>
      * <b>Preconditions:</b> all parameters are non-{@code null}.
      *
-     * @param studentParticipationRepository the repository used to resolve participants
-     * @param submissionRepository           the repository used to create missing submissions
-     * @param resultService                  the service used to replace manual assessment results
+     * @param assessmentUploadParticipationRepository the repository used to resolve participants
+     * @param submissionRepository                    the repository used to create missing submissions
+     * @param assessmentUploadResultService           the service used to replace manual assessment results
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
-    public AssessmentUploadService(final StudentParticipationRepository studentParticipationRepository, final SubmissionRepository submissionRepository,
-            final ResultService resultService) {
-        if (studentParticipationRepository == null) {
-            throw new IllegalArgumentException("The student participation repository must not be null");
+    public AssessmentUploadService(final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository, final SubmissionRepository submissionRepository,
+            final AssessmentUploadResultService assessmentUploadResultService) {
+        if (assessmentUploadParticipationRepository == null) {
+            throw new IllegalArgumentException("The assessment upload participation repository must not be null");
         }
         if (submissionRepository == null) {
             throw new IllegalArgumentException("The submission repository must not be null");
         }
-        if (resultService == null) {
-            throw new IllegalArgumentException("The result service must not be null");
+        if (assessmentUploadResultService == null) {
+            throw new IllegalArgumentException("The assessment upload result service must not be null");
         }
-        this.studentParticipationRepository = studentParticipationRepository;
+        this.assessmentUploadParticipationRepository = assessmentUploadParticipationRepository;
         this.submissionRepository = submissionRepository;
-        this.resultService = resultService;
+        this.assessmentUploadResultService = assessmentUploadResultService;
     }
 
     /**
@@ -322,12 +322,12 @@ public class AssessmentUploadService {
         final Set<Long> requestedParticipationIds = csv.records().stream().map(record -> record.size() > 0 && record.get(0) != null ? record.get(0).trim() : "")
                 .map(this::parseParticipationId).flatMap(Optional::stream).collect(Collectors.toSet());
         final Map<Long, AssessmentUploadParticipationDTO> participationsById = requestedParticipationIds.isEmpty() ? Map.of()
-                : studentParticipationRepository.findAssessmentUploadParticipations(exercise.getId(), requestedParticipationIds).stream()
+                : assessmentUploadParticipationRepository.findAssessmentUploadParticipations(exercise.getId(), requestedParticipationIds).stream()
                         .collect(Collectors.toMap(AssessmentUploadParticipationDTO::participationId, Function.identity()));
         final Set<Long> unresolvedParticipationIds = new HashSet<>(requestedParticipationIds);
         unresolvedParticipationIds.removeAll(participationsById.keySet());
         final Set<Long> participationIdsOutsideExercise = unresolvedParticipationIds.isEmpty() ? Set.of()
-                : studentParticipationRepository.findIdsOutsideExercise(exercise.getId(), unresolvedParticipationIds);
+                : assessmentUploadParticipationRepository.findIdsOutsideExercise(exercise.getId(), unresolvedParticipationIds);
 
         for (final CSVRecord csvRecord : csv.records()) {
             final String identifier = csvRecord.size() > 0 && csvRecord.get(0) != null ? csvRecord.get(0).trim() : "";
@@ -441,12 +441,12 @@ public class AssessmentUploadService {
         assert exercise != null && exercise.getId() != null : "exercise must be persisted";
         assert validatedRows != null && !validatedRows.isEmpty() : "validatedRows must not be null or empty";
         final List<Long> participationIds = validatedRows.stream().map(ValidatedRow::participationId).toList();
-        final Map<Long, StudentParticipation> participationsById = studentParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
+        final Map<Long, StudentParticipation> participationsById = assessmentUploadParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
         final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
 
-        resultService.deleteManualResultsForAssessmentUpload(exercise.getId(), participationIds);
+        assessmentUploadResultService.deleteManualResults(exercise.getId(), participationIds);
 
         final List<Result> manualResults = validatedRows.stream().map(row -> {
             final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
@@ -455,7 +455,7 @@ public class AssessmentUploadService {
                     .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
             return buildManualResult(exercise, submission, row);
         }).toList();
-        resultService.createNewManualResults(manualResults, true);
+        assessmentUploadResultService.createNewManualResults(manualResults, true);
 
         final List<String> createdIdentifiers = validatedRows.stream().map(ValidatedRow::identifier).toList();
         log.info("Stored {} manual assessments for programming exercise {} from an upload", createdIdentifiers.size(), exercise.getId());

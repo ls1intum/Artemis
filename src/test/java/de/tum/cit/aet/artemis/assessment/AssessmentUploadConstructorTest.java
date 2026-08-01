@@ -11,10 +11,10 @@ import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentUploadResource;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -33,13 +33,18 @@ class AssessmentUploadConstructorTest {
 
     @Test
     void shouldRejectNullAssessmentUploadServiceDependencies() {
-        final StudentParticipationRepository studentParticipationRepository = mock(StudentParticipationRepository.class);
+        final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository = mock(AssessmentUploadParticipationRepository.class);
         final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
-        final ResultService resultService = mock(ResultService.class);
+        final AssessmentUploadResultService assessmentUploadResultService = mock(AssessmentUploadResultService.class);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, submissionRepository, resultService));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(studentParticipationRepository, null, resultService));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(studentParticipationRepository, submissionRepository, null));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, submissionRepository, assessmentUploadResultService));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, null, assessmentUploadResultService));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, null));
+    }
+
+    @Test
+    void shouldRejectNullAssessmentUploadResultServiceDependencies() {
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadResultService(null, null, null, null, null, null, null, null, null, null, null));
     }
 
     @Test

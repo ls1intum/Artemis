@@ -179,77 +179,16 @@ public class ResultService {
         if (result == null) {
             throw new IllegalArgumentException("The manual result must not be null");
         }
-        return createNewManualResults(List.of(result), ratedResult).getFirst();
-    }
-
-    /**
-     * Creates multiple manual results while loading the current assessor and the websocket payload graph only once for the whole batch.
-     * <p>
-     * <b>Preconditions:</b> {@code results} is non-{@code null} and contains no {@code null} elements. An empty collection is permitted and produces an empty result.
-     * <p>
-     * <b>Postcondition:</b> every supplied result is stored as a manual result and the corresponding notifications have been sent.
-     *
-     * @param results     newly created results
-     * @param ratedResult override value for the rated property of every result
-     * @return the stored results with eagerly loaded submissions and feedback
-     * @throws IllegalArgumentException if a precondition is violated
-     */
-    public List<Result> createNewManualResults(final Collection<Result> results, final boolean ratedResult) {
-        if (results == null) {
-            throw new IllegalArgumentException("The manual results must not be null");
-        }
-        if (results.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("The manual results must not contain null elements");
-        }
-        if (results.isEmpty()) {
-            return List.of();
-        }
-
         final User assessor = userRepository.getUserWithAuthorities();
-        final ZonedDateTime completionDate = ZonedDateTime.now();
-        results.forEach(result -> initializeManualResult(result, ratedResult, assessor, completionDate));
-
-        resultRepository.saveAll(results);
-        final List<Long> resultIds = results.stream().map(Result::getId).toList();
-        final List<Result> savedResults = resultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
-        savedResults.forEach(this::notifyAboutNewResult);
-        return savedResults;
-    }
-
-    /**
-     * Initializes a transient result as a manual result.
-     * <p>
-     * <b>Preconditions:</b> {@code result}, {@code assessor}, and {@code completionDate} are non-{@code null}.
-     * <p>
-     * <b>Postcondition:</b> the result has manual assessment metadata and every feedback references it.
-     *
-     * @param result         result to initialize
-     * @param ratedResult    value for the rated property
-     * @param assessor       current assessor
-     * @param completionDate shared completion date of the batch
-     */
-    private void initializeManualResult(final Result result, final boolean ratedResult, final User assessor, final ZonedDateTime completionDate) {
-        assert result != null && assessor != null && completionDate != null : "result, assessor and completionDate must not be null";
         result.setAssessmentType(AssessmentType.MANUAL);
         result.setAssessor(assessor);
-        result.setCompletionDate(completionDate);
+        result.setCompletionDate(ZonedDateTime.now());
         // Manual feedback is always rated, but can be overwritten for an external submission.
         result.setRated(ratedResult);
         result.getFeedbacks().forEach(feedback -> feedback.setResult(result));
-    }
 
-    /**
-     * Notifies LTI and websocket consumers about a stored result where applicable.
-     * <p>
-     * <b>Preconditions:</b> {@code savedResult} and its submission are non-{@code null}.
-     * <p>
-     * <b>Postcondition:</b> non-example results have been broadcast and programming exercise results have been forwarded to LTI when that integration is available.
-     *
-     * @param savedResult stored result to publish
-     */
-    private void notifyAboutNewResult(final Result savedResult) {
-        assert savedResult != null : "savedResult must not be null";
-        assert savedResult.getSubmission() != null : "savedResult must have a submission";
+        resultRepository.save(result);
+        final Result savedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
         // If it is an example result we do not have any participation (isExampleResult can also be null).
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
             if (savedResult.getSubmission().getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
@@ -257,6 +196,7 @@ public class ResultService {
             }
             resultWebsocketService.broadcastNewResult(savedResult.getSubmission().getParticipation(), savedResult);
         }
+        return savedResult;
     }
 
     public void createNewRatedManualResult(Result result) {
@@ -325,63 +265,6 @@ public class ResultService {
             }
             assessmentNoteRepository.deleteByResultId(resultId);
             resultRepository.deleteResultById(resultId);
-        }
-    }
-
-    /**
-     * Bulk-deletes results and every dependent database row in foreign-key order. This path is intended for replacing a known batch of results and deliberately bypasses entity
-     * loading and lifecycle callbacks. Callers that create replacement results immediately afterwards retain participant-score scheduling through the new results' lifecycle
-     * callbacks.
-     *
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains only non-{@code null} persisted result ids.
-     * <p>
-     * <b>Postcondition:</b> the identified results and all rows that depend on them have been deleted.
-     *
-     * @param resultIds ids of the results to delete
-     * @throws IllegalArgumentException if a precondition is violated
-     */
-    public void deleteResultsByIds(final Collection<Long> resultIds) {
-        if (resultIds == null || resultIds.isEmpty()) {
-            throw new IllegalArgumentException("The result ids must not be null or empty");
-        }
-        if (resultIds.stream().anyMatch(resultId -> resultId == null || resultId <= 0)) {
-            throw new IllegalArgumentException("The result ids must identify persisted results");
-        }
-        complaintResponseRepository.deleteByResultIds(resultIds);
-        complaintRepository.deleteByResultIds(resultIds);
-        ratingRepository.deleteByResultIds(resultIds);
-        participantScoreRepository.clearAllByResultIds(resultIds);
-        longFeedbackTextRepository.deleteByFeedbackResultIds(resultIds);
-        feedbackRepository.deleteByResultIds(resultIds);
-        assessmentNoteRepository.deleteByResultIds(resultIds);
-        resultRepository.deleteAllByIds(resultIds);
-    }
-
-    /**
-     * Deletes all manual results for the requested participations of one exercise using a fixed number of bulk statements. Automatic results are not selected.
-     * <p>
-     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains only persisted ids.
-     * <p>
-     * <b>Postcondition:</b> all manual results associated with the supplied exercise and participations have been deleted; automatic results remain unchanged.
-     *
-     * @param exerciseId       target exercise id
-     * @param participationIds participations whose manual results are being replaced
-     * @throws IllegalArgumentException if a precondition is violated
-     */
-    public void deleteManualResultsForAssessmentUpload(final long exerciseId, final Collection<Long> participationIds) {
-        if (exerciseId <= 0) {
-            throw new IllegalArgumentException("The exercise id must identify a persisted exercise");
-        }
-        if (participationIds == null || participationIds.isEmpty()) {
-            throw new IllegalArgumentException("The participation ids must not be null or empty");
-        }
-        if (participationIds.stream().anyMatch(participationId -> participationId == null || participationId <= 0)) {
-            throw new IllegalArgumentException("The participation ids must identify persisted participations");
-        }
-        final List<Long> resultIds = resultRepository.findManualResultIdsForAssessmentUpload(exerciseId, participationIds);
-        if (!resultIds.isEmpty()) {
-            deleteResultsByIds(resultIds);
         }
     }
 
