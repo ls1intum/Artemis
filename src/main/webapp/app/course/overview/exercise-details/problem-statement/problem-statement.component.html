@@ -1,11 +1,6 @@
 @if (programmingExercise()) {
     <div class="row mb-4 p-1">
-        <jhi-problem-statement-renderer
-            [exercise]="programmingExercise()!"
-            [participation]="participation()!"
-            [personalParticipation]="true"
-            [liveUpdates]="participation()?.id ? 'personal' : 'none'"
-        />
+        <jhi-problem-statement-renderer [exercise]="programmingExercise()!" [participation]="participation()!" [liveUpdates]="participation()?.id ? 'personal' : 'none'" />
     </div>
 } @else {
     @if (exercise()?.problemStatement) {

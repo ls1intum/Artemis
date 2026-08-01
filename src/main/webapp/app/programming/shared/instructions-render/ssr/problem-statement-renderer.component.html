@@ -10,7 +10,7 @@
     <jhi-programming-exercise-instructions
         [exercise]="exercise()"
         [participation]="participation()"
-        [personalParticipation]="personalParticipation()"
+        [personalParticipation]="liveUpdates() === 'personal'"
         (onNoInstructionsAvailable)="onNoInstructionsAvailable.emit()"
     />
 }

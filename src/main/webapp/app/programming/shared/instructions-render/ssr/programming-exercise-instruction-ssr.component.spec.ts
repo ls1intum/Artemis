@@ -216,6 +216,36 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(spy).not.toHaveBeenCalled();
     });
 
+    it('subscribes with the personal flag false for shared live updates', () => {
+        const wsService = TestBed.inject(ParticipationWebsocketService);
+        const spy = vi.spyOn(wsService, 'subscribeForLatestResultOfParticipation');
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('liveUpdates', 'shared');
+        fixture.detectChanges();
+        flushRender();
+
+        // 'shared' is the exercise-wide staff topic, not the participation owner's own topic: personal must be false.
+        expect(spy).toHaveBeenCalledExactlyOnceWith(7, false, exercise.id);
+    });
+
+    it('resubscribes with the new mode when liveUpdates changes', () => {
+        const wsService = TestBed.inject(ParticipationWebsocketService);
+        const spy = vi.spyOn(wsService, 'subscribeForLatestResultOfParticipation');
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('liveUpdates', 'personal');
+        fixture.detectChanges();
+        flushRender();
+        expect(spy).toHaveBeenCalledExactlyOnceWith(7, true, exercise.id);
+
+        fixture.componentRef.setInput('liveUpdates', 'shared');
+        fixture.detectChanges();
+
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenLastCalledWith(7, false, exercise.id);
+    });
+
     it('keeps the previous html when a refresh fails and shows the stale hint in the light DOM', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('participation', { id: 7 });

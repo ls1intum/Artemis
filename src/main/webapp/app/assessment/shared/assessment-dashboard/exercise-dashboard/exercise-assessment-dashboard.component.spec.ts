@@ -1,5 +1,6 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -261,8 +262,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             providers,
         })
             .overrideComponent(ExerciseAssessmentDashboardComponent, {
-                remove: { imports: [TutorLeaderboardComponent] },
-                add: { imports: [MockComponent(TutorLeaderboardComponent)] },
+                // ProblemStatementRendererComponent is a standalone import of ExerciseAssessmentDashboardComponent, so
+                // merely listing MockComponent(ProblemStatementRendererComponent) in this TestBed module's own imports
+                // (above) does not replace it there; the real class stays bound to the template unless removed here.
+                remove: { imports: [TutorLeaderboardComponent, ProblemStatementRendererComponent] },
+                add: { imports: [MockComponent(TutorLeaderboardComponent), MockComponent(ProblemStatementRendererComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
@@ -788,6 +792,23 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.sortMoreFeedbackRows();
 
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+    });
+
+    it('should bind shared live updates for the programming problem statement, a staff view of the template participation', () => {
+        const programmingExerciseForStatement = {
+            ...programmingExercise,
+            problemStatement: 'Some problem statement',
+            templateParticipation: { id: 99 },
+            tutorParticipations: [{ status: TutorParticipationStatus.NOT_PARTICIPATED }],
+        } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseForStatement, headers: new HttpHeaders() })));
+
+        comp.loadAll();
+        fixture.detectChanges();
+
+        // The mocked component exposes signal inputs as plain values, not callables.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: string };
+        expect(renderer.liveUpdates).toBe('shared');
     });
 
     it('should return submission language', () => {

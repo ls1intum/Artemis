@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
 import { Component, input, output } from '@angular/core';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -55,5 +56,29 @@ describe('ProblemStatementRendererComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.ssr')).toBeTruthy();
         expect(fixture.nativeElement.querySelector('.legacy')).toBeFalsy();
+    });
+
+    it('forwards liveUpdates to the SSR child unchanged', () => {
+        toggle.next(true);
+        fixture.componentRef.setInput('liveUpdates', 'shared');
+        fixture.detectChanges();
+
+        const ssrChild = fixture.debugElement.query(By.directive(SsrStubComponent)).componentInstance as SsrStubComponent;
+        expect(ssrChild.liveUpdates()).toBe('shared');
+    });
+
+    // The wrapper takes liveUpdates as its only mode input and derives the legacy child's personalParticipation from
+    // it, rather than accepting personalParticipation as a second, independently-bindable input: two independent
+    // inputs would let a host pass a mode and a personal flag that disagree.
+    it.each<[SsrLiveUpdates, boolean]>([
+        ['personal', true],
+        ['shared', false],
+        ['none', false],
+    ])('derives personalParticipation for the legacy child from liveUpdates=%s as %s', (liveUpdates, expected) => {
+        fixture.componentRef.setInput('liveUpdates', liveUpdates);
+        fixture.detectChanges();
+
+        const legacyChild = fixture.debugElement.query(By.directive(LegacyStubComponent)).componentInstance as LegacyStubComponent;
+        expect(legacyChild.personalParticipation()).toBe(expected);
     });
 });

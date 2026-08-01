@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
@@ -129,6 +130,16 @@ describe('AssessmentInstructionsComponent', () => {
         fixture.detectChanges();
 
         expect(comp.sampleSolutionExplanation()).toBeUndefined();
+    });
+
+    it('should bind shared live updates for the programming problem statement, a staff view', () => {
+        const programmingExercise = { id: 1, type: ExerciseType.PROGRAMMING, templateParticipation: { id: 5 } } as ProgrammingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        fixture.detectChanges();
+
+        // The mocked component exposes signal inputs as plain values, not callables.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: string };
+        expect(renderer.liveUpdates).toBe('shared');
     });
 
     it('should convert the grading instructions to html', () => {

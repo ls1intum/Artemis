@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { of } from 'rxjs';
@@ -22,6 +23,9 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;
@@ -57,6 +61,9 @@ describe('ProblemStatementComponent', () => {
                 // spec never provides. Force the toggle off so the deterministic legacy branch renders, matching
                 // what these tests actually exercise.
                 { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(false) } },
+                // The legacy renderer's step wizard always injects DialogService for the feedback dialog, regardless
+                // of personalParticipation.
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -135,6 +142,25 @@ describe('ProblemStatementComponent', () => {
         fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('jhi-problem-statement-renderer')).toBeTruthy();
+    });
+
+    it('should bind personal live updates when a participation is available', () => {
+        fixture.componentRef.setInput('exerciseInput', exercise);
+        fixture.componentRef.setInput('participationInput', participation);
+        fixture.detectChanges();
+
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as ProblemStatementRendererComponent;
+        expect(renderer.liveUpdates()).toBe('personal');
+    });
+
+    it('should not subscribe to live updates without a participation', () => {
+        getParticipationDetailMock.mockReturnValue(of(new HttpResponse({ body: undefined })));
+        fixture.componentRef.setInput('exerciseInput', exercise);
+        fixture.detectChanges();
+
+        expect(component.participation()).toBeFalsy();
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as ProblemStatementRendererComponent;
+        expect(renderer.liveUpdates()).toBe('none');
     });
 
     it('should not render programming exercise instructions when exercise is not a programming exercise', () => {

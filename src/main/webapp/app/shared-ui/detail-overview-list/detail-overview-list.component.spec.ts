@@ -1,5 +1,7 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,6 +16,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -45,6 +49,10 @@ describe('DetailOverviewList', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
+            .overrideComponent(DetailOverviewListComponent, {
+                remove: { imports: [ProblemStatementRendererComponent] },
+                add: { imports: [MockComponent(ProblemStatementRendererComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 modelingService = TestBed.inject(ModelingExerciseService);
@@ -88,6 +96,21 @@ describe('DetailOverviewList', () => {
         expect(titleDetailValue).toBeDefined();
         expect(titleDetailTitle.textContent).toContain('title');
         expect(titleDetailValue.textContent).toContain('A Title');
+    });
+
+    it('should bind shared live updates for the programming problem statement, a staff view of the template participation', () => {
+        const exercise = { id: 1, templateParticipation: { id: 5 } } as ProgrammingExercise;
+        fixture.componentRef.setInput('sections', [
+            {
+                headline: 'headline.1',
+                details: [{ type: DetailType.ProgrammingProblemStatement, title: 'problemStatement', data: { exercise } }],
+            },
+        ]);
+        fixture.detectChanges();
+
+        // The mocked component exposes signal inputs as plain values, not callables.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: string };
+        expect(renderer.liveUpdates).toBe('shared');
     });
 
     it('should download apollon Diagram', () => {

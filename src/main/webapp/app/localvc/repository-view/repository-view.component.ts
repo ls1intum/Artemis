@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,6 +21,7 @@ import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-butto
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
+import { SsrLiveUpdates } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -77,6 +78,32 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     readonly result = signal<Result>(undefined!);
     readonly resultHasInlineFeedback = signal(false);
     readonly showInlineFeedback = signal(false);
+
+    /**
+     * Mode for the SSR problem statement's result websocket subscription. Deliberately not read from
+     * `participation.student` (absent, lazy or filtered) or `userId` (a non-signal assigned asynchronously in
+     * `ngOnInit`, so it cannot drive a computed value here): the repository type plus an authorization check is the
+     * only input available synchronously. Students cannot open another student's participation, so the non-staff
+     * USER case is necessarily the viewer's own (or their team's).
+     *
+     * Caveat: the shared topic's websocket policy requires *instructor*, not merely tutor, for exam exercises
+     * (`WebsocketConfiguration.java`), so a tutor viewing an exam repository has its subscription rejected. This is
+     * pre-existing websocket policy that is accepted here rather than special-cased.
+     */
+    readonly liveUpdates = computed<SsrLiveUpdates>(() => {
+        if (!this.participation()?.id) {
+            return 'none';
+        }
+        switch (this.repositoryType()) {
+            case RepositoryType.TEMPLATE:
+            case RepositoryType.SOLUTION:
+                return 'shared';
+            case RepositoryType.USER:
+                return this.accountService.isAtLeastTutorForExercise(this.exercise()) ? 'shared' : 'personal';
+            default:
+                return 'none';
+        }
+    });
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub?: Subscription;

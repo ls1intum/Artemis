@@ -40,6 +40,7 @@ describe('RepositoryViewComponent', () => {
     let activatedRoute: MockActivatedRoute;
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let accountService: AccountService;
 
     beforeAll(() => {
         try {
@@ -110,6 +111,7 @@ describe('RepositoryViewComponent', () => {
                 activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                accountService = TestBed.inject(AccountService);
             });
     });
 
@@ -456,5 +458,93 @@ describe('RepositoryViewComponent', () => {
 
         // Expect subscription to be unsubscribed
         expect(component.paramSub?.closed).toBe(true);
+    });
+
+    describe('liveUpdates', () => {
+        it('is none without a participation (TESTS repository type)', () => {
+            const mockExercise: ProgrammingExercise = {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+                studentAssignedTeamIdComputed: true,
+                secondCorrectionEnabled: true,
+            };
+            vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(new HttpResponse({ body: mockExercise })));
+            activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TESTS' });
+
+            component.ngOnInit();
+
+            expect(component.liveUpdates()).toBe('none');
+        });
+
+        it('is none for the AUXILIARY repository, which has no participation', () => {
+            const mockAuxiliaryRepository: AuxiliaryRepository = { id: 5, repositoryUri: 'repositoryUri', checkoutDirectory: 'dir', name: 'AuxRepo', description: 'description' };
+            const mockExercise: ProgrammingExercise = {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+                auxiliaryRepositories: [mockAuxiliaryRepository],
+                studentAssignedTeamIdComputed: true,
+                secondCorrectionEnabled: true,
+            };
+            vi.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(new HttpResponse({ body: mockExercise })));
+            activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'AUXILIARY', repositoryId: 5 });
+
+            component.ngOnInit();
+
+            expect(component.liveUpdates()).toBe('none');
+        });
+
+        it('is shared for the TEMPLATE repository, a staff view of the template participation', () => {
+            const mockExercise: ProgrammingExercise = {
+                id: 1,
+                templateParticipation: { id: 2, repositoryUri: 'template-repo-uri' },
+                numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+                studentAssignedTeamIdComputed: true,
+                secondCorrectionEnabled: true,
+            };
+            vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(new HttpResponse({ body: mockExercise })));
+            activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'TEMPLATE' });
+
+            component.ngOnInit();
+
+            expect(component.liveUpdates()).toBe('shared');
+        });
+
+        it('is shared for the SOLUTION repository, a staff view of the solution participation', () => {
+            const mockExercise: ProgrammingExercise = {
+                id: 1,
+                solutionParticipation: { id: 2, repositoryUri: 'solution-repo-uri' },
+                numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+                studentAssignedTeamIdComputed: true,
+                secondCorrectionEnabled: true,
+            };
+            vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(new HttpResponse({ body: mockExercise })));
+            activatedRoute.setParameters({ exerciseId: 1, repositoryType: 'SOLUTION' });
+
+            component.ngOnInit();
+
+            expect(component.liveUpdates()).toBe('shared');
+        });
+
+        it('is shared for the USER repository when the viewer is at least a tutor for the exercise', () => {
+            vi.spyOn(accountService, 'isAtLeastTutorForExercise').mockReturnValue(true);
+            const mockParticipation: ProgrammingExerciseStudentParticipation = { id: 2, repositoryUri: 'student-repo-uri', exercise: { id: 1 } };
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
+            activatedRoute.setParameters({ participationId: 2 });
+
+            component.ngOnInit();
+
+            expect(component.liveUpdates()).toBe('shared');
+        });
+
+        it("is personal for the USER repository when the viewer is not at least a tutor, i.e. it is the student's own participation", () => {
+            vi.spyOn(accountService, 'isAtLeastTutorForExercise').mockReturnValue(false);
+            const mockParticipation: ProgrammingExerciseStudentParticipation = { id: 2, repositoryUri: 'student-repo-uri', exercise: { id: 1 } };
+            vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
+            activatedRoute.setParameters({ participationId: 2 });
+
+            component.ngOnInit();
+
+            expect(component.liveUpdates()).toBe('personal');
+        });
     });
 });

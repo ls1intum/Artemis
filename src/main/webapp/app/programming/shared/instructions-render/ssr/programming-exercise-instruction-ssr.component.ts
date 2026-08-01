@@ -27,7 +27,14 @@ import {
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
 
-export type SsrLiveUpdates = 'none' | 'personal';
+/**
+ * Which result websocket topic (if any) feeds live re-renders:
+ * - `'none'`: no subscription.
+ * - `'personal'`: the user's own `/user/topic/newResults` (`participation-websocket.service.ts`).
+ * - `'shared'`: the exercise-wide, staff-only topic that broadcasts every result, including template/solution
+ *   (`WebsocketConfiguration.java`, `ResultWebsocketService.java`).
+ */
+export type SsrLiveUpdates = 'none' | 'personal' | 'shared';
 
 /**
  * Identity of the exercise and participation a render belongs to.
@@ -211,6 +218,8 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         const participationId = this.participation()?.id;
         this.resultSubscription?.unsubscribe();
         this.resultSubscription = undefined;
+        // 'personal' and 'shared' both subscribe; only their websocket topic differs, which the service resolves from
+        // the `personal` flag below.
         if (mode === 'none' || participationId === undefined) {
             return;
         }

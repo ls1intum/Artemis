@@ -14,6 +14,10 @@ import { ProgrammingExerciseInstructionSsrComponent, SsrLiveUpdates } from 'app/
  *
  * All six read-only hosts (course overview, code editor, repository view, assessment instructions, assessment
  * dashboard, detail overview list) bind this single component instead of picking a renderer themselves.
+ *
+ * `liveUpdates` is the only mode input: the legacy child's `personalParticipation` is derived from it in the
+ * template rather than accepted as a second, independently-bindable input. Two independent inputs would let a host
+ * pass a mode and a personal flag that disagree, which is exactly the drift this component exists to remove.
  */
 @Component({
     selector: 'jhi-problem-statement-renderer',
@@ -31,7 +35,6 @@ export class ProblemStatementRendererComponent {
     readonly participation = input<Participation>();
     readonly result = input<Result>();
     readonly liveUpdates = input<SsrLiveUpdates>('none');
-    readonly personalParticipation = input(false);
 
     readonly onNoInstructionsAvailable = output<void>();
 
