@@ -48,8 +48,27 @@ public class AssessmentUploadResource {
     /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final MultipartProperties multipartProperties;
 
+    /**
+     * Creates a resource for importing manual assessments.
+     * <p>
+     * <b>Preconditions:</b> all parameters are non-{@code null}.
+     *
+     * @param assessmentUploadService       the service that validates and stores uploaded assessments
+     * @param programmingExerciseRepository the repository used to resolve the target programming exercise
+     * @param multipartProperties           the configured multipart upload limits
+     * @throws IllegalArgumentException if any parameter is {@code null}
+     */
     public AssessmentUploadResource(final AssessmentUploadService assessmentUploadService, final ProgrammingExerciseRepository programmingExerciseRepository,
             final MultipartProperties multipartProperties) {
+        if (assessmentUploadService == null) {
+            throw new IllegalArgumentException("The assessment upload service must not be null");
+        }
+        if (programmingExerciseRepository == null) {
+            throw new IllegalArgumentException("The programming exercise repository must not be null");
+        }
+        if (multipartProperties == null) {
+            throw new IllegalArgumentException("The multipart properties must not be null");
+        }
         this.assessmentUploadService = assessmentUploadService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.multipartProperties = multipartProperties;

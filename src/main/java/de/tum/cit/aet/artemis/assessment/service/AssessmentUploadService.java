@@ -85,8 +85,27 @@ public class AssessmentUploadService {
     /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final ResultService resultService;
 
+    /**
+     * Creates a service for validating and storing uploaded manual assessments.
+     * <p>
+     * <b>Preconditions:</b> all parameters are non-{@code null}.
+     *
+     * @param studentParticipationRepository the repository used to resolve participants
+     * @param submissionRepository           the repository used to create missing submissions
+     * @param resultService                  the service used to replace manual assessment results
+     * @throws IllegalArgumentException if any parameter is {@code null}
+     */
     public AssessmentUploadService(final StudentParticipationRepository studentParticipationRepository, final SubmissionRepository submissionRepository,
             final ResultService resultService) {
+        if (studentParticipationRepository == null) {
+            throw new IllegalArgumentException("The student participation repository must not be null");
+        }
+        if (submissionRepository == null) {
+            throw new IllegalArgumentException("The submission repository must not be null");
+        }
+        if (resultService == null) {
+            throw new IllegalArgumentException("The result service must not be null");
+        }
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
@@ -409,21 +428,12 @@ public class AssessmentUploadService {
         final StudentParticipation participation = row.participation();
         assert participation != null && participation.getExercise() != null
                 && exercise.getId().equals(participation.getExercise().getId()) : "the participation must belong to the exercise";
-        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        // Overwrite any existing manual assessment, then attach the new one to the latest submission (creating an empty one if the participant never submitted).
         deleteExistingManualResults(participation);
         final Submission submission = participation.<Submission>findLatestSubmission()
                 .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
-
-        final Result result = new Result();
-        result.setSubmission(submission);
-        // The non-null exerciseId column is not populated by createNewManualResult, so it has to be set explicitly to avoid a foreign key violation.
-        result.setExerciseId(exercise.getId());
-        result.setScore(row.points(), exercise.getMaxPoints(), course);
-        result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
-
-        resultService.createNewManualResult(result, true);
+        final Result manualResult = buildManualResult(exercise, submission, row);
+        resultService.createNewManualResult(manualResult, true);
     }
 
     /**
@@ -434,6 +444,27 @@ public class AssessmentUploadService {
     private void deleteExistingManualResults(final StudentParticipation participation) {
         participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Result::isManual).toList()
                 .forEach(existingManualResult -> resultService.deleteResult(existingManualResult, true));
+    }
+
+    /**
+     * Builds a manual result with all required exercise and submission references, the uploaded score, and the uploaded feedback.
+     * <p>
+     * <b>Preconditions:</b> all parameters are non-{@code null}, and {@code row} contains validated assessment data for the exercise.
+     *
+     * @param exercise   the programming exercise the result belongs to
+     * @param submission the submission the result belongs to
+     * @param row        the validated assessment data
+     * @return the initialized manual result
+     */
+    private Result buildManualResult(final ProgrammingExercise exercise, final Submission submission, final ValidatedRow row) {
+        assert exercise != null && submission != null && row != null : "exercise, submission and row must not be null";
+        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        final Result result = new Result();
+        result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
+        result.setScore(row.points(), exercise.getMaxPoints(), course);
+        result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
+        return result;
     }
 
     /**
@@ -548,8 +579,15 @@ public class AssessmentUploadService {
      */
     private record ZipContents(List<byte[]> csvFiles, Map<String, String> textContentsByBaseName) {
 
+        /**
+         * <b>Preconditions:</b> {@code csvFiles} and {@code textContentsByBaseName} are non-{@code null}.
+         *
+         * @throws IllegalArgumentException if a parameter is {@code null}
+         */
         ZipContents {
-            assert csvFiles != null && textContentsByBaseName != null : "csvFiles and textContentsByBaseName must not be null";
+            if (csvFiles == null || textContentsByBaseName == null) {
+                throw new IllegalArgumentException("CSV files and text contents must not be null");
+            }
         }
     }
 
@@ -569,8 +607,18 @@ public class AssessmentUploadService {
      */
     private record ParsedCsv(List<CSVRecord> records, String pointsColumn) implements CsvParseResult {
 
+        /**
+         * <b>Preconditions:</b> {@code records} is non-{@code null} and non-empty, and {@code pointsColumn} is non-{@code null}.
+         *
+         * @throws IllegalArgumentException if a precondition is violated
+         */
         ParsedCsv {
-            assert records != null && !records.isEmpty() && pointsColumn != null : "records must be non-empty and pointsColumn must be resolved";
+            if (records == null || records.isEmpty()) {
+                throw new IllegalArgumentException("CSV records must not be null or empty");
+            }
+            if (pointsColumn == null) {
+                throw new IllegalArgumentException("The points column must not be null");
+            }
         }
     }
 
@@ -581,8 +629,15 @@ public class AssessmentUploadService {
      */
     private record CsvParseError(AssessmentUploadErrorType error) implements CsvParseResult {
 
+        /**
+         * <b>Precondition:</b> {@code error} is non-{@code null}.
+         *
+         * @throws IllegalArgumentException if {@code error} is {@code null}
+         */
         CsvParseError {
-            assert error != null : "error must not be null";
+            if (error == null) {
+                throw new IllegalArgumentException("The CSV parse error must not be null");
+            }
         }
     }
 
@@ -597,6 +652,27 @@ public class AssessmentUploadService {
      * @param feedbackText  the content of the matching text file, used as the manual feedback
      */
     private record ValidatedRow(String identifier, StudentParticipation participation, double points, String feedbackText) {
+
+        /**
+         * <b>Preconditions:</b> {@code identifier} is non-blank, {@code participation} and {@code feedbackText} are non-{@code null}, and {@code points} is finite and
+         * non-negative.
+         *
+         * @throws IllegalArgumentException if a precondition is violated
+         */
+        ValidatedRow {
+            if (identifier == null || identifier.isBlank()) {
+                throw new IllegalArgumentException("The student identifier must not be null or blank");
+            }
+            if (participation == null) {
+                throw new IllegalArgumentException("The student participation must not be null");
+            }
+            if (!Double.isFinite(points) || points < 0) {
+                throw new IllegalArgumentException("The achieved points must be finite and non-negative");
+            }
+            if (feedbackText == null) {
+                throw new IllegalArgumentException("The feedback text must not be null");
+            }
+        }
     }
 
     /**
@@ -614,8 +690,15 @@ public class AssessmentUploadService {
      */
     private record ValidRow(ValidatedRow row, String matchedTextKey) implements RowValidationResult {
 
+        /**
+         * <b>Preconditions:</b> {@code row} and {@code matchedTextKey} are non-{@code null}.
+         *
+         * @throws IllegalArgumentException if a parameter is {@code null}
+         */
         ValidRow {
-            assert row != null && matchedTextKey != null : "row and matchedTextKey must not be null";
+            if (row == null || matchedTextKey == null) {
+                throw new IllegalArgumentException("The validated row and matched text key must not be null");
+            }
         }
     }
 
@@ -626,8 +709,15 @@ public class AssessmentUploadService {
      */
     private record InvalidRow(AssessmentUploadErrorDTO error) implements RowValidationResult {
 
+        /**
+         * <b>Precondition:</b> {@code error} is non-{@code null}.
+         *
+         * @throws IllegalArgumentException if {@code error} is {@code null}
+         */
         InvalidRow {
-            assert error != null : "error must not be null";
+            if (error == null) {
+                throw new IllegalArgumentException("The row validation error must not be null");
+            }
         }
     }
 }

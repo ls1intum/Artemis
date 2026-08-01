@@ -20,6 +20,19 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 public record AssessmentUploadErrorDTO(@Nullable String identifier, AssessmentUploadErrorType type, @Nullable String detail) {
 
     /**
+     * Creates a validation error encountered during an assessment upload.
+     * <p>
+     * <b>Precondition:</b> {@code type} is non-{@code null}; {@code identifier} and {@code detail} may be {@code null}.
+     *
+     * @throws IllegalArgumentException if {@code type} is {@code null}
+     */
+    public AssessmentUploadErrorDTO {
+        if (type == null) {
+            throw new IllegalArgumentException("The assessment upload error type must not be null");
+        }
+    }
+
+    /**
      * Creates a file-independent error that is not tied to a specific CSV row or text file.
      * <p>
      * <b>Precondition:</b> {@code type} is non-{@code null}.
