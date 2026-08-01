@@ -23,7 +23,6 @@ export class CourseManagementAPIRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param options An object containing the options for creating the course
-     *   - customizeGroups: whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      *   - courseName: the title of the course (will generate default name if not provided)
      *   - courseShortName: the short name (will generate default name if not provided)
      *   - start: the start date of the course (default: now() - 2 hours)
@@ -36,7 +35,6 @@ export class CourseManagementAPIRequests {
      */
     async createCourse(
         options: {
-            customizeGroups?: boolean;
             courseName?: string;
             courseShortName?: string;
             start?: dayjs.Dayjs;
@@ -48,7 +46,6 @@ export class CourseManagementAPIRequests {
         } = {},
     ): Promise<Course> {
         const {
-            customizeGroups = false,
             courseName = 'Course ' + generateUUID(),
             courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
@@ -73,14 +70,6 @@ export class CourseManagementAPIRequests {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-        }
-
-        const allowGroupCustomization: boolean = process.env.ALLOW_GROUP_CUSTOMIZATION === 'true';
-        if (customizeGroups && allowGroupCustomization) {
-            course.studentGroupName = process.env.STUDENT_GROUP_NAME;
-            course.teachingAssistantGroupName = process.env.TUTOR_GROUP_NAME;
-            course.editorGroupName = process.env.EDITOR_GROUP_NAME;
-            course.instructorGroupName = process.env.INSTRUCTOR_GROUP_NAME;
         }
 
         const iconBuffer = await new Response(iconFile).arrayBuffer();

@@ -53,6 +53,7 @@ export class ExamAPIRequests {
         examStudentReviewStart?: dayjs.Dayjs;
         examStudentReviewEnd?: dayjs.Dayjs;
         publishResultsDate?: dayjs.Dayjs;
+        examSummaryPublicationDate?: dayjs.Dayjs;
         gracePeriod?: number;
         channelName?: string;
     }): Promise<Exam> {
@@ -72,6 +73,7 @@ export class ExamAPIRequests {
             examStudentReviewStart = null,
             examStudentReviewEnd = null,
             publishResultsDate = null,
+            examSummaryPublicationDate = null,
             gracePeriod = 30,
         } = options;
 
@@ -90,6 +92,7 @@ export class ExamAPIRequests {
             examStudentReviewStart,
             examStudentReviewEnd,
             publishResultsDate,
+            examSummaryPublicationDate,
             gracePeriod,
             channelName: titleLowercase(title),
         } as Exam;

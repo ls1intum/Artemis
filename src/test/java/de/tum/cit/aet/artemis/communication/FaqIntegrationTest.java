@@ -28,6 +28,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "faqintegrationtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private FaqRepository faqRepository;
 
@@ -44,14 +46,14 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void initTestCase() throws Exception {
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.course2 = courses.getLast();
         this.faq = FaqFactory.generateFaq(course1, FaqState.PROPOSED, "answer", "title");
         faqRepository.save(this.faq);
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
         irisRequestMockProvider.enableMockingOfRequests();
 
     }

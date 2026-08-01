@@ -5,16 +5,26 @@ import java.util.Objects;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentDTO(@Size(max = 50) String login, @Size(max = 50) String firstName, @Size(max = 50) String lastName, @Size(max = 10) String registrationNumber,
-        @Email @Size(max = 100) String email) {
+        @Email @Size(max = 100) String email, @Nullable Boolean isTestUser) {
 
     public StudentDTO(User user) {
-        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber(), user.getEmail());
+        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber(), user.getEmail(), user.isTestUser());
+    }
+
+    /**
+     * Convenience constructor without the optional {@code isTestUser} flag (defaults to {@code null}, i.e. "not provided",
+     * so an import leaves the flag unchanged). Keeps existing callers that do not set the flag working.
+     */
+    public StudentDTO(String login, String firstName, String lastName, String registrationNumber, String email) {
+        this(login, firstName, lastName, registrationNumber, email, null);
     }
 
     @Override
