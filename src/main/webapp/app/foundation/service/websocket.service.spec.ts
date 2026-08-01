@@ -5,7 +5,7 @@ import { COMPRESSION_HEADER, COMPRESSION_HEADER_KEY, ConnectionState, WebsocketS
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { RxStompState } from '@stomp/rx-stomp';
-import { BehaviorSubject, EMPTY, filter, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, filter, firstValueFrom, of } from 'rxjs';
 import { IMessage } from '@stomp/stompjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -148,6 +148,47 @@ describe('WebsocketService', () => {
                 }),
             }),
         );
+    });
+
+    it('creates only one STOMP subscription when several callers watch the same destination', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        const first = websocketService.subscribe('/topic/shared').subscribe();
+        const second = websocketService.subscribe('/topic/shared').subscribe();
+
+        // The broker rejects a second subscription to a destination already subscribed on the same session,
+        // so both callers have to share one underlying watch.
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        first.unsubscribe();
+        second.unsubscribe();
+    });
+
+    it('delivers messages of a shared destination to every caller', async () => {
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
+
+        const received: unknown[] = [];
+        const first = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
+        const second = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
+
+        messages.next({ ...baseMessage, body: JSON.stringify({ data: 'test' }) });
+
+        expect(received).toEqual([{ data: 'test' }, { data: 'test' }]);
+
+        first.unsubscribe();
+        second.unsubscribe();
+    });
+
+    it('subscribes again after the last caller of a destination unsubscribed', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        websocketService.subscribe('/topic/shared').subscribe().unsubscribe();
+        websocketService.subscribe('/topic/shared').subscribe().unsubscribe();
+
+        // The cached stream is dropped with the last consumer, so a later caller gets a fresh subscription
+        // rather than a dead one.
+        expect(watchMock).toHaveBeenCalledTimes(2);
     });
 
     it('subscribes and parses compressed messages', async () => {

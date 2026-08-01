@@ -5,7 +5,7 @@ import { IMessage } from '@stomp/stompjs';
 import { parseJson } from 'app/foundation/util/json.util';
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
-import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, finalize, map, share, switchMap } from 'rxjs/operators';
 
 /**
  * Name of the STOMP header that indicates whether a message payload is compressed.
@@ -237,6 +237,17 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @private
      */
     private subscriptionCounter = 0;
+
+    /**
+     * One shared, reference-counted observable per STOMP destination.
+     *
+     * The broker rejects a second subscription to a destination that is already subscribed on the same session, so
+     * every destination must be subscribed exactly once no matter how many callers want it. Entries are removed again
+     * once the last consumer unsubscribes.
+     * @private
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the map is keyed by destination and holds streams of different payload types; the cast back to Observable<T> happens in subscribe()
+    private readonly sharedChannelObservables = new Map<string, Observable<any>>();
 
     /**
      * Unique session identifier for this WebSocket connection.
@@ -500,6 +511,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             this.wasConnectedOnce = false;
             this.sessionId = '';
             this.subscriptionCounter = 0;
+            // The connection is gone, so the cached per-destination streams belong to a session that no longer
+            // exists and must not be handed to a caller that subscribes after a reconnect.
+            this.sharedChannelObservables.clear();
         }
     }
 
@@ -578,8 +592,22 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (!this.rxStomp) {
             return EMPTY;
         }
+        const existing = this.sharedChannelObservables.get(channel);
+        if (existing) {
+            return existing as Observable<T>;
+        }
         const params: IWatchParams = { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
-        return this.rxStomp.watch(params).pipe(map(this.handleIncomingMessage<T>()));
+        const shared = this.rxStomp.watch(params).pipe(
+            map(this.handleIncomingMessage<T>()),
+            // Drop the cache entry as soon as the underlying STOMP subscription is torn down, so a later caller
+            // gets a fresh subscription instead of a dead stream.
+            finalize(() => this.sharedChannelObservables.delete(channel)),
+            // One STOMP subscription for all consumers of this destination; it is unsubscribed once the last of
+            // them leaves.
+            share({ resetOnRefCountZero: true }),
+        );
+        this.sharedChannelObservables.set(channel, shared);
+        return shared;
     }
 
     /**
