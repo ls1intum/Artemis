@@ -6,7 +6,7 @@ package de.tum.cit.aet.artemis.account.dto;
  *
  * @param idpName The display name of the identity provider (e.g., "TUM Login") to render on the SSO button.
  */
-public record LoginOptionsDTO(LoginMethod loginMethod, String idpName, String debugReason) {
+public record LoginOptionsDTO(LoginMethod loginMethod, String idpName) {
 
     public enum LoginMethod {
         PASSWORD, OIDC, SAML2

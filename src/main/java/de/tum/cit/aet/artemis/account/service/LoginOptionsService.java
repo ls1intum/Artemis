@@ -56,7 +56,7 @@ public class LoginOptionsService {
      */
     public LoginOptionsDTO getLoginOptions(String emailOrLogin) {
         if (emailOrLogin == null || emailOrLogin.isBlank()) {
-            return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "input is null or blank");
+            return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
         }
         String sanitizedInput = emailOrLogin.trim().toLowerCase(Locale.ROOT);
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
@@ -64,28 +64,28 @@ public class LoginOptionsService {
         // if user is already in database
         if (user.isPresent()) {
             if (user.get().isInternal()) {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User found in Artemis DB, but isInternal=true");
+                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
             }
             else {
-                return getExternalUser("User found in Artemis DB (isInternal=false)");
+                return getExternalUser();
             }
         }
         if (ldapUserService.isPresent()) {
             Optional<LdapUserDto> ldapUser = isEmail ? ldapUserService.get().findByAnyEmail(sanitizedInput) : ldapUserService.get().findByLogin(sanitizedInput);
             // if user has a university account
             if (ldapUser.isPresent()) {
-                return getExternalUser("User not in DB, but found in LDAP");
+                return getExternalUser();
             }
             // if not: this is an internal user
             else {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND not found in LDAP");
+                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
             }
         }
         // If user is new and ldap is disabled - provide the SSO authentication option
         if (oidcEnabled || samlEnabled) {
-            return getExternalUser("User not in DB AND LDAP disabled -> Routing to OIDC for JIT provisioning");
+            return getExternalUser();
         }
-        return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND LdapUserService is not present");
+        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
     }
 
     /**
@@ -93,13 +93,13 @@ public class LoginOptionsService {
      *
      * @return the LoginOptionsDTO representing the active external authentication provider, or PASSWORD fallback
      */
-    private LoginOptionsDTO getExternalUser(String baseReason) {
+    private LoginOptionsDTO getExternalUser() {
         if (oidcEnabled) {
-            return new LoginOptionsDTO(LoginMethod.OIDC, oidcDisplayName, baseReason + " OIDC is ENABLED");
+            return new LoginOptionsDTO(LoginMethod.OIDC, oidcDisplayName);
         }
         if (samlEnabled) {
-            return new LoginOptionsDTO(LoginMethod.SAML2, samlDisplayName, baseReason + " SAML IS ENABLED");
+            return new LoginOptionsDTO(LoginMethod.SAML2, samlDisplayName);
         }
-        return new LoginOptionsDTO(LoginMethod.PASSWORD, null, baseReason + " BOTH OIDC AND SAML2 ARE ENABLED");
+        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
     }
 }
