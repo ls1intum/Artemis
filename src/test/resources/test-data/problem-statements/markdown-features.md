@@ -3,7 +3,7 @@
 [task][Feature check](testFeatureCheck())
 
 > [!NOTE]
-> A GitHub-style alert. The legacy pipeline renders this as .markdown-alert; the server currently does not.
+> A GitHub-style alert. Both pipelines render this as .markdown-alert.
 
 ```java
 class Example {

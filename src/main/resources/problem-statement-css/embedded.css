@@ -143,15 +143,59 @@ i.fa.artemis-icon-no-result {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%236c757d'/%3E%3Ccircle cx='8' cy='8' r='2.5' fill='%23fff'/%3E%3C/svg%3E");
 }
 
+/* GitHub-style alerts (`> [!NOTE]`), mirroring the client's content/scss/_github-alerts.scss.
+ * Each type sets --markdown-alert-color, which drives both the border and the title (and, through
+ * currentcolor, the octicon fill). dark-mode.css re-declares those five values. */
+
 .markdown-alert {
-    border-left: 4px solid var(--info, #17a2b8);
+    border-left: 4px solid var(--markdown-alert-color, #888);
     padding: 8px 16px;
     margin: 16px 0;
     border-radius: 0 4px 4px 0;
 }
 
+.markdown-alert > :first-child {
+    margin-top: 0;
+}
+
+.markdown-alert > :last-child {
+    margin-bottom: 0;
+}
+
 .markdown-alert-title {
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--markdown-alert-color, #888);
+}
+
+.markdown-alert-title .octicon {
+    display: inline-block;
+    margin-right: 0.5rem;
+    overflow: visible;
+    vertical-align: text-bottom;
+    fill: currentcolor;
+}
+
+.markdown-alert-note {
+    --markdown-alert-color: #0969da;
+}
+
+.markdown-alert-tip {
+    --markdown-alert-color: #1a7f37;
+}
+
+.markdown-alert-important {
+    --markdown-alert-color: #8250df;
+}
+
+.markdown-alert-warning {
+    --markdown-alert-color: #9a6700;
+}
+
+.markdown-alert-caution {
+    --markdown-alert-color: #d1242f;
 }
 
 /* ------------------------------------------------------------------

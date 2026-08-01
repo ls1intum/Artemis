@@ -127,7 +127,8 @@ public class ProblemStatementRenderingService {
 
     private static final Safelist HTML_SAFELIST = buildSafelist();
 
-    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create(), AutolinkExtension.create());
+    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create(), AutolinkExtension.create(),
+            GitHubAlertExtension.create());
 
     private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).build();
 
@@ -213,10 +214,12 @@ public class ProblemStatementRenderingService {
             html = inlineMarkdownImages(html);
         }
 
-        // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
+        // 8. Inject the earlier PlantUML SVGs and the GitHub-alert octicons (jsoup's HTML safelist would strip
+        // any SVG, so both are injected afterwards).
         for (int i = 0; i < inlineSvgs.size(); i++) {
             html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
         }
+        html = GitHubAlertExtension.injectIcons(html);
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
         String resultAttr = buildResultAttribute(resultSummary);
@@ -634,7 +637,7 @@ public class ProblemStatementRenderingService {
         Safelist safelist = Safelist.relaxed();
         safelist.addAttributes("div", "class", "data-diagram-id", "data-result");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",
-                "data-authored-count", "data-not-executed-count");
+                "data-authored-count", "data-not-executed-count", "data-alert-type");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
         safelist.addAttributes("p", "class");

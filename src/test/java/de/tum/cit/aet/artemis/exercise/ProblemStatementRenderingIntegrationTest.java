@@ -15,6 +15,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -1074,6 +1076,178 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).contains("data-test-status=\"success\"");
+    }
+
+    // --- GitHub-style alerts ---
+
+    @ParameterizedTest
+    @CsvSource({ "NOTE, note, Note, octicon-info", "TIP, tip, Tip, octicon-light-bulb", "IMPORTANT, important, Important, octicon-report",
+            "WARNING, warning, Warning, octicon-alert", "CAUTION, caution, Caution, octicon-stop" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderEveryGitHubAlertType(String marker, String type, String defaultTitle, String iconClass) throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!" + marker + "]\n> Body text.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<div class=\"markdown-alert markdown-alert-" + type + "\">");
+        assertThat(result.html()).contains("<p class=\"markdown-alert-title\">");
+        assertThat(result.html()).contains("<svg class=\"octicon " + iconClass + " mr-2\"");
+        assertThat(result.html()).contains(">" + defaultTitle + "</p>");
+        assertThat(result.html()).contains("<p>Body text.</p>");
+        // The blockquote the alert was parsed from must be gone, otherwise the client would style it twice.
+        assertThat(result.html()).doesNotContain("<blockquote>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRecognizeAlertMarkerCaseInsensitively() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!warning]\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<div class=\"markdown-alert markdown-alert-warning\">");
+        assertThat(result.html()).contains(">Warning</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldUseCustomAlertTitleWhenSupplied() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!TIP] Read this first\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains(">Read this first</p>");
+        assertThat(result.html()).doesNotContain(">Tip</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEscapeCustomAlertTitle() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!NOTE] Rules & limits\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains(">Rules &amp; limits</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotLocalizeTheDefaultAlertTitle() throws Exception {
+        // The client always falls back to the capitalized English type, so a localized server title would create a
+        // divergence instead of closing one.
+        var body = new ProblemStatementRenderRequestDTO("> [!NOTE]\n> Body.", null, null, "de", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains(">Note</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatBackslashEscapedAlertMarkerAsAnAlert() throws Exception {
+        // Matches the client: its marker regex allows an optional leading backslash, so `\[!NOTE]` is an alert too.
+        // CommonMark resolves the escape to a literal "[" before the server pattern runs, which gets there by itself.
+        var body = new ProblemStatementRenderRequestDTO("> \\[!NOTE]\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<div class=\"markdown-alert markdown-alert-note\">");
+        assertThat(result.html()).doesNotContain("[!NOTE]");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepOcticonSvgAfterSanitization() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!NOTE]\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The jsoup safelist drops SVG, so the icon is injected after sanitization. Both halves are asserted: the
+        // real markup arrives, and no placeholder is left behind because a type failed to match.
+        assertThat(result.html()).contains("<svg class=\"octicon octicon-info mr-2\" viewBox=\"0 0 16 16\"").contains("<path d=\"M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z");
+        assertThat(result.html()).doesNotContain("data-alert-type=");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotRenderAlertForUnknownMarker() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!HINT]\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("markdown-alert");
+        assertThat(result.html()).contains("<blockquote>").contains("[!HINT]");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotRenderAlertWhenMarkerIsNotOnTheFirstLine() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> Intro line.\n> [!NOTE]\n> Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("markdown-alert");
+        assertThat(result.html()).contains("<blockquote>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderAlertConsistingOfTheMarkerLineOnly() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!CAUTION]", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<div class=\"markdown-alert markdown-alert-caution\">");
+        assertThat(result.html()).contains(">Caution</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderNestedAlertMarkerWithoutFailing() throws Exception {
+        // Degenerate input: only the outermost blockquote of a nesting is considered, mirroring the client, which
+        // skips from a blockquote_open to the first blockquote_close. The inner quote survives inside the alert.
+        var body = new ProblemStatementRenderRequestDTO("> > [!NOTE]\n> > Body.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<div class=\"markdown-alert markdown-alert-note\">");
+        assertThat(result.html()).contains("<blockquote>");
+        assertThat(result.html()).contains("<p>Body.</p>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepEveryBlockOfAnAlertInsideTheAlertContainer() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!IMPORTANT]\n> First.\n>\n> Second.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<p>First.</p>");
+        assertThat(result.html()).contains("<p>Second.</p>");
+        // Both paragraphs must sit before the alert closes; the container ends right before the problem-statement div.
+        assertThat(result.html()).contains("<p>Second.</p>\n</div>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTurnAPlainBlockquoteIntoAnAlert() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> Just a quote.", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("markdown-alert");
+        assertThat(result.html()).contains("<blockquote>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldIncludeAlertStylingInEmbeddedCss() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("> [!NOTE]\n> Body.", null, null, "en", true, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains(".markdown-alert-note");
+        assertThat(result.html()).contains(".artemis-problem-statement--dark .markdown-alert-note");
     }
 
     private static byte[] createMinimalPng() {

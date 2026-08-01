@@ -32,6 +32,28 @@ body.artemis-ssr-body--dark {
     color: var(--body-color, #e0e0e0);
 }
 
+/* GitHub-style alert colors: the dark variants of the light values in embedded.css,
+ * taken from the client's content/scss/_github-alerts.scss. */
+.artemis-problem-statement--dark .markdown-alert-note {
+    --markdown-alert-color: #2f81f7;
+}
+
+.artemis-problem-statement--dark .markdown-alert-tip {
+    --markdown-alert-color: #3fb950;
+}
+
+.artemis-problem-statement--dark .markdown-alert-important {
+    --markdown-alert-color: #a371f7;
+}
+
+.artemis-problem-statement--dark .markdown-alert-warning {
+    --markdown-alert-color: #d29922;
+}
+
+.artemis-problem-statement--dark .markdown-alert-caution {
+    --markdown-alert-color: #f85149;
+}
+
 /* Modal dark theme — modal lives at document.body, so variables are re-declared here. */
 .artemis-modal--dark {
     --artemis-modal-bg: #1e1e1e;
