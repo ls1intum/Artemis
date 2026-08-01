@@ -255,6 +255,57 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
         assertThat(teamRepo.saveAndFlush(inOtherExercise).getId()).as("Student may join a team in a different exercise").isNotNull();
     }
 
+    /**
+     * exercise_id on team_student is derived from team.exercise_id, so moving a populated team to another exercise has to
+     * carry it along. If it went stale the unique constraint would guard the wrong exercise: the student's slot in the
+     * exercise the team left would stay blocked, and a genuine conflict in the exercise it moved into would slip through.
+     * Asserted through the constraint rather than by reading the denormalised column, since that is what it is for.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testMovingATeamToAnotherExerciseKeepsTheDerivedExerciseIdInSync() {
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Exercise otherExercise = textExerciseUtilService.createIndividualTextExercise(course, null, null, null);
+        otherExercise.setMode(ExerciseMode.TEAM);
+        otherExercise = exerciseRepository.save(otherExercise);
+
+        Team team = teamRepo.save(new Team().name(TEST_PREFIX + "Team E").shortName(TEST_PREFIX + "teame").exercise(exercise).students(Set.of(student)));
+
+        team.setExercise(otherExercise);
+        teamRepo.saveAndFlush(team);
+
+        // The slot the team vacated must be free again.
+        Team inVacatedExercise = new Team().name(TEST_PREFIX + "Team F").shortName(TEST_PREFIX + "teamf").exercise(exercise).students(Set.of(student));
+        assertThat(teamRepo.saveAndFlush(inVacatedExercise).getId()).as("Student may join a team in the exercise the moved team left").isNotNull();
+
+        // ...and the slot in the exercise it moved into must now be taken.
+        Team inTargetExercise = new Team().name(TEST_PREFIX + "Team G").shortName(TEST_PREFIX + "teamg").exercise(otherExercise).students(Set.of(student));
+        assertThatExceptionOfType(DataIntegrityViolationException.class).as("Database still enforces one team per student in the exercise the team moved into")
+                .isThrownBy(() -> teamRepo.saveAndFlush(inTargetExercise));
+    }
+
+    /**
+     * Moving a team into an exercise where one of its students already belongs to another team would violate the
+     * invariant, so the unique constraint has to reject it instead of leaving two teams of the same exercise sharing a
+     * student.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testMovingATeamIntoAnExerciseWhereTheStudentIsAlreadyAssignedIsRejected() {
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Exercise otherExercise = textExerciseUtilService.createIndividualTextExercise(course, null, null, null);
+        otherExercise.setMode(ExerciseMode.TEAM);
+        otherExercise = exerciseRepository.save(otherExercise);
+
+        teamRepo.save(new Team().name(TEST_PREFIX + "Team H").shortName(TEST_PREFIX + "teamh").exercise(exercise).students(Set.of(student)));
+        Team movable = teamRepo.save(new Team().name(TEST_PREFIX + "Team I").shortName(TEST_PREFIX + "teami").exercise(otherExercise).students(Set.of(student)));
+
+        movable.setExercise(exercise);
+
+        assertThatExceptionOfType(DataIntegrityViolationException.class).as("A team may not be moved into an exercise where one of its students is already assigned")
+                .isThrownBy(() -> teamRepo.saveAndFlush(movable));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTeam_BadRequest() throws Exception {

@@ -15,7 +15,9 @@
     Instead we denormalise exercise_id onto team_student and let a real unique index enforce the
     invariant. A BEFORE INSERT trigger populates the column, which is permitted because modifying
     NEW.* on the trigger's own table is not a prohibited self-update. Hibernate keeps inserting only
-    (team_id, student_id), so the @ManyToMany @JoinTable mapping on Team.students is unchanged.
+    (team_id, student_id), so the @ManyToMany @JoinTable mapping on Team.students is unchanged. A
+    second trigger propagates team.exercise_id to the derived column when a team is moved, so the
+    column cannot go stale and quietly stop expressing the invariant.
 
     The order of the changesets below matters and must not be rearranged: the triggers are installed
     directly after the nullable column, before the backfill and the constraints. Artemis nodes
@@ -79,6 +81,57 @@ FOR EACH ROW EXECUTE FUNCTION team_student_set_exercise_id()
         ]]></sql>
         <rollback>
             <sql>DROP TRIGGER IF EXISTS team_student_set_exercise_id ON team_student</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- Keep exercise_id in sync when a team is moved to another exercise. Without this the denormalised
+         column would keep the old exercise, which both hides a real conflict in the target exercise and
+         frees the slot in the source exercise, so the unique index below would no longer express the
+         invariant. TeamResource.updateTeam currently rejects a change of exercise, so this does not fire
+         today; it exists so the derived column stays correct if that ever becomes possible, rather than
+         silently degrading the guarantee. A move that would collide with an existing team in the target
+         exercise fails on the unique index, which is the intended outcome.
+         The trigger is on team and writes team_student, so it is not a prohibited self-update. -->
+    <changeSet id="20260728221528-4a-sync-exercise-id-trigger-mysql" author="krusche" dbms="mysql">
+        <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER team_student_sync_exercise_id
+AFTER UPDATE ON team
+FOR EACH ROW
+BEGIN
+    IF NOT (NEW.exercise_id <=> OLD.exercise_id) THEN
+        UPDATE team_student SET exercise_id = NEW.exercise_id WHERE team_id = NEW.id;
+    END IF;
+END
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS team_student_sync_exercise_id</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-4b-sync-exercise-id-function-postgresql" author="krusche" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+CREATE OR REPLACE FUNCTION team_student_sync_exercise_id() RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.exercise_id IS DISTINCT FROM OLD.exercise_id THEN
+        UPDATE team_student SET exercise_id = NEW.exercise_id WHERE team_id = NEW.id;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql
+        ]]></sql>
+        <rollback>
+            <sql>DROP FUNCTION IF EXISTS team_student_sync_exercise_id()</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260728221528-4c-sync-exercise-id-trigger-postgresql" author="krusche" dbms="postgresql">
+        <sql splitStatements="false"><![CDATA[
+CREATE TRIGGER team_student_sync_exercise_id
+AFTER UPDATE ON team
+FOR EACH ROW EXECUTE FUNCTION team_student_sync_exercise_id()
+        ]]></sql>
+        <rollback>
+            <sql>DROP TRIGGER IF EXISTS team_student_sync_exercise_id ON team</sql>
         </rollback>
     </changeSet>
 
