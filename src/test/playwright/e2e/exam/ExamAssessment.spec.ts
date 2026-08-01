@@ -302,6 +302,9 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
             endDate: examEnd,
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
+            // no grace period: assessment only opens after the exam end plus the grace period, and this spec's
+            // budget is already tight without waiting out createExam's 30s default
+            gracePeriod: 0,
         };
         exam = await examAPIRequests.createExam(examConfig);
         const textFixture = 'loremIpsum.txt';

@@ -38,7 +38,9 @@ describe('AssessmentAvailabilityUtil', () => {
 
             expect(getAssessmentNotPossibleYetReason(exercise)).toEqual({
                 translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`,
+                // the message names the exam end, but assessment only opens once the tests have run
                 date: latestExamEndDate,
+                assessmentPossibleFrom,
             });
         });
 
@@ -49,6 +51,7 @@ describe('AssessmentAvailabilityUtil', () => {
             expect(getAssessmentNotPossibleYetReason(exercise)).toEqual({
                 translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING}`,
                 date: assessmentPossibleFrom,
+                assessmentPossibleFrom,
             });
         });
     });

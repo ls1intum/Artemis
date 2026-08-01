@@ -634,6 +634,12 @@ public class ProgrammingExercise extends Exercise {
      * {@code SubmissionService#checkThatAssessmentIsPossibleElseThrow}, which additionally tells the tutor when they can
      * start. Evaluating the build-and-test date here as well would also block instructor test runs, which happen before
      * the exam starts and must stay assessable.
+     * <p>
+     * One caller is deliberately not behind that gate: {@code StudentExamService#prepareProgrammingSubmission}, used by
+     * "assess unsubmitted / empty student exams". It now also creates the empty submission in the window between the end
+     * of the exam and the build-and-test date, where it previously skipped programming participations. That endpoint
+     * already requires the exam and its grace period to be over, and creating the submission is what lets the
+     * participation be graded with 0 points at all, so this is intended.
      *
      * @return true if manual results are allowed, false otherwise
      */

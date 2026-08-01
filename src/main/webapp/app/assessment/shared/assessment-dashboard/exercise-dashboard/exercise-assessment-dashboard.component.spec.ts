@@ -818,6 +818,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(comp.assessmentNotPossibleYetReason()).toEqual({
                 translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`,
                 date: exerciseWithRunningExam.latestExamEndDate,
+                assessmentPossibleFrom: exerciseWithRunningExam.assessmentPossibleFrom,
             });
         });
 
@@ -862,18 +863,38 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
         });
 
-        it('should not show a toast for the "assessment is not possible yet" error, because the banner explains it', () => {
-            const alertService = TestBed.inject(AlertService);
-            const alertServiceSpy = vi.spyOn(alertService, 'error');
-            const errorResponse = new HttpErrorResponse({
+        const notPossibleYetError = () =>
+            new HttpErrorResponse({
                 error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: dayjs().add(1, 'hour').toISOString() } },
             });
-            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => errorResponse));
+
+        it('should not show a toast for the "assessment is not possible yet" error while the banner explains it', () => {
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => notPossibleYetError()));
             modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
             comp.loadAll();
 
+            expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
             expect(alertServiceSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still explain the error in a toast when no banner is shown, e.g. when the browser clock runs ahead', () => {
+            // the banner is computed from the browser clock while the gate uses the server clock, so the two can
+            // disagree; without a toast the tutor would get no feedback at all
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            vi.spyOn(TestBed.inject(ArtemisDatePipe), 'transform').mockReturnValue('1 Aug 2026, 10:00');
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => notPossibleYetError()));
+            modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            // the date the server sent, rendered in the browser's locale
+            expect(alertServiceSpy).toHaveBeenCalledWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, { date: '1 Aug 2026, 10:00' });
         });
 
         it('should render the explanation and make the assessment actions unreachable, also via the keyboard', () => {

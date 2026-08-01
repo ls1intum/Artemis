@@ -81,7 +81,7 @@ import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
-import { getAssessmentNotPossibleYetAlert, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -277,7 +277,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.currentLanguage();
         const reason = this.assessmentNotPossibleYetReason();
         return reason
-            ? this.translateService.instant('artemisApp.exerciseAssessmentDashboard.assessmentNotPossibleYetTooltip', { date: this.datePipe.transform(reason.date) })
+            ? this.translateService.instant('artemisApp.exerciseAssessmentDashboard.assessmentNotPossibleYetTooltip', {
+                  date: this.datePipe.transform(reason.assessmentPossibleFrom),
+              })
             : '';
     });
 
@@ -740,8 +742,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             error: (error: HttpErrorResponse) => {
                 if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached.set(true);
-                } else if (!getAssessmentNotPossibleYetAlert(error, this.datePipe)) {
-                    // the banner explains the "assessment is not possible yet" case, so it needs no additional toast
+                } else if (this.assessmentNotPossibleYetReason()) {
+                    // the banner already explains this, so it needs no additional toast
+                } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
                     this.onError(error.error?.detail || error.message);
                 }
             },
@@ -896,7 +899,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.togglingSecondCorrectionButton.set(true);
         this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
             this.secondCorrectionEnabled.set(res);
-            this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
+            if (!this.assessmentNotPossibleYetReason()) {
+                this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
+            }
             this.togglingSecondCorrectionButton.set(false);
         });
     }

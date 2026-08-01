@@ -336,7 +336,7 @@
                         <div class="alert alert-danger" jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></div>
                     }
                     @if (assessmentNotPossibleYetReason(); as assessmentNotPossibleYet) {
-                        <p-message severity="info" id="assessment-not-possible-yet" class="d-flex align-items-center gap-1 mb-3">
+                        <p-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mb-3">
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </p-message>
                     }

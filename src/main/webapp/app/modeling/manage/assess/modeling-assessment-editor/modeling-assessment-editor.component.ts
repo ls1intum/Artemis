@@ -442,7 +442,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.alertService.closeAll();
                 this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
             },
-            error: () => {
+            error: (error: HttpErrorResponse) => {
+                if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    return;
+                }
                 this.alertService.closeAll();
                 this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
@@ -488,6 +491,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.highlightMissingFeedback.set(false);
             },
             error: (error: HttpErrorResponse) => {
+                if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    return;
+                }
                 let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;

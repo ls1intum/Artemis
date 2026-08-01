@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -764,7 +765,7 @@ public class SubmissionService {
                     examAssessmentDates.latestExamEndDate());
             throw new AccessForbiddenAlertException(
                     "Assessment is not possible yet, the exam of exercise '" + exercise.getTitle() + "' is still running until " + examAssessmentDates.latestExamEndDate(),
-                    ENTITY_NAME, "assessmentNotPossibleExamRunning", Map.of("date", examAssessmentDates.latestExamEndDate().toString()), true);
+                    ENTITY_NAME, "assessmentNotPossibleExamRunning", Map.of("date", ISO_OFFSET_DATE_TIME.format(examAssessmentDates.latestExamEndDate())), true);
         }
         if (now.isBefore(examAssessmentDates.assessmentPossibleFrom())) {
             log.debug("Assessment of exam exercise '{}' is not possible yet, the tests still run on the final submissions until {}.", exercise.getTitle(),
@@ -772,7 +773,7 @@ public class SubmissionService {
             throw new AccessForbiddenAlertException(
                     "Assessment is not possible yet, the tests of exercise '" + exercise.getTitle() + "' still run on the final submissions until "
                             + examAssessmentDates.assessmentPossibleFrom(),
-                    ENTITY_NAME, "assessmentNotPossibleTestsPending", Map.of("date", examAssessmentDates.assessmentPossibleFrom().toString()), true);
+                    ENTITY_NAME, "assessmentNotPossibleTestsPending", Map.of("date", ISO_OFFSET_DATE_TIME.format(examAssessmentDates.assessmentPossibleFrom())), true);
         }
     }
 

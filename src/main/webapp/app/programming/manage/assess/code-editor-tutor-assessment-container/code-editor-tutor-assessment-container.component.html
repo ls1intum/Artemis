@@ -4,7 +4,7 @@
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
                 <span id="assessment-not-possible-yet">
                     <fa-icon [icon]="faCircleInfo" class="text-state-info" [fixedWidth]="true" />
-                    <span [jhiTranslate]="assessmentNotPossibleYetReason.translationKey" [translateValues]="assessmentNotPossibleYetReason.params"></span>
+                    <span [jhiTranslate]="assessmentNotPossibleYetReason.translationKey" [translateValues]="{ date: assessmentNotPossibleYetReason.date | artemisDate }"></span>
                 </span>
             }
             @if (participationCouldNotBeFetched()) {

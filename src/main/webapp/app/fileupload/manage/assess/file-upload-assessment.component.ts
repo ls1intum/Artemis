@@ -346,7 +346,10 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
-                error: () => {
+                error: (error: HttpErrorResponse) => {
+                    if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                        return;
+                    }
                     this.alertService.closeAll();
                     this.alertService.error('artemisApp.assessment.messages.saveFailed');
                 },
@@ -377,7 +380,11 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
-                error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+                error: (error: HttpErrorResponse) => {
+                    if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                        this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`);
+                    }
+                },
             });
     }
 

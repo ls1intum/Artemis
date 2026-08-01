@@ -48,7 +48,11 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetAlert } from 'app/assessment/shared/util/assessment-availability.util';
+import {
+    ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING,
+    ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING,
+    alertIfAssessmentNotPossibleYet,
+} from 'app/assessment/shared/util/assessment-availability.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
@@ -67,6 +71,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         FeedbackSuggestionsBannerComponent,
+        ArtemisDatePipe,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -119,8 +124,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly participationCouldNotBeFetched = signal(false);
     // Set instead of participationCouldNotBeFetched when the exam is simply not over yet: the assessment editor is
     // unusable for a reason the tutor can act on, so we say when they can come back instead of "participation not found".
-    // Kept as key + params (not a translated string) so the panel follows language changes.
-    readonly assessmentNotPossibleYet = signal<{ translationKey: string; params: { date: string } } | undefined>(undefined);
+    // Kept as key + raw ISO date (not a translated string, and not a pre-formatted date) so that both the sentence and
+    // the date follow language changes; the template formats the date with the artemisDate pipe.
+    readonly assessmentNotPossibleYet = signal<{ translationKey: string; date: string } | undefined>(undefined);
     // Written only synchronously / never reassigned — may stay plain.
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
@@ -328,10 +334,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     private handleErrorResponse(error: HttpErrorResponse): void {
         this.loadingInitialSubmission.set(false);
-        const assessmentNotPossibleYet = getAssessmentNotPossibleYetAlert(error, this.datePipe);
-        if (assessmentNotPossibleYet) {
+        const errorKey = error?.error?.errorKey;
+        if (errorKey === ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING || errorKey === ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING) {
             // the panel below the header explains this permanently, so an additional toast would only repeat it
-            this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+            this.assessmentNotPossibleYet.set({ translationKey: `error.${errorKey}`, date: error.error?.params?.date });
             this.alertService.closeAll();
             return;
         }

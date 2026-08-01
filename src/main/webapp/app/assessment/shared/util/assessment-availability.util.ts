@@ -21,6 +21,12 @@ export interface AssessmentNotPossibleYetReason {
      * reason stops applying, or — for a programming exercise whose tests still have to run — changes into the next one.
      */
     date: dayjs.Dayjs;
+
+    /**
+     * The moment assessment actually becomes possible. Later than {@link date} for a programming exercise while the
+     * exam is still running, because its tests run once more after the exam ends.
+     */
+    assessmentPossibleFrom: dayjs.Dayjs;
 }
 
 /**
@@ -43,9 +49,9 @@ export function getAssessmentNotPossibleYetReason(exercise: Exercise | undefined
     }
     const latestExamEndDate = exercise?.latestExamEndDate;
     if (!latestExamEndDate || dayjs().isBefore(latestExamEndDate)) {
-        return { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: latestExamEndDate ?? assessmentPossibleFrom };
+        return { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: latestExamEndDate ?? assessmentPossibleFrom, assessmentPossibleFrom };
     }
-    return { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING}`, date: assessmentPossibleFrom };
+    return { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING}`, date: assessmentPossibleFrom, assessmentPossibleFrom };
 }
 
 /**
