@@ -260,6 +260,9 @@ public class BonusResource {
         bonusService.validateBonusGradeTypes(existingBonus, isSourceGradeScaleUpdated);
         gradingScaleRepository.save(bonusToGradingScale);
         Bonus savedBonus = bonusService.saveBonus(existingBonus, isSourceGradeScaleUpdated);
+        // Re-set the transient bonusStrategy after save: EntityManager.merge() returns a new managed copy that does not
+        // carry @Transient fields, so the PUT response would otherwise omit the top-level bonusStrategy (see #12929).
+        savedBonus.setBonusStrategy(updatedBonus.bonusStrategy());
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(BonusResponseDTO.of(savedBonus, false));
     }
