@@ -87,6 +87,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForStudentResponseDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -1412,9 +1413,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param quizExercise the quiz exercise to map
      * @param batch        the optional quiz batch associated with the student
-     * @return the mapped DTO (QuizExerciseWithoutQuestionsDTO, QuizExerciseWithQuestionsDTO, or QuizExerciseWithSolutionsDTO)
+     * @return the student-facing quiz exercise DTO for the current quiz and batch state
      */
-    public Object createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
+    public QuizExerciseForStudentResponseDTO createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
         if (quizExercise.isQuizEnded()) {
             return QuizExerciseWithSolutionDTO.of(quizExercise);
         }

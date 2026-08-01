@@ -9,7 +9,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizExerciseWithQuestionsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExerciseWithoutQuestionsDTO, List<QuizQuestionWithoutSolutionDTO> quizQuestions) {
+public record QuizExerciseWithQuestionsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExerciseWithoutQuestionsDTO, List<QuizQuestionWithoutSolutionDTO> quizQuestions)
+        implements QuizExerciseForStudentResponseDTO {
 
     public static QuizExerciseWithQuestionsDTO of(QuizExercise quizExercise) {
         return new QuizExerciseWithQuestionsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise),
