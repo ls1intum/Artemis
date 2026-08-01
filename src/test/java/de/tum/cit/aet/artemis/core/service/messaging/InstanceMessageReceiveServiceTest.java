@@ -156,6 +156,9 @@ class InstanceMessageReceiveServiceTest {
 
         deliver(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL, ENTITY_ID);
         verify(programmingExerciseScheduleService).cancelAllScheduledTasks(ENTITY_ID);
+        // the same listener also cancels Athena; without this the handler could be dropped here and only the
+        // text-exercise topic would still cover it
+        verify(athenaApi).cancelScheduledAthena(ENTITY_ID);
     }
 
     @Test

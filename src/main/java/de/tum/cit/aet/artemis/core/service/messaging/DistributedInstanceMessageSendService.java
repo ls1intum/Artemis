@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -31,12 +32,25 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private static final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);
 
-    private final ScheduledExecutorService exec = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService exec;
 
     private final DistributedDataProvider distributedDataProvider;
 
+    @Autowired
     public DistributedInstanceMessageSendService(DistributedDataProvider distributedDataProvider) {
+        this(distributedDataProvider, Executors.newScheduledThreadPool(1));
+    }
+
+    /**
+     * Lets tests supply an executor that runs the deferred publish synchronously, so they do not have to wait for the
+     * real delay and stay independent of scheduler timing.
+     *
+     * @param distributedDataProvider provides the reliable topics the messages are published on
+     * @param exec                    the executor used to defer publishing
+     */
+    DistributedInstanceMessageSendService(DistributedDataProvider distributedDataProvider, ScheduledExecutorService exec) {
         this.distributedDataProvider = distributedDataProvider;
+        this.exec = exec;
     }
 
     @Override
