@@ -310,6 +310,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (this.rxStomp) {
             void this.rxStomp.deactivate();
             this.connectionStateSubscription?.unsubscribe();
+            // The cached streams belong to the client being replaced. Handing one of them to a caller after the
+            // reconnect would leave it watching a dead client and silently receiving nothing.
+            this.sharedChannelObservables.clear();
         }
         // NOTE: we add 'websocket' twice to use STOMP without SockJS
         const url = `//${window.location.host}/websocket/websocket`;
@@ -598,7 +601,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         }
         const params: IWatchParams = { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
         const decode = this.handleIncomingMessage<T>();
-        const shared = this.rxStomp.watch(params).pipe(
+        // Holder so the finalize callback below can compare against the very stream it belongs to.
+        const entry: { stream?: Observable<T> } = {};
+        entry.stream = this.rxStomp.watch(params).pipe(
             // Drop a frame that cannot be decoded instead of letting it error the stream. All consumers of a
             // destination share one subscription, so an error would disconnect every one of them (and, because
             // `share` resets on error, silently leave them without a subscription) over a single bad message.
@@ -611,14 +616,20 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                 }
             }),
             // Drop the cache entry as soon as the underlying STOMP subscription is torn down, so a later caller
-            // gets a fresh subscription instead of a dead stream.
-            finalize(() => this.sharedChannelObservables.delete(channel)),
+            // gets a fresh subscription instead of a dead stream. Only evict when the map still holds this very
+            // stream: a reconnect may already have replaced it, and removing the newer entry would let the next
+            // caller open a second subscription to a destination that is already subscribed.
+            finalize(() => {
+                if (this.sharedChannelObservables.get(channel) === entry.stream) {
+                    this.sharedChannelObservables.delete(channel);
+                }
+            }),
             // One STOMP subscription for all consumers of this destination; it is unsubscribed once the last of
             // them leaves.
             share({ resetOnRefCountZero: true }),
         );
-        this.sharedChannelObservables.set(channel, shared);
-        return shared;
+        this.sharedChannelObservables.set(channel, entry.stream);
+        return entry.stream;
     }
 
     /**

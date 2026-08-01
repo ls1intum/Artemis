@@ -206,6 +206,42 @@ describe('WebsocketService', () => {
         second.unsubscribe();
     });
 
+    it('does not reuse a cached destination stream after the client was replaced by a reconnect', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        const beforeReconnect = websocketService.subscribe('/topic/shared').subscribe();
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        // connect() deactivates and replaces rxStomp. A cached stream belongs to the old client, so handing it out
+        // again would leave the caller watching a dead client and receiving nothing.
+        websocketService.connect();
+        const afterReconnect = websocketService.subscribe('/topic/shared').subscribe();
+
+        expect(watchMock).toHaveBeenCalledTimes(2);
+
+        beforeReconnect.unsubscribe();
+        afterReconnect.unsubscribe();
+    });
+
+    it('does not let a stale stream evict the cache entry of its replacement', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        const stale = websocketService.subscribe('/topic/shared').subscribe();
+        websocketService.connect();
+        const current = websocketService.subscribe('/topic/shared').subscribe();
+        expect(watchMock).toHaveBeenCalledTimes(2);
+
+        // Tearing the old stream down must not remove the entry that now belongs to the new one, otherwise the next
+        // caller opens a second subscription to a destination that is already subscribed.
+        stale.unsubscribe();
+        const later = websocketService.subscribe('/topic/shared').subscribe();
+
+        expect(watchMock).toHaveBeenCalledTimes(2);
+
+        current.unsubscribe();
+        later.unsubscribe();
+    });
+
     it('subscribes again after the last caller of a destination unsubscribed', () => {
         watchMock.mockReturnValue(new Subject<IMessage>());
 
