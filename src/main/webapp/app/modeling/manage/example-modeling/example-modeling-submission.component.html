@@ -200,6 +200,8 @@
                                 [addReferenceIdForExampleSubmission]="true"
                                 (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
                                 [resultId]="result().id!"
+                                [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                                [maxPoints]="exercise()?.maxPoints"
                             />
                         }
                     }

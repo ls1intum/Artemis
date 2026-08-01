@@ -165,6 +165,8 @@
             [addReferenceIdForExampleSubmission]="true"
             (feedbacksChange)="validateFeedback()"
             [resultId]="result()!.id!"
+            [gradingCriteria]="exercise?.gradingCriteria ?? []"
+            [maxPoints]="exercise?.maxPoints"
         />
     }
 }

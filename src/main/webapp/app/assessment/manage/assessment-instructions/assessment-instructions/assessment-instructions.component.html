@@ -9,6 +9,15 @@
         }
         @if (gradingCriteriaValue && gradingCriteriaValue.length > 0) {
             <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
+                <ng-container expandableSectionHeaderActions>
+                    @if (selectable()) {
+                        <tum-ui-tag
+                            severity="secondary"
+                            styleClass="font-normal!"
+                            [value]="'artemisApp.assessmentInstructions.appliedCount' | artemisTranslate: appliedInstructionCount()"
+                        />
+                    }
+                </ng-container>
                 <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly()" [criteria]="gradingCriteriaValue" />
             </jhi-expandable-section>
         }

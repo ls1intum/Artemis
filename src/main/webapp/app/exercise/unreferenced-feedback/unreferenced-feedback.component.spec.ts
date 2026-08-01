@@ -14,6 +14,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 
 describe('UnreferencedFeedbackComponent', () => {
     let comp: UnreferencedFeedbackComponent;
@@ -151,5 +154,85 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.feedbackSuggestions.set([suggestion]);
         comp.discardSuggestion(suggestion);
         expect(comp.feedbackSuggestions()).toHaveLength(0);
+    });
+
+    describe('grading instruction selection', () => {
+        const documentationInstruction = { id: 1, credits: 4, feedback: 'documented' } as GradingInstruction;
+        const cameraInstruction = { id: 2, credits: -2, feedback: 'camera' } as GradingInstruction;
+        const criteria = [
+            { id: 1, title: 'Documentation', structuredGradingInstructions: [documentationInstruction] } as GradingCriterion,
+            { id: 2, title: 'Camera', structuredGradingInstructions: [cameraInstruction] } as GradingCriterion,
+        ];
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('gradingCriteria', criteria);
+        });
+
+        it('should register itself as the selection host while it is editable', () => {
+            const service = TestBed.inject(GradingInstructionSelectionService);
+            fixture.componentRef.setInput('readOnly', false);
+            fixture.detectChanges();
+
+            expect(service.isSelectable()).toBe(true);
+
+            fixture.destroy();
+            expect(service.isSelectable()).toBe(false);
+        });
+
+        it('should not register a read-only list', () => {
+            fixture.componentRef.setInput('readOnly', true);
+            fixture.detectChanges();
+
+            expect(TestBed.inject(GradingInstructionSelectionService).isSelectable()).toBe(false);
+        });
+
+        it('should add a feedback linked to the instruction when it is applied', () => {
+            comp.applyInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback).toHaveLength(1);
+            expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(documentationInstruction);
+            expect(comp.unreferencedFeedback[0].credits).toBe(4);
+            expect(comp.unreferencedFeedback[0].type).toBe(FeedbackType.MANUAL_UNREFERENCED);
+            expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
+        });
+
+        it('should remove every feedback of the instruction when it is un-applied', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(cameraInstruction);
+
+            comp.unapplyInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback).toHaveLength(1);
+            expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(cameraInstruction);
+            expect(comp.appliedInstructionIds()).toEqual(new Set([2]));
+        });
+
+        it('should group the feedback by criterion, with uncategorized feedback last', () => {
+            comp.applyInstruction(cameraInstruction);
+            comp.applyInstruction(documentationInstruction);
+            comp.addUnreferencedFeedback();
+
+            const groups = comp.feedbackGroups();
+            expect(groups.map((group) => group.title)).toEqual(['Camera', 'Documentation', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
+            expect(groups[2].translateTitle).toBe(true);
+            expect(comp.showGroupHeaders()).toBe(true);
+        });
+
+        it('should not show a group header for a single uncategorized block', () => {
+            fixture.componentRef.setInput('gradingCriteria', []);
+            comp.addUnreferencedFeedback();
+
+            expect(comp.feedbackGroups()).toHaveLength(1);
+            expect(comp.showGroupHeaders()).toBe(false);
+        });
+
+        it('should summarize awarded, deducted and resulting points', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(cameraInstruction);
+
+            expect(comp.pointsSummary()).toEqual({ awarded: 4, deducted: -2, total: 2 });
+        });
     });
 });

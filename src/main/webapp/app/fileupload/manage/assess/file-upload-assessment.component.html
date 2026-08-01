@@ -60,6 +60,8 @@
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise()?.gradingCriteria ?? []"
+                    [maxPoints]="exercise()?.maxPoints"
                 />
             }
         </div>

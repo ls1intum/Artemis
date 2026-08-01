@@ -68,6 +68,8 @@
                     [readOnly]="readOnly"
                     [useDefaultFeedbackSuggestionBadgeText]="true"
                     [resultId]="result()!.id!"
+                    [gradingCriteria]="exercise?.gradingCriteria ?? []"
+                    [maxPoints]="exercise?.maxPoints"
                 />
             }
         </div>

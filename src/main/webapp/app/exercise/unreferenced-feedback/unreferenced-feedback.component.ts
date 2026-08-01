@@ -1,17 +1,34 @@
-import { Component, inject, input, model, output } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+
+//One rendered block of the feedback list: the feedback belonging to a single grading criterion.
+export interface FeedbackGroup {
+    title: string;
+    translateTitle: boolean;
+    feedbacks: Feedback[];
+    points: number;
+    pointsSeverity: TumUiTagSeverity;
+}
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
-    styleUrls: [],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent],
+    styleUrls: ['./unreferenced-feedback.component.scss'],
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumUiButtonDirective, TumUiTagComponent, TumUiMessageComponent, ArtemisTranslatePipe],
 })
-export class UnreferencedFeedbackComponent {
+export class UnreferencedFeedbackComponent implements GradingInstructionSelectionHost {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
 
     FeedbackType = FeedbackType;
 
@@ -23,6 +40,12 @@ export class UnreferencedFeedbackComponent {
     readonly resultId = input<number>(undefined!);
 
     /**
+     * Criteria of the assessed exercise; used to group the feedback cards by the criterion they belong to.
+     */
+    readonly gradingCriteria = input<GradingCriterion[]>([]);
+    readonly maxPoints = input<number>();
+
+    /**
      * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback
      */
     readonly addReferenceIdForExampleSubmission = input(false);
@@ -31,6 +54,74 @@ export class UnreferencedFeedbackComponent {
     readonly feedbackSuggestions = model<Feedback[]>([]);
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
+
+    /** Ids of the grading instructions that are currently applied. */
+    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => {
+        const ids = new Set<number>();
+        for (const feedback of this.feedbacks()) {
+            const instructionId = feedback.gradingInstruction?.id;
+            if (instructionId !== undefined) {
+                ids.add(instructionId);
+            }
+        }
+        return ids;
+    });
+
+    /**
+     * The feedback cards split into one block per grading criterion (criteria in alphabetical order), with every
+     * feedback that belongs to no criterion collected in a trailing block.
+     */
+    readonly feedbackGroups = computed<FeedbackGroup[]>(() => {
+        const feedbacks = this.feedbacks();
+        const groups: FeedbackGroup[] = [];
+        const alreadyGrouped = new Set<Feedback>();
+
+        const sortedCriteria = [...this.gradingCriteria()].sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+        for (const criterion of sortedCriteria) {
+            const instructionIds = new Set((criterion.structuredGradingInstructions ?? []).map((instruction) => instruction.id));
+            const groupFeedbacks = feedbacks.filter((feedback) => feedback.gradingInstruction?.id !== undefined && instructionIds.has(feedback.gradingInstruction.id));
+            if (groupFeedbacks.length === 0) {
+                continue;
+            }
+            groupFeedbacks.forEach((feedback) => alreadyGrouped.add(feedback));
+            groups.push(toGroup(criterion.title, false, groupFeedbacks));
+        }
+
+        const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
+        if (ungrouped.length > 0) {
+            groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped));
+        }
+        return groups;
+    });
+
+    /**
+     * Group headers only add information once the feedback is actually split up.
+     * A single block of uncategorized feedback is rendered without a header.
+     */
+    readonly showGroupHeaders = computed(() => {
+        const groups = this.feedbackGroups();
+        return groups.length > 1 || (groups.length === 1 && !groups[0].translateTitle);
+    });
+
+    /** Awarded, deducted and resulting points of the unreferenced feedback shown in this list. */
+    readonly pointsSummary = computed(() => {
+        const credits = this.feedbacks().map((feedback) => feedback.credits ?? 0);
+        const awarded = credits.filter((credit) => credit > 0).reduce((sum, credit) => sum + credit, 0);
+        const deducted = credits.filter((credit) => credit < 0).reduce((sum, credit) => sum + credit, 0);
+        return { awarded, deducted, total: awarded + deducted };
+    });
+
+    constructor() {
+        // The grading-instruction list lives in a different part of the assessment editor and reaches this list
+        // through the selection service. Only an editable list may receive instructions.
+        effect((onCleanup) => {
+            if (this.readOnly()) {
+                return;
+            }
+            this.selectionService.register(this);
+            onCleanup(() => this.selectionService.unregister(this));
+        });
+    }
 
     get unreferencedFeedback(): Feedback[] {
         return this.feedbacks();
@@ -84,6 +175,22 @@ export class UnreferencedFeedbackComponent {
     }
 
     public addUnreferencedFeedback(): void {
+        this.appendFeedback(this.createFeedback());
+    }
+
+    applyInstruction(instruction: GradingInstruction): void {
+        const feedback = this.createFeedback();
+        feedback.gradingInstruction = instruction;
+        feedback.credits = instruction.credits;
+        this.appendFeedback(feedback);
+    }
+
+    unapplyInstruction(instruction: GradingInstruction): void {
+        const feedbacksToRemove = this.unreferencedFeedback.filter((feedback) => feedback.gradingInstruction?.id === instruction.id);
+        feedbacksToRemove.forEach((feedback) => this.deleteFeedback(feedback));
+    }
+
+    private createFeedback(): Feedback {
         const feedback = new Feedback();
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
 
@@ -91,7 +198,10 @@ export class UnreferencedFeedbackComponent {
         if (this.addReferenceIdForExampleSubmission()) {
             feedback.reference = this.generateNewUnreferencedFeedbackReference().toString();
         }
+        return feedback;
+    }
 
+    private appendFeedback(feedback: Feedback): void {
         this.unreferencedFeedback = [...this.unreferencedFeedback, feedback];
         this.validateFeedback();
     }
@@ -144,4 +254,15 @@ export class UnreferencedFeedbackComponent {
             this.updateFeedback(newFeedback);
         }
     }
+}
+
+function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[]): FeedbackGroup {
+    const points = feedbacks.reduce((sum, feedback) => sum + (feedback.credits ?? 0), 0);
+    let pointsSeverity: TumUiTagSeverity = 'secondary';
+    if (points > 0) {
+        pointsSeverity = 'success';
+    } else if (points < 0) {
+        pointsSeverity = 'danger';
+    }
+    return { title, translateTitle, feedbacks, points, pointsSeverity };
 }
