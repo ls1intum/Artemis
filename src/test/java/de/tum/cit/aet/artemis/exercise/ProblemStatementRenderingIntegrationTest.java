@@ -68,7 +68,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.0.0");
+        assertThat(result.rendererVersion()).isEqualTo("1.1.0");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
     }
@@ -935,8 +935,25 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.0.0");
+        assertThat(result1.rendererVersion()).isEqualTo("1.1.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldChangeContentHashWhenRendererVersionDiffers() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hello\n\nThis is **bold** text.", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634 is the content hash this exact request
+        // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test). The
+        // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
+        // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
+        // for byte-for-byte identical input, rather than only changing the reported version string. If this
+        // assertion ever fails because the version was bumped again, that is expected: replace the pinned hash
+        // with the new value captured under the previous version.
+        assertThat(result.contentHash()).isNotEqualTo("f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634");
     }
 
     // --- Image inlining ---

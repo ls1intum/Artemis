@@ -77,7 +77,16 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
-    private static final String RENDERER_VERSION = "1.0.0";
+    /**
+     * Identifies the semantics of the renderer's output, independent of the input markdown. It is folded into
+     * {@link #computeContentHash} so that a change to what/how content is rendered (not just a change to the
+     * input) invalidates renderings the client has already cached under the old hash. Bump this whenever a
+     * change alters the HTML or interactive script the renderer emits for the same input: for example a fix to
+     * task-status or diagram-colour derivation, a new or changed Markdown extension, or a change to
+     * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
+     * enough to invalidate the cache.
+     */
+    private static final String RENDERER_VERSION = "1.1.0";
 
     private static final String KATEX_BASE_PATH = "/webjars/katex/dist";
 
