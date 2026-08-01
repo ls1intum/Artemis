@@ -62,7 +62,7 @@ public class AuthorizationCheckService {
     // so that endpoints that only load authorities do not pay the cost of fetching all
     // course memberships (which would be a heavy JOIN for users in many courses).
     private boolean hasCourseRole(User user, Course course, CourseRole role) {
-        if (Hibernate.isInitialized(user.getCourseRoles())) {
+        if (user.isCourseRolesLoaded()) {
             EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
             return roles != null && roles.contains(role);
         }
@@ -70,7 +70,7 @@ public class AuthorizationCheckService {
     }
 
     private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
-        if (Hibernate.isInitialized(user.getCourseRoles())) {
+        if (user.isCourseRolesLoaded()) {
             EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
             if (roles == null) {
                 return false;

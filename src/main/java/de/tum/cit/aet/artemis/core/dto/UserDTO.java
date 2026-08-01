@@ -132,7 +132,9 @@ public class UserDTO extends AuditingEntityDTO {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
         Set<UserCourseRole> userCourseRoles = user.getCourseRoles();
-        if (userCourseRoles != null && Hibernate.isInitialized(userCourseRoles)) {
+        // getCourseRoles() returns an unmodifiable wrapper, which is never a PersistentSet and would always report as
+        // initialised, so ask the entity about the underlying collection instead.
+        if (user.isCourseRolesLoaded()) {
             this.courseRoles = userCourseRoles.stream()
                     .collect(Collectors.groupingBy(ucr -> ucr.getCourse().getId(), Collectors.mapping(UserCourseRole::getRole, Collectors.toSet()))).entrySet().stream()
                     .map(e -> new CourseAccessRightsDTO(e.getKey(), e.getValue())).toList();

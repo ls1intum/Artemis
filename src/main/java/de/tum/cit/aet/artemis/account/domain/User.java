@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -374,8 +376,35 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
     }
 
+    /**
+     * Returns an unmodifiable view: {@link #getCourseRolesByCourseId()} caches an index over this collection and can
+     * only invalidate it in {@link #setCourseRoles(Set)}, so mutating the returned set in place would leave the index
+     * stale and yield wrong authorization decisions. Replace the whole set via {@link #setCourseRoles(Set)} instead.
+     * <p>
+     * Note for callers that need to know whether the collection was loaded: do NOT test the returned value with
+     * {@code Hibernate.isInitialized(...)} — the wrapper is never a {@code PersistentSet}, so it always reports
+     * initialised. Use {@code Persistence.getPersistenceUtil().isLoaded(user, "courseRoles")}, which inspects the
+     * attribute itself.
+     *
+     * @return an unmodifiable view of this user's course roles
+     */
     public Set<UserCourseRole> getCourseRoles() {
-        return courseRoles;
+        return Collections.unmodifiableSet(courseRoles);
+    }
+
+    /**
+     * Whether the lazy {@code courseRoles} collection has been loaded, so callers can decide between the in-memory
+     * index from {@link #getCourseRolesByCourseId()} and a database query.
+     * <p>
+     * This has to live on the entity: {@link #getCourseRoles()} hands out an unmodifiable wrapper, which is never a
+     * Hibernate {@code PersistentSet} and therefore always reports as initialised. Only code with access to the field
+     * itself can answer the question.
+     *
+     * @return true if the course roles are loaded and can be read without hitting the database
+     */
+    @JsonIgnore
+    public boolean isCourseRolesLoaded() {
+        return Hibernate.isInitialized(courseRoles);
     }
 
     public void setCourseRoles(Set<UserCourseRole> courseRoles) {
