@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,9 +137,13 @@ public class ExamRegistrationService {
         List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
         List<String> usersAddedToExamForLogging = new ArrayList<>();
 
-        record ResolvedStudent(ExamUserDTO dto, User student) {
+        record ResolvedStudent(User student, String room, String seat) {
         }
-        List<ResolvedStudent> resolvedStudents = new ArrayList<>();
+        // Keyed by user id so a request (or an imported CSV) that lists the same user more than once yields exactly one
+        // ExamUser. exam_user has no unique constraint on (exam_id, student_id), so duplicates would otherwise be persisted
+        // and later break findByExamIdAndUserId, which returns an Optional. Insertion order is preserved for stable logging.
+        // Per field, the last non-blank value wins, which is how the previous row-by-row implementation behaved.
+        Map<Long, ResolvedStudent> resolvedStudentsByUserId = new LinkedHashMap<>();
         for (var examUserDto : examUserDTOs) {
             // Resolve the user WITHOUT enrolling them in the course yet, so that rejected staff leave no side effect
             Optional<User> optionalStudent = userService.findUser(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
@@ -154,21 +160,24 @@ public class ExamRegistrationService {
                 continue;
             }
 
-            resolvedStudents.add(new ResolvedStudent(examUserDto, student));
+            resolvedStudentsByUserId.merge(student.getId(), new ResolvedStudent(student, examUserDto.room(), examUserDto.seat()),
+                    (existingEntry, incoming) -> new ResolvedStudent(existingEntry.student(), StringUtils.hasText(incoming.room()) ? incoming.room() : existingEntry.room(),
+                            StringUtils.hasText(incoming.seat()) ? incoming.seat() : existingEntry.seat()));
         }
+        Collection<ResolvedStudent> resolvedStudents = resolvedStudentsByUserId.values();
 
         // Only users who will actually be registered get enrolled. Batching them keeps this to a single round trip
         // instead of one existsBy query + insert per student.
         userService.addUsersToCourse(resolvedStudents.stream().map(ResolvedStudent::student).toList(), course, CourseRole.STUDENT);
 
         // exam.getExamUsers() is already eagerly loaded, so this avoids one findByExamIdAndUserId query per student.
-        Map<Long, ExamUser> existingExamUsersByUserId = exam.getExamUsers().stream().collect(Collectors.toMap(eu -> eu.getUser().getId(), eu -> eu));
+        // Duplicates cannot be ruled out for pre-existing data (no unique constraint), so keep the first row rather than throwing.
+        Map<Long, ExamUser> existingExamUsersByUserId = exam.getExamUsers().stream().collect(Collectors.toMap(eu -> eu.getUser().getId(), eu -> eu, (first, duplicate) -> first));
 
         List<ExamUser> examUsersToCreate = new ArrayList<>();
         List<ExamUser> examUsersToUpdate = new ArrayList<>();
 
         for (var resolved : resolvedStudents) {
-            var examUserDto = resolved.dto();
             User student = resolved.student();
             ExamUser existing = existingExamUsersByUserId.get(student.getId());
 
@@ -177,22 +186,22 @@ public class ExamRegistrationService {
                 registeredExamUser.setUser(student);
                 registeredExamUser.setExam(exam);
 
-                if (StringUtils.hasText(examUserDto.room())) {
-                    registeredExamUser.setPlannedRoom(examUserDto.room());
+                if (StringUtils.hasText(resolved.room())) {
+                    registeredExamUser.setPlannedRoom(resolved.room());
                 }
-                if (StringUtils.hasText(examUserDto.seat())) {
-                    registeredExamUser.setPlannedSeat(examUserDto.seat());
+                if (StringUtils.hasText(resolved.seat())) {
+                    registeredExamUser.setPlannedSeat(resolved.seat());
                 }
                 examUsersToCreate.add(registeredExamUser);
                 usersAddedToExamForLogging.add(student.getLogin());
             }
             else {
                 // Update room/seat of an already registered exam user
-                if (StringUtils.hasText(examUserDto.room())) {
-                    existing.setPlannedRoom(examUserDto.room());
+                if (StringUtils.hasText(resolved.room())) {
+                    existing.setPlannedRoom(resolved.room());
                 }
-                if (StringUtils.hasText(examUserDto.seat())) {
-                    existing.setPlannedSeat(examUserDto.seat());
+                if (StringUtils.hasText(resolved.seat())) {
+                    existing.setPlannedSeat(resolved.seat());
                 }
                 examUsersToUpdate.add(existing);
                 usersAddedToExamForLogging.add(existing.getUser().getLogin());

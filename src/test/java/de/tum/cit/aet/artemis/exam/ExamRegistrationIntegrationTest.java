@@ -122,6 +122,32 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterUsersInExam_duplicateRowsForSameUserCreateSingleExamUser() throws Exception {
+        // exam_user has no unique constraint on (exam_id, student_id), so a request (or an imported CSV) listing the same
+        // user twice must be deduplicated in the service: two rows would both be persisted and then break
+        // findByExamIdAndUserId, which returns an Optional.
+        Exam exam = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(exam, "duplicate-rows-channel");
+        String login = OTHER_PREFIX + "student1";
+        User student = userUtilService.getUserByLogin(login);
+
+        var firstRow = new ExamUserDTO(login, "", "", "", "", "", "101", "11", false, false, false, false, "", null, null, null, null, null, null, null);
+        // Second row repeats the user with a new room but a blank seat: the last non-blank value wins per field.
+        var secondRow = new ExamUserDTO(login, "", "", "", "", "", "202", "", false, false, false, false, "", null, null, null, null, null, null, null);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(firstRow, secondRow), HttpStatus.OK, null);
+
+        Exam storedExam = examRepository.findWithExamUsersById(exam.getId()).orElseThrow();
+        assertThat(storedExam.getExamUsers()).as("the duplicated user is registered exactly once").hasSize(1);
+        // Would throw IncorrectResultSizeDataAccessException if duplicates had been persisted.
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId()).orElseThrow();
+        assertThat(examUser.getPlannedRoom()).as("last non-blank room wins").isEqualTo("202");
+        assertThat(examUser.getPlannedSeat()).as("blank seat in the later row does not clear the earlier one").isEqualTo("11");
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUserInExam_studentExamGenerated() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
