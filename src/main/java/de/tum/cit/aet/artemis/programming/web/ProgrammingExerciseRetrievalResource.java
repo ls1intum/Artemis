@@ -332,21 +332,22 @@ public class ProgrammingExerciseRetrievalResource {
      * id (which the client may not know) and returns the same payload as
      * {@code participations/{participationId}/repository/files-content}.
      *
-     * @param exerciseId   the exercise for which the solution repository files should be retrieved
-     * @param omitBinaries do not send binaries to reduce payload size
+     * The files are read from the latest commit of the bare repository, so uncommitted changes made through the online
+     * editor are not included. Binary files are never included, because the content is returned as a string.
+     *
+     * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/solution-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId,
-            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
+    public ResponseEntity<Map<String, String>> getSolutionRepositoryFilesWithContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
     }
 
     /**
@@ -355,21 +356,22 @@ public class ProgrammingExerciseRetrievalResource {
      * id (which the client may not know) and returns the same payload as
      * {@code participations/{participationId}/repository/files-content}.
      *
-     * @param exerciseId   the exercise for which the template repository files should be retrieved
-     * @param omitBinaries do not send binaries to reduce payload size
+     * The files are read from the latest commit of the bare repository, so uncommitted changes made through the online
+     * editor are not included. Binary files are never included, because the content is returned as a string.
+     *
+     * @param exerciseId the exercise for which the template repository files should be retrieved
      * @return the ResponseEntity with status 200 (OK) and a map of file path to file content
      */
     @GetMapping("programming-exercises/{exerciseId}/template-files-content")
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId,
-            @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
+    public ResponseEntity<Map<String, String>> getTemplateRepositoryFilesWithContent(@PathVariable Long exerciseId) {
         log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
-        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromWorkingCopy(participation, exercise, omitBinaries));
+        return ResponseEntity.ok(repositoryParticipationService.getFilesContentFromLastCommit(participation));
     }
 
     /**
