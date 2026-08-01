@@ -331,6 +331,11 @@ public class AssessmentService {
      */
     public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText,
             boolean submit) {
+        // Guard the write side as well, not just the endpoints that open an assessment: without this, assessment data
+        // could still be persisted for an exam exercise whose submissions can change, either by calling this endpoint
+        // directly or because isAllowedToCreateOrOverrideResult ignores the grace period and exempts instructors.
+        submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, submission.getParticipation());
+
         Result result = saveManualAssessment(submission, feedbackList, resultId, assessmentNoteText, exercise.getId());
         if (!submit) {
             return result;

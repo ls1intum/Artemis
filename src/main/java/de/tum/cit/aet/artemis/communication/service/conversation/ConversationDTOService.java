@@ -281,9 +281,9 @@ public class ConversationDTOService {
             userDTO.setIsRequestingUser(user.getId().equals(requestingUser.getId()));
             userDTO.setIsChannelModerator(null); // not needed for one to one chats
             var userWithGroups = user;
-            var groupsInitialized = Persistence.getPersistenceUtil().isLoaded(user, "groups") && user.getGroups() != null;
-            if (!groupsInitialized) {
-                userWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(user.getId());
+            var courseRolesInitialized = Persistence.getPersistenceUtil().isLoaded(user, "courseRoles") && user.getCourseRoles() != null;
+            if (!courseRolesInitialized) {
+                userWithGroups = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(user.getId());
             }
             UserPublicInfoDTO.assignRoleProperties(course, userWithGroups, userDTO);
             return userDTO;
