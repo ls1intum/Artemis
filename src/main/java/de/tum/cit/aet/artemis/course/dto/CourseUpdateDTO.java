@@ -10,7 +10,9 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -58,8 +60,9 @@ public record CourseUpdateDTO(
         String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, boolean presentationAssessmentsEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean learningPathsEnabled, boolean presentationAssessmentsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
+        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
 
     /**
      * Applies the DTO values to an existing Course entity.

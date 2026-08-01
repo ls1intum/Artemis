@@ -7,6 +7,7 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, forkJoin, map, merge, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
+import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
@@ -15,7 +16,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { COURSE_SHORT_NAME_MAX_LENGTH, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { COURSE_SHORT_NAME_MAX_LENGTH, MAX_GRADING_POINTS, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -102,6 +103,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
+    protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -256,7 +258,7 @@ export class CourseUpdateComponent implements OnInit {
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
                 maxPoints: new FormControl(this.course.maxPoints, {
-                    validators: [Validators.min(1)],
+                    validators: [Validators.min(1), Validators.max(MAX_GRADING_POINTS), integerValidator()],
                 }),
                 accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],

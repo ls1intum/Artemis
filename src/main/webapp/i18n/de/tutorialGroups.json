@@ -85,6 +85,7 @@
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
                 "editConfigurationButton": "Globale Konfiguration bearbeiten",
+                "configurationRequiredForTutor": "Die Übungsgruppenverwaltung ist erst verfügbar, nachdem Lehrende die Übungsgruppen für diesen Kurs konfiguriert haben.",
                 "deleteDialog": {
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
