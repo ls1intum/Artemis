@@ -53,6 +53,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     private Course course;
 
     private Competency[] competencies;
@@ -75,17 +77,23 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
+    private static final String NOT_STUDENT_OF_COURSE = OTHER_PREFIX + "student1337";
+
+    private static final String NOT_INSTRUCTOR_OF_COURSE = OTHER_PREFIX + "instructor1337";
+
     @BeforeEach
     void setupTestScenario() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
-        // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
-
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
-        course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
+        // Course must be created BEFORE outsider users are saved so that enrollPrefixedUsersInCourse
+        // (called inside createEnrolledCoursesWithExercisesAndLectures) does not pick them up.
+        course = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
+
+        // Add users that are not in the course (created AFTER enrollment so they stay unenrolled)
+        userUtilService.createAndSaveUser(NOT_STUDENT_OF_COURSE);
+        userUtilService.createAndSaveUser(NOT_INSTRUCTOR_OF_COURSE);
         competencies = competencyUtilService.createCompetencies(course, 5);
 
         // set threshold to 60, 70, 80, 90 and 100 respectively
@@ -157,7 +165,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     private Competency importCompetencyRESTCall() throws Exception {
-        final var course2 = courseUtilService.createCourse();
+        final var course2 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         final var competencyToImport = competencyUtilService.createCompetency(course2);
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(competencyToImport.getId()), Optional.empty(), false, false, false, Optional.empty(),
                 false);
@@ -196,7 +204,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testEnableLearningPathsWithNoCompetencies() throws Exception {
-        var courseWithoutCompetencies = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, false, 0).getFirst();
+        var courseWithoutCompetencies = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, false, 0).getFirst();
         enableLearningPathsRESTCall(courseWithoutCompetencies);
         final var updatedCourse = courseRepository.findWithEagerLearningPathsByIdElseThrow(courseWithoutCompetencies.getId());
         assertThat(updatedCourse.getLearningPathsEnabled()).as("should enable LearningPaths").isTrue();
@@ -235,7 +243,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
+    @WithMockUser(username = NOT_STUDENT_OF_COURSE, roles = "USER")
     void testGenerateLearningPathOnEnrollment() throws Exception {
         course.setEnrollmentEnabled(true);
         course.setEnrollmentStartDate(past(1));
@@ -244,7 +252,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         request.postWithResponseBody("/api/course/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        final var user = userTestRepository.findOneWithLearningPathsAndLearnerProfileByLogin(TEST_PREFIX + "student1337").orElseThrow();
+        final var user = userTestRepository.findOneWithLearningPathsAndLearnerProfileByLogin(NOT_STUDENT_OF_COURSE).orElseThrow();
 
         assertThat(user.getLearningPaths()).isNotNull();
         assertThat(user.getLearningPaths()).as("should create LearningPath for student").hasSize(1);
@@ -350,7 +358,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetAverageProgressForCourse_emptyCalculation() throws Exception {
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         assertAverageProgress(course.getId(), HttpStatus.OK, 0.0);
         assertAverageProgress(99999L, HttpStatus.FORBIDDEN, null);
     }
@@ -535,7 +543,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
+        final var student = userTestRepository.findOneWithAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
@@ -561,7 +569,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     void testGetLearningPathNavigationPreferences(int aimForGradeOrBonus, int timeInvestment, int repetitionIntensity) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        final var student = userTestRepository.findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
+        final var student = userTestRepository.findOneWithAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
         CourseLearnerProfile learnerProfile = student.getLearnerProfile().getCourseLearnerProfiles().stream().filter(clp -> clp.getCourse().getId().equals(course.getId()))
                 .findFirst().orElseThrow();
         learnerProfile.setAimForGradeOrBonus(aimForGradeOrBonus);
@@ -742,7 +750,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
+    @WithMockUser(username = NOT_STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationOverviewForOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();

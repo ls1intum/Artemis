@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.account.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Set;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -215,28 +213,13 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithGroups() throws Exception {
-        userTestService.createUserWithGroups();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithGroupsAlreadyExists() throws Exception {
+    void createUser_alreadyExists() throws Exception {
         User newUser = userTestService.student;
         newUser.setId(null);
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor"));
 
         request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateUserGroups() throws Exception {
-        userTestService.student.setPassword(passwordService.hashPassword("this is a password"));
-        userTestRepository.save(userTestService.student);
-        userTestService.updateUserGroups();
     }
 
     @Test
@@ -301,8 +284,8 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUserWithoutGroups() throws Exception {
-        userTestService.testUserWithoutGroups();
+    void testUserWithoutCourseEnrollment() throws Exception {
+        userTestService.testUserWithoutCourseEnrollment();
     }
 
     @Test

@@ -57,7 +57,7 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 4, 1, 1, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");

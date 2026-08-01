@@ -83,7 +83,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 0);
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
