@@ -38,6 +38,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @BeforeEach
     void setUp() {
         testUser = userUtilService.createAndSaveUser(TEST_PREFIX + "student1");
+        userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
         testPost = ConversationFactory.createBasicPost(1, testUser);
         conversation = ConversationFactory.generatePublicChannel(exampleCourse, "Test Channel", true);
         conversationRepository.save(conversation);

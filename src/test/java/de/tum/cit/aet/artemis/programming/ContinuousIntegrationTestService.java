@@ -75,7 +75,7 @@ public class ContinuousIntegrationTestService {
         this.continuousIntegrationService = continuousIntegrationService;
 
         userUtilService.addUsers(testPrefix, 2, 0, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(testPrefix);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
 
         // init local repo

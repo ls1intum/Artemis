@@ -99,7 +99,7 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
     @BeforeEach
     void initTest() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.setProblemStatement("Line 1\nLine 2\nLine 3");
