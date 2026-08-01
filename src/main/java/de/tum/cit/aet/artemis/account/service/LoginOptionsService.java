@@ -76,6 +76,10 @@ public class LoginOptionsService {
             if (ldapUser.isPresent()) {
                 return getExternalUser("User not in DB, but found in LDAP");
             }
+            // debug
+            else {
+                return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND not found in LDAP");
+            }
         }
         return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND LdapUserService is not present");
     }
