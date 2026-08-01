@@ -30,6 +30,11 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
@@ -106,6 +111,15 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamTestRepository;
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
@@ -165,6 +179,40 @@ class ScheduledDataCleanupTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(studentParticipationRepository.findById(participation.getId())).isEmpty();
         assertThat(courseRepository.findById(course.getId())).isPresent();
         assertThat(exerciseRepository.findById(exercise.getId())).isPresent();
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId())).get().extracting(CourseConfiguration::getStudentDataResetDate).isNotNull();
+    }
+
+    /**
+     * The scheduled job authenticates itself with a synthetic authentication that has no principal, so anything on the
+     * reset path resolving the current user would throw. That failure surfaced only for courses containing an exam, and
+     * only after other student data had already been deleted: the exam step was collected as a failed item, the reset
+     * was reported incomplete, the course was never stamped, and every following run tried again.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
+    void scheduledResetOldCoursesResetsACourseContainingAnExam() {
+        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Exercise exercise = course.getExercises().iterator().next();
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+
+        Exam exam = examUtilService.addExam(course);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+
+        CourseConfiguration configuration = new CourseConfiguration();
+        configuration.setCourse(course);
+        configuration.setGradeRelevant(false);
+        configuration.setResetWarningSentDate(ZonedDateTime.now().minusDays(40)); // warned > grace (30d) ago -> due
+        course.setCourseConfiguration(configuration);
+        course.setEndDate(ZonedDateTime.now().minusYears(2));
+        courseRepository.save(course);
+
+        scheduleService(false, true, false, false, false, false, false).resetOldCourses();
+
+        // The exam's student data is gone, the exam itself is kept, and the reset completed - an incomplete reset would
+        // leave studentDataResetDate null and retry the course forever.
+        assertThat(studentExamTestRepository.findById(studentExam.getId())).isEmpty();
+        assertThat(examTestRepository.findById(exam.getId())).isPresent();
+        assertThat(studentParticipationRepository.findById(participation.getId())).isEmpty();
         assertThat(courseConfigurationRepository.findByCourseId(course.getId())).get().extracting(CourseConfiguration::getStudentDataResetDate).isNotNull();
     }
 

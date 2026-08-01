@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -207,12 +208,15 @@ public class ExamDeletionService {
      * @param examId the ID of the exam to be reset
      */
     public void reset(@NonNull Long examId) {
-        User user = userRepository.getUser();
+        // Not userRepository.getUser(): the scheduled data-privacy cleanup runs this without a user principal, and
+        // requiring one made the exam step of a course reset fail after other student data had already been deleted,
+        // leaving a course that could never finish resetting. Audit the automated run as the system account instead.
+        String userLogin = SecurityUtils.getCurrentUserLogin().orElse(Constants.SYSTEM_ACCOUNT);
 
         // Fetch only the title for audit logging - avoids loading the entire exam with exercises
         String examTitle = examRepository.findTitleById(examId);
-        log.info("User {} has requested to reset the exam {}", user.getLogin(), examTitle);
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.RESET_EXAM, "exam=" + examTitle);
+        log.info("User {} has requested to reset the exam {}", userLogin, examTitle);
+        AuditEvent auditEvent = new AuditEvent(userLogin, Constants.RESET_EXAM, "exam=" + examTitle);
         auditEventRepository.add(auditEvent);
 
         // Fetch exercise IDs directly - more efficient than loading full exercise entities
