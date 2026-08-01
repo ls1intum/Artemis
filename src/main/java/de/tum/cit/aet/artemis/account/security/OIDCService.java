@@ -154,7 +154,6 @@ public class OIDCService extends OidcUserService {
 
         newUserDto.setLangKey("en");
         newUserDto.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
-        newUserDto.setGroups(new HashSet<ManagedUserVMJava>());
         User createdUser = userCreationService.createUser(newUserDto);
         createdUser.setInternal(false);
         return userRepository.save(createdUser);
