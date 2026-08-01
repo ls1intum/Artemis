@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -133,10 +134,15 @@ public class SAML2Service {
         log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
-        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        // Normalize to lowercase to match User.setLogin() behavior (see User.java setLogin()).
+        // The SAML assertion may contain uppercase letters, but the User entity stores the login
+        // in lowercase. Without this normalization, the second login would fail to find the
+        // existing user and attempt to create a duplicate.
+        final String normalizedUsername = username.toLowerCase(Locale.ENGLISH);
+        Optional<User> user = userRepository.findOneWithAuthoritiesByLogin(normalizedUsername);
         if (user.isEmpty()) {
             // create User if not exists
-            user = Optional.of(createUser(username, principal));
+            user = Optional.of(createUser(normalizedUsername, principal));
             Map<String, Object> accountCreationDetails = new HashMap<>(details);
             accountCreationDetails.put("user", user.get().getLogin());
             auditEventRepository.add(new AuditEvent(Instant.now(), SYSTEM_ACCOUNT, "SAML2_ACCOUNT_CREATE", accountCreationDetails));
