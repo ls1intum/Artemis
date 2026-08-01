@@ -316,6 +316,29 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldBuildInlineFixForTextFileWithBinaryListedExtension() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-shell-inline-fix");
+        pushFileToRepository(templateRepo, "check.sh", "#!/bin/sh\necho old\n");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Update shell check", "Use the new output",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "check.sh", 2, 2, "echo new")));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        CommentThread thread = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId()).iterator().next();
+        ConsistencyIssueCommentContentDTO content = (ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent();
+        assertThat(content.suggestedFix()).isNotNull();
+        assertThat(content.suggestedFix().expectedCode()).isEqualTo("echo old");
+        assertThat(content.suggestedFix().replacementCode()).isEqualTo("echo new");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() throws Exception {
         createExerciseVersion();
         LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-grouped");
