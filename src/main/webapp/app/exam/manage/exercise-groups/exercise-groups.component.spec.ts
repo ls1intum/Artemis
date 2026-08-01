@@ -278,6 +278,70 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()![from].id).toBe(toId);
     });
 
+    it('serializes reorder saves: ignores a reorder click while a save is in flight and keeps the optimistic order once it resolves', async () => {
+        comp.exerciseGroups.set(groups);
+
+        // Two independent PUTs, each controlled manually so the test can decide when they resolve.
+        const firstSave = new Subject<HttpResponse<void>>();
+        const secondSave = new Subject<HttpResponse<void>>();
+        const updateOrderSpy = vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(firstSave.asObservable()).mockReturnValueOnce(secondSave.asObservable());
+
+        // User action 1: move group at index 0 ("id 0") down. Optimistic local order becomes [1, 0, 2] and a save starts.
+        comp.moveDown(0);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+        expect(comp.orderSavePending()).toBe(true);
+        expect(updateOrderSpy).toHaveBeenCalledOnce();
+
+        // User action 2 (race attempt): while the first save is still in flight, further reorder actions must be
+        // ignored so a second, independent PUT can never be fired (concurrent PUTs could otherwise arrive at the
+        // server out of order and an earlier order would overwrite a later one).
+        comp.moveDown(1);
+        expect(updateOrderSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+
+        // The first (and only) in-flight save resolves; the response has no body and the optimistic order stands.
+        firstSave.next(new HttpResponse<void>({}));
+        firstSave.complete();
+        await Promise.resolve();
+
+        expect(comp.orderSavePending()).toBe(false);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+
+        // Now that the first save has resolved, a new reorder action is allowed and fires its own PUT.
+        comp.moveUp(2);
+        expect(updateOrderSpy).toHaveBeenCalledTimes(2);
+        expect(comp.orderSavePending()).toBe(true);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 2, 0]);
+
+        secondSave.next(new HttpResponse<void>({}));
+        secondSave.complete();
+        await Promise.resolve();
+
+        expect(comp.orderSavePending()).toBe(false);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 2, 0]);
+    });
+
+    it('restores the previous order and clears the pending flag when the reorder save is rejected', async () => {
+        comp.exerciseGroups.set(groups);
+        const failingSave = new Subject<HttpResponse<void>>();
+        vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(failingSave.asObservable());
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        // The optimistic swap is applied immediately.
+        comp.moveDown(0);
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
+        expect(comp.orderSavePending()).toBe(true);
+
+        // The server rejects the order (e.g. a stale tab whose groups no longer match the exam): the optimistic
+        // swap must not stay visible.
+        failingSave.error(new Error('rejected'));
+        await Promise.resolve();
+
+        expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([0, 1, 2]);
+        expect(comp.orderSavePending()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+    });
+
     it('maps exercise types to exercise groups', () => {
         comp.exerciseGroups.set(groups);
         const firstGroupId = groups[0].id!;
