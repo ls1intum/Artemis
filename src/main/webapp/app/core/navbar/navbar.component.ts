@@ -19,7 +19,7 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -42,6 +42,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
+import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -71,6 +72,7 @@ import { Course } from 'app/course/shared/entities/course.model';
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
+        CourseNotificationOverviewComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -96,7 +98,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
     protected readonly faFlag = faFlag;
-    protected readonly faBook = faBook;
     protected readonly faSignOutAlt = faSignOutAlt;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faUserShield = faUserShield;
@@ -118,7 +119,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     readonly passwordResetEnabled = signal(false);
     readonly breadcrumbs = signal<Breadcrumb[]>([]);
-    breadcrumbSubscriptions: Subscription[];
+    breadcrumbSubscriptions: Subscription[] = [];
     readonly isCollapsed = signal<boolean>(undefined!);
     readonly iconsMovedToMenu = signal<boolean>(undefined!);
     readonly isNavbarNavVertical = signal<boolean>(undefined!);
@@ -127,7 +128,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     atlasEnabled = false;
     examEnabled = false;
     localCIActive = false;
-    ltiEnabled: boolean;
+    ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
     readonly agentName = signal<string | undefined>(undefined);
@@ -144,12 +145,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     lectureTitle = signal<string | undefined>(undefined);
     examTitle = signal<string | undefined>(undefined);
 
-    private standardizedCompetencySubscription: Subscription;
-    private globalSearchSubscription: Subscription;
-    private authStateSubscription: Subscription;
-    private routerEventSubscription: Subscription;
-    private queryParamsSubscription: Subscription;
-    private examStartedSubscription: Subscription;
+    // Assigned lazily in ngOnInit()/route handlers (some only when a feature is active) and torn down defensively
+    // in ngOnDestroy(), so they are genuinely optional rather than definitely assigned.
+    private standardizedCompetencySubscription?: Subscription;
+    private globalSearchSubscription?: Subscription;
+    private authStateSubscription?: Subscription;
+    private routerEventSubscription?: Subscription;
+    private queryParamsSubscription?: Subscription;
+    private examStartedSubscription?: Subscription;
     private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
@@ -390,7 +393,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
-        dashboard: 'artemisApp.courseOverview.menu.dashboard',
         competencies: 'artemisApp.courseOverview.menu.competencies',
         learning_path: 'artemisApp.courseOverview.menu.learningPath',
         lecture_unit: 'artemisApp.learningPath.breadcrumbs.lectureUnit',
@@ -842,6 +844,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
+
         const courseId = course?.id?.toString();
 
         const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
@@ -868,10 +872,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+
         const courseId = course?.id?.toString();
-        const isAtLeastEditor = !!course?.isAtLeastEditor;
-        const isAtLeastInstructor = !!course?.isAtLeastInstructor;
-        const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
+        const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
+        const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
+        const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
+
+        if (!isAtLeastTutorInCourse) return ['/course-management'];
 
         const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
         const routeMappings = [
@@ -883,7 +891,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
-            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
         ];
 
         const matchedRoute = routeMappings.find((route) => {
@@ -894,12 +902,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return baseManagementPath;
         }
 
-        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
-        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
-        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
-        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructor && !courseHasTutorialGroupConfiguration;
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditorInCourse;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructorInCourse;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructorInCourse;
 
-        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed) {
             return baseManagementPath;
         }
 
@@ -1047,8 +1054,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 }
 
+/** Instantiated via `new Breadcrumb()` and populated field-by-field in setBreadcrumb(), hence the definite-assignment (!) markers. */
 class Breadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }

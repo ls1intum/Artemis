@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusResponseDTO;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.BonusFactory;
@@ -55,8 +58,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
     private GradingScaleUtilService gradingScaleUtilService;
 
     private Bonus courseBonus;
-
-    private Bonus examBonus;
 
     private Course course;
 
@@ -104,8 +105,6 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
         courseBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
         bonusRepository.save(courseBonus);
 
-        examBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale.getId(), bonusToExamGradingScale.getId());
-
         bonusToExamGradingScale.setBonusStrategy(BonusStrategy.GRADES_CONTINUOUS);
         gradingScaleRepository.save(bonusToExamGradingScale);
 
@@ -113,28 +112,70 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
         examId = bonusToExamGradingScale.getExam().getId();
     }
 
+    private String bonusesUrl() {
+        return "/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses";
+    }
+
+    private static BonusRequestDTO bonusRequest(Long id, double weight, BonusStrategy bonusStrategy, long sourceGradingScaleId) {
+        return new BonusRequestDTO(id, weight, bonusStrategy, new BonusRequestDTO.GradingScaleIdDTO(sourceGradingScaleId));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
 
-        request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.NOT_FOUND, Bonus.class);
-
-    }
-
-    private void assertBonusesAreEqualIgnoringId(Bonus actualBonus, Bonus expectedBonus) {
-        assertThat(actualBonus).usingRecursiveComparison().ignoringFields("id", "sourceGradingScale", "bonusToGradingScale").isEqualTo(expectedBonus);
-        assertThat(actualBonus.getSourceGradingScale().getId()).isEqualTo(expectedBonus.getSourceGradingScale().getId());
+        request.get(bonusesUrl(), HttpStatus.NOT_FOUND, BonusResponseDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBonusForTargetExam() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
 
-        assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
-        assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
+        assertThat(foundBonus.id()).isEqualTo(courseBonus.getId());
+        assertThat(foundBonus.weight()).isEqualTo(courseBonus.getWeight());
+        assertThat(foundBonus.bonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+
+        // The source is a COURSE grading scale: its nested course must be serialized (the client reads course/exam off it),
+        // and its max points must reflect the reachable points (200, from the 200-point exercise) rather than the course's
+        // configured max points (100). The exam reference must be absent for a course grading scale.
+        var source = foundBonus.sourceGradingScale();
+        assertThat(source.id()).isEqualTo(courseGradingScale.getId());
+        assertThat(source.exam()).isNull();
+        assertThat(source.course()).isNotNull();
+        assertThat(source.course().id()).isEqualTo(courseId);
+        assertThat(source.course().maxPoints()).isEqualTo(200);
+        // Source grade steps are excluded unless explicitly requested (omitted on the wire via @JsonInclude(NON_EMPTY)).
+        assertThat(source.gradeSteps()).isNullOrEmpty();
+
+        // The bonusTo is an EXAM grading scale: its nested exam (with owning course) must be serialized so the client can
+        // derive the rounding settings, while its grade steps are always excluded from the bonus response.
+        var bonusTo = foundBonus.bonusToGradingScale();
+        assertThat(bonusTo.id()).isEqualTo(bonusToExamGradingScale.getId());
+        assertThat(bonusTo.exam()).isNotNull();
+        assertThat(bonusTo.exam().examMaxPoints()).isEqualTo(200);
+        assertThat(bonusTo.exam().course()).isNotNull();
+        assertThat(bonusTo.exam().course().id()).isEqualTo(courseId);
+        assertThat(bonusTo.gradeSteps()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetBonusIncludesSourceGradeStepsOnlyWhenRequested() throws Exception {
+        // Re-point the bonus to a source grading scale that actually has grade steps (the grading-key student view reads them).
+        bonusRepository.delete(courseBonus);
+        GradingScale sourceWithSteps = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(course);
+        gradingScaleRepository.save(sourceWithSteps);
+        request.postWithResponseBody(bonusesUrl(), bonusRequest(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, sourceWithSteps.getId()), BonusResponseDTO.class, HttpStatus.CREATED);
+
+        BonusResponseDTO without = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(without.sourceGradingScale().gradeSteps()).isNullOrEmpty();
+
+        BonusResponseDTO with = request.get(bonusesUrl() + "?includeSourceGradeSteps=true", HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(with.sourceGradingScale().gradeSteps()).isNotEmpty();
+        assertThat(with.sourceGradingScale().gradeSteps()).allSatisfy(gradeStep -> assertThat(gradeStep.gradeName()).isNotBlank());
     }
 
     @Test
@@ -146,20 +187,31 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
         var newExamGradingScale = GradingScaleFactory.generateGradingScaleForExam(newExam, GradeType.BONUS);
         gradingScaleRepository.save(newExamGradingScale);
 
-        Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());
+        BonusResponseDTO savedBonus = request.postWithResponseBody(bonusesUrl(), bonusRequest(null, -1.0, BonusStrategy.GRADES_CONTINUOUS, newExamGradingScale.getId()),
+                BonusResponseDTO.class, HttpStatus.CREATED);
 
-        Bonus savedBonus = request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", newBonus, Bonus.class, HttpStatus.CREATED);
+        assertThat(savedBonus.id()).isGreaterThan(0);
+        assertThat(savedBonus.weight()).isEqualTo(-1.0);
+        assertThat(savedBonus.bonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+        assertThat(savedBonus.sourceGradingScale().id()).isEqualTo(newExamGradingScale.getId());
 
-        assertThat(savedBonus.getId()).isGreaterThan(0);
-        assertBonusesAreEqualIgnoringId(savedBonus, newBonus);
+        // Hardened persistence check: exactly one bonus row exists for this bonusTo (guards against the cascade duplicate-insert
+        // footgun) and the persisted bonus carries the correct source and bonusTo back-references when reloaded from the DB.
+        Set<Bonus> persisted = bonusRepository.findAllByBonusToExamId(examId);
+        assertThat(persisted).hasSize(1);
+        Bonus persistedBonus = persisted.iterator().next();
+        assertThat(persistedBonus.getId()).isEqualTo(savedBonus.id());
+        assertThat(persistedBonus.getWeight()).isEqualTo(-1.0);
+        assertThat(persistedBonus.getSourceGradingScale().getId()).isEqualTo(newExamGradingScale.getId());
+        assertThat(persistedBonus.getBonusToGradingScale().getId()).isEqualTo(bonusToExamGradingScale.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExamDuplicateError() throws Exception {
 
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
-
+        request.postWithResponseBody(bonusesUrl(), bonusRequest(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, sourceExamGradingScale.getId()), BonusResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -170,89 +222,136 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
         courseGradingScale.setGradeType(GradeType.GRADE);
         gradingScaleRepository.save(courseGradingScale);
 
-        Bonus newBonus = BonusFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
+        BonusRequestDTO newBonus = bonusRequest(null, -1.0, BonusStrategy.GRADES_CONTINUOUS, courseGradingScale.getId());
 
         // Source grading scale must have GradeType.BONUS.
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(bonusesUrl(), newBonus, BonusResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         bonusToExamGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.saveAll(List.of(courseGradingScale, bonusToExamGradingScale));
 
         // BonusTo grading scale must have GradeType.GRADE.
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", newBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(bonusesUrl(), newBonus, BonusResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.postWithResponseBody("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", examBonus, Bonus.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(bonusesUrl(), bonusRequest(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, sourceExamGradingScale.getId()), BonusResponseDTO.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.delete("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
+        request.delete(bonusesUrl() + "/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + courseBonus.getId(), courseBonus, HttpStatus.FORBIDDEN);
+        request.put(bonusesUrl() + "/" + courseBonus.getId(), bonusRequest(courseBonus.getId(), 1.0, BonusStrategy.GRADES_CONTINUOUS, courseGradingScale.getId()),
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithMismatchingIdsInPathAndBodyConflict() throws Exception {
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + courseBonus.getId() + 1, courseBonus, HttpStatus.CONFLICT);
+        // The path id ("{id}1") deliberately differs from the body id to trigger the mismatch conflict.
+        request.put(bonusesUrl() + "/" + courseBonus.getId() + 1, bonusRequest(courseBonus.getId(), 1.0, BonusStrategy.GRADES_CONTINUOUS, courseGradingScale.getId()),
+                HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithoutChangingSourceGradingScale() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
 
-        BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
-        foundBonus.setBonusStrategy(newBonusStrategy);
-        foundBonus.setWeight(-foundBonus.getWeight());
+        double newWeight = -foundBonus.weight();
+        long sourceId = foundBonus.sourceGradingScale().id();
+        request.put(bonusesUrl() + "/" + foundBonus.id(), bonusRequest(foundBonus.id(), newWeight, BonusStrategy.POINTS, sourceId), HttpStatus.OK);
 
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
-        Bonus updatedBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
-        assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
-        assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
-        assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
+        BonusResponseDTO updatedBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(updatedBonus.id()).isEqualTo(foundBonus.id());
+        assertThat(updatedBonus.bonusStrategy()).isEqualTo(BonusStrategy.POINTS);
+        assertThat(updatedBonus.weight()).isEqualTo(newWeight);
+        assertThat(updatedBonus.sourceGradingScale().id()).isEqualTo(sourceId);
+
+        // Reload from the DB and confirm the update persisted without creating a second bonus row.
+        Bonus persisted = bonusRepository.findByIdElseThrow(foundBonus.id());
+        assertThat(persisted.getWeight()).isEqualTo(newWeight);
+        assertThat(persisted.getSourceGradingScale().getId()).isEqualTo(sourceId);
+        assertThat(bonusRepository.findAllByBonusToExamId(examId)).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(foundBonus.sourceGradingScale().id()).isNotEqualTo(sourceExamGradingScale.getId());
 
-        foundBonus.setBonusStrategy(BonusStrategy.POINTS);
-        foundBonus.setWeight(-foundBonus.getWeight());
+        request.put(bonusesUrl() + "/" + foundBonus.id(), bonusRequest(foundBonus.id(), -foundBonus.weight(), BonusStrategy.POINTS, sourceExamGradingScale.getId()), HttpStatus.OK);
 
-        assertThat(foundBonus.getSourceGradingScale().getId()).isNotEqualTo(sourceExamGradingScale.getId());
-        foundBonus.setSourceGradingScale(sourceExamGradingScale);
+        BonusResponseDTO updatedBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(updatedBonus.id()).isEqualTo(foundBonus.id());
+        assertThat(updatedBonus.sourceGradingScale().id()).isEqualTo(sourceExamGradingScale.getId());
+        // The new source is an EXAM grading scale, so its exam reference must now be serialized.
+        assertThat(updatedBonus.sourceGradingScale().exam()).isNotNull();
 
-        request.put("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
-        Bonus updatedBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
-        assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
-        assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
-        assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
+        Bonus persisted = bonusRepository.findByIdElseThrow(foundBonus.id());
+        assertThat(persisted.getSourceGradingScale().getId()).isEqualTo(sourceExamGradingScale.getId());
+        assertThat(bonusRepository.findAllByBonusToExamId(examId)).hasSize(1);
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateBonusWithoutSourceGradingScaleBadRequest() throws Exception {
+        bonusRepository.delete(courseBonus);
+
+        // A create request without a source grading scale must fail with 400 rather than a 500 from findById(null).
+        request.postWithResponseBody(bonusesUrl(), new BonusRequestDTO(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, null), BonusResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        // A source reference that is present but carries a null id is rejected the same way.
+        request.postWithResponseBody(bonusesUrl(), new BonusRequestDTO(null, 1.0, BonusStrategy.GRADES_CONTINUOUS, new BonusRequestDTO.GradingScaleIdDTO(null)),
+                BonusResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        // The rejected requests created no bonus row.
+        assertThat(bonusRepository.findAllByBonusToExamId(examId)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBonusValidationFailureDoesNotPersistBonusToStrategy() throws Exception {
+        // The bonusTo grading scale currently carries the original (continuous) strategy.
+        assertThat(gradingScaleRepository.findById(bonusToExamGradingScale.getId()).orElseThrow().getBonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+
+        // An invalid source grading scale (GradeType.GRADE instead of BONUS) makes BonusService.saveBonus reject the update.
+        Exam otherExam = examUtilService.addExamWithExerciseGroup(course, true);
+        GradingScale invalidSource = GradingScaleFactory.generateGradingScaleForExam(otherExam, GradeType.GRADE);
+        gradingScaleRepository.save(invalidSource);
+
+        // Switching the strategy to POINTS and the source to the invalid scale in one update is rejected with 400.
+        request.put(bonusesUrl() + "/" + courseBonus.getId(), bonusRequest(courseBonus.getId(), -1.0, BonusStrategy.POINTS, invalidSource.getId()), HttpStatus.BAD_REQUEST);
+
+        // Regression guard: because validation now runs before persisting, the bonusTo grading scale's strategy must be
+        // unchanged when reloaded from the DB. Previously the strategy was saved before validation, leaving a partial update.
+        assertThat(gradingScaleRepository.findById(bonusToExamGradingScale.getId()).orElseThrow().getBonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteBonus() throws Exception {
 
-        Bonus foundBonus = request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.OK, Bonus.class);
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
 
-        request.delete("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses/" + foundBonus.getId(), HttpStatus.OK);
-        request.get("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonuses", HttpStatus.NOT_FOUND, Bonus.class);
+        request.delete(bonusesUrl() + "/" + foundBonus.id(), HttpStatus.OK);
 
+        // The bonus row is actually gone, and the endpoint reports it as missing.
+        assertThat(bonusRepository.findAllByBonusToExamId(examId)).isEmpty();
+        request.get(bonusesUrl(), HttpStatus.NOT_FOUND, BonusResponseDTO.class);
     }
 
     @NonNull

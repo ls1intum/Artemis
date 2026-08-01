@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Params, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -70,6 +71,7 @@ import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/
     styleUrls: ['course-management-container.component.scss'],
     providers: [MetisConversationService],
     imports: [
+        CdkScrollable,
         NgClass,
         RouterOutlet,
         NgTemplateOutlet,
@@ -295,7 +297,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         if (this.activatedComponentReference() instanceof CourseConversationsComponent) {
             const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
-            this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed() ?? false);
+            // Show the page title inside the conversations sidebar header, mirroring the student overview.
+            childRouteComponent.setPageTitle(this.pageTitle());
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
         if (this.courseBody()) {
@@ -309,7 +312,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
         childRouteComponent.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed());
     }
 
     override getSidebarItems(): SidebarItem[] {

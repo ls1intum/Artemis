@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -10,11 +10,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 /**
  * Form structure for system notification editing.
@@ -44,12 +44,13 @@ interface SystemNotificationForm {
         FaIconComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        CheckboxModule,
-        InputTextModule,
-        SelectModule,
-        ButtonModule,
-        MessageModule,
+        TumUiCheckboxComponent,
+        TumUiInputDirective,
+        TumUiSelectComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
     private readonly systemNotificationService = inject(AdminSystemNotificationService);

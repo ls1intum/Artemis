@@ -31,12 +31,14 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -457,8 +460,9 @@ public class ResultService {
      * @return a list of results as described above for the given exercise.
      */
     public List<Result> resultsForExercise(Set<StudentParticipation> participations, boolean withSubmissions) {
-        final List<Result> results = new ArrayList<>();
-
+        // First pass: pick the single relevant submission per participation. Note that the relevance filter may replace a submission's results
+        // (see SubmissionFilterService for programming submissions), so getLatestResult() must only be read after filtering.
+        final List<Submission> relevantSubmissions = new ArrayList<>();
         for (StudentParticipation participation : participations) {
             // Filter out participations without students / teams
             if (participation.getParticipant() == null) {
@@ -469,12 +473,30 @@ public class ResultService {
             if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() == null) {
                 continue;
             }
-            var submission = optionalSubmission.get();
             participation.setSubmissionCount(participation.getSubmissions().size());
-            if (withSubmissions) {
-                submission.getLatestResult().setSubmission(submission);
+            relevantSubmissions.add(optionalSubmission.get());
+        }
+
+        // Second pass: load feedbacks (and the assessor) for exactly the results selected above. The participations were loaded without feedbacks on purpose, because
+        // fetch-joining them for every result of the exercise multiplies the row count by the feedback fan-out and then discards most of it.
+        // The load has to select Result rather than Feedback: a @OneToMany collection is only marked initialized when the owning entity is fetched with the collection, and
+        // spring.jpa.open-in-view is disabled, so the entities returned here are detached. The assessor is included for the same reason - it is lazy but gets serialized.
+        final Set<Long> relevantResultIds = relevantSubmissions.stream().map(submission -> submission.getLatestResult().getId()).collect(Collectors.toSet());
+        final Map<Long, Result> resultsWithFeedbacks = relevantResultIds.isEmpty() ? Map.of()
+                : resultRepository.findResultsWithFeedbacksTestCaseAndAssessorByIdIn(relevantResultIds).stream().collect(Collectors.toMap(Result::getId, Function.identity()));
+
+        final List<Result> results = new ArrayList<>();
+        for (Submission submission : relevantSubmissions) {
+            // Skip results that disappeared between the two queries (e.g. a concurrent assessment deletion). The first-pass result must not be used as a fallback: it comes from
+            // a closed session with an uninitialized feedbacks collection, so reading it would throw a LazyInitializationException in the callers that sum up the feedbacks.
+            Result result = resultsWithFeedbacks.get(submission.getLatestResult().getId());
+            if (result == null) {
+                continue;
             }
-            results.add(submission.getLatestResult());
+            if (withSubmissions) {
+                result.setSubmission(submission);
+            }
+            results.add(result);
         }
 
         if (withSubmissions) {
@@ -828,4 +850,47 @@ public class ResultService {
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
     }
+
+    /**
+     * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
+     * Points are rounded as defined by the course settings.
+     *
+     * @param result for which the points should be summed up.
+     * @param course with the exercise the result belongs to.
+     * @return the result together with the total points and the points per criterion.
+     */
+    public ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result, final Course course) {
+        final Map<Long, Double> pointsPerCriterion = new HashMap<>();
+        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
+
+        for (final Feedback feedback : result.getFeedbacks()) {
+            final double feedbackPoints;
+            final Long criterionId;
+
+            if (feedback.getGradingInstruction() != null) {
+                feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
+                criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
+            }
+            else {
+                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
+                criterionId = null;
+            }
+
+            pointsPerCriterion.compute(criterionId, (_, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
+        }
+
+        final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);
+
+        // points for feedbacks without criterion were only needed for totalPoints calculation
+        pointsPerCriterion.remove(null);
+
+        // round the point sums per criterion once at the end
+        pointsPerCriterion.entrySet().forEach(entry -> {
+            Double rounded = RoundingUtil.roundScoreSpecifiedByCourseSettings(entry.getValue(), course);
+            entry.setValue(rounded);
+        });
+
+        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
+    }
+
 }

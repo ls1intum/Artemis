@@ -28,6 +28,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -121,6 +122,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
     protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
     private readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
+    private readonly maxNameLength = PROGRAMMING_EXERCISE_NAME_MAX_LENGTH;
 
     exerciseInfoComponent = viewChild(ProgrammingExerciseInformationComponent);
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
@@ -160,9 +162,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
 
-    auxiliaryRepositoryDuplicateNames: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
-    auxiliaryRepositoryNamedCorrectly: boolean;
+    auxiliaryRepositoryDuplicateNames = false;
+    auxiliaryRepositoryDuplicateDirectories = false;
+    auxiliaryRepositoryNamedCorrectly = false;
     private isImportFromExistingExerciseValue = false;
     private isImportFromFileValue = false;
     private isImportFromSharingValue = false;
@@ -197,10 +199,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.isImportFromSharingForAi.set(value);
     }
 
-    isEdit: boolean;
-    isCreate: boolean;
+    isEdit = false;
+    isCreate = false;
     readonly isExamMode = signal<boolean>(undefined!);
-    isLocalCIEnabled: boolean;
+    isLocalCIEnabled = false;
     hasUnsavedChanges = false;
     // programmingExercise is deeply template-bound (directly via [programmingExercise]/[(exercise)] and through the
     // recomputed getProgrammingExerciseCreationConfig()) and populated asynchronously from the route resolver, so it
@@ -221,7 +223,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExerciseLanguageForAi.set(value.programmingLanguage);
     }
 
-    backupExercise: ProgrammingExercise;
+    backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
@@ -232,18 +234,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
-    private selectedProgrammingLanguageValue: ProgrammingLanguage;
+    private selectedProgrammingLanguageValue!: ProgrammingLanguage; // set in ngOnInit() from the loaded exercise before the selectedProgrammingLanguage getter is read
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    // Left undefined until categories load; code distinguishes undefined ("not yet loaded") from an empty array.
+    exerciseCategories?: ExerciseCategory[];
+    existingCategories: ExerciseCategory[] = [];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    public inProductionEnvironment: boolean;
+    public inProductionEnvironment = false;
 
     public supportedLanguages = ['java'];
 
@@ -289,9 +292,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     constructor() {
         effect(() => {
-            if (this.isSimpleMode()) {
-                this.calculateFormStatusSections();
-            }
+            // Recalculate whenever the edit mode changes — in BOTH directions. Simple and detailed mode expose a
+            // different set (and therefore a different ordering/indexing) of status-bar sections: simple mode drops
+            // the difficulty/mode section, so e.g. "Problem" sits at a different index. Recalculating only when
+            // entering simple mode left the sections stale (still simple-mode-shaped) after switching to detailed
+            // mode, so the status bar pointed each section circle at the wrong headline.
+            this.isSimpleMode();
+            this.calculateFormStatusSections();
         });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
 
@@ -1319,6 +1326,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.title.pattern',
                 translateValues: {},
+            });
+        } else if (this.programmingExercise.title.length > this.maxNameLength) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: this.maxNameLength },
             });
         } else if (this.exerciseInfoComponent()?.exerciseTitleChannelComponent().titleChannelNameComponent().field_title?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({

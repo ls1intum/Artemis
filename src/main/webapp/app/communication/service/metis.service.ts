@@ -61,17 +61,17 @@ export class MetisService implements OnDestroy {
 
     private currentPostContextFilter: PostContextFilter = {};
     private currentConversation?: ConversationDTO = undefined;
-    private user: User;
-    private pageType: PageType;
-    private courseId: number;
+    private user!: User; // set in constructor from accountService.identity()
+    private pageType!: PageType; // set via setPageType() before use
+    private courseId!: number; // set in setCourse() before any read
     private cachedPosts: Post[] = [];
-    private cachedTotalNumberOfPosts: number;
+    private cachedTotalNumberOfPosts = 0;
     private subscriptionChannel?: string;
-    private courseWideTopicSubscription: Subscription;
-    private activeConversationSubscription: Subscription;
+    private courseWideTopicSubscription?: Subscription;
+    private activeConversationSubscription?: Subscription;
     private subscriptionChannelSubscription?: Subscription;
 
-    private course: Course;
+    private course!: Course; // set in setCourse() before any read
     // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
     private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
@@ -396,27 +396,33 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * Approves an Iris-generated answer post (optionally with edited content). The websocket update
+     * triggered server-side will refresh cached posts so no manual cache mutation is needed here.
+     */
+    verifyAnswerPost(answerPost: AnswerPost, content?: string): Observable<AnswerPost> {
+        return this.answerPostService.verify(this.courseId, answerPost.id!, content).pipe(map((res) => res.body!));
+    }
+
+    /**
      * deletes an answer post by invoking the post service
      * @param {AnswerPost} answerPost to be deleted
      */
-    deleteAnswerPost(answerPost: AnswerPost): void {
-        this.answerPostService
-            .delete(this.courseId, answerPost)
-            .pipe(
-                tap(() => {
-                    const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
-                    if (indexOfCachedPost > -1) {
-                        // Delete the answer if it still exists (might already be deleted due to WebSocket message)
-                        const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
-                        if (indexOfAnswer > -1) {
-                            this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
-                            this.posts$.next(this.cachedPosts);
-                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
-                        }
+    deleteAnswerPost(answerPost: AnswerPost): Observable<void> {
+        return this.answerPostService.delete(this.courseId, answerPost).pipe(
+            map(() => undefined),
+            tap(() => {
+                const indexOfCachedPost = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === answerPost.post?.id);
+                if (indexOfCachedPost > -1) {
+                    // Delete the answer if it still exists (might already be deleted due to WebSocket message)
+                    const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === answerPost.id) ?? -1;
+                    if (indexOfAnswer > -1) {
+                        this.cachedPosts[indexOfCachedPost].answers?.splice(indexOfAnswer, 1);
+                        this.posts$.next(this.cachedPosts);
+                        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
-                }),
-            )
-            .subscribe();
+                }
+            }),
+        );
     }
 
     /**
@@ -551,11 +557,11 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * returns the router link required for navigating to the dashboard
-     * @return {string} router link of the dashboard
+     * returns the router link required for navigating to Iris for a general course channel
+     * @return {string} router link of the Iris page
      */
     getLinkForGeneral(): string {
-        return `/courses/${this.getCourse().id}/dashboard`;
+        return `/courses/${this.getCourse().id}/iris`;
     }
 
     /**

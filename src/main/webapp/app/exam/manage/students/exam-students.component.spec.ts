@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
@@ -27,10 +26,9 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { ConfirmationService } from 'primeng/api';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 describe('ExamStudentsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 1 } as Course;
 
     const examWithCourse: Exam = {
@@ -258,6 +256,39 @@ describe('ExamStudentsComponent', () => {
 
             expect(findPagedSpy).not.toHaveBeenCalled();
         });
+
+        it('should re-run the recorded lazy load once the exam resolves (issue #13063)', () => {
+            // The paginated table fires its initial lazy load before the exam id is available: loadExamStudents
+            // early-returns but records the event, leaving isLoading=true and totalExamStudents=0.
+            component.exam.set({ ...examWithCourse, id: undefined });
+            component.loadExamStudents(mockLazyEvent);
+            expect(component.isLoading()).toBe(true);
+
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+
+            // When the exam resolves, the recorded load must be replayed so the "Generate student exams" button
+            // becomes enabled (isLoading=false, totalExamStudents>0) instead of staying greyed out.
+            component['examData$'].next(examWithCourse);
+
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+            expect(component.isLoading()).toBe(false);
+            expect(component.totalExamStudents()).toBe(1);
+            expect(component.hasRegisteredUsers()).toBe(true);
+        });
+
+        it('should replay the skipped lazy load only once, not on every exam emission (issue #13063)', () => {
+            component.exam.set({ ...examWithCourse, id: undefined });
+            component.loadExamStudents(mockLazyEvent); // records the event and marks the load as pending
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+
+            component['examData$'].next(examWithCourse); // exam resolves: the skipped load is replayed exactly once
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+
+            // A later exam re-emission (e.g. reloadStudentsView or a websocket-driven fetchExamData) must not replay
+            // the lazy load again; the table's own reset() handles reloading on those paths.
+            component['examData$'].next(examWithCourse);
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('onFilterChange', () => {
@@ -365,6 +396,79 @@ describe('ExamStudentsComponent', () => {
 
             expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
             expect(reloadSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('exam student registration', () => {
+        it('should search users through the exam management service', () => {
+            fixture.detectChanges();
+            const searchSpy = vi.spyOn(examManagementService, 'searchUsersForExamRegistration').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.searchUsersForExamFn('alice', 0, 10).subscribe();
+
+            expect(searchSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, 'alice', 0, 10);
+        });
+
+        it('should return empty search result when exam id is missing', () => {
+            fixture.detectChanges();
+            component.exam.set({ ...examWithCourse, id: undefined } as Exam);
+
+            let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+            component.searchUsersForExamFn('alice', 0, 10).subscribe((searchResult) => {
+                result = searchResult;
+            });
+
+            expect(result).toEqual({ content: [], totalElements: 0 });
+        });
+
+        it('should register users and show alerts for not found and rejected staff users', () => {
+            fixture.detectChanges();
+            const addSpy = vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            notFoundStudents: [{ login: 'missing', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                            rejectedStaffUsers: [{ login: 'staff', firstName: '', lastName: '', registrationNumber: '', email: '' }],
+                        },
+                    }),
+                ),
+            );
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component
+                .registerUsersForExamFn([
+                    {
+                        id: 1,
+                        login: 'student1',
+                        name: 'Student',
+                        email: 's@t.de',
+                        registrationNumber: '123',
+                        isRegistered: false,
+                    },
+                ])
+                .subscribe();
+
+            expect(addSpy).toHaveBeenCalledWith(course.id, examWithCourse.id, [
+                {
+                    login: 'student1',
+                    firstName: '',
+                    lastName: '',
+                    registrationNumber: '123',
+                    email: 's@t.de',
+                },
+            ]);
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins: 'missing' });
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.examManagement.examStudents.addDialog.rejectedStaffUsers', { logins: 'staff' });
+        });
+
+        it('should open the add students dialog', () => {
+            fixture.detectChanges();
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+
+            component.openAddStudentsDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
         });
     });
 

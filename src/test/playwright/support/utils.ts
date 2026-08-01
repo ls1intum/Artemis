@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
-import { Browser, Locator, Page, expect } from '@playwright/test';
+import { Browser, BrowserContext, Locator, Page, Request, Response, expect } from '@playwright/test';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
@@ -32,6 +32,274 @@ dayjs.extend(utc);
  */
 
 /**
+ * True for the Chrome DevTools Protocol body-eviction error, i.e.
+ * `response.json: Protocol error (Network.getResponseBody): No data found for resource ...`.
+ */
+function isResponseBodyEvicted(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : String(error);
+    return message.includes('getResponseBody') || message.includes('No data found for resource');
+}
+
+/**
+ * Node-held bodies of non-GET /api responses, captured by {@link installApiResponseCapture}.
+ * Keyed by the Request instance — the same object `readResponseJson` sees via `response.request()`,
+ * so lookups are exact and entries are garbage-collected with their Request. Node memory is immune
+ * to Chromium's DevTools buffer eviction, making this the only reliable source for non-GET
+ * create/update/delete bodies, which must never be replayed read-side (side effects).
+ */
+const capturedApiResponseBodies = new WeakMap<Request, Buffer>();
+
+/**
+ * In-flight reads of response bodies for requests we continued instead of replaying (see
+ * {@link captureBodyWithoutReplaying}). Keyed by the same Request instance {@link readResponseJson}
+ * sees via `response.request()`.
+ */
+const pendingApiResponseBodies = new WeakMap<Request, Promise<Buffer | undefined>>();
+
+/**
+ * Largest multipart request body we re-issue from Node in {@link installApiResponseCapture}, inclusive:
+ * a body of exactly this size is still captured, anything larger is not.
+ * Multipart requests up to this size are the metadata-carrying ones whose response bodies tests
+ * actually read — course create/update post a small JSON blob plus an optional course icon. Genuine
+ * large file uploads stay on `route.continue()`: buffering megabytes through Node costs memory and
+ * buys nothing, because those tests do not read the response body.
+ */
+const MAX_CAPTURED_MULTIPART_BODY_BYTES = 1024 * 1024;
+
+/**
+ * Size of a request body in bytes, or `undefined` when it cannot be determined. Prefers the
+ * `content-length` header (already parsed, no buffer materialisation) and falls back to the post
+ * data. An unknown size is treated as "too large" by the caller, keeping the conservative default.
+ */
+function requestBodySizeInBytes(request: Request): number | undefined {
+    const contentLength = Number(request.headers()['content-length']);
+    if (Number.isFinite(contentLength) && contentLength >= 0) {
+        return contentLength;
+    }
+    return request.postDataBuffer()?.length;
+}
+
+/**
+ * Whether `route.fetch()` can faithfully re-send this request's multipart body.
+ *
+ * `route.fetch()` replays the body Playwright holds in Node, i.e. `postDataBuffer()`. For a
+ * `FormData` assembled purely in memory (a JSON blob, a cropped-image blob) that buffer is
+ * byte-complete. For a part backed by a **file on disk** — anything a test attaches with
+ * `setInputFiles()` — it is not: Chromium streams those parts from disk and never hands the bytes to
+ * the driver, so the buffer contains the part's headers but an empty payload (387 B for an 11 KB
+ * PDF). Replaying that sends a part with a `filename` and no content, and the server rejects it —
+ * `FileUploadSubmissionResource` answers 400 "The uploaded file is empty", which made the
+ * file-upload participation and assessment tests fail deterministically.
+ *
+ * Detect exactly that signature: a part declaring a `filename` whose payload is empty. Note we
+ * cannot compare against `content-length` — Chromium does not expose it on these requests (it is
+ * added further down the network stack), so it reads as `undefined` for in-memory `FormData` too and
+ * would disable the capture wholesale, reopening the eviction gap it exists to close.
+ *
+ * Anything unparseable is treated as not replayable, so the caller falls back to `route.continue()`:
+ * the browser then sends the untouched request and we merely forgo the Node-held response body,
+ * which degrades robustness instead of corrupting the upload.
+ */
+function isBodyFaithfullyReplayable(request: Request): boolean {
+    const body = request.postDataBuffer();
+    if (!body) {
+        return false;
+    }
+    const boundary = /boundary=(?:"([^"]+)"|([^;]+))/i.exec(request.headers()['content-type'] ?? '');
+    const delimiter = (boundary?.[1] ?? boundary?.[2])?.trim();
+    if (!delimiter) {
+        return false;
+    }
+    // latin1 keeps one char per byte, so payload lengths measured here are byte-exact.
+    const segments = body.toString('latin1').split(`--${delimiter}`);
+    return segments.every((segment) => {
+        const headerEnd = segment.indexOf('\r\n\r\n');
+        if (headerEnd === -1) {
+            return true; // preamble, epilogue or a segment without headers: nothing to verify
+        }
+        if (!/;\s*filename\s*=/i.test(segment.slice(0, headerEnd))) {
+            return true; // plain field, always carried in full
+        }
+        return segment.slice(headerEnd + 4).replace(/\r\n$/, '').length > 0;
+    });
+}
+
+/**
+ * Hold the response body for a request we deliberately did NOT replay through `route.fetch()`.
+ *
+ * Skipping the replay keeps a file-backed upload intact, but it also gives up the Node-held body that
+ * {@link readResponseJson} relies on — and a non-GET response cannot be recovered read-side, because
+ * replaying it would repeat the side effect. Under parallel CI load Chromium then evicts the body from
+ * its bounded per-renderer network buffer before the test reads it, which failed the file-upload
+ * submission POST and the drag-and-drop quiz creation POST (its background image is a disk-backed file,
+ * so it takes this same path). Reading the body here, as soon as the response arrives, closes that gap
+ * without touching the request the browser sent.
+ *
+ * Best-effort by design: any failure leaves the entry absent and `readResponseJson` behaves exactly as
+ * it would have without this call, so this can only ever add robustness.
+ */
+function captureBodyWithoutReplaying(request: Request): void {
+    const read = request
+        .response()
+        .then((response) => (response && response.status() < 300 ? response.body() : undefined))
+        .catch(() => undefined);
+    // Store the in-flight read, not its result: `waitForResponse` resolves at the same moment this
+    // promise is created, so a test that immediately calls readResponseJson would otherwise race ahead
+    // of the buffer being stored, issue its own second CDP read, and hit the eviction anyway. Handing
+    // out the promise makes the test await this single earliest-possible read.
+    pendingApiResponseBodies.set(request, read);
+}
+
+/**
+ * Capture non-GET /api response bodies at the network layer for a whole browser context:
+ * `route.fetch()` performs the request from Node, we keep the body in Node memory for
+ * {@link readResponseJson}, and fulfill the page with the same response. This only works because
+ * `serviceWorkers: 'block'` (playwright.config.ts) keeps the Angular service worker from handling
+ * /api fetches — Playwright routing never sees service-worker-handled requests, which is what
+ * defeated an earlier page-scoped version of this capture.
+ *
+ * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
+ * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart bodies
+ * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive **and** only when
+ * Playwright's copy of the body is byte-complete (see {@link isBodyFaithfullyReplayable}). Multipart
+ * was previously skipped outright, which left course create/update (Angular posts them as `FormData`)
+ * with no Node-held body: a POST/PUT cannot be replayed read-side, so an eviction there fails the test
+ * outright rather than degrading. `route.fetch()` re-sends the body buffer Playwright holds and
+ * preserves the `content-type` header including its multipart boundary — so for an in-memory
+ * `FormData` the server sees the same request, but a file-backed part would arrive empty, which is
+ * exactly what the fidelity guard excludes.
+ *
+ * Error semantics matter here: `route.continue()` is only safe while the request has NOT been
+ * dispatched. Once `route.fetch()` has sent the request to the server, any failure afterwards must
+ * abort the routed request — continuing would dispatch it a second time and duplicate a
+ * non-idempotent side effect (e.g. create a second entity).
+ */
+export async function installApiResponseCapture(context: BrowserContext): Promise<void> {
+    await context.route(
+        (url) => url.pathname.includes('/api/'),
+        async (route) => {
+            const request = route.request();
+            if (request.method() === 'GET') {
+                await route.continue();
+                return;
+            }
+            const requestContentType = request.headers()['content-type'] ?? '';
+            if (requestContentType.includes('multipart/form-data')) {
+                const bodySize = requestBodySizeInBytes(request);
+                // Size cap first (cheap), then the fidelity check: a file-backed part is invisible to
+                // Playwright, so replaying it would upload an empty file. See isBodyFaithfullyReplayable.
+                if (bodySize === undefined || bodySize > MAX_CAPTURED_MULTIPART_BODY_BYTES || !isBodyFaithfullyReplayable(request)) {
+                    await route.continue();
+                    // Fire-and-forget: awaiting here would hold the route handler open until the response
+                    // arrives, delaying Playwright's routing for no benefit — the read cannot start earlier.
+                    void captureBodyWithoutReplaying(request);
+                    return;
+                }
+            }
+            let apiResponse;
+            try {
+                // maxRedirects: 0 — fulfill the page with the raw response (including any 3xx) so the
+                // browser handles redirects itself; Node must not transparently follow a non-GET redirect.
+                apiResponse = await route.fetch({ maxRedirects: 0 });
+            } catch {
+                // route.fetch() rejected. We cannot distinguish a pre-dispatch failure from a transport
+                // failure that occurred after the server already received (and possibly executed) the
+                // request, so route.continue() is unsafe here — it would re-dispatch and could duplicate a
+                // non-idempotent side effect (e.g. create a second entity). Per the invariant documented
+                // above, any failure once route.fetch() has been called must abort; the page then sees a
+                // network error and Playwright retries the test.
+                await route.abort('failed').catch(() => {});
+                return;
+            }
+            try {
+                capturedApiResponseBodies.set(request, await apiResponse.body());
+                await route.fulfill({ response: apiResponse });
+            } catch {
+                // The server has already executed the request via route.fetch(); continue() would dispatch
+                // it a second time. Abort so the page sees a network error instead of a duplicated action.
+                await route.abort('failed').catch(() => {});
+            }
+        },
+    );
+}
+
+/**
+ * Read a Playwright {@link Response} body as JSON, resilient to Chrome's CDP
+ * "Network.getResponseBody: No data found for resource" failure.
+ *
+ * Two mechanisms feed this (see {@link installApiResponseCapture} and baseFixtures):
+ * `serviceWorkers: 'block'` removes the service-worker-served responses whose bodies CDP frequently
+ * cannot return at all, and the network-layer capture holds every non-GET /api body in Node memory.
+ * What remains is the rare genuine eviction of a just-arrived body from Chrome's bounded
+ * per-renderer network buffer under parallel E2E load. This helper hardens the common
+ * `await response.json()` pattern:
+ *   0. use the Node-held captured body when present — immune to CDP eviction;
+ *   1. read the body as JSON (fast path — the eager response-event read in baseFixtures usually
+ *      already memoized the buffer in Node);
+ *   2. on an eviction error, re-read the raw body once — catches a transient (non-eviction) CDP hiccup;
+ *   3. for idempotent **GET** requests, replay the request to fetch a fresh body — the only read-side
+ *      recovery from a true eviction (a non-idempotent request must not be replayed: it would repeat
+ *      the side effect, e.g. create a second entity);
+ *   4. for a non-GET, use the caller's `recoverIdempotently` callback if one was supplied — see below;
+ *   5. otherwise throw a clear, retryable error so Playwright's test-level retry can absorb it.
+ *
+ * `recoverIdempotently` exists for one unavoidable gap. A multipart request with a **file-backed** part
+ * cannot be replayed from Node (Chromium streams those bytes from disk and never hands them to the
+ * driver), so its response body lives only in Chrome and the capture above has to fall back to a CDP
+ * read. When the page then navigates — as the quiz editor does on a successful save — Chrome discards
+ * the body of the document being left, and CDP answers "Response body is not available for a response
+ * that was navigated away from". That is a race no read-side retry can win, because the bytes are gone.
+ * A caller that can re-derive the same information with an **idempotent GET** (looking the just-created
+ * entity up by title, say) passes a callback here and stops depending on the discarded body.
+ * Only ever pass something side-effect-free: it runs in place of reading a response, not in place of
+ * making the request.
+ *
+ * Historical note: an enlarged CDP network buffer and whole-run body retention were both reverted
+ * (they OOM-crashed Chromium under parallel CI load) — do not reintroduce those. A page-scoped
+ * route capture was also once removed because the service worker bypassed it; the context-scoped
+ * capture above works only in combination with `serviceWorkers: 'block'`.
+ */
+export async function readResponseJson<T = any>(response: Response, recoverIdempotently?: () => Promise<T>): Promise<T> {
+    const capturedBody = capturedApiResponseBodies.get(response.request());
+    if (capturedBody) {
+        return JSON.parse(capturedBody.toString('utf-8')) as T;
+    }
+    // A request we deliberately continued rather than replayed (a file-backed upload) has no Node-held
+    // body, but its read was started the moment the response arrived. Await that one instead of racing it.
+    const pendingBody = await pendingApiResponseBodies.get(response.request());
+    if (pendingBody) {
+        return JSON.parse(pendingBody.toString('utf-8')) as T;
+    }
+    try {
+        return (await response.json()) as T;
+    } catch (error) {
+        if (!isResponseBodyEvicted(error)) {
+            throw error;
+        }
+        try {
+            return JSON.parse((await response.body()).toString('utf-8')) as T;
+        } catch (bodyError) {
+            if (!isResponseBodyEvicted(bodyError)) {
+                throw bodyError;
+            }
+        }
+        const request = response.request();
+        if (request.method() === 'GET') {
+            const replay = await response.frame().page().request.fetch(request);
+            return (await replay.json()) as T;
+        }
+        if (recoverIdempotently) {
+            return await recoverIdempotently();
+        }
+        throw new Error(
+            `Response body for ${request.method()} ${request.url()} was evicted from Chrome's network buffer before it could be read ` +
+                `(CDP Network.getResponseBody). A non-idempotent response cannot be recovered read-side; failing so Playwright retries.`,
+            { cause: error },
+        );
+    }
+}
+
+/**
  * Generates a unique identifier.
  */
 export function generateUUID() {
@@ -55,16 +323,25 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
  * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
  */
 export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
+    const expectedValue = date.format(format);
     await expect(dateInputField).toBeEnabled();
-    await dateInputField.click();
-    // Wait until the input is actually focused before typing; otherwise the first character(s) can be
-    // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
-    await expect(dateInputField).toBeFocused();
-    await dateInputField.press('ControlOrMeta+a');
-    await dateInputField.press('Delete');
-    // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
-    // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
-    await dateInputField.pressSequentially(date.format(format), { delay: 30 });
+    // PrimeNG's masked datepicker input can still drop the first keystroke after a clear while the
+    // mask/focus state is settling (worse under load) — e.g. "0.09.2027" instead of "20.09.2027".
+    // Retry the whole clear+type until the field holds the expected value (web-first, self-healing).
+    await expect(async () => {
+        await dateInputField.click();
+        // Wait until the input is actually focused before typing; clear via keyboard so focus is kept.
+        await expect(dateInputField).toBeFocused();
+        await dateInputField.press('ControlOrMeta+a');
+        await dateInputField.press('Delete');
+        // Ensure the clear has actually settled before typing, so the first keystroke is not swallowed while the
+        // mask is still resetting (the root cause of the dropped leading character).
+        await expect(dateInputField).toHaveValue('');
+        // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type real
+        // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
+        await dateInputField.pressSequentially(expectedValue, { delay: 30 });
+        expect(await dateInputField.inputValue()).toBe(expectedValue);
+    }).toPass({ timeout: 15000 });
     await dateInputField.press('Tab');
 }
 
@@ -378,7 +655,10 @@ export async function createFileWithContent(filePath: string, content: string) {
 }
 
 export async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    // serviceWorkers: 'block' mirrors the global `use` option in playwright.config.ts — manually created
+    // contexts do not inherit it, and an SW-controlled page would reintroduce the getResponseBody flake.
+    const context = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
+    await installApiResponseCapture(context);
     const page = await context.newPage();
     await addE2EInitScript(page);
     return page;
@@ -427,6 +707,11 @@ export async function addE2EInitScript(page: Page) {
  * @param droppable - Locator of the element to be dropped on.
  */
 export async function drag(page: Page, draggable: Locator, droppable: Locator) {
+    // The droppable of a drag-and-drop quiz is sized relative to its background image, which loads
+    // asynchronously. Until that image has loaded the droppable is zero-sized, which Playwright
+    // treats as not visible, so boundingBox() returns null and the drag coordinates below would be
+    // computed from `null`. Wait for the element to be visible (a non-empty box) before reading it.
+    await droppable.waitFor({ state: 'visible', timeout: 15_000 });
     const box = (await droppable.boundingBox())!;
     // By hovering over the droppable element, we ensure it's not hidden by any other element.
     await droppable.hover();

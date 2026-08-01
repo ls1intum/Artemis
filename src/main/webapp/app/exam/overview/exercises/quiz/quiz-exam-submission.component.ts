@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AbstractQuizSubmission } from 'app/quiz/shared/entities/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
@@ -8,6 +7,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import type { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -25,6 +25,7 @@ import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
@@ -49,6 +50,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private quizService = inject(ArtemisQuizService);
+    private examParticipationService = inject(ExamParticipationService);
 
     exerciseType = ExerciseType.QUIZ;
 
@@ -67,7 +69,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     shortAnswerQuestionComponents = viewChildren(ShortAnswerQuestionComponent);
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
-    studentSubmission = input.required<AbstractQuizSubmission>();
+    studentSubmission = input.required<QuizSubmission>();
     exercise = input<QuizExercise>();
     override examTimeline = input(false);
     quizConfiguration = input.required<QuizConfiguration>();
@@ -250,6 +252,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     onSelectionChanged() {
         this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
     }
 
     /**

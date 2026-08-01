@@ -87,9 +87,58 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
     Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Internal part of {@link #findForCreationById}: everything except the grading criteria and the competency links.
+     * Call {@link #findForCreationById} instead, which completes this graph.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the programming exercise without its grading criteria and competency links
+     */
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
-            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
-    Optional<ProgrammingExercise> findForCreationById(long exerciseId);
+            "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig", "submissionPolicy" })
+    Optional<ProgrammingExercise> findForCreationMainGraphById(long exerciseId);
+
+    /**
+     * Internal part of {@link #findForCreationById}: the grading criteria with their structured instructions.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the programming exercise with its grading criteria initialized
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria", "gradingCriteria.structuredGradingInstructions" })
+    Optional<ProgrammingExercise> findWithGradingCriteriaAndInstructionsById(long exerciseId);
+
+    /**
+     * Internal part of {@link #findForCreationById}: the competency links with their competencies.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the programming exercise with its competency links initialized
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency" })
+    Optional<ProgrammingExercise> findWithCompetencyLinksAndCompetenciesById(long exerciseId);
+
+    /**
+     * Finds a programming exercise by its id with the whole graph a freshly created (or imported) exercise needs:
+     * template and solution participation (with submissions and results), team assignment config, categories, auxiliary
+     * repositories, plagiarism detection config, build config, submission policy, grading criteria (with their
+     * structured instructions) and competency links.
+     * <p>
+     * The graph is assembled from three queries instead of one. Join-fetching the grading criteria and the competency
+     * links together with the categories, auxiliary repositories and participation submissions would multiply the result
+     * set - one row per combination of all of them - and each of those rows repeats every exercise column, including the
+     * problem statement. Two extra lookups by primary key are cheaper than that product, and callers still see a single
+     * method returning a fully initialized exercise.
+     *
+     * @param exerciseId of the programming exercise
+     * @return the programming exercise with its complete creation graph initialized
+     */
+    default Optional<ProgrammingExercise> findForCreationById(long exerciseId) {
+        Optional<ProgrammingExercise> optionalExercise = findForCreationMainGraphById(exerciseId);
+        optionalExercise.ifPresent(exercise -> {
+            findWithGradingCriteriaAndInstructionsById(exerciseId).ifPresent(withCriteria -> exercise.setGradingCriteria(withCriteria.getGradingCriteria()));
+            findWithCompetencyLinksAndCompetenciesById(exerciseId).ifPresent(withLinks -> exercise.setCompetencyLinks(withLinks.getCompetencyLinks()));
+        });
+        return optionalExercise;
+    }
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(long exerciseId);
@@ -156,17 +205,51 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Finds a ProgrammingExercise with minimal data necessary for exercise versioning.
+     * Finds a ProgrammingExercise with all data necessary for exercise versioning.
      * Only includes core configuration data, NOT submissions, results, or participation data.
-     * This includes: testCases, tasks, auxiliaryRepositories, staticCodeAnalysisCategories, buildConfig
+     * <p>
+     * The required data spans several independent {@code @OneToMany} collections (testCases, tasks with their
+     * test cases, staticCodeAnalysisCategories, auxiliaryRepositories, competencyLinks, categories, gradingCriteria).
+     * Fetching the large ones with a single {@code @EntityGraph} produces a Cartesian product: the number of rows the
+     * database has to materialize is the product of the collection sizes (e.g. 76 test cases * 62 task-test-case
+     * links * 11 SCA categories = 51,832 rows for a single exercise in production), which Hibernate then de-duplicates
+     * in memory. That was the dominant application slow query in production.
+     * <p>
+     * Instead, the large independent collections (testCases, tasks with their test cases, staticCodeAnalysisCategories)
+     * are each loaded with their own query and merged into the base exercise in Java. This avoids the Cartesian product
+     * entirely and is portable across MySQL and PostgreSQL as it only uses standard JPA {@code @EntityGraph} fetches.
      *
      * @param exerciseId the id of the exercise to be found
      * @return the programming exercise
      */
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "tasks", "testCases", "tasks.testCases",
-            "staticCodeAnalysisCategories", "submissionPolicy", "buildConfig", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "plagiarismDetectionConfig" })
-    Optional<ProgrammingExercise> findForVersioningById(long exerciseId);
+    default Optional<ProgrammingExercise> findForVersioningById(long exerciseId) {
+        // Base query loads the exercise, all to-one associations and the small collections whose mutual product stays
+        // small (aux repositories, competency links, categories, grading criteria).
+        Optional<ProgrammingExercise> exerciseOptional = findForVersioningBaseById(exerciseId);
+        if (exerciseOptional.isEmpty()) {
+            return exerciseOptional;
+        }
+        ProgrammingExercise exercise = exerciseOptional.get();
+        // Load each large independent collection with a separate query and merge it into the base exercise. Merging in
+        // Java keeps every query free of a Cartesian product between independent collections.
+        findForVersioningTestCasesById(exerciseId).ifPresent(fetched -> exercise.setTestCases(fetched.getTestCases()));
+        findForVersioningTasksById(exerciseId).ifPresent(fetched -> exercise.setTasks(fetched.getTasks()));
+        findForVersioningStaticCodeAnalysisCategoriesById(exerciseId).ifPresent(fetched -> exercise.setStaticCodeAnalysisCategories(fetched.getStaticCodeAnalysisCategories()));
+        return Optional.of(exercise);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "submissionPolicy", "buildConfig", "teamAssignmentConfig",
+            "plagiarismDetectionConfig", "auxiliaryRepositories", "competencyLinks", "categories", "gradingCriteria" })
+    Optional<ProgrammingExercise> findForVersioningBaseById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "testCases")
+    Optional<ProgrammingExercise> findForVersioningTestCasesById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "tasks", "tasks.testCases" })
+    Optional<ProgrammingExercise> findForVersioningTasksById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "staticCodeAnalysisCategories")
+    Optional<ProgrammingExercise> findForVersioningStaticCodeAnalysisCategoriesById(long exerciseId);
 
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
@@ -460,6 +543,24 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE e.endDate > :dateTime
             """)
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
+
+    /**
+     * Returns the programming exercise with its course eagerly fetched, both directly ({@code course}) and via the exam path ({@code exerciseGroup → exam → course}), so that
+     * callers can resolve the course via {@code getCourseViaExerciseGroupOrCourseMember} outside a Hibernate session (open-session-in-view is disabled).
+     *
+     * @param exerciseId the id of the programming exercise to load
+     * @return the programming exercise with its course and exam eagerly loaded (empty if the exercise does not exist)
+     */
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.course
+                LEFT JOIN FETCH pe.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam e
+                LEFT JOIN FETCH e.course
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findWithEagerCourseAndExamById(@Param("exerciseId") long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -864,7 +965,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded objects required for the creation of a programming exercise.
+     * Finds a programming exercise by its id with the complete creation graph initialized, see
+     * {@link #findForCreationById}, or throws if it does not exist. This is used to return a fully initialized exercise
+     * after creation or import, both of which run without an open session and would otherwise expose uninitialized
+     * proxies.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id

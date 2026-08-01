@@ -54,10 +54,10 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private lectureService = inject(LectureService);
     private sessionStorageService = inject(SessionStorageService);
 
-    private parentParamSubscription: Subscription;
-    private courseUpdatesSubscription: Subscription;
-    private multiLaunchSubscription: Subscription;
-    private queryParamsSubscription: Subscription;
+    private parentParamSubscription?: Subscription;
+    private courseUpdatesSubscription?: Subscription;
+    private multiLaunchSubscription?: Subscription;
+    private queryParamsSubscription?: Subscription;
 
     readonly course = signal<Course | undefined>(undefined);
     readonly courseId = signal<number>(undefined!);

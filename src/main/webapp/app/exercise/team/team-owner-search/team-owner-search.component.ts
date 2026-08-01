@@ -35,11 +35,11 @@ export class TeamOwnerSearchComponent implements OnInit {
     readonly searchFailed = output<boolean>();
     readonly searchNoResults = output<string | undefined>();
 
-    owner: User;
+    owner?: User;
     ownerOptions: User[] = [];
     ownerOptionsLoaded = false;
 
-    inputDisplayValue: string;
+    inputDisplayValue = '';
 
     /**
      * Life cycle hook to indicate component creation is done

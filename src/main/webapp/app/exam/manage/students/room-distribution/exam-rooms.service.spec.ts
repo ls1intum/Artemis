@@ -8,11 +8,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformationDTO } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamRoomsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamRoomsService;
     let httpMock: HttpTestingController;
 

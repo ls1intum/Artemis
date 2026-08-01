@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -12,21 +12,27 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
-import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { NgClass } from '@angular/common';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -108,29 +114,35 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
-    styleUrls: ['./user-management.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        UsersImportButtonComponent,
+        UsersImportDialogComponent,
         RouterLink,
         FaIconComponent,
         FormsModule,
         ReactiveFormsModule,
         DeleteUsersButtonComponent,
         DeleteButtonDirective,
-        NgClass,
-        SortDirective,
-        SortByDirective,
         ProfilePictureComponent,
         SearchHighlightComponent,
         ItemCountComponent,
-        PaginatorModule,
+        TumUiPaginatorComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiTooltipDirective,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        TumUiRadioButtonComponent,
+        TumUiMessageComponent,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        DialogModule,
+        TumUiDialogComponent,
     ],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
@@ -203,18 +215,17 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly dialogError = this.dialogErrorSource.asObservable();
 
     /** Search form */
-    userSearchForm: FormGroup;
+    userSearchForm!: FormGroup; // initialized in ngOnInit()
 
     /** Icons */
-    protected readonly faSort = faSort;
     protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
+    protected readonly faFileImport = faFileImport;
+    protected readonly faSync = faSync;
 
     /** Button constants */
-    protected readonly medium = ButtonSize.MEDIUM;
-    protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
     /**
@@ -567,9 +578,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    /** Handles a tum-ui paginator page change by converting the 0-indexed page to the 1-indexed page and navigating. */
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
+        this.transition();
+    }
+
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
+    onTableSort(event: TumUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.predicate.set(event.field);
+        this.ascending.set(event.order === 1);
         this.transition();
     }
 

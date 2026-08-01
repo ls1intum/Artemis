@@ -8,12 +8,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -77,6 +79,19 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 
     private static final String TEST_PREFIX = "progextemplate";
+
+    /**
+     * Maven Central mirror the template builds resolve through. Maven Central rate-limits CI runners (HTTP 429), which
+     * fails or even stalls these builds; see the "Maven Central rate limiting" section of the programming exercise
+     * documentation, which recommends the same mirror to instructors.
+     */
+    private static final String MAVEN_CENTRAL_MIRROR_URL = "https://reposilite.aet.cit.tum.de/releases";
+
+    /**
+     * Upper bound for a single forked template build. Generous, because slow CI runners still have to download
+     * dependencies, but bounded so a stalled repository fails this test instead of hanging the whole test suite.
+     */
+    private static final Duration EXTERNAL_BUILD_TIMEOUT = Duration.ofMinutes(5);
 
     private static File java17Home;
 
@@ -675,6 +690,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         mvnRequest.addArgs(List.of("clean", "test", "-Dmaven.repo.local=" + localMavenRepo.toAbsolutePath(), "-B"));
         mvnRequest.setShowVersion(true);
         mvnRequest.setBatchMode(true);
+        // Resolve through the Maven Central mirror instead of Maven Central itself, which rate-limits CI runners.
+        mvnRequest.setUserSettingsFile(writeMavenSettingsUsingMirror(testRepositoryPath));
+        // Without a timeout a stalled repository blocks this forked process indefinitely, which hangs the whole server
+        // test suite instead of failing this test (the Gradle path below has the same guard).
+        mvnRequest.setTimeoutInSeconds((int) EXTERNAL_BUILD_TIMEOUT.toSeconds());
 
         // Capture Maven output for debugging
         StringBuilder mavenOutput = new StringBuilder();
@@ -705,6 +725,69 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
         assertThat(result.getExecutionException()).isNull();
         return result.getExitCode();
+    }
+
+    /**
+     * Writes a Maven {@code settings.xml} that mirrors Maven Central to the AET Reposilite instance and returns it.
+     * <p>
+     * A mirror is used rather than a {@code <repositories>} entry in the template's pom, because plugins are resolved
+     * through the plugin repositories and would keep going to Maven Central directly - the rate-limited requests that
+     * broke this test in CI included {@code maven-clean-plugin}. A mirror covers both.
+     *
+     * @param directory the test repository directory the settings file is written to
+     * @return the generated settings file
+     * @throws IOException if the settings file cannot be written
+     */
+    private File writeMavenSettingsUsingMirror(Path directory) throws IOException {
+        Path settingsFile = directory.resolve("artemis-test-settings.xml");
+        FileUtils.writeStringToFile(settingsFile.toFile(), """
+                <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+                    <mirrors>
+                        <mirror>
+                            <id>reposilite-repository-releases</id>
+                            <name>AET Reposilite (Maven Central mirror)</name>
+                            <url>%s</url>
+                            <mirrorOf>central</mirrorOf>
+                        </mirror>
+                    </mirrors>
+                </settings>
+                """.formatted(MAVEN_CENTRAL_MIRROR_URL), StandardCharsets.UTF_8);
+        return settingsFile.toFile();
+    }
+
+    /**
+     * Writes a Gradle init script that resolves dependencies and plugins through the AET Reposilite Maven Central mirror
+     * and returns it.
+     * <p>
+     * The mirror is injected here instead of in the exercise templates, so that the templates keep shipping the
+     * repositories an instructor gets. {@code PREFER_SETTINGS} makes these repositories win over the ones the template's
+     * {@code build.gradle} declares; Maven Central stays as a fallback behind the mirror. The {@code pluginManagement}
+     * block is required as well, because the {@code plugins} block resolves through the Gradle Plugin Portal, which falls
+     * back to Maven Central and would otherwise bypass the mirror.
+     *
+     * @param directory the test repository directory the init script is written to
+     * @return the generated init script
+     * @throws IOException if the init script cannot be written
+     */
+    private File writeGradleInitScriptUsingMirror(Path directory) throws IOException {
+        Path initScript = directory.resolve("artemis-test-mirror-init.gradle");
+        FileUtils.writeStringToFile(initScript.toFile(), """
+                beforeSettings { settings ->
+                    settings.pluginManagement.repositories {
+                        maven { url = uri("%1$s") }
+                        gradlePluginPortal()
+                    }
+                    settings.dependencyResolutionManagement {
+                        repositoriesMode.set(org.gradle.api.initialization.resolve.RepositoriesMode.PREFER_SETTINGS)
+                        repositories {
+                            maven { url = uri("%1$s") }
+                            mavenCentral()
+                            mavenLocal()
+                        }
+                    }
+                }
+                """.formatted(MAVEN_CENTRAL_MIRROR_URL), StandardCharsets.UTF_8);
+        return initScript.toFile();
     }
 
     private String listDirectoryContents(Path directory) {
@@ -740,6 +823,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                     launcher.setJavaHome(java17Home);
                     // Isolate Gradle user home to avoid transform cache corruption from parallel builds
                     launcher.addArguments("-g", gradleUserHome.toAbsolutePath().toString());
+                    // Resolve through the Maven Central mirror instead of Maven Central itself, which rate-limits CI runners.
+                    launcher.addArguments("-I", writeGradleInitScriptUsingMirror(testRepositoryPath).getAbsolutePath());
                     String[] tasks = new String[] { "clean", "test" };
                     launcher.forTasks(tasks);
                     launcher.run();
@@ -753,12 +838,11 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
                 }
             });
 
-            // Wait up to 5 minutes for Gradle build to complete
-            // This is generous but necessary for slow CI environments with dependency downloads
-            return future.get(5, TimeUnit.MINUTES);
+            // Bounded wait: generous for slow CI environments that still download dependencies, but never indefinite
+            return future.get(EXTERNAL_BUILD_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
         }
         catch (TimeoutException e) {
-            log.error("Gradle build timed out after 5 minutes in directory: {}", testRepositoryPath);
+            log.error("Gradle build timed out after {} in directory: {}", EXTERNAL_BUILD_TIMEOUT, testRepositoryPath);
             if (future != null) {
                 future.cancel(true);
             }

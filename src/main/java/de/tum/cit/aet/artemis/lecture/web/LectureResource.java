@@ -171,10 +171,10 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String shortName) {
+        public record CourseDTO(Long id, String title, String shortName, String semester) {
 
             public static CourseDTO from(@NonNull Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName());
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getSemester());
             }
         }
     }
@@ -265,9 +265,12 @@ public class LectureResource {
      */
     @GetMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithAuthorities();
-        return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
+        final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
+        // The import search table only displays the lecture title and its course's title/semester; channel name is not needed here
+        final List<SimpleLectureDTO> lectureDtos = lecturePage.getResultsOnPage().stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(lectureDtos, lecturePage.getNumberOfPages()));
     }
 
     /**
@@ -296,7 +299,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
-    @EnforceAtLeastEditorInCourse
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 

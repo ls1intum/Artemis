@@ -5,10 +5,11 @@ const createRule = ESLintUtils.RuleCreator(() => '');
 /**
  * The entire Angular client has been migrated to signal-based APIs. Legacy decorators
  * (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren) must not be
- * reintroduced anywhere in the client code under src/main/webapp/app (including co-located specs).
+ * reintroduced anywhere in the client code — neither production/co-located specs under
+ * src/main/webapp/app, nor the test helpers/stubs/mocks under src/test/javascript.
  *
  * This rule used to be scoped to an explicit allowlist of migrated modules; now that the migration
- * is complete it applies to all client code, so no module list needs to be maintained.
+ * is complete (production AND test code) it applies to all client code, so no module list needs to be maintained.
  */
 const FORBIDDEN_DECORATORS = new Set(['Input', 'Output', 'ViewChild', 'ViewChildren', 'ContentChild', 'ContentChildren']);
 
@@ -39,8 +40,9 @@ export default createRule({
         // Normalize Windows backslashes so the client-code path check works across operating systems.
         const filename = (context.filename ?? context.getFilename()).replaceAll('\\', '/');
 
-        // Apply to all client code (including co-located test/spec files) under the Angular app directory.
-        if (!filename.includes('src/main/webapp/app/')) {
+        // Apply to all client code: production + co-located specs under the Angular app directory,
+        // and all test helpers/stubs/mocks under src/test/javascript. Legacy decorators are banned in both.
+        if (!filename.includes('src/main/webapp/app/') && !filename.includes('src/test/javascript/')) {
             return {};
         }
 

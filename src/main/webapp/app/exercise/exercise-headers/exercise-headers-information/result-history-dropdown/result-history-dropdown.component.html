@@ -33,10 +33,20 @@
                     <div class="d-flex align-items-center gap-1">
                         <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
                         <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
+                        @if (isAthenaAIResult(result)) {
+                            <fa-icon
+                                data-testid="ai-feedback-indicator"
+                                [icon]="faRobot"
+                                class="flex-shrink-0"
+                                role="img"
+                                [attr.aria-label]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                                [pTooltip]="getAthenaFeedbackTooltip(result) | artemisTranslate"
+                            />
+                        }
                         <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
                     </div>
                     <div class="d-flex align-items-center gap-1">
-                        <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadgeSeverity(result)" />
+                        <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadge(result).severity" />
                         <span class="text-body-tertiary" style="font-size: 11px">{{ result.completionDate | artemisDate }}</span>
                     </div>
                 </div>

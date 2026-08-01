@@ -35,9 +35,9 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private readonly translateService = inject(TranslateService);
 
-    private dateTime: dayjs.Dayjs;
-    private locale: string;
-    private localizedDateTime: string;
+    private dateTime!: dayjs.Dayjs; // assigned at the start of every transform() call before any read
+    private locale = 'en';
+    private localizedDateTime = '';
     private onLangChange?: Subscription;
     private long = true;
     private showDate = true;
@@ -73,7 +73,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
         // Set locale to current language
-        this.updateLocale(this.translateService.getCurrentLang());
+        this.updateLocale(this.translateService.getCurrentLang() ?? 'en');
         this.updateLocalizedDateTime(timeZone);
 
         // Clean up a possibly existing subscription to onLangChange

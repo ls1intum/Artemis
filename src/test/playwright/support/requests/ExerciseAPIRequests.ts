@@ -32,6 +32,7 @@ import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -157,7 +158,7 @@ export class ExerciseAPIRequests {
         exercise.teamAssignmentConfig = teamAssignmentConfig;
 
         const response = await this.page.request.post(`${PROGRAMMING_EXERCISE_BASE}/setup`, { data: exercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), exerciseGroup);
     }
 
     async deleteProgrammingExercise(exerciseId: number) {
@@ -240,7 +241,7 @@ export class ExerciseAPIRequests {
             channelName: 'exercise-' + titleLowercase(title),
             ...this.toExerciseReference(body),
         };
-        return this.postTextExercise(textExercise);
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -268,7 +269,7 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
             ...this.toExerciseReference(body),
         };
-        return this.postTextExercise(textExercise);
+        return this.withKnownExerciseGroup(await this.postTextExercise(textExercise), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -280,6 +281,24 @@ export class ExerciseAPIRequests {
             return { courseId: body.course.id };
         }
         return { exerciseGroupId: body.exerciseGroup.id };
+    }
+
+    /**
+     * Ensures a freshly-created exam exercise carries the caller-known exercise group (including its `title`).
+     *
+     * The exercise-creation endpoints only receive a flat `exerciseGroupId` and echo back a partial
+     * `exerciseGroup` whose `title` is intermittently absent under load. Exam E2E tests navigate to
+     * exercises by that title (see ExamNavigationBar.openOrSaveExerciseByTitle), so a missing echo used
+     * to surface as a cryptic `getByText(undefined)` -> "Cannot read properties of undefined (reading
+     * 'unicode')" TypeError and produced correlated, hard-to-diagnose failures across the exam suite.
+     * Since the caller already holds the fully-populated group it created (id + title), prefer that over
+     * the server echo. No-op for course-based exercises, which have no exercise group.
+     */
+    private withKnownExerciseGroup<T extends { exerciseGroup?: ExerciseGroup }>(exercise: T, exerciseGroup?: ExerciseGroup): T {
+        if (exerciseGroup) {
+            exercise.exerciseGroup = { ...exercise.exerciseGroup, ...exerciseGroup };
+        }
+        return exercise;
     }
 
     /**
@@ -336,7 +355,7 @@ export class ExerciseAPIRequests {
         };
         const uploadExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -419,7 +438,7 @@ export class ExerciseAPIRequests {
             newModelingExercise = Object.assign({}, templateCopy, body);
         }
         const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: newModelingExercise });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
     /**
@@ -613,7 +632,45 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.post(url, {
             multipart: multipartData,
         });
-        return response.json();
+        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+    }
+
+    /**
+     * Reads the current user's file upload submission for a participation.
+     *
+     * Recovery path for a submission made through the UI: the upload is a file-backed multipart POST, so
+     * its response body cannot be held in Node and Chrome can drop it from its bounded network buffer
+     * before the test reads it (see readResponseJson). This GET re-derives the same submission without
+     * repeating the upload. It is the endpoint the file upload editor itself loads, so a student may call
+     * it for their own participation.
+     *
+     * @param participationId - The ID of the student's participation in the file upload exercise.
+     */
+    async getFileUploadSubmissionForParticipation(participationId: number): Promise<FileUploadSubmission> {
+        const response = await this.page.request.get(`api/fileupload/participations/${participationId}/file-upload-editor`);
+        return await response.json();
+    }
+
+    /**
+     * Looks a quiz exercise up by its title within a course.
+     *
+     * Recovery path for a quiz created through the UI: that POST carries a disk-backed background image,
+     * so its response body cannot be held in Node and Chrome discards it when the editor navigates away
+     * on save (see readResponseJson). This GET re-derives the created quiz without repeating the create.
+     *
+     * @param courseId - The ID of the course the quiz belongs to.
+     * @param title - The exact title the quiz was created with.
+     * @throws if no quiz with that title exists in the course, which would otherwise surface later as a
+     *         confusing "undefined id" failure.
+     */
+    async getQuizExerciseByTitle(courseId: number, title: string): Promise<QuizExercise> {
+        const response = await this.page.request.get(`api/quiz/courses/${courseId}/quiz-exercises`);
+        const quizzes: QuizExercise[] = await response.json();
+        const quiz = quizzes.find((candidate) => candidate.title === title);
+        if (!quiz) {
+            throw new Error(`No quiz titled "${title}" found in course ${courseId}. Available titles: ${quizzes.map((candidate) => candidate.title).join(', ') || '(none)'}`);
+        }
+        return quiz;
     }
 
     /**

@@ -1,31 +1,100 @@
 @if (loggers()) {
     <h5 *adminTitleBarTitle id="logs-page-heading" class="mb-0" jhiTranslate="logs.title" data-cy="logsPageHeading"></h5>
-    <div class="table-responsive">
+    <!--
+        Full-height flex column so the table's scroll viewport is bounded by the real available space
+        (the .admin-body scroll region), not a magic `calc(100vh - …)` that does not match it.
+        The table wrapper is flex: 1 with min-height: 0, and the virtual-scroll table uses scrollHeight="flex"
+        so the CDK virtual-scroll viewport fills exactly that bounded area. This keeps the last
+        logger reachable and prevents the scroll from jumping.
+    -->
+    <div class="flex h-full min-h-0 flex-col gap-3">
         <p jhiTranslate="logs.nbloggers" [translateValues]="{ total: loggers().length }">There are {{ loggers().length }} loggers.</p>
-        <span jhiTranslate="logs.filter"></span>
-        <input type="text" [ngModel]="filter()" (ngModelChange)="updateFilter($event)" class="form-control" />
-        <table class="table table-sm table-striped table-bordered" aria-describedby="logs-page-heading">
-            <thead>
-                <tr jhiSort [predicate]="orderProp()" [ascending]="ascending()" (predicateChange)="orderProp.set($event!)" (ascendingChange)="ascending.set($event)">
-                    <th jhiSortBy="name" scope="col"><span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="level" scope="col"><span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" /></th>
-                </tr>
-            </thead>
-            @for (logger of filteredAndOrderedLoggers(); track logger) {
-                <tr>
-                    <td>
-                        <small>{{ logger.name | slice: 0 : 140 }}</small>
-                    </td>
-                    <td>
-                        <button (click)="changeLevel(logger.name, 'TRACE')" [ngClass]="logger.level === 'TRACE' ? 'btn-primary' : 'btn-light'" class="btn btn-sm">TRACE</button>
-                        <button (click)="changeLevel(logger.name, 'DEBUG')" [ngClass]="logger.level === 'DEBUG' ? 'btn-success' : 'btn-light'" class="btn btn-sm">DEBUG</button>
-                        <button (click)="changeLevel(logger.name, 'INFO')" [ngClass]="logger.level === 'INFO' ? 'btn-info' : 'btn-light'" class="btn btn-sm">INFO</button>
-                        <button (click)="changeLevel(logger.name, 'WARN')" [ngClass]="logger.level === 'WARN' ? 'btn-warning' : 'btn-light'" class="btn btn-sm">WARN</button>
-                        <button (click)="changeLevel(logger.name, 'ERROR')" [ngClass]="logger.level === 'ERROR' ? 'btn-danger' : 'btn-light'" class="btn btn-sm">ERROR</button>
-                        <button (click)="changeLevel(logger.name, 'OFF')" [ngClass]="logger.level === 'OFF' ? 'btn-secondary' : 'btn-light'" class="btn btn-sm">OFF</button>
-                    </td>
-                </tr>
-            }
-        </table>
+        <div class="flex flex-col gap-2">
+            <label for="logs-filter" jhiTranslate="logs.filter"></label>
+            <input id="logs-filter" data-testid="logs-filter-input" type="text" tumUiInput class="w-full" [ngModel]="filterInput()" (ngModelChange)="updateFilter($event)" />
+        </div>
+        <tum-ui-table-virtual-scroll
+            class="min-h-0 flex-1"
+            [items]="filteredAndOrderedLoggers()"
+            [itemSize]="logsTableRowHeight"
+            [rowTemplate]="logRow"
+            minWidth="30rem"
+            scrollHeight="flex"
+            ariaDescribedBy="logs-page-heading"
+            data-testid="logs-table"
+        >
+            <div
+                jhiSort
+                [predicate]="orderProp()"
+                [ascending]="ascending()"
+                (predicateChange)="orderProp.set($event!)"
+                (ascendingChange)="ascending.set($event)"
+                class="flex flex-1 items-center"
+            >
+                <div jhiSortBy="name" role="columnheader" class="min-w-0 flex-1 cursor-pointer truncate">
+                    <span jhiTranslate="logs.table.name"></span> <fa-icon [icon]="faSort" />
+                </div>
+                <div jhiSortBy="level" role="columnheader" class="shrink-0 text-end whitespace-nowrap cursor-pointer">
+                    <span jhiTranslate="logs.table.level"></span> <fa-icon [icon]="faSort" />
+                </div>
+            </div>
+        </tum-ui-table-virtual-scroll>
+        <ng-template #logRow let-logger>
+            <div class="min-w-0 flex-1 truncate">
+                <small>{{ logger.name | slice: 0 : 140 }}</small>
+            </div>
+            <div class="shrink-0 text-end whitespace-nowrap">
+                <tum-ui-button-group>
+                    <tum-ui-button
+                        size="small"
+                        data-testid="log-level-trace"
+                        [severity]="logger.level === 'TRACE' ? 'primary' : 'secondary'"
+                        (clicked)="changeLevel(logger.name, 'TRACE')"
+                    >
+                        TRACE
+                    </tum-ui-button>
+                    <tum-ui-button
+                        size="small"
+                        data-testid="log-level-debug"
+                        [severity]="logger.level === 'DEBUG' ? 'success' : 'secondary'"
+                        (clicked)="changeLevel(logger.name, 'DEBUG')"
+                    >
+                        DEBUG
+                    </tum-ui-button>
+                    <tum-ui-button
+                        size="small"
+                        data-testid="log-level-info"
+                        [severity]="logger.level === 'INFO' ? 'info' : 'secondary'"
+                        (clicked)="changeLevel(logger.name, 'INFO')"
+                    >
+                        INFO
+                    </tum-ui-button>
+                    <tum-ui-button
+                        size="small"
+                        data-testid="log-level-warn"
+                        [severity]="logger.level === 'WARN' ? 'warn' : 'secondary'"
+                        (clicked)="changeLevel(logger.name, 'WARN')"
+                    >
+                        WARN
+                    </tum-ui-button>
+                    <tum-ui-button
+                        size="small"
+                        data-testid="log-level-error"
+                        [severity]="logger.level === 'ERROR' ? 'danger' : 'secondary'"
+                        (clicked)="changeLevel(logger.name, 'ERROR')"
+                    >
+                        ERROR
+                    </tum-ui-button>
+                    <tum-ui-button
+                        size="small"
+                        data-testid="log-level-off"
+                        [severity]="logger.level === 'OFF' ? 'contrast' : 'secondary'"
+                        (clicked)="changeLevel(logger.name, 'OFF')"
+                    >
+                        OFF
+                    </tum-ui-button>
+                </tum-ui-button-group>
+            </div>
+        </ng-template>
     </div>
 }

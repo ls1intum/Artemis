@@ -709,6 +709,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
                 HttpStatus.CREATED);
 
+        // Wait for the post-creation @Async increment to settle: the count must reach 1 before student2 reads the
+        // conversation. Both the increment (ConversationMessagingService#notifyAboutMessageCreation) and the read reset
+        // (ConversationParticipantRepository#updateLastReadAsync) run asynchronously, so without this gate the increment
+        // can land after the reset and leave the count permanently at 1.
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(1);
+        });
+
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
         var params = new LinkedMultiValueMap<String, String>();

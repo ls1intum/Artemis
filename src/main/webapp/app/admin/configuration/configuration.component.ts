@@ -1,15 +1,15 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
 
 /**
  * Component for viewing application configuration.
@@ -18,7 +18,18 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        JsonPipe,
+        KeyValuePipe,
+        AdminTitleBarTitleDirective,
+        TumUiInputDirective,
+        TumUiTagComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+    ],
 })
 export class ConfigurationComponent implements OnInit {
     private readonly configurationService = inject(ConfigurationService);
@@ -48,9 +59,6 @@ export class ConfigurationComponent implements OnInit {
     /** Property sources from configuration */
     readonly propertySources = signal<PropertySource[]>([]);
 
-    /** Icons */
-    protected readonly faSort = faSort;
-
     /**
      * Loads beans and property sources on initialization.
      */
@@ -73,10 +81,11 @@ export class ConfigurationComponent implements OnInit {
     }
 
     /**
-     * Updates sort direction.
-     * @param ascending - Sort direction
+     * Handles a table sort event. The table runs in controlled-sort mode and only sorts by
+     * the single `prefix` field, so the handler just mirrors the resolved order onto the
+     * `beansAscending` signal that drives the client-side sort in `beans()`.
      */
-    updateBeansAscending(ascending: boolean): void {
-        this.beansAscending.set(ascending);
+    onTableSort(event: TumUiTableSortEvent): void {
+        this.beansAscending.set(event.order === 1);
     }
 }

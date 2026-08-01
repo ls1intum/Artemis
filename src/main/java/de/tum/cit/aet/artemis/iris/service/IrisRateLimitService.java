@@ -59,7 +59,7 @@ public class IrisRateLimitService {
         if (requestsLimit != -1 && timeframeHours != -1) {
             var end = ZonedDateTime.now();
             var start = end.minusHours(timeframeHours);
-            currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
+            currentMessageCount = irisMessageRepository.countFinalLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
         }
 
         return new IrisRateLimitInformation(currentMessageCount, requestsLimit, timeframeHours);

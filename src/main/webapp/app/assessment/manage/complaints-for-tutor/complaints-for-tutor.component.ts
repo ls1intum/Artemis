@@ -51,7 +51,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     set complaintResponse(value: ComplaintResponse) {
         this._complaintResponse.set(value);
     }
-    complaintResponseUpdate: ComplaintResponseUpdateDTO;
+    complaintResponseUpdate!: ComplaintResponseUpdateDTO; // instantiated before use in each lock-refresh / resolve flow (ngOnInit and respondToComplaint)
     ComplaintType = ComplaintType;
     readonly isLoading = signal(false);
     readonly showLockDuration = signal(false);
@@ -73,7 +73,12 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.complaintText = this.complaint().complaintText;
             this.handled.set(this.complaint().accepted !== undefined);
             if (this.handled()) {
-                this.complaintResponse = this.complaint().complaintResponse!;
+                // Keep the already-initialized (non-undefined) complaint response if the complaint carries none.
+                // respondToComplaint() detaches complaint().complaintResponse to break the circular structure, so
+                // a late ngOnInit (zoneless change-detection ordering) must not overwrite the signal with undefined.
+                if (this.complaint().complaintResponse) {
+                    this.complaintResponse = this.complaint().complaintResponse!;
+                }
                 this.lockedByCurrentUser.set(false);
                 this.showLockDuration.set(false);
             } else {

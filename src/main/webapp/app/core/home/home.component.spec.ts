@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -25,8 +24,6 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: HomeComponent;
     let fixture: ComponentFixture<HomeComponent>;
     let loginService: LoginService;
@@ -183,6 +180,75 @@ describe('HomeComponent', () => {
         });
     });
 
+    describe('loginWithOidc', () => {
+        it('should handle successful OIDC login with rememberMe true', async () => {
+            const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            component.rememberMe = true;
+
+            component.loginWithOidc();
+            await fixture.whenStable();
+
+            expect(loginOidcSpy).toHaveBeenCalledWith(true);
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+            expect(component.authenticationError()).toBe(false);
+            expect(component.isSubmittingLogin()).toBe(false);
+        });
+
+        it('should handle successful OIDC login with rememberMe false', async () => {
+            const loginOidcSpy = vi.spyOn(loginService, 'loginOIDC').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            component.rememberMe = false;
+
+            component.loginWithOidc();
+            await fixture.whenStable();
+
+            expect(loginOidcSpy).toHaveBeenCalledWith(false);
+            expect(handleLoginSuccessSpy).toHaveBeenCalledOnce();
+            expect(component.authenticationError()).toBe(false);
+            expect(component.isSubmittingLogin()).toBe(false);
+        });
+
+        it('should handle failed OIDC login', async () => {
+            vi.spyOn(loginService, 'loginOIDC').mockRejectedValue(new Error('OIDC failed'));
+
+            component.loginWithOidc();
+            await fixture.whenStable();
+
+            expect(component.authenticationError()).toBe(true);
+            expect(component.isSubmittingLogin()).toBe(false);
+        });
+
+        it('should execute template branch for loading icon', async () => {
+            // Enable isOidcEnabled flag
+            if (component['isOidcEnabled'] && typeof component['isOidcEnabled'].set === 'function') {
+                component['isOidcEnabled'].set(true);
+            }
+
+            // Mock loginOIDC
+            let resolveLogin: () => void = () => {};
+            const pendingPromise = new Promise<void>((resolve) => {
+                resolveLogin = resolve;
+            });
+            vi.spyOn(loginService, 'loginOIDC').mockReturnValue(pendingPromise);
+            vi.spyOn(component as any, 'handleLoginSuccess').mockImplementation(() => {});
+
+            component.loginWithOidc();
+            fixture.detectChanges();
+
+            // Verify that login button is rendered
+            expect(component.isSubmittingLogin()).toBe(true);
+            const button = fixture.nativeElement.querySelector('#oidc-login-button');
+            expect(button).toBeTruthy();
+
+            // Clean
+            resolveLogin();
+            fixture.detectChanges();
+        });
+    });
+
     describe('prefillPasskeysIfPossible', () => {
         it('should call startConditionalMediation if passkey is enabled and conditional mediation is available', async () => {
             component.isPasskeyEnabled.set(true);
@@ -226,6 +292,26 @@ describe('HomeComponent', () => {
 
             await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
         });
+    });
+
+    it('should set authenticationError and display alert if loginError=deactivated query param is present', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        // Imitate there is "loginError=deactivated" attribute
+        route.queryParams = of({ loginError: 'deactivated' });
+
+        const alertService = TestBed.inject(AlertService) as any;
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        const customFixture = TestBed.createComponent(HomeComponent);
+        const customComponent = customFixture.componentInstance;
+        customFixture.detectChanges();
+
+        // Verify red banner is shown
+        expect(customComponent.authenticationError()).toBe(true);
+        // Verify the correct error message is shown
+        expect(alertSpy).toHaveBeenCalledWith('home.errors.loginDeactivated');
+
+        customFixture.destroy();
     });
 
     describe('ngOnDestroy', () => {

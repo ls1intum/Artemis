@@ -1,10 +1,10 @@
 import { ChangeDetectorRef } from '@angular/core';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By, SafeHtml } from '@angular/platform-browser';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -12,6 +12,7 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/f
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { createFileUploadSubmission } from 'test/helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -25,11 +26,8 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('FileUploadExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
     let comp: FileUploadExamSubmissionComponent;
     let alertService: AlertService;
@@ -56,7 +54,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             imports: [
                 FileUploadExamSubmissionComponent,
                 FullscreenComponent,
-                MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
+                MockDirective(MarkdownDirective),
                 TranslatePipeMock,
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockDirective(TranslateDirective),
@@ -309,5 +307,27 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(updateStub).toHaveBeenCalledOnce();
             expect(comp.studentSubmission().filePath).toEqual(newFilePath);
         });
+    });
+
+    it('should notify the sync-state version on every isSynced transition', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if the service-wide version signal is
+        // bumped. Without these notifications those indicators stay stale for file-upload exam exercises.
+        resetComponent();
+        fixture.detectChanges();
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        // Selecting a valid file marks the submission unsaved.
+        const submissionFile = new File([''], 'exampleSubmission.png');
+        comp.setFileSubmissionForExercise({ target: { files: [submissionFile] } } as unknown as Event);
+        expect(comp.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledOnce();
+
+        // A successful upload marks it saved again.
+        vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of({ body: { filePath: 'path/to/file.png' } } as HttpResponse<FileUploadSubmission>));
+        comp.saveUploadedFile();
+        expect(comp.studentSubmission().isSynced).toBe(true);
+        expect(notify).toHaveBeenCalledTimes(2);
     });
 });

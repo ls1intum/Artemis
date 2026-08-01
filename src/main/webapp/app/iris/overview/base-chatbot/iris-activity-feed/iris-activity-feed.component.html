@@ -1,0 +1,18 @@
+@if (viewItems().length) {
+    <div class="iris-activity-feed mode-{{ mode() }}" aria-live="polite" [attr.aria-label]="feedAriaLabel()">
+        @for (activity of viewItems(); track activity.id) {
+            <div class="activity-chip" [class]="activity.stateClass">
+                <fa-icon class="activity-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" />
+                <span class="activity-text">
+                    <span class="activity-label">{{ activity.label }}</span>
+                    @if (activity.detail) {
+                        <span class="activity-detail" [title]="activity.detail">{{ activity.detail }}</span>
+                    }
+                </span>
+                @if (activity.durationLabel) {
+                    <span class="activity-duration">{{ activity.durationLabel }}</span>
+                }
+            </div>
+        }
+    </div>
+}

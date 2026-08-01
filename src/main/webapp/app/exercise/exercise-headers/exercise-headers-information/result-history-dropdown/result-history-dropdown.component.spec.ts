@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Badge, ResultService } from 'app/exercise/result/result.service';
+import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -17,30 +16,23 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ResultHistoryDropdownComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ResultHistoryDropdownComponent;
     let fixture: ComponentFixture<ResultHistoryDropdownComponent>;
     let mockRouter: MockRouter;
 
     const defaultExercise: Exercise = { id: 1, type: ExerciseType.PROGRAMMING, course: { id: 1 } } as Exercise;
 
-    const createResult = (id: number, score: number, submission?: Partial<Submission>): Result => {
-        const participation: Participation = { id: 1 } as Participation;
-        const sub = { id: id, participation } as Submission;
-        Object.assign(sub, submission);
-        return { id, score, submission: sub, completionDate: undefined } as unknown as Result;
-    };
+    const createResult = (id: number, score: number): Result => ({ id, score, submission: { id }, completionDate: undefined }) as unknown as Result;
 
     beforeEach(async () => {
         mockRouter = new MockRouter();
 
         await TestBed.configureTestingModule({
-            imports: [ResultHistoryDropdownComponent, TranslateModule.forRoot()],
+            imports: [ResultHistoryDropdownComponent],
             providers: [
                 MockProvider(ResultService),
                 MockProvider(ExerciseService),
@@ -48,10 +40,24 @@ describe('ResultHistoryDropdownComponent', () => {
                 { provide: Router, useValue: mockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         })
             .compileComponents()
             .then(() => {
+                const translateService = TestBed.inject(TranslateService);
+                translateService.setTranslation('en', {
+                    artemisApp: {
+                        result: {
+                            resultString: {
+                                automaticAIFeedbackSuccessfulTooltip: 'AI-based feedback can include mistakes. Consider checking important information.',
+                                automaticAIFeedbackFailedTooltip: 'AI feedback generation failed.',
+                                automaticAIFeedbackInProgressTooltip: 'AI feedback is being generated.',
+                            },
+                        },
+                    },
+                });
+                translateService.use('en');
                 fixture = TestBed.createComponent(ResultHistoryDropdownComponent);
                 component = fixture.componentInstance;
                 fixture.componentRef.setInput('exercise', defaultExercise);
@@ -116,8 +122,6 @@ describe('ResultHistoryDropdownComponent', () => {
             const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
             const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
             const result = { id: 1, score: 0, submission: programmingSub } as unknown as Result;
-            fixture.componentRef.setInput('sortedHistoryResults', [result]);
-            fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
@@ -197,17 +201,72 @@ describe('ResultHistoryDropdownComponent', () => {
             const participation: Participation = { id: 1, type: 'student' } as unknown as Participation;
             const programmingSub = { buildFailed: true, participation } as unknown as ProgrammingSubmission;
             const result = { id: 1, score: 100, submission: programmingSub } as unknown as Result;
-            fixture.componentRef.setInput('sortedHistoryResults', [result]);
-            fixture.detectChanges();
 
             expect(component.getResultFeedbackMessage(result)).toBe('artemisApp.result.progressString.buildFailed');
         });
     });
 
+    describe('AI feedback indicator', () => {
+        it('should render an accessible indicator for Athena results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = true;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator).toBeTruthy();
+            expect(indicator?.getAttribute('aria-label')).toBe('AI-based feedback can include mistakes. Consider checking important information.');
+        });
+
+        it('should use the failed tooltip for failed Athena results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = false;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator?.getAttribute('aria-label')).toBe('AI feedback generation failed.');
+        });
+
+        it('should use the in-progress tooltip for Athena results still being generated', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+            result.successful = undefined;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
+            expect(indicator?.getAttribute('aria-label')).toBe('AI feedback is being generated.');
+        });
+
+        it('should not render an indicator for normal automatic results', () => {
+            const result = createResult(1, 50);
+            result.assessmentType = AssessmentType.AUTOMATIC;
+            fixture.componentRef.setInput('sortedHistoryResults', [result]);
+            fixture.detectChanges();
+
+            component.resultsPopover()?.show(new Event('click'));
+            fixture.detectChanges();
+
+            expect(document.querySelector('[data-testid="ai-feedback-indicator"]')).toBeNull();
+        });
+    });
+
     describe('getResultColorClass', () => {
-        it('should return text-secondary when no participation on submission', () => {
+        it('should return text-muted-color when no participation on submission', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
-            expect(component.getResultColorClass(result)).toBe('text-secondary');
+            expect(component.getResultColorClass(result)).toBe('text-muted-color');
         });
     });
 
@@ -223,36 +282,6 @@ describe('ResultHistoryDropdownComponent', () => {
         it('should return empty string when no participation', () => {
             const result = { id: 1, score: 50, submission: { id: 1 } } as unknown as Result;
             expect(component.getResultText(result)).toBe('');
-        });
-    });
-
-    describe('getBadgeSeverity', () => {
-        it('should return success for bg-success class', () => {
-            const result = createResult(1, 100);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-success', text: 'graded', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('success');
-        });
-
-        it('should return info for bg-info class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-info', text: 'practice', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('info');
-        });
-
-        it('should return secondary for bg-secondary class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-secondary', text: 'ungraded', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBe('secondary');
-        });
-
-        it('should return undefined for unknown badge class', () => {
-            const result = createResult(1, 50);
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ class: 'bg-warning', text: 'other', tooltip: '' } as Badge);
-
-            expect(component.getBadgeSeverity(result)).toBeUndefined();
         });
     });
 
@@ -380,6 +409,7 @@ describe('ResultHistoryDropdownComponent', () => {
             component.showFeedback(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
+            expect(component.isViewingSubmission()).toBe(false);
             expect(openSpy).toHaveBeenCalledWith(
                 FeedbackComponent,
                 expect.objectContaining({
@@ -394,6 +424,7 @@ describe('ResultHistoryDropdownComponent', () => {
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
+                    focusOnShow: false,
                     inputValues: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );

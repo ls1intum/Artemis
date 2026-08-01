@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
-import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/foundation/util/global.utils';
@@ -11,16 +10,18 @@ import { SystemNotification } from 'app/admin/system-notification-management/sys
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { ParseLinks } from 'app/admin/system-notification-management/parse-links.service';
-import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -46,22 +47,25 @@ enum NotificationState {
         TranslateDirective,
         RouterLink,
         FaIconComponent,
-        SortDirective,
-        SortByDirective,
         DeleteButtonDirective,
         ItemCountComponent,
-        PaginatorModule,
+        TumUiPaginatorComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiButtonDirective,
+        TumUiTagComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
     private readonly systemNotificationService = inject(SystemNotificationService);
     private readonly adminSystemNotificationService = inject(AdminSystemNotificationService);
     private readonly alertService = inject(AlertService);
     private readonly accountService = inject(AccountService);
-    private readonly parseLinks = inject(ParseLinks);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly eventManager = inject(EventManager);
@@ -75,14 +79,8 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     protected readonly ACTIVE = NotificationState.ACTIVE;
     protected readonly EXPIRED = NotificationState.EXPIRED;
 
-    /** Current logged-in user */
-    readonly currentAccount = signal<User | undefined>(undefined);
-
     /** List of system notifications */
     readonly notifications = signal<SystemNotification[]>([]);
-
-    /** Pagination links parsed from response headers */
-    readonly links = signal<Record<string, number>>({});
 
     /** Total number of items for pagination */
     readonly totalItems = signal(0);
@@ -107,11 +105,10 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     readonly dialogError$ = this.dialogErrorSource.asObservable();
 
     /** Icons for the template */
-    protected readonly faSort = faSort;
     protected readonly faPlus = faPlus;
-    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faEye = faEye;
-    protected readonly faWrench = faWrench;
+    protected readonly faPencil = faPencil;
 
     constructor() {
         // Subscribe to route data for paging parameters
@@ -130,8 +127,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * Initializes current account and loads system notifications.
      */
     ngOnInit(): void {
-        void this.accountService.identity().then((user: User | undefined) => {
-            this.currentAccount.set(user);
+        void this.accountService.identity().then(() => {
             this.loadAll();
             this.registerChangeInNotifications();
         });
@@ -187,16 +183,6 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     }
 
     /**
-     * Track function for ngFor to optimize rendering.
-     * @param index - Index in the collection
-     * @param item - The notification item
-     * @returns The notification ID or -1 if not available
-     */
-    trackIdentity(index: number, item: SystemNotification): number {
-        return item.id ?? -1;
-    }
-
-    /**
      * Determines the current state of a notification (scheduled, active, or expired).
      * @param systemNotification - The notification to check
      * @returns The notification state
@@ -240,9 +226,26 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
         }
     }
 
-    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and loading it. */
-    onPageChange(event: PaginatorState): void {
-        this.loadPage((event.page ?? 0) + 1);
+    /** Handles a paginator page change by converting the 0-indexed page to the 1-indexed page and loading it. */
+    onPageChange(page: number): void {
+        this.loadPage(page + 1);
+    }
+
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
+    onTableSort(event: TumUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        const reverse = event.order === 1;
+        // The controlled table re-runs its sort binding whenever `[sortField]`/`[sortOrder]` change, but only
+        // emits `sortChange` on a user click. Keeping this guard is still correct: reacting only when the sort
+        // actually changed avoids assigning a new `notifications` array unnecessarily (issue #13263).
+        if (event.field === this.predicate() && reverse === this.reverse()) {
+            return;
+        }
+        this.predicate.set(event.field);
+        this.reverse.set(reverse);
+        this.transition();
     }
 
     /**
@@ -264,10 +267,6 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param headers - The response headers containing pagination info
      */
     private onSuccess(data: SystemNotification[], headers: HttpHeaders): void {
-        const linkHeader = headers.get('link');
-        if (linkHeader) {
-            this.links.set(this.parseLinks.parse(linkHeader));
-        }
         this.totalItems.set(Number(headers.get('X-Total-Count') ?? 0));
         this.notifications.set(data);
     }

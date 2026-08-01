@@ -63,7 +63,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
     public readonly exerciseCategories = signal<ExerciseCategory[]>(undefined!);
     public readonly dueDate = signal<dayjs.Dayjs | undefined>(undefined);
-    public isBeforeStartDate: boolean;
+    public isBeforeStartDate = false;
     public programmingExercise?: ProgrammingExercise;
     public individualComplaintDueDate?: dayjs.Dayjs;
     public readonly nextRelevantDate = signal<dayjs.Dayjs | undefined>(undefined);
@@ -98,7 +98,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         return undefined;
     });
 
-    icon: IconProp;
+    icon?: IconProp;
 
     // Icons
     faQuestionCircle = faQuestionCircle;

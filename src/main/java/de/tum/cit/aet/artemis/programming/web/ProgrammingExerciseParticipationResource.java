@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -62,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -322,30 +322,21 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * For every student participation of a programming exercise, try to find a pending submission.
+     * For every student participation of a programming exercise, return its latest pending submission (if any).
      *
      * @param exerciseId for which to search pending submissions.
-     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
-     *         pending submission exists or null if not.
+     * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
+     *         {@code submission} is populated if a pending submission exists and {@code null} otherwise.
      */
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<Long, Optional<Submission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<PendingProgrammingSubmissionDTO>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             throw new AccessForbiddenException("exercise", exerciseId);
         }
-        // TODO: use a different data structure than map here
-        Map<Long, Optional<Submission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
-        // Remove unnecessary data to make response smaller (exercise, student of participation).
-        pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            Optional<Submission> submissionOpt = entry.getValue();
-            // Remove participation, is not needed in the response.
-            submissionOpt.ifPresent(submission -> submission.setParticipation(null));
-            return submissionOpt;
-        }));
-        return ResponseEntity.ok(pendingSubmissions);
+        return ResponseEntity.ok(submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId));
     }
 
     /**
@@ -613,6 +604,11 @@ public class ProgrammingExerciseParticipationResource {
      * @return true if the results should be hidden, false otherwise
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
+        // Test-run results are never hidden: the conductor is the instructor who created the test run. The lookup below cannot resolve a test run either, because a test run has no
+        // regular (non-test-run) student exam.
+        if (participation.isTestRun()) {
+            return false;
+        }
         if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));

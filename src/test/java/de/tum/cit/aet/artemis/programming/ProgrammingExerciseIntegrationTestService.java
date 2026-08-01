@@ -116,6 +116,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationU
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -2234,14 +2235,15 @@ public class ProgrammingExerciseIntegrationTestService {
     // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Test", "CLT");
+
         // Ensure base repositories (template, solution, tests) exist and URIs are wired for this exercise
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // Create student participation with LocalVC repo
-        // Use a unique student to avoid repo collisions with other tests in this class
         String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
         var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
@@ -2255,9 +2257,6 @@ public class ProgrammingExerciseIntegrationTestService {
             Map.entry("C.java", "efg")
         ), "seed student files");
         // @formatter:on
-        // The endpoint under test resolves the bare repo by commit hash; ensure that specific
-        // hash is visible in the bare repo (not just HEAD) before issuing the request.
-        RepositoryExportTestUtil.waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();
@@ -2283,10 +2282,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
-        // Seed LocalVC repo for existing participation1 and create a submission for its latest commit
-        var studentLogin = participation1.getParticipantIdentifier();
-        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
-        programmingExerciseStudentParticipationRepository.save(participation1);
+        programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Forbidden Test", "CLF");
+
+        var studentLogin = testPrefix + "student1";
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files, commit, and push via util
         var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg"),
@@ -2299,8 +2301,15 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
 
         // Expect forbidden for current user
-        request.get("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content?commitId=" + submission.getCommitHash(),
+        request.get("/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content?commitId=" + submission.getCommitHash(),
                 HttpStatus.FORBIDDEN, Map.class);
+    }
+
+    private ProgrammingExercise createProgrammingExerciseWithUniqueProjectKey(String title, String shortNamePrefix) {
+        var uniqueShortName = shortNamePrefix + ShortNameGenerator.generateRandomShortName(6);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, title, uniqueShortName);
+        return programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId())
+                .orElseThrow();
     }
 
     private long getMaxProgrammingExerciseId() {

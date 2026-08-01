@@ -22,7 +22,7 @@ export class MultipleChoiceVisualQuestionComponent {
     question = input.required<MultipleChoiceQuestion>();
     reEvaluationInProgress = input<boolean>(false);
 
-    backupQuestion: MultipleChoiceQuestion;
+    backupQuestion!: MultipleChoiceQuestion; // set by the constructor effect from the required question() input before any user interaction
 
     questionChanged = output();
 

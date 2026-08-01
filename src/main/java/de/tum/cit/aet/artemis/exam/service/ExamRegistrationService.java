@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -34,6 +37,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -100,48 +104,64 @@ public class ExamRegistrationService {
     }
 
     /**
-     * Add multiple users to the students of the exam so that they can access the exam
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
+     * Add multiple users to the students of the exam so that they can access the exam.
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * <p>
+     * Users who hold a staff role (instructor, editor, tutor, or admin) in the course are rejected and reported back
+     * in {@link ExamRegistrationResultDTO#rejectedStaffUsers()}. Such users are NOT added to the course student group,
+     * so a failed registration leaves no side effect on the user's course membership.
      *
      * @param courseId     the id of the course
      * @param examId       the id of the exam
-     * @param examUserDTOs the list of students (with at least registration number) who should get access to the exam
-     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @param examUserDTOs the list of students (with at least one unique identifier) who should get access to the exam
+     * @return a result containing the students who could not be found and the staff members who were rejected
      */
-    public List<ExamUserDTO> registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
+    public ExamRegistrationResultDTO registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        // Pre-fetch instructor IDs once to avoid one isInstructorInCourse EXISTS query per submitted student.
-        Set<Long> instructorIds = userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(User::getId).collect(Collectors.toSet());
+        // Pre-fetch the ids of all course staff once to avoid one isStaffMemberOfCourse EXISTS query per submitted student.
+        Set<Long> staffUserIds = userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT)).stream()
+                .map(User::getId).collect(Collectors.toSet());
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
-        List<String> usersAddedToExam = new ArrayList<>();
+        List<ExamUserDTO> rejectedStaffDTOs = new ArrayList<>();
+        List<String> usersAddedToExamForLogging = new ArrayList<>();
 
         record ResolvedStudent(ExamUserDTO dto, User student) {
         }
         List<ResolvedStudent> resolvedStudents = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
+            // Resolve the user WITHOUT enrolling them in the course yet, so that rejected staff leave no side effect
             Optional<User> optionalStudent = userService.findUser(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
+                continue;
             }
-            else {
-                resolvedStudents.add(new ResolvedStudent(examUserDto, optionalStudent.get()));
+
+            User student = optionalStudent.get();
+
+            // Reject staff (instructor, editor, tutor, admin) BEFORE granting any course access
+            if (staffUserIds.contains(student.getId()) || authorizationCheckService.isAdmin(student)) {
+                rejectedStaffDTOs.add(examUserDto);
+                continue;
             }
+
+            resolvedStudents.add(new ResolvedStudent(examUserDto, student));
         }
 
-        // Batch-enroll all resolved students in the course in a single round trip instead of one existsBy query + insert per student.
+        // Only users who will actually be registered get enrolled. Batching them keeps this to a single round trip
+        // instead of one existsBy query + insert per student.
         userService.addUsersToCourse(resolvedStudents.stream().map(ResolvedStudent::student).toList(), course, CourseRole.STUDENT);
 
-        // exam.getExamUsers() is already eagerly loaded (findByIdWithExamUsersElseThrow), so this avoids one findByExamIdAndUserId query per student.
+        // exam.getExamUsers() is already eagerly loaded, so this avoids one findByExamIdAndUserId query per student.
         Map<Long, ExamUser> existingExamUsersByUserId = exam.getExamUsers().stream().collect(Collectors.toMap(eu -> eu.getUser().getId(), eu -> eu));
 
         List<ExamUser> examUsersToCreate = new ArrayList<>();
@@ -153,26 +173,29 @@ public class ExamRegistrationService {
             ExamUser existing = existingExamUsersByUserId.get(student.getId());
 
             if (existing == null) {
-                if (!instructorIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
-                    ExamUser registeredExamUser = new ExamUser();
-                    registeredExamUser.setUser(student);
-                    registeredExamUser.setExam(exam);
+                ExamUser registeredExamUser = new ExamUser();
+                registeredExamUser.setUser(student);
+                registeredExamUser.setExam(exam);
 
-                    if (StringUtils.hasText(examUserDto.room())) {
-                        registeredExamUser.setPlannedRoom(examUserDto.room());
-                    }
-                    if (StringUtils.hasText(examUserDto.seat())) {
-                        registeredExamUser.setPlannedSeat(examUserDto.seat());
-                    }
-                    examUsersToCreate.add(registeredExamUser);
-                    usersAddedToExam.add(student.getLogin());
+                if (StringUtils.hasText(examUserDto.room())) {
+                    registeredExamUser.setPlannedRoom(examUserDto.room());
                 }
+                if (StringUtils.hasText(examUserDto.seat())) {
+                    registeredExamUser.setPlannedSeat(examUserDto.seat());
+                }
+                examUsersToCreate.add(registeredExamUser);
+                usersAddedToExamForLogging.add(student.getLogin());
             }
             else {
-                existing.setPlannedRoom(examUserDto.room());
-                existing.setPlannedSeat(examUserDto.seat());
+                // Update room/seat of an already registered exam user
+                if (StringUtils.hasText(examUserDto.room())) {
+                    existing.setPlannedRoom(examUserDto.room());
+                }
+                if (StringUtils.hasText(examUserDto.seat())) {
+                    existing.setPlannedSeat(examUserDto.seat());
+                }
                 examUsersToUpdate.add(existing);
-                usersAddedToExam.add(existing.getUser().getLogin());
+                usersAddedToExamForLogging.add(existing.getUser().getLogin());
             }
         }
 
@@ -182,6 +205,15 @@ public class ExamRegistrationService {
 
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
+
+        if (exam.isStarted()) {
+            // Generate student exams for the registered students if the exam has already started and prepare the exercises
+            List<StudentExam> newStudentExams = studentExamService.generateMissingStudentExams(exam);
+            List<Long> studentExamIds = newStudentExams.stream().map(DomainObject::getId).toList();
+            long start = System.nanoTime();
+            studentExamService.startExercisesForStudentExams(exam.getId(), studentExamIds).thenAccept(numberOfGeneratedParticipations -> log
+                    .info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId));
+        }
 
         try {
             User currentUser = userRepository.getUserWithAuthorities();
@@ -193,13 +225,13 @@ public class ExamRegistrationService {
             }
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, userData);
             auditEventRepository.add(auditEvent);
-            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), usersAddedToExam, exam.getTitle(), exam.getId());
+            log.info("User {} has added multiple users {} to the exam {} with id {}", currentUser.getLogin(), usersAddedToExamForLogging, exam.getTitle(), exam.getId());
         }
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
         }
 
-        return notFoundStudentsDTOs;
+        return new ExamRegistrationResultDTO(notFoundStudentsDTOs, rejectedStaffDTOs);
     }
 
     /**
@@ -221,50 +253,6 @@ public class ExamRegistrationService {
      */
     public boolean isUserRegisteredForExam(Long examId, Long userId) {
         return examRepository.isUserRegisteredForExam(examId, userId);
-    }
-
-    /**
-     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has
-     * access to the course of the exam.
-     * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
-     * If the exam has already started, a student exam is additionally generated.
-     *
-     * @param course  the course containing the exam
-     * @param exam    the exam for which we want to register a student
-     * @param student the student to be registered to the exam
-     */
-    public void registerStudentToExam(Course course, Exam exam, User student) {
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration of students is only allowed for real exams");
-        }
-
-        userService.addUserToCourse(student, course, CourseRole.STUDENT);
-
-        Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-
-        if (registeredExamUserOptional.isEmpty() || !exam.getExamUsers().contains(registeredExamUserOptional.get())) {
-            ExamUser registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(student);
-            registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
-            exam.addExamUser(registeredExamUser);
-            examRepository.save(exam);
-            // Generate a student exam for the registered student if the exam has already started
-            if (exam.isStarted()) {
-                Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-                studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
-            }
-            studentExamService.invalidateExerciseStartStatus(exam.getId());
-        }
-        else {
-            log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
-            return;
-        }
-
-        User currentUser = userRepository.getUserWithAuthorities();
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has added user {} to the exam {} with id {}", currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
     }
 
     /**
@@ -385,15 +373,16 @@ public class ExamRegistrationService {
 
         // Pre-fetch already-registered user IDs from the eagerly loaded exam users to avoid one per-student DB query.
         Set<Long> registeredUserIds = exam.getExamUsers() != null ? exam.getExamUsers().stream().map(eu -> eu.getUser().getId()).collect(Collectors.toSet()) : Set.of();
-        // Pre-fetch instructor IDs once to avoid one isInstructorInCourse EXISTS query per student.
-        Set<Long> instructorIds = userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(User::getId).collect(Collectors.toSet());
+        // Pre-fetch the ids of all course staff once to avoid one isStaffMemberOfCourse EXISTS query per student.
+        Set<Long> staffUserIds = userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT)).stream()
+                .map(User::getId).collect(Collectors.toSet());
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());
         List<ExamUser> newExamUsers = new ArrayList<>();
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            if (!registeredUserIds.contains(student.getId()) && !instructorIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
+            if (!registeredUserIds.contains(student.getId()) && !staffUserIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
                 ExamUser examUser = new ExamUser();
                 examUser.setExam(exam);
                 examUser.setUser(student);
@@ -416,5 +405,17 @@ public class ExamRegistrationService {
         examUser.setExam(exam);
         examUser.setUser(user);
         return examUserRepository.save(examUser);
+    }
+
+    /**
+     * Checks whether the given user holds a staff role (instructor, editor, tutor, or admin) in the course
+     * and therefore must not be registered as an exam student.
+     *
+     * @param course the course the exam belongs to
+     * @param user   the user to check
+     * @return true if the user is course staff and may not be registered as an exam student
+     */
+    public boolean isStaffMemberOfCourse(Course course, User user) {
+        return authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 }

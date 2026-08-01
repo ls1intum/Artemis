@@ -208,7 +208,10 @@
             "recentlyAccessed": "Recently accessed",
             "maxPoints": {
                 "title": "Max. Points for Course",
-                "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course."
+                "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course.",
+                "min": "Max points must be at least 1.",
+                "max": "Max points must not exceed {{ max }}.",
+                "wholeNumber": "Max points must be a whole number."
             },
             "accuracyOfScores": {
                 "title": "Decimal Places for Score Calculations",
@@ -225,10 +228,6 @@
             "learningPaths": {
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
-            },
-            "dashboard": {
-                "label": "Student Course Analytics Dashboard Enabled",
-                "tooltip": "Activates the course analytics dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",
@@ -421,7 +420,9 @@
                     "unenrollmentAfterEnrollmentEnd": "The unenrollment end date must be after the enrollment end date.",
                     "unenrollmentBeforeCourseEndDate": "The unenrollment end date must not be after the course end date.",
                     "accuracyOfScoresRange": "Decimal places for score calculations must be between 0 and 5.",
-                    "maxPointsPositive": "Max points must be greater than 0."
+                    "maxPointsPositive": "Max points must be greater than 0.",
+                    "maxPointsWholeNumber": "Max points must be a whole number.",
+                    "maxPointsTooHigh": "Max points must not exceed {{ max }}."
                 },
                 "generalSettings": {
                     "title": "General",

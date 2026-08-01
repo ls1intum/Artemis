@@ -5,10 +5,13 @@ import { faExclamationCircle, faSpinner, faTimes } from '@fortawesome/free-solid
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 /**
  * Component that displays a table of running build jobs.
@@ -21,7 +24,19 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
     templateUrl: './running-jobs-table.component.html',
     styleUrls: ['../build-jobs-table.scss', './running-jobs-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, RouterLink, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, ArtemisTranslatePipe, SlicePipe],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        RouterLink,
+        ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
+        ArtemisTranslatePipe,
+        SlicePipe,
+        TumUiTableDirective,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class RunningJobsTableComponent {
     /** List of running build jobs to display */

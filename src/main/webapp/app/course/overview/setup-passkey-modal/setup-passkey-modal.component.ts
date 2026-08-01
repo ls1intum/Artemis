@@ -11,12 +11,13 @@ import { WebauthnService } from 'app/account/user/settings/passkey-settings/weba
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
 
 @Component({
     selector: 'jhi-setup-passkey-modal',
-    imports: [FormsModule, TranslateDirective, FontAwesomeModule, DialogModule],
+    imports: [FormsModule, TranslateDirective, FontAwesomeModule, DialogModule, ButtonModule],
     templateUrl: './setup-passkey-modal.component.html',
 })
 export class SetupPasskeyModalComponent implements OnInit {
@@ -24,6 +25,13 @@ export class SetupPasskeyModalComponent implements OnInit {
     protected readonly faShieldHalved = faShieldHalved;
 
     readonly visible = signal(false);
+
+    /**
+     * Set once the user dismisses the prompt during the current session (e.g. via "Set up later").
+     * The modal is a singleton in the app shell, so this prevents it from reopening when the
+     * authentication state re-emits (e.g. after changing the AI experience). Reset on a full reload.
+     */
+    private dismissedForCurrentSession = false;
 
     private readonly webauthnService = inject(WebauthnService);
     private readonly alertService = inject(AlertService);
@@ -56,6 +64,10 @@ export class SetupPasskeyModalComponent implements OnInit {
      * </p>
      */
     private openIfNeeded(): void {
+        if (this.dismissedForCurrentSession) {
+            return;
+        }
+
         const earliestReminderDate = this.localStorageService.retrieveDate(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
         const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < earliestReminderDate;
         if (userDisabledReminderForCurrentTimeframe) {
@@ -83,6 +95,7 @@ export class SetupPasskeyModalComponent implements OnInit {
     }
 
     closeModal(): void {
+        this.dismissedForCurrentSession = true;
         this.visible.set(false);
     }
 }

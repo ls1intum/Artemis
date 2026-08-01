@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
@@ -201,8 +202,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Generate student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(3);
         assertThat(exam.getExamUsers()).hasSize(3);
 
@@ -245,8 +246,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Generate student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(3);
         assertThat(exam.getExamUsers()).hasSize(3);
 
@@ -300,17 +301,15 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
 
         // Create individual student exams
-        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
         assertThat(generatedStudentExams).hasSize(2);
+
+        // Get the student exam of student2 as a managed entity (the response masks the nested user); needed with its exercises below
+        var studentExam2 = studentExamRepository.findWithExercisesByUserIdAndExamId(student2.getId(), exam.getId(), false).orElseThrow();
 
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-
-        // Get the student exam of student2
-        Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
-        assertThat(optionalStudent1Exam.orElseThrow()).isNotNull();
-        var studentExam2 = optionalStudent1Exam.get();
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -340,7 +339,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, NUMBER_OF_STUDENTS);
 
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
                 HttpStatus.OK);
 
         List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
@@ -352,7 +351,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).hasSize(12);
 
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExamDTO.class,
                 HttpStatus.OK);
 
         studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
@@ -375,13 +374,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 3);
 
         // Create individual student exams
-        List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+        assertThat(generatedStudentExams).isNotEmpty();
 
-        // Get the student exam of student1
-        Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student1)).findFirst();
-        assertThat(optionalStudent1Exam.orElseThrow()).isNotNull();
-        var studentExam1 = optionalStudent1Exam.get();
+        // Get the student exam of student1 as a managed entity (the response masks the nested user); needed with its exercises below
+        var studentExam1 = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), exam.getId(), false).orElseThrow();
 
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
@@ -482,16 +480,17 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         log.debug("testGetStatsForExamAssessmentDashboard: step 4 done");
 
         // generate individual student exams
-        List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
-                Optional.empty(), StudentExam.class, HttpStatus.OK);
+        List<StudentExamDTO> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
+                Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        // set start and submitted date as results are created below
-        studentExams.forEach(studentExam -> {
+        // set start and submitted date as results are created below (on the managed entities; the response masks them)
+        List<StudentExam> managedStudentExams = new ArrayList<>(studentExamRepository.findByExamId(exam.getId()));
+        managedStudentExams.forEach(studentExam -> {
             studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(2));
             studentExam.setSubmitted(true);
             studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
         });
-        studentExamRepository.saveAll(studentExams);
+        studentExamRepository.saveAll(managedStudentExams);
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 5 done");
 
@@ -626,7 +625,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         log.debug("testGetStatsForExamAssessmentDashboard: step 14 done");
     }
 
-    private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExam> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
+    private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExamDTO> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
             throws Exception {
         // Lock all submissions
         User examInstructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();

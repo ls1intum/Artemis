@@ -9,28 +9,20 @@ import { admin } from '../../support/users';
 const uid = generateUUID();
 
 async function selectTaxonomy(page: Page, taxonomy: string) {
-    const select = page.locator('#taxonomy');
-    await expect(select).toBeVisible();
-
-    const optionValue = await page.locator('#taxonomy option').evaluateAll((options, desired) => {
-        const wanted = String(desired).trim().toLowerCase();
-        for (const option of options) {
-            const text = (option.textContent ?? '').trim();
-            const lowerText = text.toLowerCase();
-
-            const normalized = lowerText.replace(/^\d+\s*:\s*/, '').trim();
-            if (normalized === wanted || normalized.includes(wanted) || lowerText.includes(wanted)) {
-                return (option as HTMLOptionElement).value;
-            }
-        }
-        return null;
-    }, taxonomy);
-
-    if (optionValue === null) {
-        throw new Error(`Could not find taxonomy option ending with '${taxonomy}'`);
-    }
-
-    await select.selectOption(optionValue);
+    // The taxonomy control is a PrimeNG p-select: open its overlay and click the option whose translated label
+    // matches the requested taxonomy.
+    await page
+        .locator('p-select')
+        .filter({ has: page.locator('#taxonomy') })
+        .click();
+    const overlay = page.locator('.p-select-overlay');
+    await expect(overlay).toBeVisible();
+    await overlay
+        .locator('.p-select-option')
+        .filter({ hasText: new RegExp(taxonomy.trim(), 'i') })
+        .first()
+        .click();
+    await expect(overlay).toBeHidden();
 }
 
 async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {
@@ -261,5 +253,120 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: prerequisiteData.title }) })).toHaveCount(0);
         });
+    });
+});
+
+test.describe('Competency Management Table — Filter and Sort', { tag: '@fast' }, () => {
+    const filterSortUid = generateUUID();
+    const competencyTitles = {
+        alpha: `AAA Filter Test Alpha ${filterSortUid}`,
+        beta: `BBB Filter Test Beta ${filterSortUid}`,
+        gamma: `CCC Filter Test Gamma ${filterSortUid}`,
+    };
+    // Distinct taxonomies chosen so that taxonomy order (ANALYZE < CREATE < REMEMBER => beta, alpha, gamma)
+    // differs from title order (alpha, beta, gamma), making the taxonomy-sort assertion meaningful.
+    const competencyTaxonomies = { alpha: 'CREATE', beta: 'ANALYZE', gamma: 'REMEMBER' } as const;
+    // Created in beforeEach, deleted in afterEach so they don't accumulate in the shared seed course.
+    let createdCompetencyIds: number[] = [];
+
+    /**
+     * Returns the keys of our three known competencies (alpha/beta/gamma) in the order their rows
+     * currently appear in the competencies table (first jhi-competency-management-table).
+     * Scoped to the first table to avoid picking up prerequisite rows.
+     */
+    async function visibleKnownOrder(page: Page): Promise<string[]> {
+        const competenciesTable = page.locator('jhi-competency-management-table').first();
+        const titles = await competenciesTable.locator('tbody tr td a[href*="/competencies/"]').allTextContents();
+        const trimmed = titles.map((title) => title.trim());
+        return (Object.keys(competencyTitles) as (keyof typeof competencyTitles)[])
+            .map((key) => ({ key, index: trimmed.indexOf(competencyTitles[key]) }))
+            .sort((a, b) => a.index - b.index)
+            .map((entry) => entry.key);
+    }
+
+    test.beforeEach('Create three competencies and navigate to management page', async ({ login, page, courseManagementAPIRequests, competencyManagement }) => {
+        await login(admin);
+        createdCompetencyIds = [];
+        const alpha = await courseManagementAPIRequests.createCompetency(course, competencyTitles.alpha, undefined, competencyTaxonomies.alpha);
+        createdCompetencyIds.push(alpha.id);
+        const beta = await courseManagementAPIRequests.createCompetency(course, competencyTitles.beta, undefined, competencyTaxonomies.beta);
+        createdCompetencyIds.push(beta.id);
+        const gamma = await courseManagementAPIRequests.createCompetency(course, competencyTitles.gamma, undefined, competencyTaxonomies.gamma);
+        createdCompetencyIds.push(gamma.id);
+        await competencyManagement.goto(course!.id!);
+        // Wait for all three competencies to be visible before tests proceed
+        await expect(page.getByRole('link', { name: competencyTitles.alpha })).toBeVisible({ timeout: 15000 });
+        await expect(page.getByRole('link', { name: competencyTitles.beta })).toBeVisible({ timeout: 10000 });
+        await expect(page.getByRole('link', { name: competencyTitles.gamma })).toBeVisible({ timeout: 10000 });
+    });
+
+    test.afterEach('Delete the competencies created for the test', async ({ login, courseManagementAPIRequests }) => {
+        if (createdCompetencyIds.length) {
+            await login(admin);
+            for (const competencyId of createdCompetencyIds) {
+                await courseManagementAPIRequests.deleteCompetency(course, competencyId);
+            }
+            createdCompetencyIds = [];
+        }
+    });
+
+    test('Filter bar is visible on the competency table', async ({ page }) => {
+        await expect(page.locator('.competency-search-input').first()).toBeVisible();
+    });
+
+    test('Live filter shows only matching rows', async ({ page }) => {
+        const searchInput = page.locator('.competency-search-input').first();
+        await searchInput.fill(competencyTitles.beta);
+
+        await expect(page.getByRole('link', { name: competencyTitles.beta })).toBeVisible({ timeout: 5000 });
+        await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
+        await expect(page.getByRole('link', { name: competencyTitles.gamma })).not.toBeVisible();
+    });
+
+    test('Empty filter shows all rows again', async ({ page }) => {
+        const searchInput = page.locator('.competency-search-input').first();
+        await searchInput.fill(competencyTitles.beta);
+        await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
+
+        await searchInput.fill('');
+
+        await expect(page.getByRole('link', { name: competencyTitles.alpha })).toBeVisible({ timeout: 5000 });
+        await expect(page.getByRole('link', { name: competencyTitles.beta })).toBeVisible();
+        await expect(page.getByRole('link', { name: competencyTitles.gamma })).toBeVisible();
+    });
+
+    test('No-results row appears when filter matches nothing', async ({ page }) => {
+        const searchInput = page.locator('.competency-search-input').first();
+        await searchInput.fill('ZZZNOMATCH_' + filterSortUid);
+
+        await expect(page.locator('jhi-competency-management-table').first().locator('td[colspan]')).toBeVisible({ timeout: 5000 });
+        await expect(page.getByRole('link', { name: competencyTitles.alpha })).not.toBeVisible();
+    });
+
+    test('Title column sort: descending then ascending', async ({ page }) => {
+        // Scope to first table — the prerequisites table below has the same jhisortby headers.
+        const titleHeader = page.locator('jhi-competency-management-table').first().locator('th[jhisortby="title"]');
+
+        // The table loads pre-sorted by title ascending, so the first click on the title header toggles
+        // to descending — our three competencies appear in reverse alphabetical order gamma, beta, alpha.
+        await titleHeader.click();
+        await expect.poll(() => visibleKnownOrder(page)).toEqual(['gamma', 'beta', 'alpha']);
+
+        // Clicking again toggles back to ascending — order becomes alpha, beta, gamma.
+        await titleHeader.click();
+        await expect.poll(() => visibleKnownOrder(page)).toEqual(['alpha', 'beta', 'gamma']);
+    });
+
+    test('Taxonomy column sort orders rows by taxonomy and reverses on second click', async ({ page }) => {
+        // Scope to first table — the prerequisites table below has the same jhisortby headers.
+        const taxonomyHeader = page.locator('jhi-competency-management-table').first().locator('th[jhisortby="taxonomy"]');
+
+        // Sort ascending by Taxonomy — ANALYZE < CREATE < REMEMBER => beta, alpha, gamma (independent of title order).
+        await taxonomyHeader.click();
+        await expect.poll(() => visibleKnownOrder(page)).toEqual(['beta', 'alpha', 'gamma']);
+
+        // Sort descending by clicking again — order reverses to gamma, alpha, beta.
+        await taxonomyHeader.click();
+        await expect.poll(() => visibleKnownOrder(page)).toEqual(['gamma', 'alpha', 'beta']);
     });
 });

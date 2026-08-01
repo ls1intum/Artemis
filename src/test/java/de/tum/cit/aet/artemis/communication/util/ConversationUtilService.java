@@ -694,13 +694,15 @@ public class ConversationUtilService {
      * @param login       The login of the User the Post and AnswerPost belong to
      * @param course      The Course the OneToOneChat belongs to
      * @param messageText The content of the Post
+     * @return The created AnswerPost, so callers can attach further data to exactly this reply instead of looking it up again
      */
-    public void addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
+    public AnswerPost addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
         var message = createMessageWithReactionForUser(login, messageText, oneToOneChat);
-        addThreadReplyWithReactionForUserToPost(login, message);
+        AnswerPost reply = addThreadReplyWithReactionForUserToPost(login, message);
         conversationRepository.save(oneToOneChat);
+        return reply;
     }
 
     /**
@@ -708,8 +710,9 @@ public class ConversationUtilService {
      *
      * @param login               The login of the User the AnswerPost and Reaction belong to
      * @param answerPostBelongsTo The Post the AnswerPost belongs to
+     * @return The created AnswerPost
      */
-    public void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+    public AnswerPost addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userUtilService.getUserByLogin(login));
         answerPost.setContent("answer post");
@@ -717,7 +720,7 @@ public class ConversationUtilService {
         answerPost.setPost(answerPostBelongsTo);
         addReactionForUserToAnswerPost(login, answerPost);
         postRepository.save(answerPostBelongsTo);
-        answerPostRepository.save(answerPost);
+        return answerPostRepository.save(answerPost);
     }
 
     /**

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -42,8 +41,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
 
 describe('Course Management Update Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let courseManagementService: CourseManagementService;
@@ -87,7 +84,6 @@ describe('Course Management Update Component', () => {
         course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
-        course.studentCourseAnalyticsDashboardEnabled = false;
 
         const route = {
             data: of({ course }),
@@ -130,6 +126,46 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = undefined;
     });
 
+    describe('max points validation', () => {
+        it('should invalidate the form and block submission when max points exceed the limit', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+            maxPointsControl.setValue(10000);
+            expect(maxPointsControl.hasError('max')).toBe(true);
+            expect(comp.courseForm.invalid).toBe(true);
+
+            maxPointsControl.setValue(9999);
+            expect(maxPointsControl.hasError('max')).toBe(false);
+        });
+
+        it('should reject max points below the lower bound and non-integer values', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            maxPointsControl.setValue(0);
+            expect(maxPointsControl.hasError('min')).toBe(true);
+
+            maxPointsControl.setValue(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
+
+            maxPointsControl.setValue(10);
+            expect(maxPointsControl.hasError('notInteger')).toBe(false);
+            expect(maxPointsControl.hasError('min')).toBe(false);
+        });
+    });
+
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
@@ -170,7 +206,6 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
-            expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
         });
     });
 
@@ -1216,11 +1251,12 @@ describe('Course Management Update Component', () => {
     });
 
     it('should open organizations modal', () => {
-        const mockDialogRef = {
-            onClose: of(new Organization()),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         comp.openOrganizationsModal();
+        expect(comp.orgSelectorVisible()).toBe(true);
+    });
+
+    it('should add the selected organization to the course', () => {
+        comp.onOrgSelected(new Organization());
         expect(comp.courseOrganizations()).toHaveLength(1);
     });
 
@@ -1299,12 +1335,9 @@ describe('Course Management Update Component', () => {
     });
 });
 
-describe('Course Management Student Course Analytics Dashboard Update', () => {
-    setupTestBed({ zoneless: true });
-
+describe('Course Management Learning Paths Feature Toggle Update', () => {
     const validTimeZone = 'Europe/Berlin';
     let fixture: ComponentFixture<CourseUpdateComponent>;
-    let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
     let featureToggleSpy: ReturnType<typeof vi.spyOn>;
     let profileService: ProfileService;
@@ -1331,7 +1364,6 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 
         fixture = TestBed.createComponent(CourseUpdateComponent);
         profileService = TestBed.inject(ProfileService);
-        accountService = TestBed.inject(AccountService);
         featureToggleService = TestBed.inject(FeatureToggleService);
         featureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
     });
@@ -1341,34 +1373,9 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         (Intl as any).supportedValuesOf = undefined;
     });
 
-    it('should hide the form field for dashboard enable toggle when user is not an admin but the feature is toggled.', () => {
-        // Simulate a user who is not an admin
-        vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-
-        // Simulate a feature toggle that includes only the specified feature toggles
+    it('should hide the learning paths form field when the feature is not toggled', () => {
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard) {
-                return of(true);
-            }
-            return of(false);
-        });
-
-        // Run change detection to update the view
-        fixture.changeDetectorRef.detectChanges();
-
-        // Try to find the form field in the DOM
-        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
-        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
-
-        expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(0);
-    });
-    it('should hide the form field for dashboard enable toggle when user is an admin but the feature is not toggled', () => {
-        // Simulate a user who is an admin
-        vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
-        const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+            if (feature === FeatureToggle.LearningPaths) {
                 return of(false);
             }
             return of(true);
@@ -1384,15 +1391,12 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         expect(featureToggleStub).toHaveBeenCalled();
         expect(filteredFormGroups).toHaveLength(0);
     });
-    it('should show the form field for dashboard enable toggle when user is an admin and the feature is toggled', () => {
-        // Simulate a user who is an admin
-        vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
+    it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+            if (feature === FeatureToggle.LearningPaths) {
                 return of(true);
             }
             return of(false);
@@ -1406,13 +1410,11 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(2);
+        expect(filteredFormGroups).toHaveLength(1);
     });
 });
 
 describe('Course Management Update Component Create', () => {
-    setupTestBed({ zoneless: true });
-
     const validTimeZone = 'Europe/Berlin';
     let component: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;

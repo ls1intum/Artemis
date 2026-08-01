@@ -92,3 +92,25 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
 
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
 }
+
+/**
+ * Determines whether the student exam summary (submission overview incl. exam questions, the student's own answers and the PDF export) may be shown to the student.
+ *
+ * If no examSummaryPublicationDate is set, the summary is available immediately after submission (default behavior). Otherwise it becomes available once that date has
+ * passed. As a safeguard, it is always available once the results are published, mirroring {@link de.tum.cit.aet.artemis.exam.domain.Exam#isExamSummaryPublished} on the server.
+ *
+ * @param isTestRun whether the current student exam is a test run (instructor) - test runs always have access
+ * @param exam the exam the summary belongs to
+ * @param serverDateService the service providing the synchronized server time
+ * @return true if the summary may be shown, false if it is withheld until the publication date
+ */
+export function isExamSummaryPublished(isTestRun: boolean, exam: Exam | undefined, serverDateService: ServerDateService): boolean {
+    // test runs and test exams (self-service practice) are never gated
+    if (isTestRun || exam?.testExam) {
+        return true;
+    }
+    if (!exam?.examSummaryPublicationDate) {
+        return true;
+    }
+    return dayjs(exam.examSummaryPublicationDate).isBefore(serverDateService.now()) || !!isExamResultPublished(isTestRun, exam, serverDateService);
+}

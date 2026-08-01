@@ -171,6 +171,7 @@ public class AdminCourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndEnrollmentEnabled();
         course.validateAccuracyOfScores();
+        course.validatePointBounds();
         course.validateStartAndEndDate();
 
         if (course.isOnlineCourse() && ltiApi.isPresent()) {

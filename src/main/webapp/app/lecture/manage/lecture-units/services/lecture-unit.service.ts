@@ -38,11 +38,13 @@ export class LectureUnitService {
         return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
     }
 
-    completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent): void {
+    completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent, onSuccess?: () => void): void {
         if (event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
             this.setCompletion(event.lectureUnit.id!, lecture.id!, event.completed).subscribe({
                 next: () => {
                     event.lectureUnit.completed = event.completed;
+                    // Callers hold the unit in a signal; the callback lets them publish a new reference so the UI updates (zoneless change detection).
+                    onSuccess?.();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -86,6 +88,8 @@ export class LectureUnitService {
 
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
+            // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
+            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
             if (res.body.type === LectureUnitType.ATTACHMENT_VIDEO) {
                 if ((res.body as AttachmentVideoUnit).attachment) {
                     (res.body as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((res.body as AttachmentVideoUnit).attachment);
@@ -95,14 +99,14 @@ export class LectureUnitService {
                     (res.body as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((res.body as ExerciseUnit).exercise);
                     ExerciseService.parseExerciseCategories((res.body as ExerciseUnit).exercise);
                 }
-            } else {
-                res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
             }
         }
         return res;
     }
 
     convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
+        // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
+        lectureUnit.releaseDate = convertDateFromServer(lectureUnit.releaseDate);
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             if ((lectureUnit as AttachmentVideoUnit).attachment) {
                 (lectureUnit as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((lectureUnit as AttachmentVideoUnit).attachment);
@@ -112,8 +116,6 @@ export class LectureUnitService {
                 (lectureUnit as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((lectureUnit as ExerciseUnit).exercise);
                 ExerciseService.parseExerciseCategories((lectureUnit as ExerciseUnit).exercise);
             }
-        } else {
-            lectureUnit.releaseDate = convertDateFromServer(lectureUnit.releaseDate);
         }
         return lectureUnit;
     }

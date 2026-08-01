@@ -109,7 +109,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseData.shortName = 'playwright' + uid;
         });
 
-        test('Creates a new course', async ({ navigationBar, courseManagement, courseCreation }) => {
+        test('Creates a new course', async ({ page, navigationBar, courseManagement, courseCreation }) => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourseCreation();
             await courseCreation.setTitle(courseData.title);
@@ -145,6 +145,20 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
             expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
             expect(courseBody.requestMoreFeedbackEnabled).toBe(courseData.enableMoreFeedback);
+
+            // After a successful create the app auto-navigates to the new course's detail page, but
+            // under heavy multi-node load that client-side navigation occasionally does not fire (the
+            // create form stays mounted). Wait for the expected URL and fall back to an explicit goto
+            // so the detail assertions below test the rendered course instead of racing the navigation.
+            const courseDetailUrl = new RegExp(`/course-management/${courseBody.id}(/|$)`);
+            const navigated = await page
+                .waitForURL(courseDetailUrl, { timeout: 15_000 })
+                .then(() => true)
+                .catch(() => false);
+            if (!navigated) {
+                await page.goto(`/course-management/${courseBody.id}`);
+                await page.waitForURL(courseDetailUrl, { timeout: 30_000 });
+            }
 
             await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();

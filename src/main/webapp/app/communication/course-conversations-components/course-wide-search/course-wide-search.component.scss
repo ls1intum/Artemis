@@ -14,6 +14,7 @@ jhi-course-wide-search {
     display: flex;
     flex-direction: column;
     min-height: 0;
+
     // Fill the fixed-height scrollable parent (.scrollable-communication-content) so the inner list, not an
     // ancestor, becomes the scroll container.
     height: 100%;
@@ -50,6 +51,7 @@ jhi-course-wide-search {
             flex-direction: column;
             min-height: 0;
             flex: 1 1 auto;
+
             // Reset Bootstrap's negative row gutters so the column-flex content does not overflow horizontally.
             margin: 0;
 

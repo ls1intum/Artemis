@@ -1554,18 +1554,7 @@ public class ExamService {
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
             originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
-            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
-            // NOTE: take the original working time extensions into account
-            if (originalTimeExtension == 0) {
-                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
-            }
-            else {
-                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
-                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
-                studentExam.setWorkingTime(adjustedWorkingTime);
-            }
+            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalExamDuration, workingTimeChange));
         }
         // Important: persist all student exams BEFORE sending WebSocket notifications.
         // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.
@@ -1579,6 +1568,22 @@ public class ExamService {
                 int originalStudentWorkingTime = originalWorkingTimes.get(studentExam.getId());
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true);
             }
+        }
+    }
+
+    /**
+     * Notifies all student exams of the given exam about a changed exam schedule (start/end date) while the working
+     * time stays the same. Sends each student their current (unchanged) working time together with the exam's new
+     * start and end dates, so a conducting student can refresh the pre-start countdown and the start-based content
+     * visibility. This complements {@link #updateStudentExamsAndRescheduleExercises}, which only runs when the working
+     * time itself changes. The exam's student exams must be loaded, and the exam must already carry the new dates.
+     *
+     * @param exam the exam with its student exams loaded
+     */
+    public void sendScheduleUpdateToStudentExams(Exam exam) {
+        for (var studentExam : exam.getStudentExams()) {
+            int workingTime = studentExam.getWorkingTime();
+            examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, workingTime, workingTime, true);
         }
     }
 

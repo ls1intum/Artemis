@@ -76,6 +76,60 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithTooHighMaxPoints() throws Exception {
+        courseTestService.testCreateCourseWithTooHighMaxPoints();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithNegativeMaxPoints() throws Exception {
+        courseTestService.testCreateCourseWithNegativeMaxPoints();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithTooHighPresentationScore() throws Exception {
+        courseTestService.testCreateCourseWithTooHighPresentationScore();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithNegativePresentationScore() throws Exception {
+        courseTestService.testCreateCourseWithNegativePresentationScore();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithTooHighMaxPoints() throws Exception {
+        courseTestService.testUpdateCourseWithTooHighMaxPoints();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithMaxPointsAtLimit() throws Exception {
+        courseTestService.testUpdateCourseWithMaxPointsAtLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithPresentationScoreAtLimit() throws Exception {
+        courseTestService.testUpdateCourseWithPresentationScoreAtLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithPresentationScoreAboveLimit() throws Exception {
+        courseTestService.testUpdateCourseWithPresentationScoreAboveLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithMaxPointsZero() throws Exception {
+        courseTestService.testUpdateCourseWithMaxPointsZero();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         courseTestService.testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains();
     }
@@ -312,6 +366,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
         courseTestService.testGetAssessmentDashboardStats_withoutAssessments();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAssessmentDashboardStats_countsOnlyLockedAssessments() throws Exception {
+        courseTestService.testGetAssessmentDashboardStats_countsOnlyLockedAssessments();
     }
 
     @Test

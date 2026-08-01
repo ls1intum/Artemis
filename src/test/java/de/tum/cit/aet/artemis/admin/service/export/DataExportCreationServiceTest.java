@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.science.util.ScienceUtilService;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
@@ -144,9 +143,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     @Autowired
     private PostTestRepository postRepository;
-
-    @Autowired
-    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationTestRepository;
@@ -374,6 +370,16 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         return examRepository.save(exam);
     }
 
+    private Exam prepareExamDataWithSummaryPublicationDateInTheFuture() throws Exception {
+        var exam = prepareExamDataForDataExportCreation("examNoSummary");
+        // both dates in the future (summary strictly before results, preserving the invariant) so neither the summary-publication gate nor the results-published safeguard
+        // releases the exercise content
+        var baseTime = ZonedDateTime.now();
+        exam.setExamSummaryPublicationDate(baseTime.plusDays(1));
+        exam.setPublishResultsDate(baseTime.plusDays(2));
+        return examRepository.save(exam);
+    }
+
     private void addOnlyReactionToPostInCourse(Course course) {
         // add a reaction in a course to a post where no other communication data exists
         var loginUser2 = TEST_PREFIX + "student2";
@@ -564,7 +570,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
         // extract zip file and check content
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
+        // match on the generated short name, not the "exam" fragment: the other exam tests in this class create courses whose short names also start with "exam", and the
+        // export of a previous test's course is still present because the database is not reset between tests
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, exam.getCourse().getShortName());
         assertCommunicationDataCsvFile(courseDirPath);
         var examsDirPath = courseDirPath.resolve("exams");
         assertThat(courseDirPath).isDirectoryContaining(examsDirPath::equals);
@@ -579,9 +587,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     private void addOnlyAnswerPostReactionInCourse(Course course) {
         var loginUser2 = TEST_PREFIX + "student2";
-        conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
-        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.iterator().next());
+        // react to exactly the reply just created in this course. Looking the reply up by author alone is not enough: other tests in this class also create answer posts for
+        // student2 and the database is not reset between tests, so an unscoped lookup would attach the reaction to a different course and leave this course without any
+        // communication data to export.
+        var reply = conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", reply);
     }
 
     @Test
@@ -593,11 +603,30 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoResults");
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, exam.getCourse().getShortName());
         assertCommunicationDataCsvFile(courseDirPath);
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
+
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void summaryPublicationDateInTheFuture_noExamContentLeaked() throws Exception {
+        var exam = prepareExamDataWithSummaryPublicationDateInTheFuture();
+        addOnlyReactionToPostInCourse(exam.getCourse());
+        var dataExport = initDataExport();
+        dataExportCreationService.createDataExport(dataExport);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, exam.getCourse().getShortName());
+        var examsDirPath = courseDirPath.resolve("exams");
+        var examDirPath = getCourseOrExamDirectoryPath(examsDirPath, "exam");
+        // the exam exercise content (problem statements, questions, submissions) must be withheld from the data export until the submission overview is published
+        assertThat(getExerciseDirectoryPaths(examDirPath)).isEmpty();
 
         RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());

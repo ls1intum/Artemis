@@ -371,7 +371,7 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
         // Inline code snippets embedded in the example reply (via <code> tags
         // in the translation, rendered with [innerHTML]).
         code {
-            font-family: var(--bs-font-monospace);
+            font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
             font-size: 0.85em;
             background: var(--iris-accent-background);
             color: var(--body-color);
@@ -427,6 +427,9 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 // [autoResize]) it grows with the content. The growth is capped at max-height,
 // past which the textarea becomes scrollable instead of expanding further.
 .iris-guidelines-textarea {
+    // Fill the full width of the card rather than the intrinsic `cols` width
+    width: 100%;
+
     border-radius: $iris-radius;
     font-size: $iris-text-sm;
 

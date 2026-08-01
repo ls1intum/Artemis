@@ -150,6 +150,7 @@ public class UserCreationService {
         }
         user.setActivated(true);
         user.setInternal(true);
+        user.setTestUser(userDTO.isTestUser());
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
@@ -228,6 +229,7 @@ public class UserCreationService {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
         user.setActivated(updatedUserDTO.isActivated());
+        user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
         if (user.isInternal() && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));

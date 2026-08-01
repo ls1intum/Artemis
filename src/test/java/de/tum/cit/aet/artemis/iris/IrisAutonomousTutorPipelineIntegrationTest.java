@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutono
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
@@ -91,8 +92,9 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
             pipelineDone.set(true);
         });
 
-        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null, stages -> {
-        });
+        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null,
+                (runId, runState, error) -> {
+                });
 
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
@@ -114,7 +116,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
 
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows ...", true, 0.9, List.of(), List.of());
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows ...", true, 0.9, PyrisRunState.FINISHED, null, List.of());
         var response = pyrisInternalStatusUpdateResource.setAutonomousTutorJobStatus(token, statusUpdate, mockRequest);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -128,7 +130,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
 
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides ...", true, 0.9, List.of(), List.of());
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides ...", true, 0.9, PyrisRunState.FINISHED, null, List.of());
 
         assertThatThrownBy(() -> pyrisInternalStatusUpdateResource.setAutonomousTutorJobStatus("wrong-run-id", statusUpdate, mockRequest)).isInstanceOf(ConflictException.class);
     }

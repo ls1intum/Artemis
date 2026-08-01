@@ -34,8 +34,8 @@ import { captureException } from '@sentry/angular';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 vi.mock('@sentry/angular', () => ({
@@ -43,8 +43,6 @@ vi.mock('@sentry/angular', () => ({
 }));
 
 describe('QuizExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
 
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -306,5 +304,20 @@ describe('QuizExamSubmissionComponent', () => {
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should notify the sync-state version whenever it marks the submission unsaved', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if this notification fires. Without it a
+        // student editing this exercise type during an exam sees no unsaved-changes indicator.
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+        fixture.componentRef.setInput('quizConfiguration', { quizQuestions: [multipleChoiceQuestion] } as QuizConfiguration);
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+
+        component.onSelectionChanged();
+
+        expect(component.studentSubmission().isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledTimes(1);
     });
 });

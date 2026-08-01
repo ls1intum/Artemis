@@ -4,24 +4,26 @@
  * validation, save, cancel, and circular dependency prevention.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 
 describe('KnowledgeAreaEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
     let component: KnowledgeAreaEditComponent;
 
@@ -58,10 +60,16 @@ describe('KnowledgeAreaEditComponent', () => {
                     ReactiveFormsModule,
                     FaIconComponent,
                     MockComponent(ButtonComponent),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockDirective(MarkdownDirective),
+                    MockPipe(ArtemisTranslatePipe),
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),
+                    MockComponent(TumUiButtonComponent),
+                    MockComponent(TumUiButtonDirective),
+                    MockDirective(TumUiInputDirective),
+                    MockComponent(TumUiSelectComponent),
+                    MockComponent(TumUiMessageComponent),
                 ],
             },
         });
@@ -181,9 +189,9 @@ describe('KnowledgeAreaEditComponent', () => {
         componentFixture.detectChanges();
         expect(component.form.controls.parentId.invalid).toBe(false);
 
-        const select = componentFixture.debugElement.query(By.css('#knowledge-area-select')).nativeElement;
-        select.value = select.options[newParentId].value;
-        select.dispatchEvent(new Event('change'));
+        // Drive the parentId control directly (the validator is the behavior under test, not the select widget)
+        component.form.controls.parentId.setValue(newParentId);
+        component.form.controls.parentId.markAsDirty();
         componentFixture.detectChanges();
 
         expect(component.form.controls.parentId.value).toEqual(newParentId);

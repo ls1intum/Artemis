@@ -1,13 +1,18 @@
 // Note: we first need to define our own customizations
 @import 'src/main/webapp/content/scss/artemis-variables';
-@import 'src/main/webapp/content/scss/_artemis-mixins';
+@import 'src/main/webapp/content/scss/artemis-mixins';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
 @import 'node_modules/bootstrap/scss/bootstrap';
 
 // Needed for mathematical formulas in markdown editor
-@import 'node_modules/katex/dist/katex.min.css';
+
+/*
+ * Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file;
+ * the 'node_modules/' prefix is treated as a relative path under PostCSS and breaks the build.
+ */
+@import 'katex/dist/katex.min.css';
 
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
@@ -40,9 +45,11 @@ h4 {
     font-weight: 500 !important;
 }
 
-/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
+/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme.
+   `.tum-ui-btn` is excluded alongside `.btn`: anchor-form tum-ui buttons (`<a tumUiButton>`) are buttons, not links, so the
+   link-blue hover color must not override their own token text color (it made solid buttons render blue-on-blue). */
 a,
-a:not(.btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
+a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
     color: $link-color;
 
     /* make sure browsers use the pointer cursor for anchors, even with no href */
@@ -62,7 +69,7 @@ a {
     cursor: default !important;
 }
 
-a:not(.btn):not(.tab-link):hover {
+a:not(.btn):not(.tum-ui-btn):not(.tab-link):hover {
     text-decoration: underline !important;
 }
 
@@ -200,8 +207,7 @@ Generic styles
 
 /* Error highlight on input fields */
 .ng-valid[required],
-.ng-valid.required,
-.ng-invalid:not(form) {
+.ng-valid.required {
     border-left: 5px solid $ng-valid-border;
 
     &.form-check-input {
@@ -209,7 +215,16 @@ Generic styles
     }
 }
 
-.ng-invalid:not(form) {
+/*
+ * Red invalid accent on form CONTROLS only, and only AFTER the user has interacted (dirty or touched):
+ * - a pristine, never-touched field on a fresh form must not show red (best practice — don't flag errors
+ *   before the user has done anything);
+ * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
+ *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
+ * Applies app-wide.
+ */
+.ng-invalid.ng-dirty:not(form):not(:has(.ng-invalid)),
+.ng-invalid.ng-touched:not(form):not(:has(.ng-invalid)) {
     border-left: 5px solid $ng-invalid-border;
 
     &.form-check-input {
@@ -742,6 +757,19 @@ code.password:hover {
     margin: 10px;
     width: calc(100% - 20px);
     height: calc(100% - 20px);
+}
+
+// tum-aet-ui kit: structural styles for CDK overlay backdrops (popover, and later menu/select).
+// Artemis intentionally does not import the CDK overlay-prebuilt stylesheet, and the minimal
+// .cdk-overlay-container override above provides none of the backdrop rules. Without a full-viewport,
+// pointer-capturing backdrop the transparent click-catcher collapses to zero size, so clicks pass
+// through to the page and OverlayRef.backdropClick() never fires (the popover stays open). `fixed` +
+// `inset: 0` covers the viewport regardless of the (statically positioned) container; the overlay pane
+// is a later sibling and therefore stacks above this backdrop, so in-panel clicks keep working.
+.tum-ui-overlay-backdrop {
+    position: fixed;
+    inset: 0;
+    pointer-events: auto;
 }
 
 .not-allowed {
@@ -1497,6 +1525,35 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
 
 #irisSendButton .svg-inline--fa {
     transition: transform 0.3s ease;
+}
+
+// Compact tooltip used by Iris context selection (add button and chip label)
+.p-tooltip.iris-context-tooltip .p-tooltip-text {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.55rem;
+    line-height: 1.2;
+}
+
+// Reduced gap between tooltip and trigger (used by the plus add button)
+.p-tooltip.iris-context-tooltip-tight {
+    &.p-tooltip-bottom {
+        margin-top: -0.35rem;
+    }
+
+    &.p-tooltip-top {
+        margin-bottom: -0.35rem;
+    }
+}
+
+// Increased gap between tooltip and trigger (used by the context chip label)
+.p-tooltip.iris-context-tooltip-spaced {
+    &.p-tooltip-bottom {
+        margin-top: 0.1rem;
+    }
+
+    &.p-tooltip-top {
+        margin-bottom: 0.4rem;
+    }
 }
 
 // About Iris modal — PrimeNG DynamicDialog (used by every Iris host)

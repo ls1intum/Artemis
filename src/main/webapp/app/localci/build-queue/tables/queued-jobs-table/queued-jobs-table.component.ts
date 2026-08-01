@@ -9,6 +9,9 @@ import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 /**
  * Component that displays a table of queued build jobs.
@@ -21,7 +24,18 @@ import dayjs from 'dayjs/esm';
     templateUrl: './queued-jobs-table.component.html',
     styleUrls: ['../build-jobs-table.scss', './queued-jobs-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, HelpIconComponent, FaIconComponent, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe, SlicePipe],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        RouterLink,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        SlicePipe,
+        TumUiTableDirective,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
+    ],
 })
 export class QueuedJobsTableComponent {
     /** List of queued build jobs to display */

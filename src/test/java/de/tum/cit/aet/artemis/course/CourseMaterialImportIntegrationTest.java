@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -18,7 +20,24 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportResultDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -26,6 +45,21 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private FaqRepository faqRepository;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private ModelingExerciseTestRepository modelingExerciseRepository;
+
+    @Autowired
+    private FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
+
+    @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
 
     private Course sourceCourse;
 
@@ -231,5 +265,73 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(result.competenciesImported()).isZero();
         assertThat(result.tutorialGroupsImported()).isZero();
         assertThat(result.faqsImported()).isZero();
+    }
+
+    // ==================== Exercise content preservation (regression guard for #13268) ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importMaterial_exercises_shouldPreserveAllContentFields() throws Exception {
+        ZonedDateTime past = ZonedDateTime.now().minusDays(2);
+        ZonedDateTime future = ZonedDateTime.now().plusDays(2);
+        ZonedDateTime farFuture = ZonedDateTime.now().plusDays(4);
+
+        TextExercise sourceText = TextExerciseFactory.generateTextExercise(past, future, farFuture, sourceCourse);
+        sourceText.setTitle("Source Text");
+        sourceText.setDifficulty(DifficultyLevel.HARD);
+        sourceText.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        sourceText.setGradingInstructions("Text grading instructions");
+        exerciseUtilService.addGradingInstructionsToExercise(sourceText);
+        sourceText = exerciseRepository.save(sourceText);
+
+        ModelingExercise sourceModeling = ModelingExerciseFactory.generateModelingExercise(past, future, farFuture, DiagramType.ClassDiagram, sourceCourse);
+        sourceModeling.setTitle("Source Modeling");
+        sourceModeling.setDifficulty(DifficultyLevel.HARD);
+        sourceModeling.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exerciseUtilService.addGradingInstructionsToExercise(sourceModeling);
+        sourceModeling = exerciseRepository.save(sourceModeling);
+
+        FileUploadExercise sourceFileUpload = FileUploadExerciseFactory.generateFileUploadExercise(past, past, farFuture, "png,pdf", sourceCourse);
+        sourceFileUpload.setTitle("Source FileUpload");
+        sourceFileUpload.setDifficulty(DifficultyLevel.HARD);
+        exerciseUtilService.addGradingInstructionsToExercise(sourceFileUpload);
+        sourceFileUpload = exerciseRepository.save(sourceFileUpload);
+
+        QuizExercise sourceQuiz = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(sourceCourse, past, future, farFuture, QuizMode.SYNCHRONIZED);
+
+        CourseMaterialImportOptionsDTO options = new CourseMaterialImportOptionsDTO(sourceCourse.getId(), true, false, false, false, false, false);
+        CourseMaterialImportResultDTO result = request.postWithResponseBody("/api/course/courses/" + targetCourse.getId() + "/import-material", options,
+                CourseMaterialImportResultDTO.class, HttpStatus.OK);
+
+        assertThat(result.exercisesImported()).isEqualTo(4);
+
+        Set<Exercise> importedExercises = exerciseRepository.findByCourseIdWithCategories(targetCourse.getId());
+        assertThat(importedExercises).hasSize(4);
+
+        ImportedExerciseAssertions.assertContentPreserved(reloadText(sourceText.getId()), reloadText(findByType(importedExercises, TextExercise.class).getId()));
+        ImportedExerciseAssertions.assertContentPreserved(reloadModeling(sourceModeling.getId()), reloadModeling(findByType(importedExercises, ModelingExercise.class).getId()));
+        ImportedExerciseAssertions.assertContentPreserved(reloadFileUpload(sourceFileUpload.getId()),
+                reloadFileUpload(findByType(importedExercises, FileUploadExercise.class).getId()));
+        ImportedExerciseAssertions.assertContentPreserved(reloadQuiz(sourceQuiz.getId()), reloadQuiz(findByType(importedExercises, QuizExercise.class).getId()));
+    }
+
+    private static <T extends Exercise> T findByType(Set<Exercise> exercises, Class<T> type) {
+        return exercises.stream().filter(type::isInstance).map(type::cast).findFirst().orElseThrow();
+    }
+
+    private TextExercise reloadText(long id) {
+        return textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(id);
+    }
+
+    private ModelingExercise reloadModeling(long id) {
+        return modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(id);
+    }
+
+    private FileUploadExercise reloadFileUpload(long id) {
+        return fileUploadExerciseRepository.findWithGradingCriteriaByIdElseThrow(id);
+    }
+
+    private QuizExercise reloadQuiz(long id) {
+        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(id);
     }
 }

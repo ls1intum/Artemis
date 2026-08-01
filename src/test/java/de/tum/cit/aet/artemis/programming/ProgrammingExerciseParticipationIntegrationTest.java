@@ -7,11 +7,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -59,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -257,6 +260,36 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithLatestResult_showsResultsDuringTestRun() throws Exception {
+        var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
+        var url = participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks";
+
+        // The state in the reported reproduction: the test run is opened before any build result exists
+        var participationWithoutResult = request.get(url, HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(participationWithoutResult)).isEmpty();
+
+        addResultToTestRunParticipation(TEST_PREFIX + "instructor1");
+        var participationWithResult = request.get(url, HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(participationWithResult)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLatestResultWithFeedbacks_showsResultsDuringTestRun() throws Exception {
+        var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
+        var url = participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks";
+
+        // The state in the reported reproduction: the test run is opened before any build result exists
+        assertThat(request.get(url, HttpStatus.OK, Result.class)).isNull();
+
+        var result = addResultToTestRunParticipation(TEST_PREFIX + "instructor1");
+        var requestedResult = request.get(url, HttpStatus.OK, Result.class);
+        assertThat(requestedResult).isNotNull();
+        assertThat(requestedResult.getId()).isEqualTo(result.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -646,13 +679,71 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         submission2 = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student2");
         ProgrammingSubmission notPendingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(55L));
         programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, notPendingSubmission, TEST_PREFIX + "student3");
-        Map<Long, ProgrammingSubmission> submissions = new HashMap<>();
-        submissions.put(submission.getParticipation().getId(), submission);
-        submissions.put(submission2.getParticipation().getId(), submission2);
-        submissions.put(notPendingSubmission.getParticipation().getId(), null);
-        Map<Long, ProgrammingSubmission> returnedSubmissions = request.getMap(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
-                Long.class, ProgrammingSubmission.class);
-        assertThat(returnedSubmissions).isEqualTo(submissions);
+
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+
+        // There is one entry per student participation; the two pending submissions carry their submission id, the
+        // participation whose latest submission already has a result carries a null submission.
+        assertThat(returnedSubmissions).hasSize(3);
+        Map<Long, PendingProgrammingSubmissionDTO> byParticipationId = returnedSubmissions.stream()
+                .collect(Collectors.toMap(PendingProgrammingSubmissionDTO::participationId, Function.identity()));
+        assertThat(byParticipationId.get(submission.getParticipation().getId()).submission().id()).isEqualTo(submission.getId());
+        assertThat(byParticipationId.get(submission2.getParticipation().getId()).submission().id()).isEqualTo(submission2.getId());
+        assertThat(byParticipationId.get(notPendingSubmission.getParticipation().getId()).submission()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLatestSubmissionsForExercise_picksLatestBySubmissionDateNotById() throws Exception {
+        // Create a submission with a newer submission date first (so it gets the lower id) ...
+        ProgrammingSubmission newerByDate = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(30L));
+        newerByDate = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, newerByDate, TEST_PREFIX + "student1");
+        // ... then a submission with an older submission date for the same participation (so it gets the higher id).
+        ProgrammingSubmission olderByDateHigherId = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(90L));
+        olderByDateHigherId = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, olderByDateHigherId, TEST_PREFIX + "student1");
+        assertThat(olderByDateHigherId.getId()).isGreaterThan(newerByDate.getId());
+        assertThat(olderByDateHigherId.getParticipation().getId()).isEqualTo(newerByDate.getParticipation().getId());
+
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+
+        long participationId = newerByDate.getParticipation().getId();
+        PendingProgrammingSubmissionDTO entry = returnedSubmissions.stream().filter(dto -> dto.participationId() == participationId).findFirst().orElseThrow();
+        // The latest submission is the one with the newer submission date, even though the other submission has a higher id.
+        assertThat(entry.submission()).isNotNull();
+        assertThat(entry.submission().id()).isEqualTo(newerByDate.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLatestSubmissionsForExercise_noParticipations_returnsEmptyList() throws Exception {
+        // The exercise has no student participations yet, so the two lean queries (participation ids / latest submission
+        // ids) return nothing and the endpoint returns an empty list rather than failing.
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+        assertThat(returnedSubmissions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLatestSubmissionsForExercise_returnsMinimalSubmissionFields() throws Exception {
+        // A pending submission carries only the minimal fields the client reads: id, commit hash and submission date.
+        ZonedDateTime submissionDate = ZonedDateTime.now().minusSeconds(30L);
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc123def456").submissionDate(submissionDate);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        List<PendingProgrammingSubmissionDTO> returnedSubmissions = request.getList(exercisesBaseUrl + programmingExercise.getId() + "/latest-pending-submissions", HttpStatus.OK,
+                PendingProgrammingSubmissionDTO.class);
+
+        long participationId = submission.getParticipation().getId();
+        PendingProgrammingSubmissionDTO entry = returnedSubmissions.stream().filter(dto -> dto.participationId() == participationId).findFirst().orElseThrow();
+        assertThat(entry.submission()).isNotNull();
+        assertThat(entry.submission().id()).isEqualTo(submission.getId());
+        assertThat(entry.submission().commitHash()).isEqualTo("abc123def456");
+        // The submission date is serialized as part of the minimal projection (exact value is asserted elsewhere; a
+        // strict equality here is fragile due to PostgreSQL's UTC storage and microsecond truncation).
+        assertThat(entry.submission().submissionDate()).isNotNull();
     }
 
     @Test
@@ -1184,6 +1275,44 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 publishResultsDate, userLogin, workingTime, TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
+    }
+
+    /**
+     * Sets up an exam exercise conducted as an instructor test run, together with a test-run participation that has no
+     * result yet. The exam started an hour ago and its results are not published yet, i.e. the state in which a test run
+     * is conducted. A test run only has a student exam with {@code testRun = true} and deliberately no regular student exam.
+     *
+     * @param instructorLogin The login of the instructor conducting the test run
+     * @return The test-run participation of the instructor
+     */
+    private ProgrammingExerciseStudentParticipation setupExamTestRunWithParticipation(String instructorLogin) {
+        var startDate = ZonedDateTime.now().minusHours(1);
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, startDate.minusHours(1), startDate, startDate.plusHours(1));
+        exam.setPublishResultsDate(startDate.plusHours(10));
+        examRepository.save(exam);
+
+        var instructor = userUtilService.getUserByLogin(instructorLogin);
+        studentExamRepository.save(examUtilService.generateTestRunForInstructor(exam, instructor, List.of(programmingExercise)));
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, instructorLogin);
+        assertThat(participation.isTestRun()).isTrue();
+        programmingExerciseParticipation = participation;
+        return participation;
+    }
+
+    /**
+     * Adds a submission with an automatic result to the test-run participation set up by {@link #setupExamTestRunWithParticipation}.
+     *
+     * @param instructorLogin The login of the instructor conducting the test run
+     * @return The result attached to the test-run participation
+     */
+    private Result addResultToTestRunParticipation(String instructorLogin) {
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, ParticipationFactory.generateProgrammingSubmission(true),
+                instructorLogin);
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(58));
+        return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }
 
 }

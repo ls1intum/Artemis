@@ -9,13 +9,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -69,6 +69,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Conditional(IrisEnabled.class)
 public class IrisChatPipelineExecutionService {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisChatPipelineExecutionService.class);
+
     private final IrisSessionRepository irisSessionRepository;
 
     private final CourseRepository courseRepository;
@@ -87,8 +89,6 @@ public class IrisChatPipelineExecutionService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final Optional<LearningMetricsApi> learningMetricsApi;
-
     private final IrisSettingsService irisSettingsService;
 
     private final PyrisDTOService pyrisDTOService;
@@ -98,8 +98,8 @@ public class IrisChatPipelineExecutionService {
     public IrisChatPipelineExecutionService(IrisSessionRepository irisSessionRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository,
-            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LearningMetricsApi> learningMetricsApi,
-            IrisSettingsService irisSettingsService, PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisSettingsService irisSettingsService,
+            PyrisDTOService pyrisDTOService, PyrisPipelineService pyrisPipelineService) {
         this.irisSessionRepository = irisSessionRepository;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -109,7 +109,6 @@ public class IrisChatPipelineExecutionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
-        this.learningMetricsApi = learningMetricsApi;
         this.irisSettingsService = irisSettingsService;
         this.pyrisDTOService = pyrisDTOService;
         this.pyrisPipelineService = pyrisPipelineService;
@@ -166,9 +165,10 @@ public class IrisChatPipelineExecutionService {
         var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
 
         // Base data shared across all chat modes (course chat is the baseline)
+        long courseLoadStart = System.nanoTime();
         var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
         PyrisCourseDTO courseDto = PyrisCourseDTO.of(fullCourse);
-        StudentMetricsDTO metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
+        log.debug("Iris chat DTO base data loaded: course {} ms", (System.nanoTime() - courseLoadStart) / 1_000_000);
 
         // Mode-specific fields (additive on top of base data)
         PyrisProgrammingExerciseDTO programmingExercise = null;
@@ -184,7 +184,11 @@ public class IrisChatPipelineExecutionService {
             case PROGRAMMING_EXERCISE_CHAT -> {
                 var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
                 programmingExercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
-                var actualSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(progExercise, user));
+                // Reload via the eager graph instead of trusting the caller-supplied entity: latestSubmission may be an event
+                // payload handed off across a thread boundary (e.g. CompletableFuture.runAsync) with no Hibernate session,
+                // so its lazy buildLogEntries/results associations would throw LazyInitializationException otherwise.
+                var actualSubmission = latestSubmission.flatMap(s -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(s.getId()))
+                        .or(() -> getLatestSubmissionIfExists(progExercise, user));
                 progSubmission = actualSubmission.map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
             }
             case TEXT_EXERCISE_CHAT -> {
@@ -226,8 +230,8 @@ public class IrisChatPipelineExecutionService {
             default -> throw new IllegalArgumentException("IrisChatPipelineExecutionService does not support chat mode " + chatMode);
         }
 
-        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, executionDto.initialStages(), customInstructions,
-                courseDto, programmingExercise, textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, metrics, safeContext.isEmpty() ? null : safeContext);
+        return new PyrisChatPipelineExecutionDTO(chatMode, messages, executionDto.settings(), session.getTitle(), pyrisUser, customInstructions, courseDto, programmingExercise,
+                textExercise, lectureDto, lectureUnitId, progSubmission, textSubmission, safeContext.isEmpty() ? null : safeContext);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

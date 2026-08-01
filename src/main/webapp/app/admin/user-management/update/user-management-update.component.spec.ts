@@ -5,13 +5,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
 import * as Sentry from '@sentry/angular';
 
@@ -21,9 +19,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockProvider } from 'ng-mocks';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
@@ -45,14 +41,21 @@ vi.mock('@sentry/angular', async () => {
     };
 });
 
-describe('UserManagementUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
+const testBedProviders = [
+    LocalStorageService,
+    SessionStorageService,
+    { provide: TranslateService, useClass: MockTranslateService },
+    { provide: Router, useClass: MockRouter },
+    { provide: ProfileService, useClass: MockProfileService },
+    provideHttpClient(),
+    provideHttpClientTesting(),
+];
 
+describe('UserManagementUpdateComponent', () => {
     let component: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
     let adminUserService: AdminUserService;
     let titleService: Title;
-    let dialogService: DialogService;
     let translateService: TranslateService;
     let profileService: ProfileService;
 
@@ -71,17 +74,7 @@ describe('UserManagementUpdateComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
-            providers: [
-                { provide: ActivatedRoute, useValue: mockRoute },
-                LocalStorageService,
-                SessionStorageService,
-                MockProvider(DialogService),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ProfileService, useClass: MockProfileService },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
         })
             .overrideTemplate(UserManagementUpdateComponent, '')
             .compileComponents();
@@ -89,7 +82,6 @@ describe('UserManagementUpdateComponent', () => {
         fixture = TestBed.createComponent(UserManagementUpdateComponent);
         component = fixture.componentInstance;
         adminUserService = TestBed.inject(AdminUserService);
-        dialogService = TestBed.inject(DialogService);
         titleService = TestBed.inject(Title);
         translateService = TestBed.inject(TranslateService);
         profileService = TestBed.inject(ProfileService);
@@ -207,6 +199,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(component.editForm.controls['id']).toBeDefined();
+            expect(component.editForm.controls['isTestUser']).toBeDefined();
         });
 
         it('should include SUPER_ADMIN authority when current user is a super admin', () => {
@@ -298,20 +291,13 @@ describe('UserManagementUpdateComponent', () => {
         const existingOrganization = {} as Organization;
         component.user.set({ organizations: [existingOrganization] } as User);
 
-        const organizationSubject = new Subject<Organization>();
-        const mockDialogRef = {
-            onClose: organizationSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-
         component.openOrganizationsModal();
 
-        expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, expect.any(Object));
+        expect(component.orgSelectorVisible()).toBe(true);
 
-        // Simulate selecting a new organization
+        // Simulate selecting a new organization via the declarative selector dialog's output
         const newOrganization = {} as Organization;
-        organizationSubject.next(newOrganization);
+        component.onOrgSelected(newOrganization);
         // Check component.user().organizations directly since immutable operations create a new array
         expect(component.user().organizations).toContain(existingOrganization);
         expect(component.user().organizations).toContain(newOrganization);
@@ -319,7 +305,7 @@ describe('UserManagementUpdateComponent', () => {
 
         // Test when user has no organizations yet
         component.user().organizations = undefined;
-        organizationSubject.next(newOrganization);
+        component.onOrgSelected(newOrganization);
         expect(component.user().organizations).toEqual([newOrganization]);
     });
 
@@ -353,19 +339,15 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
-    it('should handle undefined modal selection', () => {
+    it('should not modify organizations when the selector is cancelled', () => {
         component.user.set({ organizations: [{ id: 1 }] as Organization[] } as User);
 
-        const organizationSubject = new Subject<Organization | undefined>();
-        const mockDialogRef = {
-            onClose: organizationSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
-
         component.openOrganizationsModal();
-        organizationSubject.next(undefined);
+        expect(component.orgSelectorVisible()).toBe(true);
 
-        // Should not add undefined to organizations
+        // Cancelling closes the dialog (orgSelectorVisible -> false) without adding an organization
+        component.orgSelectorVisible.set(false);
+
         expect(component.user().organizations).toHaveLength(1);
     });
 
@@ -516,6 +498,24 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
+        });
+
+        it('should patch the isTestUser flag so the checkbox reflects the persisted value', () => {
+            const testUser = new User(123);
+            testUser.isTestUser = true;
+            component.user.set(testUser);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBe(true);
+        });
+
+        it('should leave the isTestUser checkbox unchecked for a user that is not flagged', () => {
+            component.user.set(new User(123));
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            expect(component.editForm.get('isTestUser')?.value).toBeFalsy();
         });
     });
 

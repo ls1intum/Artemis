@@ -1,7 +1,12 @@
 <div
     [id]="'item-' + posting()?.id"
     class="answer-post hover-container"
-    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage(), 'is-saved': !isConsecutive() && posting()?.isSaved, 'non-consecutive': !isConsecutive() }"
+    [ngClass]="{
+        'module-bg rounded-2': isCommunicationPage(),
+        'is-saved': !isConsecutive() && posting()?.isSaved,
+        'non-consecutive': !isConsecutive(),
+        'unverified-iris': isUnverifiedIris(),
+    }"
 >
     @if (posting()?.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
@@ -24,6 +29,7 @@
                 [isCommunicationPage]="isCommunicationPage()"
                 [lastReadDate]="lastReadDate()"
                 [isDeleted]="isDeleted"
+                [isUnverifiedIris]="isUnverifiedIris()"
                 (onUserNameClicked)="onUserNameClicked()"
             />
         </div>
@@ -31,18 +37,64 @@
     @if (!createAnswerPostModal.isInputOpen()) {
         <div class="message-container post-content-padding" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }" (contextmenu)="onRightClick($event)">
             <div class="message-content" [class.force-hover]="showDropdown()">
-                <jhi-posting-content
-                    [content]="posting()?.content"
-                    [isEdited]="!!posting()?.updatedDate"
-                    [author]="posting()?.author"
-                    [posting]="posting()"
-                    [isReply]="true"
-                    [isDeleted]="isDeleted"
-                    [deleteTimerInSeconds]="deleteTimerInSeconds()"
-                    (onUndoDeleteEvent)="onDeleteEvent(false)"
-                    (userReferenceClicked)="onUserReferenceClicked($event)"
-                    (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                />
+                @if (isUnverifiedIris() && mayVerify && isEditingIrisReply()) {
+                    <div class="iris-edit-area mt-1">
+                        <textarea
+                            pTextarea
+                            class="w-full mb-2"
+                            rows="4"
+                            [(ngModel)]="editedIrisContent"
+                            [disabled]="isVerifying()"
+                            [attr.aria-label]="'artemisApp.metis.answerPost.unverifiedIris.editAreaLabel' | artemisTranslate"
+                        ></textarea>
+                        <div class="flex gap-2">
+                            <p-button
+                                severity="success"
+                                size="small"
+                                [outlined]="true"
+                                (onClick)="approveAnswer(editedIrisContent)"
+                                [disabled]="isVerifying() || !editedIrisContent.trim()"
+                                data-testid="iris-save-approve-button"
+                            >
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.saveAndApprove"></span>
+                            </p-button>
+                            <p-button severity="secondary" size="small" [text]="true" (onClick)="cancelEditAnswer()" [disabled]="isVerifying()" data-testid="iris-cancel-button">
+                                <fa-icon [icon]="faXmark" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.cancelEdit"></span>
+                            </p-button>
+                        </div>
+                    </div>
+                } @else {
+                    <jhi-posting-content
+                        [content]="posting()?.content"
+                        [isEdited]="!!posting()?.updatedDate"
+                        [author]="posting()?.author"
+                        [posting]="posting()"
+                        [isReply]="true"
+                        [isDeleted]="isDeleted"
+                        [deleteTimerInSeconds]="deleteTimerInSeconds()"
+                        (onUndoDeleteEvent)="onDeleteEvent(false)"
+                        (userReferenceClicked)="onUserReferenceClicked($event)"
+                        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    />
+                    @if (isUnverifiedIris() && mayVerify) {
+                        <div class="iris-verify-actions mt-1 flex gap-2">
+                            <p-button severity="success" size="small" [outlined]="true" (onClick)="approveAnswer()" [disabled]="isVerifying()" data-testid="iris-approve-button">
+                                <fa-icon [icon]="faCheck" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.approve"></span>
+                            </p-button>
+                            <p-button severity="secondary" size="small" [outlined]="true" (onClick)="editAnswer()" [disabled]="isVerifying()" data-testid="iris-edit-button">
+                                <fa-icon [icon]="faPencilAlt" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.edit"></span>
+                            </p-button>
+                            <p-button severity="danger" size="small" [outlined]="true" (onClick)="rejectAnswer()" [disabled]="isVerifying()" data-testid="iris-reject-button">
+                                <fa-icon [icon]="faTrash" />
+                                <span jhiTranslate="artemisApp.metis.answerPost.unverifiedIris.reject"></span>
+                            </p-button>
+                        </div>
+                    }
+                }
                 <div class="post-content-padding hover-actions">
                     <jhi-posting-reactions-bar
                         [isReadOnlyMode]="isReadOnlyMode()"

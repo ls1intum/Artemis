@@ -1,33 +1,41 @@
 <h4 jhiTranslate="metrics.jvm.threads.title"></h4>
 
-<span><span jhiTranslate="metrics.jvm.threads.runnable"></span> {{ threadStats().runnable }}</span>
+<div class="flex flex-col gap-2">
+    <div>
+        <span><span jhiTranslate="metrics.jvm.threads.runnable"></span> {{ threadStats().runnable }}</span>
+        <tum-ui-progress-bar [value]="toPercentage(threadStats().runnable, threadStats().all)" [showValue]="false" color="var(--success)">
+            {{ toPercentage(threadStats().runnable, threadStats().all) | number: '1.0-0' }}%
+        </tum-ui-progress-bar>
+    </div>
 
-<p-progressbar [value]="toPercentage(threadStats().runnable, threadStats().all)" [showValue]="false" color="var(--bs-success, #28a745)">
-    <ng-template #content>{{ toPercentage(threadStats().runnable, threadStats().all) | number: '1.0-0' }}%</ng-template>
-</p-progressbar>
+    <div>
+        <span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats().timedWaiting }})</span>
+        <tum-ui-progress-bar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" color="var(--warning)">
+            {{ toPercentage(threadStats().timedWaiting, threadStats().all) | number: '1.0-0' }}%
+        </tum-ui-progress-bar>
+    </div>
 
-<span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats().timedWaiting }})</span>
+    <div>
+        <span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats().waiting }})</span>
+        <tum-ui-progress-bar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" color="var(--warning)">
+            {{ toPercentage(threadStats().waiting, threadStats().all) | number: '1.0-0' }}%
+        </tum-ui-progress-bar>
+    </div>
 
-<p-progressbar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" color="var(--bs-warning, #ffc107)">
-    <ng-template #content>{{ toPercentage(threadStats().timedWaiting, threadStats().all) | number: '1.0-0' }}%</ng-template>
-</p-progressbar>
+    <div>
+        <span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats().blocked }})</span>
+        <tum-ui-progress-bar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--danger)">
+            {{ toPercentage(threadStats().blocked, threadStats().all) | number: '1.0-0' }}%
+        </tum-ui-progress-bar>
+    </div>
 
-<span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats().waiting }})</span>
+    <div class="text-sm text-muted-color"><span jhiTranslate="metrics.jvm.threads.total"></span> {{ threadStats().all }}</div>
 
-<p-progressbar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" color="var(--bs-warning, #ffc107)">
-    <ng-template #content>{{ toPercentage(threadStats().waiting, threadStats().all) | number: '1.0-0' }}%</ng-template>
-</p-progressbar>
-
-<span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats().blocked }})</span>
-
-<p-progressbar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--bs-success, #28a745)">
-    <ng-template #content>{{ toPercentage(threadStats().blocked, threadStats().all) | number: '1.0-0' }}%</ng-template>
-</p-progressbar>
-
-<div>Total: {{ threadStats().all }}</div>
-
-<button class="hand btn btn-primary btn-sm" (click)="open()">
-    <span>Expand</span>
-</button>
+    <div>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="open()" data-testid="expand-threads-button">
+            <span jhiTranslate="metrics.jvm.threads.expand"></span>
+        </tum-ui-button>
+    </div>
+</div>
 
 <jhi-thread-modal [(visible)]="showThreadsModal" [threads]="threads()" />

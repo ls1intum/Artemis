@@ -33,7 +33,7 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -64,7 +64,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
         TranslateDirective,
         RatingComponent,
         ComplaintsStudentViewComponent,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         UnifiedFeedbackComponent,
     ],
 })
@@ -93,7 +93,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     expandProblemStatement = input(false);
     showProblemStatement = input(true);
 
-    private subscription: Subscription;
+    private subscription?: Subscription;
     private manualResultUpdateListener?: Subscription;
     private athenaResultUpdateListener?: Subscription;
 
@@ -118,22 +118,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     readonly assessmentResult = signal<Result | undefined>(undefined);
     readonly assessmentsNames = signal<AssessmentNamesForModelId>({});
-    totalScore: number;
+    totalScore = 0;
 
     readonly umlModel = signal<UMLModel>(undefined!); // input model for Apollon
     readonly hasElements = signal(false); // indicates if the current model has at least one element
     readonly isSaving = signal(false);
     readonly isChanged = signal(false);
     readonly retryStarted = signal(false);
-    autoSaveInterval: number;
+    autoSaveInterval?: number;
     readonly autoSaveTimer = signal(0);
 
-    explanation: string; // current explanation on text editor
+    explanation = ''; // current explanation on text editor
 
     automaticSubmissionSubscription?: Subscription;
 
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
-    isAfterAssessmentDueDate: boolean;
+    isAfterAssessmentDueDate = false;
     readonly isLoading = signal(true);
     readonly isLate = signal<boolean>(undefined!); // indicates if the submission is late
     readonly isGeneratingFeedback = signal(false);

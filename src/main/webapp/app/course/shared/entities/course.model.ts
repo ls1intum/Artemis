@@ -55,7 +55,6 @@ export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
     public description?: string;
-    public studentCourseAnalyticsDashboardEnabled?: boolean;
     public shortName?: string;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;

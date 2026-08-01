@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -493,6 +494,42 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExercise_standaloneImportHonorsEditedFieldsAndResetsDates() throws Exception {
+        // Regression test: the standalone (course-to-course) import must persist the fields the user edited in the
+        // import form (problem statement, example solution) and keep the dates the client cleared, rather than falling
+        // back to the source exercise's values.
+        var now = ZonedDateTime.now();
+        Course source = courseUtilService.addEmptyCourse();
+        Course target = courseUtilService.addEmptyCourse();
+        ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(10), now.minusDays(8), now.minusDays(6), DiagramType.ClassDiagram, source);
+        sourceExercise.setProblemStatement("SOURCE PROBLEM STATEMENT");
+        sourceExercise.setMaxPoints(42.0);
+        modelingExerciseTestRepository.save(sourceExercise);
+
+        // Emulate the client edit form: edited problem statement and example solution, cleared dates (resetForImport), target course.
+        ModelingExercise body = modelingExerciseTestRepository.findByIdElseThrow(sourceExercise.getId());
+        body.setProblemStatement("EDITED PROBLEM STATEMENT");
+        body.setExampleSolutionExplanation("EDITED EXAMPLE SOLUTION");
+        body.setReleaseDate(null);
+        body.setStartDate(null);
+        body.setDueDate(null);
+        body.setAssessmentDueDate(null);
+        body.setCourse(target);
+        body.setChannelName("edited-import-" + UUID.randomUUID().toString().substring(0, 8));
+
+        var imported = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExercise.getId(), body, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(imported.getProblemStatement()).as("edited problem statement should survive the standalone import").isEqualTo("EDITED PROBLEM STATEMENT");
+        assertThat(imported.getExampleSolutionExplanation()).as("edited example solution should survive the standalone import").isEqualTo("EDITED EXAMPLE SOLUTION");
+        assertThat(imported.getMaxPoints()).as("points should survive the standalone import").isEqualTo(42.0);
+        assertThat(imported.getReleaseDate()).as("cleared release date should stay cleared").isNull();
+        assertThat(imported.getDueDate()).as("cleared due date should stay cleared").isNull();
+        assertThat(imported.getAssessmentDueDate()).as("cleared assessment due date should stay cleared").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -517,6 +554,100 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
 
         assertModelingExerciseExistsInWeaviate(weaviateService, importedExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExercisePreservesTheGradingCriteriaTheClientSubmits() throws Exception {
+        // The import form is pre-filled from the source, so the client posts the source's grading criteria back. They must
+        // be deep-copied onto the imported exercise (new entities, same titles).
+        ModelingExercise source = createSourceExerciseWithGradingCriteria();
+        Set<GradingCriterion> sourceCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId());
+        assertThat(sourceCriteria).as("precondition: the source has grading criteria").isNotEmpty();
+
+        ModelingExercise body = importBodyFor(source);
+        body.setGradingCriteria(sourceCriteria);
+
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        Set<GradingCriterion> importedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId());
+        assertThat(importedCriteria).hasSameSizeAs(sourceCriteria);
+        assertThat(importedCriteria).extracting(GradingCriterion::getTitle).containsExactlyInAnyOrderElementsOf(sourceCriteria.stream().map(GradingCriterion::getTitle).toList());
+        assertThat(importedCriteria).extracting(GradingCriterion::getId).doesNotContainAnyElementsOf(sourceCriteria.stream().map(GradingCriterion::getId).toList());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExerciseWithoutGradingCriteriaImportsNone() throws Exception {
+        // An instructor who deletes every grading criterion in the import form posts an empty collection. That is the
+        // caller's own content and must win over the source, instead of the source's criteria being silently restored.
+        ModelingExercise source = createSourceExerciseWithGradingCriteria();
+        Set<GradingCriterion> sourceCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId());
+        assertThat(sourceCriteria).as("precondition: the source has grading criteria").isNotEmpty();
+
+        ModelingExercise body = importBodyFor(source);
+        body.setGradingCriteria(new HashSet<>());
+
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + source.getId(), body, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(importedExercise.getId())).isEmpty();
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(source.getId())).as("the source keeps its own criteria").hasSameSizeAs(sourceCriteria);
+    }
+
+    private ModelingExercise createSourceExerciseWithGradingCriteria() {
+        var now = ZonedDateTime.now();
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        ModelingExercise source = modelingExerciseTestRepository
+                .save(ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, sourceCourse));
+        exerciseUtilService.addGradingInstructionsToExercise(source);
+        return modelingExerciseTestRepository.save(source);
+    }
+
+    /**
+     * Builds the request body of a standalone import: a copy of the source pointing at a fresh target course, mirroring
+     * what the client posts from the (pre-filled) import form.
+     */
+    private ModelingExercise importBodyFor(ModelingExercise source) {
+        Course targetCourse = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(targetCourse);
+        ModelingExercise body = ModelingExerciseFactory.generateModelingExercise(source.getReleaseDate(), source.getDueDate(), source.getAssessmentDueDate(),
+                source.getDiagramType(), targetCourse);
+        body.setChannelName("channel-" + UUID.randomUUID().toString().substring(0, 8));
+        return body;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importModelingExerciseWithCompetencyLinkOfTheTargetCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(course2);
+        // The competency belongs to the TARGET course, so the link really is created for the imported exercise (a link to a
+        // competency of another course is skipped, which is why importModelingExerciseFromCourseToCourse cannot reach this
+        // code). Creating the link forces a second save of a detached exercise, and the import has to keep working on the
+        // instance that save returned - otherwise the link's derived id stays unset and the resource's follow-up save
+        // fails with a duplicate-key error.
+        Competency targetCompetency = competencyUtilService.createCompetency(course2);
+
+        ModelingExercise exerciseToImport = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
+                course1);
+        modelingExerciseTestRepository.save(exerciseToImport);
+        long sourceExerciseId = exerciseToImport.getId();
+        exerciseToImport.setCourse(course2);
+        String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
+        exerciseToImport.setChannelName(uniqueChannelName);
+        exerciseToImport.setCompetencyLinks(new HashSet<>(Set.of(new CompetencyExerciseLink(targetCompetency, exerciseToImport, 1))));
+
+        var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + sourceExerciseId, exerciseToImport,
+                ModelingExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getId()).isNotEqualTo(sourceExerciseId);
+        ModelingExercise reloaded = modelingExerciseTestRepository.findWithCompetencyLinksByIdElseThrow(importedExercise.getId());
+        assertThat(reloaded.getCompetencyLinks()).hasSize(1);
+        assertThat(reloaded.getCompetencyLinks().iterator().next().getCompetency().getId()).isEqualTo(targetCompetency.getId());
     }
 
     @Test

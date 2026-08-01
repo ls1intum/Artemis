@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -6,16 +6,21 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { TooltipModule } from 'primeng/tooltip';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
+import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
@@ -26,20 +31,27 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 
 /**
  * Component for creating and updating users in the admin user management.
- * Provides a form with validation for user properties, groups, and organizations.
+ * Provides a form with validation for user properties and organizations.
  */
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
-    styleUrls: ['./user-management-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        TooltipModule,
+        TumUiTooltipDirective,
         HelpIconComponent,
+        TumUiInputDirective,
+        TumUiCheckboxComponent,
+        TumUiSelectComponent,
+        TumUiChipComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiDialogComponent,
+        OrganizationSelectorComponent,
         FaIconComponent,
-        FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
     ],
@@ -49,8 +61,6 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly userService = inject(AdminUserService);
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
@@ -58,9 +68,12 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     protected readonly faBan = faBan;
-    protected readonly faCheck = faCheck;
-    protected readonly faTimes = faTimes;
     protected readonly faSave = faSave;
+
+    /** Controls visibility of the declarative organization-selector dialog. */
+    readonly orgSelectorVisible = signal(false);
+
+    private readonly findLanguageFromKeyPipe = new FindLanguageFromKeyPipe();
 
     /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
@@ -76,6 +89,12 @@ export class UserManagementUpdateComponent implements OnInit {
 
     /** Available languages for selection */
     readonly languages = signal<string[]>(undefined!);
+
+    /** Language options ({ label, value }) derived for the PrimeNG select. */
+    readonly languageOptions = computed(() => (this.languages() ?? []).map((language) => ({ label: this.findLanguageFromKeyPipe.transform(language), value: language })));
+
+    /** Whether a random password should be generated (new users) or the old password kept (existing users). */
+    readonly useRandomPassword = signal(true);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -111,16 +130,16 @@ export class UserManagementUpdateComponent implements OnInit {
     };
 
     /** The reactive form for editing user properties */
-    editForm: FormGroup;
+    editForm!: FormGroup; // initialized in ngOnInit() via initializeForm()
 
     /** Original login for detecting changes */
     private oldLogin?: string;
 
     /** Whether Jenkins profile is active */
-    private isJenkins: boolean;
+    private isJenkins = false;
 
     /**
-     * Initializes the component by loading user data, authorities, languages, and groups.
+     * Initializes the component by loading user data, authorities and languages.
      */
     ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
@@ -194,7 +213,8 @@ export class UserManagementUpdateComponent implements OnInit {
         }
     }
 
-    shouldRandomizePassword(useRandomPassword: Event | boolean) {
+    shouldRandomizePassword(useRandomPassword: boolean) {
+        this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
     }
 
@@ -202,22 +222,16 @@ export class UserManagementUpdateComponent implements OnInit {
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
-        const dialogRef = this.dialogService.open(OrganizationSelectorComponent, {
-            header: this.translateService.instant('artemisApp.organizationManagement.modalSelector.title'),
-            width: '80vw',
-            modal: true,
-            closable: true,
-            dismissableMask: true,
-            data: {
-                organizations: this.user().organizations,
-            },
-        });
-        dialogRef?.onClose.subscribe((organization) => {
-            if (organization !== undefined) {
-                // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
-                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
-            }
-        });
+        this.orgSelectorVisible.set(true);
+    }
+
+    /**
+     * Adds the organization chosen in the selector dialog to the user.
+     * @param organization the organization selected in the dialog
+     */
+    onOrgSelected(organization: Organization) {
+        // Rebuild the user reference (new organizations array) so the dialog result renders under zoneless.
+        this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
     }
 
     /**
@@ -242,6 +256,7 @@ export class UserManagementUpdateComponent implements OnInit {
             email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
             visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
             activated: [''],
+            isTestUser: [''],
             langKey: [''],
             authorities: [''],
             internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined

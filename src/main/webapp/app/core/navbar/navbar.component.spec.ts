@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -34,6 +33,11 @@ class StubThemeSwitchComponent {
 class StubImageComponent {
     src = input<string>();
 }
+
+@Component({ selector: 'jhi-course-notification-overview', template: '' })
+class StubCourseNotificationOverviewComponent {
+    courseId = input.required<number>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -67,16 +71,15 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
+import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
 class MockBreadcrumb {
-    label: string;
-    uri: string;
-    translate: boolean;
+    label!: string;
+    uri!: string;
+    translate!: boolean;
 }
 
 describe('NavbarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
@@ -140,10 +143,16 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent, CourseNotificationOverviewComponent],
                 },
                 add: {
-                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent, StubImageComponent],
+                    imports: [
+                        StubThemeSwitchComponent,
+                        StubConnectionWarningComponent,
+                        StubLoadingNotificationComponent,
+                        StubImageComponent,
+                        StubCourseNotificationOverviewComponent,
+                    ],
                 },
             })
             .compileComponents();
@@ -203,16 +212,37 @@ describe('NavbarComponent', () => {
     });
 
     describe('perspective switch links', () => {
-        const course = {
+        const studentCourse = {
             id: 123,
             title: 'Course1',
+            isAtLeastTutor: false,
+            isAtLeastEditor: false,
+            isAtLeastInstructor: false,
+        } as Course;
+        const tutorCourse = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastTutor: true,
+            isAtLeastEditor: false,
+            isAtLeastInstructor: false,
+        } as Course;
+        const editorCourse = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastTutor: true,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: false,
+        } as Course;
+        const instructorCourse = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastTutor: true,
             isAtLeastEditor: true,
             isAtLeastInstructor: true,
-            tutorialGroupsConfiguration: {},
         } as Course;
 
         beforeEach(() => {
-            currentCourseContextService.setCourse(course);
+            currentCourseContextService.setCourse(instructorCourse);
         });
 
         it.each([
@@ -238,20 +268,31 @@ describe('NavbarComponent', () => {
             expect(component.studentViewLink()).toEqual(['/courses', '123']);
         });
 
+        it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])(
+            'should default perspective links to their overviews outside course routes for %s',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.studentViewLink()).toEqual(['/courses']);
+                expect(component.managementViewLink()).toEqual(['/course-management']);
+            },
+        );
+
         it.each([
-            ['/courses/123/exams/1', ['/course-management', '123', 'exams']],
-            ['/courses/123/exercises/programming-exercises/1', ['/course-management', '123', 'exercises']],
-            ['/courses/123/lectures/1', ['/course-management', '123', 'lectures']],
-            ['/courses/123/communication?conversationId=123', ['/course-management', '123', 'communication']],
-            ['/courses/123/learning-path', ['/course-management', '123', 'learning-path-management']],
-            ['/courses/123/competencies', ['/course-management', '123', 'competency-management']],
-            ['/courses/123/faq', ['/course-management', '123', 'faqs']],
-            ['/courses/123/tutorial-groups', ['/course-management', '123', 'tutorial-groups-checklist']],
-            ['/courses/123/statistics', ['/course-management', '123', 'course-statistics']],
-        ])('should link from student route %s to corresponding management route', (url, expectedLink) => {
+            { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
+            { url: '/courses/123/exercises/programming-exercises/1', course: tutorCourse, expected: ['/course-management', '123', 'exercises'] },
+            { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures'] },
+            { url: '/courses/123/communication?conversationId=123', course: tutorCourse, expected: ['/course-management', '123', 'communication'] },
+            { url: '/courses/123/learning-path', course: instructorCourse, expected: ['/course-management', '123', 'learning-path-management'] },
+            { url: '/courses/123/competencies', course: instructorCourse, expected: ['/course-management', '123', 'competency-management'] },
+            { url: '/courses/123/faq', course: tutorCourse, expected: ['/course-management', '123', 'faqs'] },
+            { url: '/courses/123/tutorial-groups', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups'] },
+            { url: '/courses/123/statistics', course: tutorCourse, expected: ['/course-management', '123', 'course-statistics'] },
+        ])('should link from student route $url to corresponding management route', ({ url, course, expected }) => {
+            currentCourseContextService.setCourse(course);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(expectedLink);
+            expect(component.managementViewLink()).toEqual(expected);
         });
 
         it('should default management view link to the course management overview when route has no management equivalent', () => {
@@ -261,22 +302,15 @@ describe('NavbarComponent', () => {
         });
 
         it.each([
-            [{ isAtLeastEditor: false }, '/courses/123/lectures/1'],
-            [{ isAtLeastInstructor: false }, '/courses/123/learning-path'],
-            [{ isAtLeastInstructor: false }, '/courses/123/competencies'],
-            [{ isAtLeastInstructor: false, tutorialGroupsConfiguration: undefined }, '/courses/123/tutorial-groups'],
-        ])('should default management view link to the course management overview when access is missing', (courseOverrides, url) => {
-            currentCourseContextService.setCourse({ ...course, ...courseOverrides });
+            { course: studentCourse, url: '/courses/123/exercises', expected: ['/course-management'] },
+            { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
+            { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
+            { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
+        ])('should default management view link when access is missing for $url', ({ course, url, expected }) => {
+            currentCourseContextService.setCourse(course);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
-        });
-
-        it('should link to tutorial group management for non-instructors when tutorial group configuration exists', () => {
-            currentCourseContextService.setCourse({ ...course, isAtLeastInstructor: false, tutorialGroupsConfiguration: {} });
-            router.setUrl('/courses/123/tutorial-groups');
-
-            expect(component.managementViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+            expect(component.managementViewLink()).toEqual(expected);
         });
 
         it('should omit the course id from base perspective links when no current course is available', () => {
@@ -992,6 +1026,52 @@ describe('NavbarComponent', () => {
                 label: 'artemisApp.courseOverview.menu.exercises',
             });
             expect(component.breadcrumbs()[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+        });
+    });
+
+    describe('course controls in navbar', () => {
+        it('should render the notification overview when a course is active', () => {
+            currentCourseContextService.setCourse({ id: 1 } as Course);
+            router.setUrl('/courses/1/exercises');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+        });
+
+        it('should render the notification overview for instructors in course management view', () => {
+            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
+            router.setUrl('/course-management/1/exercises');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+        });
+
+        it('should not render the notification overview when no course is active', () => {
+            currentCourseContextService.clearCourse();
+            router.setUrl('/courses');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+        });
+
+        it('should not render the notification overview during an active or started exam', () => {
+            currentCourseContextService.setCourse({ id: 1 } as Course);
+            router.setUrl('/courses/1/exercises');
+            component.isExamActive.set(true);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
+
+            component.isExamActive.set(false);
+            component.isExamStarted.set(true);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
         });
     });
 

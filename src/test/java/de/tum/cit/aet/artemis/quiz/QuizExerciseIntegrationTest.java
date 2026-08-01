@@ -2014,6 +2014,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course").isEqualTo(course);
+        assertQuizFieldsPreserved(quizExercise, importedExercise);
     }
 
     /**
@@ -2033,6 +2034,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);
         assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup);
+        assertQuizFieldsPreserved(quizExercise, importedExercise);
     }
 
     /**
@@ -2068,6 +2070,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+        assertQuizFieldsPreserved(quizExercise, importedExercise);
     }
 
     /**
@@ -2100,6 +2103,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.CREATED);
         assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup);
+        assertQuizFieldsPreserved(quizExercise, importedExercise);
     }
 
     /**
@@ -2636,5 +2640,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         else if (!quizExercise.isQuizStarted()) {
             assertThat(quizExercise.getQuizQuestions()).isEmpty();
         }
+    }
+
+    private void assertQuizFieldsPreserved(QuizExercise source, QuizExercise imported) {
+        assertThat(imported.isRandomizeQuestionOrder()).as("randomizeQuestionOrder must be preserved").isEqualTo(source.isRandomizeQuestionOrder());
+        assertThat(imported.getAllowedNumberOfAttempts()).as("allowedNumberOfAttempts must be preserved").isEqualTo(source.getAllowedNumberOfAttempts());
+        assertThat(imported.getQuizMode()).as("quizMode must be preserved").isEqualTo(source.getQuizMode());
+        assertThat(imported.getDuration()).as("duration must be preserved").isEqualTo(source.getDuration());
+        assertThat(imported.getDifficulty()).as("difficulty must be preserved").isEqualTo(source.getDifficulty());
+        assertThat(imported.getMaxPoints()).as("maxPoints must be preserved").isEqualTo(source.getMaxPoints());
     }
 }

@@ -2,7 +2,7 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { enterDate } from '../../utils';
+import { enterDate, readResponseJson } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.
@@ -197,7 +197,7 @@ export class CourseCreationPage {
         const responsePromise = this.page.waitForResponse(COURSE_ADMIN_BASE);
         await this.page.click('#save-entity');
         const response = await responsePromise;
-        return await response.json();
+        return await readResponseJson(response);
     }
 
     /**
@@ -218,6 +218,6 @@ export class CourseCreationPage {
         );
         await this.page.click('#save-entity');
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 }

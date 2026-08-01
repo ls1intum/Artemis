@@ -372,7 +372,7 @@ public class CourseCompetencyResource {
                 .map(competency -> new IrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy())).toList();
 
         // Start the Iris competency generation pipeline for the given course.
-        // The generated competencies will be sent async over the websocket on the topic /topic/iris/competencies/{courseId}
+        // Updates are sent async over /topic/iris/competencies/{courseId} with payload {runState, error, result}.
         api.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), currentCompetencies);
 
         return ResponseEntity.accepted().build();

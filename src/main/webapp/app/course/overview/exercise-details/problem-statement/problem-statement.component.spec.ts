@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -24,8 +23,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('ProblemStatementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProblemStatementComponent;
     let fixture: ComponentFixture<ProblemStatementComponent>;
     let mockActivatedRoute: any;
@@ -80,7 +77,7 @@ describe('ProblemStatementComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should render problem statement when exercise is available', () => {
+    it('should render problem statement when exercise is available', async () => {
         const textExercise = new TextExercise(course, undefined);
         textExercise.problemStatement = 'Test problem statement';
 
@@ -89,7 +86,11 @@ describe('ProblemStatementComponent', () => {
 
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('#problem-statement')).toBeTruthy();
-        expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
+        // Markdown is rendered asynchronously via the lazy [jhiMarkdown] directive.
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(compiled.querySelector('#problem-statement p')?.innerHTML).toContain('Test problem statement');
+        });
     });
 
     it('should render problem statement when exercise is available by getting from services', async () => {
