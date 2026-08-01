@@ -223,6 +223,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.ok(modelingSubmission);
         }
 
+        modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
+
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
         modelingExercise.setGradingCriteria(gradingCriteria);

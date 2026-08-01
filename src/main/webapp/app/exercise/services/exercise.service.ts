@@ -361,6 +361,8 @@ export class ExerciseService {
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
             res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
             res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
+            res.body.latestExamEndDate = convertDateFromServer(res.body.latestExamEndDate);
+            res.body.assessmentPossibleFrom = convertDateFromServer(res.body.assessmentPossibleFrom);
             res.body.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(res.body.studentParticipations);
         }
         return res;
