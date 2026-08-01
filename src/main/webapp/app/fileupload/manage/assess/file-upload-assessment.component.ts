@@ -26,7 +26,8 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { onError } from 'app/foundation/util/global.utils';
-import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
@@ -55,6 +56,7 @@ import { FileService } from 'app/foundation/service/file.service';
         RouterLink,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        AssessmentNotPossibleYetComponent,
     ],
 })
 export class FileUploadAssessmentComponent implements OnInit {
@@ -99,6 +101,9 @@ export class FileUploadAssessmentComponent implements OnInit {
     exerciseGroupId?: number;
     readonly exerciseDashboardLink = signal<string[]>([]);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of showing its "submission not found" state.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
 
     private cancelConfirmationText!: string; // set in constructor from a synchronous translate subscription
@@ -135,6 +140,9 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
 
         this.route.params.subscribe((params) => {
+            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
+            // the previous submission has to be cleared before loading the next one
+            this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             this.resultId = Number(params['resultId']) || 0;
@@ -189,7 +197,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
-                } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
             },
@@ -211,11 +219,28 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
-                    } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
                         onError(this.alertService, error);
                     }
                 },
             });
+    }
+
+    /**
+     * Keeps the server's "assessment is not possible yet" explanation on the page, in place of the "submission not
+     * found" state that would otherwise contradict it. A toast would fade and leave only the wrong message behind.
+     *
+     * @param error the failed response of the endpoint that opens the assessment
+     * @returns true if the error was the "assessment is not possible yet" one and is now explained on the page
+     */
+    private explainIfAssessmentNotPossibleYet(error: HttpErrorResponse): boolean {
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
+        if (!assessmentNotPossibleYet) {
+            return false;
+        }
+        this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+        this.alertService.closeAll();
+        return true;
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {

@@ -2,79 +2,81 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
-import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetState, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { AlertService } from 'app/foundation/service/alert.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { catchError, map } from 'rxjs/operators';
 
-/*
- * Both resolvers below swallow load errors so that the assessment page can render its "no submission" state. The global
- * alert interceptor stays silent for the "assessment is not possible yet" 403 (the server marks it as `skipAlert` so the
- * date can be localized in the browser's time zone), so it has to be reported explicitly here, otherwise the tutor
- * would see nothing at all.
+/**
+ * What the resolvers below hand to the assessment page. Both swallow load errors so that the page can render instead of
+ * the navigation failing, so a missing participation alone does not say why: it means either "there is nothing to
+ * assess" or "the exam is not over yet". Only the latter comes with a reason, and the page needs to tell them apart —
+ * otherwise it would claim that the submission was not found while it exists and is simply still being worked on.
  */
+export interface TextAssessmentRouteData {
+    participation?: StudentParticipation;
+    assessmentNotPossibleYet?: AssessmentNotPossibleYetState;
+}
+
+/**
+ * Turns a failed load into the data the assessment page renders: the "assessment is not possible yet" 403 becomes the
+ * reason it explains, every other error becomes the empty state it already handled before.
+ *
+ * @param error the failed response of the endpoint that opens the assessment
+ * @returns the resolved route data for that error
+ */
+function routeDataForError(error: HttpErrorResponse): Observable<TextAssessmentRouteData> {
+    return of({ assessmentNotPossibleYet: getAssessmentNotPossibleYetState(error) });
+}
 
 @Injectable({ providedIn: 'root' })
-export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
+export class NewStudentParticipationResolver implements Resolve<TextAssessmentRouteData> {
     private textSubmissionService = inject(TextSubmissionService);
-
-    private alertService = inject(AlertService);
-
-    private datePipe = inject(ArtemisDatePipe);
 
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentService.
      * @param route
      */
-    resolve(route: ActivatedRouteSnapshot) {
+    resolve(route: ActivatedRouteSnapshot): Observable<TextAssessmentRouteData> {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         if (exerciseId) {
-            return this.textSubmissionService
-                .getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound)
-                .pipe(map((submission?: TextSubmission) => submission?.participation))
-                .pipe(
-                    catchError((error: HttpErrorResponse) => {
-                        alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe);
-                        return of(undefined);
-                    }),
-                );
+            return this.textSubmissionService.getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound).pipe(
+                map((submission?: TextSubmission) => ({ participation: submission?.participation })),
+                catchError(routeDataForError),
+            );
         }
-        return of(undefined);
+        return of({});
     }
 }
 
 @Injectable({ providedIn: 'root' })
-export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
+export class StudentParticipationResolver implements Resolve<TextAssessmentRouteData> {
     private textAssessmentService = inject(TextAssessmentService);
-
-    private alertService = inject(AlertService);
-
-    private datePipe = inject(ArtemisDatePipe);
 
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentService.
      * @param route
      */
-    resolve(route: ActivatedRouteSnapshot) {
+    resolve(route: ActivatedRouteSnapshot): Observable<TextAssessmentRouteData> {
         const submissionId = Number(route.paramMap.get('submissionId'));
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
-        const handleError = (error: HttpErrorResponse) => {
-            alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe);
-            return of(undefined);
-        };
         if (resultId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(catchError(handleError));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(
+                map((participation) => ({ participation })),
+                catchError(routeDataForError),
+            );
         }
         if (submissionId) {
-            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).pipe(catchError(handleError));
+            return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, correctionRound).pipe(
+                map((participation) => ({ participation })),
+                catchError(routeDataForError),
+            );
         }
-        return of(undefined);
+        return of({});
     }
 }

@@ -6,6 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -43,6 +44,7 @@ import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('FileUploadAssessmentComponent', () => {
     let component: FileUploadAssessmentComponent;
@@ -400,6 +402,45 @@ describe('FileUploadAssessmentComponent', () => {
             component.ngOnInit();
 
             expect(alertErrorSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('when assessment is not possible yet', () => {
+        // The submission exists and the student may still change it, so the page has to say that the exam is not over
+        // yet — the "submission not found" state it shows for any other load error would contradict that.
+        const notPossibleYetResponse = () =>
+            new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+
+        it('should explain the wait instead of claiming that the submission was not found', () => {
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+            const alertErrorSpy = vi.spyOn(alertService, 'error');
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.fileUploadAssessment.notFound"]'))).toBeNull();
+            // a toast would fade and leave only the misleading state behind, so the page carries the explanation
+            expect(alertErrorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the explanation when the next submission is loaded into the reused component', () => {
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+            component.ngOnInit();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(component.submission()).toBe(submission);
         });
     });
 

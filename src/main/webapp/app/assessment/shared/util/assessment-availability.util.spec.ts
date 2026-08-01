@@ -7,6 +7,7 @@ import {
     alertIfAssessmentNotPossibleYet,
     getAssessmentNotPossibleYetAlert,
     getAssessmentNotPossibleYetReason,
+    getAssessmentNotPossibleYetState,
 } from 'app/assessment/shared/util/assessment-availability.util';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -53,6 +54,21 @@ describe('AssessmentAvailabilityUtil', () => {
                 date: assessmentPossibleFrom,
                 assessmentPossibleFrom,
             });
+        });
+    });
+
+    describe('getAssessmentNotPossibleYetState', () => {
+        it.each([ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING])('should keep the raw date the server sent for %s', (errorKey) => {
+            const date = '2026-07-31T12:35:00Z';
+            const error = new HttpErrorResponse({ error: { errorKey, params: { date } } });
+
+            // raw, not formatted: the page formats it in the template so that it follows language changes
+            expect(getAssessmentNotPossibleYetState(error)).toEqual({ translationKey: `error.${errorKey}`, date });
+        });
+
+        it('should return undefined for unrelated errors so that the caller keeps its own handling', () => {
+            expect(getAssessmentNotPossibleYetState(new HttpErrorResponse({ error: { errorKey: 'lockedSubmissionsLimitReached' } }))).toBeUndefined();
+            expect(getAssessmentNotPossibleYetState(new HttpErrorResponse({}))).toBeUndefined();
         });
     });
 

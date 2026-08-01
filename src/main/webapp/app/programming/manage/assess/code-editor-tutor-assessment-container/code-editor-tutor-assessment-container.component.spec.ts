@@ -951,10 +951,15 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             const errorSpy = vi.spyOn(alertService, 'error');
             lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(throwError(() => notPossibleYetResponse()));
 
-            comp.ngOnInit();
+            // detectChanges rather than a manual ngOnInit, so that the component initializes exactly once and renders
+            fixture.detectChanges();
 
             expect(comp.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
             expect(comp.participationCouldNotBeFetched()).toBe(false);
+            expect(debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            // the submission does exist, so the "no unassessed submissions" fallback must not contradict the explanation
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.editor.errors.participationNotFound"]'))).toBeNull();
             // the panel explains this permanently, so the interceptor's toast is closed and no second one is added
             expect(closeAllSpy).toHaveBeenCalledOnce();
             expect(errorSpy).not.toHaveBeenCalled();

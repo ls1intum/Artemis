@@ -55,6 +55,30 @@ export function getAssessmentNotPossibleYetReason(exercise: Exercise | undefined
 }
 
 /**
+ * The state an assessment page keeps while the server refuses to open the assessment, so that the explanation stays on
+ * the page instead of vanishing with a toast. The date is kept as the raw ISO string the server sent (not a formatted
+ * one) so that the template can render it with the artemisDate pipe and it follows language changes.
+ */
+export interface AssessmentNotPossibleYetState {
+    translationKey: string;
+    date: string;
+}
+
+/**
+ * Turns the server's "assessment is not possible yet" 403 into the state an assessment page needs to explain it.
+ *
+ * @param error the failed response of an endpoint that opens an assessment
+ * @returns the translation key and the date it names, or undefined if the error is a different one
+ */
+export function getAssessmentNotPossibleYetState(error: HttpErrorResponse): AssessmentNotPossibleYetState | undefined {
+    const errorKey = error?.error?.errorKey;
+    if (errorKey !== ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING && errorKey !== ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING) {
+        return undefined;
+    }
+    return { translationKey: `error.${errorKey}`, date: error.error?.params?.date };
+}
+
+/**
  * Turns the server's "assessment is not possible yet" 403 into the translation key and parameters needed to display it.
  * The server sends the date as an ISO string and marks the response as `skipAlert`, so that the date can be rendered in
  * the browser's locale and time zone here instead of being shown raw by the global alert interceptor.
@@ -64,11 +88,11 @@ export function getAssessmentNotPossibleYetReason(exercise: Exercise | undefined
  * @returns the translation key and parameters, or undefined if the error is a different one
  */
 export function getAssessmentNotPossibleYetAlert(error: HttpErrorResponse, datePipe: ArtemisDatePipe): { translationKey: string; params: { date: string } } | undefined {
-    const errorKey = error?.error?.errorKey;
-    if (errorKey !== ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING && errorKey !== ASSESSMENT_NOT_POSSIBLE_TESTS_PENDING) {
+    const state = getAssessmentNotPossibleYetState(error);
+    if (!state) {
         return undefined;
     }
-    return { translationKey: `error.${errorKey}`, params: { date: datePipe.transform(error.error?.params?.date) } };
+    return { translationKey: state.translationKey, params: { date: datePipe.transform(state.date) } };
 }
 
 /**

@@ -205,6 +205,44 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
         });
+
+        it('should explain the wait on the page when the exam is not over yet, instead of claiming the submission was not found', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const response = new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(throwError(() => response));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(component.submission()).toBeUndefined();
+            // the explanation stays on the page instead of fading with a toast and leaving the misleading state behind
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the explanation when the next submission is loaded into the reused component', async () => {
+            const response = new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+            vi.spyOn(modelingSubmissionService, 'getSubmission')
+                .mockReturnValueOnce(throwError(() => response))
+                .mockReturnValue(of(getSubmissionWithData()));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(component.submission()).toBeDefined();
+        });
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({

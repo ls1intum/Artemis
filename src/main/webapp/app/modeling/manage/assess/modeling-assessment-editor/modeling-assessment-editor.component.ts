@@ -27,7 +27,8 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -52,6 +53,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        AssessmentNotPossibleYetComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
@@ -102,6 +104,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly correctionRound = signal(0);
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of showing its "submission not found" state.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
     resizeOptions = { verticalResize: true };
     isApollonModelLoaded = false;
@@ -148,6 +153,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
         this.route.paramMap.subscribe((params) => {
+            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
+            // the previous submission has to be cleared before loading the next one
+            this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
             if (params.has('examId')) {
@@ -406,11 +414,15 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submission.set(undefined);
 
         this.isLoading.set(false);
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
             this.navigateBack();
-        } else if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
-            // the alert already says when assessment is possible, a generic "could not load" on top would only confuse
+        } else if (assessmentNotPossibleYet) {
+            // The submission exists, the exam simply is not over yet. Keeping the explanation on the page (instead of in
+            // a toast that fades) replaces the "submission not found" state, which would contradict it.
             this.resetAssessmentState();
+            this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+            this.alertService.closeAll();
         } else {
             this.onError();
         }
