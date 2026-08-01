@@ -18,12 +18,20 @@ compared.
   resolves to `data-test-status="success"`. A file with no task reference
   fails the test outright (the corpus is only useful if every file actually
   exercises task resolution).
-- `markdown-features.md` specifically pins the measured markdown gaps
-  between the two pipelines (syntax highlighting, GitHub-style alerts, bare
-  URL linkification). Do not remove its fenced code block, its `[!NOTE]`
-  alert, or its bare URL without also updating the gap counts asserted in
-  `problem-statement-parity.spec.ts`. Removing them silently weakens the
-  gate rather than closing a gap.
+- Each file carries a feature area, and the client spec's
+  "keeps the corpus exercising the features the gate is about" test fails if
+  one of them disappears. Removing content here silently weakens the gate
+  rather than closing a gap:
+    - `markdown-features.md`: fenced code block, `[!NOTE]` alert, bare URL,
+      table.
+    - `name-based-tasks.md`: ordered list of name-based tasks, a table, a
+      PlantUML diagram.
+    - `inline-structure.md`: emphasis, strong emphasis, inline code,
+      backslash escapes, a nested list with a task between two text nodes,
+      root-relative and external links, root-relative and external images.
+- Avoid `~~strikethrough~~`: the server emits `<del>` (commonmark-java) and
+  the legacy pipeline emits `<s>` (markdown-it). That is a real, unclosed
+  divergence, not something the parity gate should be taught to ignore.
 - Adding a new `.md` file here automatically extends the guardrail: both the
   server test (`@MethodSource` over this directory) and the client spec
   (`readdirSync` over this directory) pick up every `.md` file without any
