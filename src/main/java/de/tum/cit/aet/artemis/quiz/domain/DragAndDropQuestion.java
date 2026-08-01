@@ -75,7 +75,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     // DragAndDropMapping overrides hashCode() to a class constant (see DragAndDropMapping.hashCode); id-based equality
     // still discriminates instances. With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
     // failure mode requires the unidirectional + @JoinColumn shape).
-    // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 
