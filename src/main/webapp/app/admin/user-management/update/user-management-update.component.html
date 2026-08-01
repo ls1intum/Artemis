@@ -125,23 +125,6 @@
                     }
                 }
                 <div class="mb-3 flex flex-col gap-2">
-                    <label jhiTranslate="artemisApp.userManagement.groups"></label>
-                    <tum-ui-autocomplete
-                        class="w-full"
-                        styleClass="w-full"
-                        [multiple]="true"
-                        [ngModel]="user().groups ?? []"
-                        [ngModelOptions]="{ standalone: true }"
-                        [suggestions]="groupSuggestions()"
-                        (completeMethod)="filterGroups($event)"
-                        (onSelect)="onGroupSelect($event)"
-                        (onUnselect)="onGroupUnselect($event)"
-                        (keydown.enter)="onGroupAdd(user(), $event)"
-                        [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
-                        data-testid="group-autocomplete"
-                    />
-                </div>
-                <div class="mb-3 flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.organizations"></label>
                     <div class="flex flex-wrap gap-2">
                         @for (organization of user().organizations; track organization) {

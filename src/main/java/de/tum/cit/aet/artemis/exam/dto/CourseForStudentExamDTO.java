@@ -6,12 +6,12 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Minimal projection of a {@link Course}, nested inside {@link ExamForStudentExamDTO}.
- * Carries exactly the fields the client's {@code accountService.setAccessRightsForCourse} needs to compute
- * the current user's course-level authorization flags (isAtLeastTutor/Editor/Instructor), plus the id needed
- * to link back to the course.
+ * Carries the course id, which is all the client's {@code accountService.setAccessRightsForCourse} needs to
+ * resolve the current user's course-level authorization flags (isAtLeastTutor/Editor/Instructor) from their
+ * course roles, and to link back to the course.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForStudentExamDTO(long id, String instructorGroupName, String editorGroupName, String teachingAssistantGroupName) {
+public record CourseForStudentExamDTO(long id) {
 
     /**
      * Converts a Course into a CourseForStudentExamDTO.
@@ -23,6 +23,6 @@ public record CourseForStudentExamDTO(long id, String instructorGroupName, Strin
         if (course == null) {
             return null;
         }
-        return new CourseForStudentExamDTO(course.getId(), course.getInstructorGroupName(), course.getEditorGroupName(), course.getTeachingAssistantGroupName());
+        return new CourseForStudentExamDTO(course.getId());
     }
 }

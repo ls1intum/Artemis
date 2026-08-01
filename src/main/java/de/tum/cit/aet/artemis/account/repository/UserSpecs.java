@@ -160,12 +160,13 @@ public class UserSpecs {
     }
 
     /**
-     * Creates the specification to find all users that are assigned no user groups.
+     * Creates the specification to find all users that have no course enrollment (i.e. no {@code user_course_role} rows).
      *
      * @return specification used to chain database operations
      */
-    public static Specification<User> getAllUsersWithoutUserGroups() {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
+    @NonNull
+    public static Specification<User> getAllUsersWithoutCourseEnrollment() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.COURSE_ROLES));
     }
 
     /**

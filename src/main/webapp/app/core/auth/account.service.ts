@@ -94,16 +94,6 @@ export class AccountService implements IAccountService {
         this.userIdentity.set(identity);
     }
 
-    syncGroups(groups: string[]) {
-        this.userIdentity.update((currentUserIdentity) => {
-            if (!currentUserIdentity) {
-                return currentUserIdentity;
-            }
-            currentUserIdentity.groups = groups;
-            return currentUserIdentity;
-        });
-    }
-
     hasAnyAuthority(authorities: readonly Authority[]): Promise<boolean> {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
@@ -136,14 +126,6 @@ export class AccountService implements IAccountService {
                 return Promise.resolve(false);
             },
         );
-    }
-
-    hasGroup(group?: string): boolean {
-        if (!this.authenticated() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
-            return false;
-        }
-
-        return this.userIdentity()?.groups?.some((userGroup: string) => userGroup === group) ?? false;
     }
 
     identity(force?: boolean): Promise<User | undefined> {
@@ -192,12 +174,10 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
-        return (
-            this.hasGroup(course?.instructorGroupName) ||
-            this.hasGroup(course?.editorGroupName) ||
-            this.hasGroup(course?.teachingAssistantGroupName) ||
-            this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)
-        );
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(course?.id, 'TEACHING_ASSISTANT');
     }
 
     /**
@@ -205,7 +185,10 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastEditorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.editorGroupName) || this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(course?.id, 'EDITOR');
     }
 
     /**
@@ -213,7 +196,27 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastInstructorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(course?.id, 'INSTRUCTOR');
+    }
+
+    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: string): boolean {
+        if (!courseId || !this.authenticated()) {
+            return false;
+        }
+        const courseRoles = this.userIdentity()?.courseRoles;
+        if (!courseRoles) {
+            return false;
+        }
+        const entry = courseRoles.find((r) => r.courseId === courseId);
+        if (!entry) {
+            return false;
+        }
+        const roleHierarchy: Record<string, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
+        const minLevel = roleHierarchy[minimumRole] ?? 0;
+        return entry.roles.some((role) => (roleHierarchy[role] ?? -1) >= minLevel);
     }
 
     /**
