@@ -22,8 +22,6 @@ The OIDC ecosystem leverages Spring Security's OAuth2 Client libraries to inject
 
 Unlike standard stateless operations, the initialization flow briefly establishes a highly secured, short-lived HTTP session in RAM. This session acts as an anti-tampering buffer, storing state and cryptographic nonce parameters to shield the system against Cross-Site Request Forgery (CSRF) or token-replay mutations.
 
-Thanks to the integrated Hazelcast distributed cache infrastructure, this transactional handshake is entirely stateless across multiple server nodes and protected from memory-exhaustion Denial-of-Service (DoS) vectors.
-
 ---
 
 ## Configuration Specification
