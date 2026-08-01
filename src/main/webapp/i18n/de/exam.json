@@ -336,6 +336,7 @@
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
             "navigation": {
+                "exerciseButton": "Aufgabe {{ number }}: {{ title }}",
                 "nextButton": "Weiter",
                 "previousButton": "Zurück"
             },

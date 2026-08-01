@@ -13,9 +13,6 @@
                 [translateValues]="{ current: exerciseIndex() + 1, all: exercises().length }"
             ></div>
         }
-        <div class="mt-2">
-            <jhi-exam-live-events-button />
-        </div>
     </div>
     <div class="col">
         <div class="d-flex justify-content-center">
@@ -35,7 +32,12 @@
                 ) {
                     <div class="navigation-item">
                         <button id="exam-exercise-{{ i }}" class="btn btn-primary w-100" [ngClass]="getExerciseButtonStatus(i)" (click)="changePage(i)">
-                            <fa-icon [icon]="faCheck" />
+                            <fa-icon [icon]="faCheck" [attr.aria-hidden]="true" />
+                            <span
+                                class="visually-hidden"
+                                jhiTranslate="artemisApp.examParticipation.navigation.exerciseButton"
+                                [translateValues]="{ number: i + 1, title: exercise.title }"
+                            ></span>
                         </button>
                         <div class="exerciseIndex">{{ i + 1 }}</div>
                     </div>
