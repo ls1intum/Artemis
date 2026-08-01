@@ -331,12 +331,12 @@
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "exerciseType": "Typ",
-            "examOverview": "Klausurübersicht",
             "examStatus": "Status",
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
             "navigation": {
+                "exerciseButton": "Aufgabe {{ number }}: {{ title }}",
                 "nextButton": "Weiter",
                 "previousButton": "Zurück"
             },
@@ -346,8 +346,6 @@
             "goToExamManagement": "Zur Klausurverwaltung gehen",
             "goToExamBack": "Gehe zurück, um die Prüfung weiterzumachen",
             "submitProgrammingExercise": "Weiter",
-            "submitOtherExercise": "Speichern & Weiter",
-            "submitLastExercise": "Speichern",
             "uploadFile": "Upload",
             "greeting": "Willkommen zu {{ title }}.",
             "finish": "Das ist das Ende von {{ title }}.",

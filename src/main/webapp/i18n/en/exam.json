@@ -331,12 +331,12 @@
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "exerciseType": "Type",
-            "examOverview": "Exam Overview",
             "examStatus": "Status",
             "examExercises": "Exam Exercises:",
             "exercisePoints": "Points",
             "exerciseName": "Name",
             "navigation": {
+                "exerciseButton": "Exercise {{ number }}: {{ title }}",
                 "nextButton": "Next",
                 "previousButton": "Previous"
             },
@@ -346,8 +346,6 @@
             "goToExamManagement": "Go to exam management page",
             "goToExamBack": "Go back to continue the exam",
             "submitProgrammingExercise": "Continue",
-            "submitOtherExercise": "Save & continue",
-            "submitLastExercise": "Save",
             "uploadFile": "Upload",
             "greeting": "Welcome to {{ title }}.",
             "finish": "This is the end of {{ title }}.",
