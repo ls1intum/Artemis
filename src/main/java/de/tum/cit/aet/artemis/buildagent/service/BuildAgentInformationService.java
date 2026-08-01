@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildRunnerType;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -45,6 +47,12 @@ public class BuildAgentInformationService {
      */
     private volatile String dockerVersion;
 
+    private volatile String buildRunnerVersion;
+
+    private volatile boolean buildRunnerAvailable;
+
+    private final BuildJobRunner buildJobRunner;
+
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
     private final GitProperties gitProperties;
@@ -58,11 +66,12 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties, BuildJobRunner buildJobRunner) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.buildJobRunner = buildJobRunner;
     }
 
     /**
@@ -80,35 +89,39 @@ public class BuildAgentInformationService {
      */
     @Scheduled(initialDelayString = "10000", fixedDelayString = "60000")
     public void updateDockerVersion() {
-        var dockerClient = buildAgentConfiguration.getDockerClient();
-        if (dockerClient == null) {
-            return;
+        updateBuildRunnerStatus();
+    }
+
+    /**
+     * Refreshes availability and version metadata for the configured build runner.
+     */
+    public void updateBuildRunnerStatus() {
+        var status = buildJobRunner.status();
+        boolean stateChanged = status.available() != buildRunnerAvailable;
+        boolean versionChanged = status.available() && !Objects.equals(status.version(), buildRunnerVersion);
+
+        if (buildJobRunner.type() == BuildRunnerType.DOCKER) {
+            buildAgentConfiguration.setDockerAvailable(status.available());
         }
-        boolean wasAvailable = buildAgentConfiguration.isDockerAvailable();
-        try {
-            String newVersion = dockerClient.versionCmd().exec().getVersion();
-            boolean stateChanged = !wasAvailable;
-            boolean versionChanged = !Objects.equals(newVersion, dockerVersion);
-            if (stateChanged) {
-                log.info("Docker is now available (version: {})", newVersion);
-                buildAgentConfiguration.setDockerAvailable(true);
-            }
-            if (versionChanged) {
-                log.info("Docker version: {}", newVersion);
-                dockerVersion = newVersion;
-            }
+
+        if (status.available()) {
             if (stateChanged || versionChanged) {
-                updateLocalBuildAgentInformation(false);
+                log.info("{} build runner is available (version: {})", buildJobRunner.type().displayName(), status.version());
+            }
+            buildRunnerVersion = status.version();
+            if (buildJobRunner.type() == BuildRunnerType.DOCKER) {
+                dockerVersion = status.version();
             }
         }
-        catch (Exception e) {
-            if (wasAvailable) {
-                log.warn("Docker is no longer available: {}", e.getMessage());
-            }
-            else {
-                log.debug("Docker is not available: {}", e.getMessage());
-            }
-            buildAgentConfiguration.setDockerAvailable(false);
+        else if (buildRunnerAvailable) {
+            log.warn("{} build runner is no longer available: {}", buildJobRunner.type().displayName(), status.message());
+        }
+        else {
+            log.debug("{} build runner is unavailable: {}", buildJobRunner.type().displayName(), status.message());
+        }
+        buildRunnerAvailable = status.available();
+        if (stateChanged || versionChanged) {
+            updateLocalBuildAgentInformation(false);
         }
     }
 
@@ -120,6 +133,10 @@ public class BuildAgentInformationService {
      */
     public String getDockerVersion() {
         return dockerVersion;
+    }
+
+    public String getBuildRunnerVersion() {
+        return buildRunnerVersion;
     }
 
     /**
@@ -244,7 +261,7 @@ public class BuildAgentInformationService {
         var timedOutBuilds = getTimedOutBuilds(agent, recentBuildJob);
 
         return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuilds, totalsBuilds, lastBuildDate, startDate, gitRevision,
-                consecutiveFailures, dockerVersion);
+                consecutiveFailures, dockerVersion, buildJobRunner.type().displayName(), buildRunnerVersion);
     }
 
     private ZonedDateTime getLastBuildDate(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {

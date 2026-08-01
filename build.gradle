@@ -378,6 +378,13 @@ dependencies {
     // Note: we explicitly use docker-java-transport-zerodep, because docker-java-transport-httpclient5 uses an outdated http5 version which is not compatible with Spring Boot >= 3.4.0
     implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
 
+    // LocalCI Kubernetes build runner. Artemis already uses Vert.x in other modules, so use the
+    // dedicated OkHttp transport to keep the Kubernetes client's transport isolated.
+    implementation("io.fabric8:kubernetes-client:${kubernetes_client_version}") {
+        exclude group: "io.fabric8", module: "kubernetes-httpclient-vertx"
+    }
+    implementation "io.fabric8:kubernetes-httpclient-okhttp:${kubernetes_client_version}"
+
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.28.0"
 

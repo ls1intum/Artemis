@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
@@ -68,9 +69,9 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
  * <strong>Failure handling</strong>
  * </p>
  * <ul>
- * <li>Timeouts: stop unresponsive containers and log guidance for students and instructors.</li>
- * <li>Exceptions: log details (incl. stack trace), stop containers, and complete futures exceptionally.</li>
- * <li>Cancellation: interrupt job execution (if running), stop containers, and clean up state.</li>
+ * <li>Timeouts: stop unresponsive executions and log guidance for students and instructors.</li>
+ * <li>Exceptions: log details (incl. stack trace), stop executions, and complete futures exceptionally.</li>
+ * <li>Cancellation: interrupt job execution (if running), stop it, and clean up state.</li>
  * </ul>
  */
 @Lazy(false)
@@ -90,7 +91,7 @@ public class BuildJobManagementService {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
-    private final BuildJobContainerService buildJobContainerService;
+    private final BuildJobRunner buildJobRunner;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -153,13 +154,6 @@ public class BuildJobManagementService {
     private boolean runBuildJobsAsynchronously;
 
     /**
-     * Prefix for Docker container names. Each build job's container is named "{prefix}{buildJobId}".
-     * This allows easy identification and management of build containers.
-     */
-    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
-    private String buildContainerPrefix;
-
-    /**
      * A map that contains all build jobs that are currently running.
      * The key is the id of the build job, the value is the future that will be completed with the build result.
      * This map is unique for each node and contains only the build jobs that are running on this node.
@@ -172,6 +166,12 @@ public class BuildJobManagementService {
      */
     private final Map<String, CompletableFuture<BuildResult>> runningFuturesWrapper = new ConcurrentHashMap<>();
 
+    /** Tracks when the submitted callable has actually left its cleanup block after cancellation. */
+    private final Map<String, BuildExecutionTracker> runningExecutionTrackers = new ConcurrentHashMap<>();
+
+    /** Keeps exact attempt resources available for conditional cleanup after a same-id handoff. */
+    private final Map<CompletableFuture<BuildResult>, BuildAttemptResources> buildAttemptResources = new ConcurrentHashMap<>();
+
     /**
      * A set that contains all build jobs that were cancelled by the user.
      * This set is unique for each node and contains only the build jobs that were cancelled on this node.
@@ -179,10 +179,10 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(DistributedDataAccessService distributedDataAccessService, BuildJobExecutionService buildJobExecutionService,
-            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
+            BuildAgentConfiguration buildAgentConfiguration, BuildJobRunner buildJobRunner, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
-        this.buildJobContainerService = buildJobContainerService;
+        this.buildJobRunner = buildJobRunner;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildLogsMap = buildLogsMap;
         this.taskScheduler = taskScheduler;
@@ -317,17 +317,25 @@ public class BuildJobManagementService {
      */
     public CompletableFuture<BuildResult> executeBuildJob(BuildJobQueueItem buildJobItem) throws LocalCIException {
 
-        // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = buildContainerPrefix + buildJobItem.id();
-
+        BuildExecutionTracker executionTracker = new BuildExecutionTracker();
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<BuildResult> buildJob = () -> buildJobExecutionService.runBuildJob(buildJobItem, containerName);
+        Callable<BuildResult> buildJob = () -> {
+            if (!executionTracker.beginExecution()) {
+                throw new CancellationException("Build execution was cancelled before it started");
+            }
+            try {
+                return buildJobExecutionService.runBuildJob(buildJobItem);
+            }
+            finally {
+                executionTracker.finishExecution();
+            }
+        };
 
         /*
          * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
          * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
          * artemis.continuous-integration.asynchronous environment variable.
-         * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
+         * Usually, when using asynchronous build jobs, it runs on the dedicated build result executor.
          * The future is stored in the runningFutures map so that it can be cancelled if needed.
          * We add a lock to prevent the job from being submitted even though it was cancelled.
          */
@@ -335,13 +343,14 @@ public class BuildJobManagementService {
         Future<BuildResult> future;
         try {
             if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id());
                 String msg = "Build job with id " + buildJobItem.id() + " was cancelled before it was submitted to the executor service.";
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
             future = buildAgentConfiguration.getBuildExecutor().submit(buildJob);
             runningFutures.put(buildJobItem.id(), future);
+            runningExecutionTrackers.put(buildJobItem.id(), executionTracker);
         }
         finally {
             jobLifecycleLock.unlock();
@@ -368,14 +377,15 @@ public class BuildJobManagementService {
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                    finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
+                    executionTracker.awaitTermination();
+                    finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id());
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(ex);
                     buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
                     throw new CompletionException(msg, ex);
                 }
                 else {
-                    finishBuildJobExceptionally(buildJobItem.id(), containerName, ex);
+                    finishBuildJobExceptionally(buildJobItem.id(), ex);
                     if (ex instanceof TimeoutException) {
                         // Cancel the underlying future to interrupt the build job that's still running.
                         // Without this, the build job continues running in the background and may create
@@ -388,11 +398,26 @@ public class BuildJobManagementService {
             }
         });
 
+        buildAttemptResources.put(futureResult, new BuildAttemptResources(buildJobItem.id(), future, executionTracker));
         runningFuturesWrapper.put(buildJobItem.id(), futureResult);
-        return futureResult.whenComplete(((result, throwable) -> {
-            runningFutures.remove(buildJobItem.id());
-            runningFuturesWrapper.remove(buildJobItem.id());
-        }));
+        return futureResult;
+    }
+
+    /**
+     * Releases local tracking after the queue processor has atomically claimed and handled the
+     * terminal result. Keeping the attempt registered until then allows a concurrent external
+     * cancellation to race against completion through {@link Future#cancel(boolean)} instead of
+     * falling into a gap between future completion and result publication.
+     *
+     * @param futureResult the exact result future returned for this attempt
+     */
+    void releaseBuildJob(CompletableFuture<BuildResult> futureResult) {
+        BuildAttemptResources resources = buildAttemptResources.remove(futureResult);
+        if (resources != null) {
+            runningFuturesWrapper.remove(resources.buildJobId(), futureResult);
+            runningFutures.remove(resources.buildJobId(), resources.future());
+            runningExecutionTrackers.remove(resources.buildJobId(), resources.executionTracker());
+        }
     }
 
     private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {
@@ -440,8 +465,7 @@ public class BuildJobManagementService {
      */
     private CompletableFuture<BuildResult> createCompletableFuture(Supplier<BuildResult> supplier) {
         if (runBuildJobsAsynchronously) {
-            // Just use the normal supplyAsync.
-            return CompletableFuture.supplyAsync(supplier);
+            return CompletableFuture.supplyAsync(supplier, buildAgentConfiguration.getBuildResultExecutor());
         }
         else {
             // Use a synchronous CompletableFuture, e.g. in the test environment.
@@ -463,11 +487,10 @@ public class BuildJobManagementService {
      * This method logs the error, provides user-friendly messaging for infrastructure issues,
      * and ensures the container is properly stopped.
      *
-     * @param buildJobId    The id of the build job that failed.
-     * @param containerName The name of the Docker container that was used to execute the build job.
-     * @param exception     The exception that occurred while building and testing the repository.
+     * @param buildJobId The id of the build job that failed.
+     * @param exception  The exception that occurred while building and testing the repository.
      */
-    private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
+    private void finishBuildJobExceptionally(String buildJobId, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
 
@@ -484,15 +507,7 @@ public class BuildJobManagementService {
             log.error(msg, exception);
         }
 
-        log.info("Getting ID of running container {} for cleanup after build job {} failure", containerName, buildJobId);
-        String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
-        if (containerId != null) {
-            log.info("Stopping container with ID {} after build job {} failed", containerId, buildJobId);
-            buildJobContainerService.stopUnresponsiveContainer(containerId);
-        }
-        else {
-            log.debug("No running container found with name {} for build job {}", containerName, buildJobId);
-        }
+        buildJobRunner.cancel(buildJobId);
     }
 
     /**
@@ -519,18 +534,34 @@ public class BuildJobManagementService {
      * @param buildJobId The id of the build job that should be cancelled.
      */
     void cancelBuildJob(String buildJobId) {
-        Future<BuildResult> future = runningFutures.get(buildJobId);
-        if (future != null) {
-            try {
-                cancelledBuildJobs.add(buildJobId);
-                future.cancel(true); // Attempt to interrupt the build job
+        jobLifecycleLock.lock();
+        try {
+            Future<BuildResult> future = runningFutures.get(buildJobId);
+            if (future != null) {
+                try {
+                    cancelledBuildJobs.add(buildJobId);
+                    boolean cancellationAccepted = future.cancel(true); // Attempt to interrupt the build job
+                    if (cancellationAccepted) {
+                        BuildExecutionTracker executionTracker = runningExecutionTrackers.get(buildJobId);
+                        if (executionTracker != null) {
+                            executionTracker.cancelBeforeStart();
+                        }
+                        buildJobRunner.cancel(buildJobId);
+                    }
+                    else {
+                        cancelledBuildJobs.remove(buildJobId);
+                    }
+                }
+                catch (CancellationException e) {
+                    log.warn("Build job already cancelled or completed for id {}", buildJobId);
+                }
             }
-            catch (CancellationException e) {
-                log.warn("Build job already cancelled or completed for id {}", buildJobId);
+            else {
+                log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
             }
         }
-        else {
-            log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
+        finally {
+            jobLifecycleLock.unlock();
         }
     }
 
@@ -539,12 +570,11 @@ public class BuildJobManagementService {
      *
      * @param repositoryUri the URI of the repository for which the build job was cancelled
      * @param buildJobId    The id of the cancelled build job
-     * @param containerName The name of the Docker container that was used to execute the build job.
      */
-    private void finishCancelledBuildJob(String repositoryUri, String buildJobId, String containerName) {
+    private void finishCancelledBuildJob(String repositoryUri, String buildJobId) {
         log.debug("Build job with id {} in repository {} was cancelled", buildJobId, repositoryUri);
 
-        buildJobContainerService.stopContainer(containerName);
+        buildJobRunner.cancel(buildJobId);
 
         cancelledBuildJobs.remove(buildJobId);
     }
@@ -562,5 +592,38 @@ public class BuildJobManagementService {
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return sw.toString();
+    }
+
+    static final class BuildExecutionTracker {
+
+        private final AtomicReference<ExecutionState> state = new AtomicReference<>(ExecutionState.NOT_STARTED);
+
+        private final CompletableFuture<Void> termination = new CompletableFuture<>();
+
+        boolean beginExecution() {
+            return state.compareAndSet(ExecutionState.NOT_STARTED, ExecutionState.RUNNING);
+        }
+
+        void finishExecution() {
+            state.set(ExecutionState.FINISHED);
+            termination.complete(null);
+        }
+
+        void cancelBeforeStart() {
+            if (state.compareAndSet(ExecutionState.NOT_STARTED, ExecutionState.CANCELLED_BEFORE_START)) {
+                termination.complete(null);
+            }
+        }
+
+        void awaitTermination() {
+            termination.join();
+        }
+
+        private enum ExecutionState {
+            NOT_STARTED, RUNNING, FINISHED, CANCELLED_BEFORE_START,
+        }
+    }
+
+    private record BuildAttemptResources(String buildJobId, Future<BuildResult> future, BuildExecutionTracker executionTracker) {
     }
 }

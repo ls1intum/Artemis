@@ -23,11 +23,22 @@ import org.jspecify.annotations.Nullable;
  * @param gitRevision              the Git commit hash of the build agent's code version, or null if unavailable
  * @param consecutiveBuildFailures the number of consecutive build failures (used for auto-pause functionality)
  * @param dockerVersion            the version of Docker running on this build agent, or null if unavailable
+ * @param buildRunner              the configured build runner display name
+ * @param buildRunnerVersion       the version reported by the configured build runner
  */
 public record BuildAgentDetailsDTO(long averageBuildDuration, long successfulBuilds, long failedBuilds, long cancelledBuilds, long timedOutBuild, long totalBuilds,
-        @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion)
-        implements Serializable {
+        @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion,
+        @NotNull String buildRunner, @Nullable String buildRunnerVersion) implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
+
+    /**
+     * Compatibility constructor for callers created before runner metadata was added.
+     */
+    public BuildAgentDetailsDTO(long averageBuildDuration, long successfulBuilds, long failedBuilds, long cancelledBuilds, long timedOutBuild, long totalBuilds,
+            @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion) {
+        this(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuild, totalBuilds, lastBuildDate, startDate, gitRevision, consecutiveBuildFailures,
+                dockerVersion, dockerVersion != null ? "Docker" : "Unknown", dockerVersion);
+    }
 }

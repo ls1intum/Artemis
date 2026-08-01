@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
@@ -41,8 +42,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
+import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -117,6 +119,13 @@ public class SharedQueueProcessingService {
      */
     private final Map<String, Integer> staleJobDetectionCounts = new ConcurrentHashMap<>();
 
+    /**
+     * Tracks the exact local attempt for each running build. The lifecycle marker lets internal
+     * handoffs claim an attempt before cancellation, so its completion callback cannot publish a
+     * terminal result for a job that has deliberately been returned to the queue.
+     */
+    private final Map<String, BuildAttemptState> activeBuildAttempts = new ConcurrentHashMap<>();
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobManagementService buildJobManagementService;
@@ -131,9 +140,7 @@ public class SharedQueueProcessingService {
 
     private final TaskScheduler taskScheduler;
 
-    private final BuildAgentDockerService buildAgentDockerService;
-
-    private final BuildJobContainerService buildJobContainerService;
+    private final BuildJobRunner buildJobRunner;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -185,9 +192,6 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
-    @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
-    private String buildContainerPrefix;
-
     /** @return true if the build agent is paused, false otherwise */
     public boolean isPaused() {
         return isPaused.get();
@@ -213,15 +217,14 @@ public class SharedQueueProcessingService {
     }
 
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
-            TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildJobContainerService buildJobContainerService,
-            BuildAgentInformationService buildAgentInformationService, DistributedDataAccessService distributedDataAccessService) {
+            TaskScheduler taskScheduler, BuildJobRunner buildJobRunner, BuildAgentInformationService buildAgentInformationService,
+            DistributedDataAccessService distributedDataAccessService) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentInformationService = buildAgentInformationService;
         this.taskScheduler = taskScheduler;
-        this.buildAgentDockerService = buildAgentDockerService;
-        this.buildJobContainerService = buildJobContainerService;
+        this.buildJobRunner = buildJobRunner;
         this.distributedDataAccessService = distributedDataAccessService;
     }
 
@@ -443,12 +446,12 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Detects stale build jobs by verifying that running builds have corresponding Docker containers.
+     * Detects stale build jobs by verifying that running builds have corresponding runner resources.
      * This scheduled task runs every 5 seconds to identify and clean up orphaned/stuck builds.
      * <p>
      * A build job is considered stale if:
      * <ul>
-     * <li>It is tracked as running in the local job management service, but has no Docker container</li>
+     * <li>It is tracked as running in the local job management service, but has no active execution resource</li>
      * <li>It exists in the distributed processing jobs map but not in the local running jobs</li>
      * </ul>
      * <p>
@@ -472,12 +475,9 @@ public class SharedQueueProcessingService {
             // Clean up tracking for jobs that are no longer running
             staleJobDetectionCounts.keySet().removeIf(jobId -> !localRunningJobIds.contains(jobId));
 
-            // Check each local running job against Docker containers
+            // Check each local running job against the selected runner.
             for (String jobId : localRunningJobIds) {
-                String containerName = buildContainerPrefix + jobId;
-                String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
-
-                if (containerId == null) {
+                if (!buildJobRunner.isActive(jobId)) {
                     // Job is tracked as running but has no container - this could be:
                     // 1. Container was killed externally
                     // 2. Container startup failed but job wasn't cleaned up
@@ -502,40 +502,33 @@ public class SharedQueueProcessingService {
                         log.error("Build job {} has been stale for {} consecutive checks (~{} seconds). Force-cancelling and requeuing.", jobId, consecutiveCount,
                                 consecutiveCount * 5);
 
-                        // Cancel the build job properly so it's recognized as CANCELLED, not FAILED.
-                        // This adds the job to cancelledBuildJobs set which the exceptionally handler checks.
-                        // IMPORTANT: cancelBuildJob() calls future.cancel(true), which completes the future
-                        // with a CancellationException. This triggers the exceptionally handler (see processBuild),
-                        // which calls removeProcessingJob() to decrement localProcessingJobs.
-                        // We must NOT decrement localProcessingJobs here to avoid a double decrement.
-                        buildJobManagementService.cancelBuildJob(jobId);
-
-                        // Remove from distributed processing jobs map immediately (don't wait for exceptionally handler).
-                        // The exceptionally handler's removeProcessingJob() will call remove() again, but that's
-                        // a no-op since the job is already removed from the map.
-                        BuildJobQueueItem staleJob = distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
-                        if (staleJob != null && staleJob.retryCount() < 5) {
-                            BuildJobQueueItem requeuedJob = new BuildJobQueueItem(staleJob, new BuildAgentDTO("", "", ""), staleJob.retryCount() + 1);
-                            log.info("Requeuing stale build job {} with retry count {}", jobId, requeuedJob.retryCount());
-                            distributedDataAccessService.getDistributedBuildJobQueue().add(requeuedJob);
+                        if (job != null && job.retryCount() < 5) {
+                            if (cancelAndRequeueInternalAttempt(job, job.retryCount() + 1)) {
+                                log.info("Requeuing stale build job {} with retry count {}", jobId, job.retryCount() + 1);
+                            }
+                            else {
+                                log.info("Stale build job {} completed while it was being claimed for requeue", jobId);
+                            }
                         }
-                        else if (staleJob != null) {
-                            log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, staleJob.retryCount());
+                        else {
+                            buildJobManagementService.cancelBuildJob(jobId);
+                            distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
+                            if (job != null) {
+                                log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, job.retryCount());
+                            }
                         }
 
-                        // Clean up stale detection state. Note: We do NOT decrement localProcessingJobs here
-                        // because the exceptionally handler will do it when the cancelled future completes.
-                        // See the documentation on removeProcessingJob() for the counter management contract.
+                        // The completion callback remains responsible for decrementing the local counter.
                         staleJobDetectionCounts.remove(jobId);
                         buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
                     }
                     else {
-                        log.warn("Stale build job detected: job {} has no running Docker container '{}' (detection count: {}/{})", jobId, containerName, consecutiveCount,
-                                MAX_CONSECUTIVE_STALE_DETECTIONS);
+                        log.warn("Stale build job detected: job {} has no active {} execution (detection count: {}/{})", jobId, buildJobRunner.type().displayName(),
+                                consecutiveCount, MAX_CONSECUTIVE_STALE_DETECTIONS);
                     }
                 }
                 else {
-                    // Job has a container - reset stale detection count
+                    // Job has an active execution resource - reset stale detection count.
                     staleJobDetectionCounts.remove(jobId);
                 }
             }
@@ -809,9 +802,28 @@ public class SharedQueueProcessingService {
 
         log.info("Processing build job: {}", buildJob);
 
-        CompletableFuture<BuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
+        BuildAttemptState attemptState = new BuildAttemptState(buildJob);
+        if (activeBuildAttempts.putIfAbsent(buildJob.id(), attemptState) != null) {
+            throw new RejectedExecutionException("Build job " + buildJob.id() + " already has an active local attempt");
+        }
+
+        CompletableFuture<BuildResult> futureResult;
+        try {
+            futureResult = buildJobManagementService.executeBuildJob(buildJob);
+        }
+        catch (RuntimeException e) {
+            activeBuildAttempts.remove(buildJob.id(), attemptState);
+            throw e;
+        }
+
         futureResult.thenAccept(buildResult -> {
+            boolean internallyRequeued = attemptState.beginCompletion();
             try {
+                if (internallyRequeued) {
+                    finishInternallyRequeuedAttempt(buildJob, attemptState);
+                    return;
+                }
+
                 log.debug("Build job completed: {}", buildJob);
                 JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
                         buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
@@ -824,7 +836,7 @@ public class SharedQueueProcessingService {
                 buildLogsMap.removeBuildLogs(buildJob.id());
 
                 ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-                enqueueBuildResult(resultQueueItem);
+                enqueueBuildResult(resultQueueItem, true);
                 // This is the single point where localProcessingJobs is decremented for successful jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
                 removeProcessingJob(buildJob);
@@ -846,10 +858,20 @@ public class SharedQueueProcessingService {
                     log.error("Failed to check for next build after error in success handler", ignored);
                 }
             }
+            finally {
+                activeBuildAttempts.remove(buildJob.id(), attemptState);
+                buildJobManagementService.releaseBuildJob(futureResult);
+            }
         });
 
         futureResult.exceptionally(ex -> {
+            boolean internallyRequeued = attemptState.beginCompletion();
             try {
+                if (internallyRequeued) {
+                    finishInternallyRequeuedAttempt(buildJob, attemptState);
+                    return null;
+                }
+
                 log.debug("Build job completed with exception: {}", buildJob, ex);
 
                 ZonedDateTime completionDate = ZonedDateTime.now();
@@ -888,7 +910,7 @@ public class SharedQueueProcessingService {
                         buildLogs, false);
 
                 ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, finishedBuildJob, buildLogs, ex);
-                enqueueBuildResult(resultQueueItem);
+                enqueueBuildResult(resultQueueItem, true);
                 // This is the single point where localProcessingJobs is decremented for failed/cancelled jobs.
                 // Other code (e.g., stale job cleanup) must NOT decrement the counter directly.
                 removeProcessingJob(buildJob);
@@ -913,19 +935,75 @@ public class SharedQueueProcessingService {
                     log.error("Failed to check for next build after error in exception handler", ignored);
                 }
             }
+            finally {
+                activeBuildAttempts.remove(buildJob.id(), attemptState);
+                buildJobManagementService.releaseBuildJob(futureResult);
+            }
             return null;
         });
+    }
+
+    private void finishInternallyRequeuedAttempt(BuildJobQueueItem buildJob, BuildAttemptState attemptState) {
+        activeBuildAttempts.remove(buildJob.id(), attemptState);
+        localProcessingJobs.decrementAndGet();
+        log.info("Suppressed terminal result for internally requeued build attempt {} retry {}", buildJob.id(), buildJob.retryCount());
+        buildLogsMap.removeBuildLogs(buildJob.id());
+        distributedDataAccessService.getDistributedBuildJobQueue().add(attemptState.requeuedBuildJob());
+        buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+        if (!isPaused.get()) {
+            checkAvailabilityAndProcessNextBuild();
+        }
+    }
+
+    /**
+     * Claims the exact local attempt for an internal handoff, removes only that attempt from the
+     * processing map, cancels its execution, and adds a fresh attempt to the shared queue. The
+     * lifecycle claim is made before cancellation so the completion callback cannot race ahead and
+     * publish a cancellation result.
+     *
+     * @param distributedAttempt the currently registered processing attempt
+     * @param newRetryCount      retry count for the queued replacement
+     * @return whether this method claimed and requeued the attempt
+     */
+    private boolean cancelAndRequeueInternalAttempt(BuildJobQueueItem distributedAttempt, int newRetryCount) {
+        BuildAttemptState attemptState = activeBuildAttempts.get(distributedAttempt.id());
+        if (attemptState == null || !sameAttempt(attemptState.buildJob, distributedAttempt)) {
+            return false;
+        }
+
+        BuildJobQueueItem requeuedJob = new BuildJobQueueItem(distributedAttempt, new BuildAgentDTO("", "", ""), newRetryCount);
+        var processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
+        processingJobs.lock(distributedAttempt.id());
+        try {
+            BuildJobQueueItem currentAttempt = processingJobs.get(distributedAttempt.id());
+            if (!sameAttempt(currentAttempt, distributedAttempt) || !attemptState.requestInternalRequeue(requeuedJob)) {
+                return false;
+            }
+            processingJobs.remove(distributedAttempt.id());
+        }
+        finally {
+            processingJobs.unlock(distributedAttempt.id());
+        }
+
+        buildJobManagementService.cancelBuildJob(distributedAttempt.id());
+        return true;
     }
 
     /**
      * Enqueue the build result to the distributed build result queue.
      * If the build agent is paused, the result will not be added to the queue.
      *
-     * @param resultQueueItem the build result to enqueue
+     * @param resultQueueItem        the build result to enqueue
+     * @param localCompletionClaimed whether this local attempt won its completion race
      */
-    private void enqueueBuildResult(ResultQueueItem resultQueueItem) {
+    private void enqueueBuildResult(ResultQueueItem resultQueueItem, boolean localCompletionClaimed) {
         // Log build duration for performance monitoring
         var finishedJob = resultQueueItem.buildJobQueueItem();
+        BuildJobQueueItem currentAttempt = distributedDataAccessService.getDistributedProcessingJobs().get(finishedJob.id());
+        if (!shouldPublishResult(currentAttempt, finishedJob, localCompletionClaimed)) {
+            log.warn("Discarding result for superseded build attempt {} retry {}", finishedJob.id(), finishedJob.retryCount());
+            return;
+        }
         var timingInfo = finishedJob.jobTimingInfo();
         if (timingInfo.buildStartDate() != null && timingInfo.buildCompletionDate() != null) {
             double durationSeconds = java.time.Duration.between(timingInfo.buildStartDate(), timingInfo.buildCompletionDate()).toMillis() / 1000.0;
@@ -956,8 +1034,33 @@ public class SharedQueueProcessingService {
      * @param buildJob the build job to remove
      */
     private void removeProcessingJob(BuildJobQueueItem buildJob) {
-        distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
+        var processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
+        processingJobs.lock(buildJob.id());
+        try {
+            if (isCurrentAttempt(buildJob)) {
+                processingJobs.remove(buildJob.id());
+            }
+        }
+        finally {
+            processingJobs.unlock(buildJob.id());
+        }
         localProcessingJobs.decrementAndGet();
+    }
+
+    private boolean isCurrentAttempt(BuildJobQueueItem buildJob) {
+        BuildJobQueueItem current = distributedDataAccessService.getDistributedProcessingJobs().get(buildJob.id());
+        return sameAttempt(current, buildJob);
+    }
+
+    static boolean shouldPublishResult(BuildJobQueueItem currentAttempt, BuildJobQueueItem finishedJob, boolean localCompletionClaimed) {
+        return sameAttempt(currentAttempt, finishedJob) || currentAttempt == null && (localCompletionClaimed || finishedJob.status() == BuildStatus.CANCELLED);
+    }
+
+    private static boolean sameAttempt(BuildJobQueueItem current, BuildJobQueueItem buildJob) {
+        return current != null && current.retryCount() == buildJob.retryCount() && current.buildAgent() != null && buildJob.buildAgent() != null
+                && Objects.equals(current.buildAgent().name(), buildJob.buildAgent().name())
+                && Objects.equals(current.jobTimingInfo() != null ? current.jobTimingInfo().buildStartDate() : null,
+                        buildJob.jobTimingInfo() != null ? buildJob.jobTimingInfo().buildStartDate() : null);
     }
 
     /**
@@ -1071,9 +1174,9 @@ public class SharedQueueProcessingService {
         Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
         List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod).values()
                 .stream().toList();
-        runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
-        distributedDataAccessService.getDistributedBuildJobQueue().addAll(runningBuildJobsAfterGracePeriod);
-        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
+        List<String> requeuedBuildJobIds = runningBuildJobsAfterGracePeriod.stream().filter(job -> cancelAndRequeueInternalAttempt(job, job.retryCount() + 1))
+                .map(BuildJobQueueItem::id).toList();
+        log.info("Cancelled running build jobs and added replacement attempts back to the queue with Ids {}", requeuedBuildJobIds);
         log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
     }
 
@@ -1133,8 +1236,8 @@ public class SharedQueueProcessingService {
             // Reset the consecutive failure counter so that previous failures do not penalize new runs.
             consecutiveBuildJobFailures.set(0);
 
-            // Cleanup any stale Docker containers from previous runs or aborted jobs.
-            buildAgentDockerService.cleanUpContainers();
+            // Cleanup stale execution resources from previous runs or aborted jobs.
+            buildJobRunner.cleanupOrphans();
 
             // To avoid multiple listeners and scheduled tasks, remove any existing ones first.
             // Note: We only remove the queue listener and scheduled task - the topic listeners
@@ -1185,13 +1288,15 @@ public class SharedQueueProcessingService {
      * @param throwable throwable to check
      * @return {@code true} if the throwable is caused by local CI failing to pull the docker image, {@code false} otherwise
      */
-    private boolean isCausedByImagePullFailedException(Throwable throwable) {
-        Throwable cause = throwable.getCause();
-        if (!(cause instanceof ExecutionException)) {
-            return false;
+    static boolean isCausedByImagePullFailedException(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof DockerImagePullException) {
+                return true;
+            }
+            current = current.getCause();
         }
-        Throwable rootCause = cause.getCause();
-        return rootCause instanceof LocalCIException && rootCause.getMessage() != null && rootCause.getMessage().contains("Could not pull Docker image");
+        return false;
     }
 
     /**
@@ -1216,6 +1321,40 @@ public class SharedQueueProcessingService {
     private boolean isCausedByTimeoutException(Throwable throwable, String buildJobId) {
         String timeoutMsg = "Build job with id " + buildJobId + " was timed out";
         return throwable.getCause() instanceof TimeoutException || throwable.getMessage().equals(timeoutMsg);
+    }
+
+    static final class BuildAttemptState {
+
+        private final BuildJobQueueItem buildJob;
+
+        private final AtomicReference<AttemptLifecycle> lifecycle = new AtomicReference<>(AttemptLifecycle.RUNNING);
+
+        private volatile BuildJobQueueItem requeuedBuildJob;
+
+        BuildAttemptState(BuildJobQueueItem buildJob) {
+            this.buildJob = buildJob;
+        }
+
+        boolean requestInternalRequeue(BuildJobQueueItem requeuedBuildJob) {
+            this.requeuedBuildJob = requeuedBuildJob;
+            if (lifecycle.compareAndSet(AttemptLifecycle.RUNNING, AttemptLifecycle.INTERNAL_REQUEUE)) {
+                return true;
+            }
+            this.requeuedBuildJob = null;
+            return false;
+        }
+
+        boolean beginCompletion() {
+            return lifecycle.getAndSet(AttemptLifecycle.COMPLETING) == AttemptLifecycle.INTERNAL_REQUEUE;
+        }
+
+        BuildJobQueueItem requeuedBuildJob() {
+            return Objects.requireNonNull(requeuedBuildJob);
+        }
+
+        private enum AttemptLifecycle {
+            RUNNING, INTERNAL_REQUEUE, COMPLETING,
+        }
     }
 
     /**

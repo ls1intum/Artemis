@@ -16,6 +16,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 
 @Profile(PROFILE_CORE)
@@ -29,9 +30,12 @@ public class JWTCookieService {
 
     private final Environment environment;
 
-    public JWTCookieService(TokenProvider tokenProvider, Environment environment) {
+    private final ArtemisProperties artemisProperties;
+
+    public JWTCookieService(TokenProvider tokenProvider, Environment environment, ArtemisProperties artemisProperties) {
         this.tokenProvider = tokenProvider;
         this.environment = environment;
+        this.artemisProperties = artemisProperties;
     }
 
     /**
@@ -97,7 +101,8 @@ public class JWTCookieService {
     private ResponseCookie buildJWTCookie(String jwt, Duration duration) {
 
         Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-        boolean isSecure = !activeProfiles.contains(DEVELOPMENT_PROFILE);
+        Boolean configuredCookieSecure = artemisProperties.getSecurity().getAuthentication().getJwt().getCookieSecure();
+        boolean isSecure = configuredCookieSecure != null ? configuredCookieSecure : !activeProfiles.contains(DEVELOPMENT_PROFILE);
 
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("Lax") // Must be Lax to allow navigation links to Artemis to work

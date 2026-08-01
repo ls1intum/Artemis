@@ -34,4 +34,6 @@ export class BuildAgentDetails {
     public gitRevision?: string;
     public consecutiveBuildFailures?: number;
     public dockerVersion?: string;
+    public buildRunner?: string;
+    public buildRunnerVersion?: string;
 }

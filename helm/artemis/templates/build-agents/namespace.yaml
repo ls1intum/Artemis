@@ -1,0 +1,9 @@
+{{- if and .Values.buildAgents.enabled .Values.buildAgents.createNamespace (ne .Values.buildAgents.namespace .Release.Namespace) }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.buildAgents.namespace }}
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    artemis.cit.tum.de/localci-build-namespace: "true"
+{{- end }}
