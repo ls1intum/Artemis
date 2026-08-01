@@ -78,7 +78,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
 
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         examUtilService.addExam(course1);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
@@ -103,7 +103,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_titleChanged_shouldNotReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setTitle("New title");
 
@@ -115,7 +115,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_changeDateSubSecondPrecision_shouldNotReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
         ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
@@ -132,7 +132,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_visibleAndStartDateChanged_shouldReschedule() throws Exception {
         // Add a programming exercise to the exam and change the dates in order to invoke a rescheduling
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
 
         ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
@@ -148,7 +148,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_visibleDateChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
 
@@ -160,7 +160,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_rescheduleProgramming_gracePeriodChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingEx = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setGracePeriod(examWithProgrammingEx.getGracePeriod() + 60);
 
@@ -174,7 +174,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
     void testImportExamWithSingleProgrammingExercise_successful() throws Exception {
         programmingExerciseTestService.setup(this, versionControlService);
 
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);

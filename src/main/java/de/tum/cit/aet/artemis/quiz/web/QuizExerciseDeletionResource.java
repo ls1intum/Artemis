@@ -75,7 +75,7 @@ public class QuizExerciseDeletionResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
 
         // Notify AtlasML about the quiz exercise deletion before actual deletion
         notifyAtlasML(quizExercise, OperationTypeDTO.DELETE, "quiz exercise deletion");
