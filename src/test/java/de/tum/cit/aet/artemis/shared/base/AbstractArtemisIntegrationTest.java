@@ -8,18 +8,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.util.FS;
-import org.eclipse.jgit.util.SystemReader;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -209,14 +203,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     private static volatile boolean fileUploadPathInitialized = false;
 
-    @BeforeAll
-    static void setup() {
-        // Configure JGit to skip reading system-level git config files.
-        // This prevents "File is too large" errors when system gitconfig files (e.g., /opt/homebrew/etc/gitconfig)
-        // exceed JGit's default 5MB file size limit.
-        configureJGitSystemReader();
-    }
-
     @BeforeEach
     void initFileUploadPath() {
         // Set the file upload path from configuration (only once across all tests)
@@ -224,95 +210,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
             FilePathConverter.setFileUploadPath(fileUploadPath);
             fileUploadPathInitialized = true;
         }
-    }
-
-    /**
-     * Configures JGit to use a custom SystemReader that skips system-level git config files.
-     * This is necessary because system gitconfig files can exceed JGit's default file size limit,
-     * causing test failures on some machines.
-     */
-    private static void configureJGitSystemReader() {
-        final var defaultReader = getSystemReader();
-
-        SystemReader.setInstance(new SystemReader() {
-
-            @Override
-            public String getHostname() {
-                return defaultReader.getHostname();
-            }
-
-            @Override
-            public String getenv(String variable) {
-                return defaultReader.getenv(variable);
-            }
-
-            @Override
-            public String getProperty(String key) {
-                return defaultReader.getProperty(key);
-            }
-
-            @Override
-            public FileBasedConfig openUserConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                return defaultReader.openUserConfig(parent, fs);
-            }
-
-            @Override
-            public FileBasedConfig openSystemConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                // Return an empty config instead of reading the potentially large system gitconfig
-                return new FileBasedConfig(parent, null, fs) {
-
-                    @Override
-                    public void load() {
-                        // Don't load anything - skip system config
-                    }
-
-                    @Override
-                    public boolean isOutdated() {
-                        return false;
-                    }
-                };
-            }
-
-            @Override
-            public FileBasedConfig openJGitConfig(org.eclipse.jgit.lib.Config parent, FS fs) {
-                return defaultReader.openJGitConfig(parent, fs);
-            }
-
-            @Override
-            public Instant now() {
-                return defaultReader.now();
-            }
-
-            @Override
-            public ZoneOffset getTimeZoneAt(Instant when) {
-                return defaultReader.getTimeZoneAt(when);
-            }
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public long getCurrentTime() {
-                return defaultReader.getCurrentTime();
-            }
-
-            @SuppressWarnings("deprecation")
-            @Override
-            public int getTimezone(long when) {
-                return defaultReader.getTimezone(when);
-            }
-        });
-    }
-
-    private static @NonNull SystemReader getSystemReader() {
-        SystemReader defaultReader = SystemReader.getInstance();
-
-        // Force initialization of static platform detection fields before calling setInstance().
-        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
-        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
-        // during parallel test execution, causing NullPointerException.
-        defaultReader.isMacOS();
-        defaultReader.isWindows();
-        defaultReader.isLinux();
-        return defaultReader;
     }
 
     @BeforeEach
