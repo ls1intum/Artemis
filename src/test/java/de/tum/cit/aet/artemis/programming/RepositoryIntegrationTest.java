@@ -43,6 +43,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
@@ -98,6 +100,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private final String currentLocalFileContent = "testContent";
 
     private final byte[] currentLocalBinaryFileContent = { (byte) 0b10101010, (byte) 0b11001100, (byte) 0b11110000 };
+
+    private final String textFileWithBinaryExtensionName = "gradlew.sh";
+
+    private final String textFileWithBinaryExtensionContent = "#!/bin/sh\necho hello\n";
 
     private final String currentLocalFolderName = "currentFolderName";
 
@@ -276,15 +282,43 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFilesWithContentSkipsBinaryFilesEvenWithoutOmitBinaries() throws Exception {
-        // The seeded repository contains a .jar whose bytes are not valid UTF-8. Such a file can never be part of the
-        // response, because the content is returned as a String. It is therefore skipped up front rather than being
-        // read, failing to decode, and producing a log entry for an entirely expected outcome.
+    void testGetFilesWithContentSkipsUndecodableFilesWithoutWarning() throws Exception {
+        // The seeded repository contains a .jar whose bytes are not valid UTF-8. It can never be part of the response,
+        // because the content is returned as a String, so it is skipped. That is an entirely expected outcome and must
+        // not be reported as a problem: a Gradle wrapper jar alone used to produce a steady stream of log entries.
+        Logger repositoryServiceLogger = (Logger) LoggerFactory.getLogger(RepositoryService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        repositoryServiceLogger.addAppender(appender);
+        try {
+            var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
+
+            assertThat(files).isNotEmpty();
+            // case-insensitive, because the extension classifier and the decoding both are
+            assertThat(files.keySet()).noneMatch(file -> file.toLowerCase().endsWith(".jar"));
+            assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+            assertThat(appender.list).as("skipping content that is not valid UTF-8 must not be logged as a problem")
+                    .noneMatch(event -> event.getLevel().isGreaterOrEqual(Level.WARN) && event.getFormattedMessage().contains("could not be read"));
+        }
+        finally {
+            repositoryServiceLogger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithContentKeepsTextFilesWithBinaryExtensions() throws Exception {
+        // The extension classifier also lists formats that are plain text (.sh, .bat, .ll, .wast, .hex). Those must
+        // still be returned when the caller did not ask for binaries to be omitted, otherwise the code editor would
+        // silently lose them.
         var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
 
-        assertThat(files).isNotEmpty();
-        assertThat(files.keySet()).noneMatch(file -> file.endsWith(".jar"));
-        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+        assertThat(files).containsEntry(textFileWithBinaryExtensionName, textFileWithBinaryExtensionContent);
+        // and it is still omitted when the caller asks for binaries to be left out
+        var withoutBinaries = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content?omitBinaries=true", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(withoutBinaries).doesNotContainKey(textFileWithBinaryExtensionName);
     }
 
     @Test
@@ -1172,6 +1206,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         FileUtils.writeStringToFile(workingDir.resolve(currentLocalFileName).toFile(), currentLocalFileContent, StandardCharsets.UTF_8);
         FileUtils.writeByteArrayToFile(workingDir.resolve(currentLocalFileName + ".jar").toFile(), currentLocalBinaryFileContent);
+        // .sh is on the binary extension list but is plain text, so it must survive when binaries are not omitted
+        FileUtils.writeStringToFile(workingDir.resolve(textFileWithBinaryExtensionName).toFile(), textFileWithBinaryExtensionContent, StandardCharsets.UTF_8);
         Path folderPath = workingDir.resolve(currentLocalFolderName);
         Files.createDirectories(folderPath);
         FileUtils.writeStringToFile(folderPath.resolve(".keep").toFile(), "", java.nio.charset.StandardCharsets.UTF_8);
