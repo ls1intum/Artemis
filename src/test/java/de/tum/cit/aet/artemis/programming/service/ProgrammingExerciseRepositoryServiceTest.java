@@ -207,13 +207,83 @@ class ProgrammingExerciseRepositoryServiceTest {
         assertThat(Files.readString(repoPath.resolve("settings.gradle"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
     }
 
+    @Test
+    void setupBuildToolProjectFile_blackbox_pointsTheSettingsMirrorAtTheConfiguredMirror() throws Exception {
+        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        Path repoPath = blackboxTestRepository();
+
+        programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(true));
+
+        // The settings file mirrors "*", so it overrides the pom repositories: unless its URL is switched over too, the
+        // configured mirror has no effect on black-box builds.
+        String localSettings = Files.readString(repoPath.resolve(".mvn").resolve("local-settings.xml"));
+        assertThat(localSettings).contains("${mavenCentralMirrorUrl}").doesNotContain("https://repo1.maven.org/maven2/").doesNotContain("%maven-central-mirror")
+                .doesNotContain("%maven-central-fallback");
+        assertThat(Files.readString(repoPath.resolve("pom.xml"))).contains("artemis-maven-central-mirror").doesNotContain("%maven-central-mirror");
+    }
+
+    @Test
+    void setupBuildToolProjectFile_blackbox_keepsMavenCentralWhenNoMirrorIsConfigured() throws Exception {
+        Path repoPath = blackboxTestRepository();
+
+        programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(false));
+
+        // Without a configured mirror the settings file has to keep its default Maven Central URL - a mirror without a
+        // URL, or one holding the literal placeholder, would break every black-box build.
+        String localSettings = Files.readString(repoPath.resolve(".mvn").resolve("local-settings.xml"));
+        assertThat(localSettings).contains("https://repo1.maven.org/maven2/").doesNotContain("${mavenCentralMirrorUrl}").doesNotContain("%maven-central-mirror")
+                .doesNotContain("%maven-central-fallback");
+        assertThat(localSettings).contains("<mirrorOf>*</mirrorOf>");
+        assertThat(Files.readString(repoPath.resolve("pom.xml"))).doesNotContain("artemis-maven-central-mirror").doesNotContain("${mavenCentralMirrorUrl}");
+    }
+
+    @Test
+    void replacePlaceholders_blackbox_insertsTheConfiguredMirrorUrlIntoTheSettingsFile() throws Exception {
+        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        Path repoPath = blackboxTestRepository();
+        programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(true));
+
+        programmingExerciseRepositoryService.replacePlaceholders(blackboxExercise(), mockRepository(repoPath));
+
+        assertThat(Files.readString(repoPath.resolve(".mvn").resolve("local-settings.xml"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
+        assertThat(Files.readString(repoPath.resolve("pom.xml"))).contains(MIRROR_URL).doesNotContain("${mavenCentralMirrorUrl}");
+    }
+
     private static Map<String, Boolean> mirrorSections(boolean mirrorConfigured) {
         Map<String, Boolean> sections = new HashMap<>();
         sections.put("maven-central-mirror", mirrorConfigured);
+        sections.put("maven-central-fallback", !mirrorConfigured);
         sections.put("static-code-analysis", false);
         sections.put("non-sequential", true);
         sections.put("sequential", false);
         return sections;
+    }
+
+    /**
+     * Creates a repository from the actual Maven black-box test template, so the assertions cover the shipped pom and
+     * the shipped .mvn/local-settings.xml (the file Maven is pinned to via .mvn/maven.config) rather than a copy of
+     * their markers that could drift from them.
+     */
+    private Path blackboxTestRepository() throws Exception {
+        Path repoPath = tempDir.resolve("blackbox-repo");
+        Files.createDirectories(repoPath.resolve(".mvn"));
+        copyTemplateResource("pom.xml", repoPath.resolve("pom.xml"));
+        copyTemplateResource(".mvn/local-settings.xml", repoPath.resolve(".mvn").resolve("local-settings.xml"));
+        return repoPath;
+    }
+
+    private static void copyTemplateResource(String relativePath, Path target) throws Exception {
+        String resource = "templates/java/test/blackbox/projectTemplate/" + relativePath;
+        try (var stream = ProgrammingExerciseRepositoryServiceTest.class.getClassLoader().getResourceAsStream(resource)) {
+            assertThat(stream).as("black-box template resource %s must exist", resource).isNotNull();
+            FileUtils.copyInputStreamToFile(stream, target.toFile());
+        }
+    }
+
+    private static ProgrammingExercise blackboxExercise() {
+        ProgrammingExercise exercise = javaExercise();
+        exercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
+        return exercise;
     }
 
     /**

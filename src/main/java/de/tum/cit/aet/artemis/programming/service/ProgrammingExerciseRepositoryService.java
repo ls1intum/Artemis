@@ -58,6 +58,10 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String SETTINGS_GRADLE = "settings.gradle";
 
+    private static final String MAVEN_DIR = ".mvn";
+
+    private static final String MAVEN_LOCAL_SETTINGS = "local-settings.xml";
+
     private static final String MAVEN_CENTRAL_MIRROR_URL_PLACEHOLDER = "${mavenCentralMirrorUrl}";
 
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
@@ -497,6 +501,9 @@ public class ProgrammingExerciseRepositoryService {
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
         // Keep or delete the Maven Central mirror declarations, depending on whether this instance configured one
         sectionsMap.put("maven-central-mirror", isMavenCentralMirrorConfigured());
+        // Complement of the above: the black-box settings file has to keep a mirror URL either way, so it falls back to
+        // Maven Central when no mirror is configured instead of dropping the declaration.
+        sectionsMap.put("maven-central-fallback", !isMavenCentralMirrorConfigured());
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -611,6 +618,15 @@ public class ProgrammingExerciseRepositoryService {
         final Path settingsGradlePath = repoLocalPath.resolve(SETTINGS_GRADLE).toAbsolutePath();
         if (Files.exists(settingsGradlePath)) {
             FileUtil.replacePlaceholderSections(settingsGradlePath, activeFeatures);
+        }
+
+        // The Maven black-box template pins Maven to its own .mvn/local-settings.xml, which mirrors "*" and therefore
+        // overrides the repositories declared in the pom. Its optional sections decide whether that mirror points at the
+        // configured mirror or stays on Maven Central, so they have to be resolved too. The file only exists for the
+        // black-box project type.
+        final Path mavenLocalSettingsPath = repoLocalPath.resolve(MAVEN_DIR).resolve(MAVEN_LOCAL_SETTINGS).toAbsolutePath();
+        if (Files.exists(mavenLocalSettingsPath)) {
+            FileUtil.replacePlaceholderSections(mavenLocalSettingsPath, activeFeatures);
         }
     }
 
