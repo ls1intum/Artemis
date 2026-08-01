@@ -29,7 +29,8 @@ artemis:
     admin:
       username: artemis_admin
       password: artemis_admin
-    jwtBase64Secret: bG9jYWwtYXJ0ZW1pcy1qd3Qtc2VjcmV0LWZvci1kb2NrZXItZGVza3RvcC1rOHMtbXZwLTAwMDAwMDAwMDAwMA==
+    # Generated and injected by run-localci-kubernetes.sh.
+    jwtBase64Secret: ""
     secureCookies: false
     versionControl:
       buildAgentGitUsername: buildjob_user

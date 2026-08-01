@@ -25,6 +25,7 @@ SKIP_BUILD=false
 KEEP=false
 TEST_FILTER=""
 WORKLOAD_MONITOR_PID=""
+LOCAL_JWT_BASE64_SECRET=""
 
 usage() {
     printf '%s\n' "Usage: ./run-localci-kubernetes.sh <command> [options]"
@@ -149,7 +150,24 @@ check_cluster_topology() {
 
 check_helm() {
     require_command helm
-    helm lint "${SCRIPT_DIRECTORY}/helm/artemis" --values "${SCRIPT_DIRECTORY}/helm/artemis/values-docker-desktop.yaml"
+    ensure_local_jwt_base64_secret
+    helm lint "${SCRIPT_DIRECTORY}/helm/artemis" \
+        --values "${SCRIPT_DIRECTORY}/helm/artemis/values-docker-desktop.yaml" \
+        --set-string "artemis.config.jwtBase64Secret=${LOCAL_JWT_BASE64_SECRET}"
+}
+
+ensure_local_jwt_base64_secret() {
+    if [[ -n "$LOCAL_JWT_BASE64_SECRET" ]]; then
+        return
+    fi
+
+    if [[ -n "${LOCALCI_K8S_JWT_BASE64_SECRET:-}" ]]; then
+        LOCAL_JWT_BASE64_SECRET="$LOCALCI_K8S_JWT_BASE64_SECRET"
+        return
+    fi
+
+    require_command openssl
+    LOCAL_JWT_BASE64_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
 }
 
 worker_nodes() {
@@ -292,11 +310,13 @@ deploy_chart() {
     fi
 
     application_image_id="$(docker image inspect --format '{{.Id}}' "$APPLICATION_IMAGE")"
+    ensure_local_jwt_base64_secret
     log "Deploying two Artemis cores and two Kubernetes build agents"
     helm upgrade --install "$RELEASE_NAME" "${SCRIPT_DIRECTORY}/helm/artemis" \
         --namespace "$ARTEMIS_NAMESPACE" \
         --create-namespace \
         --values "${SCRIPT_DIRECTORY}/helm/artemis/values-docker-desktop.yaml" \
+        --set-string "artemis.config.jwtBase64Secret=${LOCAL_JWT_BASE64_SECRET}" \
         --set-string "image.rolloutId=${application_image_id}" \
         --wait \
         --timeout 25m

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1172,12 +1173,20 @@ public class SharedQueueProcessingService {
         log.info("Grace period exceeded. Cancelling running build jobs.");
 
         Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
-        List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod).values()
-                .stream().toList();
-        List<String> requeuedBuildJobIds = runningBuildJobsAfterGracePeriod.stream().filter(job -> cancelAndRequeueInternalAttempt(job, job.retryCount() + 1))
-                .map(BuildJobQueueItem::id).toList();
+        Map<String, BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod);
+        List<String> requeuedBuildJobIds = new ArrayList<>();
+        for (String buildJobId : runningBuildJobIdsAfterGracePeriod) {
+            BuildJobQueueItem buildJob = runningBuildJobsAfterGracePeriod.get(buildJobId);
+            if (buildJob == null) {
+                log.warn("Cancelling local build job {} without a matching distributed processing entry", buildJobId);
+                buildJobManagementService.cancelBuildJob(buildJobId);
+            }
+            else if (cancelAndRequeueInternalAttempt(buildJob, buildJob.retryCount() + 1)) {
+                requeuedBuildJobIds.add(buildJobId);
+            }
+        }
         log.info("Cancelled running build jobs and added replacement attempts back to the queue with Ids {}", requeuedBuildJobIds);
-        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
+        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod.values());
     }
 
     /**
