@@ -34,9 +34,9 @@ export const metisLecture3 = { id: 3, title: 'Third Metis  Lecture 3', attachmen
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 export const metisExercise2 = { id: 2, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
-export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
-export const metisUser2 = { id: 2, name: 'username2', login: 'login2', groups: ['metisStudents'] } as User;
-export const metisTutor = { id: 4, name: 'username4', login: 'login4', groups: ['metisTutors'] } as User;
+export const metisUser1 = { id: 1, name: 'username1', login: 'login1' } as User;
+export const metisUser2 = { id: 2, name: 'username2', login: 'login2' } as User;
+export const metisTutor = { id: 4, name: 'username4', login: 'login4' } as User;
 
 export const metisTags = ['Tag1', 'Tag2'];
 
@@ -53,7 +53,6 @@ export const metisCourse = {
     exercises: [metisExercise, metisExercise2],
     lectures: [metisLecture, metisLecture2, metisLecture3],
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
-    groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
     faqs: [metisFaq1, metisFaq2, metisFaq3],
 } as Course;
 

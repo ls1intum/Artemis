@@ -55,7 +55,7 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         jenkinsRequestMockProvider.enableMockingOfRequests();
@@ -69,7 +69,7 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteParticipation_removesBuildLogEntries() {
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         // Setup: Create participation, submission and build log entries for template, solution and student

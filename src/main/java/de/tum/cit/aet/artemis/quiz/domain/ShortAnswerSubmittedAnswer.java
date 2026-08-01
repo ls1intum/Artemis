@@ -29,8 +29,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
     // actively-mutated collection produced non-deterministic reads under concurrent autosave / evaluation activity on the clustered setup.
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")
-    @Valid
-    private Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
+    private Set<@Valid ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
 
     public Set<ShortAnswerSubmittedText> getSubmittedTexts() {
         return submittedTexts;
