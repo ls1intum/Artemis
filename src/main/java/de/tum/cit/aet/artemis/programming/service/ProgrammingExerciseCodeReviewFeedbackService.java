@@ -159,16 +159,17 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
                         var feedback = new Feedback();
                         String feedbackText;
-                        if (Objects.nonNull(individualFeedbackItem.lineStart())) {
-                            if (Objects.nonNull(individualFeedbackItem.lineEnd()) && !individualFeedbackItem.lineStart().equals(individualFeedbackItem.lineEnd())) {
-                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d").formatted(individualFeedbackItem.filePath(),
-                                        individualFeedbackItem.lineStart(), individualFeedbackItem.lineEnd());
+                        Integer lineStart = individualFeedbackItem.lineStart();
+                        Integer lineEnd = individualFeedbackItem.lineEnd();
+                        if (Objects.nonNull(lineStart) && lineStart > 0) {
+                            if (Objects.nonNull(lineEnd) && lineEnd > lineStart) {
+                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at lines %d-%d").formatted(individualFeedbackItem.filePath(), lineStart, lineEnd);
+                                feedback.setReference("file:%s_line:%d-%d".formatted(individualFeedbackItem.filePath(), lineStart, lineEnd));
                             }
                             else {
-                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d").formatted(individualFeedbackItem.filePath(),
-                                        individualFeedbackItem.lineStart());
+                                feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s at line %d").formatted(individualFeedbackItem.filePath(), lineStart);
+                                feedback.setReference("file:%s_line:%d".formatted(individualFeedbackItem.filePath(), lineStart));
                             }
-                            feedback.setReference("file:%s_line:%d".formatted(individualFeedbackItem.filePath(), individualFeedbackItem.lineStart()));
                         }
                         else {
                             feedbackText = (NON_GRADED_FEEDBACK_SUGGESTION + "File %s").formatted(individualFeedbackItem.filePath());
