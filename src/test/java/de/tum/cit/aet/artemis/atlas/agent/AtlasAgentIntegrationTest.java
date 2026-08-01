@@ -61,8 +61,8 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @BeforeEach
     void setupTestScenario() {
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // Set up chatClient.mutate() to return a real builder backed by the mock ChatModel
         when(chatClient.mutate()).thenAnswer(inv -> ChatClient.builder(chatModel));
@@ -107,7 +107,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDifferentCourseContexts() throws Exception {
-        Course secondCourse = courseUtilService.createCourse();
+        Course secondCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String message = "Help with competencies for Computer Science basics";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 

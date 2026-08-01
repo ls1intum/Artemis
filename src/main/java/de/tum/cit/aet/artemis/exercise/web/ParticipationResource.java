@@ -144,7 +144,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         boolean triesToCreateAssignmentRepoForExamExercise = exercise.isExamExercise() && exercise instanceof ProgrammingExercise
                 && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         if (triesToCreateAssignmentRepoForExamExercise) {
@@ -193,7 +193,7 @@ public class ParticipationResource {
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneGradedByExerciseAndParticipant(exercise, user);
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
@@ -247,7 +247,7 @@ public class ParticipationResource {
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         participationAuthorizationService.checkAccessPermissionOwner(participation, user);
         if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
             throw new AccessForbiddenException("You are not allowed to resume that participation.");
@@ -285,7 +285,7 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to request feedback for exercise {} and participation {}", exerciseId, participationId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         if (!participation.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");

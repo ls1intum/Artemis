@@ -145,7 +145,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     void initTestCase() {
         ZonedDateTime now = ZonedDateTime.now();
 
-        oldCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        oldCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         oldCourse.setStartDate(now.minusMonths(12).plusDays(2));
         oldCourse.setEndDate(now.minusMonths(6).minusDays(2));
         TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
@@ -155,7 +155,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         oldCourse = courseRepository.save(oldCourse);
         exerciseRepository.save(finishedTextExercise1);
 
-        newCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        newCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         newCourse.setStartDate(now);
         newCourse.setEndDate(now.plusMonths(6));
         TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),

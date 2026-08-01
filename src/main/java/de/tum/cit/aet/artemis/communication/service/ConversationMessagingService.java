@@ -110,7 +110,9 @@ public class ConversationMessagingService extends PostingService {
      * @return the created message and associated data
      */
     public CreatedConversationMessage createMessage(Long courseId, CreatePostDTO message) {
-        var author = this.userRepository.getUserWithGroupsAndAuthorities();
+        // Pre-load course roles: preCheckUserAndCourseForMessaging + setAuthorRoleForPosting perform several
+        // course-role checks below for the same author/course; without this, each falls back to its own query.
+        var author = this.userRepository.getUserWithCourseRolesAndAuthorities();
 
         var newMessage = message.toEntity();
         newMessage.setAuthor(author);
@@ -342,7 +344,7 @@ public class ConversationMessagingService extends PostingService {
      * @return updated post that was persisted
      */
     public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         // check
         if (!Objects.equals(messagePost.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
@@ -380,7 +382,7 @@ public class ConversationMessagingService extends PostingService {
      * @param postId   id of the message post to delete
      */
     public void deleteMessageById(Long courseId, Long postId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         // checks
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
@@ -416,7 +418,7 @@ public class ConversationMessagingService extends PostingService {
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         preCheckUserAndCourseForCommunicationOrMessaging(user, course);
 
