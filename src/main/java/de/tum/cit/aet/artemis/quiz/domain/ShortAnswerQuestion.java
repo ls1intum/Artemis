@@ -50,7 +50,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
     // persisted transitions because ShortAnswerMapping overrides hashCode() to a class constant (see
     // ShortAnswerMapping.hashCode). With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
     // failure mode requires the unidirectional + @JoinColumn shape).
-    // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private Set<ShortAnswerMapping> correctMappings = new HashSet<>();
 
