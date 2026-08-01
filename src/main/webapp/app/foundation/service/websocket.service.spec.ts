@@ -242,15 +242,37 @@ describe('WebsocketService', () => {
         later.unsubscribe();
     });
 
-    it('subscribes again after the last caller of a destination unsubscribed', () => {
+    it('keeps serving one destination stream after the last caller unsubscribed', () => {
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
+
+        websocketService.subscribe('/topic/shared').subscribe().unsubscribe();
+
+        // The entry survives an idle period. A caller that retained the observable (IrisSearchAnswerService does)
+        // can resubscribe, and a concurrent fresh subscribe() must not open a second watch for the destination.
+        const received: unknown[] = [];
+        const later = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        messages.next({ ...baseMessage, body: JSON.stringify({ data: 'still flowing' }) });
+        expect(received).toEqual([{ data: 'still flowing' }]);
+
+        later.unsubscribe();
+    });
+
+    it('does not open a second watch when a retained observable is resubscribed', () => {
         watchMock.mockReturnValue(new Subject<IMessage>());
 
-        websocketService.subscribe('/topic/shared').subscribe().unsubscribe();
-        websocketService.subscribe('/topic/shared').subscribe().unsubscribe();
+        // A service holding the observable as a field, resubscribing after its refcount dropped to zero.
+        const retained = websocketService.subscribe('/topic/shared');
+        retained.subscribe().unsubscribe();
+        const viaRetained = retained.subscribe();
+        const viaFresh = websocketService.subscribe('/topic/shared').subscribe();
 
-        // The cached stream is dropped with the last consumer, so a later caller gets a fresh subscription
-        // rather than a dead one.
-        expect(watchMock).toHaveBeenCalledTimes(2);
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        viaRetained.unsubscribe();
+        viaFresh.unsubscribe();
     });
 
     it('subscribes and parses compressed messages', async () => {
