@@ -12,6 +12,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -45,7 +47,13 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * <p>
  * Before this gate existed only programming exercises were (indirectly) protected, so text, modeling and file upload
  * submissions could be assessed while students were still working on them, see issue #13358.
+ * <p>
+ * The tests run sequentially: {@code UserUtilService#addUsers} removes every existing user from all groups before it
+ * saves the new ones, so while one test's setup runs, a sibling test running in parallel would find its tutor without a
+ * course role and get a plain "not allowed to access the course" 403 instead of the answer it asserts. The window is
+ * proportional to the number of users already in the shared database, which is why this only shows up in a full CI run.
  */
+@Execution(ExecutionMode.SAME_THREAD)
 class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "examassessavail";
