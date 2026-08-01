@@ -684,7 +684,7 @@ public class ProgrammingExerciseGradingService {
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
-            addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback);
+            addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback, testCaseFeedback.size());
         }
 
         // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
@@ -705,9 +705,12 @@ public class ProgrammingExerciseGradingService {
      * @param result                     to which the feedback should be added.
      * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
+     * @param testCaseFeedbackCount      the number of test case feedbacks in the result, used to preserve the test case count
      */
-    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback,
+            int testCaseFeedbackCount) {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
+        result.setTestCaseCount(testCaseFeedbackCount);
 
         createFeedbacksForDuplicateTests(result, exercise);
     }
