@@ -91,6 +91,11 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
     exerciseGroupToExerciseTypesDict = signal<Map<number, ExerciseType[]>>(new Map<number, ExerciseType[]>());
 
+    // Guards against reorder-response races: every arrow click fires an independent PUT, and a stale response
+    // arriving after a newer one would re-apply an older order. While a save is in flight, further reorder actions
+    // are ignored (no queueing) so responses can never interleave.
+    orderSavePending = signal(false);
+
     localCIEnabled = signal(true);
     textExerciseEnabled = signal(false);
     modelingExerciseEnabled = signal(false);
@@ -275,13 +280,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveUp(index: number): void {
-        const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            [exerciseGroups[index], exerciseGroups[index - 1]] = [exerciseGroups[index - 1], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-            this.exerciseGroups.set([...exerciseGroups]);
-        }
-        this.saveOrder();
+        this.move(index, -1);
     }
 
     /**
@@ -289,19 +288,38 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param index of the exercise group in the exerciseGroups array
      */
     moveDown(index: number): void {
-        const exerciseGroups = this.exerciseGroups();
-        if (exerciseGroups) {
-            [exerciseGroups[index], exerciseGroups[index + 1]] = [exerciseGroups[index + 1], exerciseGroups[index]];
-            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
-            this.exerciseGroups.set([...exerciseGroups]);
-        }
-        this.saveOrder();
+        this.move(index, 1);
     }
 
-    private saveOrder(): void {
+    private move(index: number, offset: -1 | 1): void {
+        // Ignore further reorder actions while a save is in flight: concurrent PUTs could otherwise arrive at the
+        // server out of order and an earlier order would overwrite a later one.
+        if (this.orderSavePending()) {
+            return;
+        }
+        const exerciseGroups = this.exerciseGroups();
+        if (!exerciseGroups) {
+            return;
+        }
+        const previousOrder = [...exerciseGroups];
+        [exerciseGroups[index], exerciseGroups[index + offset]] = [exerciseGroups[index + offset], exerciseGroups[index]];
+        // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders.
+        this.exerciseGroups.set([...exerciseGroups]);
+        this.saveOrder(previousOrder);
+    }
+
+    private saveOrder(previousOrder: ExerciseGroup[]): void {
+        this.orderSavePending.set(true);
         this.examManagementService.updateOrder(this.courseId, this.examId(), this.exerciseGroups()!).subscribe({
-            next: (res) => this.exerciseGroups.set(res.body!),
-            error: () => this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved'),
+            // The response has no body; the already-applied optimistic order is the persisted order.
+            next: () => this.orderSavePending.set(false),
+            error: () => {
+                // The server rejected the order (e.g. a stale tab whose groups no longer match the exam), so the
+                // optimistic swap must not stay visible.
+                this.exerciseGroups.set(previousOrder);
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.orderCouldNotBeSaved');
+                this.orderSavePending.set(false);
+            },
         });
     }
 
