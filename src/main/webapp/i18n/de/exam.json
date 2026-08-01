@@ -384,6 +384,11 @@
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}",
                 "summaryAvailableFrom": "Deine Abgabenübersicht ist ab dem {{ date }} verfügbar."
             },
+            "summaryLoadFailed": {
+                "title": "Die Zusammenfassung der Klausur konnte nicht geladen werden.",
+                "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
+                "retry": "Erneut versuchen"
+            },
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
             "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
@@ -731,7 +736,9 @@
                     "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
                     "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu Erstellen der Build-Pläne kann diese Importfunktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
                 },
-                "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
+                "importSuccessful": "Import der Aufgabengruppen erfolgreich!",
+                "moveUp": "Aufgabengruppe nach oben verschieben",
+                "moveDown": "Aufgabengruppe nach unten verschieben"
             },
             "quizPool": "Quiz Pool",
             "delete": {
