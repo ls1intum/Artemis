@@ -26,9 +26,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param requestMoreFeedbackEnabled     whether more-feedback requests are enabled
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadCourseContextDTO(Long id, String title, String shortName, @Nullable String teachingAssistantGroupName, @Nullable String editorGroupName,
-        @Nullable String instructorGroupName, @Nullable Integer accuracyOfScores, @Nullable Integer maxComplaints, @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays,
-        int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
+public record FileUploadCourseContextDTO(Long id, String title, String shortName, @Nullable Integer accuracyOfScores, @Nullable Integer maxComplaints,
+        @Nullable Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
+        boolean complaintsEnabled, boolean requestMoreFeedbackEnabled) {
 
     /**
      * Factory method to create a {@link FileUploadCourseContextDTO} from a {@link Course} entity.
@@ -40,9 +40,8 @@ public record FileUploadCourseContextDTO(Long id, String title, String shortName
         if (course == null) {
             return null;
         }
-        return new FileUploadCourseContextDTO(course.getId(), course.getTitle(), course.getShortName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(),
-                course.getInstructorGroupName(), course.getAccuracyOfScores(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(),
-                course.getRequestMoreFeedbackEnabled());
+        return new FileUploadCourseContextDTO(course.getId(), course.getTitle(), course.getShortName(), course.getAccuracyOfScores(), course.getMaxComplaints(),
+                course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),
+                course.getMaxComplaintResponseTextLimit(), course.getComplaintsEnabled(), course.getRequestMoreFeedbackEnabled());
     }
 }
