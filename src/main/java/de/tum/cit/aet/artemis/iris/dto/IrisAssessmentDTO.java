@@ -9,9 +9,9 @@ import jakarta.validation.Valid;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdict;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisAssessmentDTO(Long id, IrisVerdict verdict, IrisVerdictReview verdictReview, @Valid StudentIrisAssessmentDTO student, @Valid IrisAssessmentExerciseDTO exercise)

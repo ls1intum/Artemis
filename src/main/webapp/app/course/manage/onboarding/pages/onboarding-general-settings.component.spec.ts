@@ -44,8 +44,8 @@ describe('OnboardingGeneralSettingsComponent', () => {
                             of({
                                 settings: {
                                     enabled: true,
-                                    promptingModeEnabled: true,
-                                    promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                                    askUserModeEnabled: true,
+                                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
                                 },
                             }),
                         updateCourseSettings: () =>
@@ -53,8 +53,8 @@ describe('OnboardingGeneralSettingsComponent', () => {
                                 body: {
                                     settings: {
                                         enabled: false,
-                                        promptingModeEnabled: true,
-                                        promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                                        askUserModeEnabled: true,
+                                        askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
                                     },
                                 },
                             }),

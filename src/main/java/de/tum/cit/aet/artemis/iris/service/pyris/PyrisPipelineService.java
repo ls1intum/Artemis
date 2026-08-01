@@ -29,13 +29,13 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisPromptingModeSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.promptuser.PyrisPromptUserPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.askuser.PyrisAskUserPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
@@ -270,24 +270,22 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Execute the prompt user pipeline for the given session.
-     * It provides specific data for the prompt user pipeline, including:
+     * Execute the ask user pipeline for the given session.
+     * It provides specific data for the ask user pipeline, including:
      * - The latest submission of the student
      * - The programming exercise
      * - The course the exercise is part of
      * <p>
      *
      * @param variant             the variant of the pipeline
-     * @param supportLevel        the instructional support level ("low" / "moderate" / "high"), sent for consistency with the other pipelines; whether the
-     *                                prompt user pipeline acts on it is determined by Pyris
      * @param latestSubmission    the latest submission of the student
      * @param programmingExercise the programming exercise
      * @param session             the chat session
      * @param eventVariant        if this function triggers a pipeline execution due to a specific event, this is the used event variant
-     * @param settings            prompting-mode quiz settings
+     * @param settings            ask-user-mode quiz settings
      */
-    public void executePromptUserPipeline(String variant, String supportLevel, ProgrammingSubmission latestSubmission, ProgrammingExercise programmingExercise,
-            IrisChatSession session, Optional<String> eventVariant, IrisPromptingModeSettings settings) {
+    public void executeAskUserPipeline(String variant, ProgrammingSubmission latestSubmission, ProgrammingExercise programmingExercise, IrisChatSession session,
+            Optional<String> eventVariant, IrisAskUserModeSettings settings) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
@@ -297,13 +295,13 @@ public class PyrisPipelineService {
 
         // @formatter:off
         executePipeline(
-            "prompt-user",
+            "ask-user",
             user.getSelectedLLMUsage(),
             variant,
-            supportLevel,
+            "",
             eventVariant,
-            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
-            executionDto -> new PyrisPromptUserPipelineExecutionDTO(
+            pyrisJobService.addAskUserChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
+            executionDto -> new PyrisAskUserPipelineExecutionDTO(
                 IrisChatMode.PROGRAMMING_EXERCISE_CHAT,
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 executionDto.settings(),

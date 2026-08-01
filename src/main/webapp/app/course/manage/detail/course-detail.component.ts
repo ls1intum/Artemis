@@ -125,10 +125,10 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         { initialValue: undefined },
     );
 
-    private readonly promptingModeFeatureEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.PromptingMode), { initialValue: false });
+    private readonly askUserModeFeatureEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AskUserMode), { initialValue: false });
 
     readonly irisChatEnabled = computed(() => this.irisSettings()?.settings?.enabled ?? false);
-    readonly irisPromptingModeEnabled = computed(() => this.promptingModeFeatureEnabled() && (this.irisSettings()?.settings?.promptingModeEnabled ?? false));
+    readonly irisAskUserModeEnabled = computed(() => this.askUserModeFeatureEnabled() && (this.irisSettings()?.settings?.askUserModeEnabled ?? false));
 
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);

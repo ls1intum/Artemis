@@ -79,9 +79,9 @@
                 "practice": "Practice",
                 "graded": "Graded"
             },
-            "prompting": {
+            "askUser": {
                 "start": "Assess understanding",
-                "currently": "Currently prompting",
+                "currently": "Quiz active",
                 "finished": "Quiz completed",
                 "noSubmission": "No submission"
             },

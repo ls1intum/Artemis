@@ -56,7 +56,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/understanding-assessment/shared/iris-assessment-button/iris-review-assessment-button.component';
+import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/ask-user/shared/iris-assessment-button/iris-review-assessment-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 
@@ -177,24 +177,24 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     });
 
-    private readonly irisPromptingContext = computed(() => ({
+    private readonly irisAskUserContext = computed(() => ({
         exercise: this.exercise(),
         courseId: this.course()?.id,
         irisModuleEnabled: this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS),
     }));
 
-    readonly irisPromptingEnabled = toSignal(
-        combineLatest([toObservable(this.irisPromptingContext), this.featureToggleService.getFeatureToggleActive(FeatureToggle.PromptingMode)]).pipe(
-            switchMap(([{ exercise, courseId, irisModuleEnabled }, promptingModeFeatureEnabled]) => {
+    readonly irisAskUserEnabled = toSignal(
+        combineLatest([toObservable(this.irisAskUserContext), this.featureToggleService.getFeatureToggleActive(FeatureToggle.AskUserMode)]).pipe(
+            switchMap(([{ exercise, courseId, irisModuleEnabled }, askUserModeFeatureEnabled]) => {
                 const shouldLoadIrisSettings =
-                    exercise?.type === ExerciseType.PROGRAMMING && !exercise.exerciseGroup && irisModuleEnabled && promptingModeFeatureEnabled && courseId !== undefined;
+                    exercise?.type === ExerciseType.PROGRAMMING && !exercise.exerciseGroup && irisModuleEnabled && askUserModeFeatureEnabled && courseId !== undefined;
 
                 if (!shouldLoadIrisSettings) {
                     return of(false);
                 }
 
                 return this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).pipe(
-                    map((response) => response?.settings?.promptingModeEnabled ?? false),
+                    map((response) => response?.settings?.askUserModeEnabled ?? false),
                     catchError(() => of(false)),
                 );
             }),

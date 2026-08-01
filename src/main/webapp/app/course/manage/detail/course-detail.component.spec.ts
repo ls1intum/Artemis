@@ -113,9 +113,9 @@ describe('Course Management Detail Component', () => {
                 courseId: 123,
                 settings: {
                     enabled: true,
-                    promptingModeEnabled: true,
+                    askUserModeEnabled: true,
                     variant: 'default',
-                    promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
                     rateLimit: {},
                 },
             } as IrisCourseSettingsWithRateLimitDTO),

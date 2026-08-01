@@ -7,9 +7,9 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdict;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

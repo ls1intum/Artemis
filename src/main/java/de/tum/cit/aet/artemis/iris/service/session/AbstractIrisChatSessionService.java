@@ -178,7 +178,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
      *
      * @param job          the job that was executed
      * @param statusUpdate the status update of the job
-     * @param event        optional prompting-mode event variant
+     * @param event        optional ask-user-mode event variant
      * @return the same job record or a new job record with the same job id if changes were made
      */
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {

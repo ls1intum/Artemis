@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT;
-import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX;
-import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX;
 
 import java.util.Objects;
 
@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisPromptingModeSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
@@ -128,7 +128,7 @@ public class IrisSettingsService {
 
     /**
      * Validates that non-admin users are not trying to change restricted settings.
-     * Instructors can only modify enabled status, prompting mode, prompting-mode quiz settings, support level and custom instructions; variant and rate limits are admin-only.
+     * Instructors can only modify enabled status, ask-user mode, ask-user-mode quiz settings, support level and custom instructions; variant and rate limits are admin-only.
      *
      * @param request the requested new settings
      * @param current the current settings
@@ -176,14 +176,14 @@ public class IrisSettingsService {
     }
 
     /**
-     * Checks whether Iris prompting mode is enabled for the course an exercise belongs to.
+     * Checks whether Iris ask-user mode is enabled for the course an exercise belongs to.
      *
      * @param exercise the exercise
-     * @return {@code true} if Iris and prompting mode are enabled
+     * @return {@code true} if Iris and ask-user mode are enabled
      */
-    public boolean isPromptingModeEnabledForExercise(Exercise exercise) {
+    public boolean isAskUserModeEnabledForExercise(Exercise exercise) {
         var settings = getSettingsForExercise(exercise);
-        return settings.enabled() && settings.promptingModeEnabled();
+        return settings.enabled() && settings.askUserModeEnabled();
     }
 
     /**
@@ -209,13 +209,13 @@ public class IrisSettingsService {
     }
 
     /**
-     * Ensures Iris prompting mode is enabled for the supplied exercise's course, otherwise throws an access exception.
+     * Ensures Iris ask-user mode is enabled for the supplied exercise's course, otherwise throws an access exception.
      *
      * @param exercise the exercise
      */
-    public void ensurePromptingModeEnabledForExerciseOrElseThrow(Exercise exercise) {
-        if (!isPromptingModeEnabledForExercise(exercise)) {
-            throw new AccessForbiddenAlertException("Iris prompting mode is disabled for exercise " + exercise.getId(), "Iris", "iris.prompting_mode_disabled");
+    public void ensureAskUserModeEnabledForExerciseOrElseThrow(Exercise exercise) {
+        if (!isAskUserModeEnabledForExercise(exercise)) {
+            throw new AccessForbiddenAlertException("Iris ask-user mode is disabled for exercise " + exercise.getId(), "Iris", "iris.ask_user_mode_disabled");
         }
     }
 
@@ -269,27 +269,27 @@ public class IrisSettingsService {
             return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
-        var sanitizedPromptingModeSettings = sanitizePromptingModeSettings(payload.promptingModeSettings());
-        return IrisCourseSettings.of(payload.enabled(), payload.promptingModeEnabled(), sanitizedPromptingModeSettings, payload.customInstructions(), payload.variant(),
+        var sanitizedAskUserModeSettings = sanitizeAskUserModeSettings(payload.askUserModeSettings());
+        return IrisCourseSettings.of(payload.enabled(), payload.askUserModeEnabled(), sanitizedAskUserModeSettings, payload.customInstructions(), payload.variant(),
                 payload.supportLevel(), sanitizedRateLimit);
     }
 
-    private IrisPromptingModeSettings sanitizePromptingModeSettings(IrisPromptingModeSettings promptingModeSettings) {
-        var settings = Objects.requireNonNullElse(promptingModeSettings, IrisPromptingModeSettings.defaultSettings());
+    private IrisAskUserModeSettings sanitizeAskUserModeSettings(IrisAskUserModeSettings askUserModeSettings) {
+        var settings = Objects.requireNonNullElse(askUserModeSettings, IrisAskUserModeSettings.defaultSettings());
         if (settings.minQuestions() < 1 || settings.maxQuestions() < 1) {
-            throw new BadRequestAlertException("Prompting mode question limits must be greater than 0", "IrisSettings", "irisPromptingModeQuestionsInvalid");
+            throw new BadRequestAlertException("Ask-user mode question limits must be greater than 0", "IrisSettings", "irisAskUserModeQuestionsInvalid");
         }
-        if (settings.minQuestions() > IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT || settings.maxQuestions() > IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT) {
-            throw new BadRequestAlertException("Prompting mode question limits are too high", "IrisSettings", "irisPromptingModeQuestionsInvalid");
+        if (settings.minQuestions() > IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT || settings.maxQuestions() > IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT) {
+            throw new BadRequestAlertException("Ask-user mode question limits are too high", "IrisSettings", "irisAskUserModeQuestionsInvalid");
         }
         if (settings.minQuestions() > settings.maxQuestions()) {
-            throw new BadRequestAlertException("Minimum questions must not exceed maximum questions", "IrisSettings", "irisPromptingModeQuestionsInvalid");
+            throw new BadRequestAlertException("Minimum questions must not exceed maximum questions", "IrisSettings", "irisAskUserModeQuestionsInvalid");
         }
-        if (settings.timeLimitQuestion() < 1 || settings.timeLimitQuestion() > IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX) {
-            throw new BadRequestAlertException("Prompting mode question time limit is invalid", "IrisSettings", "irisPromptingModeQuestionTimeLimitInvalid");
+        if (settings.timeLimitQuestion() < 1 || settings.timeLimitQuestion() > IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX) {
+            throw new BadRequestAlertException("Ask-user mode question time limit is invalid", "IrisSettings", "irisAskUserModeQuestionTimeLimitInvalid");
         }
-        if (settings.timeLimitInClass() < 1 || settings.timeLimitInClass() > IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX) {
-            throw new BadRequestAlertException("Prompting mode in-class quiz time limit is invalid", "IrisSettings", "irisPromptingModeInClassTimeLimitInvalid");
+        if (settings.timeLimitInClass() < 1 || settings.timeLimitInClass() > IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX) {
+            throw new BadRequestAlertException("Ask-user mode in-class quiz time limit is invalid", "IrisSettings", "irisAskUserModeInClassTimeLimitInvalid");
         }
         return settings;
     }

@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20260325160500" author="PeterNiedermoser">
         <addColumn tableName="iris_session">
-            <column name="in_prompting_mode_pipeline" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="in_ask_user_mode_pipeline" type="BOOLEAN" defaultValueBoolean="false"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

@@ -206,7 +206,7 @@
                                 <fa-icon [icon]="faCircleInfo" />
                             </button>
                         }
-                        @if (!isChatHistoryAvailable() && messages().length >= 1 && !promptingInitiated()) {
+                        @if (!isChatHistoryAvailable() && messages().length >= 1 && !quizStarted()) {
                             <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
@@ -231,7 +231,7 @@
                 </div>
             </div>
         }
-        <div class="chat-body" [class.empty-state]="isEmptyState()" [class.colored-border]="currentlyPrompting()" #chatBody>
+        <div class="chat-body" [class.empty-state]="isEmptyState()" [class.colored-border]="quizActive()" #chatBody>
             @if (messages()?.length || liveAssistantDraft()) {
                 <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
@@ -305,7 +305,7 @@
                                                 </div>
                                             }
                                         }
-                                        @if (!message.inPromptingMode) {
+                                        @if (!message.inAskUserMode) {
                                             <div class="rate-message-buttons toolbox">
                                                 <button
                                                     class="btn btn-sm rate-button-not-clicked"
@@ -408,8 +408,8 @@
                     </div>
                 </div>
             }
-            @if (showOnlyPromptingModeMessage()) {
-                <div class="client-chat-info" jhiTranslate="artemisApp.exerciseChatbot.onlyPromptingEnabled"></div>
+            @if (showOnlyAskUserModeMessage()) {
+                <div class="client-chat-info" jhiTranslate="artemisApp.exerciseChatbot.onlyAskUserEnabled"></div>
             }
             @if (error()) {
                 <div class="client-chat-error">
@@ -422,7 +422,7 @@
             @if (userAccepted() === LLMSelectionDecision.NO_AI) {
                 <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
             }
-            @if (currentlyPrompting()) {
+            @if (quizActive()) {
                 <jhi-quiz-timer-bar [open]="timerExpiresAt() !== undefined" [timeLimit]="timeLimit()" [timerExpiresAt]="timerExpiresAt()" (timerExpired)="timerExpired.emit()" />
             }
             @if (isAIEnabled()) {
@@ -468,7 +468,7 @@
                             }
                             <div class="textarea-controls">
                                 <jhi-context-selection
-                                    [disabled]="isInputDisabled() || promptingInitiated()"
+                                    [disabled]="isInputDisabled() || quizStarted()"
                                     data-onboarding-target="context-selector"
                                     (contextChanged)="onContextChangedDuringOnboarding()"
                                 />

@@ -55,49 +55,47 @@
                             <div class="iris-enabled-cards">
                                 <div class="iris-toggle-row">
                                     <p-toggleswitch
-                                        inputId="iris-prompting-mode-toggle"
-                                        [ngModel]="settingsValue.promptingModeEnabled"
-                                        (ngModelChange)="setPromptingModeEnabled($event)"
+                                        inputId="iris-askUser-mode-toggle"
+                                        [ngModel]="settingsValue.askUserModeEnabled"
+                                        (ngModelChange)="setAskUserModeEnabled($event)"
                                         [ariaLabel]="
-                                            (settingsValue.promptingModeEnabled
-                                                ? 'artemisApp.iris.settings.promptingModeEnabled'
-                                                : 'artemisApp.iris.settings.promptingModeDisabled'
-                                            ) | artemisTranslate
+                                            (settingsValue.askUserModeEnabled ? 'artemisApp.iris.settings.askUserModeEnabled' : 'artemisApp.iris.settings.askUserModeDisabled')
+                                                | artemisTranslate
                                         "
                                     />
-                                    <label for="iris-prompting-mode-toggle">
-                                        @if (settingsValue.promptingModeEnabled) {
-                                            <span jhiTranslate="artemisApp.iris.settings.promptingModeEnabled"></span>
-                                            <small class="iris-card-subtitle block text-muted-color" jhiTranslate="artemisApp.iris.settings.promptingModeEnabledSubtext"></small>
+                                    <label for="iris-ask-user-mode-toggle">
+                                        @if (settingsValue.askUserModeEnabled) {
+                                            <span jhiTranslate="artemisApp.iris.settings.askUserModeEnabled"></span>
+                                            <small class="iris-card-subtitle block text-muted-color" jhiTranslate="artemisApp.iris.settings.askUserModeEnabledSubtext"></small>
                                         } @else {
-                                            <span jhiTranslate="artemisApp.iris.settings.promptingModeDisabled"></span>
-                                            <small class="iris-card-subtitle block text-muted-color" jhiTranslate="artemisApp.iris.settings.promptingModeDisabledSubtext"></small>
+                                            <span jhiTranslate="artemisApp.iris.settings.askUserModeDisabled"></span>
+                                            <small class="iris-card-subtitle block text-muted-color" jhiTranslate="artemisApp.iris.settings.askUserModeDisabledSubtext"></small>
                                         }
                                     </label>
                                 </div>
 
-                                @if (settingsValue.promptingModeEnabled) {
+                                @if (settingsValue.askUserModeEnabled) {
                                     <div class="iris-card">
-                                        <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.promptingModeSettings.title"></h6>
-                                        <small class="iris-card-subtitle text-muted-color" jhiTranslate="artemisApp.iris.settings.promptingModeSettings.help"></small>
+                                        <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.askUserModeSettings.title"></h6>
+                                        <small class="iris-card-subtitle text-muted-color" jhiTranslate="artemisApp.iris.settings.askUserModeSettings.help"></small>
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                                             <div>
                                                 <label
-                                                    for="promptingModeMinQuestions"
+                                                    for="askUserModeMinQuestions"
                                                     class="block mb-1"
-                                                    jhiTranslate="artemisApp.iris.settings.promptingModeSettings.minQuestions"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.minQuestions"
                                                 ></label>
                                                 <p-inputnumber
-                                                    inputId="promptingModeMinQuestions"
+                                                    inputId="askUserModeMinQuestions"
                                                     [fluid]="true"
-                                                    [ngModel]="settingsValue.promptingModeSettings.minQuestions"
-                                                    (ngModelChange)="updatePromptingModeSetting('minQuestions', $event)"
+                                                    [ngModel]="settingsValue.askUserModeSettings.minQuestions"
+                                                    (ngModelChange)="updateAskUserModeSetting('minQuestions', $event)"
                                                     [min]="1"
-                                                    [max]="PROMPTING_MODE_MAX_QUESTIONS"
-                                                    [invalid]="!!promptingModeMinQuestionsError()"
+                                                    [max]="ASK_USER_MODE_MAX_QUESTIONS"
+                                                    [invalid]="!!askUserModeMinQuestionsError()"
                                                 />
-                                                @if (promptingModeMinQuestionsError(); as error) {
+                                                @if (askUserModeMinQuestionsError(); as error) {
                                                     <div class="text-state-danger text-sm mt-1">
                                                         <span [jhiTranslate]="error"></span>
                                                     </div>
@@ -106,20 +104,20 @@
 
                                             <div>
                                                 <label
-                                                    for="promptingModeMaxQuestions"
+                                                    for="askUserModeMaxQuestions"
                                                     class="block mb-1"
-                                                    jhiTranslate="artemisApp.iris.settings.promptingModeSettings.maxQuestions"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.maxQuestions"
                                                 ></label>
                                                 <p-inputnumber
-                                                    inputId="promptingModeMaxQuestions"
+                                                    inputId="askUserModeMaxQuestions"
                                                     [fluid]="true"
-                                                    [ngModel]="settingsValue.promptingModeSettings.maxQuestions"
-                                                    (ngModelChange)="updatePromptingModeSetting('maxQuestions', $event)"
+                                                    [ngModel]="settingsValue.askUserModeSettings.maxQuestions"
+                                                    (ngModelChange)="updateAskUserModeSetting('maxQuestions', $event)"
                                                     [min]="1"
-                                                    [max]="PROMPTING_MODE_MAX_QUESTIONS"
-                                                    [invalid]="!!promptingModeMaxQuestionsError()"
+                                                    [max]="ASK_USER_MODE_MAX_QUESTIONS"
+                                                    [invalid]="!!askUserModeMaxQuestionsError()"
                                                 />
-                                                @if (promptingModeMaxQuestionsError(); as error) {
+                                                @if (askUserModeMaxQuestionsError(); as error) {
                                                     <div class="text-state-danger text-sm mt-1">
                                                         <span [jhiTranslate]="error"></span>
                                                     </div>
@@ -128,20 +126,20 @@
 
                                             <div>
                                                 <label
-                                                    for="promptingModeQuestionTimeLimit"
+                                                    for="askUserModeQuestionTimeLimit"
                                                     class="block mb-1"
-                                                    jhiTranslate="artemisApp.iris.settings.promptingModeSettings.timeLimitQuestion"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.timeLimitQuestion"
                                                 ></label>
                                                 <p-inputnumber
-                                                    inputId="promptingModeQuestionTimeLimit"
+                                                    inputId="askUserModeQuestionTimeLimit"
                                                     [fluid]="true"
-                                                    [ngModel]="settingsValue.promptingModeSettings.timeLimitQuestion"
-                                                    (ngModelChange)="updatePromptingModeSetting('timeLimitQuestion', $event)"
+                                                    [ngModel]="settingsValue.askUserModeSettings.timeLimitQuestion"
+                                                    (ngModelChange)="updateAskUserModeSetting('timeLimitQuestion', $event)"
                                                     [min]="1"
-                                                    [max]="PROMPTING_MODE_QUESTION_TIME_LIMIT_MAX"
-                                                    [invalid]="!!promptingModeQuestionTimeLimitError()"
+                                                    [max]="ASK_USER_MODE_QUESTION_TIME_LIMIT_MAX"
+                                                    [invalid]="!!askUserModeQuestionTimeLimitError()"
                                                 />
-                                                @if (promptingModeQuestionTimeLimitError(); as error) {
+                                                @if (askUserModeQuestionTimeLimitError(); as error) {
                                                     <div class="text-state-danger text-sm mt-1">
                                                         <span [jhiTranslate]="error"></span>
                                                     </div>
@@ -150,20 +148,20 @@
 
                                             <div>
                                                 <label
-                                                    for="promptingModeInClassTimeLimit"
+                                                    for="askUserModeInClassTimeLimit"
                                                     class="block mb-1"
-                                                    jhiTranslate="artemisApp.iris.settings.promptingModeSettings.timeLimitInClass"
+                                                    jhiTranslate="artemisApp.iris.settings.askUserModeSettings.timeLimitInClass"
                                                 ></label>
                                                 <p-inputnumber
-                                                    inputId="promptingModeInClassTimeLimit"
+                                                    inputId="askUserModeInClassTimeLimit"
                                                     [fluid]="true"
-                                                    [ngModel]="settingsValue.promptingModeSettings.timeLimitInClass"
-                                                    (ngModelChange)="updatePromptingModeSetting('timeLimitInClass', $event)"
+                                                    [ngModel]="settingsValue.askUserModeSettings.timeLimitInClass"
+                                                    (ngModelChange)="updateAskUserModeSetting('timeLimitInClass', $event)"
                                                     [min]="1"
-                                                    [max]="PROMPTING_MODE_IN_CLASS_TIME_LIMIT_MAX"
-                                                    [invalid]="!!promptingModeInClassTimeLimitError()"
+                                                    [max]="ASK_USER_MODE_IN_CLASS_TIME_LIMIT_MAX"
+                                                    [invalid]="!!askUserModeInClassTimeLimitError()"
                                                 />
-                                                @if (promptingModeInClassTimeLimitError(); as error) {
+                                                @if (askUserModeInClassTimeLimitError(); as error) {
                                                     <div class="text-state-danger text-sm mt-1">
                                                         <span [jhiTranslate]="error"></span>
                                                     </div>

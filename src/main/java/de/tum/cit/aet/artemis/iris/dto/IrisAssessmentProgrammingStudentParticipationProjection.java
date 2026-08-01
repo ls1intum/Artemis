@@ -4,8 +4,8 @@ import java.io.Serializable;
 
 import jakarta.annotation.Nullable;
 
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdict;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 
 public record IrisAssessmentProgrammingStudentParticipationProjection(Long id, String repositoryUri, String buildPlanId, String studentLogin, String studentFirstName,
         String studentLastName, Long irisAssessmentId, IrisVerdict irisAssessmentVerdict, IrisVerdictReview irisAssessmentVerdictReview) implements Serializable {

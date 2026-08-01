@@ -62,12 +62,12 @@
                 "irisDisabled": "Iris ist deaktiviert",
                 "enableSubtext": "Alle Studierenden dieses Kurses können Iris nutzen, wenn es aktiviert ist",
                 "disabledSubtext": "Iris ist für diesen Kurs inaktiv.",
-                "promptingModeEnabled": "Prompting-Modus ist aktiviert",
-                "promptingModeDisabled": "Prompting-Modus ist deaktiviert",
-                "promptingModeEnabledSubtext": "Studierende können den Prompting-Modus in Programmieraufgaben starten.",
-                "promptingModeDisabledSubtext": "Prompting-Modus-Steuerelemente werden für Studierende ausgeblendet.",
-                "promptingModeSettings": {
-                    "title": "Prompting-Modus-Quiz",
+                "askUserModeEnabled": "Quiz-Modus ist aktiviert",
+                "askUserModeDisabled": "Quiz-Modus ist deaktiviert",
+                "askUserModeEnabledSubtext": "Studierende können den Quiz-Modus in Programmieraufgaben starten.",
+                "askUserModeDisabledSubtext": "Quiz-Modus-Steuerelemente werden für Studierende ausgeblendet.",
+                "askUserModeSettings": {
+                    "title": "Quiz-Modus-Quiz",
                     "help": "Lege fest, wie viele Fragen Iris stellt und wie viel Zeit Studierende für Antworten haben.",
                     "minQuestions": "Minimale Anzahl an Fragen",
                     "maxQuestions": "Maximale Anzahl an Fragen",
@@ -159,7 +159,7 @@
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "tutorSuggestionSettings": "Tutor Vorschlag Einstellungen",
-                    "promptUserSettings": "Studentenbefragung Einstellungen",
+                    "askUserSettings": "Quiz Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
                         "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."

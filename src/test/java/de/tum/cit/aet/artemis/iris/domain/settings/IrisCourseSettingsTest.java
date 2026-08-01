@@ -18,8 +18,8 @@ class IrisCourseSettingsTest {
         var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null, null);
 
         assertThat(dto.customInstructions()).isEqualTo("trimmed text");
-        assertThat(dto.promptingModeEnabled()).isTrue();
-        assertThat(dto.promptingModeSettings()).isEqualTo(IrisPromptingModeSettings.defaultSettings());
+        assertThat(dto.askUserModeEnabled()).isTrue();
+        assertThat(dto.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
         assertThat(dto.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
         // null rateLimit is preserved (means "use defaults"), not converted to empty()
@@ -44,8 +44,8 @@ class IrisCourseSettingsTest {
         var deserialized = objectMapper.readValue(serialized, IrisCourseSettings.class);
 
         assertThat(deserialized.enabled()).isFalse();
-        assertThat(deserialized.promptingModeEnabled()).isTrue();
-        assertThat(deserialized.promptingModeSettings()).isEqualTo(IrisPromptingModeSettings.defaultSettings());
+        assertThat(deserialized.askUserModeEnabled()).isTrue();
+        assertThat(deserialized.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
         assertThat(deserialized.customInstructions()).isEqualTo("trimmed text");
         assertThat(deserialized.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
         assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.LOW);
@@ -60,33 +60,33 @@ class IrisCourseSettingsTest {
     }
 
     @Test
-    void deserialization_withoutPromptingModeEnabled_defaultsToEnabled() throws JsonProcessingException {
+    void deserialization_withoutAskUserModeEnabled_defaultsToEnabled() throws JsonProcessingException {
         var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
 
-        assertThat(deserialized.promptingModeEnabled()).isTrue();
+        assertThat(deserialized.askUserModeEnabled()).isTrue();
     }
 
     @Test
-    void deserialization_withoutPromptingModeSettings_defaultsToDefaultQuizSettings() throws JsonProcessingException {
+    void deserialization_withoutAskUserModeSettings_defaultsToDefaultQuizSettings() throws JsonProcessingException {
         var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
 
-        assertThat(deserialized.promptingModeSettings()).isEqualTo(IrisPromptingModeSettings.defaultSettings());
+        assertThat(deserialized.askUserModeSettings()).isEqualTo(IrisAskUserModeSettings.defaultSettings());
     }
 
     @Test
-    void deserialization_withPromptingModeSettings_isPreserved() throws JsonProcessingException {
+    void deserialization_withAskUserModeSettings_isPreserved() throws JsonProcessingException {
         var deserialized = objectMapper.readValue(
-                "{\"enabled\":true,\"promptingModeSettings\":{\"minQuestions\":2,\"maxQuestions\":7,\"timeLimitQuestion\":45,\"timeLimitInClass\":20},\"variant\":\"default\"}",
+                "{\"enabled\":true,\"askUserModeSettings\":{\"minQuestions\":2,\"maxQuestions\":7,\"timeLimitQuestion\":45,\"timeLimitInClass\":20},\"variant\":\"default\"}",
                 IrisCourseSettings.class);
 
-        assertThat(deserialized.promptingModeSettings()).isEqualTo(new IrisPromptingModeSettings(2, 7, 45, 20));
+        assertThat(deserialized.askUserModeSettings()).isEqualTo(new IrisAskUserModeSettings(2, 7, 45, 20));
     }
 
     @Test
-    void deserialization_withPromptingModeDisabled_isPreserved() throws JsonProcessingException {
-        var deserialized = objectMapper.readValue("{\"enabled\":true,\"promptingModeEnabled\":false,\"variant\":\"default\"}", IrisCourseSettings.class);
+    void deserialization_withAskUserModeDisabled_isPreserved() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"askUserModeEnabled\":false,\"variant\":\"default\"}", IrisCourseSettings.class);
 
-        assertThat(deserialized.promptingModeEnabled()).isFalse();
+        assertThat(deserialized.askUserModeEnabled()).isFalse();
     }
 
     @Test

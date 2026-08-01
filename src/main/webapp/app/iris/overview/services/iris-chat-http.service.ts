@@ -160,12 +160,4 @@ export class IrisChatHttpService {
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
         return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
-
-    startPromptingMode(exerciseId: number): Response<void> {
-        return this.httpClient.patch<void>(`${this.apiPrefix}/programming-exercises/${exerciseId}/assessment-quiz/start`, null, { observe: 'response' });
-    }
-
-    startInClassPromptingMode(exerciseId: number): Response<void> {
-        return this.httpClient.patch<void>(`${this.apiPrefix}/programming-exercises/${exerciseId}/assessment-quiz/in-class/start-current-session`, null, { observe: 'response' });
-    }
 }

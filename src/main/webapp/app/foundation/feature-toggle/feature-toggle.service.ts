@@ -25,7 +25,7 @@ export enum FeatureToggle {
     RateLimit = 'RateLimit',
     AutonomousTutor = 'AutonomousTutor',
     GlobalSearch = 'GlobalSearch',
-    PromptingMode = 'PromptingMode',
+    AskUserMode = 'AskUserMode',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

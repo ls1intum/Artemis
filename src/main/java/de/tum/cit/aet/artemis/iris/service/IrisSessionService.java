@@ -22,9 +22,9 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
@@ -42,7 +42,7 @@ public class IrisSessionService {
 
     private final IrisChatSessionService irisChatSessionService;
 
-    private final IrisPromptUserService irisPromptUserService;
+    private final IrisAskUserService irisAskUserService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
@@ -50,11 +50,11 @@ public class IrisSessionService {
 
     private final IrisSettingsService irisSettingsService;
 
-    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisPromptUserService irisPromptUserService,
+    public IrisSessionService(UserRepository userRepository, IrisChatSessionService irisChatSessionService, IrisAskUserService irisAskUserService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, IrisChatSessionRepository irisChatSessionRepository, IrisSettingsService irisSettingsService) {
         this.userRepository = userRepository;
         this.irisChatSessionService = irisChatSessionService;
-        this.irisPromptUserService = irisPromptUserService;
+        this.irisAskUserService = irisAskUserService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.irisSettingsService = irisSettingsService;
@@ -112,8 +112,8 @@ public class IrisSessionService {
         var wrapper = getIrisSessionSubService(session);
         if (wrapper.irisSubFeatureInterface instanceof IrisChatBasedFeatureInterface<S> chatWrapper) {
             if (session instanceof IrisChatSession chatSession) {
-                if (chatSession.isInPromptingModePipeline()) {
-                    irisPromptUserService.requestAndHandleResponse(chatSession);
+                if (chatSession.isInAskUserModePipeline()) {
+                    irisAskUserService.requestAndHandleResponse(chatSession);
                 }
                 else {
                     irisChatSessionService.requestAndHandleResponseWithAdditionalData(chatSession, uncommittedFiles, context);

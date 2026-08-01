@@ -1,0 +1,14 @@
+<button
+    jhi-exercise-action-button
+    [buttonIcon]="faBrain"
+    [class.btn-success]="!needsAttention()"
+    [class.btn-danger]="needsAttention()"
+    [jhiFeatureToggle]="FeatureToggle.AskUserMode"
+    [overwriteDisabled]="irisAssessment()?.verdict === undefined || irisAssessment()?.verdict === null"
+    [buttonLabel]="label() | artemisTranslate"
+    [smallButton]="smallButton()"
+    [hideLabelMobile]="hideLabelMobile()"
+    [routerLink]="['/course-management', course().id, assessmentReviewPath(), irisAssessment()?.id, 'details']"
+    placement="right auto"
+    container="body"
+></button>

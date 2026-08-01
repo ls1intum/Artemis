@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 @Entity

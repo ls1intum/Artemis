@@ -18,7 +18,7 @@ export enum IrisErrorMessageKey {
     IRIS_NOT_AVAILABLE = 'artemisApp.exerciseChatbot.errors.irisNotAvailable',
     RATE_LIMIT_EXCEEDED = 'artemisApp.exerciseChatbot.errors.rateLimitExceeded',
     AI_USAGE_DECLINED = 'artemisApp.exerciseChatbot.errors.aiUsageDeclined',
-    START_PROMPTING_FAILED = 'artemisApp.exerciseChatbot.errors.startPromptingFailed',
+    START_ASK_USER_FAILED = 'artemisApp.exerciseChatbot.errors.startAskUserFailed',
 }
 
 export interface IrisErrorType {

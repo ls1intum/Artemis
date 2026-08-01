@@ -26,7 +26,7 @@ export class IrisAssistantMessage implements BaseEntity {
     createdMemories?: MemirisMemory[];
     activities?: IrisActivityItem[];
     final?: boolean;
-    inPromptingMode?: boolean;
+    inAskUserMode?: boolean;
 }
 
 export interface IrisUserMessage extends BaseEntity {
@@ -37,7 +37,7 @@ export interface IrisUserMessage extends BaseEntity {
     messageDifferentiator?: number;
     accessedMemories?: MemirisMemory[];
     createdMemories?: MemirisMemory[];
-    inPromptingMode?: boolean;
+    inAskUserMode?: boolean;
 }
 
 export interface IrisArtifactMessage extends BaseEntity {
@@ -56,7 +56,7 @@ export class IrisContextSwitchMessage implements BaseEntity {
     sender!: IrisSender.CTXSWAP;
     accessedMemories?: never;
     createdMemories?: never;
-    inPromptingMode?: boolean;
+    inAskUserMode?: boolean;
 }
 
 export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisContextSwitchMessage;

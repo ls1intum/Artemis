@@ -29,11 +29,11 @@ describe('IrisSettingsUpdateComponent', () => {
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
-        promptingModeEnabled: true,
+        askUserModeEnabled: true,
         customInstructions: 'Test instructions',
         variant: 'default',
         supportLevel: 'moderate',
-        promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+        askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -107,9 +107,9 @@ describe('IrisSettingsUpdateComponent', () => {
                 courseId: 1,
                 settings: {
                     enabled: true,
-                    promptingModeEnabled: true,
+                    askUserModeEnabled: true,
                     variant: 'default',
-                    promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
                     rateLimit: undefined as any,
                 },
                 effectiveRateLimit: { requests: 50, timeframeHours: 12 },
@@ -855,53 +855,53 @@ describe('IrisSettingsUpdateComponent', () => {
         });
     });
 
-    describe('prompting mode settings', () => {
+    describe('askUser mode settings', () => {
         beforeEach(async () => {
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             await fixture.whenStable();
         });
 
-        it('should update prompting mode quiz settings', async () => {
-            component.updatePromptingModeSetting('minQuestions', 4);
-            component.updatePromptingModeSetting('maxQuestions', 8);
-            component.updatePromptingModeSetting('timeLimitQuestion', 60);
-            component.updatePromptingModeSetting('timeLimitInClass', 20);
+        it('should update askUser mode quiz settings', async () => {
+            component.updateAskUserModeSetting('minQuestions', 4);
+            component.updateAskUserModeSetting('maxQuestions', 8);
+            component.updateAskUserModeSetting('timeLimitQuestion', 60);
+            component.updateAskUserModeSetting('timeLimitInClass', 20);
 
-            expect(component.settings()?.promptingModeSettings).toEqual({ minQuestions: 4, maxQuestions: 8, timeLimitQuestion: 60, timeLimitInClass: 20 });
+            expect(component.settings()?.askUserModeSettings).toEqual({ minQuestions: 4, maxQuestions: 8, timeLimitQuestion: 60, timeLimitInClass: 20 });
             expect(component.isDirty()).toBe(true);
             expect(component.isFormValid()).toBe(true);
         });
 
-        it('should reject invalid prompting mode quiz settings while prompting mode is enabled', async () => {
-            component.updatePromptingModeSetting('minQuestions', 6);
-            component.updatePromptingModeSetting('maxQuestions', 5);
-            component.updatePromptingModeSetting('timeLimitQuestion', 181);
-            component.updatePromptingModeSetting('timeLimitInClass', 31);
+        it('should reject invalid ask-user mode quiz settings while ask-user mode is enabled', async () => {
+            component.updateAskUserModeSetting('minQuestions', 6);
+            component.updateAskUserModeSetting('maxQuestions', 5);
+            component.updateAskUserModeSetting('timeLimitQuestion', 181);
+            component.updateAskUserModeSetting('timeLimitInClass', 31);
 
-            expect(component.promptingModeMinQuestionsError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.minQuestionsBeforeMaxQuestions');
-            expect(component.promptingModeMaxQuestionsError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.minQuestionsBeforeMaxQuestions');
-            expect(component.promptingModeQuestionTimeLimitError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.questionTimeLimitRange');
-            expect(component.promptingModeInClassTimeLimitError()).toBe('artemisApp.iris.settings.promptingModeSettings.validation.inClassTimeLimitRange');
+            expect(component.askUserModeMinQuestionsError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.minQuestionsBeforeMaxQuestions');
+            expect(component.askUserModeMaxQuestionsError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.minQuestionsBeforeMaxQuestions');
+            expect(component.askUserModeQuestionTimeLimitError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.questionTimeLimitRange');
+            expect(component.askUserModeInClassTimeLimitError()).toBe('artemisApp.iris.settings.askUserModeSettings.validation.inClassTimeLimitRange');
             expect(component.isFormValid()).toBe(false);
         });
 
-        it('should reset hidden invalid prompting mode quiz settings before saving disabled prompting mode', async () => {
+        it('should reset hidden invalid askUser mode quiz settings before saving disabled askUser mode', async () => {
             const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             component.settings.set(
                 Object.assign({}, component.settings()!, {
-                    promptingModeSettings: { minQuestions: 6, maxQuestions: 5, timeLimitQuestion: 181, timeLimitInClass: 31 },
+                    askUserModeSettings: { minQuestions: 6, maxQuestions: 5, timeLimitQuestion: 181, timeLimitInClass: 31 },
                 }),
             );
             expect(component.isFormValid()).toBe(false);
 
-            component.setPromptingModeEnabled(false);
+            component.setAskUserModeEnabled(false);
             component.saveSettings();
             await fixture.whenStable();
 
             const savedSettings = updateSpy.mock.calls[0][1];
-            expect(savedSettings.promptingModeEnabled).toBe(false);
-            expect(savedSettings.promptingModeSettings).toEqual({ minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 });
+            expect(savedSettings.askUserModeEnabled).toBe(false);
+            expect(savedSettings.askUserModeSettings).toEqual({ minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 });
             expect(component.isFormValid()).toBe(true);
         });
     });

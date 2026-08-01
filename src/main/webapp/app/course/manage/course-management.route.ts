@@ -8,7 +8,7 @@ import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
-import { IrisAssessmentReviewResolver } from 'app/iris/overview/services/iris-assessment-review-resolver.service';
+import { IrisAssessmentReviewResolver } from 'app/iris/overview/ask-user/services/iris-assessment-review-resolver.service';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -300,7 +300,7 @@ export const courseManagementRoutes: Routes = [
                     {
                         path: 'iris-assessments',
                         loadComponent: () =>
-                            import('app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-overview.component').then(
+                            import('app/iris/overview/ask-user/assessment-review-overview/iris-assessment-review-overview.component').then(
                                 (m) => m.IrisAssessmentReviewOverviewComponent,
                             ),
                         data: {
@@ -315,8 +315,7 @@ export const courseManagementRoutes: Routes = [
                     },
                     {
                         path: 'iris-assessments/:assessmentId/details',
-                        loadComponent: () =>
-                            import('app/iris/overview/understanding-assessment/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
+                        loadComponent: () => import('app/iris/overview/ask-user/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.iris.assessmentReview.title',
@@ -330,7 +329,7 @@ export const courseManagementRoutes: Routes = [
                     {
                         path: 'iris-in-class-assessments',
                         loadComponent: () =>
-                            import('app/iris/overview/understanding-assessment/assessment-review-overview/iris-assessment-review-overview.component').then(
+                            import('app/iris/overview/ask-user/assessment-review-overview/iris-assessment-review-overview.component').then(
                                 (m) => m.IrisAssessmentReviewOverviewComponent,
                             ),
                         data: {
@@ -346,8 +345,7 @@ export const courseManagementRoutes: Routes = [
                     },
                     {
                         path: 'iris-in-class-assessments/:assessmentId/details',
-                        loadComponent: () =>
-                            import('app/iris/overview/understanding-assessment/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
+                        loadComponent: () => import('app/iris/overview/ask-user/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.iris.assessmentReview.title',

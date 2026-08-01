@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
@@ -49,7 +49,7 @@ public class PyrisStatusUpdateService {
 
     private final IrisChatSessionService irisChatSessionService;
 
-    private final IrisPromptUserService irisPromptUserService;
+    private final IrisAskUserService irisAskUserService;
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
@@ -61,12 +61,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
-    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisPromptUserService irisPromptUserService,
+    public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisAskUserService irisAskUserService,
             IrisCompetencyGenerationService competencyGenerationService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService,
             AutonomousTutorService autonomousTutorService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
-        this.irisPromptUserService = irisPromptUserService;
+        this.irisAskUserService = irisAskUserService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
         this.autonomousTutorService = autonomousTutorService;
@@ -90,7 +90,7 @@ public class PyrisStatusUpdateService {
      *
      * @param job          the chat job that is updated
      * @param statusUpdate the status update payload
-     * @param event        optional prompting-mode event variant
+     * @param event        optional ask-user-mode event variant
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate, String event) {
         var runState = resolveRunState(statusUpdate.runState(), job);
@@ -106,8 +106,11 @@ public class PyrisStatusUpdateService {
 
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, normalizedStatusUpdate, event);
         var jobWasTracked = removeJobIfTerminatedElseUpdate(runState, updatedJob);
-        if (shouldHandlePromptUserPipelineEvent(normalizedStatusUpdate, jobWasTracked)) {
-            irisPromptUserService.handleStatusUpdate(updatedJob, normalizedStatusUpdate);
+        if (shouldHandleAskUserPipelineEvent(normalizedStatusUpdate, jobWasTracked)) {
+            irisAskUserService.handleStatusUpdate(updatedJob, normalizedStatusUpdate);
+        }
+        else if (shouldResetAskUserPipelineAfterFailure(updatedJob, runState, jobWasTracked)) {
+            irisAskUserService.handleAskUserPipelineFailure((ChatJob) updatedJob, normalizedStatusUpdate.error());
         }
     }
 
@@ -176,9 +179,13 @@ public class PyrisStatusUpdateService {
         }
     }
 
-    private boolean shouldHandlePromptUserPipelineEvent(PyrisChatStatusUpdateDTO statusUpdate, boolean jobWasTracked) {
+    private boolean shouldHandleAskUserPipelineEvent(PyrisChatStatusUpdateDTO statusUpdate, boolean jobWasTracked) {
         return jobWasTracked && statusUpdate.runState() == PyrisRunState.FINISHED && statusUpdate.result() != null && statusUpdate.event() != null
                 && !Boolean.FALSE.equals(statusUpdate.finalResult());
+    }
+
+    private boolean shouldResetAskUserPipelineAfterFailure(TrackedSessionBasedPyrisJob job, PyrisRunState runState, boolean jobWasTracked) {
+        return jobWasTracked && runState == PyrisRunState.FAILED && job instanceof ChatJob chatJob && chatJob.isAskUserPipeline();
     }
 
     /**

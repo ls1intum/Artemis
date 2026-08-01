@@ -52,8 +52,8 @@
             [hasPractice]="showPracticeMode()"
             [hasGraded]="showGradedMode()"
         />
-        @if (exercise().type === ExerciseType.PROGRAMMING && !exercise().exerciseGroup && irisPromptingModeEnabled()) {
-            <jhi-start-prompting-button [exercise]="exercise()" [smallButtons]="false" [participation]="studentParticipation()" />
+        @if (exercise().type === ExerciseType.PROGRAMMING && !exercise().exerciseGroup && irisAskUserModeEnabled()) {
+            <jhi-start-quiz-button [exercise]="exercise()" [smallButtons]="false" [participation]="studentParticipation()" />
             <jhi-start-in-class-quiz-button [exercise]="exercise()" [smallButtons]="false" [participation]="studentParticipation()" />
         }
     </div>

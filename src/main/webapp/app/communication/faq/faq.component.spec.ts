@@ -288,10 +288,10 @@ describe('FaqComponent', () => {
             courseId: faqComponent.courseId(),
             settings: {
                 enabled: true,
-                promptingModeEnabled: true,
+                askUserModeEnabled: true,
                 customInstructions: '',
                 variant: 'default',
-                promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
                 rateLimit: { requests: 100, timeframeHours: 24 },
             },
             effectiveRateLimit: { requests: 100, timeframeHours: 24 },

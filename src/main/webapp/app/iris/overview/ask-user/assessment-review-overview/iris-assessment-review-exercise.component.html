@@ -1,0 +1,113 @@
+<div class="d-flex justify-content-between align-items-center flex-wrap">
+    <h2 class="mb-0">
+        <span>{{ exercise().title }}</span>
+    </h2>
+
+    @if (!exercise().exerciseGroup) {
+        <div class="d-flex gap-2 ms-auto">
+            @if (showStartInClassQuizButton()) {
+                <span class="d-inline-flex align-items-center gap-1">
+                    @if (availableInClassQuiz(); as inClassQuiz) {
+                        <jhi-quiz-timer-bar
+                            [open]="true"
+                            [timeLimit]="inClassQuiz.timeLimit"
+                            [timerExpiresAt]="inClassQuiz.timerExpiresAt"
+                            [showProgress]="false"
+                            (timerExpired)="handleInClassQuizTimerExpired()"
+                        />
+                    }
+                    <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.inClassQuizTooltip" class="ms-1" />
+                    <button class="btn btn-primary btn-sm" type="button" (click)="makeInClassQuizAvailable()">
+                        <fa-icon [icon]="faBrain" />
+                        <span class="d-none d-md-inline" [jhiTranslate]="inClassQuizButtonLabel()"></span>
+                    </button>
+                </span>
+            }
+            <a [routerLink]="['/course-management', course().id, exercise().type + '-exercises', exercise().id, 'participations']" class="btn btn-primary btn-sm">
+                <fa-icon [icon]="faListAlt" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
+            </a>
+            <a [routerLink]="['/course-management', course().id, 'programming-exercises', exercise().id, 'scores']" class="tab-item btn btn-sm btn-info">
+                <fa-icon [icon]="faTable" />
+                <span jhiTranslate="entity.action.scores"></span>
+            </a>
+        </div>
+    }
+</div>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th jhiTranslate="artemisApp.exercise.name"></th>
+                <th jhiTranslate="artemisApp.exercise.studentId"></th>
+                <th class="text-center" jhiTranslate="artemisApp.exercise.submissionCount"></th>
+                @if (exercise().isAtLeastInstructor) {
+                    <th></th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @for (participation of participationRows(); track participation.id ?? $index) {
+                <tr>
+                    <td>
+                        @if (exercise().isAtLeastInstructor) {
+                            <a [routerLink]="participation.participationLink">
+                                {{ participation.student?.name }}
+                            </a>
+                        } @else {
+                            {{ participation.student?.name }}
+                        }
+                    </td>
+                    <td>{{ participation.student?.login }}</td>
+                    <td class="text-center">
+                        @if (exercise().isAtLeastInstructor) {
+                            <a [routerLink]="participation.participationLink">
+                                {{ participation.submissionCount }}
+                            </a>
+                        } @else {
+                            {{ participation.submissionCount }}
+                        }
+                    </td>
+                    @if (exercise().isAtLeastInstructor) {
+                        <td>
+                            <div class="button-header">
+                                <div class="mb-2">
+                                    @if (participation.repositoryUri) {
+                                        <jhi-code-button
+                                            class="me-1"
+                                            [smallButtons]="true"
+                                            [repositoryUri]="participation.repositoryUri || ''"
+                                            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, participation.id!]"
+                                        />
+                                    }
+                                    @if (participation.buildPlanId && !localCIEnabled) {
+                                        <a target="_blank" rel="noreferrer" href="{{ participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
+                                            <fa-icon class="me-1" [icon]="faFileCode" />
+                                            Build plan
+                                        </a>
+                                    }
+                                    <a
+                                        [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', participation.id!]"
+                                        class="btn btn-info btn-sm me-1"
+                                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                    >
+                                        <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true" />
+                                        Online editor
+                                    </a>
+                                    <jhi-iris-review-assessment-button
+                                        class="me-1"
+                                        [smallButton]="true"
+                                        [course]="course()"
+                                        [exercise]="exercise()"
+                                        [participation]="participation"
+                                        [inClass]="showStartInClassQuizButton()"
+                                    />
+                                </div>
+                            </div>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

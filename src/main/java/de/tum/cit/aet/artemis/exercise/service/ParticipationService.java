@@ -1023,8 +1023,7 @@ public class ParticipationService {
         }
         else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()) {
 
-            loadIrisAssessment = Optional.ofNullable(irisSettingsServiceProvider.getIfAvailable()).map(service -> service.isPromptingModeEnabledForExercise(exercise))
-                    .orElse(false);
+            loadIrisAssessment = Optional.ofNullable(irisSettingsServiceProvider.getIfAvailable()).map(service -> service.isAskUserModeEnabledForExercise(exercise)).orElse(false);
 
             if (loadIrisAssessment) {
                 participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));

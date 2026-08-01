@@ -3,8 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import { BehaviorSubject, Observable, Subject, Subscription, catchError, from, map, of, tap, throwError } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
@@ -721,7 +720,7 @@ export class IrisChatService implements OnDestroy {
             this.closePendingRunGeneration();
         }
         if (this.currentRunId && runId !== this.currentRunId) {
-            return this.isPromptingMessagePayload(payload);
+            return this.isAskUserMessagePayload(payload);
         }
 
         const terminalState = this.terminalRunStateByRunId.get(runId);
@@ -731,7 +730,7 @@ export class IrisChatService implements OnDestroy {
         return true;
     }
 
-    private isPromptingMessagePayload(payload: IrisChatWebsocketDTO): boolean {
+    private isAskUserMessagePayload(payload: IrisChatWebsocketDTO): boolean {
         return payload.type === IrisChatWebsocketPayloadType.MESSAGE && !!payload.event;
     }
 
@@ -1118,14 +1117,6 @@ export class IrisChatService implements OnDestroy {
         return this.latestEvent.asObservable();
     }
 
-    public startPromptingMode(exerciseId: number): Observable<void> {
-        return from(this.clearChat()).pipe(
-            switchMap(() => this.irisChatHttpService.startPromptingMode(exerciseId)),
-            map(() => undefined),
-            catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
-        );
-    }
-
     /**
      * Deletes a single chat session by ID.
      * Removes it from the local session list and switches to another session if the deleted one was active.
@@ -1160,13 +1151,5 @@ export class IrisChatService implements OnDestroy {
      */
     public setShouldReopenChat(value: boolean): void {
         this.shouldReopenChatSubject.next(value);
-    }
-
-    public startInClassPromptingMode(exerciseId: number): Observable<void> {
-        return from(this.clearChat()).pipe(
-            switchMap(() => this.irisChatHttpService.startInClassPromptingMode(exerciseId)),
-            map(() => undefined),
-            catchError(() => throwError(() => new Error(IrisErrorMessageKey.START_PROMPTING_FAILED))),
-        );
     }
 }

@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -28,9 +30,12 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisAssessmentService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
+import de.tum.cit.aet.artemis.iris.service.IrisAssessmentReviewService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
@@ -44,11 +49,11 @@ public class IrisAssessmentReviewResource {
 
     private static final Logger log = LoggerFactory.getLogger(IrisAssessmentReviewResource.class);
 
-    private final IrisPromptUserService irisPromptUserService;
+    private final IrisAskUserService irisAskUserService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final IrisAssessmentService irisAssessmentService;
+    private final IrisAssessmentReviewService irisAssessmentReviewService;
 
     private final IrisAssessmentRepository irisAssessmentRepository;
 
@@ -56,15 +61,22 @@ public class IrisAssessmentReviewResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    protected IrisAssessmentReviewResource(IrisPromptUserService irisPromptUserService, AuthorizationCheckService authorizationCheckService,
-            IrisAssessmentService irisAssessmentService, IrisAssessmentRepository irisAssessmentRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentParticipationRepository studentParticipationRepository) {
-        this.irisPromptUserService = irisPromptUserService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final IrisSettingsService irisSettingsService;
+
+    protected IrisAssessmentReviewResource(IrisAskUserService irisAskUserService, AuthorizationCheckService authorizationCheckService,
+            IrisAssessmentReviewService irisAssessmentReviewService, IrisAssessmentRepository irisAssessmentRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, IrisSettingsService irisSettingsService) {
+        this.irisAskUserService = irisAskUserService;
         this.authorizationCheckService = authorizationCheckService;
-        this.irisAssessmentService = irisAssessmentService;
+        this.irisAssessmentReviewService = irisAssessmentReviewService;
         this.irisAssessmentRepository = irisAssessmentRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -81,7 +93,7 @@ public class IrisAssessmentReviewResource {
         var user = assessment.getStudent();
         var exercise = validate(assessment.getExercise());
 
-        return ResponseEntity.ok(irisPromptUserService.getQAExchangeDTOList(assessment, exercise, user, inClass));
+        return ResponseEntity.ok(irisAskUserService.getQAExchangeDTOList(assessment, exercise, user, inClass));
     }
 
     /**
@@ -95,7 +107,7 @@ public class IrisAssessmentReviewResource {
     public ResponseEntity<Void> acceptAnswers(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
-        irisAssessmentService.acceptAnswers(assessment);
+        irisAssessmentReviewService.acceptAnswers(assessment);
 
         return ResponseEntity.ok().build();
     }
@@ -112,7 +124,7 @@ public class IrisAssessmentReviewResource {
     public ResponseEntity<Void> rejectAnswers(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
-        irisAssessmentService.rejectAnswers(assessment);
+        irisAssessmentReviewService.rejectAnswers(assessment);
 
         return ResponseEntity.ok().build();
     }
@@ -162,32 +174,49 @@ public class IrisAssessmentReviewResource {
         return participationDTOs;
     }
 
-    /*
-     * public ResponseEntity<Set<ProgrammingExerciseStudentParticipation>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId) {
-     * Set<ProgrammingExerciseStudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(exercise.getId())
-     * .stream().filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(ProgrammingExerciseStudentParticipation.class::cast)
-     * .filter(participation -> participation.findLatestResult() != null && participation.findLatestResult().getScore() > 0).collect(Collectors.toSet());
-     * Map<Long, Integer> submissionCountMap = studentParticipationRepository
-     * .countSubmissionsPerParticipationByIdsAsMap(participations.stream().map(StudentParticipation::getId).toList());
-     * participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
-     * participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
-     * // remove unnecessary data to reduce response size
-     * participation.setExercise(null);
-     * }).collect(Collectors.toSet());
-     * return ResponseEntity.ok(participations);
-     * }
+    /**
+     * PATCH programming-exercises/{exerciseId}/ask-user/in-class/start: Starts the instructor-controlled in-class quiz window.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data
      */
+    @PatchMapping("programming-exercises/{exerciseId}/ask-user/in-class/available")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<IrisQuizTimerDTO> makeInClassQuizAvailable(@PathVariable Long exerciseId) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
+
+        return ResponseEntity.ok(irisAskUserService.makeInClassQuizAvailable(exercise));
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/ask-user/in-class: Gets the active instructor-controlled in-class quiz window.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the timer data, or {@code null} if no timer is active
+     */
+    @GetMapping("programming-exercises/{exerciseId}/ask-user/in-class")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<IrisQuizTimerDTO> getAvailableInClassQuiz(@PathVariable Long exerciseId) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+
+        irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
+
+        return ResponseEntity.ok(irisAskUserService.getAvailableInClassQuiz(exercise));
+    }
 
     private Exercise validate(Exercise exercise) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         if (exercise.isTeamMode()) {
-            throw new ConflictException("Prompting mode is not supported for team exercises", "Iris", "irisTeamExercise");
+            throw new ConflictException("Ask-user mode is not supported for team exercises", "Iris", "irisTeamExercise");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
 
         return exercise;
     }
+
 }

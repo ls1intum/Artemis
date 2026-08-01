@@ -53,7 +53,7 @@ public class IrisMessageService {
         message.setSession(session);
         message.getContent().forEach(content -> content.setMessage(message));
         if (session instanceof IrisChatSession chatSession) {
-            message.setInPromptingMode(chatSession.isInPromptingModePipeline());
+            message.setInAskUserMode(chatSession.isInAskUserModePipeline());
         }
 
         session.getMessages().add(message);

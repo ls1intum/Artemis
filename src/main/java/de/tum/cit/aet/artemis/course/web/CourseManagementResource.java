@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentAttentionDTO;
-import de.tum.cit.aet.artemis.iris.service.IrisAssessmentService;
+import de.tum.cit.aet.artemis.iris.service.IrisAssessmentReviewService;
 
 /**
  * REST controller for managing courses by tutors, editors and instructors.
@@ -85,12 +85,12 @@ public class CourseManagementResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final Optional<IrisAssessmentService> irisAssessmentService;
+    private final Optional<IrisAssessmentReviewService> irisAssessmentService;
 
     public CourseManagementResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
             ExerciseRepository exerciseRepository, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService, Optional<IrisAssessmentService> irisAssessmentService) {
+            CourseLoadService courseLoadService, Optional<IrisAssessmentReviewService> irisAssessmentService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;

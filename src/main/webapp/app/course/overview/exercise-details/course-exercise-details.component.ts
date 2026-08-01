@@ -219,8 +219,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly _irisChatEnabled = signal(false);
     readonly irisChatEnabled = this._irisChatEnabled.asReadonly();
 
-    private readonly _irisPromptingModeEnabled = signal(false);
-    readonly irisPromptingModeEnabled = this._irisPromptingModeEnabled.asReadonly();
+    private readonly _irisAskUserModeEnabled = signal(false);
+    readonly irisAskUserModeEnabled = this._irisAskUserModeEnabled.asReadonly();
 
     private readonly _instructorActionItems = signal<InstructorActionItem[]>([]);
     readonly instructorActionItems = this._instructorActionItems.asReadonly();
@@ -306,7 +306,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this._irisEnabled.set(false);
         this._irisChatEnabled.set(false);
-        this._irisPromptingModeEnabled.set(false);
+        this._irisAskUserModeEnabled.set(false);
 
         if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
             const courseId = this.courseId;
@@ -315,16 +315,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
             if (this.irisEnabled()) {
-                combineLatest([this.irisSettingsService.getCourseSettingsWithRateLimit(courseId), this.featureToggleService.getFeatureToggleActive(FeatureToggle.PromptingMode)])
+                combineLatest([this.irisSettingsService.getCourseSettingsWithRateLimit(courseId), this.featureToggleService.getFeatureToggleActive(FeatureToggle.AskUserMode)])
                     .pipe(takeUntilDestroyed(this.destroyRef))
-                    .subscribe(([response, promptingModeFeatureEnabled]) => {
+                    .subscribe(([response, askUserModeFeatureEnabled]) => {
                         if (this.courseId !== courseId || this.exercise?.id !== exerciseId) {
                             return;
                         }
 
                         this._irisChatEnabled.set(response?.settings?.enabled ?? false);
 
-                        this._irisPromptingModeEnabled.set(promptingModeFeatureEnabled && (response?.settings?.promptingModeEnabled ?? false));
+                        this._irisAskUserModeEnabled.set(askUserModeFeatureEnabled && (response?.settings?.askUserModeEnabled ?? false));
                     });
             }
         }

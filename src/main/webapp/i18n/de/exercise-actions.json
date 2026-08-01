@@ -79,9 +79,9 @@
                 "practice": "Übung",
                 "graded": "Bewertet"
             },
-            "prompting": {
+            "askUser": {
                 "start": "Verständnis prüfen",
-                "currently": "Wird überprüft",
+                "currently": "Quiz läuft",
                 "finished": "Quiz abgeschlossen",
                 "noSubmission": "Keine Abgabe"
             },

@@ -98,22 +98,22 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
     }
 
     /**
-     * Finds the latest completed prompting-mode chat session for a programming exercise and user.
+     * Finds the latest completed ask-user-mode chat session for a programming exercise and user.
      *
      * @param exerciseId the programming exercise id, stored as {@code entityId}
      * @param userId     the user id
-     * @return the latest finished prompting-mode session
-     * @throws EntityNotFoundException if no finished prompting-mode session exists
+     * @return the latest finished ask-user-mode session
+     * @throws EntityNotFoundException if no finished ask-user-mode session exists
      */
-    default IrisChatSession findLatestFinishedPromptingModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(long exerciseId, long userId, boolean inClass)
+    default IrisChatSession findLatestFinishedAskUserModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(long exerciseId, long userId, boolean inClass)
             throws EntityNotFoundException {
 
         var result = findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId, IrisChatMode.PROGRAMMING_EXERCISE_CHAT, userId, Pageable.unpaged()).stream()
-                .filter(session -> !session.isInPromptingModePipeline()).filter(session -> session.isInClassQuiz() == inClass)
-                .filter(session -> session.getMessages().stream().anyMatch(message -> Boolean.TRUE.equals(message.getInPromptingMode()))).findFirst();
+                .filter(session -> !session.isInAskUserModePipeline()).filter(session -> session.isInClassQuiz() == inClass)
+                .filter(session -> session.getMessages().stream().anyMatch(message -> Boolean.TRUE.equals(message.getInAskUserMode()))).findFirst();
 
         if (result.isEmpty()) {
-            var sessionType = inClass ? "finished in-class prompting-mode session" : "finished regular prompting-mode session";
+            var sessionType = inClass ? "finished in-class ask-user-mode session" : "finished regular ask-user-mode session";
 
             throw new EntityNotFoundException("Iris Chat Session: no " + sessionType + " found");
         }

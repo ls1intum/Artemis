@@ -36,9 +36,9 @@ export const SLIDER_VALUE_TO_SUPPORT_LEVEL: Record<number, IrisSupportLevel> = {
     100: 'high',
 };
 
-export const IRIS_PROMPTING_MODE_MAX_QUESTION_LIMIT = 10;
-export const IRIS_PROMPTING_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX = 180;
-export const IRIS_PROMPTING_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX = 30;
+export const IRIS_ASK_USER_MODE_MAX_QUESTION_LIMIT = 10;
+export const IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_MAX = 180;
+export const IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX = 30;
 
 /**
  * Rate limit configuration with optional per-course overrides.
@@ -50,9 +50,9 @@ export interface IrisRateLimitConfiguration {
 }
 
 /**
- * Prompting-mode quiz configuration stored in the course Iris settings JSON column.
+ * AskUser-mode quiz configuration stored in the course Iris settings JSON column.
  */
-export interface IrisPromptingModeSettingsDTO {
+export interface IrisAskUserModeSettingsDTO {
     minQuestions: number;
     maxQuestions: number;
     timeLimitQuestion: number;
@@ -67,12 +67,12 @@ export interface IrisPromptingModeSettingsDTO {
  */
 export interface IrisCourseSettingsDTO {
     enabled: boolean;
-    promptingModeEnabled: boolean;
+    askUserModeEnabled: boolean;
     customInstructions?: string;
     variant: IrisPipelineVariant;
     // Optional: absent means "use server default" (MODERATE), mirroring the @Nullable backend field.
     supportLevel?: IrisSupportLevel;
-    promptingModeSettings: IrisPromptingModeSettingsDTO;
+    askUserModeSettings: IrisAskUserModeSettingsDTO;
     rateLimit?: IrisRateLimitConfiguration;
 }
 
@@ -95,9 +95,9 @@ export function createEmptyRateLimit(): IrisRateLimitConfiguration {
 }
 
 /**
- * Helper to create default prompting-mode quiz settings.
+ * Helper to create default ask-user-mode quiz settings.
  */
-export function createDefaultPromptingModeSettings(): IrisPromptingModeSettingsDTO {
+export function createDefaultAskUserModeSettings(): IrisAskUserModeSettingsDTO {
     return {
         minQuestions: 3,
         maxQuestions: 5,
@@ -112,9 +112,9 @@ export function createDefaultPromptingModeSettings(): IrisPromptingModeSettingsD
 export function createDefaultCourseSettings(): IrisCourseSettingsDTO {
     return {
         enabled: true,
-        promptingModeEnabled: true,
+        askUserModeEnabled: true,
         variant: 'default',
         supportLevel: 'moderate',
-        promptingModeSettings: createDefaultPromptingModeSettings(),
+        askUserModeSettings: createDefaultAskUserModeSettings(),
     };
 }

@@ -16,8 +16,8 @@ import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
+import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.session.IrisPromptUserService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 
@@ -33,7 +33,7 @@ class PyrisStatusUpdateServiceChatTest {
     void setUp() {
         pyrisJobService = mock(PyrisJobService.class);
         irisChatSessionService = mock(IrisChatSessionService.class);
-        service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, mock(IrisPromptUserService.class), mock(IrisCompetencyGenerationService.class),
+        service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, mock(IrisAskUserService.class), mock(IrisCompetencyGenerationService.class),
                 mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.empty(), mock(IrisWebsocketService.class));
     }
 

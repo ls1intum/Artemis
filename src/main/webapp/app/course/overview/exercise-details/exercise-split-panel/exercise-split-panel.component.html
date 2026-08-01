@@ -91,11 +91,11 @@
                     class="h-100"
                     [layout]="'embedded'"
                     [isChatHistoryAvailable]="false"
-                    [currentlyPrompting]="currentlyPrompting()"
-                    [promptingInitiated]="promptingInitiated()"
+                    [quizActive]="quizActive()"
+                    [quizStarted]="quizStarted()"
                     [timerExpiresAt]="timerExpiresAt()"
                     [timeLimit]="timeLimit()"
-                    (timerExpired)="handlePromptingTimerExpired()"
+                    (timerExpired)="handleAskUserTimerExpired()"
                 />
             }
         </ng-template>

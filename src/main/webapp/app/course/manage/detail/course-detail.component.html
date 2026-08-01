@@ -22,7 +22,7 @@
                     @if (course()!.isAtLeastInstructor && irisEnabled()) {
                         <div class="flex flex-row flex-nowrap gap-3 xl:flex-row">
                             <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
-                            <jhi-iris-assessment-attention-center [course]="course()!" [assessmentEnabled]="irisPromptingModeEnabled()" style="min-height: 13rem" />
+                            <jhi-iris-assessment-attention-center [course]="course()!" [assessmentEnabled]="irisAskUserModeEnabled()" style="min-height: 13rem" />
                         </div>
                     }
                 </div>

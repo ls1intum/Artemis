@@ -29,10 +29,10 @@ import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisPromptingModeSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisAskUserModeSettings;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.promptuser.PyrisPromptUserPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.askuser.PyrisAskUserPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
@@ -113,7 +113,7 @@ class PyrisPipelineServiceTest {
     }
 
     @Test
-    void executePromptUserPipelineSendsPromptUserContractExpectedByPyris() throws Exception {
+    void executeAskUserPipelineSendsAskUserContractExpectedByPyris() throws Exception {
         var pyrisConnectorService = mock(PyrisConnectorService.class);
         var pyrisJobService = mock(PyrisJobService.class);
         var pyrisDTOService = mock(PyrisDTOService.class);
@@ -124,7 +124,7 @@ class PyrisPipelineServiceTest {
         user.setLogin("student");
         user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
-        when(pyrisJobService.addChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
+        when(pyrisJobService.addAskUserChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
 
         var course = new Course();
         course.setId(1L);
@@ -149,13 +149,13 @@ class PyrisPipelineServiceTest {
         session.setEntityId(3L);
         session.setUserId(7L);
 
-        service.executePromptUserPipeline("default", "moderate", submission, exercise, session, Optional.of("BUILD_WITH_POINTS"), IrisPromptingModeSettings.defaultSettings());
+        service.executeAskUserPipeline("default", submission, exercise, session, Optional.of("BUILD_WITH_POINTS"), IrisAskUserModeSettings.defaultSettings());
 
         var dtoCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(pyrisConnectorService).executePipeline(eq("prompt-user"), dtoCaptor.capture(), eq(Optional.of("BUILD_WITH_POINTS")));
+        verify(pyrisConnectorService).executePipeline(eq("ask-user"), dtoCaptor.capture(), eq(Optional.of("BUILD_WITH_POINTS")));
 
-        assertThat(dtoCaptor.getValue()).isInstanceOf(PyrisPromptUserPipelineExecutionDTO.class);
-        var dto = (PyrisPromptUserPipelineExecutionDTO) dtoCaptor.getValue();
+        assertThat(dtoCaptor.getValue()).isInstanceOf(PyrisAskUserPipelineExecutionDTO.class);
+        var dto = (PyrisAskUserPipelineExecutionDTO) dtoCaptor.getValue();
         assertThat(dto.chatMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         assertThat(dto.exercise()).isSameAs(exerciseDTO);
         assertThat(dto.submission()).isSameAs(submissionDTO);

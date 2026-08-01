@@ -1,5 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -36,12 +36,12 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { PageActivityService } from 'app/foundation/service/page-activity.service';
-import { IrisAssessmentQuizService } from 'app/iris/overview/services/iris-assessment-quiz.service';
+import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
 import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
-import { take } from 'rxjs';
+import { combineLatest, map, of, switchMap, take } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -76,7 +76,7 @@ export class ExerciseSplitPanelComponent {
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
     private readonly destroyRef = inject(DestroyRef);
     private readonly pageActivity = inject(PageActivityService);
-    private readonly assessmentQuizService = inject(IrisAssessmentQuizService);
+    private readonly askUserService = inject(IrisAskUserHttpService);
     // Tracks whether a quiz batch is started / the quiz has ended, from the server-provided exercise data.
     // Updated via effect (safe for required inputs) rather than computed (would throw NG0950 during early init).
     private readonly _quizBatchStarted = signal(false);
@@ -106,8 +106,8 @@ export class ExerciseSplitPanelComponent {
     protected readonly ExerciseType = ExerciseType;
     protected readonly AssessmentType = AssessmentType;
     protected readonly PlagiarismVerdict = PlagiarismVerdict;
-    protected readonly currentlyPrompting = signal(false);
-    protected readonly promptingInitiated = signal(false);
+    protected readonly quizActive = signal(false);
+    protected readonly quizStarted = signal(false);
     protected readonly timerExpiresAt = signal<dayjs.Dayjs | undefined>(undefined);
     protected readonly timeLimit = signal(0);
 
@@ -278,14 +278,27 @@ export class ExerciseSplitPanelComponent {
             });
         });
 
-        this.handlePromptingEvents();
-        this.handlePromptingDefocus();
+        this.handleAskUserDefocus();
+        this.handleAskUserEvents();
 
-        this.chatService.stopTimer$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            if (this.currentlyPrompting()) {
-                this.stopPromptingTimer();
-            }
-        });
+        // Initial fetch if ask-user mode is already started
+        toObservable(this.exercise)
+            .pipe(
+                switchMap((exercise) => {
+                    if (exercise?.id === undefined) {
+                        return of(false);
+                    }
+
+                    return combineLatest([
+                        this.askUserService.currentStartedQuizForExercise(exercise.id),
+                        this.askUserService.currentStartedInClassQuizForExercise(exercise.id),
+                    ]).pipe(map(([isAskUserStarted, isInClassStarted]) => isAskUserStarted || isInClassStarted));
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((isStarted) => {
+                this.quizStarted.set(isStarted);
+            });
     }
 
     private currentProgrammingExerciseId(): number | undefined {
@@ -293,13 +306,13 @@ export class ExerciseSplitPanelComponent {
         return exercise.type === ExerciseType.PROGRAMMING ? exercise.id : undefined;
     }
 
-    private startPromptingTimer(): void {
+    private startAskUserTimer(): void {
         const exerciseId = this.currentProgrammingExerciseId();
         if (exerciseId === undefined) {
             return;
         }
 
-        this.assessmentQuizService
+        this.askUserService
             .startTimer(exerciseId)
             .pipe(take(1))
             .subscribe((response) => {
@@ -307,29 +320,29 @@ export class ExerciseSplitPanelComponent {
                     this.timerExpiresAt.set(convertDateFromServer(response.body.timerExpiresAt));
                     this.timeLimit.set(response.body.timeLimit);
                 } else {
-                    throw new Error(IrisErrorMessageKey.START_PROMPTING_FAILED);
+                    throw new Error(IrisErrorMessageKey.START_ASK_USER_FAILED);
                 }
             });
     }
 
-    protected stopPromptingTimer(): void {
+    protected stopAskUserTimer(): void {
         const exerciseId = this.currentProgrammingExerciseId();
-        this.clearPromptingTimerState();
+        this.clearAskUserTimerState();
         if (exerciseId !== undefined) {
-            this.assessmentQuizService.stopTimer(exerciseId).pipe(take(1)).subscribe();
+            this.askUserService.stopTimer(exerciseId).pipe(take(1)).subscribe();
         }
     }
 
-    protected handlePromptingTimerExpired(): void {
-        this.clearPromptingTimerState();
+    protected handleAskUserTimerExpired(): void {
+        this.clearAskUserTimerState();
     }
 
-    private clearPromptingTimerState(): void {
+    private clearAskUserTimerState(): void {
         this.timerExpiresAt.set(undefined);
         this.timeLimit.set(0);
     }
 
-    private handlePromptingEvents(): void {
+    private handleAskUserEvents(): void {
         this.chatService
             .currentLatestEvent()
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -339,21 +352,21 @@ export class ExerciseSplitPanelComponent {
                 }
 
                 switch (event) {
-                    case IrisPipeEvent.USER_INITIATES_PROMPTING:
-                        this.promptingInitiated.set(true);
+                    case IrisPipeEvent.USER_STARTS_QUIZ:
+                        this.quizStarted.set(true);
                         break;
                     case IrisPipeEvent.FIRST_QUESTION:
-                        this.currentlyPrompting.set(true);
-                        this.promptingInitiated.set(true);
-                        this.startPromptingTimer();
+                        this.quizActive.set(true);
+                        this.quizStarted.set(true);
+                        this.startAskUserTimer();
                         break;
                     case IrisPipeEvent.NEXT_QUESTION:
-                        this.startPromptingTimer();
+                        this.startAskUserTimer();
                         break;
-                    case IrisPipeEvent.PROMPTING_FINISHED:
-                        this.currentlyPrompting.set(false);
-                        this.promptingInitiated.set(false);
-                        this.clearPromptingTimerState();
+                    case IrisPipeEvent.QUIZ_FINISHED:
+                        this.quizActive.set(false);
+                        this.quizStarted.set(false);
+                        this.clearAskUserTimerState();
                         break;
                     default:
                         break;
@@ -361,14 +374,14 @@ export class ExerciseSplitPanelComponent {
             });
     }
 
-    private handlePromptingDefocus(): void {
+    private handleAskUserDefocus(): void {
         this.pageActivity.pageLeaving$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const exerciseId = this.currentProgrammingExerciseId();
-            if (this.currentlyPrompting() && exerciseId !== undefined) {
-                this.currentlyPrompting.set(false);
-                this.promptingInitiated.set(false);
-                this.clearPromptingTimerState();
-                this.assessmentQuizService.registerDefocusForCurrentSession(exerciseId).subscribe();
+            if (this.quizActive() && exerciseId !== undefined) {
+                this.quizActive.set(false);
+                this.quizStarted.set(false);
+                this.clearAskUserTimerState();
+                this.askUserService.registerDefocusForCurrentSession(exerciseId).subscribe();
             }
         });
     }

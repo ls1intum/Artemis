@@ -11,18 +11,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.map.listener.EntryExpiredListener;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisJobExpiredEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -44,6 +48,8 @@ public class PyrisJobService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     @Nullable
     private IMap<String, PyrisJob> jobMap;
 
@@ -59,8 +65,9 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
     private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
-    public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+    public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher) {
         this.hazelcastInstance = hazelcastInstance;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -82,6 +89,7 @@ public class PyrisJobService {
     private IMap<String, PyrisJob> getPyrisJobMap() {
         if (this.jobMap == null) {
             this.jobMap = this.hazelcastInstance.getMap("pyris-job-map");
+            this.jobMap.addEntryListener(new PyrisJobExpiredListener(), true);
         }
         return this.jobMap;
     }
@@ -101,8 +109,16 @@ public class PyrisJobService {
     }
 
     public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
+        return addChatJob(courseId, sessionId, entityId, userMessageId, ChatJob.CHAT_PIPELINE_NAME);
+    }
+
+    public String addAskUserChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
+        return addChatJob(courseId, sessionId, entityId, userMessageId, ChatJob.ASK_USER_PIPELINE_NAME);
+    }
+
+    private String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId, String pipelineName) {
         var token = generateJobIdToken();
-        var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null);
+        var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null, pipelineName);
         getPyrisJobMap().put(token, job);
         return token;
     }
@@ -286,5 +302,16 @@ public class PyrisJobService {
             }
         }
         return randomStringBuilder.toString().replace("https://", "").replace("http://", "").replace(":", "_").replace(".", "_").replace("/", "_");
+    }
+
+    private class PyrisJobExpiredListener implements EntryExpiredListener<String, PyrisJob> {
+
+        @Override
+        public void entryExpired(EntryEvent<String, PyrisJob> event) {
+            var expiredJob = event.getOldValue() != null ? event.getOldValue() : event.getValue();
+            if (expiredJob != null) {
+                eventPublisher.publishEvent(new PyrisJobExpiredEvent(expiredJob));
+            }
+        }
     }
 }

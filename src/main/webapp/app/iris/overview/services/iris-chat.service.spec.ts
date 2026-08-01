@@ -682,19 +682,19 @@ describe('IrisChatService', () => {
             expect(messageCountWhenEventEmits).toBe(initialMessageCount + 1);
         });
 
-        it('should keep both prompting start messages when the first-question run starts before the first run returns', async () => {
+        it('should keep both askUser start messages when the first-question run starts before the first run returns', async () => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
             await startSessionWithWebsocket(websocketSubject);
             const emittedEvents: (IrisPipeEvent | undefined)[] = [];
             service.currentLatestEvent().subscribe((event) => emittedEvents.push(event));
 
-            websocketSubject.next(statusFrame('run-user-initiates', IrisRunState.RUNNING, { event: IrisPipeEvent.USER_INITIATES_PROMPTING }));
+            websocketSubject.next(statusFrame('run-user-initiates', IrisRunState.RUNNING, { event: IrisPipeEvent.USER_STARTS_QUIZ }));
             websocketSubject.next(statusFrame('run-first-question', IrisRunState.RUNNING, { event: IrisPipeEvent.FIRST_QUESTION }));
 
             websocketSubject.next(
                 messageFrame('run-user-initiates', {
-                    event: IrisPipeEvent.USER_INITIATES_PROMPTING,
-                    message: { ...mockWebsocketServerMessage.message!, id: 401, content: [{ type: 'text', textContent: 'Prompting mode starts now.' }] },
+                    event: IrisPipeEvent.USER_STARTS_QUIZ,
+                    message: { ...mockWebsocketServerMessage.message!, id: 401, content: [{ type: 'text', textContent: 'Ask-user mode starts now.' }] },
                 }),
             );
             websocketSubject.next(
@@ -704,17 +704,17 @@ describe('IrisChatService', () => {
                 }),
             );
 
-            expect(emittedEvents).toEqual([IrisPipeEvent.USER_INITIATES_PROMPTING, IrisPipeEvent.FIRST_QUESTION]);
+            expect(emittedEvents).toEqual([IrisPipeEvent.USER_STARTS_QUIZ, IrisPipeEvent.FIRST_QUESTION]);
             expect(service.messages.getValue().some((message) => message.id === 401)).toBe(true);
             expect(service.messages.getValue().some((message) => message.id === 402)).toBe(true);
         });
 
-        it('should accept the next user-triggered run after prompting start messages', async () => {
+        it('should accept the next user-triggered run after askUser start messages', async () => {
             const websocketSubject = new Subject<IrisChatWebsocketDTO>();
             await startSessionWithWebsocket(websocketSubject);
             websocketSubject.next(
                 messageFrame('run-user-initiates', {
-                    event: IrisPipeEvent.USER_INITIATES_PROMPTING,
+                    event: IrisPipeEvent.USER_STARTS_QUIZ,
                     message: { ...mockWebsocketServerMessage.message!, id: 401 },
                 }),
             );
@@ -1190,40 +1190,6 @@ describe('IrisChatService', () => {
             const courseId = service.getCourseId();
 
             expect(courseId).toBeUndefined();
-        });
-    });
-
-    describe('prompting mode start', () => {
-        it('should clear the chat before starting prompting mode', async () => {
-            const exerciseId = 42;
-            const sessionId = 777;
-            const session = { ...mockConversationWithNoMessages, id: sessionId, mode: ChatServiceMode.COURSE, entityId: courseId };
-            const createCourseSessionSpy = vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
-            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            const websocketSpy = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-            const startSpy = vi.spyOn(httpService, 'startPromptingMode').mockReturnValueOnce(of(new HttpResponse<void>()));
-
-            await firstValueFrom(service.startPromptingMode(exerciseId));
-
-            expect(createCourseSessionSpy).toHaveBeenCalledWith(courseId);
-            expect(websocketSpy).toHaveBeenCalledWith(sessionId);
-            expect(startSpy).toHaveBeenCalledWith(exerciseId);
-        });
-
-        it('should clear the chat before starting in-class prompting mode', async () => {
-            const exerciseId = 43;
-            const sessionId = 778;
-            const session = { ...mockConversationWithNoMessages, id: sessionId, mode: ChatServiceMode.COURSE, entityId: courseId };
-            const createCourseSessionSpy = vi.spyOn(httpService, 'createCourseSession').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
-            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            const websocketSpy = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-            const startSpy = vi.spyOn(httpService, 'startInClassPromptingMode').mockReturnValueOnce(of(new HttpResponse<void>()));
-
-            await firstValueFrom(service.startInClassPromptingMode(exerciseId));
-
-            expect(createCourseSessionSpy).toHaveBeenCalledWith(courseId);
-            expect(websocketSpy).toHaveBeenCalledWith(sessionId);
-            expect(startSpy).toHaveBeenCalledWith(exerciseId);
         });
     });
 

@@ -78,7 +78,7 @@ import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import dayjs from 'dayjs/esm';
-import { QuizTimerBarComponent } from 'app/iris/overview/understanding-assessment/quiz-timer-bar/quiz-timer-bar.component';
+import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar/quiz-timer-bar.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -306,7 +306,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !this.active() ||
             !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.awaitingAnswer() ||
-            this.showOnlyPromptingModeMessage(),
+            this.showOnlyAskUserModeMessage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
     readonly canShowSuggestions = computed(
@@ -367,9 +367,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
-    readonly showOnlyPromptingModeMessage = input<boolean>(false);
-    readonly currentlyPrompting = input<boolean>(false);
-    readonly promptingInitiated = input<boolean>(false);
+    readonly showOnlyAskUserModeMessage = input<boolean>(false);
+    readonly quizActive = input<boolean>(false);
+    readonly quizStarted = input<boolean>(false);
     readonly timerExpiresAt = input<dayjs.Dayjs | undefined>(undefined);
     readonly timeLimit = input<number | undefined>();
     readonly timerExpired = output<void>();

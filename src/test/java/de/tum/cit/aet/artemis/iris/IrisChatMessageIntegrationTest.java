@@ -590,13 +590,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void createMessage_usesPromptUserPipelineWhenPromptingModeIsActive() throws Exception {
+        void createMessage_usesAskUserPipelineWhenAskUserModeIsActive() throws Exception {
             IrisChatSession session = createProgrammingSession(programmingExercise, "student1");
-            session.setInPromptingModePipeline(true);
+            session.setInAskUserModePipeline(true);
             session.setQuestionsAsked(2);
             irisChatSessionRepository.save(session);
 
-            irisRequestMockProvider.mockPromptUserResponse(dto -> {
+            irisRequestMockProvider.mockAskUserResponse(dto -> {
                 assertThat(dto.programmingExercise()).isNotNull();
                 assertThat(dto.questionsAsked()).isEqualTo(2);
                 assertThat(dto.chatHistory()).hasSize(1);
@@ -608,7 +608,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             await().until(pipelineDone::get);
 
             assertThat(response.id()).isNotNull();
-            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast().getInPromptingMode()).isTrue();
+            assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).getLast().getInAskUserMode()).isTrue();
         }
 
         @Test

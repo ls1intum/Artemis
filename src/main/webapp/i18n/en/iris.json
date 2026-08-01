@@ -62,12 +62,12 @@
                 "irisDisabled": "Iris is disabled",
                 "enableSubtext": "All students in this course can use Iris when it is enabled",
                 "disabledSubtext": "Iris is inactive for this course.",
-                "promptingModeEnabled": "Prompting mode is enabled",
-                "promptingModeDisabled": "Prompting mode is disabled",
-                "promptingModeEnabledSubtext": "Students can start prompting mode in programming exercises.",
-                "promptingModeDisabledSubtext": "Prompting mode controls are hidden for students.",
-                "promptingModeSettings": {
-                    "title": "Prompting Mode Quiz",
+                "askUserModeEnabled": "Quiz mode is enabled",
+                "askUserModeDisabled": "Quiz mode is disabled",
+                "askUserModeEnabledSubtext": "Students can start quiz mode in programming exercises.",
+                "askUserModeDisabledSubtext": "Quiz mode controls are hidden for students.",
+                "askUserModeSettings": {
+                    "title": "Quiz Mode",
                     "help": "Configure how many questions Iris asks and how long students have to answer.",
                     "minQuestions": "Minimum number of questions",
                     "maxQuestions": "Maximum number of questions",
@@ -159,7 +159,7 @@
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "tutorSuggestionSettings": "Tutor Suggestion Settings",
-                    "promptUserSettings": "Prompt User Settings",
+                    "askUserSettings": "Quiz Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
                         "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."

@@ -80,8 +80,8 @@ public class IrisMessage extends DomainObject {
     @Column(name = "intermediate")
     private Boolean intermediate;
 
-    @Column(name = "in_prompting_mode", nullable = false)
-    private boolean inPromptingMode = false;
+    @Column(name = "in_ask_user_mode", nullable = false)
+    private boolean inAskUserMode = false;
 
     @Transient
     private Integer messageDifferentiator; // is supposed to be only a part of the dto and helps the client application to differentiate messages it should add to the message store
@@ -185,11 +185,11 @@ public class IrisMessage extends DomainObject {
                 + ", toolActivity=" + toolActivity + ", intermediate=" + intermediate + ", messageDifferentiator=" + messageDifferentiator + '}';
     }
 
-    public Boolean getInPromptingMode() {
-        return inPromptingMode;
+    public Boolean getInAskUserMode() {
+        return inAskUserMode;
     }
 
-    public void setInPromptingMode(@Nullable Boolean inPromptingMode) {
-        this.inPromptingMode = Boolean.TRUE.equals(inPromptingMode);
+    public void setInAskUserMode(@Nullable Boolean inAskUserMode) {
+        this.inAskUserMode = Boolean.TRUE.equals(inAskUserMode);
     }
 }

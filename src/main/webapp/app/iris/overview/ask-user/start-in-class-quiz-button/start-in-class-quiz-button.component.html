@@ -1,0 +1,23 @@
+@if (availableInClassQuiz(); as inClassQuiz) {
+    <span class="d-inline-flex align-items-center gap-1">
+        <button
+            (click)="startInClassQuiz()"
+            jhi-exercise-action-button
+            [id]="'start-in-class-quiz-' + exercise().id!"
+            [buttonIcon]="faBrain"
+            [class.btn-success]="quizAlreadyDone() && !showQuizActive()"
+            [jhiFeatureToggle]="FeatureToggle.AskUserMode"
+            [buttonLabel]="buttonLabel() | artemisTranslate"
+            [smallButton]="smallButtons()"
+            [hideLabelMobile]="hideLabelMobile()"
+            [overwriteDisabled]="!canBeStarted()"
+        ></button>
+        <jhi-quiz-timer-bar
+            [open]="true"
+            [timeLimit]="inClassQuiz.timeLimit"
+            [timerExpiresAt]="inClassQuiz.timerExpiresAt"
+            [showProgress]="false"
+            (timerExpired)="handleTimerExpired()"
+        />
+    </span>
+}

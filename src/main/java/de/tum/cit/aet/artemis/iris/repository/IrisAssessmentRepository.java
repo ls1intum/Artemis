@@ -16,8 +16,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisAssessment;
-import de.tum.cit.aet.artemis.iris.domain.promptuser.IrisVerdict;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
+import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
 
 /**
  * Spring Data JPA repository for the IrisAssessment entity.
