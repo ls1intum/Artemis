@@ -33,17 +33,14 @@ class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFindEnrollableForStudent() {
         var enrollmentDisabled = courseUtilService.createCourse();
-        enrollmentDisabled.setStudentGroupName("test-enrollable-students");
         enrollmentDisabled.setEnrollmentEnabled(false);
         courseRepository.save(enrollmentDisabled);
 
         var enrollmentEnabledNotActivePast = courseUtilService.createCourse();
-        enrollmentEnabledNotActivePast.setStudentGroupName("test-enrollable-students");
         setEnrollmentConfiguration(enrollmentEnabledNotActivePast, ZonedDateTime.now().minusDays(7), ZonedDateTime.now().minusDays(5));
         courseRepository.save(enrollmentEnabledNotActivePast);
 
         var enrollmentEnabledNotActiveFuture = courseUtilService.createCourse();
-        enrollmentEnabledNotActiveFuture.setStudentGroupName("test-enrollable-students");
         setEnrollmentConfiguration(enrollmentEnabledNotActiveFuture, ZonedDateTime.now().plusDays(5), ZonedDateTime.now().plusDays(7));
         courseRepository.save(enrollmentEnabledNotActiveFuture);
 
@@ -53,7 +50,6 @@ class CourseAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(courses).doesNotContain(enrollmentDisabled, enrollmentEnabledNotActivePast, enrollmentEnabledNotActiveFuture);
 
         var enrollmentEnabledAndActive = courseUtilService.createCourse();
-        enrollmentEnabledAndActive.setStudentGroupName("test-enrollable-students");
         setEnrollmentConfiguration(enrollmentEnabledAndActive, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5));
         courseRepository.save(enrollmentEnabledAndActive);
 

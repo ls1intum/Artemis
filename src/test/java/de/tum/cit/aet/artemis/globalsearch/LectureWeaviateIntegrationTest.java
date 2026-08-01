@@ -81,7 +81,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
     }
 
     @Test

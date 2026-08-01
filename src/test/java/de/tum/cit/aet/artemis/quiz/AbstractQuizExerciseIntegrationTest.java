@@ -43,7 +43,16 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
  */
-public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    /**
+     * Returns the login prefix used by {@code @BeforeEach} to create test users via {@code userUtilService.addUsers(prefix, ...)}.
+     * Used by shared helper methods (e.g. {@link #createQuizOnServer}) to enroll those users in newly-created courses so that
+     * course-membership access checks pass.
+     *
+     * @return the test-user login prefix for this test class (e.g. {@code "quizexerciseintegration"})
+     */
+    protected abstract String getTestPrefix();
 
     @Autowired
     protected QuizExerciseService quizExerciseService;
@@ -66,7 +75,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     protected Course createEmptyCourse() {
         final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
         final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
-        return quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
+        Course course = quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
+        userUtilService.enrollPrefixedUsersInCourse(course, getTestPrefix());
+        return course;
     }
 
     protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
@@ -95,7 +106,7 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     }
 
     protected QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(releaseDate, dueDate, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(getTestPrefix(), releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
