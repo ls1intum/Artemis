@@ -74,7 +74,7 @@ public class TutorEffortResource {
         if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             return ResponseEntity.noContent().build();
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
         List<TutorEffortDTO> tutorEffortList = tutorEffortService.buildTutorEffortList(courseId, exerciseId);

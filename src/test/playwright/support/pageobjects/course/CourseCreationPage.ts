@@ -90,51 +90,6 @@ export class CourseCreationPage {
     }
 
     /**
-     * Sets if the course group names should be customized
-     * @param customizeGroupNames customize the group names
-     */
-    async setCustomizeGroupNames(customizeGroupNames: boolean) {
-        const selector = this.page.locator('#field_customizeGroupNamesEnabled');
-        if (customizeGroupNames) {
-            await selector.check();
-        } else {
-            await selector.uncheck();
-        }
-    }
-
-    /**
-     * Sets the customized group name for students
-     * @param groupName the group name
-     */
-    async setStudentGroup(groupName: string) {
-        await this.page.locator('#field_studentGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for tutors
-     * @param groupName the group name
-     */
-    async setTutorGroup(groupName: string) {
-        await this.page.locator('#field_teachingAssistantGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for editors
-     * @param groupName the group name
-     */
-    async setEditorGroup(groupName: string) {
-        await this.page.locator('#field_editorGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for instructors
-     * @param groupName the group name
-     */
-    async setInstructorGroup(groupName: string) {
-        await this.page.locator('#field_instructorGroupName').fill(groupName);
-    }
-
-    /**
      * Sets if complaints are enabled
      * @param complaints if complaints should be enabled
      */

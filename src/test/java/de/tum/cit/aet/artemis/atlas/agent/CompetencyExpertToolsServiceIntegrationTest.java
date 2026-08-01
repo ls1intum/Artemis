@@ -45,7 +45,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setDescription("course description for testing");
         courseRepository.save(course);
         existingCompetency = competencyUtilService.createCompetency(course);

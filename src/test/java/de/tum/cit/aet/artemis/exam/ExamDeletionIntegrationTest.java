@@ -85,7 +85,7 @@ class ExamDeletionIntegrationTest extends AbstractSpringIntegrationIndependentTe
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
         // reset courses
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         exam = examUtilService.addExam(course);
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
