@@ -4,7 +4,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
+import { ExamNavigationBarComponent } from 'app/exam/manage/student-exams/student-exam-timeline/exam-navigation-bar/exam-navigation-bar.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';

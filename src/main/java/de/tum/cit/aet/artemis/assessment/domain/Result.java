@@ -102,8 +102,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     // PersistentSet (HashSet-backed) for uninitialized collections; using LinkedHashSet would keep the
     // persistent wrapper around and fail with LazyInitializationException once the Hibernate session
     // closes (open-in-view is disabled). Insertion order is not meaningful here anyway.
-    // TODO: drop the legacy "feedbacks_order" DB column in a follow-up PR via a Liquibase changeset.
-    // Keeping the column for now so this PR ships as a pure-Java change without a DB migration risk.
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
