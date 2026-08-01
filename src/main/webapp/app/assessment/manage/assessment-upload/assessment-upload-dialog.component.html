@@ -65,13 +65,6 @@
                 </table>
             </div>
         }
-
-        @if (successResult()) {
-            <div class="mt-4 text-state-success" data-testid="upload-success">
-                <fa-icon [icon]="faCheckCircle" class="mr-1" />
-                <span>{{ 'artemisApp.assessmentUpload.success' | artemisTranslate: { count: successResult()!.numberOfCreatedAssessments } }}</span>
-            </div>
-        }
     </div>
 
     <ng-template #footer>

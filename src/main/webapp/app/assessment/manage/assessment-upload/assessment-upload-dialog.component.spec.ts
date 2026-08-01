@@ -85,7 +85,7 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(component['isDragOver']()).toBe(false);
     });
 
-    it('should upload for the bound exercise id and store the success result', () => {
+    it('should upload for the bound exercise id, show a success alert, and close the dialog', () => {
         const result: AssessmentUploadResult = { numberOfCreatedAssessments: 2, createdStudentIdentifiers: ['1-a', '2-b'] };
         uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
 
@@ -93,9 +93,9 @@ describe('AssessmentUploadDialogComponent', () => {
         component.upload();
 
         expect(uploadSpy).toHaveBeenCalledWith(7, zipFile);
-        expect(component['successResult']()).toEqual(result);
         expect(component['errors']()).toHaveLength(0);
         expect(alertSuccess).toHaveBeenCalledWith('artemisApp.assessmentUpload.success', { count: 2 });
+        expect(component.visible()).toBe(false);
     });
 
     it('should show the validation errors and no success when the upload is rejected', () => {
@@ -106,8 +106,8 @@ describe('AssessmentUploadDialogComponent', () => {
         component.upload();
 
         expect(component['errors']()).toEqual(result.errors);
-        expect(component['successResult']()).toBeUndefined();
         expect(alertSuccess).not.toHaveBeenCalled();
+        expect(component.visible()).toBe(true);
     });
 
     it('should leave the dialog ready for another attempt after an HTTP error', () => {
@@ -123,20 +123,17 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(component['isUploading']()).toBe(false);
         expect(component['selectedFile']()).toBe(zipFile);
         expect(component['errors']()).toEqual([]);
-        expect(component['successResult']()).toBeUndefined();
+        expect(component.visible()).toBe(true);
     });
 
-    it('should clear the selected file and previous result when reset', () => {
-        const result: AssessmentUploadResult = { numberOfCreatedAssessments: 1, createdStudentIdentifiers: ['1-a'] };
-        uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
+    it('should clear the selected file and previous errors when reset', () => {
         component.onFileInputChange(fileInputEvent(zipFile));
-        component.upload();
+        component['errors'].set([{ identifier: '1-a', type: 'MISSING_TEXT_FILE' }]);
 
         component.resetState();
 
         expect(component['selectedFile']()).toBeUndefined();
         expect(component['errors']()).toEqual([]);
-        expect(component['successResult']()).toBeUndefined();
         expect(component['isUploading']()).toBe(false);
     });
 

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input, model, signal } from
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheckCircle, faCloudUploadAlt, faFileZipper } from '@fortawesome/free-solid-svg-icons';
+import { faCloudUploadAlt, faFileZipper } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -16,7 +16,7 @@ import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService 
  * <p>
  * Rendered with the tum-ui kit: a declarative {@link TumUiDialogComponent} whose visibility the parent controls via {@code [(visible)]}.
  * <p>
- * Invariant: at most one of {@link errors} and {@link successResult} is populated at any time, and {@link isUploading} is true only while an upload request is in flight.
+ * Invariant: {@link isUploading} is true only while an upload request is in flight. Validation errors keep the dialog open, while a successful upload closes it.
  */
 @Component({
     selector: 'jhi-assessment-upload-dialog',
@@ -38,11 +38,9 @@ export class AssessmentUploadDialogComponent {
     protected readonly isDragOver = signal(false);
     protected readonly isUploading = signal(false);
     protected readonly errors = signal<AssessmentUploadError[]>([]);
-    protected readonly successResult = signal<AssessmentUploadResult | undefined>(undefined);
 
     protected readonly faCloudUploadAlt = faCloudUploadAlt;
     protected readonly faFileZipper = faFileZipper;
-    protected readonly faCheckCircle = faCheckCircle;
 
     /** Marks the drop zone as active while a file is dragged over it. */
     onDragOver(event: DragEvent): void {
@@ -86,8 +84,8 @@ export class AssessmentUploadDialogComponent {
     }
 
     /**
-     * Validates a candidate file and, if it is an acceptable `.zip` within the size limit, selects it and clears any previous result.
-     * Postcondition: on success `selectedFile()` is the file and both `errors()` and `successResult()` are cleared; on rejection an alert is shown and the selection is unchanged.
+     * Validates a candidate file and, if it is an acceptable `.zip` within the size limit, selects it and clears any previous errors.
+     * Postcondition: on success `selectedFile()` is the file and `errors()` is cleared; on rejection an alert is shown and the selection is unchanged.
      */
     private handleFile(file: File): void {
         if (!file.name.toLowerCase().endsWith('.zip')) {
@@ -100,14 +98,13 @@ export class AssessmentUploadDialogComponent {
         }
         // Reset any previous outcome when a new file is chosen.
         this.errors.set([]);
-        this.successResult.set(undefined);
         this.selectedFile.set(file);
     }
 
     /**
      * Uploads the currently selected file and reflects the outcome in the component state.
      * Precondition: a file is selected (otherwise this is a no-op).
-     * Postcondition: while in flight `isUploading()` is true; on completion it is false and exactly one of `successResult()` (with a success alert) or `errors()` is populated.
+     * Postcondition: while in flight `isUploading()` is true; on completion it is false. A successful upload shows a success alert and closes the dialog; validation errors keep it open.
      */
     upload(): void {
         const file = this.selectedFile();
@@ -116,7 +113,6 @@ export class AssessmentUploadDialogComponent {
         }
         this.isUploading.set(true);
         this.errors.set([]);
-        this.successResult.set(undefined);
         this.assessmentUploadService.uploadManualAssessments(this.exerciseId(), file).subscribe({
             next: (response) => this.handleUploadResult(response.body ?? { numberOfCreatedAssessments: 0 }),
             // Malformed-request errors (empty/oversized/not a zip) carry an Artemis error header and are surfaced by the global alert interceptor.
@@ -124,14 +120,14 @@ export class AssessmentUploadDialogComponent {
         });
     }
 
-    /** Reflects the server's parsing/storing result in the component state: shows the per-row errors, or the success summary with a success alert. */
+    /** Reflects the server's parsing/storing result: shows per-row errors, or shows a success alert and closes the dialog. */
     private handleUploadResult(result: AssessmentUploadResult): void {
         this.isUploading.set(false);
         if (result.errors?.length) {
             this.errors.set(result.errors);
         } else {
-            this.successResult.set(result);
             this.alertService.success('artemisApp.assessmentUpload.success', { count: result.numberOfCreatedAssessments });
+            this.close();
         }
     }
 
@@ -144,7 +140,6 @@ export class AssessmentUploadDialogComponent {
     resetState(): void {
         this.selectedFile.set(undefined);
         this.errors.set([]);
-        this.successResult.set(undefined);
         this.isUploading.set(false);
     }
 }
