@@ -56,7 +56,7 @@ public class LoginOptionsService {
      */
     public LoginOptionsDTO getLoginOptions(String emailOrLogin) {
         if (emailOrLogin == null || emailOrLogin.isBlank()) {
-            return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
+            return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "input is null or blank");
         }
         String sanitizedInput = emailOrLogin.trim().toLowerCase(Locale.ROOT);
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
@@ -64,20 +64,20 @@ public class LoginOptionsService {
         // if user is already in database
         if (user.isPresent()) {
             if (user.get().isInternal()) {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
+                return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User found in Artemis DB, but isInternal=true");
             }
             else {
-                return getExternalUser();
+                return getExternalUser("User found in Artemis DB (isInternal=false)");
             }
         }
         if (ldapUserService.isPresent()) {
             Optional<LdapUserDto> ldapUser = isEmail ? ldapUserService.get().findByAnyEmail(sanitizedInput) : ldapUserService.get().findByLogin(sanitizedInput);
             // if user has a university account
             if (ldapUser.isPresent()) {
-                return getExternalUser();
+                return getExternalUser("User not in DB, but found in LDAP");
             }
         }
-        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
+        return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND LdapUserService is not present");
     }
 
     /**
@@ -85,13 +85,13 @@ public class LoginOptionsService {
      *
      * @return the LoginOptionsDTO representing the active external authentication provider, or PASSWORD fallback
      */
-    private LoginOptionsDTO getExternalUser() {
+    private LoginOptionsDTO getExternalUser(String baseReason) {
         if (oidcEnabled) {
-            return new LoginOptionsDTO(LoginMethod.OIDC, oidcDisplayName);
+            return new LoginOptionsDTO(LoginMethod.OIDC, oidcDisplayName, baseReason + " OIDC is ENABLED");
         }
         if (samlEnabled) {
-            return new LoginOptionsDTO(LoginMethod.SAML2, samlDisplayName);
+            return new LoginOptionsDTO(LoginMethod.SAML2, samlDisplayName, baseReason + " SAML IS ENABLED");
         }
-        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
+        return new LoginOptionsDTO(LoginMethod.PASSWORD, null, baseReason + " BOTH OIDC AND SAML2 ARE ENABLED");
     }
 }
