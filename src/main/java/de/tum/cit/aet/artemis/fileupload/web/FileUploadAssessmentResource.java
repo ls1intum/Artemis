@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
@@ -35,7 +38,9 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentInputDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadResultDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 
@@ -70,11 +75,11 @@ public class FileUploadAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission that should be sent to the client
      * @return the assessment of the given submission
      */
-    @Override
     @GetMapping("file-upload-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
-    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
-        return super.getAssessmentBySubmissionId(submissionId);
+    public ResponseEntity<FileUploadResultDTO> getFileUploadAssessmentBySubmissionId(@PathVariable Long submissionId) {
+        var response = super.getAssessmentBySubmissionId(submissionId);
+        return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
     }
 
     /**
@@ -88,12 +93,13 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("file-upload-submissions/{submissionId}/feedback")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-            @RequestBody FileUploadAssessmentDTO fileUploadAssessment) {
+    public ResponseEntity<FileUploadResultDTO> saveFileUploadAssessment(@PathVariable Long submissionId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
+            @Valid @RequestBody FileUploadAssessmentInputDTO fileUploadAssessment) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         // if a result exists, we want to override it, otherwise create a new one
         var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
-        return super.saveAssessment(submission, submit, fileUploadAssessment.feedbacks(), resultId, fileUploadAssessment.assessmentNote());
+        var response = super.saveAssessment(submission, submit, fileUploadAssessment.feedbackEntities(), resultId, fileUploadAssessment.assessmentNote());
+        return toFileUploadResultResponse(response.getStatusCode(), response.getHeaders(), response.getBody());
     }
 
     /**
@@ -106,7 +112,8 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("file-upload-submissions/{submissionId}/assessment-after-complaint")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdateDTO assessmentUpdate) {
+    public ResponseEntity<FileUploadResultDTO> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId,
+            @Valid @RequestBody FileUploadAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(submissionId);
@@ -115,14 +122,14 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
-        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate.toAssessmentUpdateDTO());
 
         if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(fileUploadExercise)) {
             ((StudentParticipation) result.getSubmission().getParticipation()).setParticipant(null);
         }
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(FileUploadResultDTO.ofTopLevel(result));
     }
 
     /**
@@ -156,5 +163,9 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @Override
     protected String getEntityName() {
         return ENTITY_NAME;
+    }
+
+    private static ResponseEntity<FileUploadResultDTO> toFileUploadResultResponse(HttpStatusCode status, HttpHeaders headers, Result result) {
+        return ResponseEntity.status(status).headers(headers).body(FileUploadResultDTO.ofTopLevel(result));
     }
 }
