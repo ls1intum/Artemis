@@ -209,6 +209,25 @@ describe('LectureUnitService', () => {
         expect(result.body).toBeDefined();
     });
 
+    it('should convert the release date of an attachment video unit from server so the date picker never receives a raw ISO string', () => {
+        // The server sends the release date as an ISO string; without conversion the edit form would display the raw timestamp (see issue #13259).
+        (attachmentVideoUnit as any).releaseDate = '2026-07-15T13:39:00+02:00';
+        const response = new HttpResponse<AttachmentVideoUnit>({ body: attachmentVideoUnit });
+
+        const result = service.convertLectureUnitResponseDatesFromServer(response);
+
+        expect(dayjs.isDayjs(result.body!.releaseDate)).toBe(true);
+        expect(result.body!.releaseDate!.isSame(dayjs('2026-07-15T13:39:00+02:00'))).toBe(true);
+    });
+
+    it('should convert the release date of an attachment video unit from server on array conversion', () => {
+        (attachmentVideoUnit as any).releaseDate = '2026-07-15T13:39:00+02:00';
+
+        const result = service.convertLectureUnitArrayDatesFromServer([attachmentVideoUnit]);
+
+        expect(dayjs.isDayjs(result[0].releaseDate)).toBe(true);
+    });
+
     it('should convert lecture unit response dates from server for exercise unit', () => {
         const response = new HttpResponse<ExerciseUnit>({ body: exerciseUnit });
         const result = service.convertLectureUnitResponseDatesFromServer(response);
