@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.account.test_repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -94,82 +92,44 @@ public interface UserTestRepository extends UserRepository {
     Optional<User> findOneWithExamUsersByLogin(@Param("login") String login);
 
     /**
-     * Batch-loads users with their {@code authorities} eagerly for the given set of logins.
-     * Used by {@link #saveAllOrUpdate} to fetch all existing users in a single query instead of
+     * Batch-loads users with their lazy collections eagerly for the given set of logins.
+     * Used by {@link #saveAllOrUpdate} to warm the persistence context in a single query instead of
      * issuing one {@code findOneWithAuthoritiesByLogin} query per user.
      * <p>
      * Unlike the production {@code findAllWithAuthoritiesByDeletedIsFalseAndLoginIn}, this
      * variant does NOT filter by {@code deleted = FALSE} — test users may be soft-deleted but
-     * still need to be updated in-place to avoid the Hibernate {@code PersistentSet(sn=null)} NPE.
+     * still need to be reset.
      *
      * @param logins the set of logins to load
-     * @return users with eagerly initialised {@code authorities}
+     * @return users with eagerly initialised {@code authorities} and {@code courseRoles}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    @EntityGraph(type = LOAD, attributePaths = { "authorities", "courseRoles" })
     @Query("SELECT u FROM User u WHERE u.login IN :logins")
-    Set<User> findAllWithAuthoritiesByLoginIn(@Param("logins") Set<String> logins);
+    Set<User> findAllWithAuthoritiesAndCourseRolesByLoginIn(@Param("logins") Set<String> logins);
 
     /**
-     * Batch-saves new users and updates existing ones in-place, preventing the Hibernate
-     * {@code PersistentSet(sn=null)} NPE for batch saves of "zombie" {@link User} objects
-     * (fresh Java objects with an existing DB ID and a plain {@code HashSet} for {@code authorities}).
+     * Batch-saves new users and resets existing ones to the state of the passed-in object.
      * <p>
-     * When {@link #save} is called on a zombie, Spring Data JPA delegates to JPA {@code merge()},
-     * which loads the managed entity with a lazy, uninitialized {@code PersistentSet} ({@code sn=null})
-     * for the {@code authorities} {@code @ManyToMany} collection. Replacing that collection with a
-     * plain {@code HashSet} queues a {@code CollectionUpdateAction} whose {@code compareTo} calls
-     * {@code hasDeletes()} on the uninitialized snapshot — causing an NPE.
+     * Test users are "zombies": fresh Java objects that carry an existing DB id (see
+     * {@code UserUtilService.createOrReuseExistingUser}) and plain {@code HashSet}s for their collections. Saving one
+     * delegates to JPA {@code merge()}, which needs the managed entity's lazy collections to be initialised — otherwise
+     * replacing an uninitialised {@code PersistentSet} queues a {@code CollectionUpdateAction} whose {@code compareTo}
+     * calls {@code hasDeletes()} on a {@code null} snapshot and throws an NPE.
      * <p>
-     * This method avoids that by batch-loading all existing users with {@code authorities} eagerly
-     * (one query via {@link #findAllWithAuthoritiesByLoginIn}) within the same {@code @Transactional}
-     * session, then updating each user in-place via {@link #copyFieldsInPlace} so the snapshot is
-     * always initialized before flush. New users (no ID) are passed directly to {@link #save}.
+     * Warming the persistence context with those collections initialised is therefore enough, and {@code merge()} then
+     * copies every field by itself. Do NOT replace this with a hand-written field-by-field copy: such a list silently
+     * goes stale whenever a field is added to {@link User}, which already caused test users to keep a stale
+     * {@code isTestUser} flag and disappear from statistics queries.
      *
-     * @param users the list of users to persist or update
-     * @return the list of saved or updated managed users, in input order
+     * @param users the list of users to persist or reset
+     * @return the list of saved managed users, in input order
      */
     @Transactional
     default List<User> saveAllOrUpdate(List<User> users) {
-        Set<String> existingLogins = users.stream().filter(u -> u.getId() != null).map(User::getLogin).collect(Collectors.toSet());
-
-        Map<String, User> loadedByLogin = existingLogins.isEmpty() ? Map.of()
-                : findAllWithAuthoritiesByLoginIn(existingLogins).stream().collect(Collectors.toMap(User::getLogin, u -> u));
-
-        List<User> result = new ArrayList<>();
-        for (User fresh : users) {
-            User loaded = fresh.getId() != null ? loadedByLogin.get(fresh.getLogin()) : null;
-            if (loaded == null) {
-                result.add(save(fresh));
-            }
-            else {
-                copyFieldsInPlace(fresh, loaded);
-                result.add(save(loaded));
-            }
+        Set<String> existingLogins = users.stream().filter(user -> user.getId() != null).map(User::getLogin).collect(Collectors.toSet());
+        if (!existingLogins.isEmpty()) {
+            findAllWithAuthoritiesAndCourseRolesByLoginIn(existingLogins);
         }
-        return result;
-    }
-
-    /**
-     * Copies all scalar fields and updates the {@code authorities} collection in-place from
-     * {@code fresh} into {@code existing}. Never replaces the {@code PersistentSet} reference so
-     * the Hibernate snapshot ({@code sn}) stays initialised and no NPE occurs at flush time.
-     */
-    private void copyFieldsInPlace(User fresh, User existing) {
-        existing.setPassword(fresh.getPassword());
-        existing.setFirstName(fresh.getFirstName());
-        existing.setLastName(fresh.getLastName());
-        existing.setEmail(fresh.getEmail());
-        existing.setActivated(fresh.getActivated());
-        existing.setDeleted(fresh.isDeleted());
-        existing.setLangKey(fresh.getLangKey());
-        existing.setRegistrationNumber(fresh.getRegistrationNumber());
-        existing.setVcsAccessToken(fresh.getVcsAccessToken());
-        existing.setVcsAccessTokenExpiryDate(fresh.getVcsAccessTokenExpiryDate());
-        existing.setSelectedLLMUsageTimestamp(fresh.getSelectedLLMUsageTimestamp());
-        existing.setSelectedLLMUsage(fresh.getSelectedLLMUsage());
-        existing.getAuthorities().clear();
-        if (fresh.getAuthorities() != null) {
-            existing.getAuthorities().addAll(fresh.getAuthorities());
-        }
+        return saveAll(users);
     }
 }
