@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.fileupload.dto;
 import java.time.ZonedDateTime;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -29,9 +30,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
  * @param exercise              the exercise context of this participation
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadParticipationDTO(Long id, InitializationState initializationState, ZonedDateTime initializationDate, ZonedDateTime individualDueDate,
-        Double presentationScore, Integer submissionCount, String type, Boolean testRun, String participantName, String participantIdentifier, Boolean isOwner,
-        FileUploadExerciseContextDTO exercise) {
+public record FileUploadParticipationDTO(Long id, @Nullable InitializationState initializationState, @Nullable ZonedDateTime initializationDate,
+        @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore, @Nullable Integer submissionCount, String type, boolean testRun,
+        @Nullable String participantName, @Nullable String participantIdentifier, @Nullable Boolean isOwner, @Nullable FileUploadExerciseContextDTO exercise) {
 
     /**
      * Factory method to create a {@link FileUploadParticipationDTO} from a {@link Participation} entity.
@@ -40,7 +41,7 @@ public record FileUploadParticipationDTO(Long id, InitializationState initializa
      * @param includeExercise whether to include the exercise details in the mapped DTO
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadParticipationDTO of(Participation participation, boolean includeExercise) {
+    public static @Nullable FileUploadParticipationDTO of(@Nullable Participation participation, boolean includeExercise) {
         return of(participation, includeExercise, null, null, null, null);
     }
 
@@ -55,8 +56,8 @@ public record FileUploadParticipationDTO(Long id, InitializationState initializa
      * @param isAtLeastInstructor whether the current user has at least instructor privileges for the exercise
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadParticipationDTO of(Participation participation, boolean includeExercise, Boolean isOwner, Boolean isAtLeastTutor, Boolean isAtLeastEditor,
-            Boolean isAtLeastInstructor) {
+    public static @Nullable FileUploadParticipationDTO of(@Nullable Participation participation, boolean includeExercise, @Nullable Boolean isOwner,
+            @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor) {
         if (participation == null) {
             return null;
         }
