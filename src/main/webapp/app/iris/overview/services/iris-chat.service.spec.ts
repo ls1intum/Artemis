@@ -36,6 +36,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import dayjs from 'dayjs/esm';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -1163,6 +1164,103 @@ describe('IrisChatService', () => {
 
             expect(emissions).toBe(1);
         });
+
+        /**
+         * The chatbot decides whether to show the "Choose Your AI Experience" modal from the cached
+         * `userIdentity().selectedLLMUsage`. Publishing the decision only after the PUT resolved made a widget
+         * that is re-created in that window read the stale value and ask again (nightly Iris e2e #13301), so
+         * the cache must reflect the choice as soon as it is made.
+         */
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, LLMSelectionDecision.NO_AI])(
+            'should publish %s to the account cache while the request is still in flight',
+            (decision) => {
+                accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+                userMock.updateLLMSelectionDecision.mockReturnValue(new Subject<HttpResponse<void>>().asObservable());
+
+                service.updateLLMUsageConsent(decision);
+
+                expect(accountService.userIdentity()?.selectedLLMUsage).toBe(decision);
+            },
+        );
+
+        it('should revert to "no decision yet" — without stamping a timestamp — when persisting it fails', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined, selectedLLMUsageTimestamp: undefined } as User);
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+            // A rollback must not claim the user decided just now: the settings page renders this timestamp.
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+        });
+
+        /**
+         * The consent handler only has to CREATE the session that could not exist before the user opted in —
+         * it must not tear down a session that is already established, which would discard the message the
+         * user has meanwhile sent (its response is dropped once `sessionId` changes) and leave an empty chat.
+         */
+        it('should keep an already established session when the accepted decision is persisted', async () => {
+            const unsubscribeSpy = vi.spyOn(wsMock, 'unsubscribeFromSession');
+            await startSessionWithWebsocket(new Subject<IrisChatWebsocketDTO>());
+            expect(service.sessionId).toBe(id);
+            const messagesBefore = service.messages.getValue();
+            expect(messagesBefore).not.toHaveLength(0);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(unsubscribeSpy).not.toHaveBeenCalled();
+            expect(service.sessionId).toBe(id);
+            // The reported symptom was an empty chat, so assert on what the user actually sees.
+            expect(service.messages.getValue()).toEqual(messagesBefore);
+        });
+
+        it('should roll back to the last server-confirmed decision, not to a previous unpersisted one', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined, selectedLLMUsageTimestamp: undefined } as User);
+            // The first request never settles (it is cancelled by the second call), so CLOUD_AI is never persisted.
+            userMock.updateLLMSelectionDecision
+                .mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable())
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+            service.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            // Reverting to CLOUD_AI would claim a decision the server may never have stored, which would
+            // suppress the AI-selection modal forever while the server keeps rejecting session creation.
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBeUndefined();
+        });
+
+        it('should keep the decision cached after it was persisted successfully', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        /**
+         * Right after the decision is cached the chat renders, but the session only exists once the consent request
+         * has landed. A send in that window must report the failure — the caller clears the textarea either way.
+         */
+        it('should surface an error instead of silently dropping a message sent before a session exists', async () => {
+            const errors: (IrisErrorMessageKey | undefined)[] = [];
+            service.currentError().subscribe((error) => errors.push(error));
+
+            await expect(firstValueFrom(service.sendMessage('hello'))).rejects.toThrow('Not initialized');
+
+            expect(errors).toContain(IrisErrorMessageKey.SEND_MESSAGE_FAILED);
+        });
+
+        it('should revert the cached decision to the previous one when persisting a change fails', () => {
+            const previousTimestamp = dayjs().subtract(3, 'day');
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: previousTimestamp } as User);
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            service.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsageTimestamp).toBe(previousTimestamp);
+        });
     });
 
     describe('authentication state changes', () => {
@@ -1397,6 +1495,32 @@ describe('IrisChatService', () => {
             await callerResult;
 
             expect(scopedService.error.getValue()).toBeUndefined();
+        });
+
+        /**
+         * The rollback snapshot is captured per consent request and deliberately not overwritten while one is in
+         * flight. It therefore has to be discarded when a logout cancels that request, or the next user's failed
+         * consent update would restore the previous user's decision into their identity cache.
+         */
+        it('should not restore the decision of a previous user after an authentication reset cancelled their consent request', () => {
+            customAccountService.userIdentity.set({ id: 99, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            userMock.updateLLMSelectionDecision.mockReset();
+            userMock.updateLLMSelectionDecision.mockReturnValueOnce(new Subject<HttpResponse<void>>().asObservable());
+
+            // First user picks a decision; the request never settles.
+            scopedService.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+
+            // They log out, which cancels the in-flight consent request, and a different user logs in.
+            authState.next(undefined);
+            customAccountService.userIdentity.set({ id: 100, selectedLLMUsage: undefined } as User);
+            authState.next({ id: 100 } as User);
+
+            // The new user's consent update fails, triggering a rollback.
+            userMock.updateLLMSelectionDecision.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            scopedService.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+
+            // Must roll back to the NEW user's own previous state, never to NO_AI from the first user.
+            expect(customAccountService.userIdentity()?.selectedLLMUsage).toBeUndefined();
         });
     });
 });

@@ -47,6 +47,11 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtlasIntegrationTest {
 
+    /** Stored in {@link #setupTestScenario} so that helper methods can create prefix-matched courses. */
+    protected String testPrefix;
+
+    protected String otherPrefix;
+
     protected Course course;
 
     protected Course course2;
@@ -64,7 +69,11 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     protected TextExercise textExercise;
 
     // BeforeEach
-    void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
+    void setupTestScenario(String TEST_PREFIX, String OTHER_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
+        // Store prefix so that helper test methods can create prefix-matched courses.
+        testPrefix = TEST_PREFIX;
+        otherPrefix = OTHER_PREFIX;
+
         // Mock AtlasML saves to avoid external calls in tests that create/import competencies
         atlasMLRequestMockProvider.ifPresent(provider -> {
             provider.enableMockingOfRequests();
@@ -72,14 +81,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         });
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        course2 = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
-
-        // creating course
-        course = courseUtilService.createCourse();
-        course2 = courseUtilService.createCourse();
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         courseCompetency = createCourseCompetencyForCourse.apply(course);
         lecture = createLecture(course);
@@ -407,6 +414,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     void shouldImportExerciseAndLectureWithCompetency() throws Exception {
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
+        // presentationScoreEnabled has a non-null default, so it can only be preserved if it is copied explicitly onto
+        // the fresh target exercise (see LearningObjectImportService); assert that the competency import keeps it.
+        textExercise.setPresentationScoreEnabled(true);
         exerciseRepository.save(textExercise);
 
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(courseCompetency.getId()), Optional.empty(), false, true, true, Optional.empty(), false);
@@ -414,6 +424,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
         assertThat(course2.getExercises()).hasSize(2);
+        // Only the (non-team) text exercise had presentation scoring enabled on the source; it must survive the import.
+        assertThat(course2.getExercises()).anyMatch(exercise -> Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()));
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
     }
@@ -503,7 +515,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportAllCompetencies(Function<Course, CourseCompetency> createCourseCompetencyForCourse) throws Exception {
-        var course3 = courseUtilService.createCourse();
+        // Use testPrefix so the editor/instructor users are enrolled in course3 and can import from it.
+        // In the UCR-based auth model, the user must be at least EDITOR in the source course.
+        var course3 = courseUtilService.createEnrolledCourse(testPrefix);
 
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
         var competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);

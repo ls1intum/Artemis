@@ -164,7 +164,8 @@ class QuizParticipationIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private QuizExercise createEndedCourseQuiz() {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().minusMinutes(2),
+                QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(120);
         return quizExerciseService.save(quizExercise);
     }

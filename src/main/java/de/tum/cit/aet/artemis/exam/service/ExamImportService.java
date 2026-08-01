@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.exception.ExamConfigurationException;
@@ -185,7 +186,7 @@ public class ExamImportService {
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
-        return new ExamImportResultDTO(examWithExercises, skippedExerciseTitles, incompleteExerciseTitles);
+        return new ExamImportResultDTO(ExamIdAndTitleDTO.of(examWithExercises), skippedExerciseTitles, incompleteExerciseTitles);
     }
 
     /**
@@ -408,6 +409,10 @@ public class ExamImportService {
                 // Hibernate conflicts with managed entities that have the same ID in the persistence context
                 Long sourceExerciseId = exerciseToCopy.getId();
                 exerciseToCopy.setId(null);
+                // The exercise is not editable on this path, so the skeleton carries no grading criteria of its own; null
+                // asks the import service to deep-copy the source's (an initialized empty collection would count as "the
+                // caller wants none", see ExerciseImportService#copyExerciseBasis).
+                exerciseToCopy.setGradingCriteria(null);
                 Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                     case MODELING -> {
                         if (modelingExerciseImportApi.isEmpty()) {
@@ -458,19 +463,14 @@ public class ExamImportService {
                             yield Optional.empty();
                         }
                         var originalQuizExercise = optionalOriginalQuizExercise.get();
-                        // The import service mutates the second parameter (importedExercise) in-place
-                        // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
-                        // same managed entity for both parameters, as that would corrupt the original
-                        // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
-                        // exercise group, title, shortName, etc. from the DTO conversion.
-                        // However, the skeleton does not contain quiz questions or batches (these are
-                        // not part of ExerciseImportDTO), so we must copy them from the original.
+                        // The quizSkeleton is the destination-bearing newExercise (correct exercise group, title,
+                        // shortName from the DTO conversion). The import service backfills questions and settings from
+                        // originalQuizExercise (the source), so we must NOT pass the same managed entity for both
+                        // parameters, which would corrupt the original quiz in the L1 cache. Batches are not copied for
+                        // exam exercises (exam timing controls scheduling); the import service skips them anyway.
                         QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
-                        quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
-                        // Don't copy batches — exam timing controls quiz scheduling, and the import service
-                        // skips batch copying for exam exercises anyway.
                         // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                        yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
+                        yield Optional.of(quizExerciseImportService.importQuizExercise(quizSkeleton, originalQuizExercise, null));
                     }
                 };
                 // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.

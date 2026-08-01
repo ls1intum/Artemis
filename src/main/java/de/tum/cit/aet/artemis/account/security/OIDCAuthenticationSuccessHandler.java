@@ -65,7 +65,7 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
             throw new IllegalStateException("OIDC authentication succeeded but required username claim '" + usernameClaimKey + "' is missing.");
         }
 
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)
+        User user = userRepository.findOneWithAuthoritiesByLogin(username)
                 .orElseThrow(() -> new IllegalStateException("Authenticated OIDC user " + username + " could not be found in the database."));
 
         // Artemis-side authorization, get roles from database

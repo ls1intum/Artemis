@@ -199,11 +199,16 @@
                         type="number"
                         min="1"
                         max="9999"
+                        step="1"
+                        pattern="\d*"
                         [(ngModel)]="exam.examMaxPoints"
                         #examMaxPointsInput="ngModel"
                     />
                     @if (examMaxPointsInput.errors?.['max']) {
                         <div class="alert alert-danger" jhiTranslate="error.examMaxPointsTooHigh"></div>
+                    }
+                    @if (examMaxPointsInput.errors?.['pattern']) {
+                        <div class="alert alert-danger" jhiTranslate="error.examMaxPointsWholeNumber"></div>
                     }
                 </div>
                 <div class="col-sm-6">
@@ -270,6 +275,18 @@
                                     [error]="!isValidPublishResultsDate"
                                     name="publishResultsDate"
                                     id="publishResultsDate"
+                                />
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <jhi-date-time-picker
+                                    labelName="{{ 'artemisApp.examManagement.examSummaryPublicationDate' | artemisTranslate }}"
+                                    labelTooltip="{{ 'artemisApp.examManagement.examSummaryPublicationDateTooltip' | artemisTranslate }}"
+                                    [(ngModel)]="exam.examSummaryPublicationDate"
+                                    [error]="!isValidExamSummaryPublicationDate"
+                                    name="examSummaryPublicationDate"
+                                    id="examSummaryPublicationDate"
                                 />
                             </div>
                         </div>

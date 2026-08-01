@@ -517,6 +517,57 @@ Do one of these:
 - `else` goes on the same line from the closing curly brace.
 - Use 4 spaces per indentation.
 
+### Cloning objects
+
+Copy objects with `deepClone` from `app/foundation/util/deep-clone.util` (a thin wrapper over lodash `cloneDeep`). **Never** use `structuredClone()`, object spread (`{ ...obj }`), or `Object.assign({}, obj)` to copy an entity-like object — anything that may hold a `dayjs` date, a nested object, a `Map`/`Set`, or a circular reference.
+
+```ts
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+
+// Don't - structuredClone() does not preserve prototypes, so `startDate` loses every dayjs
+// method and `copy.startDate.format(...)` throws at runtime. Worse, `dayjs.isDayjs(copy.startDate)`
+// still returns true (an internal data flag survives the clone), so a guard does not catch it.
+const copy = structuredClone(lecture);
+
+// Don't - shallow: `copy.course` is the SAME object as `lecture.course`, so editing the copy
+// silently edits the original too.
+const copy = { ...lecture };
+const copy = Object.assign({}, lecture);
+
+// Do
+const copy = deepClone(lecture);
+copy.title = 'New title';
+```
+
+Why each alternative fails:
+
+| Approach                 | Problem                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `structuredClone()`      | Drops prototypes — `dayjs` dates (and other class instances) lose their methods, while `isDayjs()` still says true |
+| `{ ...obj }`             | One level deep only — nested objects/arrays stay shared with the original                                          |
+| `Object.assign({}, obj)` | Same shallow-copy problem, and it reads as if the result were independent when it is not                           |
+
+This matters most for **signals**, which only notify when the reference changes (see [Zoneless change detection & signal-based state](#zoneless-change-detection--signal-based-state)). Replace the object instead of mutating it:
+
+```ts
+// Do - a new reference, with the nested state safely detached
+this.userIdentity.update((current) => {
+    if (!current) {
+        return current;
+    }
+    const updated = deepClone(current);
+    updated.imageUrl = url;
+    return updated;
+});
+```
+
+`AccountService.setImageUrl` and `AccountService.setUserEnabledMemiris` are the canonical examples.
+
+Two things this rule does **not** cover:
+
+- **Arrays.** Array spread is the documented way to append immutably: `this.items.update((items) => [...items, newItem])`. Reach for `deepClone` only when you need the array's _elements_ detached as well.
+- **Merging a couple of primitive fields onto a fresh literal.** Writing the literal out is clearer than cloning; the rule targets copies of existing entity objects.
+
 ### Prettier and ESLint
 
 - We use `prettier` to style code automatically and `eslint` to find additional issues.
