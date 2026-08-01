@@ -124,6 +124,7 @@
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",
+        "check:vite-override": "node supporting_scripts/check-vite-override.mjs",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
         "compile": "pnpm run prebuild && tsc --project tsconfig.app.json",
         "compile:tests": "pnpm run prebuild && tsc --project tsconfig.spec.json",
