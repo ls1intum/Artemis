@@ -51,15 +51,18 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -85,6 +88,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -175,7 +179,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @BeforeEach
     void initTestCase() throws GitAPIException {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
@@ -425,7 +429,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
         exam = examRepository.save(exam);
@@ -710,6 +714,56 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         lockedSubmissions = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLockedSubmissionsForExam_wirePinsAssessmentLocksDTO() throws Exception {
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroupWithTitle(true, exam, "text group");
+        exam = examRepository.save(exam);
+
+        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup, "Locked Text Exercise");
+        exerciseRepository.save(textExercise);
+
+        TextSubmission textSubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, student1, "some text");
+        StudentParticipation participation = (StudentParticipation) textSubmission.getParticipation();
+
+        // A genuinely LOCKED assessment: a tutor has started an in-progress manual assessment (assessor set,
+        // no completion date yet) on this exam text exercise.
+        Result lockedResult = new Result();
+        lockedResult.setAssessor(tutor);
+        lockedResult.setScore(55D);
+        lockedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        lockedResult.setSubmission(textSubmission);
+        lockedResult.setExerciseId(textExercise.getId());
+        lockedResult = resultRepository.save(lockedResult);
+        textSubmission.addResult(lockedResult);
+        submissionRepository.save(textSubmission);
+
+        List<LockedExamSubmissionDTO> lockedSubmissions = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK,
+                LockedExamSubmissionDTO.class);
+
+        assertThat(lockedSubmissions).hasSize(1);
+        LockedExamSubmissionDTO lockedSubmissionDTO = lockedSubmissions.getFirst();
+
+        // Every field the assessment-locks screen reads on the wire, pinned exactly: the polymorphic submission-type
+        // discriminator, participation id, exercise id/type/title, and the (in-progress) result's score/completionDate.
+        assertThat(lockedSubmissionDTO.submissionExerciseType()).isEqualTo("text");
+        assertThat(lockedSubmissionDTO.participation()).isNotNull();
+        assertThat(lockedSubmissionDTO.participation().id()).isEqualTo(participation.getId());
+        assertThat(lockedSubmissionDTO.participation().exercise()).isNotNull();
+        assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
+        assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
+        assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
+        assertThat(lockedSubmissionDTO.participation().submissionCount()).isEqualTo(1);
+        assertThat(lockedSubmissionDTO.results()).hasSize(1);
+        LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();
+        assertThat(resultDTO.score()).isEqualTo(55D);
+        // The assessment is still in progress, so no completion date has been set yet.
+        assertThat(resultDTO.completionDate()).isNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

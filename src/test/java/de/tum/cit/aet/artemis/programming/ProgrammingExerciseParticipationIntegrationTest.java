@@ -102,7 +102,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
@@ -859,8 +859,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoNameExam() throws Exception {
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
-                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000);
+        var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
+                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000, TEST_PREFIX);
         programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -936,7 +936,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_badRequest() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(programmingExercise.getExam().getId());
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1);
@@ -968,7 +968,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @BeforeEach
         void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExerciseWithAuxRepo = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExerciseWithAuxRepo = programmingExerciseRepository
                     .findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
@@ -1084,7 +1084,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @BeforeEach
         void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
@@ -1271,8 +1271,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var visibilityDate = startDate.minusHours(1);
         var publishResultsDate = startDate.plusHours(10);
         var workingTime = 120 * 60;
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate, publishResultsDate,
-                userLogin, workingTime);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate,
+                publishResultsDate, userLogin, workingTime, TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
     }

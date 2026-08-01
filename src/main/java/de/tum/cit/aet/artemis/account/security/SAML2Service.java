@@ -133,7 +133,7 @@ public class SAML2Service {
         log.debug("SAML2 password-enabled: {}", saml2EnablePassword);
 
         final String username = substituteAttributes(properties.getUsernamePattern(), principal);
-        Optional<User> user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        Optional<User> user = userRepository.findOneWithAuthoritiesByLogin(username);
         if (user.isEmpty()) {
             // create User if not exists
             user = Optional.of(createUser(username, principal));
@@ -204,7 +204,6 @@ public class SAML2Service {
         } // else set registration number to null to preserve uniqueness
         newUser.setLangKey(substituteAttributes(properties.getLangKeyPattern(), principal));
         newUser.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
-        newUser.setGroups(new HashSet<>());
 
         // userService.createUser(ManagedUserVM) does create an activated User
         // a random password is generated
