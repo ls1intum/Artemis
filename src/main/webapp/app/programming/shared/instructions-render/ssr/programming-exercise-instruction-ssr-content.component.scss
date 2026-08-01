@@ -31,6 +31,10 @@ $hljs-tokens:
     }
 }
 
+// Monokai's own rule for a class name, which highlight.js emits as `hljs-title class_`. Its (0,2,0) specificity beats
+// the generated `.hljs-title` rule no matter which palette is active, so the Visual Studio palette has to bind
+// `--hljs-class-title` as well (to its plain title colour, since vs.css has no `.class_` rule at all). Leaving it
+// unbound there would drop the colour of every class name in light mode.
 .hljs-title.class_,
 .hljs-class .hljs-title {
     color: var(--hljs-class-title, inherit);
@@ -68,6 +72,7 @@ $hljs-tokens:
     --hljs-tag: #00f;
     --hljs-string: #a31515;
     --hljs-title: #a31515;
+    --hljs-class-title: #a31515;
     --hljs-section: #a31515;
     --hljs-attribute: #a31515;
     --hljs-literal: #a31515;

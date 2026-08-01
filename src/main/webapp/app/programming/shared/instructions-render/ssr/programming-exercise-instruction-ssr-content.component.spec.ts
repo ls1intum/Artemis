@@ -232,20 +232,34 @@ describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
         expect(code.classList.contains('hljs')).toBe(true);
     });
 
-    it('does not highlight a code block twice when the dom is reused', () => {
+    it('does not highlight a code block twice when the pass runs again over retained markup', () => {
         render(codeBlock('class Example {}', 'java'), []);
         const code = shadowRoot().querySelector('pre code')!;
         const highlighted = code.innerHTML;
         expect(code.getAttribute('data-highlighted')).toBe('true');
+        expect(shadowRoot().querySelectorAll('pre code:not([data-highlighted])')).toHaveLength(0);
 
-        // Same html: the component keeps the dom, so the already highlighted markup must survive untouched. Feeding
-        // the highlighted markup back through highlight.js would nest a second layer of token spans in it.
-        fixture.componentRef.setInput('interactive', true);
-        fixture.detectChanges();
+        // Invoked directly because no public path reaches the pass twice today: `applyToDom` returns early while the
+        // html is unchanged. The marker is what makes idempotence a property of the pass itself instead of a
+        // consequence of that early return, so this test has to drive the pass, not the input. Re-highlighting would
+        // nest a second layer of token spans inside the first.
+        fixture.componentInstance['highlightCodeBlocks'](shadowRoot().querySelector<HTMLElement>('.artemis-problem-statement-host')!);
 
         expect(shadowRoot().querySelector('pre code')).toBe(code);
         expect(code.innerHTML).toBe(highlighted);
         expect(highlight).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the rest of the statement working when a code block fails to highlight', () => {
+        highlight.mockImplementation(() => {
+            throw new Error('grammar exploded');
+        });
+        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}<pre><code class="language-java">class Example {}</code></pre></div>`, [task(0, 'A', [1])], true);
+
+        // Degrades to the plain source, exactly like the formula pass degrades to the plain formula.
+        expect(shadowRoot().querySelector('pre code')!.textContent).toBe('class Example {}');
+        // The failure must not cost the statement its accessibility attributes, which are applied after this pass.
+        expect(taskElements()[0].getAttribute('role')).toBe('button');
     });
 
     it('binds the visual studio palette on the statement container and the monokai palette on its dark variant', () => {
@@ -270,6 +284,11 @@ describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
         // it is what makes the token rule fall through to its `inherit` fallback.
         expect(light.getPropertyValue('--hljs-doctag')).toBe('#808080');
         expect(dark.getPropertyValue('--hljs-doctag')).toBe('');
+        // `hljs-title class_` is what highlight.js emits for a class name, and Monokai's rule for it outranks the
+        // generic title rule in both palettes. Visual Studio has no such rule, so its class names have to keep the
+        // title colour rather than fall through to `inherit`.
+        expect(light.getPropertyValue('--hljs-class-title')).toBe('#a31515');
+        expect(dark.getPropertyValue('--hljs-class-title')).toBe('#fff');
 
         style.remove();
         containers.remove();

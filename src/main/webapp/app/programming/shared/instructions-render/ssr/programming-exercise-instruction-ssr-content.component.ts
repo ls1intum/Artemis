@@ -4,7 +4,7 @@ import katex from 'katex';
 import hljs from 'app/foundation/util/highlight-languages.util';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
-/** Marks a code block that has already been highlighted, so a re-render that reuses the DOM cannot highlight it twice. */
+/** Marks a code block that has already been highlighted, so running the pass again over retained markup is a no-op. */
 const HIGHLIGHTED_MARKER = 'data-highlighted';
 /** The class CommonMark puts on a fenced code block, and the only place the authored language survives in the markup. */
 const LANGUAGE_CLASS_PREFIX = 'language-';
@@ -126,13 +126,20 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
             element.classList.add('hljs');
             const code = element.textContent ?? '';
             const language = this.codeLanguage(element);
-            if (!language) {
-                element.innerHTML = hljs.highlightAuto(code).value;
-            } else if (hljs.getLanguage(language)) {
-                element.innerHTML = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+            // Per block, like the formula pass above: a grammar that throws must cost that block its colours and
+            // nothing else. Propagating out of here would skip the task attributes, the scroll and the focus restore
+            // below, leaving the whole statement non-interactive over one bad code block.
+            try {
+                if (!language) {
+                    element.innerHTML = hljs.highlightAuto(code).value;
+                } else if (hljs.getLanguage(language)) {
+                    element.innerHTML = hljs.highlight(code, { language, ignoreIllegals: true }).value;
+                }
+                // Unknown language: the legacy pipeline emits the escaped source, which is what the server already put
+                // into this element, so its content is left untouched.
+            } catch {
+                element.textContent = code;
             }
-            // Unknown language: the legacy pipeline emits the escaped source, which is what the server already put
-            // into this element, so its content is left untouched.
         });
     }
 
