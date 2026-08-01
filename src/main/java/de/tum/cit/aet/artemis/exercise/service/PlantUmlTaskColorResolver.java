@@ -51,8 +51,8 @@ public final class PlantUmlTaskColorResolver {
      */
     public static String resolve(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean allTestsPassed) {
         TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
-        // Same effective predicate as ProblemStatementRenderingService: task markers and the diagram beside them must
-        // never disagree. Re-derived here rather than trusted, because this is a public utility.
+        // Callers hand over the raw request flag, so the predicate is applied here, once, on the same two inputs the
+        // task renderer uses: task markers and the diagram beside them must never disagree.
         boolean allPassed = allTestsPassed && testResults == null;
 
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {

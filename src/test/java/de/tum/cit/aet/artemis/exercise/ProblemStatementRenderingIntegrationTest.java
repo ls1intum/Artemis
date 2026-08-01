@@ -476,6 +476,24 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<svg");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldColorPlantUmlGreenWhenAllTestsPassedWithoutFeedback() throws Exception {
+        // Covers the wiring from the request through the renderer into PlantUmlTaskColorResolver: without the flag
+        // reaching the diagram pass, the task markers of an all-passed submission turn green next to a grey diagram.
+        // PlantUML resolves the color names into their HTML values, so green is #008000 and grey is #808080.
+        String markdown = "@startuml\n!pragma layout smetana\nclass A #testsColor(testBubbleSort())\n@enduml";
+        var flagged = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, true, null, true);
+        var unflagged = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO greenResult = request.postWithResponseBody(POST_URL, flagged, RenderedProblemStatementDTO.class, HttpStatus.OK);
+        RenderedProblemStatementDTO greyResult = request.postWithResponseBody(POST_URL, unflagged, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(greenResult.html()).contains("<svg").contains("fill=\"#008000\"").doesNotContain("fill=\"#808080\"");
+        // The identical request without the flag stays grey, which is what makes the assertion above about the flag.
+        assertThat(greyResult.html()).contains("<svg").contains("fill=\"#808080\"").doesNotContain("fill=\"#008000\"");
+    }
+
     // --- Locale ---
 
     @Test

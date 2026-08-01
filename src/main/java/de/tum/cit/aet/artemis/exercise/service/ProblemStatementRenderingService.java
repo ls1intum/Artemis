@@ -176,8 +176,8 @@ public class ProblemStatementRenderingService {
         }
 
         // Individual test outcomes always win: the flag is only a substitute for feedback the client does not have. A
-        // request carrying both is decided by the feedback. This one predicate drives task status, task counts and
-        // diagram colors alike, so the three can never disagree.
+        // request carrying both is decided by the feedback. The diagram colors apply the same predicate to the same
+        // two inputs inside PlantUmlTaskColorResolver, so status, counts and colors can never disagree.
         boolean allPassed = allTestsPassed && testResults == null;
 
         // 1. Mask code blocks so downstream passes skip over them.
@@ -186,7 +186,7 @@ public class ProblemStatementRenderingService {
 
         // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark.
         List<String> inlineSvgs = new ArrayList<>();
-        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode, allPassed);
+        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode, allTestsPassed);
 
         // 3. Normalize math notation, then extract formulas (still while code blocks are masked).
         processed = MathFormulaExtractor.applyCompatibility(processed);
@@ -253,7 +253,8 @@ public class ProblemStatementRenderingService {
         return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode, boolean allPassed) {
+    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode,
+            boolean allTestsPassed) {
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -266,7 +267,9 @@ public class ProblemStatementRenderingService {
 
             String fullMatch = matcher.group(0);
             String diagramId = "uml-" + diagramIndex;
-            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults, allPassed);
+            // The raw request flag, not the derived one: the resolver applies the identical predicate to the same
+            // testResults, which keeps its documented contract true for every caller.
+            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults, allTestsPassed);
             // Strip <testid> wrappers inside PlantUML: the layout engine does not understand them.
             resolvedSource = TestReferenceParser.stripTestIdWrappers(resolvedSource);
 

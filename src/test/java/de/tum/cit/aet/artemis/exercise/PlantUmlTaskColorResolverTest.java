@@ -39,7 +39,7 @@ class PlantUmlTaskColorResolverTest {
     @Test
     void shouldColorEveryReferenceGreenWhenAllTestsPassedWithoutResults() {
         // A successful result without any feedback: nothing can be resolved, so every form and both reference kinds
-        // (name and id) must go green — otherwise the task markers turn green while the diagram stays grey.
+        // (name and id) must go green. Otherwise the task markers turn green while the diagram beside them stays grey.
         assertThat(PlantUmlTaskColorResolver.resolve("<color:testsColor(testPassed())>A</color>", null, true)).isEqualTo("<color:green>A</color>");
         assertThat(PlantUmlTaskColorResolver.resolve("#text:testsColor(unknownTest())", null, true)).isEqualTo("#text:green");
         assertThat(PlantUmlTaskColorResolver.resolve("A -> B #testsColor(<testid>7</testid>)", null, true)).isEqualTo("A -> B #green");
