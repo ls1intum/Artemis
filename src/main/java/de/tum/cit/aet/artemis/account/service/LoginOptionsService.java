@@ -81,6 +81,10 @@ public class LoginOptionsService {
                 return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND not found in LDAP");
             }
         }
+        // debug
+        if (oidcEnabled || samlEnabled) {
+            return getExternalUser("User not in DB AND LDAP disabled -> Routing to OIDC for JIT provisioning");
+        }
         return new LoginOptionsDTO(LoginMethod.PASSWORD, null, "User not in DB AND LdapUserService is not present");
     }
 
