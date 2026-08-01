@@ -31,7 +31,8 @@ public class IrisLectureSearchApi extends AbstractIrisApi {
      * @return list of matching lecture snippets
      */
     public List<IrisLectureSnippetDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
-        return pyrisConnectorService.searchLectures(query, limit, courseIds).stream().map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet()))
+        // No access context: this facade has no requesting user (callers such as Hyperion already scope by courseId), so Pyris applies no permission filter.
+        return pyrisConnectorService.searchLectures(query, limit, courseIds, null).stream().map(r -> new IrisLectureSnippetDTO(r.lecture().name(), r.lectureUnit().name(), r.snippet()))
                 .toList();
     }
 }
