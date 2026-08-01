@@ -405,6 +405,48 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(comp.isRefreshing()).toBe(true);
     });
 
+    it('drops a render failure banner when the exercise becomes undefined with nothing on screen', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        httpMock.expectOne(RENDER_URL_MATCHER).flush('too many requests', new HttpErrorResponse({ status: 429, statusText: 'Too Many Requests' }));
+        fixture.detectChanges();
+        expect(comp.initialLoadFailed()).toBe(true);
+
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.detectChanges();
+
+        // The pane has stopped showing an answer for the exercise that error described, so the banner goes with it.
+        // A spinner next to a stale failure banner is a state the user must never see.
+        expect(comp.isLoading()).toBe(true);
+        expect(comp.initialLoadFailed()).toBe(false);
+        expect(comp.refreshFailed()).toBe(false);
+        expect(comp.errorStatus()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('tum-ui-message')).toBeNull();
+    });
+
+    it('drops a stale hint when the exercise becomes undefined with content retained', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        flushRender();
+        currentTheme.set(Theme.DARK);
+        fixture.detectChanges();
+        httpMock.expectOne(RENDER_URL_MATCHER).error(new ProgressEvent('network error'));
+        fixture.detectChanges();
+        expect(comp.refreshFailed()).toBe(true);
+
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.detectChanges();
+
+        expect(comp.isRefreshing()).toBe(true);
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.refreshFailed()).toBe(false);
+        expect(comp.initialLoadFailed()).toBe(false);
+        expect(comp.errorStatus()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('tum-ui-message')).toBeNull();
+        // The statement itself is deliberately kept while the next exercise is awaited.
+        expect(firstTaskElement()).toBeTruthy();
+    });
+
     it('cancels an in-flight render and drops the rendered context when the problem statement goes blank', () => {
         const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
         fixture.componentRef.setInput('exercise', exercise);

@@ -240,11 +240,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         this.hydrationFailed.set(false);
         // Loading starts here, not when the render request is issued: hydration itself may take a round trip, and a
         // previous failure must stop being displayed as soon as a fresh attempt begins.
-        this.setPendingFlags();
-        this.initialLoadFailed.set(false);
-        this.refreshFailed.set(false);
-        // The status describes the previous render error; a fresh attempt must not inherit it.
-        this.errorStatus.set(undefined);
+        this.enterPendingState();
         this.hydrationRequests.next(request);
     }
 
@@ -266,7 +262,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             // the code editor). The effect re-runs as soon as the exercise arrives. A render started for the previous
             // exercise must not survive this, hence the cancellation; EMPTY reports nothing, so the flags are set here.
             this.renderRequests.next(undefined);
-            this.setPendingFlags();
+            this.enterPendingState();
             return;
         }
         const markdown = exercise.problemStatement?.trim();
@@ -293,11 +289,19 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         });
     }
 
-    /** Turns on the indicator that matches the current screen state: the initial spinner, or the refresh hint. */
-    private setPendingFlags(): void {
+    /**
+     * Switches the chrome to "an answer is on its way": the indicator matching what is on screen, and no leftover
+     * error. Every transition that ends up here has stopped showing an answer for whatever the error described, so
+     * a spinner next to a stale failure banner is a state the user must never see.
+     */
+    private enterPendingState(): void {
         const hasContent = this.renderedHtml() !== undefined;
         this.isLoading.set(!hasContent);
         this.isRefreshing.set(hasContent);
+        this.initialLoadFailed.set(false);
+        this.refreshFailed.set(false);
+        // The status describes the previous render error; a fresh attempt must not inherit it.
+        this.errorStatus.set(undefined);
     }
 
     /** Whether the markup on screen was rendered for exactly the exercise and participation currently bound. */
