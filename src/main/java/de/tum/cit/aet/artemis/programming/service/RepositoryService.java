@@ -140,18 +140,25 @@ public class RepositoryService {
      * @param repository   The repository from which files are to be fetched.
      * @param omitBinaries omit binary files for brevity and reducing size
      * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
-     *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
+     *         The map includes only those files that could successfully have their contents read; binary files and files that cause an IOException are not included.
      */
     public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, boolean omitBinaries) {
         var files = gitService.listFilesAndFolders(repository, omitBinaries).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
+            // Binary content cannot be decoded as UTF-8, so such a file would be dropped by the catch below anyway.
+            // Skipping it up front keeps the result identical and avoids logging an error for an expected outcome
+            // (a Gradle wrapper jar alone produced a steady stream of errors in production). This mirrors what
+            // getFilesContentFromBareRepository already does for the bare-repository case.
+            if (isBinaryFile(file.toString())) {
+                return;
+            }
             try {
                 fileListWithContent.put(file.toString(), Files.readString(file.toPath(), StandardCharsets.UTF_8));
             }
             catch (IOException e) {
-                log.error("Content of file: {} could not be loaded and throws the following error: {}", file, e.getMessage());
+                log.warn("Content of file {} could not be read as UTF-8 and is therefore skipped: {}", file, e.getMessage());
             }
         });
         return fileListWithContent;

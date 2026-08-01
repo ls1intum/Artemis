@@ -276,6 +276,19 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithContentSkipsBinaryFilesEvenWithoutOmitBinaries() throws Exception {
+        // The seeded repository contains a .jar whose bytes are not valid UTF-8. Such a file can never be part of the
+        // response, because the content is returned as a String. It is therefore skipped up front rather than being
+        // read, failing to decode, and producing a log entry for an entirely expected outcome.
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
+
+        assertThat(files).isNotEmpty();
+        assertThat(files.keySet()).noneMatch(file -> file.endsWith(".jar"));
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithOmitBinaries() throws Exception {
         var queryParams = "?omitBinaries=true";
         var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
