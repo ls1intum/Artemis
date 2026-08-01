@@ -15,9 +15,11 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -79,6 +81,9 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExerciseTestRepository exerciseRepository;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     private Course course;
 
     private User student;
@@ -86,7 +91,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
     }
 
@@ -159,6 +164,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         Exercise exercise = course.getExercises().iterator().next();
         long courseId = course.getId();
         long exerciseId = exercise.getId();
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
         // Student data that must be deleted by the reset.
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
@@ -180,8 +186,8 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(examUserRepository.countByExamId(examId)).isEqualTo(1);
         assertThat(conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), student.getId())).isPresent();
         assertThat(studentParticipationRepository.findById(participation.getId())).isPresent();
-        // The instructor is enrolled via the course instructor group before the reset.
-        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getGroups()).contains(course.getInstructorGroupName());
+        // The instructor holds the instructor role in the course before the reset.
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), courseId, CourseRole.INSTRUCTOR)).isTrue();
 
         courseResetService.resetStudentData(courseId);
 
@@ -195,7 +201,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         // instructor keeps access (instructors are never unenrolled by a reset).
         assertThat(courseRepository.findById(courseId)).isPresent();
         assertThat(exerciseRepository.findById(exerciseId)).isPresent();
-        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getGroups()).contains(course.getInstructorGroupName());
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(instructor.getId(), courseId, CourseRole.INSTRUCTOR)).isTrue();
 
         // The unrelated course's exam users and conversation participants are untouched.
         assertThat(examUserRepository.countByExamId(otherExamId)).isEqualTo(1);

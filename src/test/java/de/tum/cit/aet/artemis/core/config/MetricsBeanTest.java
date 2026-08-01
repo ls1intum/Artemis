@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
@@ -67,6 +68,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     private UserTestRepository userRepository;
 
     @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Autowired
     private ExamUserRepository examUserRepository;
 
     @Autowired
@@ -117,9 +121,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         var users = userUtilService.addUsers(TEST_PREFIX + "active", 3, 0, 0, 0);
 
-        var course1 = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-        course1.setStudentGroupName(TEST_PREFIX + "active" + "tumuser");
-        courseRepository.save(course1);
+        var course1 = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
 
         var textExercise = ExerciseUtilService.getFirstExerciseWithType(course1, TextExercise.class);
         textExercise.setStartDate(ZonedDateTime.now().minusDays(40));
@@ -228,7 +230,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         var course1 = courseUtilService.createCourse();
         course1.setTitle("Course 1");
         course1.setSemester(null);
-        course1.setStudentGroupName(TEST_PREFIX + "course1Students");
         course1 = courseRepository.save(course1);
         var exam1 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam1.setStartDate(ZonedDateTime.now().minusMinutes(1));
@@ -239,7 +240,6 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         var course2 = courseUtilService.createCourse();
         course2.setSemester("WS 2023/24");
-        course2.setStudentGroupName(TEST_PREFIX + "course2Students");
         course2 = courseRepository.save(course2);
         var exam2 = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
         exam2.setTitle("exam" + UUID.randomUUID());
@@ -247,12 +247,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam2);
         examUtilService.addStudentExamWithUser(exam2, users.getFirst());
 
-        users.forEach(user -> user.setGroups(new HashSet<>()));
-        users.getFirst().getGroups().add(TEST_PREFIX + "course1Students");
-        users.get(1).getGroups().add(TEST_PREFIX + "course1Students");
-        users.get(2).getGroups().add(TEST_PREFIX + "course1Students");
-        users.get(2).getGroups().add(TEST_PREFIX + "course2Students");
-        userRepository.saveAll(users);
+        userUtilService.enrollUserInCourse(users.getFirst(), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(1), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(2), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(2), course2, CourseRole.STUDENT);
 
         metricsBean.updatePublicArtemisMetrics();
 
@@ -302,17 +300,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     void testPrometheusMetricsExercises() {
         var users = userUtilService.addUsers(TEST_PREFIX, 6, 0, 0, 0);
         // 3 in course 1
-        users.getFirst().setGroups(Set.of(TEST_PREFIX + "course1students"));
-        users.get(1).setGroups(Set.of(TEST_PREFIX + "course1students"));
-        users.get(2).setGroups(Set.of(TEST_PREFIX + "course1students"));
-        // 3 in course 2
-        users.get(3).setGroups(Set.of(TEST_PREFIX + "course2students"));
-        users.get(4).setGroups(Set.of(TEST_PREFIX + "course2students"));
-        users.get(5).setGroups(Set.of(TEST_PREFIX + "course2students"));
-        userRepository.saveAll(users);
-
         var course1 = courseUtilService.createCourse();
-        course1.setStudentGroupName(TEST_PREFIX + "course1students");
+        userUtilService.enrollUserInCourse(users.getFirst(), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(1), course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(2), course1, CourseRole.STUDENT);
 
         course1.addExercises(exerciseRepository
                 .save(QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusMinutes(5), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED, course1)));
@@ -358,8 +349,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         assertMetricEquals(2, "artemis.scheduled.exercises.release.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         var course2 = courseUtilService.createCourse();
-        course2.setStudentGroupName(TEST_PREFIX + "course2students");
-        courseRepository.save(course2);
+        userUtilService.enrollUserInCourse(users.get(3), course2, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(4), course2, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(users.get(5), course2, CourseRole.STUDENT);
         course2.addExercises(
                 exerciseRepository.save(QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED, course2)));
         courseRepository.save(course2);
@@ -447,7 +439,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testEnsureCourseInformationIsSet() {
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         course.setTitle(null);
         course.setShortName("metricCourseShort");
         course.setSemester(null);

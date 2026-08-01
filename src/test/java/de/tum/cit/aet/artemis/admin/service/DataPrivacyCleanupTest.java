@@ -16,7 +16,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -331,7 +331,6 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
         // A finished course with a real, submitted text submission for <prefix>student1.
         Course course = courseUtilService.addCourseWithModelingAndTextExercise();
-        course.setInstructorGroupName(TEST_PREFIX + "instructor"); // so getInstructors() finds an eligible instructor
         course.setStartDate(ZonedDateTime.now().minusYears(2).minusMonths(2));
         course.setEndDate(ZonedDateTime.now().minusYears(2)); // past the 1-year non-grade retention -> due for warning
         CourseConfiguration configuration = new CourseConfiguration();
@@ -340,6 +339,8 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         course.setCourseConfiguration(configuration);
         course = courseRepository.save(course);
         long courseId = course.getId();
+        // so getInstructors() finds an eligible instructor: enrollment is a course role, not a group name
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, CourseRole.INSTRUCTOR);
         TextExercise textExercise = course.getExercises().stream().filter(TextExercise.class::isInstance).map(TextExercise.class::cast).findFirst().orElseThrow();
         long textExerciseId = textExercise.getId();
         // Known submission content, so we can prove the archive actually contains the student's work.
@@ -534,8 +535,8 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     private User enrolledUser(String login, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
-        user.setGroups(Set.of(TEST_PREFIX + "-enrolled-group"));
-        user = userRepository.save(user);
+        // enrollment is a course role now, so a plain group name would no longer make the user count as enrolled
+        userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
         userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
         return user;
     }

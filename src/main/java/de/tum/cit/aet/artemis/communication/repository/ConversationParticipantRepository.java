@@ -48,11 +48,11 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
                 LEFT JOIN FETCH conversationParticipant.user user
-                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.courseRoles
                 LEFT JOIN FETCH user.authorities
             WHERE conversationParticipant.conversation.id = :conversationId
             """)
-    Set<ConversationParticipant> findConversationParticipantsWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
+    Set<ConversationParticipant> findConversationParticipantsWithUserCourseRolesByConversationId(@Param("conversationId") Long conversationId);
 
     @Async
     @Transactional // ok because of modifying query

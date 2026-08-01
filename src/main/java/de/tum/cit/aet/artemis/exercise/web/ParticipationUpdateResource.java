@@ -109,7 +109,7 @@ public class ParticipationUpdateResource {
             throw new ConflictException("The participation does not belong to the specified exercise", ENTITY_NAME, "noidmatch");
         }
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();

@@ -49,7 +49,7 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
 
         // A course an instructor has opted out of grade relevance for, placed under a data-retention hold (e.g. a
         // pending objection) and already warned about the upcoming student-data reset.
