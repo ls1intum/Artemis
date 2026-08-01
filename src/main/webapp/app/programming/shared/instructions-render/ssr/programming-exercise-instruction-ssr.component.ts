@@ -33,6 +33,10 @@ import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/progra
  * - `'personal'`: the user's own `/user/topic/newResults` (`participation-websocket.service.ts`).
  * - `'shared'`: the exercise-wide, staff-only topic that broadcasts every result, including template/solution
  *   (`WebsocketConfiguration.java`, `ResultWebsocketService.java`).
+ *
+ * Caveat for every `'shared'` host: for exam exercises the topic's websocket policy requires *instructor*, not merely
+ * tutor (`WebsocketConfiguration.java`), so a tutor viewing an exam exercise has the subscription rejected and sees no
+ * live updates. This is pre-existing websocket policy that is accepted here rather than special-cased.
  */
 export type SsrLiveUpdates = 'none' | 'personal' | 'shared';
 
@@ -307,9 +311,11 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     }
 
     /**
-     * Switches the chrome to "an answer is on its way": the indicator matching what is on screen, and no leftover
-     * error. Every transition that ends up here has stopped showing an answer for whatever the error described, so
-     * a spinner next to a stale failure banner is a state the user must never see.
+     * Switches the chrome to "no answer yet": the indicator matching what is on screen, and no leftover error. The two
+     * callers reach it for different reasons: `startHydration` because a hydration (and the render that follows it) is
+     * on its way, and `requestRender` because the exercise input is still undefined, where nothing is in flight at all
+     * and the component is waiting for its host. Every transition that ends up here has stopped showing an answer for
+     * whatever the error described, so a spinner next to a stale failure banner is a state the user must never see.
      */
     private enterPendingState(): void {
         const hasContent = this.renderedHtml() !== undefined;

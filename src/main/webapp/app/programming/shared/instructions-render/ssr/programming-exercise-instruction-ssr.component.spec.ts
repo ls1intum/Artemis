@@ -30,7 +30,7 @@ const taskSpan = (name: string, testIds: string, status = 'success', notExecuted
 const bodyStyleResponse = (body: string, contentHash: string) => ({
     html: `<!DOCTYPE html><html><head></head><body><style>.artemis-task{color:red}</style><div class="artemis-problem-statement">${body}</div></body></html>`,
     contentHash,
-    rendererVersion: '1.0.0',
+    rendererVersion: '1.1.0',
 });
 
 const passingFeedback = () => [{ testCase: { id: 1, testName: 'testA' }, positive: true }];
@@ -52,7 +52,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
     const renderResponse = (status = 'success', extra = '', notExecutedCount = '0') => ({
         html: `<!DOCTYPE html><html><head><style>.artemis-task{color:red}</style></head><body><div class="artemis-problem-statement">${taskSpan('A', '1', status, notExecutedCount)}${extra}<script>window.x=1</script></div></body></html>`,
         contentHash: status + extra + notExecutedCount,
-        rendererVersion: '1.0.0',
+        rendererVersion: '1.1.0',
     });
 
     beforeEach(async () => {
@@ -785,7 +785,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         request.flush({
             html: `<!DOCTYPE html><html><body><div class="artemis-problem-statement">${taskSpan('A', '1')}</div></body></html>`,
             contentHash: 'hydrated',
-            rendererVersion: '1.0.0',
+            rendererVersion: '1.1.0',
         });
         fixture.detectChanges();
 
@@ -830,7 +830,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         httpMock.expectOne(RENDER_URL_MATCHER).flush({
             html: `<!DOCTYPE html><html><body><div class="artemis-problem-statement">${taskSpan('A', '1')}</div></body></html>`,
             contentHash: 'hydrated',
-            rendererVersion: '1.0.0',
+            rendererVersion: '1.1.0',
         });
         fixture.detectChanges();
         expect(comp.tasks()[0].status).toBe('success');

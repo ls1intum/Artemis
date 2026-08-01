@@ -86,9 +86,8 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      * only input available synchronously. Students cannot open another student's participation, so the non-staff
      * USER case is necessarily the viewer's own (or their team's).
      *
-     * Caveat: the shared topic's websocket policy requires *instructor*, not merely tutor, for exam exercises
-     * (`WebsocketConfiguration.java`), so a tutor viewing an exam repository has its subscription rejected. This is
-     * pre-existing websocket policy that is accepted here rather than special-cased.
+     * The `'shared'` mode carries a caveat for exam exercises (a tutor's subscription is rejected); it applies to every
+     * host using that mode and is documented on `SsrLiveUpdates` in `programming-exercise-instruction-ssr.component.ts`.
      */
     readonly liveUpdates = computed<SsrLiveUpdates>(() => {
         if (!this.participation()?.id) {

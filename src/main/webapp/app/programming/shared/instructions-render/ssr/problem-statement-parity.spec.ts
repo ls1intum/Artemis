@@ -15,6 +15,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
+import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -604,6 +605,26 @@ describe('problem statement rendering parity', () => {
         expect(highlightedCodeBlocks(afterClientRendering(serverHtml))).toBe(legacyHighlighted);
     });
 
+    it('produces the same highlight.js markup as the legacy pipeline for a known language', () => {
+        // The assertion above counts highlighted blocks, which cannot see *which* branch either side took. The content
+        // component transcribes the three branches of `highlightWithHljs` (foundation/util/markdown.conversion.util.ts)
+        // instead of sharing them, because the legacy unknown-language branch escapes the source itself while the SSR
+        // one relies on the server having escaped it already. The known-language branch is the one that produces token
+        // markup at all, and it is comparable byte for byte, so a drift in branch selection or in the highlighting call
+        // fails here. The other two branches diverge legitimately in where the escaping comes from.
+        const source = 'class Example {\n    List<String> run() { return null; }\n}\n';
+        // The server escapes the code before it reaches the client; the content component reads it back via textContent.
+        const escaped = 'class Example {\n    List&lt;String&gt; run() { return null; }\n}\n';
+        const legacyCode = problemStatementRoot(htmlForMarkdown('```java\n' + source + '```')).querySelector('pre > code');
+        const renderedFragment = `<div class="artemis-problem-statement"><pre><code class="language-java">${escaped}</code></pre></div>`;
+        const renderedCode = problemStatementRoot(afterClientRendering(renderedFragment)).querySelector('pre > code');
+
+        // Two nulls would compare equal, and unhighlighted source would too, so both are ruled out first.
+        expect(legacyCode?.innerHTML).toContain('hljs-keyword');
+        expect(renderedCode?.innerHTML).toContain('hljs-keyword');
+        expect(renderedCode?.innerHTML).toBe(legacyCode?.innerHTML);
+    });
+
     it('renders the same math as the legacy pipeline, once the content component has run', () => {
         // The server emits inert `.katex-formula` placeholders (MathFormulaExtractor.restore) and strips its own KaTeX
         // script, so the math only exists after the content component has rendered it.
@@ -892,6 +913,29 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         return fixture.nativeElement as HTMLElement;
     };
 
+    /** A rendered task span as the server emits it on the all-passed path: green, with a possibly empty id list. */
+    const renderedTaskSpan = (name: string, testIds: string) =>
+        `<span class="artemis-task artemis-task-success" data-task-name="${name}" data-test-ids="${testIds}" data-test-status="success">${name}</span>`;
+
+    /** The statement fragment rendered through the shadow-root content component, with interactivity switched on. */
+    const renderSsrContent = (body: string, tasks: SsrTask[]): ShadowRoot => {
+        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
+        fixture.componentRef.setInput('html', `<div class="artemis-problem-statement">${body}</div>`);
+        fixture.componentRef.setInput('tasks', tasks);
+        fixture.componentRef.setInput('interactive', true);
+        fixture.detectChanges();
+        return (fixture.nativeElement as HTMLElement).shadowRoot!;
+    };
+
+    const ssrTask = (index: number, taskName: string, testIds: number[]): SsrTask => ({
+        index,
+        taskName,
+        testIds,
+        status: 'success',
+        authoredCount: 1,
+        notExecutedCount: 0,
+    });
+
     let taskExtension: PluginSimple;
 
     beforeEach(() => {
@@ -954,5 +998,31 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         const code = problemStatementRoot(htmlForMarkdown(fenced, [taskExtension])).querySelector('pre > code');
 
         expect(code?.textContent).toBe('\\[task\\]\\[Sort\\]\\(testSort\\(\\)\\)\n');
+    });
+
+    it('divergence 5: on an all-passed result the server resolves only <testid> references, leaving name-only tasks inert', () => {
+        // Open, not intended. On the all-passed path the request carries no test results at all
+        // (ProblemStatementRenderingService.extractTasks), so `lookup.resolve` cannot resolve a *name*: only a
+        // `<testid>` wrapper reaches `data-test-ids`, and a name-only task is rendered with an empty list. The client
+        // then gates `role` / `tabindex` on `task.testIds.length` (content component) and drops the activation in
+        // `ProgrammingExerciseInstructionSsrComponent.openTaskFeedback`. Two tasks with an identical green presentation
+        // therefore end up one clickable and one inert, decided purely by how their tests were referenced.
+        const shadowRoot = renderSsrContent(renderedTaskSpan('ById', '1') + renderedTaskSpan('ByName', ''), [ssrTask(0, 'ById', [1]), ssrTask(1, 'ByName', [])]);
+        const rendered = [...shadowRoot.querySelectorAll('.artemis-task')];
+
+        expect(rendered.map((element) => element.getAttribute('data-test-status'))).toEqual(['success', 'success']);
+        expect(rendered.map((element) => element.getAttribute('role'))).toEqual(['button', null]);
+
+        // The legacy engine never makes that distinction: `convertTestListToIds` maps every authored reference to an id
+        // (or to -1 for a name it cannot find), so both reference styles keep a non-empty list, and the clickable stats
+        // line is gated on the result's feedbacks instead. For this result that means neither task is clickable, which
+        // is at least uniform. Resolving names server-side, or gating on the authored count, is a follow-up.
+        const instructionService = TestBed.inject(ProgrammingExerciseInstructionService);
+        const successfulWithoutFeedback = { id: 1, successful: true, feedbacks: [] } as Result;
+
+        expect(instructionService.convertTestListToIds('<testid>1</testid>', [])).toEqual([1]);
+        expect(instructionService.convertTestListToIds('testSort()', [])).toEqual([-1]);
+        expect(renderLegacyTask([1], successfulWithoutFeedback).querySelector('.test-status--linked')).toBeNull();
+        expect(renderLegacyTask([-1], successfulWithoutFeedback).querySelector('.test-status--linked')).toBeNull();
     });
 });

@@ -89,7 +89,7 @@ describe('ProblemStatementSsrRenderService', () => {
             expect(req.request.body.includeCss).toBe(true);
             expect(req.request.body.inlineImages).toBe(false);
             expect(req.request.body.allTestsPassed).toBe(false);
-            req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.0.0' });
+            req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.1.0' });
 
             expect(received).toBe('<p>Hi</p>');
         });
@@ -100,18 +100,18 @@ describe('ProblemStatementSsrRenderService', () => {
             const req = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(req.request.body.allTestsPassed).toBe(true);
             expect(req.request.body.testResults).toBeNull();
-            req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.0.0' });
+            req.flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.1.0' });
         });
 
         it('distinguishes all-tests-passed from no result in the cache key', () => {
             // Both requests send `testResults: null`; only the flag decides between all-green and neutral tasks, so
             // they must not collide on one cache entry.
             service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: true, locale: 'en', darkMode: false }).subscribe();
-            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>green</p>', contentHash: 'g', rendererVersion: '1.0.0' });
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>green</p>', contentHash: 'g', rendererVersion: '1.1.0' });
 
             let second: string | undefined;
             service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe((r) => (second = r.html));
-            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>neutral</p>', contentHash: 'n', rendererVersion: '1.0.0' });
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>neutral</p>', contentHash: 'n', rendererVersion: '1.1.0' });
 
             expect(second).toBe('<p>neutral</p>');
         });
@@ -119,7 +119,7 @@ describe('ProblemStatementSsrRenderService', () => {
         it('serves a repeated identical request from cache without a second request', () => {
             const request = { markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false };
             service.render(request).subscribe();
-            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.0.0' });
+            httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render')).flush({ html: '<p>Hi</p>', contentHash: 'abc', rendererVersion: '1.1.0' });
 
             let second: string | undefined;
             service.render(request).subscribe((r) => (second = r.html));
@@ -131,12 +131,12 @@ describe('ProblemStatementSsrRenderService', () => {
             service.render({ markdown: '# Hi', testResults: [], allTestsPassed: false, locale: 'en', darkMode: false }).subscribe();
             const first = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(first.request.body.testResults).toEqual([]);
-            first.flush({ html: '<p>empty</p>', contentHash: 'e', rendererVersion: '1.0.0' });
+            first.flush({ html: '<p>empty</p>', contentHash: 'e', rendererVersion: '1.1.0' });
 
             service.render({ markdown: '# Hi', testResults: undefined, allTestsPassed: false, locale: 'en', darkMode: false }).subscribe();
             const second = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             expect(second.request.body.testResults).toBeNull();
-            second.flush({ html: '<p>none</p>', contentHash: 'n', rendererVersion: '1.0.0' });
+            second.flush({ html: '<p>none</p>', contentHash: 'n', rendererVersion: '1.1.0' });
         });
 
         it('defaults html to an empty string when the server omits it for a blank rendering', () => {
@@ -145,7 +145,7 @@ describe('ProblemStatementSsrRenderService', () => {
 
             const req = httpMock.expectOne((r) => r.url.endsWith('exercise/problem-statement/render'));
             // The server serializes with @JsonInclude(NON_EMPTY), so a blank rendering omits `html` from the JSON entirely.
-            req.flush({ contentHash: 'empty', rendererVersion: '1.0.0' });
+            req.flush({ contentHash: 'empty', rendererVersion: '1.1.0' });
 
             expect(received?.html).toBe('');
         });

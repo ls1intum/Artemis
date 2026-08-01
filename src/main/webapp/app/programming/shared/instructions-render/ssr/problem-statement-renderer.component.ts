@@ -9,8 +9,14 @@ import { ProgrammingExerciseInstructionSsrComponent, SsrLiveUpdates } from 'app/
 
 /**
  * Renders a programming exercise problem statement, choosing between the server-side renderer and the legacy
- * client-side pipeline based on the SsrProblemStatement feature toggle. The toggle acts as a kill switch: while it
- * is off, behavior is byte-for-byte the previous one.
+ * client-side pipeline based on the SsrProblemStatement feature toggle. Turning the toggle off returns every host to
+ * the legacy renderer, with one deliberate exception: which result websocket topic that renderer subscribes to on
+ * staff-facing views. `personalParticipation` is derived from `liveUpdates` in the template (see below) rather than
+ * passed per host, so the detail overview list and the repository view (template / solution repositories, and a tutor
+ * looking at a student's repository) now subscribe to the exercise-wide topic instead of the viewer's personal one.
+ * Both previously passed `true`, and a personal topic can never carry results for a template, solution or another
+ * student's participation, so that subscription could not deliver the live updates it promised. Every other host ends
+ * up with the value it passed before, or has no participation to subscribe for at all.
  *
  * All six read-only hosts (course overview, code editor, repository view, assessment instructions, assessment
  * dashboard, detail overview list) bind this single component instead of picking a renderer themselves.
