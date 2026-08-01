@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -140,18 +141,29 @@ public class RepositoryService {
      * @param repository   The repository from which files are to be fetched.
      * @param omitBinaries omit binary files for brevity and reducing size
      * @return A {@link Map} where each key is a file path (as a {@link String}) and each value is the content of the file (also as a {@link String}).
-     *         The map includes only those files that could successfully have their contents read; files that cause an IOException are logged but not included.
+     *         The map includes only those files whose content could be decoded as UTF-8; files that cannot be are skipped, since the content is returned as a {@link String}.
      */
     public Map<String, String> getFilesContentFromWorkingCopy(Repository repository, boolean omitBinaries) {
         var files = gitService.listFilesAndFolders(repository, omitBinaries).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
         Map<String, String> fileListWithContent = new HashMap<>();
 
         files.forEach(file -> {
+            // Only skip by extension when binaries were explicitly asked to be omitted. The classifier is
+            // extension-based and also covers formats that are plain text (.sh, .bat, .ll, .wast, .hex), so skipping
+            // it unconditionally would drop files the caller can legitimately display.
+            if (omitBinaries && isBinaryFile(file.toString())) {
+                return;
+            }
             try {
                 fileListWithContent.put(file.toString(), Files.readString(file.toPath(), StandardCharsets.UTF_8));
             }
+            catch (CharacterCodingException e) {
+                // Expected for genuinely binary content: it cannot be represented in the String response, so it is
+                // simply left out. A Gradle wrapper jar alone used to produce a steady stream of errors in production.
+                log.debug("Content of file {} is not valid UTF-8 and is therefore skipped", file);
+            }
             catch (IOException e) {
-                log.error("Content of file: {} could not be loaded and throws the following error: {}", file, e.getMessage());
+                log.warn("Content of file {} could not be read and is therefore skipped: {}", file, e.getMessage());
             }
         });
         return fileListWithContent;
@@ -209,8 +221,7 @@ public class RepositoryService {
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
 
-        try {
-            var bareRepository = gitService.getBareRepository(repositoryUri, false);
+        try (Repository bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
         }
         catch (GitException exception) {

@@ -53,7 +53,7 @@ public class ProgrammingExerciseImportFromSharingService {
      * {@code sharingSetupInfo.course()}, otherwise fail with {@link SharingException}</li>
      * <li>Run the standard ZIP import using {@link ProgrammingExerciseImportFromFileService}</li>
      * </ol>
-     * The import runs as the current user returned by {@link UserRepository#getUserWithGroupsAndAuthorities()}.
+     * The import runs as the current user returned by {@link UserRepository#getUserWithAuthorities()}.
      * </p>
      *
      * @param sharingSetupInfo container with the basket reference, the exercise model to import, and (optionally) the target course
@@ -74,7 +74,7 @@ public class ProgrammingExerciseImportFromSharingService {
         }
         try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
-            User user = userRepository.getUserWithGroupsAndAuthorities();
+            User user = userRepository.getUserWithAuthorities();
             Course course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
 
             if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {

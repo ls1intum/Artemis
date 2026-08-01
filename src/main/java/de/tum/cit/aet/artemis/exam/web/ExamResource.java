@@ -732,7 +732,7 @@ public class ExamResource {
     @GetMapping("exams/active")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -755,7 +755,7 @@ public class ExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<ExamForImportListDTO>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises,
             SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         SearchResultPageDTO<Exam> page = examService.getAllOnPageWithSize(search, user, withExercises);
         List<ExamForImportListDTO> rows = page.getResultsOnPage().stream().map(ExamForImportListDTO::of).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(rows, page.getNumberOfPages()));
@@ -879,7 +879,7 @@ public class ExamResource {
         Course course = exam.getCourse();
         checkExamCourseIdElseThrow(courseId, exam);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         if (ZonedDateTime.now().isBefore(exam.getEndDate()) && authCheckService.isTeachingAssistantInCourse(course, user)) {
@@ -971,7 +971,7 @@ public class ExamResource {
     @GetMapping("courses/{courseId}/exams-for-user")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ExamForQuestionPoolDTO>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final List<Exam> exams;
         if (authCheckService.isAdmin(user)) {
             exams = examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
@@ -979,8 +979,7 @@ public class ExamResource {
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-            var userGroups = new ArrayList<>(user.getGroups());
-            exams = examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups);
+            exams = examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(user.getId());
         }
         return ResponseEntity.ok(exams.stream().map(ExamForQuestionPoolDTO::of).toList());
     }
@@ -1213,7 +1212,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> optionalStudent = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
             throw new EntityNotFoundException("User with login " + studentLogin + " does not exist");
         }
@@ -1380,7 +1379,7 @@ public class ExamResource {
         // The locked submissions are loaded by exam id alone, so authorizing the course on its own would let an
         // instructor pair a course they manage with another course's exam and read that exam's submissions.
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
         // one batched query for the submission counts the assessment-locks table renders; never one query per row
