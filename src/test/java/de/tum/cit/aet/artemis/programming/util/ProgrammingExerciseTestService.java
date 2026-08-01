@@ -1295,8 +1295,10 @@ public class ProgrammingExerciseTestService {
         RepositoryExportTestUtil.safeDeleteDirectory(targetProjectFolder);
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, ExamImportResultDTO.class, HttpStatus.CREATED)
-                .exam();
+        // The import response carries only the imported exam's id/title; re-fetch the persisted exam graph to assert it.
+        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, ExamImportResultDTO.class, HttpStatus.CREATED).exam()
+                .id();
+        final Exam received = examTestRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
 
         // Extract the programming exercise from the exam
         Exercise exerciseReceived = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
