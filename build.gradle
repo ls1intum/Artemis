@@ -553,6 +553,7 @@ dependencies {
     implementation "org.webjars.npm:katex:0.16.47"
     implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
     implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
+    implementation "org.commonmark:commonmark-ext-autolink:0.29.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"

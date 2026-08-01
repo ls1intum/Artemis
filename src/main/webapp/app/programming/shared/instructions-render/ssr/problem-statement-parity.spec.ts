@@ -189,6 +189,6 @@ describe('problem statement rendering parity', () => {
         expect(legacy.alerts).toBe(1);
         expect(server.alerts).toBe(0);
         expect(legacy.links).toBe(1);
-        expect(server.links).toBe(0);
+        expect(server.links).toBe(1);
     });
 });

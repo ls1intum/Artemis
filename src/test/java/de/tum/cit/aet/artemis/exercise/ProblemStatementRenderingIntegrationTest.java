@@ -766,6 +766,42 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<code>");
     }
 
+    // --- Autolinking ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLinkifyBareUrlInProse() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("Check out https://artemis.tum.de for details.", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The response has already passed through the service's Jsoup safelist by this point, so a surviving
+        // <a href> also confirms the safelist keeps the link the autolink extension produces.
+        assertThat(result.html()).contains("<a href=\"https://artemis.tum.de\">https://artemis.tum.de</a>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotLinkifyUrlInFencedCodeBlock() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("```\nhttps://artemis.tum.de\n```", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("<a href");
+        assertThat(result.html()).contains("<pre><code>https://artemis.tum.de");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotLinkifyUrlInInlineCode() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("`https://artemis.tum.de`", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("<a href");
+        assertThat(result.html()).contains("<code>https://artemis.tum.de</code>");
+    }
+
     // --- CSS toggle ---
 
     @Test

@@ -22,6 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
@@ -126,7 +127,7 @@ public class ProblemStatementRenderingService {
 
     private static final Safelist HTML_SAFELIST = buildSafelist();
 
-    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create());
+    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create(), AutolinkExtension.create());
 
     private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).build();
 
