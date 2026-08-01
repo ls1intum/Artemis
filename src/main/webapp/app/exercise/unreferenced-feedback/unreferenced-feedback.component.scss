@@ -90,28 +90,4 @@
            match its tallest neighbor, leaving dead space at the bottom of every shorter card in that row. */
         align-items: start;
     }
-
-    /* Target inner card components to expand horizontally */
-    &__card {
-        display: flex;
-        flex-direction: column;
-        padding: 0.75rem; /* Tightened internal padding */
-        gap: 0.5rem;
-
-        /* Force inputs/textareas to fill the width */
-        textarea,
-        input[type='text'] {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Makes the points control section align horizontally */
-        .points-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            gap: 0.5rem;
-        }
-    }
 }
