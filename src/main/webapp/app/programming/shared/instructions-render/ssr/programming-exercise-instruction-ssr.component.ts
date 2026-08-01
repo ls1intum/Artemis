@@ -270,9 +270,14 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             // A render for the previous statement must not paint over the pane that is about to be emptied.
             this.renderRequests.next(undefined);
             // startHydration already switched on a loading indicator; there is nothing to render, so clear it again
-            // or the spinner would stay forever on an exercise without a problem statement.
+            // or the spinner would stay forever on an exercise without a problem statement. Written out rather than
+            // going through enterPendingState(): nothing is pending here, so both indicators have to end up false.
             this.isLoading.set(false);
             this.isRefreshing.set(false);
+            // The failure described the statement that is being cleared right now, so the banner goes with it.
+            this.initialLoadFailed.set(false);
+            this.refreshFailed.set(false);
+            this.errorStatus.set(undefined);
             this.renderedHtml.set(undefined);
             this.tasks.set([]);
             // Cleared alongside the html: otherwise a statement that goes blank and later returns to a previously

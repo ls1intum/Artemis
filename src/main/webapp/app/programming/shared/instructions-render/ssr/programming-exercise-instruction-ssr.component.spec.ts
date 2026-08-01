@@ -447,6 +447,26 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(firstTaskElement()).toBeTruthy();
     });
 
+    it('drops a render failure banner when the bound exercise changes to a blank problem statement', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        httpMock.expectOne(RENDER_URL_MATCHER).flush('too many requests', new HttpErrorResponse({ status: 429, statusText: 'Too Many Requests' }));
+        fixture.detectChanges();
+        expect(comp.initialLoadFailed()).toBe(true);
+
+        fixture.componentRef.setInput('exercise', { id: 43, problemStatement: '' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        // The banner described the render of exercise 42, which is no longer bound. Emitting
+        // onNoInstructionsAvailable does not help: the host only re-emits it, so nothing hides this pane.
+        expect(comp.initialLoadFailed()).toBe(false);
+        expect(comp.refreshFailed()).toBe(false);
+        expect(comp.errorStatus()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('tum-ui-message')).toBeNull();
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.isRefreshing()).toBe(false);
+    });
+
     it('cancels an in-flight render and drops the rendered context when the problem statement goes blank', () => {
         const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
         fixture.componentRef.setInput('exercise', exercise);
