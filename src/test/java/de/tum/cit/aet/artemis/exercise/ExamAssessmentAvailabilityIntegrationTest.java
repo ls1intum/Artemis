@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentInputDTO;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -224,7 +224,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
         // therefore be persisted while the student can still change their submission.
         FileUploadExercise fileUploadExercise = exerciseOfType(FileUploadExercise.class);
         Submission submission = saveSubmission(fileUploadExercise);
-        var assessment = new FileUploadAssessmentDTO(List.of(), null);
+        var assessment = new FileUploadAssessmentInputDTO(List.of(), null);
 
         String response = request
                 .performMvcRequest(put("/api/fileupload/file-upload-submissions/" + submission.getId() + "/feedback").param("submit", "true")

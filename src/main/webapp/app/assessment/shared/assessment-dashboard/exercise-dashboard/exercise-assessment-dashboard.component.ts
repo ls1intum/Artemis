@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -143,6 +144,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private sortService = inject(SortService);
     private datePipe = inject(ArtemisDatePipe);
+    private destroyRef = inject(DestroyRef);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -315,7 +317,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.loadAll();
 
         this.currentLanguage.set(this.translateService.getCurrentLang() ?? undefined);
-        this.translateService.onLangChange.subscribe(() => {
+        // onLangChange never completes, so it has to be tied to the component lifetime explicitly
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.currentLanguage.set(this.translateService.getCurrentLang() ?? undefined);
             this.setupGraph();
         });

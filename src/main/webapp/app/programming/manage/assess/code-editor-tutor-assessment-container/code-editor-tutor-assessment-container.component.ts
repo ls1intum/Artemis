@@ -2,7 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, ou
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Observable, Subscription, firstValueFrom, of } from 'rxjs';
+import { EMPTY, Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
@@ -26,7 +26,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { switchMap, tap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -199,6 +199,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
+            // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
+            // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
+            this.assessmentNotPossibleYet.set(undefined);
 
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
@@ -218,10 +221,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         next: async (submission?: ProgrammingSubmission) => {
                             await this.onSubmissionReceived(submissionId, submission);
                         },
-                        error: (error: HttpErrorResponse) => {
-                            this.handleErrorResponse(error);
-                        },
                         complete: () => this.loadingParticipation.set(false),
+                    }),
+                    catchError((error: HttpErrorResponse) => {
+                        this.handleErrorResponse(error);
+                        // Stop the chain: without a participation the steps below cannot run anyway, and letting the
+                        // error reach the subscriber would additionally report it as an uncaught exception — the very
+                        // Sentry noise the explicit handling avoids.
+                        return EMPTY;
                     }),
                     // The following is needed for highlighting changed code lines
                     switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise().id!, false, true)),
