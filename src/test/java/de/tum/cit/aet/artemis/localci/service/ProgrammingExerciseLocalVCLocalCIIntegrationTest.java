@@ -509,7 +509,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("InitTitle", "initimp", programmingExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
         exerciseToBeImported.setChannelName("testchannel-pe-init");
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");

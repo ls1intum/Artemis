@@ -365,9 +365,14 @@ public class StudentExamResource {
         // If the instructor delayed the submission overview (examSummaryPublicationDate), a student who already submitted must not be able to re-fetch the exam content via
         // the conduction endpoint either, otherwise the summary gate could be bypassed to leak the exam content (relevant for staggered/multi-shift exams). Instructors and
         // test runs always have access. Students who have not submitted yet are unaffected, so an ongoing conduction (incl. reload) keeps working.
-        boolean conductionAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-        if (!conductionAccessAlwaysAllowed && Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
-            throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+        // The instructor check is evaluated last and only when the gate could actually close: currentUser is loaded without its
+        // course roles, so isAtLeastInstructorInCourse costs an extra query, which the common conduction path must not pay.
+        if (Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
+            boolean conductionAccessAlwaysAllowed = studentExam.isTestRun()
+                    || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+            if (!conductionAccessAlwaysAllowed) {
+                throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+            }
         }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {

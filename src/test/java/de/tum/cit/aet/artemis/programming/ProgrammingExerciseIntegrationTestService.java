@@ -2236,6 +2236,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
         programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Test", "CLT");
+        // The helper creates a fresh course, so the calling instructor needs a course role in it to read the files.
+        userUtilService.enrollPrefixedUsersInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), testPrefix);
 
         // Ensure base repositories (template, solution, tests) exist and URIs are wired for this exercise
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);

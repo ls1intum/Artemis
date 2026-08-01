@@ -309,14 +309,14 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     /**
-     * Membership oracle guard: an unauthorized caller (tutor2 has a global TA role but is not authorized for course1)
+     * Membership oracle guard: an unauthorized caller (an outsider tutor with a global TA role but no role in course1)
      * must get a uniform 403 regardless of whether the requested id resolves within course1, belongs to a different
      * course, or does not exist at all. Before the authorization-ordering fix, the course-scoped lookup ran before
      * the authorization check, so a course2 id or a non-existing id returned 404 while a course1 id returned 403 -
      * leaking whether a diagram belongs to the path course via the response status code.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetApollonDiagram_unauthorizedForCourse_uniform403() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram existingInCourse1 = apollonDiagramRepository.save(apollonDiagram);

@@ -499,8 +499,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // import form (problem statement, example solution) and keep the dates the client cleared, rather than falling
         // back to the source exercise's values.
         var now = ZonedDateTime.now();
-        Course source = courseUtilService.addEmptyCourse();
-        Course target = courseUtilService.addEmptyCourse();
+        Course source = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course target = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(10), now.minusDays(8), now.minusDays(6), DiagramType.ClassDiagram, source);
         sourceExercise.setProblemStatement("SOURCE PROBLEM STATEMENT");
         sourceExercise.setMaxPoints(42.0);
@@ -598,7 +598,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private ModelingExercise createSourceExerciseWithGradingCriteria() {
         var now = ZonedDateTime.now();
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise source = modelingExerciseTestRepository
                 .save(ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, sourceCourse));
         exerciseUtilService.addGradingInstructionsToExercise(source);
@@ -610,7 +610,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
      * what the client posts from the (pre-filled) import form.
      */
     private ModelingExercise importBodyFor(ModelingExercise source) {
-        Course targetCourse = courseUtilService.addEmptyCourse();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(targetCourse);
         ModelingExercise body = ModelingExerciseFactory.generateModelingExercise(source.getReleaseDate(), source.getDueDate(), source.getAssessmentDueDate(),
                 source.getDiagramType(), targetCourse);
@@ -622,8 +622,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseWithCompetencyLinkOfTheTargetCourse() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         // The competency belongs to the TARGET course, so the link really is created for the imported exercise (a link to a
         // competency of another course is skipped, which is why importModelingExerciseFromCourseToCourse cannot reach this
