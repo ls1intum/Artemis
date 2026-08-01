@@ -118,8 +118,12 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
-    // Lazy on purpose: the course table is already wide and these values are only needed in specific flows (course
-    // settings form, data-privacy cleanup). Do NOT add this to eager course queries or entity graphs.
+    // Lazy on purpose: the course table is already wide and these values are only needed in specific flows. Note that
+    // getCourseConfiguration() returns null while the association is uninitialized, so every flow that needs it must
+    // fetch it deliberately. The ones that do: the instructor course-settings read path
+    // (findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById), the course update path (which attaches
+    // it via CourseConfigurationRepository.findByCourseId so applyTo updates it in place) and the data-retention cleanup
+    // queries. Do NOT add it to any other course query or entity graph.
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "course_configuration_id")
     private CourseConfiguration courseConfiguration;

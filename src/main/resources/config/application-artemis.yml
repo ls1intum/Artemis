@@ -149,8 +149,9 @@ artemis:
     #    then destroyed. The authoritative long-term grade/degree record (reduced exam file, 50 years) is kept in the
     #    campus-management system (e.g. TUMonline), not in Artemis. See the privacy statement (BayHSchG Art. 61, TUM APSO).
     #  - Non-grade-relevant courses carry no exam-retention obligation, so their student data is minimized after 1 year.
-    #  NOTE: a pending objection/legal proceeding legally extends retention; Artemis does not model legal holds, so exclude
-    #  such a course from the reset (the jobs are admin-triggered and off by default) until the proceeding concludes.
+    #  NOTE: a pending objection/legal proceeding legally extends retention. Enable the affected course's data-retention
+    #  hold (course settings -> data privacy) until the proceeding concludes: held courses are skipped by the warning and
+    #  reset jobs for as long as the hold lasts, regardless of the cutoffs below.
     grade-relevant-retention-years: 5 # reset student data of grade-relevant courses 5 years after they end
     non-grade-relevant-retention-years: 1 # reset student data of non-grade-relevant courses 1 year after they end
     reset-warning-grace-period-days: 30 # days between warning instructors and actually resetting the student data
