@@ -367,7 +367,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide updatedSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(updatedSlide).isNotNull();
         assertThat(updatedSlide.getHidden()).isNotNull();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
 
         // Verify the exercise association
         assertThat(updatedSlide.getExercise()).isNotNull();
@@ -386,7 +386,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         List<Slide> updatedSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         Slide updatedHiddenSlide = updatedSlides.stream().filter(slide -> slide.getId().equals(hiddenSlide.getId())).findFirst().orElseThrow();
-        assertThat(updatedHiddenSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedHiddenSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(updatedHiddenSlide.getSlideImagePath()).isEqualTo(originalImagePath);
         assertThat(updatedSlides.stream().filter(slide -> !slide.getId().equals(hiddenSlide.getId()))).allMatch(slide -> slide.getHidden() == null);
 
@@ -434,7 +434,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
 
         Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(updatedSlide.getHidden().toInstant()).isCloseTo(hiddenUntil.toInstant(), within(1, ChronoUnit.MILLIS));
     }
 
     @Test
@@ -759,7 +759,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getSlideNumber()).isEqualTo(1); // Should have slide number 1
         assertThat(firstSlide.getHidden()).isNotNull();
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -836,8 +836,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
-        // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        // The service stores this exact value (SlideSplitterService.setHidden(hiddenPageInfo.date())), so there is
+        // only one clock sample; the persisted copy differs solely because the `hidden` column is datetime(3) and
+        // the database ROUNDS to millisecond precision. That rounding can carry the value across a second boundary
+        // (e.g. ...:56.9997 -> ...:57.000), which is why truncating both sides to seconds could differ by a whole
+        // second. The true deviation is at most 0.5 ms, so assert that instead — matching the millisecond tolerance
+        // already used further down in this file.
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 
@@ -1031,8 +1036,13 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Slide firstSlide = slides.stream().filter(s -> s.getSlideNumber() == 1).findFirst().orElse(null);
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
-        // Compare dates truncated to millis to avoid timing precision issues
-        assertThat(firstSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        // The service stores this exact value (SlideSplitterService.setHidden(hiddenPageInfo.date())), so there is
+        // only one clock sample; the persisted copy differs solely because the `hidden` column is datetime(3) and
+        // the database ROUNDS to millisecond precision. That rounding can carry the value across a second boundary
+        // (e.g. ...:56.9997 -> ...:57.000), which is why truncating both sides to seconds could differ by a whole
+        // second. The true deviation is at most 0.5 ms, so assert that instead — matching the millisecond tolerance
+        // already used further down in this file.
+        assertThat(firstSlide.getHidden().toInstant()).isCloseTo(hiddenDate.toInstant(), within(1, ChronoUnit.MILLIS));
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
 

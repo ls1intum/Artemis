@@ -10,25 +10,29 @@ import org.junit.platform.launcher.TestPlan;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 /**
- * GlobalCleanupListener performs a single
+ * GlobalCleanupListener performs setup that has to happen exactly once before all server integration tests, and a single
  * cleanup operation of local server-integration-test directories after all server integration tests have completed.
  *
  * <p>
- * This listener registers with the JUnit Platform Launcher to receive a callback
- * in {@link #testPlanExecutionFinished(TestPlan)} once the entire test plan has
- * executed. Unlike JUnit Jupiter {@link org.junit.jupiter.api.AfterAll} methods and
+ * This listener registers with the JUnit Platform Launcher to receive callbacks in {@link #testPlanExecutionStarted(TestPlan)} and
+ * in {@link #testPlanExecutionFinished(TestPlan)}, i.e. before and after the entire test plan has
+ * executed. Unlike JUnit Jupiter {@link org.junit.jupiter.api.BeforeAll} / {@link org.junit.jupiter.api.AfterAll} methods and
  * {@link org.junit.jupiter.api.extension.AfterAllCallback} extensions, which are scoped
  * per test container and may run multiple times (once per class), this listener ensures
- * cleanup logic is executed exactly once per test run. Running the cleanup once per class caused issues with parallel test execution.
+ * the logic is executed exactly once per test run, while the JVM is still single-threaded. Running it once per class caused issues with parallel test execution,
+ * both for the cleanup and for the JGit {@link JGitSystemReaderInitializer configuration}.
  *
  * <p>
- * If you want to keep the directory for debugging purposes, you can either comment out the method below or remove the listener from
- * {@code  src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener}.
+ * If you want to keep the directory for debugging purposes, comment out {@link #testPlanExecutionFinished(TestPlan)}. Do not remove the listener from
+ * {@code src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener}, because the JGit setup would be lost as well.
  */
 public class GlobalCleanupListener implements TestExecutionListener {
 
     @Override
     public void testPlanExecutionStarted(TestPlan testPlan) {
+        // Must happen here and not in a @BeforeAll: installing a JGit SystemReader resets JGit's static platform detection caches,
+        // which makes git operations of already running test classes fail. See JGitSystemReaderInitializer.
+        JGitSystemReaderInitializer.configureOnce();
         CpuUsageMonitor.start();
     }
 

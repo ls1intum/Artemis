@@ -88,6 +88,44 @@ export class CourseOverviewPage {
     }
 
     /**
+     * Enters an exercise participation regardless of whether it still has to be started.
+     *
+     * For a TEAM exercise the participation belongs to the whole team, so as soon as one member starts
+     * it, every other member's open page is pushed a participation update over the websocket and
+     * navigated straight into the participation (the editor) — where neither "Start exercise" nor
+     * "Open exercise" exists any more. A second member calling {@link startExercise} therefore waits
+     * for a button that is already gone and times out. The failure was timing-dependent, because it
+     * only happened once the update had arrived.
+     *
+     * This helper is defined by its outcome instead: end up in the participation view. If the page is
+     * already there, there is nothing to click; otherwise click whichever button is present, tolerating
+     * a lost race against that navigation.
+     *
+     * @param exerciseId The ID of the exercise to enter.
+     */
+    async startOrOpenExercise(exerciseId: number) {
+        if (this.isInParticipationView()) {
+            return;
+        }
+        const button = this.getStartExerciseButton(exerciseId).or(this.getOpenRunningExerciseButton(exerciseId)).first();
+        try {
+            await button.click({ timeout: 30_000 });
+        } catch (error) {
+            // The click races the websocket participation update: if it lands first this page has
+            // already navigated into the editor and both buttons are gone, so the click fails on a
+            // detached/absent element. Being in the participation view is the outcome we wanted.
+            if (!this.isInParticipationView()) {
+                throw error;
+            }
+        }
+    }
+
+    /** True once this page shows an exercise participation (the editor), rather than the exercise details. */
+    private isInParticipationView(): boolean {
+        return this.page.url().includes('/participate/');
+    }
+
+    /**
      * Clicks the start practice button for an exercise given its ID.
      * @param exerciseId The ID of the exercise to start in practice mode.
      */
