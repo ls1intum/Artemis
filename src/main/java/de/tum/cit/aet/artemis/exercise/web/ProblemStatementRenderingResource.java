@@ -3,10 +3,8 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -77,14 +75,13 @@ public class ProblemStatementRenderingResource {
                 return unprocessable("Too many test results", "testResults contains " + renderRequest.testResults().size() + " entries, the maximum is " + maxTestResults + ".");
             }
             testResults = new HashMap<>();
-            Set<String> seenNames = new HashSet<>();
             for (TestFeedbackInputDTO input : renderRequest.testResults()) {
                 if (testResults.containsKey(input.testId())) {
                     return unprocessable("Duplicate test id", "Duplicate test id " + input.testId() + " in testResults. Each test id must appear at most once.");
                 }
-                if (!seenNames.add(input.testName())) {
-                    return unprocessable("Duplicate test name", "Duplicate test name in testResults. Each test name must appear at most once.");
-                }
+                // Two distinct test ids may legitimately share a test name (no DB uniqueness constraint on
+                // test_name), so a duplicate name is not rejected here. TestFeedbackLookup treats such a name as
+                // ambiguous and resolves it to not-executed instead of picking one of the two tests.
                 testResults.put(input.testId(), input);
             }
         }

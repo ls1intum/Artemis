@@ -62,4 +62,29 @@ class TestFeedbackLookupTest {
         assertThat(empty.resolve("<testid>1</testid>")).isNull();
         assertThat(lookup().hasResults()).isTrue();
     }
+
+    @Test
+    void shouldTreatAmbiguousNameAsUnresolvedButKeepBothIdsResolvable() {
+        // test_name has no uniqueness constraint in the database, so two distinct test ids may share a name.
+        // Resolving by that name must not silently pick either one; resolving by id must still work for both.
+        var first = new TestFeedbackInputDTO(10L, "sameName()", true, null, null);
+        var second = new TestFeedbackInputDTO(11L, "sameName()", false, null, null);
+        var lookup = TestFeedbackLookup.of(Map.of(10L, first, 11L, second));
+
+        assertThat(lookup.resolve("sameName()")).isNull();
+        assertThat(lookup.outcomeOf("sameName()")).isEqualTo(TestOutcome.NOT_EXECUTED);
+        assertThat(lookup.resolve("<testid>10</testid>")).isEqualTo(first);
+        assertThat(lookup.resolve("<testid>11</testid>")).isEqualTo(second);
+    }
+
+    @Test
+    void shouldStayAmbiguousWithMoreThanTwoSharedNames() {
+        // A third entry sharing the name must not resurrect it as unambiguous.
+        var first = new TestFeedbackInputDTO(20L, "sameName()", true, null, null);
+        var second = new TestFeedbackInputDTO(21L, "sameName()", false, null, null);
+        var third = new TestFeedbackInputDTO(22L, "sameName()", null, null, null);
+        var lookup = TestFeedbackLookup.of(Map.of(20L, first, 21L, second, 22L, third));
+
+        assertThat(lookup.resolve("sameName()")).isNull();
+    }
 }

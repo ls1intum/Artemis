@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
 
@@ -31,6 +33,12 @@ public final class TestFeedbackLookup {
 
     /**
      * Creates a lookup over the given test results.
+     * <p>
+     * {@code test_name} carries no uniqueness constraint in the database, so two distinct test ids may legitimately
+     * share a name. Such a name is treated as ambiguous and resolves to {@code null} (not-executed), rather than
+     * falling back to the first match: silently picking one of two distinct tests would misreport whichever one it
+     * did not pick. This deliberately diverges from the legacy Angular renderer, which resolves an ambiguous name
+     * to its first match; do not "fix" this back to first-match matching.
      *
      * @param testResults map of test id → feedback, or {@code null} when no result is available at all
      * @return the lookup
@@ -40,8 +48,16 @@ public final class TestFeedbackLookup {
             return new TestFeedbackLookup(null, Map.of());
         }
         Map<String, TestFeedbackInputDTO> byName = new HashMap<>();
+        Set<String> ambiguousNames = new HashSet<>();
         for (TestFeedbackInputDTO detail : testResults.values()) {
-            byName.put(detail.testName(), detail);
+            String name = detail.testName();
+            if (ambiguousNames.contains(name)) {
+                continue;
+            }
+            if (byName.putIfAbsent(name, detail) != null) {
+                byName.remove(name);
+                ambiguousNames.add(name);
+            }
         }
         return new TestFeedbackLookup(testResults, byName);
     }

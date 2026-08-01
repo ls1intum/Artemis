@@ -132,9 +132,9 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * One feedback per DISTINCT reference, numbered in first-appearance order. Deduplication is required for two
-     * reasons: a test referenced by several tasks would otherwise trip the duplicate-name 422 rule, and the
-     * client-side half of this harness rebuilds the same numbering.
+     * One feedback per DISTINCT reference, numbered in first-appearance order. Deduplication is required because a
+     * test referenced by several tasks must resolve to a single id, matching the numbering the client-side half of
+     * this harness rebuilds independently; without it, the same test name would spuriously look ambiguous.
      */
     private static List<TestFeedbackInputDTO> feedbacksFor(String markdown, @Nullable Boolean passed) {
         Map<String, Long> idsByReference = new LinkedHashMap<>();

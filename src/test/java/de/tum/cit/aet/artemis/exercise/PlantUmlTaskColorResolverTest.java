@@ -62,6 +62,19 @@ class PlantUmlTaskColorResolverTest {
     }
 
     @Test
+    void shouldColorAmbiguousNameGreyButStillResolveEachIdIndividually() {
+        // Two distinct test ids sharing a name must color grey (not-executed) when referenced by that name, since
+        // TestFeedbackLookup treats the name as unresolvable rather than picking one of the two tests. This is the
+        // same lookup the task renderer uses, so the diagram must classify the ambiguous name identically.
+        Map<Long, TestFeedbackInputDTO> ambiguousResults = Map.of(4L, new TestFeedbackInputDTO(4L, "sameName()", true, null, null), 5L,
+                new TestFeedbackInputDTO(5L, "sameName()", false, null, null));
+
+        assertThat(PlantUmlTaskColorResolver.resolve("#testsColor(sameName())", ambiguousResults, false)).isEqualTo("#grey");
+        assertThat(PlantUmlTaskColorResolver.resolve("#testsColor(<testid>4</testid>)", ambiguousResults, false)).isEqualTo("#green");
+        assertThat(PlantUmlTaskColorResolver.resolve("#testsColor(<testid>5</testid>)", ambiguousResults, false)).isEqualTo("#red");
+    }
+
+    @Test
     void shouldAcceptLeadingButNotTrailingWhitespaceInReference() {
         // TESTS_COLOR_INNER allows leading whitespace inside testsColor(...) but not a space before the closing
         // parenthesis, so the second form does not match the pattern at all and is left untouched.

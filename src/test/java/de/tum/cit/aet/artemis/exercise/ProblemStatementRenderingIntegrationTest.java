@@ -704,12 +704,36 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldRejectDuplicateTestNames() throws Exception {
+    void shouldResolveBothEntriesOfADuplicateNameByTestId() throws Exception {
+        // test_name has no uniqueness constraint in the database, so two distinct test ids sharing a display name
+        // must not break rendering. Referencing each by its unambiguous <testid> must still resolve correctly.
+        var first = new TestFeedbackInputDTO(1L, "sameName()", true, null, null);
+        var second = new TestFeedbackInputDTO(2L, "sameName()", false, null, null);
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>),[task][B](<testid>2</testid>)", List.of(first, second), null, "en", false, false, true,
+                null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-ids=\"1\"");
+        assertThat(result.html()).contains("data-test-ids=\"2\"");
+        var taskAStatus = result.html().substring(result.html().indexOf("data-test-ids=\"1\""));
+        assertThat(taskAStatus).contains("data-test-status=\"success\"");
+        var taskBStatus = result.html().substring(result.html().indexOf("data-test-ids=\"2\""));
+        assertThat(taskBStatus).contains("data-test-status=\"fail\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatAmbiguousTestNameAsNotExecutedInsteadOfRejecting() throws Exception {
+        // A reference by the shared name alone cannot pick between the two test ids, so it must resolve as
+        // not-executed rather than silently choosing one of them or failing the whole request.
         var first = new TestFeedbackInputDTO(1L, "sameName()", true, null, null);
         var second = new TestFeedbackInputDTO(2L, "sameName()", false, null, null);
         var body = new ProblemStatementRenderRequestDTO("[task][Dup](sameName())", List.of(first, second), null, "en", false, false, true, null);
 
-        request.postWithoutResponseBody(POST_URL, body, HttpStatus.UNPROCESSABLE_CONTENT);
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"not-executed\"");
     }
 
     // --- PlantUML diagram limit ---
