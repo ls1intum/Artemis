@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Observable, Subject, of, throwError } from 'rxjs';
+import { NEVER, Observable, Subject, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -133,6 +133,8 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         // permanently hide the instructions pane in the code editor.
         expect(emitted).not.toHaveBeenCalled();
         expect(comp.isLoading()).toBe(true);
+        // Nothing is on screen yet, so this is an initial load and not a refresh of retained content.
+        expect(comp.isRefreshing()).toBe(false);
 
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
@@ -363,6 +365,219 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.detectChanges();
 
         expect(comp.tasks()[0].status).toBe('success');
+    });
+
+    // A cancelled HttpClient request never delivers a response, so asserting `cancelled` is exactly the assertion
+    // that the superseded render can no longer paint the pane. Angular's TestRequest refuses to flush a cancelled
+    // request, which is why these specs cannot "deliver the late response" and observe nothing happening.
+    it('cancels an in-flight render and keeps waiting when the exercise becomes undefined', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.detectChanges();
+
+        const requests = httpMock.match(RENDER_URL_MATCHER);
+        expect(requests).toHaveLength(1);
+        expect(requests[0].cancelled).toBe(true);
+        expect(comp.renderedHtml()).toBeUndefined();
+        expect(comp.isLoading()).toBe(true);
+        expect(comp.isRefreshing()).toBe(false);
+    });
+
+    it('cancels an in-flight render and keeps the rendered statement when the exercise becomes undefined', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        flushRender();
+        const before = comp.renderedHtml();
+
+        // The theme switch starts a second render, which is still open when the exercise disappears.
+        currentTheme.set(Theme.DARK);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('exercise', undefined);
+        fixture.detectChanges();
+
+        const requests = httpMock.match(RENDER_URL_MATCHER);
+        expect(requests).toHaveLength(1);
+        expect(requests[0].cancelled).toBe(true);
+        expect(comp.renderedHtml()).toBe(before);
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.isRefreshing()).toBe(true);
+    });
+
+    it('cancels an in-flight render and drops the rendered context when the problem statement goes blank', () => {
+        const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+        flushRender();
+        const task = comp.tasks()[0];
+        expect(comp.canOpenFeedback()).toBe(true);
+
+        currentTheme.set(Theme.DARK);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('exercise', { id: 42, problemStatement: '' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        const requests = httpMock.match(RENDER_URL_MATCHER);
+        expect(requests).toHaveLength(1);
+        expect(requests[0].cancelled).toBe(true);
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.isRefreshing()).toBe(false);
+        expect(comp.renderedHtml()).toBeUndefined();
+        expect(comp.tasks()).toEqual([]);
+        // The result and the participation are still bound, so only the cleared render context stops the removed
+        // markup's tasks from still claiming that they can open a dialog.
+        expect(comp.canOpenFeedback()).toBe(false);
+        comp.openTaskFeedback(task);
+        expect(open).not.toHaveBeenCalled();
+    });
+
+    it('cancels an in-flight render when the participation changes', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        const requests = httpMock.match(RENDER_URL_MATCHER);
+        expect(requests).toHaveLength(2);
+        expect(requests[0].cancelled).toBe(true);
+        expect(requests[1].cancelled).toBe(false);
+
+        requests[1].flush(renderResponse());
+        fixture.detectChanges();
+        expect(comp.tasks()).toHaveLength(1);
+    });
+
+    it('cancels the in-flight render of the previous participation while hydration for the new one is still pending', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+        // Deliberately left in flight: participation 7's render is still open when the inputs move on.
+
+        hydrateResult = () => NEVER;
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        // The render effect refuses to run while hydration is unsettled, so no new request supersedes the old one.
+        // Only cancelling at the start of hydration stops participation 7's response from painting the pane.
+        const requests = httpMock.match(RENDER_URL_MATCHER);
+        expect(requests).toHaveLength(1);
+        expect(requests[0].cancelled).toBe(true);
+        expect(comp.renderedHtml()).toBeUndefined();
+        expect(comp.isLoading()).toBe(true);
+        expect(comp.isRefreshing()).toBe(false);
+    });
+
+    it('cancels the in-flight render of the previous participation when hydration for the new one fails', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+
+        hydrateResult = () => throwError(() => new Error('feedback details unavailable'));
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        // A failed hydration issues no render either, so the same cancellation is the only thing keeping the
+        // superseded response off the screen.
+        const requests = httpMock.match(RENDER_URL_MATCHER);
+        expect(requests).toHaveLength(1);
+        expect(requests[0].cancelled).toBe(true);
+        expect(comp.renderedHtml()).toBeUndefined();
+        expect(comp.initialLoadFailed()).toBe(true);
+    });
+
+    it('does not open a dialog carrying the previous participation result when hydration for the new one fails', () => {
+        const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+        flushRender();
+        expect(firstTaskElement().getAttribute('role')).toBe('button');
+
+        hydrateResult = () => throwError(() => new Error('feedback details unavailable'));
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        // The stale statement stays on screen, but it was rendered for participation 7 and must not act for 8.
+        expect(comp.refreshFailed()).toBe(true);
+        expect(comp.renderedHtml()).toBeDefined();
+        expect(comp.canOpenFeedback()).toBe(false);
+        expect(firstTaskElement().getAttribute('role')).toBeNull();
+        // Both activation paths: the retained markup stays clickable in the browser, and the parent guards itself.
+        firstTaskElement().dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+        comp.onTaskActivated(0);
+        expect(open).not.toHaveBeenCalled();
+    });
+
+    it('adopts the new participation when its render is served from the cache', () => {
+        const open = vi.spyOn(dialogService, 'open').mockReturnValue({} as never);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+        flushRender();
+
+        fixture.componentRef.setInput('participation', { id: 8 });
+        fixture.detectChanges();
+
+        // Identical markdown, locale, theme and test results: the render service answers from its cache with the
+        // same contentHash, so the DOM is deliberately kept. It has to belong to participation 8 all the same.
+        httpMock.expectNone(RENDER_URL_MATCHER);
+        expect(comp.canOpenFeedback()).toBe(true);
+        expect(firstTaskElement().getAttribute('role')).toBe('button');
+        comp.onTaskActivated(0);
+        expect(open.mock.calls[0][1]?.inputValues?.participation).toEqual({ id: 8 });
+    });
+
+    it('drops a websocket result that arrives after the bound participation moved on', () => {
+        const hydrated: { participationId?: number; resultId?: number }[] = [];
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 7 });
+        fixture.componentRef.setInput('liveUpdates', 'personal');
+        fixture.detectChanges();
+        flushRender();
+        hydrateResult = (participation, result) => {
+            hydrated.push({ participationId: participation?.id, resultId: result.id });
+            return of(result);
+        };
+
+        // The bound participation already moved on; the effect that tears the old per-participation subject down
+        // only runs on the next change detection pass, so an emission can still slip through here.
+        fixture.componentRef.setInput('participation', { id: 8 });
+        resultSubject.next({ id: 9, feedbacks: passingFeedback() } as Result);
+
+        // Hydrating would pair participation 8 with participation 7's result.
+        expect(hydrated).toEqual([]);
+    });
+
+    it('shows the refresh indicator and clears the error flags when hydration restarts over rendered content', () => {
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
+        flushRender();
+        fixture.componentRef.setInput('result', { id: 3, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+        httpMock.expectOne(RENDER_URL_MATCHER).flush('too many requests', new HttpErrorResponse({ status: 429, statusText: 'Too Many Requests' }));
+        fixture.detectChanges();
+        expect(comp.refreshFailed()).toBe(true);
+        expect(comp.errorStatus()).toBe(429);
+
+        fixture.componentRef.setInput('result', { id: 4, feedbacks: passingFeedback() } as Result);
+        fixture.detectChanges();
+
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.isRefreshing()).toBe(true);
+        expect(comp.refreshFailed()).toBe(false);
+        expect(comp.initialLoadFailed()).toBe(false);
+        expect(comp.errorStatus()).toBeUndefined();
+        httpMock.expectOne(RENDER_URL_MATCHER).flush(renderResponse('success', '<!-- second -->'));
+        fixture.detectChanges();
     });
 
     it('re-renders when the theme switches to dark', () => {

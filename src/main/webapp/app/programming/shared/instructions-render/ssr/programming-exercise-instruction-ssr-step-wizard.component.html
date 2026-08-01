@@ -12,6 +12,7 @@
                         type="button"
                         class="stepwizard-circle"
                         [attr.aria-label]="task.taskName"
+                        [disabled]="!interactive()"
                         [class.stepwizard-step--success]="task.status === 'success'"
                         [class.stepwizard-step--failed]="task.status === 'fail'"
                         [class.stepwizard-step--not-executed]="task.status === 'not-executed'"

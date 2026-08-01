@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -28,6 +28,24 @@ import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programmi
 import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
 
 export type SsrLiveUpdates = 'none' | 'personal';
+
+/**
+ * Identity of the exercise and participation a render belongs to.
+ *
+ * Deliberately *not* part of `ProblemStatementRenderRequest`: that interface is the HTTP body and feeds the render
+ * cache key, and neither may depend on who is looking at the statement. The identity only exists to decide whether
+ * the markup currently on screen still belongs to the bound inputs.
+ */
+interface RenderedContext {
+    exerciseId?: number;
+    participationId?: number;
+}
+
+/** Internal pairing of a render request with the context it was issued for; only the request goes on the wire. */
+interface RenderEnvelope {
+    request: ProblemStatementRenderRequest;
+    context: RenderedContext;
+}
 
 /**
  * Read-only problem statement rendered by the server.
@@ -59,7 +77,8 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     private destroyRef = inject(DestroyRef);
 
     private readonly locale = getCurrentLocaleSignal(this.translateService);
-    private readonly renderRequests = new Subject<ProblemStatementRenderRequest>();
+    // `undefined` is the cancellation signal: it supersedes whatever render is in flight without starting a new one.
+    private readonly renderRequests = new Subject<RenderEnvelope | undefined>();
     private readonly hydrationRequests = new Subject<{ participation?: Participation; result?: Result }>();
     private readonly hydrationSettled = signal(false);
     private readonly hydrationFailed = signal(false);
@@ -91,8 +110,15 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
 
     private latestResult = signal<Result | undefined>(undefined);
 
-    /** Tasks are only interactive when a feedback dialog can actually be opened. */
-    readonly canOpenFeedback = computed(() => !!this.latestResult() && !!this.participation());
+    /** Identity the markup currently on screen was rendered for; `undefined` while nothing is rendered. */
+    private readonly renderedContext = signal<RenderedContext | undefined>(undefined);
+
+    /**
+     * Tasks are only interactive when a feedback dialog can actually be opened *for the bound inputs*. After a switch
+     * to another exercise or participation the retained DOM still shows the previous statement, whose tasks must not
+     * pair the previous result with the new participation.
+     */
+    readonly canOpenFeedback = computed(() => !!this.latestResult() && !!this.participation() && this.rendersCurrentContext());
 
     private resultSubscription?: Subscription;
     private contentHash?: string;
@@ -159,17 +185,21 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         effect(() => this.setupResultSubscription());
 
         // switchMap gives single-in-flight, last-wins semantics: a stale response can never overwrite a newer render.
+        // An `undefined` envelope maps to EMPTY, which unsubscribes the in-flight render without issuing a new one.
+        // Because EMPTY invokes no subscriber callback, every producer of `undefined` owns the loading flags itself.
         this.renderRequests
             .pipe(
-                switchMap((request) =>
-                    this.renderService.render(request).pipe(
-                        map((rendered) => ({ rendered, error: undefined })),
-                        catchError((error: HttpErrorResponse) => of({ rendered: undefined, error })),
-                    ),
+                switchMap((envelope) =>
+                    envelope === undefined
+                        ? EMPTY
+                        : this.renderService.render(envelope.request).pipe(
+                              map((rendered) => ({ rendered, error: undefined, context: envelope.context })),
+                              catchError((error: HttpErrorResponse) => of({ rendered: undefined, error, context: envelope.context })),
+                          ),
                 ),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe(({ rendered, error }) => (rendered ? this.applyRendered(rendered) : this.applyError(error)));
+            .subscribe(({ rendered, error, context }) => (rendered ? this.applyRendered(rendered, context) : this.applyError(error)));
     }
 
     ngOnDestroy(): void {
@@ -189,20 +219,28 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             // The websocket emits undefined before the first push; pushed results go through hydration like any other
             // source, because they may arrive without feedback details.
             .pipe(filter((result): result is Result => !!result))
-            .subscribe((result) => this.startHydration({ participation: this.participation(), result }));
+            .subscribe((result) => {
+                const participation = this.participation();
+                if (participation?.id !== participationId) {
+                    // The bound participation already moved on and this effect has not torn the old subject down yet.
+                    // Hydrating anyway would label the previous participation's result as the new participation's.
+                    return;
+                }
+                this.startHydration({ participation, result });
+            });
     }
 
     /** Starts (and thereby cancels any in-flight) hydration, resetting the settled/failed state first. */
     private startHydration(request: { participation?: Participation; result?: Result }): void {
+        // The real cancellation point of the render lifecycle. The render effect refuses to run while hydration is
+        // unsettled or failed, so without this a render started for the previous inputs would keep running and paint
+        // the pane once the new hydration stalls or fails.
+        this.renderRequests.next(undefined);
         this.hydrationSettled.set(false);
         this.hydrationFailed.set(false);
         // Loading starts here, not when the render request is issued: hydration itself may take a round trip, and a
         // previous failure must stop being displayed as soon as a fresh attempt begins.
-        if (this.renderedHtml() === undefined) {
-            this.isLoading.set(true);
-        } else {
-            this.isRefreshing.set(true);
-        }
+        this.setPendingFlags();
         this.initialLoadFailed.set(false);
         this.refreshFailed.set(false);
         // The status describes the previous render error; a fresh attempt must not inherit it.
@@ -225,11 +263,16 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         if (!exercise) {
             // The exercise is still loading. That is not the same as "this exercise has no problem statement", so the
             // loading indicator stays on and onNoInstructionsAvailable must not fire (it permanently hides the pane in
-            // the code editor). The effect re-runs as soon as the exercise arrives.
+            // the code editor). The effect re-runs as soon as the exercise arrives. A render started for the previous
+            // exercise must not survive this, hence the cancellation; EMPTY reports nothing, so the flags are set here.
+            this.renderRequests.next(undefined);
+            this.setPendingFlags();
             return;
         }
         const markdown = exercise.problemStatement?.trim();
         if (!markdown) {
+            // A render for the previous statement must not paint over the pane that is about to be emptied.
+            this.renderRequests.next(undefined);
             // startHydration already switched on a loading indicator; there is nothing to render, so clear it again
             // or the spinner would stay forever on an exercise without a problem statement.
             this.isLoading.set(false);
@@ -239,17 +282,38 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             // Cleared alongside the html: otherwise a statement that goes blank and later returns to a previously
             // rendered value would hit the render cache, match the retained hash, and stay blank forever.
             this.contentHash = undefined;
+            // Nothing is on screen any more, so no identity may keep claiming that it is.
+            this.renderedContext.set(undefined);
             this.onNoInstructionsAvailable.emit();
             return;
         }
-        this.renderRequests.next({ markdown, testResults: this.renderService.mapFeedbacksToTestInputs(result), locale, darkMode });
+        this.renderRequests.next({
+            request: { markdown, testResults: this.renderService.mapFeedbacksToTestInputs(result), locale, darkMode },
+            context: { exerciseId: exercise.id, participationId: this.participation()?.id },
+        });
     }
 
-    private applyRendered(rendered: RenderedProblemStatement): void {
+    /** Turns on the indicator that matches the current screen state: the initial spinner, or the refresh hint. */
+    private setPendingFlags(): void {
+        const hasContent = this.renderedHtml() !== undefined;
+        this.isLoading.set(!hasContent);
+        this.isRefreshing.set(hasContent);
+    }
+
+    /** Whether the markup on screen was rendered for exactly the exercise and participation currently bound. */
+    private rendersCurrentContext(): boolean {
+        const rendered = this.renderedContext();
+        return rendered !== undefined && rendered.exerciseId === this.exercise()?.id && rendered.participationId === this.participation()?.id;
+    }
+
+    private applyRendered(rendered: RenderedProblemStatement, context: RenderedContext): void {
         this.isLoading.set(false);
         this.isRefreshing.set(false);
         this.refreshFailed.set(false);
         this.initialLoadFailed.set(false);
+        // Adopted before the hash check: byte-identical output for another participation keeps the DOM, but that DOM
+        // now belongs to the new identity. Installing it only past the early return would leave it gated forever.
+        this.renderedContext.set(context);
         if (rendered.contentHash === this.contentHash) {
             // Identical output: keep the current DOM so scroll position, focus and the rendered formulas survive
             // untouched. Nothing has to be scheduled here: the content component re-applies the task accessibility
@@ -320,12 +384,16 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     /**
      * Opens the shared feedback dialog for a task. The not-executed count comes from the server metadata, so the
      * client never recomputes test status.
+     *
+     * The context match is enforced here rather than only in the accessibility gating: both activation paths (the
+     * shadow content and the step wizard) can reach this method, and stale markup must never pair a previous result
+     * with the newly bound participation.
      */
     openTaskFeedback(task: SsrTask): void {
         const result = this.latestResult();
         const participation = this.participation();
         const exercise = this.exercise();
-        if (!result || !participation || !exercise || !task.testIds.length) {
+        if (!result || !participation || !exercise || !task.testIds.length || !this.rendersCurrentContext()) {
             return;
         }
         this.dialogService.open(FeedbackComponent, {

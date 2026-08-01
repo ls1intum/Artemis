@@ -44,6 +44,7 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         const emitted = vi.fn();
         comp.taskSelected.subscribe(emitted);
         fixture.componentRef.setInput('tasks', duplicates);
+        fixture.componentRef.setInput('interactive', true);
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelectorAll('.stepwizard-step')).toHaveLength(2);
@@ -55,11 +56,29 @@ describe('ProgrammingExerciseInstructionSsrStepWizardComponent', () => {
         const emitted = vi.fn();
         comp.taskSelected.subscribe(emitted);
         fixture.componentRef.setInput('tasks', tasks);
+        fixture.componentRef.setInput('interactive', true);
         fixture.detectChanges();
 
-        fixture.nativeElement.querySelectorAll('.stepwizard-circle')[1].click();
+        const circles = fixture.nativeElement.querySelectorAll('.stepwizard-circle');
+        expect([...circles].every((circle: HTMLButtonElement) => !circle.disabled)).toBe(true);
+        circles[1].click();
 
         expect(emitted).toHaveBeenCalledWith(tasks[1]);
+    });
+
+    it('disables every step while no feedback dialog can be opened', () => {
+        const emitted = vi.fn();
+        comp.taskSelected.subscribe(emitted);
+        fixture.componentRef.setInput('tasks', tasks);
+        fixture.detectChanges();
+
+        // The wizard is the second activation path into the feedback dialog; gating the shadow content alone would
+        // still let a click here pair a stale result with the newly bound participation.
+        const circles = fixture.nativeElement.querySelectorAll('.stepwizard-circle');
+        expect([...circles].every((circle: HTMLButtonElement) => circle.disabled)).toBe(true);
+        circles[1].click();
+
+        expect(emitted).not.toHaveBeenCalled();
     });
 
     it('renders nothing without tasks', () => {

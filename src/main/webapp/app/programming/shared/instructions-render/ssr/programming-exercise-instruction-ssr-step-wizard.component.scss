@@ -27,8 +27,14 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 }
 
 .stepwizard-circle {
-    // Every circle is actionable: the click handler emits for all statuses, so the pointer must not depend on colour.
+    // Every enabled circle is actionable: the click handler emits for all statuses, so the pointer must not depend on
+    // colour. It is disabled as a whole while no feedback dialog can be opened, and then must not advertise a click.
     cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+    }
+
     background-color: var(--module-bg);
     width: $step-button-size;
     height: $step-button-size;

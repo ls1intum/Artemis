@@ -154,6 +154,11 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
      * `composedPath()` still contains the real node inside the shadow tree.
      */
     onActivate(event: Event): void {
+        if (!this.interactive()) {
+            // The markup is retained across context changes and stays clickable in the browser regardless of the
+            // accessibility gating, so the gate has to suppress the emission too, not just the role and tabindex.
+            return;
+        }
         const taskElement = event.composedPath().find((target): target is HTMLElement => target instanceof HTMLElement && target.classList.contains('artemis-task'));
         if (!taskElement) {
             return;

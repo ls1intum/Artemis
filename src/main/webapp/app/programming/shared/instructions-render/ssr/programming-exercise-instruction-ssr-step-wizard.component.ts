@@ -21,6 +21,8 @@ import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-
 })
 export class ProgrammingExerciseInstructionSsrStepWizardComponent {
     readonly tasks = input.required<SsrTask[]>();
+    /** Whether a step can currently open a feedback dialog. A step that cannot is rendered disabled. */
+    readonly interactive = input(false);
     readonly taskSelected = output<SsrTask>();
 
     readonly faTimes = faTimes;

@@ -153,6 +153,18 @@ describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
         expect(activated).toEqual([0]);
     });
 
+    it('does not emit an activation while the tasks are not interactive', () => {
+        const activated: number[] = [];
+        fixture.componentInstance.taskActivated.subscribe((index) => activated.push(index));
+        render(`<div class="artemis-problem-statement">${taskSpan('A', '1')}</div>`, [task(0, 'A', [1])]);
+
+        // Retained markup stays clickable in the browser no matter what role and tabindex say, so the emission
+        // itself has to be gated: after a context change the statement on screen belongs to other inputs.
+        taskElements()[0].dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+
+        expect(activated).toEqual([]);
+    });
+
     it('ignores activations outside a task', () => {
         const activated: number[] = [];
         fixture.componentInstance.taskActivated.subscribe((index) => activated.push(index));
