@@ -14,8 +14,10 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -98,6 +100,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
@@ -109,6 +112,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -130,6 +134,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -161,6 +166,8 @@ public class ExamResource {
     private String examArchivesDirPath;
 
     private final UserRepository userRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final CourseRepository courseRepository;
 
@@ -212,7 +219,8 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -237,6 +245,7 @@ public class ExamResource {
         this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -478,14 +487,14 @@ public class ExamResource {
         // Import Exam with Exercises and create a channel for the exam. When the client supplies an importId, live progress
         // is reported to the importing user over a websocket so the UI can show a progress dialog while this request runs.
         ExamImportResultDTO importResult = examImportService.importExamWithExercises(examToBeImported, courseId, importId, userRepository.getCurrentUserLogin());
-        Exam examCopied = importResult.exam();
+        ExamIdAndTitleDTO examCopied = importResult.exam();
 
         // The exam is always created. Any exercises that could not be imported are reported in the response body, split
         // into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the client can
         // give precise feedback instead of the whole import failing.
-        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle());
+        HttpHeaders headers = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.title());
 
-        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.getId())).headers(headers).body(importResult);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examCopied.id())).headers(headers).body(importResult);
     }
 
     /**
@@ -1283,18 +1292,21 @@ public class ExamResource {
     }
 
     /**
-     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
-     * exercise groups do not belong to the exam the operation is aborted.
+     * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If a received
+     * exercise group id does not belong to the exam the operation is aborted.
+     * <p>
+     * The body is the ids of the exam's exercise groups in the desired order (mirroring
+     * {@code LectureUnitResource.updateLectureUnitsOrder}). The response carries no body: the caller already holds the
+     * fully-detailed groups in exactly this order, so there is nothing to echo.
      *
-     * @param courseId              the id of the course
-     * @param examId                the id of the exam
-     * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
-     * @return the list of exercise groups
+     * @param courseId                the id of the course
+     * @param examId                  the id of the exam
+     * @param orderedExerciseGroupIds the ids of the exam's exercise groups in the desired order
+     * @return 200 (OK) with an empty body once the order is persisted
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups-order")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
+    public ResponseEntity<Void> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<Long> orderedExerciseGroupIds) {
         log.debug("REST request to update the order of exercise groups of exam : {}", examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
@@ -1302,22 +1314,25 @@ public class ExamResource {
         Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
 
         // Ensure that exactly as many exercise groups have been received as are currently related to the exam
-        if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
+        if (orderedExerciseGroupIds.size() != exam.getExerciseGroups().size()) {
             throw new BadRequestAlertException("The number of exercise groups changed", ENTITY_NAME, "numberExerciseGroupsChanged");
         }
 
         // Build a map from ID to managed exercise group for reordering
-        var managedGroupsById = new java.util.HashMap<Long, ExerciseGroup>();
+        var managedGroupsById = new HashMap<Long, ExerciseGroup>();
         for (ExerciseGroup managedGroup : exam.getExerciseGroups()) {
             managedGroupsById.put(managedGroup.getId(), managedGroup);
         }
 
-        // Ensure all received exercise groups exist in the exam and build the reordered list using managed entities
-        var reorderedManagedGroups = new java.util.ArrayList<ExerciseGroup>();
-        for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
-            ExerciseGroup managedGroup = managedGroupsById.get(exerciseGroup.getId());
+        // Ensure the received ids are exactly a permutation of the exam's group ids and build the reordered list using
+        // managed entities. remove() (not get()) also rejects duplicate ids: together with the size check above, a
+        // duplicate would mean another group is omitted from the rebuilt list — and with orphanRemoval on
+        // Exam.exerciseGroups, saving such a list would delete the omitted group and its exercises.
+        var reorderedManagedGroups = new ArrayList<ExerciseGroup>();
+        for (Long exerciseGroupId : orderedExerciseGroupIds) {
+            ExerciseGroup managedGroup = managedGroupsById.remove(exerciseGroupId);
             if (managedGroup == null) {
-                throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
+                throw new BadRequestAlertException("The exercise group is not related to the exam or appears more than once", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
             }
             reorderedManagedGroups.add(managedGroup);
         }
@@ -1328,8 +1343,7 @@ public class ExamResource {
         exam.getExerciseGroups().addAll(reorderedManagedGroups);
         examRepository.save(exam);
 
-        // Return the original request body as it might contain exercise details (e.g. quiz questions), which would be lost otherwise
-        return ResponseEntity.ok(orderedExerciseGroups);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -1360,18 +1374,23 @@ public class ExamResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/locked-submissions")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<List<LockedExamSubmissionDTO>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         long start = System.currentTimeMillis();
-        Course course = courseRepository.findWithEagerExercisesById(courseId);
+        // The locked submissions are loaded by exam id alone, so authorizing the course on its own would let an
+        // instructor pair a course they manage with another course's exam and read that exam's submissions.
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(examId, user);
+        // one batched query for the submission counts the assessment-locks table renders; never one query per row
+        List<Long> participationIds = submissions.stream().map(submission -> submission.getParticipation().getId()).distinct().toList();
+        Map<Long, Integer> submissionCounts = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(participationIds);
+        List<LockedExamSubmissionDTO> lockedSubmissions = submissions.stream().map(submission -> LockedExamSubmissionDTO.of(submission, submissionCounts)).toList();
 
         long end = System.currentTimeMillis();
         log.debug("Finished /courses/{}/submissions call in {}ms", courseId, end - start);
-        return ResponseEntity.ok(submissions);
+        return ResponseEntity.ok(lockedSubmissions);
     }
 
     /**
