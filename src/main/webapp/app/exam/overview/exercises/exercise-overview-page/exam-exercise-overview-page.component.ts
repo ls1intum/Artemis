@@ -68,7 +68,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     /**
-     * calculate the exercise status (also see exam-navigation-bar.component.ts --> make sure the logic is consistent)
+     * calculate the exercise status (also see exam-navigation-sidebar.component.ts --> make sure the logic is consistent)
      * also determines the used icon and its color
      * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
      *  this method could e.g. return the sync status and the icon
