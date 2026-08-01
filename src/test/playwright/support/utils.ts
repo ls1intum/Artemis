@@ -357,6 +357,9 @@ export function dayjsToString(day: dayjs.Dayjs) {
 
 export const BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS = 10;
 
+/** The grace period `prepareExam` configures, kept short so tests do not have to wait out the server default of 180s. */
+const EXAM_GRACE_PERIOD_IN_SECONDS = 10;
+
 export function getExamBuildAndTestAfterDueDate(exam: Exam) {
     return getExamEndDateWithGrace(exam).add(BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS, 'seconds');
 }
@@ -761,7 +764,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         examStudentReviewStart: resultDate,
         examStudentReviewEnd: resultDate.add(5, 'minutes'),
         publishResultsDate: resultDate,
-        gracePeriod: 10,
+        gracePeriod: EXAM_GRACE_PERIOD_IN_SECONDS,
     };
     const exam = await examAPIRequests.createExam(examConfig);
     let additionalData = {};
@@ -809,15 +812,19 @@ export async function makeExamSubmission(
 }
 
 /**
- * Waits for the exam to end if it hasn't already.
- * This is necessary because the assessment dashboard button only appears after the exam ends.
- * @param examEnd - The exam end date
+ * Waits for the exam to end if it hasn't already, including its grace period.
+ * This is necessary because the assessment dashboard button only appears after the exam ends, and because the server
+ * refuses to open an assessment until the last student can no longer hand in, which is the exam end plus the grace
+ * period (see SubmissionService#checkThatAssessmentIsPossibleElseThrow). The grace period is read from the exam itself,
+ * so that exams which do not configure one (and therefore get the server default of 180s) are waited out correctly.
+ * @param exam - The exam to wait for, as returned by the create call
  * @param page - The Playwright page object (used for waitForTimeout)
  */
-export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
-    if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
-        console.log(`Waiting ${timeToWait}ms for exam to end...`);
+export async function waitForExamEnd(exam: Exam, page: Page) {
+    const assessableFrom = getExamEndDateWithGrace(exam);
+    if (assessableFrom.isAfter(dayjs())) {
+        const timeToWait = assessableFrom.diff(dayjs()) + 2000; // Add 2 second buffer
+        console.log(`Waiting ${timeToWait}ms for exam (including its ${exam.gracePeriod ?? 0}s grace period) to end...`);
         await page.waitForTimeout(timeToWait);
     }
 }
