@@ -98,7 +98,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         exerciseGroup1 = exam1.getExerciseGroups().getFirst();
@@ -311,7 +311,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
 
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
@@ -375,9 +375,9 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         TextExercise exercise3_2 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
         TextExercise exercise3_3 = textExerciseUtilService.createTextExerciseForExam(exerciseGroup3);
 
-        List<ExerciseGroup> orderedExerciseGroups = new ArrayList<>(List.of(exerciseGroup2, exerciseGroup3, exerciseGroup1));
+        List<Long> orderedExerciseGroupIds = new ArrayList<>(List.of(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId()));
         // Should save new order
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.OK);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroupIds, HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
 
         List<ExerciseGroup> savedExerciseGroups = examRepository.findWithExerciseGroupsById(exam.getId()).orElseThrow().getExerciseGroups();
@@ -395,17 +395,62 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(savedExerciseGroup3.getExercises()).containsExactlyInAnyOrder(exercise3_1, exercise3_2, exercise3_3);
 
         // Should fail with too many exercise groups
-        orderedExerciseGroups.add(exerciseGroup1);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+        orderedExerciseGroupIds.add(exerciseGroup1.getId());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroupIds, HttpStatus.BAD_REQUEST);
 
         // Should fail with too few exercise groups
-        orderedExerciseGroups.remove(3);
-        orderedExerciseGroups.remove(2);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+        orderedExerciseGroupIds.remove(3);
+        orderedExerciseGroupIds.remove(2);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroupIds, HttpStatus.BAD_REQUEST);
 
-        // Should fail with different exercise group
-        orderedExerciseGroups = Arrays.asList(exerciseGroup2, exerciseGroup3, ExamFactory.generateExerciseGroup(true, exam));
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
+        // Should fail with an exercise group id that does not belong to the exam
+        List<Long> idsWithForeignGroup = Arrays.asList(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId() + 100_000L);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", idsWithForeignGroup, HttpStatus.BAD_REQUEST);
+
+        // Should fail with duplicate ids: the rebuilt list would omit a group, and orphanRemoval on
+        // Exam.exerciseGroups would delete the omitted group and its exercises.
+        List<Long> idsWithDuplicate = Arrays.asList(exerciseGroup2.getId(), exerciseGroup2.getId(), exerciseGroup1.getId());
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", idsWithDuplicate, HttpStatus.BAD_REQUEST);
+
+        // A fresh reload proves the rejected requests changed nothing: all three groups intact, still in the last
+        // successfully saved order, and every exercise still in its original group.
+        Exam reloadedExam = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
+        List<ExerciseGroup> reloadedGroups = reloadedExam.getExerciseGroups();
+        assertThat(reloadedGroups).extracting(ExerciseGroup::getId).containsExactly(exerciseGroup2.getId(), exerciseGroup3.getId(), exerciseGroup1.getId());
+        assertThat(reloadedGroups.getFirst().getExercises()).extracting(Exercise::getId).containsExactlyInAnyOrder(exercise2_1.getId());
+        assertThat(reloadedGroups.get(1).getExercises()).extracting(Exercise::getId).containsExactlyInAnyOrder(exercise3_1.getId(), exercise3_2.getId(), exercise3_3.getId());
+        assertThat(reloadedGroups.get(2).getExercises()).extracting(Exercise::getId).containsExactlyInAnyOrder(exercise1_1.getId(), exercise1_2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateOrderOfExerciseGroups_wirePinsRequestAndResponseDTO() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1);
+        ExerciseGroup exerciseGroupA = ExamFactory.generateExerciseGroupWithTitle(true, exam, "alpha");
+        ExerciseGroup exerciseGroupB = ExamFactory.generateExerciseGroupWithTitle(true, exam, "beta");
+        ExerciseGroup exerciseGroupC = ExamFactory.generateExerciseGroupWithTitle(true, exam, "gamma");
+        exam = examRepository.save(exam);
+
+        TextExercise exerciseA1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroupA);
+        TextExercise exerciseB1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroupB);
+        TextExercise exerciseC1 = textExerciseUtilService.createTextExerciseForExam(exerciseGroupC);
+
+        // This is the actual wire shape the client sends: only the exercise-group ids, in the desired order,
+        // not full ExerciseGroup entities. The response carries no body.
+        List<Long> requestBody = List.of(exerciseGroupC.getId(), exerciseGroupA.getId(), exerciseGroupB.getId());
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", requestBody, HttpStatus.OK);
+
+        // Fresh repository read (a new query, not the JPA session used to build the request) confirms the persisted
+        // order, that the @OrderColumn-backed list has no null slot, and that every group AND exercise id survived.
+        Exam reloaded = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
+        List<ExerciseGroup> persistedGroups = reloaded.getExerciseGroups();
+        assertThat(persistedGroups).as("the @OrderColumn-backed list must not contain a null slot").doesNotContainNull();
+        assertThat(persistedGroups).extracting(ExerciseGroup::getId).containsExactly(exerciseGroupC.getId(), exerciseGroupA.getId(), exerciseGroupB.getId());
+
+        assertThat(persistedGroups.get(0).getExercises()).extracting(Exercise::getId).containsExactly(exerciseC1.getId());
+        assertThat(persistedGroups.get(1).getExercises()).extracting(Exercise::getId).containsExactly(exerciseA1.getId());
+        assertThat(persistedGroups.get(2).getExercises()).extracting(Exercise::getId).containsExactly(exerciseB1.getId());
     }
 
     @Test

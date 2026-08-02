@@ -5,15 +5,17 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,6 +32,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -48,6 +51,8 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -107,6 +112,22 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false; // default value
 
+    /**
+     * When the user last logged in. Set on every successful authentication and used as the activity signal for the
+     * data-privacy not-enrolled-user cleanup (a real login signal, unlike the auditing {@code lastModifiedDate}, which is
+     * bumped by any write to the user row such as group synchronization).
+     */
+    @Column(name = "last_login_date")
+    private Instant lastLoginDate;
+
+    /**
+     * When the data-privacy cleanup warned the user that their (not-enrolled, inactive) account will be deleted after a
+     * grace period. Stays {@code null} until the user has been warned; cleared if the user becomes active or enrolled
+     * again. Anchors the grace period to the real warning so an account is never deleted without prior notice.
+     */
+    @Column(name = "deletion_warning_sent_date")
+    private Instant deletionWarningSentDate;
+
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
     private String langKey;
@@ -156,10 +177,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "user_groups")
-    private Set<String> groups = new HashSet<>();
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    private Set<UserCourseRole> courseRoles = new HashSet<>();
+
+    @Column(name = "lti_created", nullable = false)
+    private boolean ltiCreated = false; // default value
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
@@ -369,12 +392,71 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
     }
 
-    public Set<String> getGroups() {
-        return groups;
+    /**
+     * Returns an unmodifiable view: {@link #getCourseRolesByCourseId()} caches an index over this collection and can
+     * only invalidate it in {@link #setCourseRoles(Set)}, so mutating the returned set in place would leave the index
+     * stale and yield wrong authorization decisions. Replace the whole set via {@link #setCourseRoles(Set)} instead.
+     * <p>
+     * Note for callers that need to know whether the collection was loaded: do NOT test the returned value with
+     * {@code Hibernate.isInitialized(...)} — the wrapper is never a {@code PersistentSet}, so it always reports
+     * initialised. Use {@code Persistence.getPersistenceUtil().isLoaded(user, "courseRoles")}, which inspects the
+     * attribute itself.
+     *
+     * @return an unmodifiable view of this user's course roles
+     */
+    public Set<UserCourseRole> getCourseRoles() {
+        return Collections.unmodifiableSet(courseRoles);
     }
 
-    public void setGroups(Set<String> groups) {
-        this.groups = groups;
+    /**
+     * Whether the lazy {@code courseRoles} collection has been loaded, so callers can decide between the in-memory
+     * index from {@link #getCourseRolesByCourseId()} and a database query.
+     * <p>
+     * This has to live on the entity: {@link #getCourseRoles()} hands out an unmodifiable wrapper, which is never a
+     * Hibernate {@code PersistentSet} and therefore always reports as initialised. Only code with access to the field
+     * itself can answer the question.
+     *
+     * @return true if the course roles are loaded and can be read without hitting the database
+     */
+    @JsonIgnore
+    public boolean isCourseRolesLoaded() {
+        return Hibernate.isInitialized(courseRoles);
+    }
+
+    public void setCourseRoles(Set<UserCourseRole> courseRoles) {
+        this.courseRoles = courseRoles;
+        this.courseRolesByCourseIdTransient = null;
+    }
+
+    @Transient
+    @JsonIgnore
+    private transient Map<Long, EnumSet<CourseRole>> courseRolesByCourseIdTransient = null;
+
+    /**
+     * In-memory index of this user's course roles grouped by course id, built lazily from {@link #courseRoles} and
+     * cached for the lifetime of this (request-scoped) entity instance. Enables O(1) membership lookups on hot paths
+     * that check many courses (e.g. the course dashboard), instead of scanning the whole collection per check.
+     *
+     * @return a map from course id to the set of roles the user holds in that course (empty if no roles loaded)
+     */
+    @JsonIgnore
+    public Map<Long, EnumSet<CourseRole>> getCourseRolesByCourseId() {
+        if (courseRolesByCourseIdTransient == null) {
+            Map<Long, EnumSet<CourseRole>> map = new HashMap<>();
+            for (UserCourseRole courseRole : courseRoles) {
+                map.computeIfAbsent(courseRole.getCourse().getId(), key -> EnumSet.noneOf(CourseRole.class)).add(courseRole.getRole());
+            }
+            courseRolesByCourseIdTransient = map;
+        }
+        return courseRolesByCourseIdTransient;
+    }
+
+    public boolean isLtiCreated() {
+        return ltiCreated;
+    }
+
+    public void setLtiCreated(boolean ltiCreated) {
+        this.ltiCreated = ltiCreated;
     }
 
     public Set<Authority> getAuthorities() {
@@ -477,6 +559,24 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    @JsonIgnore
+    public Instant getLastLoginDate() {
+        return lastLoginDate;
+    }
+
+    public void setLastLoginDate(Instant lastLoginDate) {
+        this.lastLoginDate = lastLoginDate;
+    }
+
+    @JsonIgnore
+    public Instant getDeletionWarningSentDate() {
+        return deletionWarningSentDate;
+    }
+
+    public void setDeletionWarningSentDate(Instant deletionWarningSentDate) {
+        this.deletionWarningSentDate = deletionWarningSentDate;
     }
 
     @Nullable

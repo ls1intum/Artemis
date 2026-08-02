@@ -9,6 +9,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.Transient;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -23,6 +26,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 @DiscriminatorValue(value = "F")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadSubmission extends Submission {
+
+    private static final Logger log = LoggerFactory.getLogger(FileUploadSubmission.class);
 
     @Override
     public String getSubmissionExerciseType() {
@@ -40,9 +45,17 @@ public class FileUploadSubmission extends Submission {
      */
     @PostRemove
     public void onDelete() {
-        if (filePath != null) {
+        if (filePath == null) {
+            return;
+        }
+        // Best-effort: a malformed or legacy stored path must not abort the surrounding deletion transaction (e.g. a
+        // course/exam reset), which would otherwise leave the course permanently half-reset.
+        try {
             Path actualPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), FilePathType.FILE_UPLOAD_SUBMISSION);
             fileService.schedulePathForDeletion(actualPath, 0);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not schedule the file of file-upload submission {} for deletion (stored path '{}')", getId(), filePath, e);
         }
     }
 
