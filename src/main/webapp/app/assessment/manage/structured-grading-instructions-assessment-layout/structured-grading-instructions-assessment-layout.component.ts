@@ -103,8 +103,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * Applying an instruction via its checkbox is equivalent to dropping it onto the feedback list. Un-applying it
      * deletes every feedback card that instruction produced.
      */
-    toggleApplied(instruction: GradingInstruction, applied: boolean): void {
-        if (applied) {
+    toggleApplied(event: Event, instruction: GradingInstruction): void {
+        event.preventDefault();
+        if (!this.isApplied(instruction)) {
             this.selectionService.setApplied(instruction, true);
             return;
         }
