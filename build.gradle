@@ -550,7 +550,12 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.29.0"
-    implementation "org.webjars.npm:katex:0.16.47"
+    // Only the packaged JS/CSS is served (see ProblemStatementRenderingService), so the npm transitives are dead weight.
+    // They also carry the build's only dynamic version range (commander:[8.3.0,9.0.0-0)), which cannot be resolved from
+    // cache or the mirror whenever Maven Central rate-limits us, breaking compileJava on CI.
+    implementation("org.webjars.npm:katex:0.16.47") {
+        transitive = false
+    }
     implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
     implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
 
