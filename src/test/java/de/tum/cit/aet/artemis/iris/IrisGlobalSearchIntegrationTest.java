@@ -4,20 +4,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
@@ -25,6 +31,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "globalsearchit";
+
+    @Autowired
+    private AuthorizationCheckService authCheckService;
 
     @BeforeEach
     void setupUsers() {
@@ -175,7 +184,109 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.UNAUTHORIZED);
     }
 
+    // ==================== access context consistency with Artemis roles ====================
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "multi", roles = "USER")
+    void lectureSearch_sendsAccessContextConsistentWithArtemisRoles() throws Exception {
+        // One user holding a different role in each course, plus a course they are not a member of.
+        var studentCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "sStud", TEST_PREFIX + "sTa", TEST_PREFIX + "sEd", TEST_PREFIX + "sIn");
+        var taCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "tStud", TEST_PREFIX + "tTa", TEST_PREFIX + "tEd", TEST_PREFIX + "tIn");
+        var editorCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "eStud", TEST_PREFIX + "eTa", TEST_PREFIX + "eEd", TEST_PREFIX + "eIn");
+        var instructorCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "iStud", TEST_PREFIX + "iTa", TEST_PREFIX + "iEd", TEST_PREFIX + "iIn");
+        var foreignCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "nStud", TEST_PREFIX + "nTa", TEST_PREFIX + "nEd", TEST_PREFIX + "nIn");
+
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "multi");
+        user.setGroups(Set.of(TEST_PREFIX + "sStud", TEST_PREFIX + "tTa", TEST_PREFIX + "eEd", TEST_PREFIX + "iIn"));
+        user = userTestRepository.save(user);
+
+        AtomicReference<PyrisAccessContextDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), dto -> sent.set(dto.accessContext()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        PyrisAccessContextDTO context = sent.get();
+        assertThat(context).isNotNull();
+        assertThat(context.unrestricted()).isFalse();
+        assertThat(context.now()).isNotNull();
+
+        // The context sent to Iris must match Artemis's own access decision for every course, so the Iris lane
+        // scopes and bypasses exactly like the Artemis UI does. Asserted against AuthorizationCheckService, not literals.
+        // Empty role lists are omitted on the wire (@JsonInclude NON_EMPTY) and arrive as null, which the contract
+        // treats as empty; orEmpty() applies that same interpretation here.
+        for (Course course : List.of(studentCourse, taCourse, editorCourse, instructorCourse, foreignCourse)) {
+            long id = course.getId();
+            assertThat(orEmpty(context.courseIds()).contains(id)).as("courseIds membership for course %d must match isAtLeastStudentInCourse", id)
+                    .isEqualTo(authCheckService.isAtLeastStudentInCourse(course, user));
+            assertThat(orEmpty(context.staffCourseIds()).contains(id)).as("staffCourseIds (release/visibility bypass) for course %d must match isAtLeastTeachingAssistantInCourse", id)
+                    .isEqualTo(authCheckService.isAtLeastTeachingAssistantInCourse(course, user));
+            assertThat(orEmpty(context.studentCourseIds()).contains(id)).as("studentCourseIds for course %d must match isOnlyStudentInCourse", id)
+                    .isEqualTo(authCheckService.isOnlyStudentInCourse(course, user));
+        }
+
+        // The course the user cannot access must never leak into any scope.
+        assertThat(orEmpty(context.courseIds())).doesNotContain(foreignCourse.getId());
+        assertThat(orEmpty(context.staffCourseIds())).doesNotContain(foreignCourse.getId());
+        assertThat(orEmpty(context.studentCourseIds())).doesNotContain(foreignCourse.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void lectureSearch_forAdmin_sendsUnrestrictedContext() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+
+        AtomicReference<PyrisAccessContextDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), dto -> sent.set(dto.accessContext()));
+
+        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        PyrisAccessContextDTO context = sent.get();
+        assertThat(context).isNotNull();
+        // An Artemis admin sees everything, so Iris must receive a present, unrestricted context with empty role lists.
+        assertThat(authCheckService.isAdmin(TEST_PREFIX + "admin")).as("the test user is an Artemis admin").isTrue();
+        assertThat(context.unrestricted()).isTrue();
+        assertThat(orEmpty(context.courseIds())).isEmpty();
+        assertThat(orEmpty(context.staffCourseIds())).isEmpty();
+        assertThat(orEmpty(context.studentCourseIds())).isEmpty();
+        assertThat(context.now()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void lectureSearchAndAnswer_forwardTheSameAccessContext() throws Exception {
+        AtomicReference<PyrisAccessContextDTO> fromLectureSearch = new AtomicReference<>();
+        AtomicReference<PyrisAccessContextDTO> fromAnswer = new AtomicReference<>();
+        // Declare both expectations up front; MockRestServiceServer matches them in declared order.
+        irisRequestMockProvider.mockSearchLectures(List.of(), dto -> fromLectureSearch.set(dto.accessContext()));
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> fromAnswer.set(dto.accessContext()));
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("backpropagation", 5, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.OK);
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("backpropagation", 5, UUID.randomUUID()), HttpStatus.ACCEPTED);
+
+        PyrisAccessContextDTO lectureContext = fromLectureSearch.get();
+        PyrisAccessContextDTO answerContext = fromAnswer.get();
+        assertThat(lectureContext).isNotNull();
+        assertThat(answerContext).isNotNull();
+        // Both endpoints resolve the same user through the same service, so the scoping they forward must agree;
+        // otherwise the list results and the answer sources could enforce different access rights for one user.
+        assertThat(orEmpty(answerContext.courseIds())).containsExactlyInAnyOrderElementsOf(orEmpty(lectureContext.courseIds()));
+        assertThat(orEmpty(answerContext.staffCourseIds())).containsExactlyInAnyOrderElementsOf(orEmpty(lectureContext.staffCourseIds()));
+        assertThat(orEmpty(answerContext.studentCourseIds())).containsExactlyInAnyOrderElementsOf(orEmpty(lectureContext.studentCourseIds()));
+        assertThat(answerContext.unrestricted()).isEqualTo(lectureContext.unrestricted());
+    }
+
     // ==================== helpers ====================
+
+    /**
+     * Absent role lists are omitted on the wire ({@code @JsonInclude(NON_EMPTY)}) and deserialize as {@code null};
+     * the access-context contract treats an absent list as empty, so tests apply the same interpretation.
+     */
+    private static List<Long> orEmpty(List<Long> ids) {
+        return ids == null ? List.of() : ids;
+    }
 
     private void sendGlobalSearchAnswerStatus(String jobId, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
