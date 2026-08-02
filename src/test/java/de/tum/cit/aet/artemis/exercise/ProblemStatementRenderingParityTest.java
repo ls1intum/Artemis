@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -92,12 +93,13 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
         // an explicit, opt-in action via -Dartemis.regenerateProblemStatementFixtures=true.
         Path fixture = FIXTURE_DIRECTORY.resolve(corpusFile.getFileName().toString().replace(".md", ".html"));
         if (Boolean.getBoolean("artemis.regenerateProblemStatementFixtures")) {
-            Files.createDirectories(fixture.getParent());
             // Written with a trailing newline: .editorconfig requires insert_final_newline = true for every file in
             // this repo, so a fixture without one invites an editor or formatter to "fix" it later. The compare path
             // below strips exactly one trailing newline back off before comparing, so that eventual fix-up can never
             // break the parity gate for a reason unrelated to actual rendering differences.
-            Files.writeString(fixture, html + "\n", StandardCharsets.UTF_8);
+            // FileUtils rather than Files.writeString: it creates the missing fixture directory on a first
+            // regeneration run, which Files does not (see ArchitectureTest.testFileWriteUsage).
+            FileUtils.writeStringToFile(fixture.toFile(), html + "\n", StandardCharsets.UTF_8);
             return;
         }
         assertThat(fixture).as("fixture missing - regenerate with -Dartemis.regenerateProblemStatementFixtures=true").exists();
