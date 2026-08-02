@@ -63,6 +63,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private static final String TEST_PREFIX = "modelingsubmissionintegration";
 
+    /** Users not enrolled in the test course; exercise the wrong-course branches. */
+    private static final String OTHER_PREFIX = "modelingsubmissionother";
+
     @Autowired
     private TeamRepository teamRepository;
 
@@ -123,7 +126,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
+        userUtilService.addUsers(OTHER_PREFIX, 1, 1, 0, 1); // outsider student, tutor, instructor — never enrolled
+        course = modelingExerciseUtilService.addEnrolledCourseWithDifferentModelingExercises(TEST_PREFIX);
+
         classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
         objectExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
@@ -137,13 +142,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
-        Course course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course2 = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).getFirst();
-
-        // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student4");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @Test
@@ -157,7 +157,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
     void createModelingSubmission_studentNotInCourse() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", toRequest(submission), ModelingSubmissionResponseDTO.class,
@@ -403,7 +403,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllSubmissionsOfExercise_instructorNotInCourse() throws Exception {
         request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmissionResponseDTO.class);
     }
@@ -422,7 +422,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void getAllSubmissionsOfExercise_assessedByTutor_instructorNotInCourse() throws Exception {
         request.getList("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.FORBIDDEN,
                 ModelingSubmissionResponseDTO.class);
@@ -498,7 +498,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void getModelSubmission_tutorNotInCourse() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
@@ -682,7 +682,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void getModelSubmissionWithoutAssessment_notTutorInCourse() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");

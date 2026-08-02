@@ -158,7 +158,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @NonNull
     private ResponseEntity<ModelingSubmissionResponseDTO> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -207,7 +207,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
         }
         // Tutors must not see the student behind a submission (double-blind); instructors may.
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         List<ModelingSubmissionResponseDTO> submissionDTOs = submissions.stream()
@@ -239,7 +239,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
 
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         if (!authCheckService.isAtLeastStudentForExercise(modelingExercise, user)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this modeling submission.");
@@ -257,6 +257,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.setSubmissionDate(null);
             return ResponseEntity.ok(ModelingSubmissionResponseDTO.of(modelingSubmission));
         }
+
+        modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
 
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
@@ -312,7 +314,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (!(exercise instanceof final ModelingExercise modelingExercise)) {
@@ -380,7 +382,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     private ValidationResult validateParticipation(long participationId) {
         var studentParticipation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var exercise = studentParticipation.getExercise();
 
         if (exercise == null) {

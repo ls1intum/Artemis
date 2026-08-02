@@ -197,7 +197,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<ResultDTO> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody ModelingAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(submissionId);
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);

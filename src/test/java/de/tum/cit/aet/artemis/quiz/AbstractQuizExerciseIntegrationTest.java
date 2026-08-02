@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
@@ -43,7 +42,16 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 /**
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
  */
-public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    /**
+     * Returns the login prefix used by {@code @BeforeEach} to create test users via {@code userUtilService.addUsers(prefix, ...)}.
+     * Used by shared helper methods (e.g. {@link #createQuizOnServer}) to enroll those users in newly-created courses so that
+     * course-membership access checks pass.
+     *
+     * @return the test-user login prefix for this test class (e.g. {@code "quizexerciseintegration"})
+     */
+    protected abstract String getTestPrefix();
 
     @Autowired
     protected QuizExerciseService quizExerciseService;
@@ -66,7 +74,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     protected Course createEmptyCourse() {
         final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
         final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
-        return quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
+        Course course = quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
+        userUtilService.enrollPrefixedUsersInCourse(course, getTestPrefix());
+        return course;
     }
 
     protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
@@ -95,7 +105,7 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     }
 
     protected QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(releaseDate, dueDate, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(getTestPrefix(), releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
@@ -315,23 +325,8 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     protected void prepareQuizForImport(QuizExercise quizExercise) {
         quizExercise.setQuizBatches(Set.of());
         quizExercise.setCompetencyLinks(Set.of());
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                for (var dragItem : dragAndDropQuestion.getDragItems()) {
-                    dragItem.setId(null);
-                }
-                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
-                    dropLocation.setId(null);
-                }
-            }
-            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                for (var spot : shortAnswerQuestion.getSpots()) {
-                    spot.setId(null);
-                }
-                for (var solution : shortAnswerQuestion.getSolutions()) {
-                    solution.setId(null);
-                }
-            }
-        }
+        // Drag-and-drop and short-answer component ids (drop locations / drag items, resp. spots / solutions) are question-scoped and stored inside the JSON content; they are
+        // referenced by id from the correct mappings. Nulling them here would break mapping resolution. Import regenerates fresh question-scoped ids server-side on save, so the
+        // source ids can simply be kept (they act as temp ids).
     }
 }

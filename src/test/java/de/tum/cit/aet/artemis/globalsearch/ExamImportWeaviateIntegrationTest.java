@@ -61,7 +61,7 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
     }
 
     @Test
@@ -71,7 +71,9 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         sourceExam.setChannelName("weaviate-import-test");
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course.getId());
 
-        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam();
+        // The import response carries only the imported exam's id/title; re-fetch the persisted exam graph to assert it.
+        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam().id();
+        Exam importedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
 
         assertThat(importedExam.getId()).isNotNull();
         assertThat(importedExam.getExerciseGroups()).hasSize(4);
@@ -103,12 +105,12 @@ class ExamImportWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         sourceExam.setChannelName("weaviate-empty-import");
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course.getId());
 
-        Exam importedExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam();
+        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, CREATED).exam().id();
 
-        assertThat(importedExam.getId()).isNotNull();
+        assertThat(importedExamId).isNotNull();
 
         // Verify the exam is indexed even without exercises
-        assertExamExistsInWeaviate(weaviateService, importedExam.getId());
+        assertExamExistsInWeaviate(weaviateService, importedExamId);
     }
 
     @Test
