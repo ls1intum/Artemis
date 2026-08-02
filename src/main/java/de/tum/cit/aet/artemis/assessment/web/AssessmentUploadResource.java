@@ -41,13 +41,10 @@ public class AssessmentUploadResource {
 
     private static final String ENTITY_NAME = "assessmentUpload";
 
-    /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final AssessmentUploadService assessmentUploadService;
 
-    /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final MultipartProperties multipartProperties;
 
     /**

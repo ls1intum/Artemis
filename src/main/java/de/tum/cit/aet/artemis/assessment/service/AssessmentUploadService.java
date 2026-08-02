@@ -28,7 +28,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
@@ -82,14 +83,13 @@ public class AssessmentUploadService {
     /** The extension (including the leading dot) of the per-participant feedback files inside the zip. */
     private static final String TEXT_FILE_EXTENSION = ".txt";
 
-    /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository;
 
-    /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final SubmissionRepository submissionRepository;
 
-    /** Invariant: never {@code null} after construction (constructor-injected and {@code final}). */
     private final AssessmentUploadResultService assessmentUploadResultService;
+
+    private final TransactionTemplate transactionTemplate;
 
     /**
      * Creates a service for validating and storing uploaded manual assessments.
@@ -99,16 +99,18 @@ public class AssessmentUploadService {
      * @param assessmentUploadParticipationRepository the repository used to resolve participants
      * @param submissionRepository                    the repository used to create missing submissions
      * @param assessmentUploadResultService           the service used to replace manual assessment results
+     * @param transactionManager                      the transaction manager used to store the complete batch atomically
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository, final SubmissionRepository submissionRepository,
-            final AssessmentUploadResultService assessmentUploadResultService) {
-        if (Stream.of(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService).anyMatch(Objects::isNull)) {
+            final AssessmentUploadResultService assessmentUploadResultService, final PlatformTransactionManager transactionManager) {
+        if (Stream.of(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, transactionManager).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.assessmentUploadParticipationRepository = assessmentUploadParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.assessmentUploadResultService = assessmentUploadResultService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -128,7 +130,6 @@ public class AssessmentUploadService {
      * @return a result describing either the created assessments (on success) or the collected validation errors (on failure); nothing is stored in the latter case
      * @throws IllegalArgumentException if a precondition is violated
      */
-    @Transactional
     public AssessmentUploadResultDTO importAssessments(final ProgrammingExercise exercise, final MultipartFile zipFile) {
         if (exercise == null) {
             throw new IllegalArgumentException("The exercise for a manual assessment upload must not be null");
@@ -160,7 +161,7 @@ public class AssessmentUploadService {
             return AssessmentUploadResultDTO.failure(errors);
         }
 
-        return storeValidatedRows(exercise, validatedRows);
+        return transactionTemplate.execute(status -> storeValidatedRows(exercise, validatedRows));
     }
 
     /**

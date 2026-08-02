@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
@@ -36,10 +37,14 @@ class AssessmentUploadConstructorTest {
         final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository = mock(AssessmentUploadParticipationRepository.class);
         final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
         final AssessmentUploadResultService assessmentUploadResultService = mock(AssessmentUploadResultService.class);
+        final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, submissionRepository, assessmentUploadResultService));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, null, assessmentUploadResultService));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, null));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, submissionRepository, assessmentUploadResultService, transactionManager));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, null, assessmentUploadResultService, transactionManager));
+        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, null, transactionManager));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, null));
     }
 
     @Test
