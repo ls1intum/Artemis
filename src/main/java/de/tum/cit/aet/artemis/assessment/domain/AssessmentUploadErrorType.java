@@ -23,6 +23,11 @@ public enum AssessmentUploadErrorType {
     EMPTY_CSV,
 
     /**
+     * The {@code assessment-scores.csv} file contains malformed CSV data.
+     */
+    MALFORMED_CSV,
+
+    /**
      * The {@code assessment-scores.csv} file does not contain the mandatory {@code Overall points} column.
      */
     MISSING_OVERALL_POINTS_COLUMN,
@@ -61,6 +66,11 @@ public enum AssessmentUploadErrorType {
      * The value of the {@code Overall points} column is missing, not a number, or negative.
      */
     INVALID_POINTS,
+
+    /**
+     * More than one {@code .txt} file has the same base name.
+     */
+    DUPLICATE_TEXT_FILE,
 
     /**
      * No {@code .txt} file in the zip matches the student identifier of a CSV row.

@@ -69,6 +69,14 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(alertError).not.toHaveBeenCalled();
     });
 
+    it('should reset the file input after selecting a file', () => {
+        const event = fileInputEvent(zipFile);
+
+        component.onFileInputChange(event);
+
+        expect((event.target as HTMLInputElement).value).toBe('');
+    });
+
     it('should update the drop-zone state and suppress the browser drag behavior', () => {
         const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as DragEvent;
 
@@ -124,6 +132,19 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(component['selectedFile']()).toBe(zipFile);
         expect(component['errors']()).toEqual([]);
         expect(component.visible()).toBe(true);
+    });
+
+    it('should prevent closing and starting another request while uploading', () => {
+        const upload = new Subject<HttpResponse<AssessmentUploadResult>>();
+        uploadSpy.mockReturnValue(upload);
+        component.onFileInputChange(fileInputEvent(zipFile));
+
+        component.upload();
+        component.close();
+        component.upload();
+
+        expect(component.visible()).toBe(true);
+        expect(uploadSpy).toHaveBeenCalledOnce();
     });
 
     it('should clear the selected file and previous errors when reset', () => {

@@ -118,7 +118,7 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     }
 
     /**
-     * Clears all participant-score references to a batch of results before those results are deleted.
+     * Clears all participant-score references to a collection of results before those results are deleted.
      * <p>
      * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains only non-{@code null} persisted result ids.
      * <p>

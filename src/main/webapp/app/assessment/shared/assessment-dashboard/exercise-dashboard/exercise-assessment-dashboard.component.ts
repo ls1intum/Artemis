@@ -306,9 +306,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faCircleInfo = faCircleInfo;
 
     /**
-     * Extracts the course and exercise ids from the route params and fetches the exercise from the server
-     */
-    /**
      * Opens the dialog that lets an instructor upload manual assessments for the participants of this programming exercise at once.
      * Precondition: the current exercise is a programming exercise and the user is at least instructor (the launch button is only shown then).
      * Postcondition: opens the upload dialog for the current exercise id; it does not itself change any persistent state.
@@ -317,6 +314,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.uploadDialogVisible.set(true);
     }
 
+    /**
+     * Extracts the course and exercise ids from the route params and fetches the exercise from the server
+     */
     ngOnInit(): void {
         this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));

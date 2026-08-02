@@ -19,6 +19,7 @@
                 "MISSING_CSV": "Die ZIP-Datei enthält keine Datei \"assessment-scores.csv\".",
                 "MULTIPLE_CSV": "Die ZIP-Datei enthält mehr als eine Datei \"assessment-scores.csv\".",
                 "EMPTY_CSV": "Die Datei \"assessment-scores.csv\" ist leer oder konnte nicht gelesen werden.",
+                "MALFORMED_CSV": "Die Datei \"assessment-scores.csv\" enthält ungültige CSV-Daten.",
                 "MISSING_OVERALL_POINTS_COLUMN": "Die Datei \"assessment-scores.csv\" enthält keine Spalte \"Overall points\".",
                 "MISSING_IDENTIFIER": "Eine Zeile enthält in der ersten Spalte keine Teilnehmerkennung.",
                 "INVALID_IDENTIFIER_FORMAT": "Die Kennung entspricht nicht dem erwarteten Format <participationId>-<login>.",
@@ -26,7 +27,8 @@
                 "PARTICIPATION_NOT_FOUND": "Für diese Kennung existiert keine Teilnahme.",
                 "PARTICIPATION_WRONG_EXERCISE": "Die Teilnahme gehört zu einer anderen Aufgabe.",
                 "IDENTIFIER_MISMATCH": "Der Login stimmt nicht mit dem Teilnehmer der ermittelten Teilnahme überein.",
-                "INVALID_POINTS": "Der Wert \"Overall points\" fehlt oder ist keine gültige nicht-negative Zahl.",
+                "INVALID_POINTS": "Der Wert \"Overall points\" fehlt, ist ungültig, negativ oder überschreitet die maximalen Punkte einschließlich Bonuspunkten.",
+                "DUPLICATE_TEXT_FILE": "Mehr als eine .txt-Datei hat diesen Basisnamen.",
                 "MISSING_TEXT_FILE": "Keine .txt-Datei in der ZIP-Datei passt zu dieser Kennung.",
                 "UNMATCHED_TEXT_FILE": "Diese .txt-Datei passt zu keiner Zeile der CSV-Datei."
             }

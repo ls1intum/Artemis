@@ -19,6 +19,7 @@
                 "MISSING_CSV": "The zip file does not contain an \"assessment-scores.csv\" file.",
                 "MULTIPLE_CSV": "The zip file contains more than one \"assessment-scores.csv\" file.",
                 "EMPTY_CSV": "The \"assessment-scores.csv\" file is empty or could not be parsed.",
+                "MALFORMED_CSV": "The \"assessment-scores.csv\" file contains malformed CSV data.",
                 "MISSING_OVERALL_POINTS_COLUMN": "The \"assessment-scores.csv\" file does not contain an \"Overall points\" column.",
                 "MISSING_IDENTIFIER": "A row does not contain a student identifier in its first column.",
                 "INVALID_IDENTIFIER_FORMAT": "The identifier is not in the expected <participationId>-<login> format.",
@@ -26,7 +27,8 @@
                 "PARTICIPATION_NOT_FOUND": "No participation exists for this identifier.",
                 "PARTICIPATION_WRONG_EXERCISE": "The participation belongs to a different exercise.",
                 "IDENTIFIER_MISMATCH": "The login does not match the participant of the resolved participation.",
-                "INVALID_POINTS": "The \"Overall points\" value is missing or not a valid non-negative number.",
+                "INVALID_POINTS": "The \"Overall points\" value is missing, invalid, negative, or exceeds the maximum points including bonus points.",
+                "DUPLICATE_TEXT_FILE": "More than one .txt file has this base name.",
                 "MISSING_TEXT_FILE": "No .txt file in the zip matches this identifier.",
                 "UNMATCHED_TEXT_FILE": "This .txt file does not match any row of the CSV file."
             }

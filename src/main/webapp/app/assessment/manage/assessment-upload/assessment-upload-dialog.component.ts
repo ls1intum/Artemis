@@ -108,7 +108,7 @@ export class AssessmentUploadDialogComponent {
      */
     upload(): void {
         const file = this.selectedFile();
-        if (!file) {
+        if (!file || this.isUploading()) {
             return;
         }
         this.isUploading.set(true);
@@ -133,6 +133,9 @@ export class AssessmentUploadDialogComponent {
 
     /** Closes the dialog. */
     close(): void {
+        if (this.isUploading()) {
+            return;
+        }
         this.visible.set(false);
     }
 

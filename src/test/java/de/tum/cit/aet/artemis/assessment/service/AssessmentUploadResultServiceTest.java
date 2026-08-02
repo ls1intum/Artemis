@@ -22,7 +22,7 @@ class AssessmentUploadResultServiceTest extends AbstractSpringIntegrationIndepen
     private ParticipantScoreRepository participantScoreRepository;
 
     @Test
-    void shouldRejectInvalidBatchParameters() {
+    void shouldRejectInvalidResultParameters() {
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadResultService.createNewManualResults(null, true));
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadResultService.createNewManualResults(Collections.singletonList(null), true));
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadResultService.deleteResultsByIds(null));

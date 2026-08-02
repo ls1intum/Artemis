@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import java.io.ByteArrayOutputStream;
@@ -20,12 +21,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
@@ -100,6 +103,10 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldOverwriteAnExistingManualAssessment() {
+        final Result automaticResult = participationUtilService.createSubmissionAndResult(participation1, 25, true);
+        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultRepository.saveAndFlush(automaticResult);
+
         final Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(identifier1 + ".txt", "First feedback");
         assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), textFiles));
@@ -114,6 +121,56 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // Still exactly one manual result, now with the corrected score and feedback.
         assertThat(getManualResults(participation1.getId())).hasSize(1);
         assertManualAssessment(participation1.getId(), 90.0, "Corrected feedback");
+        assertThat(resultRepository.findById(automaticResult.getId())).isPresent().get().extracting(Result::getAssessmentType).isEqualTo(AssessmentType.AUTOMATIC);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectPointsAboveMaximumIncludingBonusPoints() {
+        programmingExercise.setBonusPoints(10.0);
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        final Map<String, String> textFiles = Map.of(identifier1 + ".txt", "feedback");
+
+        final AssessmentUploadResultDTO accepted = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,110\n".formatted(identifier1), textFiles));
+        final AssessmentUploadResultDTO rejected = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,110.01\n".formatted(identifier1), textFiles));
+
+        assertThat(accepted.errors()).isEmpty();
+        assertThat(rejected.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.INVALID_POINTS);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectDuplicateTextFileBaseNames() {
+        final Map<String, String> textFiles = new LinkedHashMap<>();
+        textFiles.put("first/" + identifier1 + ".txt", "first");
+        textFiles.put("second/" + identifier1 + ".TXT", "second");
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), textFiles));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.DUPLICATE_TEXT_FILE);
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReportMalformedCsvSeparatelyFromEmptyCsv() {
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n\"unterminated,80\n", Map.of(identifier1 + ".txt", "feedback")));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.MALFORMED_CSV);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectZipEntryAboveUncompressedSizeLimit() {
+        final String oversizedFeedback = "x".repeat(10 * 1024 * 1024 + 1);
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", oversizedFeedback))))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("maximum uncompressed size");
     }
 
     @Test

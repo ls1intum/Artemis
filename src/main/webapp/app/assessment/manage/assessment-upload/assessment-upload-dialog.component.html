@@ -2,12 +2,15 @@
     [(visible)]="visible"
     [header]="'artemisApp.assessmentUpload.title' | artemisTranslate"
     [style]="{ width: '60rem' }"
+    [closable]="!isUploading()"
+    [closeOnEscape]="!isUploading()"
     [dismissableMask]="false"
     (onShow)="resetState()"
 >
     <div class="assessment-upload">
         <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
 
+        <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
         <div
             class="upload-drop-zone"
             [ngClass]="{ 'drag-over': isDragOver() }"
@@ -22,7 +25,6 @@
             [attr.aria-label]="'artemisApp.assessmentUpload.dropZoneTitle' | artemisTranslate"
             data-testid="upload-drop-zone"
         >
-            <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
             <div class="drop-zone-content">
                 <fa-icon [icon]="faCloudUploadAlt" class="upload-icon" />
                 <div class="drop-zone-text">
@@ -68,10 +70,10 @@
     </div>
 
     <ng-template #footer>
-        <tum-ui-button severity="secondary" size="small" (clicked)="close()">
+        <tum-ui-button severity="secondary" size="small" [disabled]="isUploading()" (clicked)="close()">
             <span jhiTranslate="entity.action.cancel"></span>
         </tum-ui-button>
-        <tum-ui-button data-testid="upload-button" severity="primary" size="small" [disabled]="!selectedFile()" [loading]="isUploading()" (clicked)="upload()">
+        <tum-ui-button data-testid="upload-button" severity="primary" size="small" [disabled]="!selectedFile() || isUploading()" [loading]="isUploading()" (clicked)="upload()">
             <fa-icon [icon]="faCloudUploadAlt" />
             <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.uploadButton"></span>
         </tum-ui-button>

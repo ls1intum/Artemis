@@ -4,19 +4,31 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.servlet.autoconfigure.MultipartProperties;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentUploadResource;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 class AssessmentUploadConstructorTest {
@@ -49,7 +61,23 @@ class AssessmentUploadConstructorTest {
 
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadResultService(null, null, null, null, null, null, null, null, null, null, null));
+        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), mock(AssessmentNoteRepository.class), Optional.<LtiApi>empty(),
+                mock(ResultWebsocketService.class), mock(ComplaintResponseRepository.class), mock(RatingRepository.class), mock(FeedbackRepository.class),
+                mock(ComplaintRepository.class), mock(ParticipantScoreRepository.class), mock(LongFeedbackTextRepository.class) };
+
+        for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
+            final Object[] dependenciesWithNull = dependencies.clone();
+            dependenciesWithNull[dependencyIndex] = null;
+            assertThatIllegalArgumentException().isThrownBy(() -> createAssessmentUploadResultService(dependenciesWithNull));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private AssessmentUploadResultService createAssessmentUploadResultService(final Object[] dependencies) {
+        return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (AssessmentNoteRepository) dependencies[2],
+                (Optional<LtiApi>) dependencies[3], (ResultWebsocketService) dependencies[4], (ComplaintResponseRepository) dependencies[5], (RatingRepository) dependencies[6],
+                (FeedbackRepository) dependencies[7], (ComplaintRepository) dependencies[8], (ParticipantScoreRepository) dependencies[9],
+                (LongFeedbackTextRepository) dependencies[10]);
     }
 
     @Test

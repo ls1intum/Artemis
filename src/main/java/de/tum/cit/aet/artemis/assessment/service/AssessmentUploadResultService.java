@@ -9,9 +9,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -31,12 +35,14 @@ import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
- * Service for creating and replacing manual results in assessment-upload batches.
+ * Service for creating and replacing manual results from assessment uploads.
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class AssessmentUploadResultService {
+
+    private static final Logger log = LoggerFactory.getLogger(AssessmentUploadResultService.class);
 
     private final UserRepository userRepository;
 
@@ -101,11 +107,12 @@ public class AssessmentUploadResultService {
     }
 
     /**
-     * Creates multiple manual results while loading the current assessor and the websocket payload graph only once for the whole batch.
+     * Creates multiple manual results while loading the current assessor and the websocket payload graph only once for the whole upload.
      * <p>
      * <b>Preconditions:</b> {@code results} is non-{@code null} and contains no {@code null} elements. An empty collection is permitted and produces an empty result.
      * <p>
-     * <b>Postcondition:</b> every supplied result is stored as a manual result and the corresponding notifications have been sent.
+     * <b>Postcondition:</b> every supplied result is stored as a manual result and its notification is sent immediately when no transaction is active, or scheduled for the
+     * surrounding transaction's successful commit.
      *
      * @param results     newly created results
      * @param ratedResult override value for the rated property of every result
@@ -130,8 +137,55 @@ public class AssessmentUploadResultService {
         assessmentUploadResultRepository.saveAll(results);
         final List<Long> resultIds = results.stream().map(Result::getId).toList();
         final List<Result> savedResults = assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
-        savedResults.forEach(this::notifyAboutNewResult);
+        notifyAboutNewResultsAfterCommit(savedResults);
         return savedResults;
+    }
+
+    /**
+     * Sends result notifications immediately when no transaction is active, or after the active transaction commits.
+     * <p>
+     * <b>Preconditions:</b> {@code savedResults} is non-{@code null}, non-empty, contains no {@code null} elements, and every result is persisted and has an initialized
+     * submission.
+     * <p>
+     * <b>Postcondition:</b> notifications were attempted before return when no transaction synchronization is active; otherwise exactly one after-commit callback was registered
+     * for all supplied results. Notification failures do not propagate.
+     *
+     * @param savedResults persisted results with their notification graph initialized
+     */
+    private void notifyAboutNewResultsAfterCommit(final List<Result> savedResults) {
+        assert savedResults != null && !savedResults.isEmpty() : "savedResults must not be null or empty";
+        assert savedResults.stream()
+                .allMatch(result -> result != null && result.getId() != null && result.getSubmission() != null) : "savedResults must be persisted and have submissions";
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            savedResults.forEach(this::notifyAboutNewResultSafely);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+            @Override
+            public void afterCommit() {
+                savedResults.forEach(AssessmentUploadResultService.this::notifyAboutNewResultSafely);
+            }
+        });
+    }
+
+    /**
+     * Isolates notification failures from the already committed assessment upload.
+     * <p>
+     * <b>Precondition:</b> {@code savedResult} is non-{@code null}, persisted, and has an initialized submission.
+     * <p>
+     * <b>Postcondition:</b> notification was attempted; any {@link RuntimeException} was logged and did not propagate.
+     *
+     * @param savedResult result to announce
+     */
+    private void notifyAboutNewResultSafely(final Result savedResult) {
+        assert savedResult != null && savedResult.getId() != null && savedResult.getSubmission() != null : "savedResult must be persisted and have a submission";
+        try {
+            notifyAboutNewResult(savedResult);
+        }
+        catch (final RuntimeException e) {
+            log.warn("Could not notify consumers about uploaded assessment result {}", savedResult.getId(), e);
+        }
     }
 
     /**
@@ -144,7 +198,7 @@ public class AssessmentUploadResultService {
      * @param result         result to initialize
      * @param ratedResult    value for the rated property
      * @param assessor       current assessor
-     * @param completionDate shared completion date of the batch
+     * @param completionDate shared completion date of the upload
      */
     private void initializeManualResult(final Result result, final boolean ratedResult, final User assessor, final ZonedDateTime completionDate) {
         assert result != null && assessor != null && completionDate != null : "result, assessor and completionDate must not be null";

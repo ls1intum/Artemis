@@ -25,6 +25,28 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 public interface AssessmentUploadParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 
     /**
+     * Locks the target participations in a deterministic order before their manual results are replaced.
+     * <p>
+     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise, {@code participationIds} is non-{@code null}, non-empty, and contains only persisted ids, and the
+     * caller has an active transaction.
+     * <p>
+     * <b>Postcondition:</b> returns the matching participation ids in ascending order; their database rows remain write-locked until the caller's transaction completes.
+     *
+     * @param exerciseId       the target exercise id
+     * @param participationIds the participations included in the upload
+     * @return the ids of the locked participations in ascending order
+     */
+    @Query(value = """
+            SELECT p.id
+            FROM participation p
+            WHERE p.exercise_id = :exerciseId
+                AND p.id IN (:participationIds)
+            ORDER BY p.id
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<Long> lockAllForAssessmentUpload(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
+
+    /**
      * Resolves the minimal participant information needed for assessment-upload validation in one exercise-scoped query.
      * <p>
      * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
@@ -45,6 +67,7 @@ public interface AssessmentUploadParticipationRepository extends ArtemisJpaRepos
                 LEFT JOIN p.team team
             WHERE p.exercise.id = :exerciseId
                 AND p.id IN :participationIds
+                AND (student.id IS NOT NULL OR team.id IS NOT NULL)
             """)
     List<AssessmentUploadParticipationDTO> findAssessmentUploadParticipations(@Param("exerciseId") final long exerciseId,
             @Param("participationIds") final Collection<Long> participationIds);
@@ -64,7 +87,8 @@ public interface AssessmentUploadParticipationRepository extends ArtemisJpaRepos
     @Query("""
             SELECT p.id
             FROM StudentParticipation p
-            WHERE (p.exercise.id <> :exerciseId OR p.exercise IS NULL)
+                LEFT JOIN p.exercise exercise
+            WHERE (exercise.id <> :exerciseId OR exercise.id IS NULL)
                 AND p.id IN :participationIds
             """)
     Set<Long> findIdsOutsideExercise(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
