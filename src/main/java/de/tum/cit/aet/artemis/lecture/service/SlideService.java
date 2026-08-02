@@ -88,8 +88,21 @@ public class SlideService {
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
         relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
-        lectureUnitVisibilitySyncService.markVisibilityDirtyForExercise(exercise);
-        relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).distinct().map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull)
-                .forEach(attachmentService::regenerateStudentVersion);
+        try {
+            lectureUnitVisibilitySyncService.markVisibilityDirtyForSlides(relatedSlides);
+        }
+        catch (Exception e) {
+            log.error("Failed to mark lecture unit visibility dirty after updating slides for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+        }
+        relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull).distinct()
+                .forEach(attachment -> {
+                    try {
+                        attachmentService.regenerateStudentVersion(attachment);
+                    }
+                    catch (Exception e) {
+                        log.error("Failed to regenerate student version for attachment {} after updating slides for exercise {}: {}", attachment.getId(), exercise.getId(),
+                                e.getMessage(), e);
+                    }
+                });
     }
 }

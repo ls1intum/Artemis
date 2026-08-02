@@ -170,7 +170,7 @@ public class AttachmentVideoUnitResource {
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
-        validateAtLeastOneVisibleSlide(updateIntent, hiddenPages, existingAttachmentVideoUnit, attachment);
+        validateAtLeastOneVisibleSlide(updateIntent, hiddenPages, pageOrder, existingAttachmentVideoUnit, attachment);
         validateStudentVersionForHiddenSlides(updateIntent, hiddenPages, studentVersion, existingAttachmentVideoUnit);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
@@ -232,7 +232,7 @@ public class AttachmentVideoUnitResource {
         if (!isFileChange) {
             return;
         }
-        boolean hasHiddenSlidesAfterUpdate = hiddenPages != null ? hiddenPages.stream().anyMatch(page -> page.date() != null || page.hasExercise())
+        boolean hasHiddenSlidesAfterUpdate = hiddenPages != null ? hiddenPages.stream().anyMatch(page -> page.date() != null)
                 : existingAttachmentVideoUnit.getSlides().stream().anyMatch(slide -> slide.getHidden() != null);
         if (hasHiddenSlidesAfterUpdate && (studentVersion == null || studentVersion.isEmpty())) {
             throw new BadRequestAlertException("A matching student PDF is required when an updated PDF contains hidden slides", ENTITY_NAME,
@@ -246,15 +246,23 @@ public class AttachmentVideoUnitResource {
         return existingAttachmentVideoUnit.getAttachment() == null && attachment != null && updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && !hasFile;
     }
 
-    private static void validateAtLeastOneVisibleSlide(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, AttachmentVideoUnit existingAttachmentVideoUnit,
-            AttachmentDTO attachment) {
-        if (updateIntent != AttachmentUpdateIntent.NO_FILE_CHANGE || hiddenPages == null || attachment == null || existingAttachmentVideoUnit.getAttachment() == null) {
+    private static void validateAtLeastOneVisibleSlide(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentDTO attachment) {
+        if (hiddenPages == null || attachment == null || existingAttachmentVideoUnit.getAttachment() == null) {
             return;
         }
 
         Set<String> hiddenSlideIds = hiddenPages.stream().filter(hiddenPage -> hiddenPage.date() != null).map(HiddenPageInfoDTO::slideId).collect(Collectors.toSet());
-        boolean hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().map(slide -> String.valueOf(slide.getId()))
-                .anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+        if (hiddenSlideIds.isEmpty()) {
+            return;
+        }
+        boolean hasVisibleSlide;
+        if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE || pageOrder == null) {
+            hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().map(slide -> String.valueOf(slide.getId())).anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+        }
+        else {
+            hasVisibleSlide = pageOrder.stream().map(SlideOrderDTO::slideId).anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+        }
         if (!hasVisibleSlide) {
             throw new BadRequestAlertException("Cannot create a student version with no visible pages", ENTITY_NAME, "noVisiblePages");
         }

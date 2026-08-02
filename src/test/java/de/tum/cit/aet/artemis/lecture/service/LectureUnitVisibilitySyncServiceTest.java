@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -27,12 +25,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @ExtendWith(MockitoExtension.class)
 class LectureUnitVisibilitySyncServiceTest {
-
-    private static final long EXERCISE_ID = 9L;
 
     private static final long LECTURE_UNIT_ID = 42L;
 
@@ -78,13 +73,12 @@ class LectureUnitVisibilitySyncServiceTest {
 
     @Test
     void marksAffectedUnitDirtyWithDetachedSnapshotContainingMetadataAndFullSortedSlideVisibility() {
-        var exercise = exercise();
         var unit = attachmentVideoUnit();
-        when(slideRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of(slide(2, HIDDEN_UNTIL, unit)));
+        var relatedSlides = List.of(slide(2, HIDDEN_UNTIL, unit));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID))
                 .thenReturn(List.of(slide(3, null, unit), slide(1, HIDDEN_UNTIL.plusDays(1), unit), slide(2, HIDDEN_UNTIL, unit)));
 
-        service.markVisibilityDirtyForExercise(exercise);
+        service.markVisibilityDirtyForSlides(relatedSlides);
 
         var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
@@ -99,41 +93,26 @@ class LectureUnitVisibilitySyncServiceTest {
         assertThat(snapshot.videoSource()).isEqualTo("https://video.example/source");
         assertThat(snapshot.releaseDate()).isEqualTo(RELEASE_DATE);
         assertThat(snapshot.slideHiddenUntilBySlideNumber().keySet()).containsExactly(1, 2, 3);
-        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(1, HIDDEN_UNTIL.plusDays(1)).containsEntry(2, HIDDEN_UNTIL).containsEntry(3, null);
+        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(1, HIDDEN_UNTIL.plusDays(1));
+        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(2, HIDDEN_UNTIL);
+        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsEntry(3, null);
     }
 
     @Test
     void deduplicatesMultipleLinkedSlidesBelongingToSameUnit() {
-        var exercise = exercise();
         var firstUnitReference = attachmentVideoUnit();
         var secondUnitReference = attachmentVideoUnit();
-        when(slideRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, secondUnitReference)));
+        var relatedSlides = List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, secondUnitReference));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID))
                 .thenReturn(List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, firstUnitReference)));
 
-        service.markVisibilityDirtyForExercise(exercise);
+        service.markVisibilityDirtyForSlides(relatedSlides);
 
         verify(slideRepository).findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID);
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
     }
 
     @Test
-    void doesNothingWhenNoSlidesAreLinkedToExercise() {
-        var exercise = exercise();
-        when(slideRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of());
-
-        service.markVisibilityDirtyForExercise(exercise);
-
-        verify(slideRepository, never()).findAllByAttachmentVideoUnitId(any());
-        verifyNoInteractions(irisLectureUnitSyncService);
-    }
-
-    private static TextExercise exercise() {
-        var exercise = new TextExercise();
-        exercise.setId(EXERCISE_ID);
-        return exercise;
-    }
-
     private static AttachmentVideoUnit attachmentVideoUnit() {
         var course = new Course();
         course.setTitle("Course");

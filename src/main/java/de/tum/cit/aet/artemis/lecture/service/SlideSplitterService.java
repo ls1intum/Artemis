@@ -114,9 +114,23 @@ public class SlideSplitterService {
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
+            markVisibilityDirtyAfterFailedSplit(attachmentVideoUnit.getId());
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+        catch (RuntimeException e) {
+            markVisibilityDirtyAfterFailedSplit(attachmentVideoUnit.getId());
+            throw e;
+        }
         return CompletableFuture.completedFuture(null);
+    }
+
+    private void markVisibilityDirtyAfterFailedSplit(long attachmentVideoUnitId) {
+        try {
+            lectureUnitVisibilitySyncService.markVisibilityDirtyForAttachmentVideoUnit(attachmentVideoUnitId);
+        }
+        catch (Exception e) {
+            log.error("Failed to mark visibility dirty after slide splitting failed for AttachmentVideoUnit {}: {}", attachmentVideoUnitId, e.getMessage(), e);
+        }
     }
 
     /**

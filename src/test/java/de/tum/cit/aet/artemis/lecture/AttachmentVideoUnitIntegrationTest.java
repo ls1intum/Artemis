@@ -779,6 +779,67 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(reloadedAttachment.getStudentVersion()).isNotBlank();
     }
 
+    @ParameterizedTest
+    @EnumSource(value = AttachmentUpdateIntent.class, names = { "FILE_UPLOAD", "EDITOR_PDF_CONTENT_CHANGED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitFileChangeWithAllSlidesHiddenReturnsBadRequest(AttachmentUpdateIntent intent) throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().sorted(Comparator.comparing(Slide::getSlideNumber))
+                .toList();
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"date\": \"" + futureDate + "\"}")
+                .collect(Collectors.joining(",", "[", "]"));
+        String pageOrderJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"order\": " + slide.getSlideNumber() + "}")
+                .collect(Collectors.joining(",", "[", "]"));
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, intent);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(persistedAttachment));
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var pageOrderPart = new MockMultipartFile("pageOrder", "", MediaType.APPLICATION_JSON_VALUE, pageOrderJson.getBytes());
+        var studentVersionPart = new MockMultipartFile("studentVersion", "student-version.pdf", MediaType.APPLICATION_PDF_VALUE,
+                createAttachmentVideoUnitPdf("student version").getBytes());
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(createAttachmentVideoUnitPdf("changed instructor version")).file(studentVersionPart).file(hiddenPagesPart).file(pageOrderPart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("noVisiblePages"));
+        Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
+        assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion);
+        assertThat(reloadedAttachment.getStudentVersion()).isNull();
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitFileChangeWithoutPageOrderAndAllSlidesHiddenReturnsBadRequest() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId());
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"date\": \"" + futureDate + "\"}")
+                .collect(Collectors.joining(",", "[", "]"));
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(persistedAttachment));
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var studentVersionPart = new MockMultipartFile("studentVersion", "student-version.pdf", MediaType.APPLICATION_PDF_VALUE,
+                createAttachmentVideoUnitPdf("student version").getBytes());
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(createAttachmentVideoUnitPdf("changed instructor version")).file(studentVersionPart).file(hiddenPagesPart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("noVisiblePages"));
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).allMatch(slide -> slide.getHidden() == null);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnitWithFileUploadAndLegacyUnhideEntryDoesNotRequireStudentVersion() throws Exception {

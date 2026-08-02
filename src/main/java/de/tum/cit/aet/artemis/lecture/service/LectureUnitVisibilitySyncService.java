@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Conditional;
@@ -13,7 +14,6 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -54,19 +54,9 @@ public class LectureUnitVisibilitySyncService {
                 .map(this::buildSnapshot).ifPresent(irisLectureUnitSyncService::markVisibilityDirtyAfterCommit));
     }
 
-    /**
-     * Marks all attachment video units linked to the exercise through slides as visibility-dirty for Iris/Pyris.
-     * The snapshots are detached from JPA entities before being handed to the sync service.
-     *
-     * @param exercise the exercise whose due date changed
-     */
-    public void markVisibilityDirtyForExercise(Exercise exercise) {
-        if (exercise.getId() == null) {
-            return;
-        }
-
+    void markVisibilityDirtyForSlides(List<Slide> relatedSlides) {
         Map<Long, AttachmentVideoUnit> affectedUnitsById = new LinkedHashMap<>();
-        slideRepository.findByExerciseId(exercise.getId()).forEach(slide -> {
+        relatedSlides.forEach(slide -> {
             AttachmentVideoUnit unit = slide.getAttachmentVideoUnit();
             if (unit != null && unit.getId() != null) {
                 affectedUnitsById.putIfAbsent(unit.getId(), unit);

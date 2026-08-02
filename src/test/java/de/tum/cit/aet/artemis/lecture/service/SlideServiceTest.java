@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -51,7 +52,7 @@ class SlideServiceTest {
         inOrder.verify(slideRepository).saveAll(relatedSlides);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(firstSlide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
-        inOrder.verify(visibilitySyncService).markVisibilityDirtyForExercise(exercise);
+        inOrder.verify(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
         inOrder.verify(attachmentService).regenerateStudentVersion(attachment);
     }
 
@@ -99,7 +100,59 @@ class SlideServiceTest {
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(slide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
         verify(attachmentService).regenerateStudentVersion(attachment);
-        inOrder.verify(visibilitySyncService).markVisibilityDirtyForExercise(exercise);
+        inOrder.verify(visibilitySyncService).markVisibilityDirtyForSlides(List.of(slide, secondSlide));
+    }
+
+    @Test
+    void updateSlidesHiddenDateRegeneratesSharedAttachmentOnlyOnce() {
+        // Guard the id-based attachment deduplication defensively, even though the current mapping does not permit two units to share an attachment.
+        var slideRepository = mock(SlideRepository.class);
+        var slideUnhideService = mock(SlideUnhideService.class);
+        var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
+        var attachmentService = mock(AttachmentService.class);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var exercise = exerciseWithDueDate();
+        var attachment = new Attachment();
+        attachment.setId(7L);
+        var firstUnit = new AttachmentVideoUnit();
+        firstUnit.setAttachment(attachment);
+        var secondUnit = new AttachmentVideoUnit();
+        secondUnit.setAttachment(attachment);
+        var firstSlide = new Slide();
+        firstSlide.setAttachmentVideoUnit(firstUnit);
+        var secondSlide = new Slide();
+        secondSlide.setAttachmentVideoUnit(secondUnit);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(firstSlide, secondSlide));
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        verify(attachmentService).regenerateStudentVersion(attachment);
+    }
+
+    @Test
+    void updateSlidesHiddenDateDoesNotFailExerciseUpdateWhenFollowUpWorkFails() {
+        var slideRepository = mock(SlideRepository.class);
+        var slideUnhideService = mock(SlideUnhideService.class);
+        var visibilitySyncService = mock(LectureUnitVisibilitySyncService.class);
+        var attachmentService = mock(AttachmentService.class);
+        var slideService = new SlideService(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        var exercise = exerciseWithDueDate();
+        var attachment = new Attachment();
+        attachment.setId(7L);
+        var unit = new AttachmentVideoUnit();
+        unit.setAttachment(attachment);
+        var slide = new Slide();
+        slide.setAttachmentVideoUnit(unit);
+        var relatedSlides = List.of(slide);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(relatedSlides);
+        doThrow(new IllegalStateException("sync failed")).when(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
+        doThrow(new IllegalStateException("PDF failed")).when(attachmentService).regenerateStudentVersion(attachment);
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        verify(slideRepository).saveAll(relatedSlides);
+        verify(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
+        verify(attachmentService).regenerateStudentVersion(attachment);
     }
 
     private static TextExercise exerciseWithDueDate() {
