@@ -15,10 +15,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
- * Declarative group-edit dialog (rendered from {@code ExerciseGroupTimelineLockComponent} and
- * {@code CourseManagementExercisesComponent}). The edited group is passed via the {@link group} input and shown while
- * {@link visible} is true; saving emits the updated {@link CourseExerciseGroup} on {@link saved} and closes, cancelling
- * just closes (no event).
+ * Declarative group-edit dialog. The edited group comes in via {@link group} and is shown while {@link visible} is
+ * true; saving emits the updated {@link CourseExerciseGroup} on {@link saved} and closes, cancelling just closes.
  */
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
@@ -48,6 +46,8 @@ export class ExerciseGroupEditModalComponent {
     readonly visible = model<boolean>(false);
     /** The group being edited, supplied by the parent. */
     readonly group = input.required<CourseExerciseGroup>();
+    /** True when the group does not exist yet, so the dialog is titled "Create Group" instead of "Edit Group". */
+    readonly isNew = input(false);
     /** Emits the edited group on save (only when something actually changed); cancel/close emit nothing. */
     readonly saved = output<CourseExerciseGroup>();
 
@@ -58,6 +58,8 @@ export class ExerciseGroupEditModalComponent {
     readonly draftDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftAssessmentDueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
+
+    readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const releaseDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate };
@@ -72,8 +74,7 @@ export class ExerciseGroupEditModalComponent {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.draftExampleSolutionPublicationDate,
-                // The group only requires exampleSolutionPublicationDate >= releaseDate (ExerciseVariantGroup#areDatesValid);
-                // unlike a single exercise it has no IncludedInOverallScore, so it can't enforce the stricter due-date rule.
+                // The group only requires `>= releaseDate` (see ExerciseVariantGroup#areDatesValid).
                 orderCheckAgainst: [releaseDateItem],
             },
         );
@@ -93,9 +94,8 @@ export class ExerciseGroupEditModalComponent {
             const g = this.group();
             this.draftTitle.set(g.title ?? '');
             this.draftMaxPoints.set(g.maxPoints);
-            // The group's dates are typed as dayjs but arrive as ISO strings at runtime: the exercise's date
-            // deserialization does not reach the nested variant-group reference. Coerce so the timeline (which calls
-            // dayjs.toDate()) receives real dayjs objects. See {@link ExerciseTimelineComponent}.
+            // The group's dates are typed as dayjs but arrive as ISO strings: exercise date deserialization does
+            // not reach the nested variant-group reference, so coerce them for the timeline.
             this.draftReleaseDate.set(toDayjs(g.releaseDate));
             this.draftStartDate.set(toDayjs(g.startDate));
             this.draftDueDate.set(toDayjs(g.dueDate));
@@ -115,7 +115,7 @@ export class ExerciseGroupEditModalComponent {
             assessmentDueDate: this.draftAssessmentDueDate(),
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
         };
-        // Nothing edited: close without a `saved` event so the openers skip the persistence call, same as a cancel.
+        // Nothing edited: close without a `saved` event, so the openers skip the persistence call.
         if (!this.isUnchanged(updated)) {
             this.saved.emit(updated);
         }

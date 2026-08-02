@@ -86,6 +86,7 @@
             },
             "groupEdit": {
                 "header": "Gruppe bearbeiten",
+                "createHeader": "Gruppe erstellen",
                 "name": "Name",
                 "namePlaceholder": "Gruppenname",
                 "maxPoints": "Maximale Punkte",

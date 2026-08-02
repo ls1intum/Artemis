@@ -107,10 +107,8 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         return style ? `${parts.join(' ')} ${style}` : parts.join(' ');
     });
 
-    // WAI-ARIA spinbutton semantics: the input announces its numeric value + range and is adjusted with the arrow
-    // keys (see onKeydown), so screen-reader / keyboard users get the stepper affordance without the mouse-only
-    // increment / decrement buttons (which stay `aria-hidden`). `aria-valuetext` carries the human-readable
-    // display (incl. any prefix / suffix), `aria-valuenow` the raw number.
+    // WAI-ARIA spinbutton semantics, so the arrow keys (see onKeydown) replace the `aria-hidden` stepper buttons
+    // for screen-reader users. `aria-valuetext` carries the formatted display, `aria-valuenow` the raw number.
     protected readonly ariaValueNow = computed(() => this.cvaValue());
     protected readonly ariaValueText = computed(() => this.format(this.cvaValue()) || null);
 
@@ -118,20 +116,15 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     private onModelTouched: () => void = () => {};
 
     /**
-     * True while the field holds text that is deliberately not (yet) representable as a number — currently the
-     * lone `-` of a negative number being typed. The sync effect leaves that text alone; every other path
-     * (a completed keystroke, step, blur, or an external write) clears the flag.
+     * True while the field holds text not (yet) representable as a number, e.g. the lone `-` of a negative
+     * number being typed. The sync effect leaves that text alone; every other path clears the flag.
      */
     private readonly rawEditInProgress = signal(false);
 
     constructor() {
-        // Keep the field's displayed text in sync with the model whenever the value or a formatting input changes.
-        // This must also run while the field is focused: an external write (`reset()` / `patchValue()` / a value
-        // clamped by the host) would otherwise leave the old text on screen, and the next keystroke would parse
-        // that stale text straight back over the new model. Two guards keep it from fighting the user instead:
-        // the write is skipped when the text already matches the model (the normal typing path, where `onInput`
-        // has already set the text and caret), and while `rawEditInProgress` marks text that is deliberately not
-        // yet representable as a number (see `onInput`).
+        // Keep the displayed text in sync with the model. Runs while focused too, since an external write
+        // (`reset()` / `patchValue()`) would otherwise leave stale text that the next keystroke reparses. The two
+        // guards below (text already matches, `rawEditInProgress`) keep it from fighting the user.
         effect(() => {
             const value = this.cvaValue();
             // establish reactive deps on the formatting inputs
@@ -191,9 +184,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             return Number.isNaN(parsed) ? undefined : parsed;
         }
 
-        // Decimal mode: keep the digits, a leading `-`, and only the FIRST decimal separator (normalised to `.`).
-        // Everything else — grouping separators included — is dropped, which is why the separator is resolved from
-        // the locale rather than assumed.
+        // Decimal mode: keep the digits, a leading `-`, and only the first decimal separator; drop the rest.
         const separator = this.decimalSeparator();
         const negative = body.trimStart().startsWith('-');
         let integerPart = '';
@@ -262,16 +253,13 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         const parsed = this.parse(el.value);
         this.cvaValue.set(parsed);
         this.onModelChange(parsed);
-        // Mid-typing a negative number ("-" before any digit): leave the raw text so the minus is not erased on
-        // this keystroke; the model stays `undefined` until a digit arrives, then formatting resumes normally.
+        // Mid-typing a negative number ("-" before any digit): leave the raw text so the minus is not erased.
         if (parsed === undefined && el.value.includes('-') && !/\d/.test(el.value)) {
             this.rawEditInProgress.set(true);
             return;
         }
-        // Mid-typing a decimal: `12.` parses to 12, whose formatted form ("12") would drop the separator the user
-        // just typed — and `12.50` on the way to `12.505` would lose the trailing zero. Leave the raw text alone
-        // for the whole fraction; onBlurHandler reformats canonically. Live grouping pauses meanwhile, which is
-        // the same trade-off the lone `-` above already makes.
+        // Mid-typing a decimal: reformatting would drop the separator just typed ("12." → "12") or a trailing
+        // zero ("12.50" on the way to "12.505"). Leave the raw text alone; onBlurHandler reformats canonically.
         if (this.maxFractionDigits() > 0 && el.value.includes(this.decimalSeparator())) {
             this.rawEditInProgress.set(true);
             return;

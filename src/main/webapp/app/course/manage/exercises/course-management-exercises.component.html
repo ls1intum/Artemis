@@ -7,10 +7,9 @@
         </div>
     </div>
 
-    <!-- Import / Export / Create live on the title row (next to the course title) so the toolbar row below has the full
-         width for the view switch and the search bar. -->
+    <!-- Import / Export / Create sit on the title row, leaving the toolbar row to the view switch and search bar. -->
     <ng-template titleBarActions>
-        <!-- Create/import/export all route to editor-only workflows; hide them from tutors (who can reach this page). -->
+        <!-- These all route to editor-only workflows, so they stay hidden from tutors. -->
         @if (course()?.isAtLeastEditor) {
             <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
                 <fa-icon [icon]="faFileImport" />
@@ -46,8 +45,7 @@
             <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
         </div>
 
-        <!-- Mass actions row. All bulk actions target editor+ workflows, so tutors (who can reach this page but
-             cannot select rows) never see it. -->
+        <!-- Mass actions row. All bulk actions target editor+ workflows, so tutors never see it. -->
         @if (selectedCount() > 0 && course()?.isAtLeastEditor) {
             <div class="selection-bar" animate.enter="selection-entering" animate.leave="selection-leaving">
                 <div class="d-flex align-items-center flex-wrap gap-3 mt-2 pt-2 border-top">
@@ -62,8 +60,7 @@
                         <div class="d-flex align-items-center flex-wrap gap-2">
                             @if (allSelectedAreProgramming()) {
                                 @if (selectionHasGroupMember()) {
-                                    <!-- A variant-group member shares the group's timeline; editing it here would desync it, so the
-                                         timeline edit is disabled with an explanation. The other bulk actions below stay available. -->
+                                    <!-- Editing a group member's timeline here would desync it, so only this action is disabled. -->
                                     <span [tumUiTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tumUiTooltipPlacement="top">
                                         <button tumUiButton type="button" severity="warn" size="small" [disabled]="true">
                                             <fa-icon [icon]="faWrench" />
@@ -240,10 +237,9 @@
         (exportRequested)="openQuizExportDialog()"
     />
 
-    <!-- Declarative modals (were opened programmatically via DialogService / NgbModal). Each is gated by its data
-         signal where its input is required, so it is only instantiated once the data exists. -->
+    <!-- Declarative modals. Each with a required input is gated by its data signal, so it waits for the data. -->
     @if (groupEditGroup(); as group) {
-        <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" (saved)="onGroupEditSaved($event)" />
+        <jhi-exercise-group-edit-modal [(visible)]="showGroupEdit" [group]="group" [isNew]="groupEditIsNew()" (saved)="onGroupEditSaved($event)" />
     }
     <jhi-consistency-check [(visible)]="showConsistencyCheck" [exercisesToCheck]="consistencyExercises()" />
     @if (courseId(); as id) {

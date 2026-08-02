@@ -82,6 +82,16 @@ describe('ExerciseGroupEditModalComponent', () => {
         expect(releaseDate?.isSame(dayjs('2026-03-03T00:00:00Z'))).toBe(true);
     });
 
+    it('titles the dialog "create" for a new group and "edit" for an existing one', () => {
+        fixture.componentRef.setInput('group', buildGroup());
+        fixture.detectChanges();
+        expect(component.headerStringKey()).toBe('artemisApp.exerciseManagement.groupEdit.header');
+
+        fixture.componentRef.setInput('isNew', true);
+        fixture.detectChanges();
+        expect(component.headerStringKey()).toBe('artemisApp.exerciseManagement.groupEdit.createHeader');
+    });
+
     it('marks the title invalid when blank and disables save', () => {
         fixture.componentRef.setInput('group', buildGroup());
         fixture.detectChanges();

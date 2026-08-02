@@ -1,6 +1,6 @@
 <tum-ui-dialog
     [(visible)]="visible"
-    [header]="'artemisApp.exerciseManagement.groupEdit.header' | artemisTranslate"
+    [header]="headerStringKey() | artemisTranslate"
     [modal]="true"
     [closable]="true"
     [closeOnEscape]="true"
@@ -39,6 +39,7 @@
                     (ngModelChange)="draftMaxPoints.set($event)"
                     [min]="0"
                     [maxFractionDigits]="1"
+                    [showButtons]="true"
                     [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
                 />
             </div>
