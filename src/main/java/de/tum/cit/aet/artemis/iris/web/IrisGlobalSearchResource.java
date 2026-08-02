@@ -59,13 +59,12 @@ public class IrisGlobalSearchResource {
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
      *
      * @param requestDTO the search request containing query, limit, and optional courseIds filter
-     * @param principal  the authenticated user, whose role-grouped course access is resolved and sent to Pyris
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
      */
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO, Principal principal) {
-        var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+    public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
+        var user = userRepository.getUserWithAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
     }
@@ -82,7 +81,7 @@ public class IrisGlobalSearchResource {
     @EnforceAtLeastStudent
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
     public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
-        var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+        var user = userRepository.getUserWithAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());

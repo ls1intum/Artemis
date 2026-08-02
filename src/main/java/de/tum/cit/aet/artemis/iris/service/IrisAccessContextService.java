@@ -39,7 +39,7 @@ public class IrisAccessContextService {
     /**
      * Resolves the courses the given user can access, grouped by role, into an access context for Pyris.
      *
-     * @param user the requesting user, loaded with groups (see {@code UserRepository#getUserWithGroupsAndAuthorities})
+     * @param user the requesting user (loaded with authorities, see {@code UserRepository#getUserWithAuthorities})
      * @return an access context with role-based course ID sets; admins get a present context with {@code unrestricted = true}
      */
     public PyrisAccessContextDTO resolveAccessContext(User user) {
@@ -47,7 +47,7 @@ public class IrisAccessContextService {
             // Admin: present context with unrestricted=true (NOT null; a null context now means the safe-default filter).
             return new PyrisAccessContextDTO(List.of(), List.of(), List.of(), List.of(), List.of(), ZonedDateTime.now(), true);
         }
-        var courses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
+        var courses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
         var editorIds = new ArrayList<Long>();
         var taIds = new ArrayList<Long>();
         var studentIds = new ArrayList<Long>();

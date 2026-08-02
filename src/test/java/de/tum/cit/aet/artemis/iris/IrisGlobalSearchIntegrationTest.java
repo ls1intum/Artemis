@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,6 +17,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
@@ -189,16 +189,21 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "multi", roles = "USER")
     void lectureSearch_sendsAccessContextConsistentWithArtemisRoles() throws Exception {
-        // One user holding a different role in each course, plus a course they are not a member of.
-        var studentCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "sStud", TEST_PREFIX + "sTa", TEST_PREFIX + "sEd", TEST_PREFIX + "sIn");
-        var taCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "tStud", TEST_PREFIX + "tTa", TEST_PREFIX + "tEd", TEST_PREFIX + "tIn");
-        var editorCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "eStud", TEST_PREFIX + "eTa", TEST_PREFIX + "eEd", TEST_PREFIX + "eIn");
-        var instructorCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "iStud", TEST_PREFIX + "iTa", TEST_PREFIX + "iEd", TEST_PREFIX + "iIn");
-        var foreignCourse = courseUtilService.addEmptyCourse(TEST_PREFIX + "nStud", TEST_PREFIX + "nTa", TEST_PREFIX + "nEd", TEST_PREFIX + "nIn");
+        // One user holding a different role in each course, plus a course they are not enrolled in.
+        var studentCourse = courseUtilService.addEmptyCourse();
+        var taCourse = courseUtilService.addEmptyCourse();
+        var editorCourse = courseUtilService.addEmptyCourse();
+        var instructorCourse = courseUtilService.addEmptyCourse();
+        var foreignCourse = courseUtilService.addEmptyCourse();
 
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "multi");
-        user.setGroups(Set.of(TEST_PREFIX + "sStud", TEST_PREFIX + "tTa", TEST_PREFIX + "eEd", TEST_PREFIX + "iIn"));
-        user = userTestRepository.save(user);
+        userUtilService.enrollUserInCourse(user, studentCourse, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(user, taCourse, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(user, editorCourse, CourseRole.EDITOR);
+        userUtilService.enrollUserInCourse(user, instructorCourse, CourseRole.INSTRUCTOR);
+        // user is intentionally NOT enrolled in foreignCourse
+        // Reload with course roles so the AuthorizationCheckService assertions see the enrollments.
+        user = userTestRepository.getUserWithCourseRolesAndAuthorities(TEST_PREFIX + "multi");
 
         AtomicReference<PyrisAccessContextDTO> sent = new AtomicReference<>();
         irisRequestMockProvider.mockSearchLectures(List.of(), dto -> sent.set(dto.accessContext()));
