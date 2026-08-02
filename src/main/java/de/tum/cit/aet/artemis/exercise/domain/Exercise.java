@@ -372,8 +372,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.exerciseGroup = exerciseGroup;
     }
 
-    @Nullable
-    public ExerciseVariantGroup getExerciseVariantGroup() {
+    public @Nullable ExerciseVariantGroup getExerciseVariantGroup() {
         return exerciseVariantGroup;
     }
 
@@ -861,23 +860,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
-    /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     *
-     * @throws BadRequestAlertException if the dates are not valid
-     */
+    /** Validates the dates of this exercise. Subclasses extend it with type-specific checks. */
     public void validateDates() {
         validateBaseDates();
     }
 
-    /**
-     * Validates the base date ordering shared by every exercise type (release/start/due/assessmentDue/exampleSolutionPublication).
-     * Intentionally {@code final} so it stays callable on a {@link de.tum.cit.aet.artemis.quiz.domain.QuizExercise} whose lazy
-     * {@code quizBatches} collection is not initialized, avoiding the {@code LazyInitializationException} that
-     * {@code QuizExercise.validateDates()}'s additional batch check would throw.
-     *
-     * @throws BadRequestAlertException if the dates are not valid
-     */
+    /** Validates the date ordering shared by every exercise type. {@code final} so it stays callable on a QuizExercise whose lazy {@code quizBatches} are uninitialized. */
     public final void validateBaseDates() {
         // All fields are optional, so there is no error if none of them is set
         if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
