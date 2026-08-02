@@ -62,6 +62,39 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
     /**
+     * Finds all courses that ended before the given date, eagerly loading their (otherwise lazy) course configuration so
+     * grade-relevance can be evaluated without extra queries. Used by the data-privacy retention cleanup to determine
+     * which old courses are due for a student-data reset.
+     *
+     * @param endDateBefore only courses whose end date is non-null and strictly before this are returned
+     * @return the matching courses with their course configuration initialized
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+                LEFT JOIN FETCH c.courseConfiguration
+            WHERE c.endDate IS NOT NULL
+                AND c.endDate < :endDateBefore
+            """)
+    List<Course> findAllWithCourseConfigurationByEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
+
+    /**
+     * Finds all courses whose data-privacy reset warning has already been sent (i.e. their configuration has a non-null
+     * reset warning date), eagerly loading the configuration. Used by the retention cleanup to determine which warned
+     * courses are past the grace period and due for a student-data reset.
+     *
+     * @return the matching courses with their course configuration initialized
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+                LEFT JOIN FETCH c.courseConfiguration cc
+            WHERE cc.resetWarningSentDate IS NOT NULL
+                AND cc.studentDataResetDate IS NULL
+            """)
+    List<Course> findAllWithResetWarningSent();
+
+    /**
      * Returns the active courses in which the given user holds any role. For an active course (already started, not yet
      * finished) holding any role is exactly the visibility condition evaluated by
      * {@code CourseVisibleService.isCourseVisibleForUser} for a non-admin, so this lets the dashboard/dropdown load only
@@ -201,7 +234,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
+    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance for editing.
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })

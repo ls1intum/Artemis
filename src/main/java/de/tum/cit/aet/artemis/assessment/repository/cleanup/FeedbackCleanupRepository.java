@@ -189,6 +189,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                         LEFT JOIN r2.submission s2
                         LEFT JOIN s2.participation p2
                     WHERE p2.id = p.id
+                        AND r2.rated = FALSE
                     )
                     AND r.rated = FALSE
                     AND c.endDate < :deleteTo
@@ -223,6 +224,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                         LEFT JOIN r2.submission s2
                         LEFT JOIN s2.participation p2
                     WHERE p2.id = p.id
+                        AND r2.rated = FALSE
                     )
                     AND r.rated = FALSE
                     AND c.endDate < :deleteTo
