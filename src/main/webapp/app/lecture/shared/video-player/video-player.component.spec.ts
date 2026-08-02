@@ -70,6 +70,7 @@ import { of, throwError } from 'rxjs';
 import { GocastStreamIdentity } from './video-player.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TumLiveAttributionComponent } from 'app/videosource/gocast/tum-live-attribution.component';
 
 describe('VideoPlayerComponent', () => {
     let fixture: ComponentFixture<VideoPlayerComponent>;
@@ -114,7 +115,7 @@ describe('VideoPlayerComponent', () => {
         // the exact wiring that ships in production, so the drag tests below exercise that delegated path.
         TestBed.overrideComponent(VideoPlayerComponent, {
             set: {
-                imports: [ResizableDirective],
+                imports: [ResizableDirective, TumLiveAttributionComponent],
                 template: `
                     <div #videoWrapper class="video-wrapper">
                         <div

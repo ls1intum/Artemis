@@ -61,7 +61,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
     void setUp() {
         featureToggleService.enableFeature(Feature.Gocast);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
     @AfterEach

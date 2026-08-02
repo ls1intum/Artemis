@@ -111,7 +111,7 @@ public class GocastIntegrationResource {
         if (term != null && !term.isBlank() && !term.equals("W") && !term.equals("S")) {
             return ResponseEntity.badRequest().build();
         }
-        String lrzId = userRepository.getUserWithGroupsAndAuthorities().getLogin();
+        String lrzId = userRepository.getUser().getLogin();
         try {
             List<GocastCourseDTO> courses = connectorService.listAdministeredCourses(lrzId, year != null ? year : 0, term != null ? term : "");
             return ResponseEntity.ok(courses);
@@ -164,7 +164,7 @@ public class GocastIntegrationResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<GocastBindingWithApprovalDTO> createBinding(@PathVariable long courseId, @Valid @RequestBody @NotNull GocastCreateBindingRequestDTO requestDTO) {
         log.debug("REST request to create gocast binding for Artemis course {}: gocastCourseId={}", courseId, requestDTO.gocastCourseId());
-        String instructorLrzId = userRepository.getUserWithGroupsAndAuthorities().getLogin();
+        String instructorLrzId = userRepository.getUser().getLogin();
         try {
             GocastCourseBinding binding = bindingService.createBinding(courseId, requestDTO.gocastCourseId(), requestDTO.gocastCourseSlug(), instructorLrzId);
             String callbackUrl = serverUrl + "/course-management/" + courseId + "/gocast-binding";
@@ -249,7 +249,7 @@ public class GocastIntegrationResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<GocastPlaybackTokenDTO> getPlaybackToken(@PathVariable long courseId, @PathVariable long streamId) {
         log.debug("REST request to get playback token for Artemis course {}, stream {}", courseId, streamId);
-        String lrzId = userRepository.getUserWithGroupsAndAuthorities().getLogin();
+        String lrzId = userRepository.getUser().getLogin();
         try {
             return ResponseEntity.ok(bindingService.getPlaybackToken(courseId, streamId, lrzId, DEFAULT_PLAYBACK_TOKEN_TTL_SECONDS));
         }
