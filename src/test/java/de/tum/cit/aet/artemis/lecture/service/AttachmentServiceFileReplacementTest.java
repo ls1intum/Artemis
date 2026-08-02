@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -94,4 +96,30 @@ class AttachmentServiceFileReplacementTest {
         assertThat(attachment.getStudentVersion()).isEqualTo(OLD_STUDENT_VERSION);
         verify(fileService, never()).schedulePathForDeletion(any(Path.class), anyLong());
     }
+
+    @Test
+    void regenerationLocksPersistedAttachmentBeforeReadingVisibility() {
+        attachment.setId(7L);
+        attachment.setStudentVersion(null);
+        when(attachmentRepository.findByIdWithPessimisticWriteLock(attachment.getId())).thenReturn(java.util.Optional.of(attachment));
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of());
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+        try {
+            attachmentService.regenerateStudentVersion(attachment);
+        }
+        finally {
+            TransactionSynchronizationManager.clear();
+        }
+
+        verify(attachmentRepository).findByIdWithPessimisticWriteLock(attachment.getId());
+    }
+
+    @Test
+    void safeRegenerationKeepsCallerCommittableOnGenerationFailure() {
+        AttachmentService serviceSpy = spy(attachmentService);
+        doThrow(new IllegalStateException("PDF failed")).when(serviceSpy).regenerateStudentVersion(attachment);
+
+        assertThat(serviceSpy.regenerateStudentVersionOrLeavePending(attachment)).isFalse();
+    }
+
 }

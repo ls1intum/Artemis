@@ -112,7 +112,6 @@ class LectureUnitVisibilitySyncServiceTest {
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
     }
 
-    @Test
     private static AttachmentVideoUnit attachmentVideoUnit() {
         var course = new Course();
         course.setTitle("Course");

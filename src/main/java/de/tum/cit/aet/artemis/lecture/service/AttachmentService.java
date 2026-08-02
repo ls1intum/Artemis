@@ -10,9 +10,12 @@ import java.util.List;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +38,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Service
 @Conditional(LectureEnabled.class)
 public class AttachmentService {
+
+    private static final Logger log = LoggerFactory.getLogger(AttachmentService.class);
 
     private final AttachmentRepository attachmentRepository;
 
@@ -105,7 +110,9 @@ public class AttachmentService {
      *
      * @param attachment The attachment whose student version needs to be regenerated
      */
+    @Transactional
     public void regenerateStudentVersion(Attachment attachment) {
+        attachment = lockAttachmentIfPersisted(attachment);
         AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
         if (attachmentVideoUnit == null) {
             return;
@@ -130,6 +137,37 @@ public class AttachmentService {
         catch (Exception e) {
             throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());
         }
+    }
+
+    /**
+     * Attempts regeneration while keeping the surrounding visibility transaction committable on file-generation failure.
+     *
+     * @param attachment the attachment whose student version should be regenerated
+     * @return whether regeneration succeeded
+     */
+    @Transactional
+    public boolean regenerateStudentVersionOrLeavePending(Attachment attachment) {
+        try {
+            regenerateStudentVersion(attachment);
+            return true;
+        }
+        catch (RuntimeException exception) {
+            log.error("Failed to regenerate student version for attachment {}; leaving it pending for retry: {}", attachment.getId(), exception.getMessage(), exception);
+            return false;
+        }
+    }
+
+    @Transactional
+    public void markStudentVersionRegenerationPending(Attachment attachment) {
+        removeStudentVersionFile(lockAttachmentIfPersisted(attachment));
+    }
+
+    private Attachment lockAttachmentIfPersisted(Attachment attachment) {
+        if (attachment.getId() == null || !TransactionSynchronizationManager.isActualTransactionActive()) {
+            return attachment;
+        }
+        return attachmentRepository.findByIdWithPessimisticWriteLock(attachment.getId())
+                .orElseThrow(() -> new IllegalStateException("Attachment " + attachment.getId() + " no longer exists"));
     }
 
     /**

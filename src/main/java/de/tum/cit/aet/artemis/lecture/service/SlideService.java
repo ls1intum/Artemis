@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -9,9 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -19,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Conditional(LectureEnabled.class)
 @Lazy
 @Service
+@Transactional
 public class SlideService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideService.class);
@@ -85,6 +89,10 @@ public class SlideService {
 
         ZonedDateTime newHiddenDate = exercise.getDueDate();
 
+        var affectedAttachments = relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).map(AttachmentVideoUnit::getAttachment)
+                .filter(Objects::nonNull).distinct().sorted(Comparator.comparing(Attachment::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+        affectedAttachments.forEach(attachmentService::markStudentVersionRegenerationPending);
+
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
         relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
@@ -94,15 +102,6 @@ public class SlideService {
         catch (Exception e) {
             log.error("Failed to mark lecture unit visibility dirty after updating slides for exercise {}: {}", exercise.getId(), e.getMessage(), e);
         }
-        relatedSlides.stream().map(Slide::getAttachmentVideoUnit).filter(Objects::nonNull).map(AttachmentVideoUnit::getAttachment).filter(Objects::nonNull).distinct()
-                .forEach(attachment -> {
-                    try {
-                        attachmentService.regenerateStudentVersion(attachment);
-                    }
-                    catch (Exception e) {
-                        log.error("Failed to regenerate student version for attachment {} after updating slides for exercise {}: {}", attachment.getId(), exercise.getId(),
-                                e.getMessage(), e);
-                    }
-                });
+        affectedAttachments.forEach(attachmentService::regenerateStudentVersionOrLeavePending);
     }
 }

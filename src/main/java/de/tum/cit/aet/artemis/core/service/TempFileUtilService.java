@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -132,16 +133,20 @@ public class TempFileUtilService {
         Path temporaryPath = createTempFile(normalizedTarget.getParent(), "." + normalizedTarget.getFileName() + ".", ".tmp");
         try {
             FileUtils.writeByteArrayToFile(temporaryPath.toFile(), fileData);
-            try {
-                temporaryPath.getFileSystem().provider().move(temporaryPath, normalizedTarget, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (AtomicMoveNotSupportedException ignored) {
-                temporaryPath.getFileSystem().provider().move(temporaryPath, normalizedTarget, StandardCopyOption.REPLACE_EXISTING);
-            }
+            moveReplacing(temporaryPath, normalizedTarget);
             return normalizedTarget;
         }
         finally {
             Files.deleteIfExists(temporaryPath);
+        }
+    }
+
+    void moveReplacing(Path source, Path target) throws IOException {
+        try {
+            source.getFileSystem().provider().move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        }
+        catch (AtomicMoveNotSupportedException | FileAlreadyExistsException ignored) {
+            source.getFileSystem().provider().move(source, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

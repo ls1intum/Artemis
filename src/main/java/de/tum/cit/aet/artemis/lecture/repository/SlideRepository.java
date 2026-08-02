@@ -50,6 +50,8 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      */
     List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
 
+    boolean existsByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
+
     /**
      * Find all slides associated with a specific exercise
      *

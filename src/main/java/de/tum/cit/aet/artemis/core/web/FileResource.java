@@ -697,6 +697,9 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
+            if (api.hasHiddenSlides(attachmentVideoUnitId)) {
+                throw new EntityNotFoundException("Student version", attachmentVideoUnitId);
+            }
             return buildAttachmentFileResponse(getActualPathFromPublicPathString(attachment.getLink(), FilePathType.ATTACHMENT_UNIT), downloadFilename,
                     AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }

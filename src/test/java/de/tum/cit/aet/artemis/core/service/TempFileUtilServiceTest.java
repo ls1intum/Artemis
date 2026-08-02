@@ -3,9 +3,17 @@ package de.tum.cit.aet.artemis.core.service;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.spi.FileSystemProvider;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -39,5 +47,23 @@ class TempFileUtilServiceTest {
         assertThatThrownBy(() -> tempFileUtilService.replaceFileAtomically(trustedRoot, escapedTarget, "content".getBytes(UTF_8))).isInstanceOf(java.io.IOException.class)
                 .hasMessageContaining("trusted root");
         assertThat(escapedTarget).doesNotExist();
+    }
+
+    @Test
+    void moveReplacingFallsBackWhenAtomicMoveCannotReplaceExistingTarget() throws Exception {
+        TempFileUtilService tempFileUtilService = new TempFileUtilService(tempDirectory);
+        Path source = mock(Path.class);
+        Path target = mock(Path.class);
+        FileSystem fileSystem = mock(FileSystem.class);
+        FileSystemProvider provider = mock(FileSystemProvider.class);
+        when(source.getFileSystem()).thenReturn(fileSystem);
+        when(fileSystem.provider()).thenReturn(provider);
+        doThrow(new FileAlreadyExistsException("target.pdf")).when(provider).move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+
+        tempFileUtilService.moveReplacing(source, target);
+
+        var inOrder = inOrder(provider);
+        inOrder.verify(provider).move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        inOrder.verify(provider).move(source, target, StandardCopyOption.REPLACE_EXISTING);
     }
 }

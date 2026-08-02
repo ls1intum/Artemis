@@ -49,11 +49,12 @@ class SlideServiceTest {
         assertThat(secondSlide.getHidden()).isEqualTo(exercise.getDueDate());
 
         var inOrder = inOrder(slideRepository, slideUnhideService, visibilitySyncService, attachmentService);
+        inOrder.verify(attachmentService).markStudentVersionRegenerationPending(attachment);
         inOrder.verify(slideRepository).saveAll(relatedSlides);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(firstSlide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
         inOrder.verify(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
-        inOrder.verify(attachmentService).regenerateStudentVersion(attachment);
+        inOrder.verify(attachmentService).regenerateStudentVersionOrLeavePending(attachment);
     }
 
     @Test
@@ -99,7 +100,8 @@ class SlideServiceTest {
         inOrder.verify(slideRepository).saveAll(List.of(slide, secondSlide));
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(slide);
         inOrder.verify(slideUnhideService).handleSlideHiddenUpdate(secondSlide);
-        verify(attachmentService).regenerateStudentVersion(attachment);
+        verify(attachmentService).regenerateStudentVersionOrLeavePending(attachment);
+        verify(attachmentService).markStudentVersionRegenerationPending(attachment);
         inOrder.verify(visibilitySyncService).markVisibilityDirtyForSlides(List.of(slide, secondSlide));
     }
 
@@ -126,7 +128,8 @@ class SlideServiceTest {
 
         slideService.updateSlidesHiddenDate(exercise);
 
-        verify(attachmentService).regenerateStudentVersion(attachment);
+        verify(attachmentService).regenerateStudentVersionOrLeavePending(attachment);
+        verify(attachmentService).markStudentVersionRegenerationPending(attachment);
     }
 
     @Test
@@ -146,13 +149,14 @@ class SlideServiceTest {
         var relatedSlides = List.of(slide);
         when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(relatedSlides);
         doThrow(new IllegalStateException("sync failed")).when(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
-        doThrow(new IllegalStateException("PDF failed")).when(attachmentService).regenerateStudentVersion(attachment);
+        when(attachmentService.regenerateStudentVersionOrLeavePending(attachment)).thenReturn(false);
 
         slideService.updateSlidesHiddenDate(exercise);
 
         verify(slideRepository).saveAll(relatedSlides);
         verify(visibilitySyncService).markVisibilityDirtyForSlides(relatedSlides);
-        verify(attachmentService).regenerateStudentVersion(attachment);
+        verify(attachmentService).regenerateStudentVersionOrLeavePending(attachment);
+        verify(attachmentService).markStudentVersionRegenerationPending(attachment);
     }
 
     private static TextExercise exerciseWithDueDate() {
