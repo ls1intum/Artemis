@@ -4,7 +4,7 @@ index be48d2541e5d9d5756093bda3bbe01d0143fb12b..1a2f93e4b885d768e28e062c604c0d5e
 +++ b/dist/y-monaco.cjs
 @@ -3,7 +3,7 @@
  Object.defineProperty(exports, '__esModule', { value: true });
-
+ 
  var Y = require('yjs');
 -var monaco = require('monaco-editor/esm/vs/editor/editor.api.js');
 +var monaco = require('monaco-editor/editor/editor.api.js');
