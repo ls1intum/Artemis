@@ -4,19 +4,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -38,6 +34,13 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropProp
 
 /**
  * A DragAndDropQuestion.
+ * <p>
+ * Its drop locations, drag items and correct mappings are no longer separate JPA entity tables: they are stored inside the {@code quiz_question.content} JSON column as a
+ * {@link DragAndDropQuestionContent}. This eliminates the eager {@code @OneToMany} fan-out that produced a Cartesian-product blow-up when loading quizzes with many drop locations.
+ * The public accessors below ({@code getDropLocations()} / {@code getDragItems()} / {@code getCorrectMappings()}) keep their original signatures and delegate to the content, so
+ * the
+ * REST/websocket wire format and all callers are preserved. Correct mappings are stored normalized (id-based, see {@link DragAndDropCorrectMapping}) and resolved to object-based
+ * {@link DragAndDropMapping}s on access.
  */
 @Entity
 @DiscriminatorValue(value = "DD")
@@ -52,31 +55,32 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Column(name = "background_file_path")
     private String backgroundFilePath;
 
-    // No @Cache on the three child collections below: they are the parent collections of DragItem / DropLocation / DragAndDropMapping
-    // references resolved during submission merge cascade. Stale reads under clustered NONSTRICT_READ_WRITE were the root of #12574 / #12584.
-    // Bidirectional mapping: each child owns the question_id FK via its @ManyToOne back-reference, so a parent saveAndFlush
-    // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
-    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
-    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "drop_locations_order")
-    private List<DropLocation> dropLocations = new ArrayList<>();
+    /**
+     * @return the drag-and-drop content, creating and attaching an empty one if none exists yet.
+     */
+    private DragAndDropQuestionContent dndContent() {
+        if (getContent() instanceof DragAndDropQuestionContent dragAndDropContent) {
+            return dragAndDropContent;
+        }
+        DragAndDropQuestionContent created = new DragAndDropQuestionContent();
+        setContent(created);
+        return created;
+    }
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "drag_items_order")
-    private List<DragItem> dragItems = new ArrayList<>();
-
-    // Stored as a Set: position carries no semantic meaning — each mapping is identified by its (dragItem, dropLocation)
-    // pair. QuizService.{save,restore}CorrectMappingsFromIndices… looks up positions in the sibling dragItems /
-    // dropLocations Lists, never in correctMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
-    // products that would otherwise appear when callers JOIN FETCH correctMappings alongside another collection,
-    // avoids MultipleBagFetchException risk if a sibling ever drops @OrderColumn, and matches the conceptual model
-    // (a set of mapping pairs). HashSet membership is contract-safe across transient → persisted transitions because
-    // DragAndDropMapping overrides hashCode() to a class constant (see DragAndDropMapping.hashCode); id-based equality
-    // still discriminates instances. With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
-    // failure mode requires the unidirectional + @JoinColumn shape).
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private Set<DragAndDropMapping> correctMappings = new HashSet<>();
+    /**
+     * Mint a fresh, question-scoped component id: one greater than the largest id currently used by any drop location, drag item or correct mapping of this question.
+     *
+     * @return the next free component id
+     */
+    private long nextComponentId() {
+        long max = 0;
+        for (Long id : dndContent().componentIds()) {
+            if (id != null && id > max) {
+                max = id;
+            }
+        }
+        return max + 1;
+    }
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -87,117 +91,205 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     public List<DropLocation> getDropLocations() {
-        return dropLocations;
+        return dndContent().getDropLocations();
     }
 
     public void setDropLocations(List<DropLocation> dropLocations) {
-        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
-        this.dropLocations = dropLocations;
+        dndContent().setDropLocations(dropLocations);
+        assignMissingComponentIds(dndContent().getDropLocations());
     }
 
     /**
-     * Adds a single drop location and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Assign a fresh, question-scoped id to every component in the given list that does not have one yet. Called from the entity-level bulk setters used by the create/edit/import
+     * flows; the JSON deserialization path goes through {@link DragAndDropQuestionContent}'s own setters instead and therefore preserves existing ids.
+     *
+     * @param components the components to assign ids to
+     */
+    private void assignMissingComponentIds(List<? extends DomainObject> components) {
+        for (var component : components) {
+            if (component.getId() == null) {
+                component.setId(nextComponentId());
+            }
+        }
+    }
+
+    /**
+     * Mint a fresh, question-scoped id for any drop location or drag item added without one (e.g. via {@code getDropLocations().add(...)} / {@code getDragItems().add(...)}, which
+     * bypass {@link #addDropLocation} / {@link #addDragItem}). Called before persisting so the statistics counters (keyed by drop-location id) and the stored JSON content stay
+     * id-consistent.
+     */
+    public void assignMissingComponentIds() {
+        assignMissingComponentIds(getDropLocations());
+        assignMissingComponentIds(getDragItems());
+    }
+
+    /**
+     * Adds a single drop location, assigning it a fresh question-scoped id if it does not have one yet.
      *
      * @param dropLocation the drop location to add
      * @return this question for fluent chaining
      */
     public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
-        if (this.dropLocations == null) {
-            this.dropLocations = new ArrayList<>();
+        if (dropLocation.getId() == null) {
+            dropLocation.setId(nextComponentId());
         }
-        this.dropLocations.add(dropLocation);
-        dropLocation.setQuestion(this);
+        dndContent().getDropLocations().add(dropLocation);
         return this;
     }
 
     /**
-     * Removes a single drop location and clears its back-reference; with {@code orphanRemoval = true} the location will also be deleted on the next flush.
+     * Removes a single drop location.
      *
      * @param dropLocation the drop location to remove
      * @return this question for fluent chaining
      */
     public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
-        if (this.dropLocations != null) {
-            this.dropLocations.remove(dropLocation);
-        }
-        dropLocation.setQuestion(null);
+        dndContent().getDropLocations().remove(dropLocation);
         return this;
     }
 
     public List<DragItem> getDragItems() {
-        return dragItems;
+        return dndContent().getDragItems();
     }
 
     public void setDragItems(List<DragItem> dragItems) {
-        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
-        this.dragItems = dragItems;
+        dndContent().setDragItems(dragItems);
+        assignMissingComponentIds(dndContent().getDragItems());
     }
 
     /**
-     * Adds a single drag item and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Adds a single drag item, assigning it a fresh question-scoped id if it does not have one yet.
      *
      * @param dragItem the drag item to add
      * @return this question for fluent chaining
      */
     public DragAndDropQuestion addDragItem(DragItem dragItem) {
-        if (this.dragItems == null) {
-            this.dragItems = new ArrayList<>();
+        if (dragItem.getId() == null) {
+            dragItem.setId(nextComponentId());
         }
-        this.dragItems.add(dragItem);
-        dragItem.setQuestion(this);
+        dndContent().getDragItems().add(dragItem);
         return this;
     }
 
     /**
-     * Removes a single drag item and clears its back-reference; with {@code orphanRemoval = true} the item will also be deleted on the next flush.
+     * Removes a single drag item.
      *
      * @param dragItem the drag item to remove
      * @return this question for fluent chaining
      */
     public DragAndDropQuestion removeDragItem(DragItem dragItem) {
-        if (this.dragItems != null) {
-            this.dragItems.remove(dragItem);
-        }
-        dragItem.setQuestion(null);
+        dndContent().getDragItems().remove(dragItem);
         return this;
     }
 
+    /**
+     * The correct mappings resolved into object-based {@link DragAndDropMapping}s (with their drag item / drop location objects and derived indices). Built on demand from the
+     * normalized id-based mappings stored in {@link DragAndDropQuestionContent}. Mutating the returned set does not affect the stored mappings — use {@link #addCorrectMapping},
+     * {@link #removeCorrectMapping} or {@link #setCorrectMappings} instead.
+     *
+     * @return the resolved correct mappings
+     */
     public Set<DragAndDropMapping> getCorrectMappings() {
-        return correctMappings;
-    }
-
-    public void setCorrectMappings(Set<DragAndDropMapping> dragAndDropMappings) {
-        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
-        this.correctMappings = dragAndDropMappings;
+        Set<DragAndDropMapping> result = new HashSet<>();
+        List<DropLocation> dropLocations = dndContent().getDropLocations();
+        List<DragItem> dragItems = dndContent().getDragItems();
+        for (DragAndDropCorrectMapping entry : dndContent().getCorrectMappings()) {
+            DragItem dragItem = findDragItemById(entry.getDragItemId());
+            DropLocation dropLocation = findDropLocationById(entry.getDropLocationId());
+            // skip stale mappings whose drag item or drop location no longer exists (e.g. removed during re-evaluation)
+            if (dragItem == null || dropLocation == null) {
+                continue;
+            }
+            DragAndDropMapping mapping = new DragAndDropMapping();
+            mapping.setId(entry.getId());
+            mapping.setInvalid(entry.isInvalid());
+            mapping.setDragItem(dragItem);
+            mapping.setDropLocation(dropLocation);
+            if (dragItem != null) {
+                int index = dragItems.indexOf(dragItem);
+                mapping.setDragItemIndex(index >= 0 ? index : null);
+            }
+            if (dropLocation != null) {
+                int index = dropLocations.indexOf(dropLocation);
+                mapping.setDropLocationIndex(index >= 0 ? index : null);
+            }
+            result.add(mapping);
+        }
+        return result;
     }
 
     /**
-     * Adds a single mapping and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Replaces the correct mappings, storing them id-based in the content. Missing mapping ids are minted question-scoped.
      *
-     * @param dragAndDropMapping the mapping to add
+     * @param correctMappings the object-based correct mappings to store
+     */
+    public void setCorrectMappings(Set<DragAndDropMapping> correctMappings) {
+        List<DragAndDropCorrectMapping> entries = new ArrayList<>();
+        if (correctMappings != null) {
+            for (DragAndDropMapping mapping : correctMappings) {
+                entries.add(toEntry(mapping));
+            }
+        }
+        dndContent().setCorrectMappings(entries);
+        // Mint ids only after the entries are attached to the content, so nextComponentId() sees each freshly-assigned id and does not hand out the same id to multiple mappings.
+        for (DragAndDropCorrectMapping entry : dndContent().getCorrectMappings()) {
+            if (entry.getId() == null) {
+                entry.setId(nextComponentId());
+            }
+        }
+    }
+
+    /**
+     * Adds a single correct mapping, assigning it a fresh question-scoped id if it does not have one yet. The referenced drag item and drop location must already have ids (i.e. be
+     * added to this question first).
+     *
+     * @param mapping the correct mapping to add
      * @return this question for fluent chaining
      */
-    public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        if (this.correctMappings == null) {
-            this.correctMappings = new HashSet<>();
+    public DragAndDropQuestion addCorrectMapping(DragAndDropMapping mapping) {
+        Long dragItemId = mapping.getDragItem() != null ? mapping.getDragItem().getId() : null;
+        Long dropLocationId = mapping.getDropLocation() != null ? mapping.getDropLocation().getId() : null;
+        // Skip a duplicate mapping for the same (drag item, drop location) pair: the former Set<DragAndDropMapping> storage deduplicated by id, so preserve that behavior against a
+        // request that sends the same pair twice.
+        boolean alreadyMapped = dndContent().getCorrectMappings().stream()
+                .anyMatch(entry -> Objects.equals(entry.getDragItemId(), dragItemId) && Objects.equals(entry.getDropLocationId(), dropLocationId));
+        if (alreadyMapped) {
+            return this;
         }
-        this.correctMappings.add(dragAndDropMapping);
-        dragAndDropMapping.setQuestion(this);
+        if (mapping.getId() == null) {
+            mapping.setId(nextComponentId());
+        }
+        dndContent().getCorrectMappings().add(toEntry(mapping));
         return this;
     }
 
     /**
-     * Removes a single mapping and clears its back-reference; with {@code orphanRemoval = true} the mapping will also be deleted on the next flush.
+     * Removes the correct mapping with the same drag item and drop location as the given mapping.
      *
-     * @param dragAndDropMapping the mapping to remove
+     * @param mapping the correct mapping to remove
      * @return this question for fluent chaining
      */
-    public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        if (this.correctMappings != null) {
-            this.correctMappings.remove(dragAndDropMapping);
-        }
-        dragAndDropMapping.setQuestion(null);
+    public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping mapping) {
+        Long dragItemId = mapping.getDragItem() != null ? mapping.getDragItem().getId() : null;
+        Long dropLocationId = mapping.getDropLocation() != null ? mapping.getDropLocation().getId() : null;
+        dndContent().getCorrectMappings().removeIf(entry -> Objects.equals(entry.getDragItemId(), dragItemId) && Objects.equals(entry.getDropLocationId(), dropLocationId));
         return this;
+    }
+
+    /**
+     * Removes correct-mapping entries whose drag item or drop location no longer exists on this question (e.g. after a component was deleted during re-evaluation). Keeps the
+     * stored
+     * content free of orphan mappings so {@link #isValid()} / {@code nextComponentId()} stay accurate and the JSON does not grow across repeated re-evaluations.
+     */
+    public void removeOrphanCorrectMappings() {
+        dndContent().getCorrectMappings().removeIf(entry -> findDragItemById(entry.getDragItemId()) == null || findDropLocationById(entry.getDropLocationId()) == null);
+    }
+
+    private DragAndDropCorrectMapping toEntry(DragAndDropMapping mapping) {
+        Long dragItemId = mapping.getDragItem() != null ? mapping.getDragItem().getId() : null;
+        Long dropLocationId = mapping.getDropLocation() != null ? mapping.getDropLocation().getId() : null;
+        // id may be null here; setCorrectMappings mints missing ids after the entries are attached to the content (addCorrectMapping mints before calling this).
+        return new DragAndDropCorrectMapping(mapping.getId(), dragItemId, dropLocationId, mapping.isInvalid());
     }
 
     @Override
@@ -208,16 +300,14 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
 
         // A drag item can either be a text or a picture, but not both or none
-        for (DragItem dragItem : dragItems) {
+        for (DragItem dragItem : getDragItems()) {
             if (StringUtils.isEmpty(dragItem.getText()) == StringUtils.isEmpty(dragItem.getPictureFilePath())) {
                 return false;
             }
         }
 
-        // check if at least one correct mapping exists
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
-
-        // TODO: (?) Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
+        // check if at least one correct mapping exists (resolved getter, so orphan mappings left behind by a re-evaluation deletion don't count)
+        return !getCorrectMappings().isEmpty();
     }
 
     /**
@@ -233,38 +323,9 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     /**
-     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
-     * via {@code getDropLocations().add(...)} / {@code getDragItems().add(...)} / {@code getCorrectMappings().add(...)}
-     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
-     */
-    @PrePersist
-    @PreUpdate
-    private void ensureChildBackReferences() {
-        if (dropLocations != null) {
-            for (DropLocation location : dropLocations) {
-                if (location != null && location.getQuestion() != this) {
-                    location.setQuestion(this);
-                }
-            }
-        }
-        if (dragItems != null) {
-            for (DragItem item : dragItems) {
-                if (item != null && item.getQuestion() != this) {
-                    item.setQuestion(this);
-                }
-            }
-        }
-        if (correctMappings != null) {
-            for (DragAndDropMapping mapping : correctMappings) {
-                if (mapping != null && mapping.getQuestion() != this) {
-                    mapping.setQuestion(this);
-                }
-            }
-        }
-    }
-
-    /**
-     * This method is called when deleting the entity. It makes sure that the corresponding file is deleted as well.
+     * This method is called when deleting the entity. It makes sure that the corresponding background file is deleted as well. Drag item picture files are deleted explicitly by
+     * the
+     * service layer (see {@code QuizExerciseService}) since drag items are no longer JPA entities with a {@code @PostRemove} callback.
      */
     @PostRemove
     public void onDelete() {
@@ -288,12 +349,36 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public Set<DragItem> getCorrectDragItemsForDropLocation(DropLocation dropLocation) {
         Set<DragItem> result = new HashSet<>();
-        for (DragAndDropMapping mapping : correctMappings) {
-            if (mapping.getDropLocation().equals(dropLocation)) {
-                result.add(mapping.getDragItem());
+        if (dropLocation == null || dropLocation.getId() == null) {
+            return result;
+        }
+        for (DragAndDropCorrectMapping mapping : dndContent().getCorrectMappings()) {
+            if (dropLocation.getId().equals(mapping.getDropLocationId())) {
+                DragItem dragItem = findDragItemById(mapping.getDragItemId());
+                if (dragItem != null) {
+                    result.add(dragItem);
+                }
             }
         }
         return result;
+    }
+
+    /**
+     * Check whether the given drop location was solved correctly in the given submitted answer. This used to live on {@link DropLocation}, but now that a drop location no longer
+     * has
+     * a back-reference to its question, the owning question resolves the mappings.
+     *
+     * @param dropLocation the drop location to check
+     * @param dndAnswer    the student's submitted answer
+     * @return true if the drop location is correct
+     */
+    public boolean isDropLocationCorrect(DropLocation dropLocation, DragAndDropSubmittedAnswer dndAnswer) {
+        Set<DragItem> correctDragItems = getCorrectDragItemsForDropLocation(dropLocation);
+        DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
+
+        // the drop location was meant to stay empty and the user didn't drag anything onto it
+        // OR the user dragged one of the correct drag items onto this drop location
+        return (correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem));
     }
 
     /**
@@ -304,10 +389,8 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public DragItem findDragItemById(Long dragItemId) {
         if (dragItemId != null) {
-            // iterate through all dragItems of this quiz
-            for (DragItem dragItem : dragItems) {
-                // return dragItem if the IDs are equal
-                if (dragItem.getId().equals(dragItemId)) {
+            for (DragItem dragItem : dndContent().getDragItems()) {
+                if (dragItemId.equals(dragItem.getId())) {
                     return dragItem;
                 }
             }
@@ -323,109 +406,13 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public DropLocation findDropLocationById(Long dropLocationId) {
         if (dropLocationId != null) {
-            // iterate through all dropLocations of this quiz
-            for (DropLocation dropLocation : dropLocations) {
-                // return dropLocation if the IDs are equal
-                if (dropLocation.getId().equals(dropLocationId)) {
+            for (DropLocation dropLocation : dndContent().getDropLocations()) {
+                if (dropLocationId.equals(dropLocation.getId())) {
                     return dropLocation;
                 }
             }
         }
         return null;
-    }
-
-    /**
-     * undo all dragItem- and dropLocation-changes which are not allowed ( adding them)
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            backgroundFilePath = dndOriginalQuestion.getBackgroundFilePath();
-            // undo unallowed dragItemChanges
-            undoUnallowedDragItemChanges(dndOriginalQuestion);
-            // undo unallowed dragItemChanges
-            undoUnallowedDropLocationChanges(dndOriginalQuestion);
-        }
-    }
-
-    /**
-     * undo all dragItem-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
-     */
-    private void undoUnallowedDragItemChanges(DragAndDropQuestion originalQuestion) {
-        // find added DragItems, which are not allowed to be added
-        Set<DragItem> notAllowedAddedDragItems = new HashSet<>();
-        // check every dragItem of the question
-        for (DragItem dragItem : this.getDragItems()) {
-            // check if the dragItem were already in the originalQuestion -> if not it's an added dragItem
-            if (originalQuestion.getDragItems().contains(dragItem)) {
-                // find original dragItem
-                DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
-
-                // correct invalid = null to invalid = false
-                if (dragItem.isInvalid() == null) {
-                    dragItem.setInvalid(false);
-                }
-                // reset invalid dragItem if it already set to true (it's not possible to set a dragItem valid again)
-                dragItem.setInvalid(dragItem.isInvalid() || (originalDragItem.isInvalid() != null && originalDragItem.isInvalid()));
-            }
-            else {
-                // mark the added dragItem (adding dragItems is not allowed)
-                notAllowedAddedDragItems.add(dragItem);
-            }
-        }
-        // remove the added dragItems
-        this.getDragItems().removeAll(notAllowedAddedDragItems);
-    }
-
-    /**
-     * undo all dropLocation-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
-     */
-    private void undoUnallowedDropLocationChanges(DragAndDropQuestion originalQuestion) {
-        // find added DropLocations, which are not allowed to be added
-        Set<DropLocation> notAllowedAddedDropLocations = new HashSet<>();
-        // check every dropLocation of the question
-        for (DropLocation dropLocation : this.getDropLocations()) {
-            // check if the dropLocation were already in the originalQuestion -> if not it's an added dropLocation
-            if (originalQuestion.getDropLocations().contains(dropLocation)) {
-                // find original dropLocation
-                DropLocation originalDropLocation = originalQuestion.findDropLocationById(dropLocation.getId());
-                // correct invalid = null to invalid = false
-                if (dropLocation.isInvalid() == null) {
-                    dropLocation.setInvalid(false);
-                }
-                // reset invalid dropLocation if it already set to true (it's not possible to set a dropLocation valid again)
-                dropLocation.setInvalid(dropLocation.isInvalid() || (originalDropLocation.isInvalid() != null && originalDropLocation.isInvalid()));
-            }
-            else {
-                // mark the added dropLocation (adding dropLocations is not allowed)
-                notAllowedAddedDropLocations.add(dropLocation);
-            }
-        }
-        // remove the added dropLocations
-        this.getDropLocations().removeAll(notAllowedAddedDropLocations);
-    }
-
-    /**
-     * check if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the dragItem and dropLocation-changes make an update necessary and false if not
-     */
-    @Override
-    public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
-            // spuriously triggering recalculation when the only difference is row order.
-            return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
-                    || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
-        }
-        return false;
     }
 
     @Override
@@ -434,78 +421,16 @@ public class DragAndDropQuestion extends QuizQuestion {
         setQuizQuestionStatistic(new DragAndDropQuestionStatistic());
     }
 
-    /**
-     * check dragItems if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuestion the original DragAndDropQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the dragItem-changes make an update necessary and false if not
-     */
-    private boolean checkDragItemsIfRecalculationIsNecessary(DragAndDropQuestion originalQuestion) {
-        boolean updateNecessary = false;
-        // check every dragItem of the question
-        for (DragItem dragItem : this.getDragItems()) {
-            // check if the dragItem were already in the originalQuizExercise
-            if (originalQuestion.getDragItems().contains(dragItem)) {
-                // find original dragItem
-                DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
-
-                // check if a dragItem is set invalid
-                // if true an update of the Statistics and Results is necessary
-                if ((dragItem.isInvalid() && !this.isInvalid() && originalDragItem.isInvalid() == null)
-                        || (dragItem.isInvalid() && !this.isInvalid() && !originalDragItem.isInvalid())) {
-                    updateNecessary = true;
-                }
-            }
-        }
-        // check if a dragItem was deleted (not allowed added dragItems are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (this.getDragItems().size() < originalQuestion.getDragItems().size()) {
-            updateNecessary = true;
-        }
-        return updateNecessary;
-    }
-
-    /**
-     * check DropLocations if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuestion the original DragAndDropQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the dropLocation-changes make an update necessary and false if not
-     */
-    private boolean checkDropLocationsIfRecalculationIsNecessary(DragAndDropQuestion originalQuestion) {
-        boolean updateNecessary = false;
-        // check every dropLocation of the question
-        for (DropLocation dropLocation : this.getDropLocations()) {
-            // check if the dropLocation were already in the originalQuizExercise
-            if (originalQuestion.getDropLocations().contains(dropLocation)) {
-                // find original dropLocation
-                DropLocation originalDropLocation = originalQuestion.findDropLocationById(dropLocation.getId());
-
-                // check if a dropLocation is set invalid
-                // if true an update of the Statistics and Results is necessary
-                if ((dropLocation.isInvalid() && !this.isInvalid() && originalDropLocation.isInvalid() == null)
-                        || (dropLocation.isInvalid() && !this.isInvalid() && !originalDropLocation.isInvalid())) {
-                    updateNecessary = true;
-                }
-            }
-        }
-        // check if a dropLocation was deleted (not allowed added dropLocations are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (this.getDropLocations().size() < originalQuestion.getDropLocations().size()) {
-            updateNecessary = true;
-        }
-        return updateNecessary;
-    }
-
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        setCorrectMappings(null);
+        dndContent().setCorrectMappings(new ArrayList<>());
     }
 
     @Override
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
-        setCorrectMappings(null);
+        dndContent().setCorrectMappings(new ArrayList<>());
     }
 
     /**
@@ -533,5 +458,4 @@ public class DragAndDropQuestion extends QuizQuestion {
         question.setId(getId());
         return question;
     }
-
 }
