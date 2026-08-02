@@ -90,7 +90,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String lastName;
 
     @Size(max = 20)
-    @Column(name = "registration_number", length = 20)
+    @Column(name = "registration_number", length = 20, unique = true)
     @JsonIgnore
     private String registrationNumber;
 
@@ -101,7 +101,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100)
+    @Column(length = 100) // TODO why not unique (there is no unique constraint at db level)
     private String email;
 
     @NonNull
