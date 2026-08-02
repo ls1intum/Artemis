@@ -126,7 +126,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String activationKey;
 
     @Size(max = 20)
-    @Column(name = "reset_key_id", length = 20)
+    @Column(name = "reset_key_id", length = 20, unique = true)
     @JsonIgnore
     private String resetKeyId;
 

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Remove jhi_user.reset_key and replace it with two columns for id and hash -->
+    <changeSet id="20260802050000-1" author="angatha and Lion Holtkötter">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <uniqueConstraintExists tableName="jhi_user" constraintName="jhu_user_reset_key_id" />
+            </not>
+        </preConditions>
+
+        <sql>
+            UPDATE jhi_user
+            SET reset_key_id   = NULL,
+                reset_key_hash = NULL
+            WHERE reset_key_id IN (SELECT reset_key_id
+                                   FROM jhi_user
+                                   WHERE reset_key_id IS NOT NULL
+                                   GROUP BY reset_key_id
+                                   HAVING COUNT(*) > 1);
+        </sql>
+
+        <addUniqueConstraint tableName="jhi_user" columnNames="reset_key_id" constraintName="jhu_user_reset_key_id" />
+    </changeSet>
+</databaseChangeLog>
