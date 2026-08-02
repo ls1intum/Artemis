@@ -600,6 +600,45 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         request.postWithResponseBody(POST_URL, body, String.class, HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
+    // --- Test result count cap ---
+
+    /**
+     * The effective value of {@code artemis.problem-statement-rendering.max-test-results} under the shipped
+     * configuration. Asserted against the default rather than a value injected via {@code @TestPropertySource},
+     * because the latter forks the Spring test context (see {@code SpringContextConfigurationArchitectureTest}).
+     * <p>
+     * The two tests below bracket the limit, so they fail for any effective value other than this constant. They do
+     * not cover that the limit is configurable: the {@code @Value} fallback in {@code ProblemStatementRenderingResource}
+     * is 1000 as well, so a mistyped property key would keep the same behaviour and stay unnoticed here.
+     */
+    private static final int MAX_TEST_RESULTS = 1000;
+
+    private static List<TestFeedbackInputDTO> testFeedbacks(int count) {
+        List<TestFeedbackInputDTO> feedbacks = new ArrayList<>(count);
+        for (int i = 1; i <= count; i++) {
+            feedbacks.add(new TestFeedbackInputDTO((long) i, "test" + i, true, null, null));
+        }
+        return feedbacks;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldAcceptExactlyTheConfiguredTestResultLimit() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>)", testFeedbacks(MAX_TEST_RESULTS), null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-test-status=\"success\"");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRejectOneTestResultAboveTheConfiguredLimit() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("[task][A](<testid>1</testid>)", testFeedbacks(MAX_TEST_RESULTS + 1), null, "en", false, false, true, null);
+
+        request.postWithoutResponseBody(POST_URL, body, HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
     // --- Task reference resolution by test name ---
 
     @Test

@@ -461,6 +461,14 @@ describe('RepositoryViewComponent', () => {
     });
 
     describe('liveUpdates', () => {
+        // Only the id is relevant for the live-update decision, the other members are required by the Exercise type.
+        const minimalExercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+            studentAssignedTeamIdComputed: true,
+            secondCorrectionEnabled: true,
+        };
+
         it('is none without a participation (TESTS repository type)', () => {
             const mockExercise: ProgrammingExercise = {
                 id: 1,
@@ -527,7 +535,7 @@ describe('RepositoryViewComponent', () => {
 
         it('is shared for the USER repository when the viewer is at least a tutor for the exercise', () => {
             vi.spyOn(accountService, 'isAtLeastTutorForExercise').mockReturnValue(true);
-            const mockParticipation: ProgrammingExerciseStudentParticipation = { id: 2, repositoryUri: 'student-repo-uri', exercise: { id: 1 } };
+            const mockParticipation: ProgrammingExerciseStudentParticipation = { id: 2, repositoryUri: 'student-repo-uri', exercise: minimalExercise };
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
             activatedRoute.setParameters({ participationId: 2 });
 
@@ -538,7 +546,7 @@ describe('RepositoryViewComponent', () => {
 
         it("is personal for the USER repository when the viewer is not at least a tutor, i.e. it is the student's own participation", () => {
             vi.spyOn(accountService, 'isAtLeastTutorForExercise').mockReturnValue(false);
-            const mockParticipation: ProgrammingExerciseStudentParticipation = { id: 2, repositoryUri: 'student-repo-uri', exercise: { id: 1 } };
+            const mockParticipation: ProgrammingExerciseStudentParticipation = { id: 2, repositoryUri: 'student-repo-uri', exercise: minimalExercise };
             vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
             activatedRoute.setParameters({ participationId: 2 });
 
