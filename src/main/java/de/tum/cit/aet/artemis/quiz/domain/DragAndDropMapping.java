@@ -1,49 +1,43 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
- * A DragAndDropMapping.
+ * A DragAndDropMapping links a {@link DragItem} to a {@link DropLocation}.
+ * <p>
+ * This is the in-memory / wire representation used by the REST DTOs, the raw exam submission/conduction endpoints, the scoring strategies and the client. It carries the drag item
+ * and
+ * drop location as nested objects (the shape the client expects), plus derived, transient {@code dragItemIndex}/{@code dropLocationIndex} for the editor UI.
+ * <p>
+ * It is intentionally <b>not</b> what gets persisted: a question's correct mappings are stored inside {@link DragAndDropQuestionContent} as normalized, id-based
+ * {@link DragAndDropCorrectMapping} entries, and a submission's mappings are stored inside {@link DragAndDropSubmittedAnswerSelection} as {@link DragAndDropMappingSelection}
+ * entries.
+ * {@link DragAndDropQuestion#getCorrectMappings()} and {@link DragAndDropSubmittedAnswer#getMappings()} build these object-based mappings on demand by resolving the stored ids
+ * against
+ * the owning question, and their setters extract the ids back into the stored form. Formerly a JPA entity backed by {@code drag_and_drop_mapping}; it is now a plain POJO.
+ * <p>
+ * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
+ * is no
+ * longer an {@code @Entity}. For a question's correct mapping the {@code id} is the question-scoped mapping id; for a submission mapping it is {@code null} (submission mappings
+ * have no
+ * identity of their own).
  */
-// No @Cache here on purpose: part of the quiz-submission merge graph. See #12574 / #12584.
-@Entity
-@Table(name = "drag_and_drop_mapping")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragAndDropMapping extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DragAndDropMapping extends DomainObject {
 
-    @Column(name = "drag_item_index")
+    // Derived, transient: the position of the drag item / drop location within the question's ordered lists. Populated when building the mapping from stored content; never
+    // persisted.
     private Integer dragItemIndex;
 
-    @Column(name = "drop_location_index")
     private Integer dropLocationIndex;
 
-    @Column(name = "invalid")
     private Boolean invalid = false;
 
-    @ManyToOne
     private DragItem dragItem;
 
-    @ManyToOne
     private DropLocation dropLocation;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private DragAndDropSubmittedAnswer submittedAnswer;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private DragAndDropQuestion question;
 
     public Integer getDragItemIndex() {
         return dragItemIndex;
@@ -73,17 +67,21 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
         return dragItem;
     }
 
+    public void setDragItem(DragItem dragItem) {
+        this.dragItem = dragItem;
+    }
+
     public DragAndDropMapping dragItem(DragItem dragItem) {
         this.dragItem = dragItem;
         return this;
     }
 
-    public void setDragItem(DragItem dragItem) {
-        this.dragItem = dragItem;
-    }
-
     public DropLocation getDropLocation() {
         return dropLocation;
+    }
+
+    public void setDropLocation(DropLocation dropLocation) {
+        this.dropLocation = dropLocation;
     }
 
     public DragAndDropMapping dropLocation(DropLocation dropLocation) {
@@ -91,43 +89,8 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
         return this;
     }
 
-    public void setDropLocation(DropLocation dropLocation) {
-        this.dropLocation = dropLocation;
-    }
-
-    public DragAndDropSubmittedAnswer getSubmittedAnswer() {
-        return submittedAnswer;
-    }
-
-    public void setSubmittedAnswer(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
-        this.submittedAnswer = dragAndDropSubmittedAnswer;
-    }
-
-    public DragAndDropQuestion getQuestion() {
-        return question;
-    }
-
-    @Override
-    public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-    }
-
     @Override
     public String toString() {
-        return "DragAndDropMapping{" + "id=" + getId() + ", dragItemIndex='" + getDragItemIndex() + "'" + ", dropLocationIndex='" + getDropLocationIndex() + "'" + ", invalid='"
-                + isInvalid() + "'" + "}";
-    }
-
-    /**
-     * Stable, constant hashCode that does not change when Hibernate assigns the id on persist. This is required because
-     * {@link DragAndDropQuestion#correctMappings} is a {@code Set<DragAndDropMapping>}: factories and DTO mappers add
-     * transient mappings (id == null) to the set, and the id-based default would change after persist and silently
-     * break HashSet membership. Returning a constant forces all instances into the same bucket; the (id-based)
-     * {@code equals} contract still distinguishes them. The performance impact is negligible — a question's mapping
-     * set is small. Mirrors the same pattern on {@link de.tum.cit.aet.artemis.assessment.domain.Feedback}.
-     */
-    @Override
-    public int hashCode() {
-        return DragAndDropMapping.class.hashCode();
+        return "DragAndDropMapping{" + "id=" + getId() + ", dragItemIndex=" + dragItemIndex + ", dropLocationIndex=" + dropLocationIndex + ", invalid=" + isInvalid() + "}";
     }
 }
