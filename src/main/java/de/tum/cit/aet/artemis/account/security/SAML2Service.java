@@ -208,7 +208,9 @@ public class SAML2Service {
 
         // userService.createUser(ManagedUserVM) does create an activated User
         // a random password is generated
-        return userCreationService.createUser(newUser);
+        User createdUser = userCreationService.createUser(newUser);
+        createdUser.setInternal(false);
+        return userRepository.save(createdUser);
     }
 
     private static Collection<GrantedAuthority> toGrantedAuthorities(final Collection<Authority> authorities) {
