@@ -1,17 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
-
 import java.util.Objects;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,42 +10,62 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
  * A ShortAnswerSubmittedText.
+ * <p>
+ * This is the in-memory / wire representation of a single submitted text; it is built on demand by {@link ShortAnswerSubmittedAnswer#getSubmittedTexts()} and serialized to the
+ * client (its {@code spot} object, {@code text} and {@code isCorrect}). It is <b>not</b> persisted directly: a submission's texts are stored inside
+ * {@link ShortAnswerSubmittedAnswerSelection} as normalized, id-based {@link ShortAnswerTextSelection} entries in the {@code submitted_answer.selection} JSON column.
+ * <p>
+ * Every instance is backed by a mutable {@link ShortAnswerTextSelection} entry: {@link #getText()}/{@link #setText} and {@link #isIsCorrect()}/{@link #setIsCorrect} delegate to
+ * it. This preserves the pre-JSON behavior that the scoring pass ({@code ScoringStrategyShortAnswerUtil}) mutates {@code isCorrect} on a submitted text and the change persists —
+ * because the wire object writes through to the stored selection entry. The {@code spot} (resolved object) and {@code submittedAnswer} back-reference are transient and never
+ * stored in the entry; {@code submittedAnswer} lets {@link #isSubmittedTextCorrect} reach the owning question for its similarity settings.
  */
-// No @Cache here on purpose: written on every live quiz autosave / submission. See #12574 / #12584.
-@Entity
-@Table(name = "short_answer_submitted_text")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSubmittedText extends DomainObject {
 
-    @Column(name = "text")
-    @Size(max = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH, message = "The submitted answer text is too long.")
-    private String text;
-
-    @Column(name = "is_correct")
-    private Boolean isCorrect;
-
-    @OneToOne
-    @JoinColumn()
-    private ShortAnswerSpot spot;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
-    private ShortAnswerSubmittedAnswer submittedAnswer;
+    private final transient ShortAnswerTextSelection entry;
+
+    private transient ShortAnswerSpot spot;
+
+    @JsonIgnore
+    private transient ShortAnswerSubmittedAnswer submittedAnswer;
+
+    public ShortAnswerSubmittedText() {
+        this.entry = new ShortAnswerTextSelection();
+    }
+
+    /**
+     * Wraps an existing stored selection entry so that mutations (e.g. {@code setIsCorrect} during scoring) write through to it.
+     *
+     * @param entry the backing selection entry
+     */
+    public ShortAnswerSubmittedText(ShortAnswerTextSelection entry) {
+        this.entry = entry != null ? entry : new ShortAnswerTextSelection();
+    }
+
+    /**
+     * @return the backing selection entry (used by {@link ShortAnswerSubmittedAnswer} to store this submitted text)
+     */
+    @JsonIgnore
+    ShortAnswerTextSelection getEntry() {
+        return entry;
+    }
 
     public String getText() {
-        return text;
+        return entry.getText();
     }
 
     public void setText(String text) {
-        this.text = text;
+        entry.setText(text);
     }
 
     public Boolean isIsCorrect() {
-        return isCorrect;
+        return entry.getIsCorrect();
     }
 
     public void setIsCorrect(Boolean isCorrect) {
-        this.isCorrect = isCorrect;
+        entry.setIsCorrect(isCorrect);
     }
 
     public ShortAnswerSpot getSpot() {
@@ -65,8 +74,10 @@ public class ShortAnswerSubmittedText extends DomainObject {
 
     public void setSpot(ShortAnswerSpot shortAnswerSpot) {
         this.spot = shortAnswerSpot;
+        entry.setSpotId(shortAnswerSpot != null ? shortAnswerSpot.getId() : null);
     }
 
+    @JsonIgnore
     public ShortAnswerSubmittedAnswer getSubmittedAnswer() {
         return submittedAnswer;
     }

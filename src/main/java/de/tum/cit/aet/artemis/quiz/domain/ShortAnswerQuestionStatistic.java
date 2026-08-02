@@ -1,59 +1,64 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A ShortAnswerQuestionStatistic.
+ * <p>
+ * Its per-spot counters are stored as a JSON list in the {@code quiz_statistic.counters} column (see {@link ShortAnswerSpotCounter}) instead of separate
+ * {@code quiz_statistic_counter} rows, eliminating the eager {@code @OneToMany} counter fan-out. Counters are fully recomputed from the results on every statistics update, so no
+ * per-counter locking is required. {@link #getShortAnswerSpotCounters()} keeps its shape so the REST/websocket wire format is preserved. Mirrors
+ * {@link DragAndDropQuestionStatistic}.
  */
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
 
-    // No @Cache: counters are incremented on every evaluation while instructors watch live statistics, same class of bug as #12574.
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "shortAnswerQuestionStatistic")
-    private Set<ShortAnswerSpotCounter> shortAnswerSpotCounters = new HashSet<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "counters")
+    private List<ShortAnswerSpotCounter> shortAnswerSpotCounters = new ArrayList<>();
 
-    public Set<ShortAnswerSpotCounter> getShortAnswerSpotCounters() {
+    public List<ShortAnswerSpotCounter> getShortAnswerSpotCounters() {
         return shortAnswerSpotCounters;
     }
 
     public void addShortAnswerSpotCounters(ShortAnswerSpotCounter shortAnswerSpotCounter) {
         this.shortAnswerSpotCounters.add(shortAnswerSpotCounter);
-        shortAnswerSpotCounter.setShortAnswerQuestionStatistic(this);
     }
 
-    public void setShortAnswerSpotCounters(Set<ShortAnswerSpotCounter> shortAnswerSpotCounters) {
-        this.shortAnswerSpotCounters = shortAnswerSpotCounters;
+    public void setShortAnswerSpotCounters(List<ShortAnswerSpotCounter> shortAnswerSpotCounters) {
+        this.shortAnswerSpotCounters = shortAnswerSpotCounters != null ? shortAnswerSpotCounters : new ArrayList<>();
     }
 
     /**
-     * 1. creates the ShortAnswerSpotCounter for the new spot if where is already an ShortAnswerSpotCounter with the given spot -> nothing happens
+     * 1. creates the ShortAnswerSpotCounter for the new spot if there is already a ShortAnswerSpotCounter with the given spot -> nothing happens
      *
      * @param spot the spot-object which will be added to the ShortAnswerQuestionStatistic
      */
     public void addSpot(ShortAnswerSpot spot) {
-        if (spot == null) {
+        if (spot == null || spot.getId() == null) {
             return;
         }
 
         for (ShortAnswerSpotCounter counter : shortAnswerSpotCounters) {
-            if (spot.equals(counter.getSpot())) {
+            if (spot.getId().equals(counter.getSpotId())) {
                 return;
             }
         }
         ShortAnswerSpotCounter spotCounter = new ShortAnswerSpotCounter();
-        spotCounter.setSpot(spot);
+        spotCounter.setSpotId(spot.getId());
         addShortAnswerSpotCounters(spotCounter);
     }
 
@@ -80,17 +85,21 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         if (!(submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer)) {
             return;
         }
+        ShortAnswerQuestion question = getQuizQuestion() instanceof ShortAnswerQuestion shortAnswerQuestion ? shortAnswerQuestion : null;
+
+        // Recompute correctness first: isAnswerCorrect runs the scoring pass that (re)sets each submitted text's isCorrect flag, which correctSpotCounters then reads. Reuse its
+        // result for the whole-answer correct counter so the spot counters and the correct counter are derived from the same, freshly computed scoring.
+        boolean answerCorrect = getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer);
 
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
-            handleCountersForCorrectSpots(shortAnswerSubmittedAnswer, (ShortAnswerSpotCounter spotCounter) -> {
-                // change rated spotCounter if spot is correct
+            // change rated spotCounter if spot is correct
+            for (ShortAnswerSpotCounter spotCounter : correctSpotCounters(question, shortAnswerSubmittedAnswer)) {
                 spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
-            });
-
+            }
             // change rated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if (answerCorrect) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -98,36 +107,50 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         else {
             // change the unrated participants
             setParticipantsUnrated(getParticipantsUnrated() + change);
-            handleCountersForCorrectSpots(shortAnswerSubmittedAnswer, (ShortAnswerSpotCounter spotCounter) -> {
-                // change unrated spotCounter if spot is correct
+            // change unrated spotCounter if spot is correct
+            for (ShortAnswerSpotCounter spotCounter : correctSpotCounters(question, shortAnswerSubmittedAnswer)) {
                 spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
-            });
+            }
             // change unrated correctCounter if answer is complete correct
-            if (getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if (answerCorrect) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }
     }
 
-    private void handleCountersForCorrectSpots(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, Consumer<ShortAnswerSpotCounter> changeCounterIfSpotIsCorrect) {
-        if (shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
-            for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
-                ShortAnswerSpot spot = spotCounter.getSpot();
-                ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
-                Set<ShortAnswerSolution> shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spot);
-
-                if (shortAnswerSubmittedText == null) {
-                    continue;
-                }
-                // reconnect to avoid issues
-                shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
-                for (ShortAnswerSolution solution : shortAnswerSolutions) {
-                    if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
-                            && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
-                        changeCounterIfSpotIsCorrect.accept(spotCounter);
-                    }
+    /**
+     * Determine, for the given submitted answer, which spot counters correspond to a correctly answered spot. Resolves each counter's spot by its question-scoped id against the
+     * owning question (counters no longer hold a spot object) and reuses the stored {@code isCorrect} flag together with a fuzzy re-check of the submitted text.
+     *
+     * @param question                   the owning question (may be null on a transient statistic)
+     * @param shortAnswerSubmittedAnswer the submitted answer
+     * @return the spot counters whose spot was answered correctly
+     */
+    private List<ShortAnswerSpotCounter> correctSpotCounters(ShortAnswerQuestion question, ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+        List<ShortAnswerSpotCounter> correct = new ArrayList<>();
+        if (question == null) {
+            return correct;
+        }
+        for (ShortAnswerSpotCounter spotCounter : shortAnswerSpotCounters) {
+            ShortAnswerSpot spot = question.findSpotById(spotCounter.getSpotId());
+            if (spot == null) {
+                continue;
+            }
+            ShortAnswerSubmittedText shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spot);
+            if (shortAnswerSubmittedText == null) {
+                continue;
+            }
+            // reconnect to avoid issues
+            shortAnswerSubmittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer);
+            Set<ShortAnswerSolution> shortAnswerSolutions = question.getCorrectSolutionForSpot(spot);
+            for (ShortAnswerSolution solution : shortAnswerSolutions) {
+                if (shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText())
+                        && Boolean.TRUE.equals(shortAnswerSubmittedText.isIsCorrect())) {
+                    correct.add(spotCounter);
+                    break;
                 }
             }
         }
+        return correct;
     }
 }
