@@ -117,7 +117,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private ResponseEntity<FileUploadSubmissionDTO> handleFileUploadSubmission(long exerciseId, FileUploadSubmissionInputDTO fileUploadSubmissionInput, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionInput.toEntity();
 
@@ -206,8 +206,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
+        fileUploadSubmissionService.checkThatAssessmentIsPossibleElseThrow(fileUploadExercise, studentParticipation);
 
         // load submission with results either by resultId or by correctionRound
         if (resultId != null) {
@@ -279,7 +280,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Load the course roles with the user so the authorization check below resolves in memory instead of issuing its own EXISTS query
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, fileUploadExercise, user);
 
         // Check if tutors can start assessing the students submission
@@ -337,7 +339,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
         var accessRights = getAccessRights(fileUploadExercise, user);
 

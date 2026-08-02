@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -26,8 +27,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * @param results                the list of results/assessments for this submission
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boolean exampleSubmission, ZonedDateTime submissionDate, Long durationInMinutes,
-        String submissionExerciseType, String filePath, FileUploadParticipationDTO participation, List<FileUploadResultDTO> results) {
+public record FileUploadSubmissionDTO(Long id, @Nullable Boolean submitted, @Nullable SubmissionType type, @Nullable Boolean exampleSubmission,
+        @Nullable ZonedDateTime submissionDate, @Nullable Long durationInMinutes, String submissionExerciseType, @Nullable String filePath,
+        @Nullable FileUploadParticipationDTO participation, @Nullable List<@Nullable FileUploadResultDTO> results) {
 
     /**
      * Factory method to map a {@link FileUploadSubmission} to a DTO after a successful submission.
@@ -36,7 +38,7 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * @param isOwner    whether the current user owns the participation
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadSubmissionDTO ofAfterSubmit(FileUploadSubmission submission, Boolean isOwner) {
+    public static @Nullable FileUploadSubmissionDTO ofAfterSubmit(@Nullable FileUploadSubmission submission, @Nullable Boolean isOwner) {
         return of(submission, true, false, true, isOwner, null, null, null);
     }
 
@@ -46,7 +48,7 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * @param submission the file upload submission entity to map
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadSubmissionDTO ofForList(FileUploadSubmission submission) {
+    public static @Nullable FileUploadSubmissionDTO ofForList(@Nullable FileUploadSubmission submission) {
         return of(submission, true, false, true, null, null, null, null);
     }
 
@@ -59,7 +61,8 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * @param isAtLeastInstructor whether the current user has at least instructor privileges for the exercise
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadSubmissionDTO ofForAssessment(FileUploadSubmission submission, Boolean isAtLeastTutor, Boolean isAtLeastEditor, Boolean isAtLeastInstructor) {
+    public static @Nullable FileUploadSubmissionDTO ofForAssessment(@Nullable FileUploadSubmission submission, @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor,
+            @Nullable Boolean isAtLeastInstructor) {
         return of(submission, true, true, true, null, isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor);
     }
 
@@ -73,8 +76,8 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * @param isAtLeastInstructor whether the current user has at least instructor privileges for the exercise
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadSubmissionDTO ofForEditor(FileUploadSubmission submission, Boolean isOwner, Boolean isAtLeastTutor, Boolean isAtLeastEditor,
-            Boolean isAtLeastInstructor) {
+    public static @Nullable FileUploadSubmissionDTO ofForEditor(@Nullable FileUploadSubmission submission, @Nullable Boolean isOwner, @Nullable Boolean isAtLeastTutor,
+            @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor) {
         return of(submission, true, true, true, isOwner, isAtLeastTutor, isAtLeastEditor, isAtLeastInstructor);
     }
 
@@ -84,7 +87,7 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * @param submission the file upload submission entity to map
      * @return the mapped DTO, or null if the input was null
      */
-    static FileUploadSubmissionDTO ofForTopLevelResult(FileUploadSubmission submission) {
+    static @Nullable FileUploadSubmissionDTO ofForTopLevelResult(@Nullable FileUploadSubmission submission) {
         return of(submission, true, false, false, null, null, null, null);
     }
 
@@ -101,8 +104,8 @@ public record FileUploadSubmissionDTO(Long id, Boolean submitted, SubmissionType
      * @param isAtLeastInstructor  whether the current user has at least instructor privileges for the exercise
      * @return the mapped DTO, or null if the input was null
      */
-    private static FileUploadSubmissionDTO of(FileUploadSubmission submission, boolean includeParticipation, boolean includeExercise, boolean includeResults, Boolean isOwner,
-            Boolean isAtLeastTutor, Boolean isAtLeastEditor, Boolean isAtLeastInstructor) {
+    private static @Nullable FileUploadSubmissionDTO of(@Nullable FileUploadSubmission submission, boolean includeParticipation, boolean includeExercise, boolean includeResults,
+            @Nullable Boolean isOwner, @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor, @Nullable Boolean isAtLeastInstructor) {
         if (submission == null) {
             return null;
         }
