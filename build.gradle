@@ -379,9 +379,9 @@ dependencies {
     implementation "io.micrometer:micrometer-commons"
     implementation "io.micrometer:micrometer-observation"
 
-    // required for exposing LLM traces to Langfuse (version managed by Spring Boot BOM)
-    implementation "io.micrometer:micrometer-tracing-bridge-otel"
-    // OpenTelemetry version managed by the micrometer-tracing BOM
+    // Micrometer-to-OpenTelemetry tracing and OTLP export (version managed by Spring Boot BOM)
+    implementation "org.springframework.boot:spring-boot-starter-opentelemetry:${spring_boot_version}"
+    // Used directly by the Langfuse-only exporter below.
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus needs protobuf-java transitively; declare it directly to force the latest version (avoids CVEs).

@@ -106,7 +106,7 @@ public class HyperionConsistencyCheckService {
         }
         var usage = response.getMetadata().getUsage();
         return llmTokenUsageService.buildLLMRequest(response.getMetadata().getModel(), usage.getPromptTokens() != null ? usage.getPromptTokens() : 0,
-                usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, pipelineId);
+                usage.getCompletionTokens() != null ? usage.getCompletionTokens() : 0, pipelineId, response.getMetadata().getId(), usage.getCacheReadInputTokens());
     }
 
     /**
@@ -192,7 +192,10 @@ public class HyperionConsistencyCheckService {
 
         long totalPromptTokens = validRequests.stream().mapToLong(LLMRequest::numInputTokens).sum();
         long totalCompletionTokens = validRequests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
-        double promptCost = validRequests.stream().mapToDouble(r -> r.numInputTokens() * r.costPerMillionInputToken() / 1_000_000.0).sum();
+        double promptCost = validRequests.stream().mapToDouble(r -> {
+            long cachedTokens = Math.min(r.numInputTokens(), r.numCachedInputTokens() == null ? 0 : r.numCachedInputTokens());
+            return (r.numInputTokens() - cachedTokens) * r.costPerMillionInputToken() / 1_000_000.0 + cachedTokens * r.costPerMillionCachedInputToken() / 1_000_000.0;
+        }).sum();
         double completionCost = validRequests.stream().mapToDouble(r -> r.numOutputTokens() * r.costPerMillionOutputToken() / 1_000_000.0).sum();
 
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);

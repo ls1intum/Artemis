@@ -63,7 +63,8 @@ class CriticPromptContractTest {
                         "normalize the candidate's claimed cases into public traces", "smallest behaviorally equivalent implementation independently",
                         "unsupportedChoices, unobservableRequirements, and redundantDistinctions are all empty", "\"admissible\":false",
                         "expects a concept to instantiate a qualitative domain", "Do not flag those choices merely because the brief left them open",
-                        "may describe one viable implementation", "does not constrain all", "normative field", "not redundant concept distinctions"),
+                        "may describe one viable implementation", "does not constrain all", "normative field", "not redundant concept distinctions", "not an admission finding",
+                        "non-graded pedagogical objective", "non-normative", "must, only, required, prohibited, or never"),
 
                 // Specification review: the pre-freeze brief-to-spec audit.
                 rows(SPECIFICATION_REVIEW, "Design ownership table", "template supplies a type marked `student-creates`", "correct table does not cancel contradictory prose",

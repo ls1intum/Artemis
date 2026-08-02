@@ -251,7 +251,17 @@ class RepairRoundSchedulerTest {
                     finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "weak")));
 
             assertThat(RepairRoundScheduler.reasonForUnschedulableReport(partialReview)).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
-            assertThat(RepairRoundScheduler.hasReviewUnavailableFinding(partialReview)).isTrue();
+            assertThat(RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(partialReview)).isTrue();
+            assertThat(RepairRoundScheduler.hasInstrumentUnavailableFinding(partialReview)).isTrue();
+        }
+
+        @Test
+        void unavailableExecutableEvidenceBlocksConvergenceWithoutMasqueradingAsAPrimaryReviewFailure() {
+            SpecFidelityReport executableEvidence = SpecFidelityReport.executableEvidenceUnavailable("witness adjudication did not complete");
+
+            assertThat(RepairRoundScheduler.reasonForUnschedulableReport(executableEvidence)).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+            assertThat(RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(executableEvidence)).isFalse();
+            assertThat(RepairRoundScheduler.hasInstrumentUnavailableFinding(executableEvidence)).isTrue();
         }
     }
 
@@ -440,6 +450,45 @@ class RepairRoundSchedulerTest {
             // The point of the counts: "3 issues" alone cannot tell a stuck repair loop from a productive one.
             assertThat(RepairRoundScheduler.roundMessage(round(2, 1, 4, 2)))
                     .isEqualTo("Quality review round 2: 3 issues — 1 still open from the previous round, 4 resolved, 2 new.");
+        }
+    }
+
+    @Nested
+    class RepairProgress {
+
+        @Test
+        void requiresARepairToRemoveABlockerWithoutAddingAnother() {
+            SpecFidelityReport first = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "contradictory boundary"),
+                    finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "missing starter guidance")));
+            SpecFidelityReport improved = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "missing starter guidance")));
+            SpecFidelityReport renamed = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "missing starter guidance"),
+                    finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "different contradiction")));
+
+            assertThat(RepairRoundScheduler.repairImproved(first, improved)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(first, first)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, renamed)).isFalse();
+        }
+
+        @Test
+        void ignoresAdvisoriesAndUnavailableInstrumentsWhenJudgingTheCandidate() {
+            SpecFidelityReport first = report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+            SpecFidelityReport current = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "add an example"),
+                    SpecFidelityReport.executableEvidenceUnavailable("probe failed").findings().getFirst()));
+
+            assertThat(RepairRoundScheduler.repairImproved(first, current)).isTrue();
+        }
+
+        @Test
+        void rejectsARepairThatIntroducesTheFirstCandidateBlocker() {
+            assertThat(RepairRoundScheduler.repairImproved(SpecFidelityReport.empty(), report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION))).isFalse();
+        }
+
+        @Test
+        void rejectsARepairThatTradesARepairableBlockerForAnUnschedulableOne() {
+            SpecFidelityReport first = report(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
+            SpecFidelityReport current = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
+
+            assertThat(RepairRoundScheduler.repairImproved(first, current)).isFalse();
         }
     }
 }

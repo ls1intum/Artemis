@@ -304,6 +304,7 @@
         },
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
-        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "generationCapacityUnavailable": "Derzeit ist kein Build-Agent für die Aufgabengenerierung verfügbar. Bitte versuche es später erneut oder bitte deine Administration, Sandbox-Kapazität auf einem Build-Agent freizugeben."
     }
 }

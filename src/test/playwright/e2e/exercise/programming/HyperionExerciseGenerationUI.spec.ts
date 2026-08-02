@@ -181,7 +181,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             expect(draft.draftProblemStatement).toContain('# Temperature Alert Classification');
             await expectProblemStatementTextThroughUi(page, 'Create a small Java program that classifies temperature readings.');
             await expect(page.locator('#field_title')).toHaveValue('Temperature Alert Classification');
-            await expect(page.locator('#field_packageName')).toHaveValue('temperaturealertclassification');
+            await expect(page.locator('#field_packageName')).toHaveValue('de.tum.cit.aet.temperaturealert');
             await expect(page.getByText('Problem statement has been successfully generated.')).toBeVisible();
             const setupResponsePromise = page.waitForResponse(
                 (response) => response.request().method() === 'POST' && response.url().includes('/api/programming/programming-exercises/setup?emptyRepositories=true'),
@@ -195,20 +195,19 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             exercise = await readResponseJson<ProgrammingExercise>(setupResponse);
             expect(exercise.id).toBeDefined();
             expect(exercise.title).toBe('Temperature Alert Classification');
-            expect(exercise.packageName).toBe('temperaturealertclassification');
+            expect(exercise.packageName).toBe('de.tum.cit.aet.temperaturealert');
             await expect(page).toHaveURL(new RegExp(`/programming-exercises/${exercise.id}/code-editor/TEMPLATE/`));
             const startResponse = await startResponsePromise;
             expect(startResponse.status()).toBe(202);
             const { jobId } = await readResponseJson<{ jobId: string }>(startResponse);
             await expectRunningGenerationStatus(page, exercise.id!, jobId, 'GENERATE');
             await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
-            await expectSuccessfulGenerationStatus(page, exercise.id!, jobId, 'GENERATE', 3);
-            await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Saved to exercise');
+            await expectSuccessfulGenerationStatus(page, exercise.id!, jobId, 'GENERATE', 3, 'NEEDS_REVIEW');
             await expectExerciseProblemStatement(page, exercise.id!, 'TemperatureClassifier.classify');
             const solution = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise.id}/solution-files-content?omitBinaries=true`);
-            expect(solution['src/temperaturealertclassification/TemperatureClassifier.java']).toContain('labels.add');
+            expect(solution['src/de/tum/cit/aet/temperaturealert/TemperatureClassifier.java']).toContain('labels.add');
             const template = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise.id}/template-files-content?omitBinaries=true`);
-            expect(template['src/temperaturealertclassification/TemperatureClassifier.java']).toContain('throw new UnsupportedOperationException("Not implemented")');
+            expect(template['src/de/tum/cit/aet/temperaturealert/TemperatureClassifier.java']).toContain('throw new UnsupportedOperationException("Not implemented")');
             await page.reload();
             await openHyperionTab(page);
             await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Saved to exercise');

@@ -13,10 +13,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 
@@ -114,5 +116,29 @@ class ExerciseGenerationDtoTest {
         JsonNode withSpecDocument = mapper.readTree(
                 mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, null, List.of(), List.of(), true, null, null, true, false, "## Rules\n- R1: computes")));
         assertThat(withSpecDocument.get("specDocument").asText()).isEqualTo("## Rules\n- R1: computes");
+    }
+
+    @Test
+    void statusSerializesCanonicalNestedUsageAndCompleteness() throws Exception {
+        ExerciseGenerationUsageDTO usage = new ExerciseGenerationUsageDTO(2, 3, 17, 4, 100, 50, 40, true, 0.25, false, List.of("model-a", "model-b"),
+                List.of("response-a", "response-b"), true);
+        JsonNode json = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null,
+                true, false, null, usage, ExerciseGenerationAccountingState.COMPLETE, null)));
+
+        assertThat(json.get("accountingState").asText()).isEqualTo("COMPLETE");
+        assertThat(json.get("usage").get("modelCalls").asLong()).isEqualTo(2);
+        assertThat(json.get("usage").get("toolCalls").asLong()).isEqualTo(3);
+        // agentTurns and attempts separate a few long attempts from many short ones; modelCalls alone cannot.
+        assertThat(json.get("usage").get("agentTurns").asLong()).isEqualTo(17);
+        assertThat(json.get("usage").get("attempts").asLong()).isEqualTo(4);
+        assertThat(json.get("usage").get("inputTokens").asLong()).isEqualTo(100);
+        assertThat(json.get("usage").get("outputTokens").asLong()).isEqualTo(50);
+        assertThat(json.get("usage").get("cachedInputTokens").asLong()).isEqualTo(40);
+        assertThat(json.get("usage").get("cachedInputTokensComplete").asBoolean()).isTrue();
+        assertThat(json.get("usage").get("estimatedCostEur").asDouble()).isEqualTo(0.25);
+        assertThat(json.get("usage").get("estimatedCostEurComplete").asBoolean()).isFalse();
+        assertThat(json.get("usage").get("providerRequestIds")).hasSize(2);
+        assertThat(json.get("usage").get("providerRequestIdsComplete").asBoolean()).isTrue();
+        assertThat(json.get("usage").get("models")).hasSize(2);
     }
 }

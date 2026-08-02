@@ -69,7 +69,7 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
         return Optional.empty();
     }
 
-    private static @Nullable RepairSurface surfaceFor(SpecFidelityReport.Kind kind) {
+    static @Nullable RepairSurface surfaceFor(SpecFidelityReport.Kind kind) {
         return switch (kind) {
             // A validated witness is a test to adopt, so it belongs to the oracle surface. Being advisory it never triggers a repair by itself (the loop stops when nothing
             // blocks); it rides along with an oracle repair that is already happening, and otherwise reaches the instructor as a review comment.
@@ -79,8 +79,8 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
                 RepairSurface.CONTRACT;
             // A technique mandate blocks autonomous publication but has no repair surface: no assertion distinguishes a recursive implementation from an iterative one with the
             // same results. Leaving it unscheduled saves the verified candidate for an instructor decision instead of burning rounds on source inspection or proxy metrics.
-            case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, UNENFORCEABLE_TECHNIQUE_RULE,
-                    SPECIFICATION_REVIEW_FINDING, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
+            case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, EXECUTABLE_EVIDENCE_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE,
+                    UNENFORCEABLE_TECHNIQUE_RULE, SPECIFICATION_REVIEW_FINDING, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
                 null;
         };
     }

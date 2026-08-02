@@ -97,6 +97,10 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
         REVIEW_UNAVAILABLE,
         /** The agent submitted the previously rejected candidate unchanged, so re-verifying it could only repeat the same verdict. */
         UNCHANGED_CANDIDATE_RESUBMITTED,
+        /** A semantic repair introduced a new blocker or failed to remove any existing blocker, so the previous reviewed checkpoint was retained. */
+        REPAIR_DID_NOT_IMPROVE,
+        /** Concept exploration completed, but no candidate satisfied the instructor brief and learning-fit review. */
+        NO_ADMISSIBLE_CONCEPT,
         /** The run was stopped cooperatively (instructor cancellation, lost job ownership, or an unclassified stop signal). */
         CANCELLED,
         /** The run exceeded its configured wall-clock budget. */

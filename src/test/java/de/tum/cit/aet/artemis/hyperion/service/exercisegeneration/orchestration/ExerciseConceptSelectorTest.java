@@ -11,15 +11,29 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 
 class ExerciseConceptSelectorTest {
@@ -112,5 +126,72 @@ class ExerciseConceptSelectorTest {
         assertThat(result.complete()).isFalse();
         assertThat(result.accepted()).isFalse();
         assertThat(result.feedback()).contains("did not contain exactly three complete candidates");
+    }
+
+    @Test
+    void conceptAdmissionRejection_stillReportsTheAgentTurnsItSpent() throws Exception {
+        // The gate-abandoned paths are the ones an administrator most needs to see, and this is the earliest of them: the run is rejected before any attempt loop starts, so
+        // nothing downstream ever produces an outcome carrying a turn count. Exercised through the real agent loop and the real usage accumulator so the whole push path — turn
+        // begins, sink records, usage DTO reports — is covered rather than any single link of it.
+        HazelcastInstance hazelcastInstance = Hazelcast
+                .newHazelcastInstance(new Config().setClusterName("hyperion-concept-turn-accounting-" + System.nanoTime()).setProperty("hazelcast.phone.home.enabled", "false"));
+        try {
+            hazelcastInstance.getConfig().getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+            GenerationJobReplayStore replayStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofHours(4));
+            long exerciseId = 900L;
+            String jobId = "concept-rejected";
+            hazelcastInstance.getMap("hyperion-exercise-generation-jobs").set(String.valueOf(exerciseId),
+                    new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now(), null, "node", null, true, null));
+            replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
+
+            ChatModel chatModel = mock(ChatModel.class);
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(THREE_CANDIDATES)))));
+            AgentLoopRunner realLoop = new AgentLoopRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), new NoOpProviderFailureCooldown());
+            SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+            // Every batch is rejected, so no concept is ever admitted and the run stops at the gate.
+            when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
+                    .thenReturn(new SpecFidelityCriticService.ConceptSelectionReview(true, null, List.of("No candidate passed.")));
+            ProviderUsageSink usageSink = new ProviderUsageSink() {
+
+                @Override
+                public void accept(ChatResponse response) {
+                }
+
+                @Override
+                public void recordToolCalls(long count) {
+                }
+
+                @Override
+                public void recordTurn() {
+                    replayStore.recordAgentTurn(jobId);
+                }
+
+                @Override
+                public void markUncertain() {
+                }
+            };
+
+            ExerciseConceptSelector.ConceptSelection selection = new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", () -> false, usageSink, null);
+
+            assertThat(selection.accepted()).isFalse();
+            ExerciseGenerationUsageDTO usage = replayStore.usageSnapshot(jobId).usage();
+            assertThat(usage).isNotNull();
+            assertThat(usage.agentTurns()).as("a run abandoned at the concept gate must still report the turns it spent").isEqualTo(selection.turns()).isPositive();
+        }
+        finally {
+            hazelcastInstance.shutdown();
+        }
+    }
+
+    private static final class NoOpProviderFailureCooldown implements ProviderFailureCooldown {
+
+        @Override
+        public Instant cooldownUntil(String key) {
+            return null;
+        }
+
+        @Override
+        public void startCooldown(String key, Instant until) {
+        }
     }
 }

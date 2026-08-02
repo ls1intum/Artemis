@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
-/**
- * Outcome of an agent loop run: how it ended, how many model turns it took, and the agent's final message (which may be empty).
- */
+/** Outcome of one agent-loop session. {@code turns} is session-local budget state, not the run-level telemetry count. */
 public record AgentLoopResult(Status status, int turns, String finalMessage) {
+
+    public static AgentLoopResult outsideSession(Status status, String finalMessage) {
+        return new AgentLoopResult(status, 0, finalMessage);
+    }
 
     public enum Status {
         /** The agent stopped on its own (no further tool calls) within the budget. */

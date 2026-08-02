@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,6 +93,20 @@ class LLMTokenUsageServiceTest {
 
         assertThat(request.costPerMillionInputToken()).isEqualTo(0.0f);
         assertThat(request.costPerMillionOutputToken()).isEqualTo(0.0f);
+        assertThat(request.costEstimateComplete()).isFalse();
+    }
+
+    @Test
+    void explicitZeroRatesRepresentKnownFreeUsage() {
+        LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties free = new LLMModelCostConfiguration.ModelCostProperties();
+        free.setInputCostPerMillionEur(0f);
+        free.setCachedInputCostPerMillionEur(0f);
+        free.setOutputCostPerMillionEur(0f);
+        configuration.setModelCosts(Map.of("local-model", free));
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, configuration);
+
+        assertThat(service.buildLLMRequest("local-model", 10, 5, "PIPE").costEstimateComplete()).isTrue();
     }
 
     @Test
@@ -133,14 +149,57 @@ class LLMTokenUsageServiceTest {
         when(usage.getPromptTokens()).thenReturn(10);
         when(usage.getCompletionTokens()).thenReturn(5);
         when(llmTokenUsageTraceRepository.save(any())).thenThrow(new IllegalStateException("database unavailable"));
+        @SuppressWarnings("unchecked")
+        Consumer<LLMRequest> observer = mock(Consumer.class);
 
-        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder)).isFalse();
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder, observer)).isFalse();
+        verify(observer, never()).accept(any());
+    }
+
+    @Test
+    void trackChatResponseTokenUsage_whenTransientObserverFails_reportsAnIncompleteAccountAfterPersistence() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(metadata.getModel()).thenReturn("gpt-5-mini");
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(5);
+
+        boolean complete = llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder, request -> {
+            throw new IllegalStateException("transient observer unavailable");
+        });
+
+        assertThat(complete).isFalse();
+        verify(llmTokenUsageTraceRepository).save(any());
+    }
+
+    @Test
+    void trackChatResponseTokenUsageExposesProviderMetadataToTransientObserver() {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(metadata.getModel()).thenReturn("gpt-5-mini");
+        when(metadata.getId()).thenReturn("provider-id");
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(5);
+        when(usage.getCacheReadInputTokens()).thenReturn(4L);
+        AtomicReference<LLMRequest> observed = new AtomicReference<>();
+
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.HYPERION, "PIPE", builder -> builder, observed::set)).isTrue();
+        assertThat(observed.get().providerRequestId()).isEqualTo("provider-id");
+        assertThat(observed.get().numCachedInputTokens()).isEqualTo(4L);
+        assertThat(observed.get().costEstimateComplete()).isTrue();
     }
 
     private static LLMModelCostConfiguration createCostConfiguration() {
         LLMModelCostConfiguration costConfiguration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties modelCostProperties = new LLMModelCostConfiguration.ModelCostProperties();
         modelCostProperties.setInputCostPerMillionEur(0.23f);
+        modelCostProperties.setCachedInputCostPerMillionEur(0.05f);
         modelCostProperties.setOutputCostPerMillionEur(1.84f);
         costConfiguration.setModelCosts(Map.of("gpt-5-mini", modelCostProperties));
         return costConfiguration;

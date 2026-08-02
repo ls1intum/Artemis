@@ -18,17 +18,10 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
-/**
- * Guards {@link LLMModelCostConfiguration}: baseline Atlas costs are seeded as code defaults (so they survive a
- * managed deployment that overrides the map), configured entries override those defaults, and dotted map keys
- * added to YAML must be bracket-quoted (otherwise relaxed binding parses the dot as a nested path).
- */
+/** Guards operator-supplied model pricing and normalized managed-deployment keys. */
 class LLMModelCostConfigurationBindingTest {
-
-    private static final String PRODUCTION_CONFIG = "src/main/resources/config/application-artemis.yml";
 
     private LLMModelCostConfiguration bind(Resource resource) throws IOException {
         assertThat(resource.exists()).as("config resource must be resolvable").isTrue();
@@ -54,36 +47,6 @@ class LLMModelCostConfigurationBindingTest {
     }
 
     @Test
-    void seedsAtlasModelCostDefaults() {
-        var config = new LLMModelCostConfiguration();
-        config.applyDefaultModelCosts();
-        var modelCosts = config.getModelCosts();
-
-        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionEur()).isCloseTo(13.80f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionEur()).isCloseTo(0.69f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4-mini").getOutputCostPerMillionEur()).isCloseTo(4.14f, within(1e-4f));
-    }
-
-    @Test
-    void configuredCostsOverrideDefaults() throws IOException {
-        var config = bindYaml("""
-                artemis:
-                  llm:
-                    model-costs:
-                      "[gpt-5.4]":
-                        input-cost-per-million-eur: 9.99
-                        output-cost-per-million-eur: 11.11
-                """);
-        config.applyDefaultModelCosts();
-        var modelCosts = config.getModelCosts();
-
-        assertThat(modelCosts.get("gpt-5.4").getInputCostPerMillionEur()).isCloseTo(9.99f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4").getOutputCostPerMillionEur()).isCloseTo(11.11f, within(1e-4f));
-        assertThat(modelCosts.get("gpt-5.4-mini").getInputCostPerMillionEur()).isCloseTo(0.69f, within(1e-4f));
-    }
-
-    @Test
     void dottedKeysRequireBracketQuoting() throws IOException {
         var modelCosts = bindYaml("""
                 artemis:
@@ -99,85 +62,47 @@ class LLMModelCostConfigurationBindingTest {
     }
 
     @Test
-    void defaultsAreNotSeededWhenConfiguredUnderStrippedKey() throws IOException {
-        // Docker env-var config produces the stripped key "gpt54" for the model "gpt-5.4". The "gpt-5.4"
-        // default must not also be seeded, otherwise both keys would strip to "gpt54" and collide.
-        var config = bindYaml("""
-                artemis:
-                  llm:
-                    model-costs:
-                      gpt54:
-                        input-cost-per-million-eur: 9.99
-                        output-cost-per-million-eur: 11.11
-                """);
-        config.applyDefaultModelCosts();
-        var modelCosts = config.getModelCosts();
-
-        assertThat(modelCosts).containsKey("gpt54");
-        assertThat(modelCosts).doesNotContainKey("gpt-5.4");
-        assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(9.99f, within(1e-4f));
-        // an unrelated default is still seeded
-        assertThat(modelCosts).containsKey("gpt-5.4-mini");
-    }
-
-    @Test
     void dottedModelBindsFromEnvironmentVariablesViaStrippedKey() {
         // This is the Docker path: env-var keys cannot contain '.' or '-', so the collection renders
         // "gpt-5.4" as ARTEMIS_LLM_MODELCOSTS_GPT54_*. Prove Spring binds that into model-costs[gpt54].
         var config = bindEnvironment(Map.of("ARTEMIS_LLM_MODELCOSTS_GPT54_INPUTCOSTPERMILLIONEUR", "2.30", "ARTEMIS_LLM_MODELCOSTS_GPT54_OUTPUTCOSTPERMILLIONEUR", "13.80",
-                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_INPUTCOSTPERMILLIONEUR", "0.23", "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_OUTPUTCOSTPERMILLIONEUR", "1.84"));
+                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_INPUTCOSTPERMILLIONEUR", "0.23", "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_OUTPUTCOSTPERMILLIONEUR", "1.84",
+                "ARTEMIS_LLM_MODELCOSTS_GPT5MINI_CACHEDINPUTCOSTPERMILLIONEUR", "0.023"));
         var modelCosts = config.getModelCosts();
 
         assertThat(modelCosts).containsKey("gpt54");
         assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
         assertThat(modelCosts.get("gpt54").getOutputCostPerMillionEur()).isCloseTo(13.80f, within(1e-4f));
         assertThat(modelCosts.get("gpt5mini").getInputCostPerMillionEur()).isCloseTo(0.23f, within(1e-4f));
-    }
-
-    @Test
-    void dottedModelFromEnvironmentSurvivesDefaultSeeding() {
-        // The env key "gpt54" and the seeded default "gpt-5.4" both strip to "gpt54"; seeding must skip
-        // the default so the two don't later collide at lookup-map construction. Guards the Docker boot path.
-        var config = bindEnvironment(Map.of("ARTEMIS_LLM_MODELCOSTS_GPT54_INPUTCOSTPERMILLIONEUR", "2.30", "ARTEMIS_LLM_MODELCOSTS_GPT54_OUTPUTCOSTPERMILLIONEUR", "13.80"));
-        config.applyDefaultModelCosts();
-        var modelCosts = config.getModelCosts();
-
-        assertThat(modelCosts).containsKey("gpt54");
-        assertThat(modelCosts).doesNotContainKey("gpt-5.4");
-        assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
-        // unrelated default still present
-        assertThat(modelCosts).containsKey("gpt-5.4-mini");
+        assertThat(modelCosts.get("gpt5mini").getCachedInputCostPerMillionEur()).isCloseTo(0.023f, within(1e-4f));
     }
 
     @Test
     void rejectsModelCostKeyThatStripsToEmpty() {
-        // A punctuation-only key strips to "" - the same form a missing model name takes - so it must be
-        // rejected before it can become the silent fallback price for model-less requests.
         var config = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties cost = new LLMModelCostConfiguration.ModelCostProperties();
         cost.setInputCostPerMillionEur(1.0f);
         cost.setOutputCostPerMillionEur(2.0f);
         config.setModelCosts(new HashMap<>(Map.of("...", cost)));
 
-        assertThatThrownBy(config::applyDefaultModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("alphanumeric");
+        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("alphanumeric");
     }
 
     @Test
-    void productionConfigBindsWithoutActiveModelCostsAndSeedsCodeDefaults() throws IOException {
-        // The bundled config must not ship an active model-costs entry (a literal key there would collide
-        // with the same model supplied via env vars); the baselines come from the code defaults instead.
-        var config = bind(new FileSystemResource(PRODUCTION_CONFIG));
-        assertThat(config.getModelCosts()).isEmpty();
+    void rejectsNegativeAndNonFinitePrices() {
+        var config = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties cost = new LLMModelCostConfiguration.ModelCostProperties();
+        cost.setInputCostPerMillionEur(-0.01f);
+        cost.setOutputCostPerMillionEur(Float.NaN);
+        config.setModelCosts(Map.of("model", cost));
 
-        config.applyDefaultModelCosts();
-        assertThat(config.getModelCosts()).containsKeys("gpt-5-mini", "gpt-5.4", "gpt-5.4-mini");
+        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid input price");
+        cost.setInputCostPerMillionEur(1.0f);
+        assertThatThrownBy(config::validateModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("invalid output price");
     }
 
     @Test
-    void productionEnvironmentDeploymentBootsWithoutKeyCollision() {
-        // Reproduces the full Docker scenario: the bundled config seeds nothing active, the collection
-        // supplies the whole model set via env vars (stripped keys), and code defaults are applied on top.
-        // Every stripped key must stay unique so lookup-map construction in LLMTokenUsageService cannot throw.
+    void productionEnvironmentPricesHaveUniqueNormalizedKeys() {
         Map<String, Object> environment = new HashMap<>();
         putEnvCost(environment, "GPT5MINI", "0.23", "1.84");
         putEnvCost(environment, "GPT5NANO", "0.046", "0.37");
@@ -190,7 +115,6 @@ class LLMModelCostConfigurationBindingTest {
         putEnvCost(environment, "GPT55", "4.60", "27.60");
 
         var config = bindEnvironment(environment);
-        config.applyDefaultModelCosts();
         var strippedKeys = config.getModelCosts().keySet().stream().map(LLMModelCostConfiguration::stripToAlphanumeric).toList();
 
         assertThat(strippedKeys).doesNotHaveDuplicates();

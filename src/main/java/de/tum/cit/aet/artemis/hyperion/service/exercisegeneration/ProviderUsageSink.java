@@ -4,13 +4,20 @@ import java.util.function.Consumer;
 
 import org.springframework.ai.chat.model.ChatResponse;
 
-/** Records successful provider usage and marks responses whose usage could not be accounted for. */
+/** Records provider usage and marks any admitted provider attempt whose usage cannot be proved. */
 public interface ProviderUsageSink extends Consumer<ChatResponse> {
 
-    /**
-     * Marks token accounting as failed for a response that WAS received but whose usage could not be recorded
-     * (metering hole on real spend). Thrown provider calls must not report here: they yield no response to meter,
-     * their spend is bounded by the retry policy, and the caller's own error handling reports the failure.
-     */
+    /** Records tool calls requested by the model, whether or not execution succeeds. */
+    void recordToolCalls(long count);
+
+    /** Records a turn when it starts, including turns whose session produces no result. */
+    default void recordTurn() {
+    }
+
+    /** Records an authoring attempt when it starts. */
+    default void recordAttempt() {
+    }
+
+    /** Marks accounting incomplete after an admitted provider call whose usage cannot be proved. */
     void markUncertain();
 }

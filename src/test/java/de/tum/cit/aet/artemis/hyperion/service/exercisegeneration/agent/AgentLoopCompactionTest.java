@@ -63,20 +63,20 @@ class AgentLoopCompactionTest {
     @Test
     void estimateMessageTokens_addsStructuralOverheadOnTopOfJtokkit() {
         // 30 repeated 'x' chars tokenize to 5 tokens under jtokkit's o200k_base encoding, plus the flat per-message overhead (4).
-        assertThat(AgentLoopRunner.estimateMessageTokens(new UserMessage("x".repeat(30)))).isEqualTo(5 + 4);
+        assertThat(AgentConversationContext.estimateMessageTokens(new UserMessage("x".repeat(30)))).isEqualTo(5 + 4);
         // A tool result: per-message overhead (4) + per-result overhead (8) + the jtokkit count of the payload (5).
-        assertThat(AgentLoopRunner.estimateMessageTokens(toolResult("c", "bash", "x".repeat(30)))).isEqualTo(4 + 8 + 5);
+        assertThat(AgentConversationContext.estimateMessageTokens(toolResult("c", "bash", "x".repeat(30)))).isEqualTo(4 + 8 + 5);
     }
 
     @Test
     void estimateContextTokens_anchorsToRealUsageAndAddsOnlyTheDelta() {
         List<Message> conversation = conversationWithTurns(2, 30); // 2 turns appended after a hypothetical earlier call
         // With real usage (5000) reported at conversation size 2, only messages [2..] are estimated and added on top.
-        long delta = AgentLoopRunner.estimateMessageTokens(conversation.get(2)) + AgentLoopRunner.estimateMessageTokens(conversation.get(3))
-                + AgentLoopRunner.estimateMessageTokens(conversation.get(4)) + AgentLoopRunner.estimateMessageTokens(conversation.get(5));
-        assertThat(AgentLoopRunner.estimateContextTokens(conversation, 5000, 2)).isEqualTo(5000 + delta);
+        long delta = AgentConversationContext.estimateMessageTokens(conversation.get(2)) + AgentConversationContext.estimateMessageTokens(conversation.get(3))
+                + AgentConversationContext.estimateMessageTokens(conversation.get(4)) + AgentConversationContext.estimateMessageTokens(conversation.get(5));
+        assertThat(AgentConversationContext.estimateContextTokens(conversation, 5000, 2)).isEqualTo(5000 + delta);
         // Without usage yet (0), the whole conversation is estimated from scratch.
-        assertThat(AgentLoopRunner.estimateContextTokens(conversation, 0, 2)).isEqualTo(AgentLoopRunner.estimateContextTokens(conversation, 0, 0));
+        assertThat(AgentConversationContext.estimateContextTokens(conversation, 0, 2)).isEqualTo(AgentConversationContext.estimateContextTokens(conversation, 0, 0));
     }
 
     @Test
@@ -87,7 +87,7 @@ class AgentLoopCompactionTest {
         conversation.add(assistantToolCall("c2", "read_file", "{}"));
         conversation.add(toolResult("c2", "read_file", "short output"));
 
-        AgentLoopRunner.capToolResponses(conversation);
+        AgentConversationContext.capToolResponses(conversation);
 
         String capped = ((ToolResponseMessage) conversation.get(1)).getResponses().getFirst().responseData();
         assertThat(capped).hasSizeLessThan(40_000).startsWith("HEAD").endsWith("TAIL").contains("characters elided");
@@ -99,15 +99,15 @@ class AgentLoopCompactionTest {
     @Test
     void assertValidPairing_acceptsValidAndRejectsOrphans() {
         List<Message> valid = List.of(new SystemMessage("s"), new UserMessage("u"), assistantToolCall("c", "bash", "{}"), toolResult("c", "bash", "ok"));
-        assertThatNoException().isThrownBy(() -> AgentLoopRunner.assertValidPairing(valid));
+        assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(valid));
 
         // A tool result with no preceding assistant tool-call is an orphan.
         List<Message> orphanResult = List.of(new SystemMessage("s"), new UserMessage("u"), toolResult("c", "bash", "ok"));
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> AgentLoopRunner.assertValidPairing(orphanResult));
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> AgentConversationContext.assertValidPairing(orphanResult));
 
         // An assistant tool-call with no following tool result is also invalid.
         List<Message> unanswered = List.of(new SystemMessage("s"), new UserMessage("u"), assistantToolCall("c", "bash", "{}"), new UserMessage("nudge"));
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> AgentLoopRunner.assertValidPairing(unanswered));
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> AgentConversationContext.assertValidPairing(unanswered));
     }
 
     @Test
@@ -132,7 +132,7 @@ class AgentLoopCompactionTest {
         // The kept tail (everything from the cut to the end) must fit under the budget — keepRecent is a target, the real floor is "the tail must fit".
         long tailTokens = 0;
         for (int i = cut; i < conversation.size(); i++) {
-            tailTokens += AgentLoopRunner.estimateMessageTokens(conversation.get(i));
+            tailTokens += AgentConversationContext.estimateMessageTokens(conversation.get(i));
         }
         assertThat(tailTokens).isLessThanOrEqualTo(budget);
     }
@@ -177,7 +177,7 @@ class AgentLoopCompactionTest {
         // Compaction shrank the history, the kept tail begins at a turn start, and the result satisfies the pairing contract.
         assertThat(compacted).hasSizeLessThan(conversation.size());
         assertThat(compacted.get(3)).isInstanceOf(AssistantMessage.class);
-        assertThatNoException().isThrownBy(() -> AgentLoopRunner.assertValidPairing(compacted));
+        assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(compacted));
     }
 
     @Test
@@ -208,7 +208,7 @@ class AgentLoopCompactionTest {
 
         assertThat(compacted.get(2).getText()).contains("SESSION SUMMARY").contains("omitted to fit the context window");
         assertThat(compacted).hasSizeLessThan(conversation.size());
-        assertThatNoException().isThrownBy(() -> AgentLoopRunner.assertValidPairing(compacted));
+        assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(compacted));
     }
 
     @Test

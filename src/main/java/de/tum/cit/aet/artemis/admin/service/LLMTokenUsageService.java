@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -51,12 +52,13 @@ public class LLMTokenUsageService {
             LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
-        this.costs = costConfiguration.getModelCosts().entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
+        this.costs = costConfiguration.getModelCosts().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+                e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur(), e.getValue().getCachedInputCostPerMillionEur())));
         this.costsByStrippedKey = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(entry -> LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
                         entry -> new StrippedModelCost(entry.getKey(), LLMModelCostConfiguration.stripToAlphanumeric(entry.getKey()),
-                                new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur())),
+                                new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur(),
+                                        entry.getValue().getCachedInputCostPerMillionEur())),
                         LLMTokenUsageService::throwOnStrippedCostCollision))
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
     }
@@ -71,19 +73,51 @@ public class LLMTokenUsageService {
      * @return LLMRequest with costs from configuration
      */
     public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
-        String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
-        String stripped = LLMModelCostConfiguration.stripToAlphanumeric(normalized);
-        ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.ZERO));
-        if (cost == ModelCost.ZERO && inputTokens + outputTokens > 0) {
-            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording zero cost. Known cost keys: {}", model, normalized,
-                    stripped, pipelineId, costs.keySet());
-        }
-        return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
+        return buildLLMRequest(model, inputTokens, outputTokens, pipelineId, null, null);
     }
 
-    private record ModelCost(float input, float output) {
+    /**
+     * Builds an LLM request with provider correlation and cache usage kept in memory while preserving the existing persistence schema.
+     *
+     * @param model             model identifier
+     * @param inputTokens       number of input tokens
+     * @param outputTokens      number of output tokens
+     * @param pipelineId        pipeline identifier
+     * @param providerRequestId provider response identifier, when available
+     * @param cachedInputTokens cache-read input tokens, when reported
+     * @return request with configured costs and transient provider metadata
+     */
+    public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId, @Nullable String providerRequestId, @Nullable Long cachedInputTokens) {
+        String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
+        String stripped = LLMModelCostConfiguration.stripToAlphanumeric(normalized);
+        ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.UNKNOWN));
+        if (cost.equals(ModelCost.UNKNOWN) && inputTokens + outputTokens > 0) {
+            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording an incomplete zero estimate. Known cost keys: {}", model,
+                    normalized, stripped, pipelineId, costs.keySet());
+        }
+        boolean zeroTokenRequest = inputTokens + outputTokens == 0;
+        boolean cachePriceResolved = cachedInputTokens != null ? cachedInputTokens == 0 || cost.cachedInput() != null
+                : cost.input() != null && cost.cachedInput() != null && cost.input().equals(cost.cachedInput());
+        boolean complete = zeroTokenRequest || (inputTokens == 0 || cost.input() != null && cachePriceResolved) && (outputTokens == 0 || cost.output() != null);
+        return new LLMRequest(model, inputTokens, cost.inputOrZero(), outputTokens, cost.outputOrZero(), pipelineId, providerRequestId, cachedInputTokens, cost.cachedInputOrZero(),
+                complete);
+    }
 
-        static final ModelCost ZERO = new ModelCost(0f, 0f);
+    private record ModelCost(@Nullable Float input, @Nullable Float output, @Nullable Float cachedInput) {
+
+        static final ModelCost UNKNOWN = new ModelCost(null, null, null);
+
+        float inputOrZero() {
+            return input == null ? 0f : input;
+        }
+
+        float outputOrZero() {
+            return output == null ? 0f : output;
+        }
+
+        float cachedInputOrZero() {
+            return cachedInput == null ? 0f : cachedInput;
+        }
     }
 
     private record StrippedModelCost(String originalKey, String strippedKey, ModelCost cost) {
@@ -118,7 +152,6 @@ public class LLMTokenUsageService {
         builder.getCourseID().ifPresent(llmTokenUsageTrace::setCourseId);
         builder.getExerciseID().ifPresent(llmTokenUsageTrace::setExerciseId);
         builder.getUserID().ifPresent(llmTokenUsageTrace::setUserId);
-
         llmTokenUsageTrace.setLlmRequests(llmRequests.stream().map(LLMTokenUsageService::convertLLMRequestToLLMTokenUsageRequest)
                 .peek(llmTokenUsageRequest -> llmTokenUsageRequest.setTrace(llmTokenUsageTrace)).collect(Collectors.toSet()));
 
@@ -130,10 +163,20 @@ public class LLMTokenUsageService {
         llmTokenUsageRequest.setModel(llmRequest.model());
         llmTokenUsageRequest.setNumInputTokens(llmRequest.numInputTokens());
         llmTokenUsageRequest.setNumOutputTokens(llmRequest.numOutputTokens());
-        llmTokenUsageRequest.setCostPerMillionInputTokens(llmRequest.costPerMillionInputToken());
+        llmTokenUsageRequest.setCostPerMillionInputTokens(effectiveInputCost(llmRequest));
         llmTokenUsageRequest.setCostPerMillionOutputTokens(llmRequest.costPerMillionOutputToken());
         llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
         return llmTokenUsageRequest;
+    }
+
+    /** Stores the exact blended input cost in the existing schema without adding cache-specific database columns. */
+    private static float effectiveInputCost(LLMRequest request) {
+        if (request.numCachedInputTokens() == null || request.numInputTokens() == 0) {
+            return request.costPerMillionInputToken();
+        }
+        long cachedTokens = Math.min(request.numInputTokens(), request.numCachedInputTokens());
+        long uncachedTokens = request.numInputTokens() - cachedTokens;
+        return (uncachedTokens * request.costPerMillionInputToken() + cachedTokens * request.costPerMillionCachedInputToken()) / request.numInputTokens();
     }
 
     // TODO: this should ideally be done Async
@@ -170,18 +213,39 @@ public class LLMTokenUsageService {
      */
     public boolean trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
             Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
+        return trackChatResponseTokenUsage(chatResponse, serviceType, pipelineId, builderFunction, ignored -> {
+        });
+    }
+
+    /**
+     * Persists standard usage and exposes the richer in-memory record to transient observers such as the generation status replay.
+     *
+     * @param chatResponse      chat response containing usage metadata, may be null
+     * @param serviceType       LLM service type
+     * @param pipelineId        pipeline identifier
+     * @param builderFunction   configures the persisted trace
+     * @param recordedUsageSink receives the complete in-memory record after persistence
+     * @return {@code true} only when complete usage metadata was persisted and observed
+     */
+    public boolean trackChatResponseTokenUsage(@Nullable ChatResponse chatResponse, LLMServiceType serviceType, String pipelineId,
+            Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction, Consumer<LLMRequest> recordedUsageSink) {
         try {
             if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
                 return false;
             }
             ChatResponseMetadata metadata = chatResponse.getMetadata();
             Usage usage = metadata.getUsage();
-            if (usage.getPromptTokens() == null || usage.getCompletionTokens() == null) {
+            Integer promptTokens = usage.getPromptTokens();
+            Integer completionTokens = usage.getCompletionTokens();
+            Long cachedInputTokens = usage.getCacheReadInputTokens();
+            if (promptTokens == null || completionTokens == null || promptTokens < 0 || completionTokens < 0
+                    || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
                 return false;
             }
             String model = metadata.getModel() != null ? metadata.getModel() : "";
-            LLMRequest llmRequest = buildLLMRequest(model, usage.getPromptTokens(), usage.getCompletionTokens(), pipelineId);
+            LLMRequest llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
             saveLLMTokenUsage(List.of(llmRequest), serviceType, builderFunction);
+            recordedUsageSink.accept(llmRequest);
             return true;
         }
         catch (Exception e) {
@@ -262,5 +326,6 @@ public class LLMTokenUsageService {
         public Optional<Long> getUserID() {
             return userID;
         }
+
     }
 }

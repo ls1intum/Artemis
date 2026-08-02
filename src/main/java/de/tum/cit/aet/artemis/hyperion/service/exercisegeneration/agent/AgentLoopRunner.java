@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -21,19 +22,20 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.knuddels.jtokkit.api.EncodingType;
 
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -72,25 +74,6 @@ public class AgentLoopRunner {
 
     /** Target size of the verbatim recent tail kept across a compaction (everything older is summarized). */
     private static final int KEEP_RECENT_TOKENS = 20_000;
-
-    /**
-     * Pinned to {@code o200k_base}, the tokenizer of the GPT-4o/GPT-5-class models Hyperion is configured against ({@code gpt-5-mini} by default), rather than the library
-     * default {@code cl100k_base}, which belongs to the older GPT-4/3.5 families and would mis-size the context of every model actually used here — under-counting risks a
-     * provider-side context overflow, over-counting compacts a conversation that still fits. It counts message text only; the per-message structural overheads
-     * below (envelope, tool-call framing) are added on top because the estimator cannot see them.
-     */
-    private static final JTokkitTokenCountEstimator TEXT_TOKEN_ESTIMATOR = new JTokkitTokenCountEstimator(EncodingType.O200K_BASE);
-
-    private static final int MESSAGE_OVERHEAD_TOKENS = 4;
-
-    private static final int TOOLCALL_OVERHEAD_TOKENS = 8;
-
-    /**
-     * Hard cap on a single tool result kept in the live context; head and tail (where the signal lives) are kept and the middle is elided. Package-private because every tool
-     * that caps its own inline output must stay below it (see {@code SandboxAgentTools}), or that tool's "output was truncated" marker describes an elision this loop then
-     * silently redoes.
-     */
-    static final int MAX_TOOL_RESPONSE_CHARS = 12_000;
 
     /** Per-tool-result truncation applied when serializing older messages as input to the summarizer. */
     private static final int SUMMARY_INPUT_TRUNCATE_CHARS = 2_000;
@@ -142,6 +125,18 @@ public class AgentLoopRunner {
     @Nullable
     private final ChatModel chatModel;
 
+    /** The unwrapped provider bean, kept only so the checkpoint provider contract fingerprints the configured implementation rather than this loop's scrubbing decorator. */
+    @Nullable
+    private final ChatModel contractModel;
+
+    /**
+     * The options every request for this runner starts from: the effort profile's prebuilt provider options when the run selected one, and otherwise the configured
+     * {@link ChatModel}'s own options. Resolved once here so the model id, the reasoning effort, the output-token limit, and the checkpoint provider contract can never read from
+     * different sources.
+     */
+    @Nullable
+    private final ChatOptions effectiveOptions;
+
     private final ToolCallingManager toolCallingManager;
 
     /** The model's usable context window in tokens; compaction keeps the conversation below {@code contextWindow - RESERVE_TOKENS}. Configurable because deployments cap it. */
@@ -162,26 +157,54 @@ public class AgentLoopRunner {
             AgentCheckpointManager checkpointManager) {
         ChatModel configuredChatModel = chatModels.isEmpty() ? null : chatModels.iterator().next();
         this.chatModel = configuredChatModel == null ? null : new HarmonyScrubbingChatModel(configuredChatModel);
+        this.contractModel = configuredChatModel;
+        this.effectiveOptions = configuredChatModel == null ? null : configuredChatModel.getOptions();
         this.toolCallingManager = ToolCallingManager.builder().build();
         this.contextWindowTokens = contextWindowTokens;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
         this.checkpointManager = checkpointManager;
-        this.checkpointProviderContract = checkpointManager.providerContract(configuredChatModel, contextWindowTokens);
+        this.checkpointProviderContract = checkpointManager.providerContract(configuredChatModel, contextWindowTokens, this.effectiveOptions, "");
+    }
+
+    /** Derivation constructor for {@link #forSettings}; shares the wrapped model, tool manager, cooldown state, and checkpoint manager of the deployment-wide runner. */
+    private AgentLoopRunner(AgentLoopRunner deploymentRunner, HyperionGenerationSettings settings) {
+        this.chatModel = deploymentRunner.chatModel;
+        this.contractModel = deploymentRunner.contractModel;
+        this.effectiveOptions = settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions;
+        this.toolCallingManager = deploymentRunner.toolCallingManager;
+        this.contextWindowTokens = settings.contextWindowTokens();
+        this.providerHardFailureCooldown = deploymentRunner.providerHardFailureCooldown;
+        this.providerFailureCooldown = deploymentRunner.providerFailureCooldown;
+        this.checkpointManager = deploymentRunner.checkpointManager;
+        this.emptyResponseRetryBaseMillis = deploymentRunner.emptyResponseRetryBaseMillis;
+        this.emptyResponseRetryCapMillis = deploymentRunner.emptyResponseRetryCapMillis;
+        this.checkpointProviderContract = checkpointManager.providerContract(this.contractModel, contextWindowTokens, this.effectiveOptions, settings.name(),
+                settings.maxTokensPerJob(), settings.maxJobDuration());
     }
 
     /**
-     * The model id the configured {@link ChatModel} was set up with. It is pinned on every request because Spring AI uses prompt options in place of model defaults when they are
-     * present. Returns {@code null} when the model exposes no options.
+     * A runner configured for one run's effort profile. The profile's prebuilt options replace the model bean's defaults for every call this runner makes — the agent turn, the
+     * compaction summary, and the empty-response re-sample alike.
+     *
+     * @param settings the resolved settings of the run
+     * @return this runner when the settings are the deployment default, or a runner pinned to the profile otherwise
+     */
+    public AgentLoopRunner forSettings(@Nullable HyperionGenerationSettings settings) {
+        return settings == null ? this : new AgentLoopRunner(this, settings);
+    }
+
+    /**
+     * The model id this runner's effective options were set up with. It is pinned on every request because Spring AI uses prompt options in place of model defaults when they are
+     * present. Returns {@code null} when no options are available.
      */
     @Nullable
     private String configuredModel() {
-        return chatModel != null && chatModel.getOptions() != null ? chatModel.getOptions().getModel() : null;
+        return effectiveOptions == null ? null : effectiveOptions.getModel();
     }
 
     private OpenAiChatOptions.Builder configuredOptionsBuilder() {
-        var defaults = chatModel == null ? null : chatModel.getOptions();
-        return defaults instanceof OpenAiChatOptions openAiDefaults ? openAiDefaults.mutate() : OpenAiChatOptions.builder();
+        return effectiveOptions instanceof OpenAiChatOptions openAiDefaults ? openAiDefaults.mutate() : OpenAiChatOptions.builder();
     }
 
     public void beginCheckpointRun(String jobId, ProgrammingExercise exercise, SandboxAgentTools tools, ApprovedSpecRegistry approvedSpecs) {
@@ -193,20 +216,18 @@ public class AgentLoopRunner {
     }
 
     private boolean hasConfiguredReasoningEffort() {
-        var defaults = chatModel == null ? null : chatModel.getOptions();
-        return defaults instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getReasoningEffort() != null;
+        return effectiveOptions instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getReasoningEffort() != null;
     }
 
     private record TurnTokenLimit(boolean legacy, int tokens) {
     }
 
     private TurnTokenLimit configuredTurnTokenLimit() {
-        var defaults = chatModel == null ? null : chatModel.getOptions();
-        if (defaults instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getMaxCompletionTokens() != null) {
+        if (effectiveOptions instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getMaxCompletionTokens() != null) {
             return new TurnTokenLimit(false, openAiDefaults.getMaxCompletionTokens());
         }
-        if (defaults != null && defaults.getMaxTokens() != null) {
-            return new TurnTokenLimit(true, defaults.getMaxTokens());
+        if (effectiveOptions != null && effectiveOptions.getMaxTokens() != null) {
+            return new TurnTokenLimit(true, effectiveOptions.getMaxTokens());
         }
         return new TurnTokenLimit(false, TURN_MAX_OUTPUT_TOKENS);
     }
@@ -217,7 +238,7 @@ public class AgentLoopRunner {
 
     private OpenAiChatOptions agentOptions(ToolCallback[] toolCallbacks, List<Message> conversation) {
         TurnTokenLimit configuredLimit = configuredTurnTokenLimit();
-        long available = (long) contextWindowTokens - estimateTokens(conversation, 0, conversation.size()) - CONTEXT_ESTIMATION_SAFETY_TOKENS;
+        long available = (long) contextWindowTokens - AgentConversationContext.estimateTokens(conversation, 0, conversation.size()) - CONTEXT_ESTIMATION_SAFETY_TOKENS;
         if (available < MIN_TURN_OUTPUT_TOKENS) {
             throw new IllegalStateException("The agent prompt leaves insufficient context for a model response.");
         }
@@ -303,6 +324,9 @@ public class AgentLoopRunner {
                 emit(stepListener, "Cancelling generation…");
                 return session(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText, conversation);
             }
+            // The single place in the codebase where a turn begins. Recorded unconditionally and before anything can fail, so a run abandoned at a gate still reports the turns it
+            // spent; AgentLoopResult.turns stays loop-local control state for the staged turn-budget pool and is deliberately not the number anyone reports.
+            recordTurn(usageSink);
             if (tools instanceof TurnAware turnAware) {
                 turnAware.onTurn(turn);
             }
@@ -349,6 +373,9 @@ public class AgentLoopRunner {
             }
             response = normalizeToolNames(response);
             lastPromptTokens = promptTokensOf(response);
+            List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
+                    : List.of();
+            recordToolCalls(usageSink, toolCalls.size());
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
                 finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.CANCELLED);
@@ -370,9 +397,6 @@ public class AgentLoopRunner {
                         AgentLoopResult.Status.COMPLETED);
                 return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, completedConversation);
             }
-
-            List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
-                    : List.of();
 
             // A completion cut off by the token limit may carry silently truncated tool arguments (half a file in write_file's content). Executing them would corrupt the
             // workspace while the model believes the calls landed, so every call id is answered with a re-issue instruction instead.
@@ -397,13 +421,12 @@ public class AgentLoopRunner {
                 }
             }
             boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> SUBMIT_TOOL_NAME.equals(toolCall.name()));
-
             ToolExecutionResult toolExecutionResult;
             try {
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
                 // Rebuild immediately so even a terminal sandbox failure has a lossless checkpoint of the model call and every tool result produced before termination.
                 conversation = new ArrayList<>(toolExecutionResult.conversationHistory());
-                capToolResponses(conversation);
+                AgentConversationContext.capToolResponses(conversation);
                 if (isSandboxSessionTerminated(tools)) {
                     emit(stepListener, "The build environment stopped responding.");
                     finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.ERROR);
@@ -627,9 +650,7 @@ public class AgentLoopRunner {
             }
             try {
                 requirePromptSafe(prompt);
-                // Only a successful response feeds the usage sink: a thrown call yields nothing to meter, and its spend is already bounded by the retry policy and turn budget.
-                ChatResponse response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> chatModel.call(prompt));
-                emitUsage(usageSink, response);
+                ChatResponse response = callProvider(prompt, providerFailureKey, usageSink);
                 if (!isEmptyResponse(response)) {
                     return response;
                 }
@@ -650,6 +671,35 @@ public class AgentLoopRunner {
         log.warn("Agent loop model call returned an empty response on turn {} after {} samples", turn, EMPTY_RESPONSE_SAMPLES);
         emit(stepListener, "The AI service returned no usable response.");
         return null;
+    }
+
+    /**
+     * Executes one admitted provider request and preserves the distinction between a local cooldown rejection and an indeterminate provider outcome. Once the supplier starts, an
+     * exception cannot prove zero billable usage because the SDK/provider may already have accepted or retried the request.
+     */
+    @Nullable
+    private ChatResponse callProvider(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink) {
+        AtomicBoolean attempted = new AtomicBoolean();
+        ChatResponse response;
+        try {
+            response = providerFailureCooldown.execute(providerFailureKey, providerHardFailureCooldown, () -> {
+                attempted.set(true);
+                return chatModel.call(prompt);
+            });
+        }
+        catch (RuntimeException error) {
+            if (attempted.get()) {
+                markUsageUncertain(usageSink);
+            }
+            throw error;
+        }
+        if (response == null) {
+            markUsageUncertain(usageSink);
+        }
+        else {
+            emitUsage(usageSink, response);
+        }
+        return response;
     }
 
     /**
@@ -687,7 +737,7 @@ public class AgentLoopRunner {
 
     private List<Message> compactIfNeeded(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled, @Nullable Consumer<String> stepListener) {
-        long contextTokens = estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall);
+        long contextTokens = AgentConversationContext.estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall);
         if (contextTokens <= (long) contextWindowTokens - RESERVE_TOKENS) {
             return conversation;
         }
@@ -698,90 +748,12 @@ public class AgentLoopRunner {
         return compact(conversation, usageSink, cancelled);
     }
 
-    /**
-     * Estimates the prompt's token count: anchors on the provider's real {@code promptTokens} from the previous call (which also captures out-of-band tool-schema tokens) and adds
-     * a jtokkit estimate of only the messages appended since. Before the first call the whole conversation is estimated.
-     */
-    static long estimateContextTokens(List<Message> conversation, long lastPromptTokens, int messagesAtLastCall) {
-        if (lastPromptTokens <= 0 || messagesAtLastCall < 0 || messagesAtLastCall > conversation.size()) {
-            return estimateTokens(conversation, 0, conversation.size());
-        }
-        return lastPromptTokens + estimateTokens(conversation, messagesAtLastCall, conversation.size());
-    }
-
-    private static long estimateTokens(List<Message> conversation, int from, int to) {
-        long tokens = 0;
-        for (int i = from; i < to; i++) {
-            tokens += estimateMessageTokens(conversation.get(i));
-        }
-        return tokens;
-    }
-
-    static long estimateMessageTokens(Message message) {
-        long tokens = MESSAGE_OVERHEAD_TOKENS;
-        if (message instanceof ToolResponseMessage toolResponse) {
-            for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                tokens += TOOLCALL_OVERHEAD_TOKENS + estimateTextTokens(response.responseData());
-            }
-            return tokens;
-        }
-        if (message instanceof AssistantMessage assistant) {
-            tokens += estimateTextTokens(assistant.getText());
-            for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-                tokens += TOOLCALL_OVERHEAD_TOKENS + estimateTextTokens(toolCall.name()) + estimateTextTokens(toolCall.arguments());
-            }
-            return tokens;
-        }
-        return tokens + estimateTextTokens(message.getText());
-    }
-
-    private static long estimateTextTokens(@Nullable String text) {
-        if (text == null || text.isEmpty()) {
-            return 0;
-        }
-        return TEXT_TOKEN_ESTIMATOR.estimate(text);
-    }
-
     private static long promptTokensOf(@Nullable ChatResponse response) {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return 0;
         }
         Number promptTokens = response.getMetadata().getUsage().getPromptTokens();
         return promptTokens == null ? 0 : promptTokens.longValue();
-    }
-
-    /** Truncates any tool result longer than {@link #MAX_TOOL_RESPONSE_CHARS}, keeping head and tail (where the signal lives) and eliding the middle. Mutates the list in place. */
-    static void capToolResponses(List<Message> conversation) {
-        for (int i = 0; i < conversation.size(); i++) {
-            if (!(conversation.get(i) instanceof ToolResponseMessage toolResponse)) {
-                continue;
-            }
-            boolean changed = false;
-            List<ToolResponseMessage.ToolResponse> capped = new ArrayList<>(toolResponse.getResponses().size());
-            for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                String data = response.responseData();
-                if (data != null && data.length() > MAX_TOOL_RESPONSE_CHARS) {
-                    capped.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(), truncateMiddle(data)));
-                    changed = true;
-                }
-                else {
-                    capped.add(response);
-                }
-            }
-            if (changed) {
-                conversation.set(i, ToolResponseMessage.builder().responses(capped).metadata(toolResponse.getMetadata()).build());
-            }
-        }
-    }
-
-    private static String truncateMiddle(String data) {
-        // head + marker + tail must stay within MAX_TOOL_RESPONSE_CHARS.
-        int head = MAX_TOOL_RESPONSE_CHARS / 4;
-        int elidedEstimate = data.length() - MAX_TOOL_RESPONSE_CHARS;
-        String marker = "\n[… " + elidedEstimate
-                + " characters elided to fit the context window. Re-fetch just the part you need: read_file with offset/limit, or grep via bash. …]\n";
-        int tail = Math.max(0, MAX_TOOL_RESPONSE_CHARS - head - marker.length());
-        return data.substring(0, head) + marker + data.substring(data.length() - tail);
     }
 
     /**
@@ -826,7 +798,7 @@ public class AgentLoopRunner {
         }
         rebuilt.add(new UserMessage(SUMMARY_SENTINEL + "\n\n" + summaryBody));
         rebuilt.addAll(conversation.subList(cut, conversation.size()));
-        assertValidPairing(rebuilt);
+        AgentConversationContext.assertValidPairing(rebuilt);
         return rebuilt;
     }
 
@@ -840,7 +812,7 @@ public class AgentLoopRunner {
         int cut = n;
         long tail = 0;
         for (int i = n - 1; i >= protectedPrefix; i--) {
-            long messageTokens = estimateMessageTokens(conversation.get(i));
+            long messageTokens = AgentConversationContext.estimateMessageTokens(conversation.get(i));
             if (tail > 0 && tail + messageTokens > KEEP_RECENT_TOKENS) {
                 break;
             }
@@ -849,8 +821,8 @@ public class AgentLoopRunner {
         }
         cut = snapToTurnStart(conversation, cut);
         long budget = (long) contextWindowTokens - RESERVE_TOKENS;
-        long fixed = estimateTokens(conversation, 0, protectedPrefix) + SUMMARY_MAX_OUTPUT_TOKENS + MESSAGE_OVERHEAD_TOKENS;
-        while (cut < n && fixed + estimateTokens(conversation, cut, n) > budget) {
+        long fixed = AgentConversationContext.estimateTokens(conversation, 0, protectedPrefix) + SUMMARY_MAX_OUTPUT_TOKENS + AgentConversationContext.MESSAGE_OVERHEAD_TOKENS;
+        while (cut < n && fixed + AgentConversationContext.estimateTokens(conversation, cut, n) > budget) {
             cut = snapToTurnStart(conversation, cut + 1);
         }
         if (cut == n) {
@@ -898,8 +870,7 @@ public class AgentLoopRunner {
         if (cancelled.getAsBoolean()) {
             throw new CancellationException("Generation was cancelled before conversation compaction");
         }
-        ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> chatModel.call(prompt));
-        emitUsage(usageSink, response);
+        ChatResponse response = callProvider(prompt, ProviderFailureCooldown.keyForModel(configuredModel), usageSink);
         String text = extractText(response);
         if (text == null || text.isBlank()) {
             throw new IllegalStateException("summarizer returned an empty summary");
@@ -961,23 +932,6 @@ public class AgentLoopRunner {
         return value.substring(0, SUMMARY_INPUT_TRUNCATE_CHARS) + " […" + (value.length() - SUMMARY_INPUT_TRUNCATE_CHARS) + " more characters truncated]";
     }
 
-    /**
-     * Asserts the tool-pairing contract on a rebuilt conversation (each tool-result preceded by an assistant tool-call turn and vice versa), turning a compaction bug into a
-     * catchable internal error rather than a provider 400.
-     */
-    static void assertValidPairing(List<Message> conversation) {
-        for (int i = 0; i < conversation.size(); i++) {
-            Message message = conversation.get(i);
-            if (message instanceof ToolResponseMessage && (i == 0 || !(conversation.get(i - 1) instanceof AssistantMessage previous) || previous.getToolCalls().isEmpty())) {
-                throw new IllegalStateException("Compaction produced an orphaned tool-result message at index " + i);
-            }
-            if (message instanceof AssistantMessage assistant && !assistant.getToolCalls().isEmpty()
-                    && (i + 1 >= conversation.size() || !(conversation.get(i + 1) instanceof ToolResponseMessage))) {
-                throw new IllegalStateException("Compaction left an assistant tool-call without a following tool-result at index " + i);
-            }
-        }
-    }
-
     private static String extractText(ChatResponse response) {
         if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
             return "";
@@ -994,6 +948,24 @@ public class AgentLoopRunner {
     private static void emitUsage(@Nullable Consumer<ChatResponse> usageSink, @Nullable ChatResponse response) {
         if (usageSink != null && response != null) {
             usageSink.accept(response);
+        }
+    }
+
+    private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {
+        if (usageSink instanceof ProviderUsageSink providerUsageSink) {
+            providerUsageSink.markUncertain();
+        }
+    }
+
+    private static void recordToolCalls(@Nullable Consumer<ChatResponse> usageSink, long count) {
+        if (usageSink instanceof ProviderUsageSink providerUsageSink) {
+            providerUsageSink.recordToolCalls(count);
+        }
+    }
+
+    private static void recordTurn(@Nullable Consumer<ChatResponse> usageSink) {
+        if (usageSink instanceof ProviderUsageSink providerUsageSink) {
+            providerUsageSink.recordTurn();
         }
     }
 }

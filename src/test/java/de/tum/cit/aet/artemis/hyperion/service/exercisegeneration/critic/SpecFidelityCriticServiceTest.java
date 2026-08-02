@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -37,11 +38,14 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport.Kind;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -247,6 +251,19 @@ class SpecFidelityCriticServiceTest {
 
         SpecFidelityCriticService.ConceptSelectionReview review = SpecFidelityCriticService.enforceExploratoryConcept("The exercise must be implemented recursively.", candidates,
                 modelReview);
+
+        assertThat(review).isEqualTo(modelReview);
+        assertThat(review.accepted()).isTrue();
+    }
+
+    @Test
+    void conceptReviewPreservesATechniqueExpressedAsTheLearningObjective() {
+        Map<Integer, String> candidates = Map.of(1, "Implement each method recursively.", 2, "Aggregate invoice totals.", 3, "Classify readings.");
+        SpecFidelityCriticService.ConceptSelectionReview modelReview = new SpecFidelityCriticService.ConceptSelectionReview(true, 1, List.of(),
+                "Candidate 1 directly preserves the instructor's recursion objective.", "The model accepted candidate 1.");
+
+        SpecFidelityCriticService.ConceptSelectionReview review = SpecFidelityCriticService.enforceExploratoryConcept(
+                "Create an intermediate Java exercise that teaches recursion. Students implement several recursive methods over numbers and strings.", candidates, modelReview);
 
         assertThat(review).isEqualTo(modelReview);
         assertThat(review.accepted()).isTrue();
@@ -2104,7 +2121,7 @@ class SpecFidelityCriticServiceTest {
                 "A clean problem statement.", List.of("test_x"), usageSink);
         assertThat(report.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
         verify(chatModel, times(3)).call(any(Prompt.class));
-        verify(usageSink, never()).markUncertain();
+        verify(usageSink, times(3)).markUncertain();
         verify(usageSink, never()).accept(any());
     }
 
@@ -2147,7 +2164,7 @@ class SpecFidelityCriticServiceTest {
                 "A clean problem statement.", List.of("test_x"), firstUsageSink);
         assertThat(firstReport.findings()).hasSize(2).allMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.QUALITY_REVIEW_UNAVAILABLE);
         verify(failingModel).call(any(Prompt.class));
-        verify(firstUsageSink, never()).markUncertain();
+        verify(firstUsageSink).markUncertain();
         ChatModel nextModel = mock(ChatModel.class);
         when(nextModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCriticService nextCritic = criticWithCooldown(ChatClient.create(nextModel), "configured-model", Duration.ofMinutes(5L), cooldown);
@@ -2674,6 +2691,10 @@ class SpecFidelityCriticServiceTest {
         return criticReturning(rawResponse(body)).authorContractWitnesses(SPEC_WITH_RULES, "class RosterParserTest { }", "class RosterParser { }", null, () -> false);
     }
 
+    private List<ContractWitness> witnessesFrom(String body, String testSources) {
+        return criticReturning(rawResponse(body)).authorContractWitnesses(SPEC_WITH_RULES, testSources, "class RosterParser { }", null, () -> false);
+    }
+
     @Test
     void contractWitnessContextMakesStudentCreatedTypesExplicitlyReflectionOnly() {
         assertThat(ContractWitnessAuthor.renderTemplateOwnership(Map.of("Elevator", "given", "ElevatorDispatcher", "student-creates")))
@@ -2705,6 +2726,22 @@ class SpecFidelityCriticServiceTest {
             assertThat(witness.code()).contains("void testWitnessNegativeSalary()");
             assertThat(witness.wrongBehavior()).isEqualTo("accepts negative salary records");
         });
+    }
+
+    @Test
+    void authorContractWitnesses_dropsAProbeThatCallsASuiteLocalHelper() {
+        String testSources = """
+                class ReservationPlannerTest {
+                    private static Interval i(int start, int end) { return new Interval(start, end); }
+                    private static void assertIntervalsEqual(Object expected, Object actual) { assertEquals(expected, actual); }
+                }
+                """;
+
+        assertThat(witnessesFrom("""
+                {"witnesses":[{"rule":"R1","testName":"testWitnessNegativeSalary",
+                 "code":"@Test\\nvoid testWitnessNegativeSalary() { assertIntervalsEqual(i(1, 2), i(1, 2)); }",
+                 "wrongBehavior":"accepts negative salary records"}]}
+                """, testSources)).isEmpty();
     }
 
     @Test
@@ -2932,4 +2969,45 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.findings()).isEmpty();
     }
 
+    @Test
+    void forSettings_runsEveryReviewerPassOnTheProfilesModel() {
+        // A profile that pins a model but leaves the critics on the deployment model would review one configuration's output with another configuration's judgement.
+        ScriptedCritic scripted = criticScripted(jsonResponse("{\"complete\": true, \"findings\": []}"));
+        HyperionGenerationSettings settings = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 96_000,
+                OpenAiChatOptions.builder().model("thorough-model").build(), false, true);
+
+        scripted.critic().forSettings(settings).reviewSpecification("brief", "specification", null, () -> false);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), atLeastOnce()).call(prompts.capture());
+        assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> assertThat(prompt.getOptions().getModel()).isEqualTo("thorough-model"));
+    }
+
+    @Test
+    void forSettings_withDeploymentDefaultSettings_reusesTheSharedCritic() {
+        SpecFidelityCriticService critic = criticReturning(jsonResponse("{\"complete\": true, \"findings\": []}"));
+        HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, 60, Duration.ofMinutes(45), 3_000_000L, true, "CONTINUOUS", 128_000, null, true,
+                false);
+
+        assertThat(critic.forSettings(deploymentDefault)).isSameAs(critic);
+        assertThat(critic.forSettings(null)).isSameAs(critic);
+    }
+
+    @Test
+    void criticModelId_comesFromTheChatModelBeanRatherThanTheRawProperty() {
+        // One value, one source. Reading spring.ai.openai.chat.model separately let a deployment that configured its model anywhere else review with a different model than it
+        // authored with, and nothing in the system could observe the split.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("bean-model").build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"complete\": true, \"findings\": []}"));
+        HyperionAgentProperties properties = new HyperionAgentProperties();
+
+        SpecFidelityCriticService critic = new SpecFidelityCriticService(ChatClient.create(chatModel), objectMapper, new HyperionPromptTemplateService(), Duration.ZERO,
+                ProviderFailureCooldown.disabled(), properties, List.of(chatModel), new AgentCheckpointManager(objectMapper, "", "", 0, false, ""));
+        critic.reviewSpecification("brief", "specification", null, () -> false);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, atLeastOnce()).call(prompts.capture());
+        assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> assertThat(prompt.getOptions().getModel()).isEqualTo("bean-model"));
+    }
 }

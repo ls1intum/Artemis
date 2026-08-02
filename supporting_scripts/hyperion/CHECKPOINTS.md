@@ -6,7 +6,7 @@ replay source is configured.
 
 ```bash
 # Provider credentials/config can live in the ignored .env.hyperion.local file.
-supporting_scripts/hyperion/checkpoint record seeded-strategy-elevator --name elevator-base
+supporting_scripts/hyperion/checkpoint record /tmp/elevator-brief.md --name elevator-base
 supporting_scripts/hyperion/checkpoint turns elevator-base
 supporting_scripts/hyperion/checkpoint show elevator-base@42
 supporting_scripts/hyperion/checkpoint show elevator-base@r3
@@ -19,17 +19,22 @@ supporting_scripts/hyperion/checkpoint fork elevator-base@42 --name prompt-v2 --
 
 # Change only the selected late call while preserving the recorded prefix.
 supporting_scripts/hyperion/checkpoint fork elevator-base@42 --name prompt-v3 --instruction-file /tmp/experiment.txt --repeat 5
+# Inspect where two checkpoint traces first diverge; use exgen-bench for measured comparisons.
 supporting_scripts/hyperion/checkpoint compare elevator-base prompt-v2
 ```
 
-`record`, `replay`, and `fork` restart the local server so its checkpoint properties cannot silently remain stale, reuse/start the Angular client, and drive the tracked
-`HyperionLiveLlmUI.spec.ts` scenario. They expect a reachable local database and the ordinary Hyperion live-provider variables. Artifacts default to
+`record`, `replay`, and `fork` restart the local server so its checkpoint properties cannot silently remain stale, reuse/start the Angular client, and drive a single brief through
+`HyperionCheckpointDriver.spec.ts`. They expect a reachable local database and the ordinary Hyperion live-provider variables. Artifacts default to
 `.e2e-local/hyperion-checkpoints/`.
+
+The driver is intentionally not an evaluation harness. Comparative campaigns, datasets, grading, usage reconciliation, and release archives belong in exgen-bench. This tool
+exists only to record, replay, and fork Hyperion's internal effectful turns.
 
 Replay is deterministic and needs no configured AI provider: every authoring call restores its committed post-state without invoking the provider or tools, while reviewers
 return their recorded verdict. Deterministic orchestration between calls (stage gates and differential verification) runs normally, which validates restored state and returns a
 fork to the correct pipeline continuation. A fork begins live sampling at the selected author call, including later reviewers, and therefore requires the same provider
-model/options as its source. Forks are fresh samples, not controlled deterministic experiments; use `--repeat` and compare distributions when the provider has no seed.
+model/options as its source. Forks are fresh samples, not controlled deterministic experiments; `--repeat` is useful for exploratory debugging, while distributional comparisons
+belong in exgen-bench.
 `--instruction-file` appends a clearly labelled user instruction only at the selected call, so a late-stage experiment does not invalidate or rerun the prefix.
 
 The unit is deliberately the **effectful agent turn**, not a transport request: an empty-response retry has no new state to restore, and an internal context-compaction request is

@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -30,6 +32,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIndicator;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
@@ -39,8 +43,10 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -83,10 +89,15 @@ public class HyperionExerciseGenerationResource {
 
     private final HyperionGenerationBudgetService generationBudgetService;
 
+    private final HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator;
+
+    private final HyperionEffortProfileService effortProfileService;
+
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobService, AgentSystemPromptService agentSystemPromptService,
             HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ExerciseGenerationRevertService generationRevertService,
-            RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService) {
+            RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService,
+            HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator, HyperionEffortProfileService effortProfileService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -96,6 +107,8 @@ public class HyperionExerciseGenerationResource {
         this.generationRevertService = generationRevertService;
         this.sandboxClient = sandboxClient;
         this.generationBudgetService = generationBudgetService;
+        this.generationCapacityHealthIndicator = generationCapacityHealthIndicator;
+        this.effortProfileService = effortProfileService;
     }
 
     /**
@@ -111,6 +124,9 @@ public class HyperionExerciseGenerationResource {
     public ResponseEntity<ExerciseGenerationJobStartDTO> generateExercise(@PathVariable long exerciseId, @Valid @RequestBody ExerciseGenerationRequestDTO request) {
         log.debug("REST request to run agentic exercise generation ({}) for exercise [{}]", request.mode(), exerciseId);
         validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
+        validateRequestedJobDuration(request.maxJobDuration());
+        // Resolved before anything expensive happens, and fail-closed on an unknown name: a silent fallback to the default profile is how an instructor gets a surprise bill.
+        HyperionGenerationSettings settings = effortProfileService.resolve(request.effortProfile()).tightenedBy(request.maxTokens(), request.maxJobDuration());
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
@@ -125,18 +141,20 @@ public class HyperionExerciseGenerationResource {
         }
         jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
         if (!sandboxClient.hasAvailableGenerationSandboxSlot()) {
+            // Without this the rejection is invisible on the server: the client sees a bare 503 and the log says nothing about why the fleet cannot host the run.
+            generationCapacityHealthIndicator.warnGenerationRejectedForMissingCapacity();
             throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has a free sandbox slot to start a run.", ENTITY_NAME,
                     "generationCapacityUnavailable");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Long courseId = courseIdOf(exercise);
         String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
-        HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId);
+        // Reserve what this run may actually spend rather than the fleet-wide worst case, so a course drafting small exercises is not throttled at the job count of the largest.
+        HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId, settings.maxTokensPerJob());
         String jobId;
         try {
             String sourceBrief = request.mode() == GenerationMode.GENERATE && request.prompt() != null && !request.prompt().isBlank() ? request.prompt().strip() : null;
-            jobId = sourceBrief == null ? jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id())
-                    : jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id(), sourceBrief);
+            jobId = jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id(), sourceBrief, settings);
         }
         catch (RuntimeException e) {
             generationBudgetService.releaseReservation(budgetReservation.id());
@@ -161,6 +179,25 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
+     * GET programming-exercises/generation/effort-profiles : the effort profiles an instructor may pick for a run, so clients offer the deployment's configured set instead of
+     * hardcoding one. Empty when the deployment configures none, in which case every run uses the deployment-wide configuration.
+     * <p>
+     * Name and label only. Model ids and budgets are admin-owned procurement details an instructor cannot act on, and what actually ran is attested separately through the run's
+     * terminal usage, its provider request ids, and its spans.
+     * <p>
+     * Not exercise-scoped, so it is guarded by the least-privileged global role that can create exercises ({@link EnforceAtLeastEditor}), mirroring
+     * {@link #getSupportedGenerationLanguages()}.
+     *
+     * @return the selectable effort profiles, in configured order
+     */
+    @GetMapping("programming-exercises/generation/effort-profiles")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<ExerciseGenerationEffortProfileDTO>> getGenerationEffortProfiles() {
+        log.debug("REST request to get the Hyperion generation effort profiles");
+        return ResponseEntity.ok(effortProfileService.selectableProfiles());
+    }
+
+    /**
      * GET programming-exercises/{exerciseId}/generate-exercise/status : returns the caller's current or most-recent run for the exercise (id, whether it is still running, and the
      * transcript so far), so a client that (re)loads the page can replay the progress and reattach to a live run. Returns 204 when there is nothing to show.
      *
@@ -179,11 +216,10 @@ public class HyperionExerciseGenerationResource {
             ExerciseGenerationStatusDTO status = retainedStatus.get();
             return ResponseEntity.ok(new ExerciseGenerationStatusDTO(status.jobId(), status.running(), status.mode(), status.events(), status.fileChanges(),
                     revertibleRun.isPresent(), revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::jobId).orElse(null),
-                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable(), status.specDocument()));
+                    revertibleRun.map(ExerciseGenerationRevertService.RevertibleRun::mode).orElse(null), status.ownedByCaller(), status.cancellable(), status.specDocument(),
+                    status.usage(), status.accountingState(), status.effortProfile()));
         }
-        return revertibleRun
-                .<ResponseEntity<ExerciseGenerationStatusDTO>>map(
-                        run -> ResponseEntity.ok(new ExerciseGenerationStatusDTO(run.jobId(), false, run.mode(), List.of(), List.of(), true, run.jobId(), run.mode())))
+        return revertibleRun.<ResponseEntity<ExerciseGenerationStatusDTO>>map(run -> ResponseEntity.ok(ExerciseGenerationStatusDTO.revertOnly(run.jobId(), run.mode())))
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
@@ -289,6 +325,16 @@ public class HyperionExerciseGenerationResource {
     private boolean canOfferRevert(ProgrammingExercise exercise) {
         boolean hasParticipations = exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty();
         return !exercise.isReleased() && !hasParticipations && !jobService.hasActiveJob(exercise.getId());
+    }
+
+    /**
+     * Bean validation has no positivity constraint for {@link Duration}, and a non-positive bound would clamp the run to a deadline it can never meet rather than tighten it.
+     * Rejected rather than clamped: unlike an over-large value, there is no sensible run it could have meant.
+     */
+    private void validateRequestedJobDuration(@Nullable Duration maxJobDuration) {
+        if (maxJobDuration != null && (maxJobDuration.isZero() || maxJobDuration.isNegative())) {
+            throw new BadRequestAlertException("The requested maximum job duration must be positive.", ENTITY_NAME, "invalidMaxJobDuration");
+        }
     }
 
     /** Complements the {@code @Size} cap on the DTO, which bounds how many ids may be sent but not what they may be. */

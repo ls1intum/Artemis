@@ -400,7 +400,7 @@ public final class ExerciseIntegrityGate {
             List<String> declaredRiskPartitions = StageCheckService.riskPartitionIds(approvedSpec);
             if (!declaredRiskPartitions.isEmpty()) {
                 Map<String, List<String>> partitionsBySeam = declaredRiskPartitions.stream()
-                        .collect(Collectors.groupingBy(partition -> partition.substring(0, partition.indexOf('.')), LinkedHashMap::new, Collectors.toList()));
+                        .collect(Collectors.groupingBy(partition -> partition.substring(0, partition.indexOf('.')), LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
                 // Older programmatic plans can infer a seam's sole partition. Multiple partitions require explicit claims so broad test names cannot silently collapse them.
                 List<String> testsWithoutRiskPartitions = plan.tests().stream().filter(entry -> entry.riskPartitions().isEmpty())
                         .filter(entry -> partitionsBySeam.getOrDefault(entry.seam(), List.of()).size() != 1).map(GeneratedTestPlan.Entry::name).toList();
@@ -830,6 +830,8 @@ public final class ExerciseIntegrityGate {
             // the grammar of the input language" is about the input, not the student's code. The mandate ends the clause or scopes itself to the implementation; the domain
             // rule continues into what it constrains. The hyphen lookbehind separately keeps "Self-loops are not allowed" out.
             "(?:must|should|shall)\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|implement\\w*\\s+[^.|\\n]{0,60}?\\brecursively\\b"
+                    + "|(?:teach\\w*|practi[cs]e\\w*|learn\\w*)\\s+(?:[\\w*]+\\s+){0,5}?(?:recursion|iteration|stream\\s+api|lambdas?|if\\p{Pd}?else|switch)\\b"
+                    + "|implement\\w*\\s+(?:[\\w*]+\\s+){0,4}?(?:recursive|iterative|stream-based|lambda-based)\\s+(?:methods?|functions?|solutions?)\\b"
                     + "|must\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|implement)\\s+(?:[\\w*]+\\s+){0,3}\\**"
                     + "(?:recursion|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?|stream\\**\\s+\\**pipelines?|lambda\\s+expressions?)\\**\\b"
                     + "|(?:must\\s+not|may\\s+not|cannot|can't|do\\s+not|don't|never)\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|contain)\\s+(?:[\\w*]+\\s+){0,3}\\**"

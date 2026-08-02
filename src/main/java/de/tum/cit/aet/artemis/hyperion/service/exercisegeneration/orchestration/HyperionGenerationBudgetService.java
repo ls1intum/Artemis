@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
 /**
@@ -69,9 +70,16 @@ public class HyperionGenerationBudgetService {
             @Value("${artemis.hyperion.agent.token-budget-window:PT24H}") Duration budgetWindow,
             @Value("${artemis.hyperion.agent.admission-max-tokens-per-user:12000000}") long maxTokensPerUser,
             @Value("${artemis.hyperion.agent.admission-max-tokens-per-course:120000000}") long maxTokensPerCourse,
-            @Value("${artemis.hyperion.agent.admission-max-tokens-global:600000000}") long maxTokensGlobal,
-            @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
-            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
+            @Value("${artemis.hyperion.agent.admission-max-tokens-global:600000000}") long maxTokensGlobal, HyperionEffortProfileService effortProfiles,
+            HyperionAgentProperties agentProperties) {
+        // Validated against the LARGEST configured profile, not the deployment default: a profile that raises the per-job ceiling above a rolling budget could otherwise be
+        // admitted against a budget too small to hold one of its jobs, which under-reserves exactly the runs that cost the most.
+        this(tokenUsageTraceRepository, hazelcastInstance, budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, effortProfiles.largestMaxTokensPerJob(),
+                agentProperties.getMaxJobDuration());
+    }
+
+    HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, HazelcastInstance hazelcastInstance, Duration budgetWindow, long maxTokensPerUser,
+            long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob, Duration maxJobDuration) {
         validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, maxTokensPerJob);
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
         this.hazelcastInstance = hazelcastInstance;
@@ -100,7 +108,8 @@ public class HyperionGenerationBudgetService {
     private static void validateBudgetFitsOneJob(String budgetName, long budget, long maxTokensPerJob) {
         if (budget > 0 && maxTokensPerJob > budget) {
             throw new IllegalArgumentException("artemis.hyperion.agent." + budgetName
-                    + " must be at least artemis.hyperion.agent.max-tokens-per-job so one generation can be admitted without under-reserving its allowed usage");
+                    + " must be at least the largest configured max-tokens-per-job (the deployment default or any effort profile under artemis.hyperion.agent.profiles, "
+                    + "whichever is larger: " + maxTokensPerJob + ") so one generation can be admitted without under-reserving its allowed usage");
         }
     }
 
@@ -134,17 +143,22 @@ public class HyperionGenerationBudgetService {
     }
 
     /**
-     * Reserves the configured worst-case token allowance for a newly admitted job. The reservation is released when the async job finishes; a TTL is a crash safety net.
+     * Reserves exactly what the admitted job is allowed to spend. Reserving the fleet-wide worst case for every job regardless of its size throttles a course that only ever
+     * drafts small exercises at the same job count as one running the largest possible jobs; sizing the reservation to the run is a straight capacity gain that changes nothing
+     * about the ceiling itself. The reservation is released when the async job finishes; a TTL is a crash safety net.
      *
-     * @param userId   the requesting user's id, or null if unavailable
-     * @param courseId the course id, or null if unavailable
+     * @param userId         the requesting user's id, or null if unavailable
+     * @param courseId       the course id, or null if unavailable
+     * @param reservedTokens the tokens this job may spend, already clamped to its profile's ceiling
      * @return the reservation to attach to the job
      */
-    public BudgetReservation reserveGenerationBudget(@Nullable Long userId, @Nullable Long courseId) {
+    public BudgetReservation reserveGenerationBudget(@Nullable Long userId, @Nullable Long courseId, long reservedTokens) {
         if (maxTokensPerUser <= 0 && maxTokensPerCourse <= 0 && maxTokensGlobal <= 0) {
             return BudgetReservation.none();
         }
-        if (reservationMap == null || maxTokensPerJob <= 0) {
+        // Never reserve more than the validated ceiling: the startup check proved only that ceiling fits every enabled budget.
+        long tokens = reservedTokens <= 0 ? maxTokensPerJob : Math.min(reservedTokens, maxTokensPerJob);
+        if (reservationMap == null || tokens <= 0) {
             assertWithinBudgets(userId, courseId);
             return BudgetReservation.none();
         }
@@ -154,10 +168,10 @@ public class HyperionGenerationBudgetService {
             if (!locked) {
                 throw admissionBusy();
             }
-            assertWithinBudgets(userId, courseId, maxTokensPerJob);
+            assertWithinBudgets(userId, courseId, tokens);
             String id = UUID.randomUUID().toString();
             long ttlSeconds = Math.max(1L, reservationTtl.toSeconds());
-            reservationMap.set(id, new TokenBudgetReservation(userId, courseId, maxTokensPerJob), ttlSeconds, TimeUnit.SECONDS);
+            reservationMap.set(id, new TokenBudgetReservation(userId, courseId, tokens), ttlSeconds, TimeUnit.SECONDS);
             return new BudgetReservation(id);
         }
         catch (InterruptedException e) {
@@ -197,6 +211,43 @@ public class HyperionGenerationBudgetService {
         }
         catch (RuntimeException e) {
             log.warn("Could not release Hyperion generation budget reservation {}; TTL cleanup will release it later: {}", reservationId, e.getMessage());
+        }
+    }
+
+    public void recordPersistedUsage(@Nullable String reservationId, long tokens) {
+        if (reservationId == null || reservationMap == null || tokens <= 0) {
+            return;
+        }
+        boolean locked = false;
+        try {
+            reservationMap.lock(reservationId);
+            locked = true;
+            TokenBudgetReservation reservation = reservationMap.get(reservationId);
+            if (reservation == null) {
+                return;
+            }
+            long remaining = Math.max(0, reservation.tokens() - tokens);
+            if (remaining == 0) {
+                reservationMap.remove(reservationId);
+            }
+            else {
+                reservationMap.set(reservationId, new TokenBudgetReservation(reservation.userId(), reservation.courseId(), remaining), Math.max(1L, reservationTtl.toSeconds()),
+                        TimeUnit.SECONDS);
+            }
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not reduce Hyperion generation budget reservation {} after durable usage was recorded; admission remains conservative: {}", reservationId,
+                    exception.getMessage());
+        }
+        finally {
+            if (locked) {
+                try {
+                    reservationMap.unlock(reservationId);
+                }
+                catch (RuntimeException exception) {
+                    log.warn("Could not unlock Hyperion generation budget reservation {} after recording usage: {}", reservationId, exception.getMessage());
+                }
+            }
         }
     }
 

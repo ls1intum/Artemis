@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
@@ -15,6 +16,7 @@ import com.knuddels.jtokkit.api.EncodingType;
 
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 
@@ -59,8 +61,13 @@ final class ReviewerClient {
     @Nullable
     private final Integer configuredMaxOutputTokens;
 
+    /** Retained so a run can derive a profile-pinned client that starts from the same provider options this one inherited. */
+    @Nullable
+    private final ChatOptions configuredOptions;
+
     ReviewerClient(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService, @Nullable String configuredModel, Duration providerHardFailureCooldown,
             ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions, AgentCheckpointManager checkpointManager) {
+        this.configuredOptions = configuredOptions;
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.configuredModel = configuredModel == null || configuredModel.isBlank() ? null : configuredModel;
@@ -71,6 +78,12 @@ final class ReviewerClient {
         Integer maxCompletionTokens = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.getMaxCompletionTokens() : null;
         this.usesLegacyMaxTokens = maxCompletionTokens == null && configuredOptions != null && configuredOptions.getMaxTokens() != null;
         this.configuredMaxOutputTokens = maxCompletionTokens != null ? maxCompletionTokens : configuredOptions == null ? null : configuredOptions.getMaxTokens();
+    }
+
+    /** The provider options this client starts from, so a profile that changes no provider option inherits exactly what the deployment configured. */
+    @Nullable
+    ChatOptions configuredOptions() {
+        return configuredOptions;
     }
 
     /** Whether an AI reviewer is configured at all; a blocking pass returns an explicit unavailable verdict rather than an empty one when it is not. */
@@ -104,14 +117,34 @@ final class ReviewerClient {
         }
         String contract = (configuredModel == null ? "<default>" : configuredModel) + "\n" + (usesLegacyMaxTokens ? "maxTokens=" : "maxCompletionTokens=") + outputTokens;
         return checkpointManager.reviewerCall(systemPrompt, userPrompt, contract, () -> {
-            // The critic is advisory, so a thrown call must never escalate through the usage sink's uncertainty path and stop the whole generation job.
-            ChatResponse response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown,
-                    () -> chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse());
-            if (usageSink != null) {
+            AtomicBoolean attempted = new AtomicBoolean();
+            ChatResponse response;
+            try {
+                response = providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
+                    attempted.set(true);
+                    return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
+                });
+            }
+            catch (RuntimeException error) {
+                if (attempted.get()) {
+                    markUsageUncertain(usageSink);
+                }
+                throw error;
+            }
+            if (response == null) {
+                markUsageUncertain(usageSink);
+            }
+            else if (usageSink != null) {
                 usageSink.accept(response);
             }
             return LLMTokenUsageService.extractResponseText(response);
         });
+    }
+
+    private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {
+        if (usageSink instanceof ProviderUsageSink providerUsageSink) {
+            providerUsageSink.markUncertain();
+        }
     }
 
     private int reviewerOutputTokens(String systemPrompt, String userPrompt, int maxOutputTokens) {

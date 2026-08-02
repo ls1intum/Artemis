@@ -39,12 +39,15 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -78,9 +81,10 @@ public class GenerationJobService {
 
     private static final String SYSTEM_CANCELLATION_MESSAGE = "Generation was cancelled by an administrator. Nothing was changed.";
 
+    static final Duration DEFAULT_TERMINAL_REPLAY_TTL = Duration.ofHours(4);
+
     private final HazelcastInstance hazelcastInstance;
 
-    // Run launched via an event so this service does not depend on the task service, which would close a construction cycle.
     private final ApplicationEventPublisher eventPublisher;
 
     private final LLMTokenUsageService llmTokenUsageService;
@@ -95,6 +99,10 @@ public class GenerationJobService {
 
     private final int expectedDataMemberCount;
 
+    private final Duration terminalReplayTtl;
+
+    private final boolean exactProviderUsage;
+
     private String localNodeId;
 
     private IMap<String, JobInfo> jobMap;
@@ -103,16 +111,28 @@ public class GenerationJobService {
 
     private GenerationJobReplayStore replayStore;
 
-    // Node-local interrupts held in-process because the hook closes over a live sandbox reference that exists only on the node running the job; other nodes rely on the Hazelcast
-    // flag.
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
     @Autowired
     public GenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
             LLMTokenUsageService llmTokenUsageService, HyperionGenerationBudgetService generationBudgetService,
-            @Value("${artemis.hyperion.agent.stale-job-timeout:PT35M}") Duration staleJobTimeout,
-            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration, @Qualifier("taskExecutor") Executor cancellationExecutor,
-            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount) {
+            @Value("${artemis.hyperion.agent.stale-job-timeout:PT35M}") Duration staleJobTimeout, HyperionAgentProperties agentProperties,
+            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
+            @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, agentProperties.getMaxJobDuration(), cancellationExecutor,
+                expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0);
+    }
+
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
+            int expectedDataMemberCount, Duration terminalReplayTtl) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+                terminalReplayTtl, true);
+    }
+
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
+            int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage) {
         this.hazelcastInstance = hazelcastInstance;
         this.eventPublisher = eventPublisher;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -121,11 +141,21 @@ public class GenerationJobService {
         this.maxJobDuration = maxJobDuration;
         this.cancellationExecutor = cancellationExecutor;
         this.expectedDataMemberCount = expectedDataMemberCount;
+        this.terminalReplayTtl = terminalReplayTtl;
+        this.exactProviderUsage = exactProviderUsage;
+    }
+
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
+            int expectedDataMemberCount) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+                DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
     public GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1);
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1,
+                DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
     GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
@@ -142,23 +172,42 @@ public class GenerationJobService {
         this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
-    /**
-     * The token-usage sink for a generation run's model calls: each {@link ChatResponse} is recorded against the run's course/exercise/user. It lives here — with the rest of the
-     * run's bookkeeping — so the orchestrator and the independent examiner attribute their model calls through one shared path.
-     *
-     * @param courseId   the run's course id, or {@code null} if unavailable
-     * @param exerciseId the run's exercise id, or {@code null} if unavailable
-     * @param userId     the initiating user's id, or {@code null} if unavailable
-     * @return a sink that records each model response's token usage
-     */
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId) {
+        return tokenUsageSink(courseId, exerciseId, userId, null);
+    }
+
+    public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId) {
         return chatResponse -> {
             boolean recorded = llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
-                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId));
+                    builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId), request -> {
+                        if (generationJobId != null) {
+                            replayStore.recordUsage(generationJobId, request);
+                            recordPersistedUsage(exerciseId, generationJobId, (long) request.numInputTokens() + request.numOutputTokens());
+                        }
+                    });
             if (!recorded) {
                 throw new TokenUsageAccountingException();
             }
         };
+    }
+
+    void recordToolCalls(String generationJobId, long count) {
+        replayStore.recordToolCalls(generationJobId, count);
+    }
+
+    private void recordPersistedUsage(@Nullable Long exerciseId, String generationJobId, long tokens) {
+        if (generationBudgetService == null || exerciseId == null) {
+            return;
+        }
+        try {
+            JobInfo job = jobMap.get(key(exerciseId));
+            if (job != null && job.jobId().equals(generationJobId)) {
+                generationBudgetService.recordPersistedUsage(job.budgetReservationId(), tokens);
+            }
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not reduce the transient budget reservation for generation job {}; admission remains conservative", generationJobId, exception);
+        }
     }
 
     static final class TokenUsageAccountingException extends RuntimeException {
@@ -167,7 +216,6 @@ public class GenerationJobService {
         private static final long serialVersionUID = 1L;
     }
 
-    /** Initializes the distributed job state and local cancellation listener. */
     @PostConstruct
     public void init() {
         if (expectedDataMemberCount < 1) {
@@ -181,7 +229,7 @@ public class GenerationJobService {
         }
         jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
         cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
-        replayStore = new GenerationJobReplayStore(hazelcastInstance);
+        replayStore = new GenerationJobReplayStore(hazelcastInstance, terminalReplayTtl);
         ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
         cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
         localNodeId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
@@ -195,40 +243,31 @@ public class GenerationJobService {
         return startJob(user, exercise, userPrompt, mode, budgetReservationId, null);
     }
 
-    /**
-     * Starts a job while preserving the original instructor brief separately from the rendered authoring instruction.
-     *
-     * @param user                the requesting instructor
-     * @param exercise            the target exercise
-     * @param userPrompt          the rendered instruction for the generation agent
-     * @param mode                the explicit run intent
-     * @param budgetReservationId the optional token-budget reservation id
-     * @param sourceBrief         the authoritative instructor brief for a from-scratch generation, or {@code null} for a statement-driven run
-     * @return the started job id
-     */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief) {
+        return startJob(user, exercise, userPrompt, mode, budgetReservationId, sourceBrief, null);
+    }
+
+    public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
+            @Nullable HyperionGenerationSettings settings) {
         String jobId = UUID.randomUUID().toString();
         String key = key(exercise.getId());
         Instant startedAt = Instant.now();
-        Instant deadlineAt = deadlineAt(startedAt);
+        Instant deadlineAt = startedAt.plus(settings == null ? maxJobDuration : settings.maxJobDuration());
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId);
         claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
         GenerationJobReplayStore.StartedReplay startedReplay = null;
         boolean publicStatePublished = false;
-        // Fresh transcript and fileChange store for this run. Keep the previous replay state until the async event is accepted; if publishing fails synchronously, rollback
-        // restores the prior terminal replay instead of leaving the status endpoint empty. State initialization is inside the rollback boundary as well: once the slot is claimed,
-        // no distributed-map failure may leave it wedged.
         try {
-            startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode);
+            startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name());
+            if (!exactProviderUsage) {
+                replayStore.markUsageIncomplete(jobId);
+            }
             publishExerciseState(exercise.getId(), jobId, true);
             publicStatePublished = true;
             eventPublisher.publishEvent(new GenerationStartedEvent(jobId, user, exercise, userPrompt, mode, exercise.getProblemStatement(), exercise.getTitle(), deadlineAt,
-                    budgetReservationId, sourceBrief));
+                    budgetReservationId, sourceBrief, settings));
         }
         catch (RejectedExecutionException e) {
-            // The generation executor is saturated (AbortPolicy), so the @Async listener never ran and no terminal event will ever fire. Roll the claimed slot and its retained
-            // state back — value-guarded, so a later run for this exercise is never clobbered — rather than leave the exercise wedged as "running". This also catches
-            // ThreadPoolTaskExecutor's TaskRejectedException, a RejectedExecutionException subclass.
             rollbackUnpublishedStart(exercise.getId(), key, newJob, startedReplay);
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
@@ -342,7 +381,34 @@ public class GenerationJobService {
     }
 
     public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
-        return replayStore.getStatus(user, exercise);
+        return replayStore.getStatus(user, exercise).map(this::withTerminalUsage);
+    }
+
+    public void markTokenAccountingIncomplete(String jobId) {
+        replayStore.markUsageIncomplete(jobId);
+    }
+
+    public void sealTokenAccountingOnWorkerExit(long exerciseId, String jobId) {
+        replayStore.sealUsageOnWorkerExit(exerciseId, jobId);
+    }
+
+    void recordAgentTurn(String generationJobId) {
+        replayStore.recordAgentTurn(generationJobId);
+    }
+
+    void recordAttempt(String generationJobId) {
+        replayStore.recordAttempt(generationJobId);
+    }
+
+    private ExerciseGenerationStatusDTO withTerminalUsage(ExerciseGenerationStatusDTO status) {
+        if (status.running()) {
+            return status;
+        }
+        if (!status.ownedByCaller()) {
+            return status.withUsage(null, ExerciseGenerationAccountingState.INCOMPLETE);
+        }
+        GenerationJobReplayStore.UsageSnapshot snapshot = replayStore.usageSnapshot(status.jobId());
+        return status.withUsage(snapshot.usage(), snapshot.accountingState());
     }
 
     public void discardRetainedRun(long exerciseId, String jobId) {
@@ -819,7 +885,7 @@ public class GenerationJobService {
     private void signalStaleLiveOwner(JobInfo current, Instant now) {
         boolean alreadyCancelled = Boolean.TRUE.equals(cancellationMap.get(current.jobId()));
         cancellationMap.set(current.jobId(), Boolean.TRUE);
-        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now));
+        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
         if (!alreadyCancelled) {
             interruptCluster(current.jobId());
         }
@@ -827,7 +893,8 @@ public class GenerationJobService {
 
     private void stopActiveJob(String key, JobInfo current, Instant now) {
         cancellationMap.set(current.jobId(), Boolean.TRUE, Math.max(1, maxJobDuration.toSeconds()), TimeUnit.SECONDS);
-        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now));
+        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
+        replayStore.sealUsageIncomplete(current.jobId());
         if (jobMap.remove(key, current)) {
             replayStore.retainAfterJobCleared(current.exerciseId(), current.jobId());
         }
@@ -877,12 +944,13 @@ public class GenerationJobService {
         return "Generation stopped because the owning node stopped sending heartbeats. Review the exercise and repositories before use if this happened while saving.";
     }
 
-    private static String key(long exerciseId) {
-        return String.valueOf(exerciseId);
+    private ExerciseGenerationEventDTO.TerminationReason stoppedTerminationReason(JobInfo job, Instant now) {
+        return job.deadlineAt() != null && !job.deadlineAt().isAfter(now) ? ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED
+                : ExerciseGenerationEventDTO.TerminationReason.CANCELLED;
     }
 
-    private Instant deadlineAt(Instant startedAt) {
-        return startedAt.plus(maxJobDuration);
+    private static String key(long exerciseId) {
+        return String.valueOf(exerciseId);
     }
 
     public record ExternalMutationInfo(long exerciseId, String token, @Nullable String ownerNodeId, Instant startedAt) {
@@ -914,10 +982,14 @@ public class GenerationJobService {
     }
 
     public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done,
-            @Nullable String specDocument) implements Serializable {
+            @Nullable String specDocument, @Nullable String effortProfile) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
+
+        JobTranscript withEvents(List<ExerciseGenerationEventDTO> newEvents, boolean newDone, @Nullable String newSpecDocument) {
+            return new JobTranscript(jobId, userLogin, exerciseId, mode, newEvents, newDone, newSpecDocument, effortProfile);
+        }
     }
 
     public record JobFileChangeIndex(String jobId, String userLogin, List<ExerciseGenerationFileChangeDTO> changes) implements Serializable {

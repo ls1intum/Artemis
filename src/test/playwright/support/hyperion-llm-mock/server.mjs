@@ -23,6 +23,12 @@ const adaptedTestMessageMarker = 'The sort algorithm of Context was not MergeSor
 const adaptedBoundaryTestLoopMarker = 'for (int i = 0; i < 5; i++)';
 const adaptedBoundaryTestMessageMarker = 'The sort algorithm of Context was not BubbleSort for a list with less or equal than 5 dates.';
 const criticPromptMarker = 'reviewer for a generated programming exercise';
+const specificationReviewPromptMarker = 'review one candidate programming-exercise specification';
+const conceptGenerationPromptMarker = 'Generate exactly three candidate realizations for the instructor brief';
+const conceptReviewPromptMarker = 'Review exactly three generator-authored exercise concepts';
+const conceptAdmissionPromptMarker = 'Audit one already-selected exercise concept';
+const semanticMutantPromptMarker = 'independent semantic mutation-test author';
+const contractWitnessPromptMarker = 'author executable witnesses for a generated programming exercise';
 const oracleReviewPromptMarker = 'test-oracle reviewer for a generated programming exercise';
 const draftPromptMarker = 'expert technical writing assistant for programming exercise problem statements';
 const draftProblemStatement = `# Temperature Alert Classification
@@ -53,15 +59,99 @@ Implement \`TemperatureClassifier.classify(List<Integer>)\`. Return one label fo
 
 ## Tasks
 
-1. [task][Classify temperatures](testRepresentativeTemperatures)
-2. [task][Handle boundaries and empty input](testBoundariesAndEmptyInput)
-3. [task][Reject missing readings atomically](testMissingReadingIsRejected)
+### 1. Classify representative temperatures
+[task][Classify temperatures](testRepresentativeTemperatures)
+
+Implement the three classification ranges and preserve the order of all readings.
+
+### 2. Handle boundaries and empty input
+[task][Handle boundaries and empty input](testBoundariesAndEmptyInput)
+
+Treat 0 and 25 as inclusive NORMAL boundaries, and return an empty result for an empty input.
+
+### 3. Reject missing readings atomically
+[task][Reject missing readings atomically](testMissingReadingIsRejected)
+
+Validate the complete input before returning classifications so a null reading cannot produce a partial result.
 `;
-const correctedGeneratedProblemStatement = generatedProblemStatement
-    .replace('testRepresentativeTemperatures)', 'testRepresentativeTemperatures())')
-    .replace('testBoundariesAndEmptyInput)', 'testBoundariesAndEmptyInput())')
-    .replace('testMissingReadingIsRejected)', 'testMissingReadingIsRejected())');
-const generatedSolution = `package temperaturealertclassification;
+const correctedGeneratedProblemStatement = generatedProblemStatement;
+const generatedSpec = `# Temperature Alert Classification
+
+## Rules
+- R1: readings below 0 are FREEZING, readings from 0 through 25 are NORMAL, and readings above 25 are HOT.
+- R2: classifications preserve input order.
+- R3: a null reading rejects the complete input without a partial result.
+- R4: an empty input produces an empty result.
+
+## Worked Examples
+| Rules | Input | Expected |
+|-------|-------|----------|
+| R1, R2 | -1, 0, 26 | FREEZING, NORMAL, HOT |
+| R3, R4 | null reading / empty list | exception / empty list |
+
+## Design
+| Type | Role | Template status |
+|------|------|-----------------|
+| TemperatureClassifier | classifies an ordered list of readings | stubbed |
+
+## Public API
+\`\`\`java
+public final class TemperatureClassifier { public static java.util.List<String> classify(java.util.List<Integer> readings); }
+\`\`\`
+
+## Testing Strategy
+| Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+|------|------------|---------------------------|--------|----------------|
+| S1 | TemperatureClassifier | representative values and order | 3 | no |
+| S2 | TemperatureClassifier | exact boundaries and empty input | 3 | no |
+| S3 | TemperatureClassifier | atomic null rejection | 3 | no |
+
+## Contract Risk Inventory
+| Seam | Rules | Admitted partitions | Excluded inputs |
+|------|-------|---------------------|-----------------|
+| S1 | R1, R2 | S1.P1: below, within, and above boundaries | none |
+| S2 | R1, R4 | S2.P1: exact 0 and 25; S2.P2: empty input | none |
+| S3 | R3 | S3.P1: null before and after valid readings | null list |
+
+## Diagram
+no — single-class exercise
+`;
+const generatedConcepts = `## Candidate 1
+Domain situation: A monitoring console categorizes ordered temperature readings into alert bands.
+Real constraint: Operators need consistent inclusive boundary handling while scanning a small batch.
+Common caller goal: Obtain one meaningful alert category for every reading in its original order.
+Student-owned objective: Implement the complete comparison and branching behavior that assigns each reading to its category.
+Student-owned reasoning: Translate an exhaustive ordered numeric partition into correct branching while preserving collection order.
+Alternative policies: Not applicable
+Observable substitution: Not applicable
+Likely supplied support: The input collection and routine project infrastructure.
+
+## Candidate 2
+Domain situation: A laboratory dashboard groups ordered sensor readings into operating ranges.
+Real constraint: Technicians must see deterministic classifications at every shared range boundary.
+Common caller goal: Classify a short ordered sample without losing its correspondence to the inputs.
+Student-owned objective: Implement the range comparisons and ordered transformation for all admitted readings.
+Student-owned reasoning: Reconcile inclusive and exclusive range edges and produce one result per input.
+Alternative policies: Not applicable
+Observable substitution: Not applicable
+Likely supplied support: Basic data setup and the build harness.
+
+## Candidate 3
+Domain situation: A field station summarizes ordered numeric measurements into response levels.
+Real constraint: Downstream staff rely on unambiguous treatment of measurements exactly on a threshold.
+Common caller goal: Turn a small sequence of measurements into an equally ordered sequence of levels.
+Student-owned objective: Implement exhaustive branching across the measurement ranges and preserve sequence order.
+Student-owned reasoning: Design control flow that covers every range exactly once and maps all inputs without reordering.
+Alternative policies: Not applicable
+Observable substitution: Not applicable
+Likely supplied support: Measurement values and routine scaffolding.
+`;
+const generatedTestPlan = `{"tests":[
+  {"name":"testRepresentativeTemperatures","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":3,"visibility":"ALWAYS"},
+  {"name":"testBoundariesAndEmptyInput","seam":"S2","riskPartitions":["S2.P1","S2.P2"],"seamWeightTier":3,"visibility":"ALWAYS"},
+  {"name":"testMissingReadingIsRejected","seam":"S3","riskPartitions":["S3.P1"],"seamWeightTier":3,"visibility":"ALWAYS"}
+]}`;
+const generatedSolution = `package de.tum.cit.aet.temperaturealert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +172,7 @@ public final class TemperatureClassifier {
     }
 }
 `;
-const generatedTemplate = `package temperaturealertclassification;
+const generatedTemplate = `package de.tum.cit.aet.temperaturealert;
 
 import java.util.List;
 
@@ -91,12 +181,14 @@ public final class TemperatureClassifier {
     }
 
     public static List<String> classify(List<Integer> readings) {
-        // TODO: Implement the classification rules.
+        // TODO S1: Classify representative values while preserving input order.
+        // TODO S2: Handle the exact boundaries and empty input.
+        // TODO S3: Reject an input containing a null reading atomically.
         throw new UnsupportedOperationException("Not implemented");
     }
 }
 `;
-const generatedTests = `package temperaturealertclassification;
+const generatedTests = `package de.tum.cit.aet.temperaturealert;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -264,7 +356,7 @@ function toolCallResponse(requestNumber, toolName, args) {
                 finish_reason: 'tool_calls',
             },
         ],
-        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2, prompt_tokens_details: { cached_tokens: 1 } },
     };
 }
 
@@ -275,7 +367,7 @@ function textResponse(requestNumber, content) {
         created: Math.floor(Date.now() / 1000),
         model: 'hyperion-e2e-mock',
         choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+        usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2, prompt_tokens_details: { cached_tokens: 1 } },
     };
 }
 
@@ -408,6 +500,148 @@ const server = http.createServer((req, res) => {
                 jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submit an intentionally invalid candidate to exercise the real verifier.' }));
                 return;
             }
+            if (body.includes(conceptGenerationPromptMarker)) {
+                jsonResponse(res, 200, textResponse(requestNumber, generatedConcepts));
+                return;
+            }
+            if (body.includes(conceptReviewPromptMarker)) {
+                const evaluation = (candidate) => ({
+                    candidate,
+                    candidateEvidenceIds: [`C${candidate}.2`, `C${candidate}.5`, `C${candidate}.6`],
+                    briefCoverage: 'The concept preserves the introductory Java branching, comparison, ordered readings, and explicit-boundary objective.',
+                    objectiveCounterfactual: 'Without the learner-owned range decisions, the exercise no longer practices the requested comparison and branching objective.',
+                    difficultyFit: 'The concise branching and ordered transformation are proportionate to an introductory exercise.',
+                    smallestStudentImplementation: 'A complete classifier must compare each reading against exhaustive range edges and emit one ordered category.',
+                    reasoningAfterRoutineWork: 'Students still determine exhaustive branch control flow, inclusive edge placement, and order-preserving traversal.',
+                    domainGrounding: 'Operational reading categories make exact thresholds and consistent ordered classification meaningful.',
+                    feasibility: 'The behavior fits one small Java class and can be observed directly through representative and boundary inputs.',
+                    briefCovered: true,
+                    objectiveEssential: true,
+                    learningFitSufficient: true,
+                    learnerOwnsObjectiveMechanism: true,
+                    objectiveObservable: true,
+                    prematureContractClosure: false,
+                    difficultySufficient: true,
+                    domainGrounded: true,
+                    feasibleAndProportionate: true,
+                });
+                jsonResponse(
+                    res,
+                    200,
+                    textResponse(
+                        requestNumber,
+                        JSON.stringify({
+                            selectedCandidate: 1,
+                            selectionReason: 'Candidate 1 most directly connects ordered temperature monitoring to exhaustive student-owned branching while remaining introductory.',
+                            evaluations: [evaluation(1), evaluation(2), evaluation(3)],
+                        }),
+                    ),
+                );
+                return;
+            }
+            if (body.includes(conceptAdmissionPromptMarker)) {
+                jsonResponse(
+                    res,
+                    200,
+                    textResponse(
+                        requestNumber,
+                        JSON.stringify({
+                            auditedCandidateEvidenceIds: ['C1.2', 'C1.5', 'C1.6'],
+                            smallestEquivalentImplementation: 'The minimal implementation compares each ordered reading against a complete range partition and returns one corresponding category.',
+                            observablePartitionAudit: 'Each qualitative range changes the returned category, while order preservation remains observable across a multi-reading input.',
+                            unsupportedChoices: [],
+                            unobservableRequirements: [],
+                            redundantDistinctions: [],
+                            admissible: true,
+                            summary: 'The concept stays qualitative, observable, proportionate, and free of unsupported implementation mandates.',
+                        }),
+                    ),
+                );
+                return;
+            }
+            if (body.includes(semanticMutantPromptMarker)) {
+                jsonResponse(res, 200, textResponse(requestNumber, '{"mutants":[]}'));
+                return;
+            }
+            if (body.includes(contractWitnessPromptMarker)) {
+                jsonResponse(res, 200, textResponse(requestNumber, '{"witnesses":[]}'));
+                return;
+            }
+            if (body.includes(specificationReviewPromptMarker)) {
+                jsonResponse(
+                    res,
+                    200,
+                    textResponse(
+                        requestNumber,
+                        JSON.stringify({
+                            learningFit: {
+                                briefEvidenceIds: ['B2'],
+                                specEvidenceIds: ['E3', 'E15', 'E18', 'E23', 'E24', 'E25'],
+                                objectiveEvidenceIds: ['E3', 'E18'],
+                                studentOwnershipEvidenceIds: ['E15'],
+                                assessmentEvidenceIds: ['E23', 'E24', 'E25'],
+                                objectiveMechanism: 'Students implement the classifier that compares each reading against both inclusive category boundaries and preserves input order.',
+                                remainingStudentReasoning: 'Students must translate the complete ordered numeric partition into branching logic, preserve collection order, and validate the whole input before producing a result.',
+                                domainGrounding: 'The classification rules model temperature alert ranges, so every comparison and boundary decision directly determines a domain label.',
+                                learnerOwnsObjectiveMechanism: true,
+                                objectiveObservable: true,
+                                difficultySufficient: true,
+                                domainGrounded: true,
+                                sufficient: true,
+                                direction: 'SUFFICIENT',
+                            },
+                            conceptAlignment: {
+                                briefEvidenceIds: ['B2'],
+                                conceptEvidenceIds: ['C2', 'C5', 'C6'],
+                                specEvidenceIds: ['E3', 'E15', 'E18'],
+                                disposition: 'ALIGNED',
+                                reason: 'The specification preserves the selected monitoring classification interaction and leaves students responsible for its complete branching mechanism.',
+                            },
+                            boundaryChecks: [
+                                {
+                                    briefEvidenceIds: ['B2'],
+                                    specEvidenceIds: ['E3', 'E18', 'E24'],
+                                    publicSetup: 'Call TemperatureClassifier.classify with readings containing 0 and 25.',
+                                    observedOperation: 'TemperatureClassifier.classify returns NORMAL for both exact boundary readings.',
+                                    reachable: true,
+                                    timingPreserved: true,
+                                    reason: 'The public list input admits both exact integers and R1 assigns each to the inclusive NORMAL range.',
+                                },
+                                {
+                                    briefEvidenceIds: ['B2'],
+                                    specEvidenceIds: ['E5', 'E18', 'E25'],
+                                    publicSetup: 'Call TemperatureClassifier.classify with a list containing a null reading.',
+                                    observedOperation: 'TemperatureClassifier.classify rejects the complete input without returning a partial result.',
+                                    reachable: true,
+                                    timingPreserved: true,
+                                    reason: 'The public list input can contain null and R3 makes rejection observable during the classification call.',
+                                },
+                            ],
+                            priorFindingChecks: [],
+                            exampleChecks: [
+                                {
+                                    exampleEvidenceId: 'E10',
+                                    replayedOutcome: 'FREEZING, NORMAL, HOT in the original order.',
+                                    consistent: true,
+                                    reason: '-1 is below 0, 0 is inside the inclusive range, and 26 is above 25.',
+                                },
+                                {
+                                    exampleEvidenceId: 'E11',
+                                    replayedOutcome: 'A null reading causes rejection, while an empty list returns an empty list.',
+                                    consistent: true,
+                                    reason: 'The two outcomes follow directly from R3 and R4 without conflicting state or preconditions.',
+                                },
+                            ],
+                            omissions: [],
+                            conflicts: [],
+                            internalConflicts: [],
+                            ambiguities: [],
+                            unsupportedConstraints: [],
+                        }),
+                    ),
+                );
+                return;
+            }
             if (body.includes(criticPromptMarker)) {
                 const weakThresholdOracle = body.includes(submitSeedMarker) && currentCandidateContains(body, 'for (int i = 0; i < 3; i++)');
                 const oracleReview = body.includes(oracleReviewPromptMarker);
@@ -429,26 +663,55 @@ const server = http.createServer((req, res) => {
                 return;
             }
             if (body.includes(submitNewExerciseMarker) || body.includes('# Temperature Alert Classification')) {
+                const specStage = body.includes('SPEC.md: the only writable artifact in this stage');
+                const testsStage = body.includes('solution/, template/, tests/, and test-plan.json');
+                const statementStage = body.includes('problem-statement.md: the only writable artifact in this stage');
+                if (specStage) {
+                    if (!hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === 'SPEC.md')) {
+                        jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'SPEC.md', content: generatedSpec }));
+                        return;
+                    }
+                    jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the deterministic temperature specification.' }));
+                    return;
+                }
+                if (testsStage) {
+                    const generatedPackage = body.match(/Module \/ package name: ([a-zA-Z0-9_.]+)/)?.[1] ?? 'de.tum.cit.aet.temperaturealert';
+                    const generatedPackagePath = generatedPackage.replaceAll('.', '/');
+                    const withGeneratedPackage = (content) => content.replaceAll('de.tum.cit.aet.temperaturealert', generatedPackage);
+                    const files = [
+                        [`solution/src/${generatedPackagePath}/TemperatureClassifier.java`, withGeneratedPackage(generatedSolution)],
+                        [`template/src/${generatedPackagePath}/TemperatureClassifier.java`, withGeneratedPackage(generatedTemplate)],
+                        [`tests/test/${generatedPackagePath}/TemperatureClassifierTest.java`, withGeneratedPackage(generatedTests)],
+                        ['test-plan.json', generatedTestPlan],
+                    ];
+                    const nextFile = files.find(([file]) => !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === file));
+                    if (nextFile) {
+                        jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: nextFile[0], content: nextFile[1] }));
+                        return;
+                    }
+                    jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted deterministic temperature code and tests.' }));
+                    return;
+                }
                 if (
+                    statementStage &&
                     body.includes('These [task] bindings reference names that match no actual test') &&
-                    !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === 'problem-statement.md' && args.content?.includes('testRepresentativeTemperatures()'))
+                    !hasAcknowledgedToolCall(
+                        body,
+                        'write_file',
+                        (args) => args.path === 'problem-statement.md' && args.content?.includes('### 1. Classify representative temperatures'),
+                    )
                 ) {
                     jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: correctedGeneratedProblemStatement }));
                     return;
                 }
-                const files = [
-                    ['solution/src/temperaturealertclassification/TemperatureClassifier.java', generatedSolution],
-                    ['template/src/temperaturealertclassification/TemperatureClassifier.java', generatedTemplate],
-                    ['tests/test/temperaturealertclassification/TemperatureClassifierTest.java', generatedTests],
-                    ['problem-statement.md', generatedProblemStatement],
-                ];
-                const nextFile = files.find(([file]) => !hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === file));
-                if (nextFile) {
-                    jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: nextFile[0], content: nextFile[1] }));
+                if (statementStage) {
+                    if (!hasAcknowledgedToolCall(body, 'write_file', (args) => args.path === 'problem-statement.md')) {
+                        jsonResponse(res, 200, toolCallResponse(requestNumber, 'write_file', { path: 'problem-statement.md', content: generatedProblemStatement }));
+                        return;
+                    }
+                    jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the deterministic temperature problem statement.' }));
                     return;
                 }
-                jsonResponse(res, 200, toolCallResponse(requestNumber, 'submit', { summary: 'Submitted the generated temperature exercise for deterministic E2E verification.' }));
-                return;
             }
             if (body.includes(writeSnapshotMarker) && !body.includes('HyperionPreview.java')) {
                 jsonResponse(

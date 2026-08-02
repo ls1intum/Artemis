@@ -81,6 +81,11 @@ public record SpecFidelityReport(List<Finding> findings) {
          * adopted and does not by itself prove the current exercise defective.
          */
         CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE,
+        /**
+         * The primary full-artifact review completed, but an auxiliary executable mutant or reference-witness check could not produce complete evidence. This blocks autonomous
+         * convergence without invalidating the reviewed, mechanically verified candidate.
+         */
+        EXECUTABLE_EVIDENCE_UNAVAILABLE,
         /** The automated full-artifact quality review could not produce a complete verdict. */
         QUALITY_REVIEW_UNAVAILABLE,
         /** A complete pre-freeze specification review still rejected the compiled contract after its bounded refinement budget. */
@@ -99,7 +104,8 @@ public record SpecFidelityReport(List<Finding> findings) {
         public boolean isBlocking() {
             return switch (kind) {
                 case UNCOVERED_REQUIREMENT, MECHANICS_LEAK, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
-                        CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, QUALITY_REVIEW_UNAVAILABLE ->
+                        CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, EXECUTABLE_EVIDENCE_UNAVAILABLE,
+                        QUALITY_REVIEW_UNAVAILABLE ->
                     true;
                 case SPECIFICATION_REVIEW_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
@@ -123,6 +129,11 @@ public record SpecFidelityReport(List<Finding> findings) {
     public static SpecFidelityReport qualityReviewUnavailable(String detail) {
         return new SpecFidelityReport(List
                 .of(new Finding(Kind.QUALITY_REVIEW_UNAVAILABLE, "Exercise quality could not be verified", detail + " Review the saved exercise carefully before releasing it.")));
+    }
+
+    public static SpecFidelityReport executableEvidenceUnavailable(String detail) {
+        return new SpecFidelityReport(List.of(new Finding(Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE, "Executable quality evidence could not be completed",
+                detail + " Review the saved exercise carefully before releasing it.")));
     }
 
     public boolean hasFindings() {

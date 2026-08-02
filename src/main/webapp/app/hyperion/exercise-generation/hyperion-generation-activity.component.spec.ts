@@ -624,8 +624,7 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(completed).toHaveBeenCalledOnce();
         expect(completed.mock.calls[0][0]).toMatchObject({ jobId: 'j1', liveExerciseChanged: true, savedRepositoryCommits: { template: 'template-commit' } });
 
-        // A subsequent background poll of the same terminal status must not emit a second refresh for the same job.
-        (fixture.componentInstance as any).loadStatus(42, undefined, true);
+        fixture.componentInstance.retryStatus();
         expect(completed).toHaveBeenCalledOnce();
     });
 
@@ -1082,7 +1081,8 @@ describe('HyperionGenerationActivityComponent', () => {
         const errorSpy = vi.spyOn(alertService, 'error');
         const successSpy = vi.spyOn(alertService, 'success');
 
-        (component as any).revert();
+        component.confirmRevert();
+        component.acceptRevert();
         component.running.set(true);
         component.cancel();
         const stateBeforeDestroy = { reverting: component.reverting(), cancelRequested: component.cancelRequested() };
@@ -1103,17 +1103,24 @@ describe('HyperionGenerationActivityComponent', () => {
 
     it('does not retry a late revert-availability failure after destruction', () => {
         vi.useFakeTimers();
-        const fixture = createWith({ jobId: 'j1', mode: 'ADAPT', running: false, events: [], fileChanges: [] });
+        const status: TestGenerationStatus = { jobId: 'j1', mode: 'ADAPT', running: true, events: [], fileChanges: [] };
+        const terminalStatus$ = new Subject<HttpResponse<HyperionGenerationStatus>>();
         const availability$ = new Subject<HttpResponse<HyperionGenerationStatus>>();
-        service.getStatus = vi.fn(() => availability$);
+        service.getStatus = vi
+            .fn()
+            .mockReturnValueOnce(of(new HttpResponse({ body: normalizeStatus(status) })))
+            .mockReturnValueOnce(terminalStatus$)
+            .mockReturnValueOnce(availability$);
+        const fixture = createWith(status);
 
-        (fixture.componentInstance as any).refreshRevertAvailability(42, 'j1');
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
         fixture.destroy();
+        const timersAfterDestroy = vi.getTimerCount();
         availability$.error(new Error('late failure'));
-        expect(vi.getTimerCount()).toBe(0);
+        expect(vi.getTimerCount()).toBe(timersAfterDestroy);
         vi.advanceTimersByTime(60_000);
 
-        expect(service.getStatus).toHaveBeenCalledOnce();
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
     });
 
     it('refreshes retained status when cancellation is rejected or already terminal', () => {

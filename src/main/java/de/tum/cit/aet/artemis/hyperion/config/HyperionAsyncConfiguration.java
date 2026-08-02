@@ -32,7 +32,7 @@ public class HyperionAsyncConfiguration {
      * Wires the task-agnostic {@link AgentLoopRunner} as an exercise-generation-conditional bean, supplying the deployment's context-window size.
      *
      * @param chatModels                  the available chat models (the first is used; empty if no AI provider is configured)
-     * @param contextWindowTokens         the model's usable context window in tokens, below which the loop keeps the conversation via compaction
+     * @param agentProperties             the bound {@code artemis.hyperion.agent} configuration, supplying the deployment-default context window
      * @param providerHardFailureCooldown cooldown applied after deterministic provider/auth/quota failures
      * @param providerFailureCooldown     shared provider cooldown state
      * @param checkpointManager           opt-in development checkpoint manager
@@ -40,10 +40,10 @@ public class HyperionAsyncConfiguration {
      */
     @Bean
     @Lazy
-    public AgentLoopRunner agentLoopRunner(Collection<ChatModel> chatModels, @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens,
+    public AgentLoopRunner agentLoopRunner(Collection<ChatModel> chatModels, HyperionAgentProperties agentProperties,
             @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
             AgentCheckpointManager checkpointManager) {
-        return new AgentLoopRunner(chatModels, contextWindowTokens, providerHardFailureCooldown, providerFailureCooldown, checkpointManager);
+        return new AgentLoopRunner(chatModels, agentProperties.getContextWindowTokens(), providerHardFailureCooldown, providerFailureCooldown, checkpointManager);
     }
 
     /**

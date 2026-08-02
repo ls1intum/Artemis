@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTra
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
@@ -593,8 +594,9 @@ class GenerationOrchestrationServiceTest {
         }
     }
 
-    private static SpecFidelityReport reportWith(String requirement) {
-        return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement, "no test covers it")));
+    private static SpecFidelityReport reportWith(String... requirements) {
+        return new SpecFidelityReport(Stream.of(requirements)
+                .map(requirement -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, requirement, "no test covers it")).toList());
     }
 
     private static SpecFidelityReport advisoryReportWith(String requirement) {
@@ -806,24 +808,24 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void aNewGroundedFindingAfterRepairGetsOneMoreBoundedSemanticRepair() {
+    void repairThatTradesOneBlockerForAnotherRetainsTheReviewedPredecessor() {
         SpecFidelityReport originalReview = reportWith("original contract blocker");
         SpecFidelityReport repairedReview = reportWith("repair introduced a different blocker");
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(originalReview, repairedReview,
-                SpecFidelityReport.empty());
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(originalReview, repairedReview);
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Original verified candidate", "# First repair", "# Complete repair");
 
         try (GenerationOutcome outcome = generate(() -> false)) {
-            assertThat(outcome.producedProblemStatement()).isEqualTo("# Complete repair");
-            assertThat(outcome.specFidelityReport()).isEqualTo(SpecFidelityReport.empty());
+            assertThat(outcome.producedProblemStatement()).isEqualTo("# Original verified candidate");
+            assertThat(outcome.specFidelityReport()).isEqualTo(originalReview);
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
         }
 
         ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
-        verify(agentLoopRunner, times(3)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
-        assertThat(prompts.getAllValues().get(2)).contains("repair introduced a different blocker").doesNotContain("original contract blocker");
-        verify(specFidelityCritic, times(3)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getAllValues().get(1)).contains("original contract blocker");
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -1476,7 +1478,8 @@ class GenerationOrchestrationServiceTest {
         // The single most consequential distinction the artifacts could not previously make: a run that stopped because it ran out of rounds, not because it was finished.
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("unbounded blocker"));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(reportWith("unbounded blocker", "secondary blocker"), reportWith("unbounded blocker"));
 
         try (GenerationOutcome outcome = serviceWithRepairBudget(1).generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null,
                 null, null)) {
@@ -1492,7 +1495,8 @@ class GenerationOrchestrationServiceTest {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("first"), rejected("second"), rejected("third"),
                 accepted(), rejected("the repair broke the build"), accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("unbounded blocker"));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(reportWith("unbounded blocker", "secondary blocker"), reportWith("unbounded blocker"));
 
         try (GenerationOutcome outcome = serviceWithRepairBudget(1).generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null,
                 null, null)) {
@@ -1538,6 +1542,21 @@ class GenerationOrchestrationServiceTest {
 
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+        }
+    }
+
+    @Test
+    void unavailableReviewAfterRepairRetainsTheReviewedPredecessor() {
+        acceptedCandidateWithSpecAndTests();
+        SpecFidelityReport reviewed = reportWith("boundary behavior is untested");
+        SpecFidelityReport unavailable = SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict");
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reviewed, unavailable, unavailable);
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Reviewed predecessor", "# Unreviewed repair");
+
+        try (GenerationOutcome outcome = generate(() -> false)) {
+            assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+            assertThat(outcome.producedProblemStatement()).isEqualTo("# Reviewed predecessor");
+            assertThat(outcome.specFidelityReport()).isEqualTo(reviewed);
         }
     }
 
@@ -1646,11 +1665,11 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void theSameFindingAfterARepair_isCountedAsCarriedOverRatherThanFresh() {
-        acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("emoji graphemes"), SpecFidelityReport.empty());
+        acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("emoji graphemes"));
 
         List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
 
-        assertThat(rounds).hasSize(3);
+        assertThat(rounds).hasSize(2);
         assertThat(rounds.get(0)).as("the first round has nothing to compare against").satisfies(round -> {
             assertThat(round.round()).isEqualTo(1);
             assertThat(round.attempt()).isEqualTo(1);
@@ -1663,12 +1682,6 @@ class GenerationOrchestrationServiceTest {
             assertThat(round.carriedOver()).isEqualTo(1);
             assertThat(round.drained()).isZero();
             assertThat(round.fresh()).isZero();
-        });
-        assertThat(rounds.get(2)).as("the second repair drained it").satisfies(round -> {
-            assertThat(round.carriedOver()).isZero();
-            assertThat(round.drained()).isEqualTo(1);
-            assertThat(round.fresh()).isZero();
-            assertThat(round.blocking()).isZero();
         });
     }
 
@@ -1754,7 +1767,7 @@ class GenerationOrchestrationServiceTest {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), rejected("the repair broke the build"),
                 accepted());
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("emoji graphemes"),
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(reportWith("emoji graphemes", "CJK graphemes"),
                 reportWith("emoji graphemes"), SpecFidelityReport.empty());
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("# Verified", "# Broken repair", "# Corrected repair", "# Final");
 
@@ -1764,19 +1777,19 @@ class GenerationOrchestrationServiceTest {
         assertThat(rounds.get(1)).satisfies(round -> {
             assertThat(round.round()).isEqualTo(2);
             assertThat(round.carriedOver()).as("the baseline survived the unreviewed attempt in between").isEqualTo(1);
-            assertThat(round.drained()).isZero();
+            assertThat(round.drained()).isEqualTo(1);
         });
     }
 
     @Test
     void theRoundLine_readsAsProgressAndCarriesItsCountsOnTheSameEvent() {
-        acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("CJK graphemes"), SpecFidelityReport.empty());
+        acceptedCandidateReviewedAs(reportWith("emoji graphemes", "CJK graphemes"), reportWith("CJK graphemes"), SpecFidelityReport.empty());
 
         RecordingProgressSink sink = generateRecordingProgress();
 
         assertThat(sink.lines).as("the existing human-readable lines are kept; the telemetry is additive")
                 .anySatisfy(line -> assertThat(line).contains("The review found", "1 blocking"));
-        assertThat(sink.lines).anySatisfy(line -> assertThat(line).contains("Quality review round 2", "0 still open from the previous round", "1 resolved", "1 new"));
+        assertThat(sink.lines).anySatisfy(line -> assertThat(line).contains("Quality review round 2", "1 still open from the previous round", "1 resolved", "0 new"));
         assertThat(sink.lines).anySatisfy(line -> assertThat(line).contains("Quality review round 3", "no issues remain"));
     }
 
@@ -1804,6 +1817,38 @@ class GenerationOrchestrationServiceTest {
             assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
             assertThat(outcome.specFidelityReport().findings()).singleElement()
                     .satisfies(finding -> assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE));
+        }
+    }
+
+    @Test
+    void effortProfile_replacesTheEngineWithProfilePinnedCollaboratorsAndItsOwnTurnBudget() {
+        // The end of the thread A4 pulls: whatever the resource resolved must be what the loop actually runs, turn budget included.
+        when(agentLoopRunner.forSettings(any())).thenReturn(agentLoopRunner);
+        when(specFidelityCritic.forSettings(any())).thenReturn(specFidelityCritic);
+        when(stagedGenerationRunner.forSettings(any(), any(), any())).thenReturn(stagedGenerationRunner);
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+        HyperionGenerationSettings draft = new HyperionGenerationSettings("draft", "Quick draft", 20, java.time.Duration.ofMinutes(12), 600_000L, false, "CONTINUOUS", 64_000, null,
+                false, false);
+
+        try (GenerationOutcome ignored = newService().generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null,
+                null, draft)) {
+            verify(agentLoopRunner).forSettings(draft);
+            verify(specFidelityCritic).forSettings(draft);
+            verify(stagedGenerationRunner).forSettings(eq(draft), any(), any());
+            // 20 from the profile, not the 100 this service was constructed with.
+            verify(agentLoopRunner).runSession(anyString(), any(), anyString(), any(), eq(20), any(), any(), any());
+        }
+    }
+
+    @Test
+    void withoutAnEffortProfile_theEngineIsNotDerivedAtAll() {
+        // A deployment that configures no profiles must keep running on exactly the shared singletons it ran on before profiles existed.
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
+
+        try (GenerationOutcome ignored = generate(() -> false)) {
+            verify(agentLoopRunner, never()).forSettings(any());
+            verify(specFidelityCritic, never()).forSettings(any());
+            verify(stagedGenerationRunner, never()).forSettings(any(), any(), any());
         }
     }
 }

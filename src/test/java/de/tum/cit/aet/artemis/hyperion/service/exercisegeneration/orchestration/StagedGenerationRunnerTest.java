@@ -38,6 +38,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
@@ -453,6 +454,23 @@ class StagedGenerationRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         verify(reviewer).reviewSpecification(eq("brief"), anyString(), any(), any());
         assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
+    }
+
+    @Test
+    void completedConceptRejectionHasItsOwnTerminationReason() {
+        ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
+        when(conceptSelector.select(eq("brief"), any(), any(), any()))
+                .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, null, null, 2, List.of(), "Every candidate invented a constraint.", ""));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs,
+                mock(SpecFidelityCriticService.class), conceptSelector, "FRESH");
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY, true, true, null);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.NO_ADMISSIBLE_CONCEPT);
+        assertThat(outcome.result().finalMessage()).contains("No exercise concept passed", "Every candidate invented a constraint");
+        verifyNoInteractions(agentLoopRunner);
     }
 
     @Test

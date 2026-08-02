@@ -118,21 +118,26 @@ final class ConceptAdmissionCritic {
         if (response.unsupportedChoices() == null || response.unobservableRequirements() == null || response.redundantDistinctions() == null) {
             return incomplete("One or more required finding arrays were missing.");
         }
-        List<AdmissionFinding> findings = new ArrayList<>();
-        findings.addAll(response.unsupportedChoices());
-        findings.addAll(response.unobservableRequirements());
-        findings.addAll(response.redundantDistinctions());
-        if (findings.stream().anyMatch(finding -> finding == null || !substantive(finding.detail()) || !evidence.containsSubstantive(finding.candidateEvidenceIds()))) {
+        List<AdmissionFinding> reportedFindings = new ArrayList<>();
+        reportedFindings.addAll(response.unsupportedChoices());
+        reportedFindings.addAll(response.unobservableRequirements());
+        reportedFindings.addAll(response.redundantDistinctions());
+        if (reportedFindings.stream().anyMatch(finding -> finding == null || !substantive(finding.detail()) || !evidence.containsSubstantive(finding.candidateEvidenceIds()))) {
             return incomplete("Every admission finding must cite substantive selected-candidate evidence and give a concrete reason.");
         }
-        boolean arraysEmpty = findings.isEmpty();
-        if (response.admissible() != arraysEmpty) {
+        if (response.admissible() != reportedFindings.isEmpty()) {
             return incomplete("admissible must be true exactly when all three finding arrays are empty.");
         }
-        String audit = "Decision: " + (response.admissible() ? "admitted" : "rejected") + "\nSmallest equivalent implementation: "
+        List<AdmissionFinding> findings = new ArrayList<>(response.unsupportedChoices());
+        findings.addAll(response.unobservableRequirements().stream().filter(finding -> !evidence.citesOnlyNonNormativeStudentReasoning(finding.candidateEvidenceIds())).toList());
+        findings.addAll(response.redundantDistinctions());
+        int ignoredDescriptiveFindings = reportedFindings.size() - findings.size();
+        boolean admitted = findings.isEmpty();
+        String audit = "Decision: " + (admitted ? "admitted" : "rejected") + "\nSmallest equivalent implementation: "
                 + truncateLearningEvidence(response.smallestEquivalentImplementation().strip()) + "\nObservable partition audit: "
-                + truncateLearningEvidence(response.observablePartitionAudit().strip()) + "\nSummary: " + truncateLearningEvidence(response.summary().strip());
-        if (response.admissible()) {
+                + truncateLearningEvidence(response.observablePartitionAudit().strip()) + "\nSummary: " + truncateLearningEvidence(response.summary().strip())
+                + (ignoredDescriptiveFindings == 0 ? "" : "\nServer normalization: ignored " + ignoredDescriptiveFindings + " non-normative Student-owned reasoning finding(s).");
+        if (admitted) {
             return new ParsedAdmission(true, true, "", audit);
         }
         String finding = "Selected concept failed focused admission: "

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fine-grained Hyperion authoring checkpoint DX.
 
-Record/replay/fork commands drive the tracked live Playwright scenario against a local Artemis stack.
+Record/replay/fork commands drive one brief through a minimal Playwright client against a local Artemis stack.
 Inspection commands are offline and need only the checkpoint directory.
 """
 
@@ -13,7 +13,6 @@ import json
 import os
 from pathlib import Path
 import signal
-import shutil
 import subprocess
 import sys
 import time
@@ -23,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_STORE = ROOT / ".e2e-local" / "hyperion-checkpoints"
 SERVER_PID_FILE = ROOT / ".e2e-local" / "checkpoint-server.pid"
 PLAYWRIGHT = ROOT / "src/test/playwright"
-LIVE_SPEC = "e2e/exercise/programming/HyperionLiveLlmUI.spec.ts"
+CHECKPOINT_DRIVER = "e2e/exercise/programming/HyperionCheckpointDriver.spec.ts"
 
 
 def read_json(path: Path) -> dict:
@@ -33,6 +32,12 @@ def read_json(path: Path) -> dict:
 def completed_run(path: Path) -> bool:
     manifest = path / "run.json"
     return manifest.is_file() and read_json(manifest).get("completed") is True
+
+
+def completed_runs(path: Path) -> set[Path]:
+    if not path.is_dir():
+        return set()
+    return {candidate.resolve() for candidate in path.iterdir() if candidate.is_dir() and completed_run(candidate)}
 
 
 def resolve_run(reference: str, store: Path) -> Path:
@@ -183,31 +188,6 @@ def compare_runs(left: Path, right: Path) -> None:
     for label, records in (("left", left_calls), ("right", right_calls)):
         terminal = next((call for call in reversed(records) if call.get("terminalStatus")), None)
         print(f"{label} terminal: {terminal.get('terminalStatus') if terminal else 'budget/unfinished'} at call {terminal.get('ordinal') if terminal else len(records)}")
-    for label, run in (("left", left), ("right", right)):
-        evaluation = run / "evaluation.json"
-        if not evaluation.is_file():
-            print(f"{label} outcome: no live evaluation sidecar")
-            continue
-        report = read_json(evaluation)
-        assessment = report.get("generatedAssessment") or {}
-        repositories = (report.get("repositories") or {}).get("selectedContent") or {}
-        artifact_hash = hashlib.sha256(
-            json.dumps(
-                {
-                    "statement": report.get("candidateProblemStatement"),
-                    "spec": report.get("specDocument"),
-                    "repositories": repositories,
-                },
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode()
-        ).hexdigest()[:12]
-        events = (report.get("terminalStatus") or {}).get("events") or []
-        final_event = events[-1].get("message") if events else "missing"
-        print(
-            f"{label} outcome: artifact={artifact_hash} tests={assessment.get('testCount', '?')} solutionPassed={assessment.get('solutionPassed', '?')} "
-            f"templateFailed={assessment.get('templateFailed', '?')} terminal={final_event}"
-        )
 
 
 def load_local_env() -> dict[str, str]:
@@ -308,8 +288,8 @@ def start_stack(env: dict[str, str]) -> None:
             raise SystemExit(f"Angular did not become healthy; inspect {client_log.name}")
 
 
-def run_scenario(
-    scenario: str,
+def run_checkpoint(
+    brief: str,
     name: str,
     output: Path,
     replay: Path | None,
@@ -320,14 +300,14 @@ def run_scenario(
 ) -> None:
     output.mkdir(parents=True, exist_ok=True)
     metadata = {
-        "scenario": scenario,
+        "brief": brief,
         "name": name,
         "parent": str(replay) if replay else None,
         "forkAt": fork_at,
         "forkReviewAt": fork_review_at,
     }
-    (output / "checkpoint-cli.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
     for repeat in range(1, repeats + 1):
+        existing_runs = completed_runs(output)
         env = load_local_env()
         local_defaults = {
             "SPRING_PROFILES_ACTIVE": "artemis,scheduling,localvc,localci,buildagent,core,dev",
@@ -359,10 +339,7 @@ def run_scenario(
                 "ARTEMIS_HYPERION_AGENT_CHECKPOINT_DIR": str(output),
                 "ARTEMIS_HYPERION_AGENT_CHECKPOINT_STRICT": "true",
                 "HYPERION_LLM_MODE": "live",
-                "HYPERION_LIVE_SCENARIOS": scenario,
-                "HYPERION_LIVE_RUN_ID": f"{name}-{repeat}",
-                "HYPERION_LIVE_ALLOW_QUALITY_FINDINGS": "true",
-                "HYPERION_LIVE_LLM_TIMEOUT_MS": "480000",
+                "HYPERION_CHECKPOINT_BRIEF": brief,
                 "BASE_URL": "http://localhost:9000",
             }
         )
@@ -379,29 +356,27 @@ def run_scenario(
             if source_manifest.get("exerciseProblemStatement") is not None:
                 env["HYPERION_CHECKPOINT_EXERCISE_STATEMENT"] = source_manifest["exerciseProblemStatement"]
         start_stack(env)
-        command = ["npx", "playwright", "test", LIVE_SPEC, "--project=slow-tests", "--max-failures=1"]
+        command = ["pnpm", "exec", "playwright", "test", CHECKPOINT_DRIVER, "--project=slow-tests", "--max-failures=1"]
         result = subprocess.run(command, cwd=PLAYWRIGHT, env=env, check=False)
-        report = ROOT / ".e2e-local" / "hyperion-live" / f"{name}-{repeat}" / f"{scenario}.json"
-        try:
-            latest = resolve_run(str(output), output.parent)
-        except SystemExit:
-            if result.returncode != 0:
+        new_runs = completed_runs(output) - existing_runs
+        if len(new_runs) != 1:
+            if result.returncode != 0 and not new_runs:
                 raise subprocess.CalledProcessError(result.returncode, command) from None
-            raise
-        if report.is_file():
-            shutil.copy2(report, latest / "evaluation.json")
-        elif result.returncode == 0:
-            raise SystemExit(f"Playwright completed without its qualitative report: {report}")
+            raise SystemExit(f"Expected one new completed checkpoint run in {output}, found {len(new_runs)}")
+        latest = new_runs.pop()
+        (latest / "checkpoint-cli.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
         if result.returncode != 0:
             raise subprocess.CalledProcessError(result.returncode, command)
         print(f"recorded repeat {repeat}: {latest}")
 
 
-def parent_scenario(run: Path) -> str:
-    for candidate in (run.parent / "checkpoint-cli.json", run / "checkpoint-cli.json"):
-        if candidate.is_file():
-            return read_json(candidate)["scenario"]
-    raise SystemExit("The source has no scenario metadata. Pass --scenario explicitly.")
+def parent_brief(run: Path) -> str:
+    metadata = run / "checkpoint-cli.json"
+    if metadata.is_file():
+        value = read_json(metadata).get("brief")
+        if value:
+            return value
+    raise SystemExit("The source has no brief metadata. Pass --brief-file explicitly.")
 
 
 def main() -> None:
@@ -409,7 +384,7 @@ def main() -> None:
     parser.add_argument("--store", type=Path, default=DEFAULT_STORE)
     sub = parser.add_subparsers(dest="command", required=True)
     record = sub.add_parser("record")
-    record.add_argument("scenario")
+    record.add_argument("brief_file", type=Path)
     record.add_argument("--name", required=True)
     turns_parser = sub.add_parser("turns")
     turns_parser.add_argument("run")
@@ -417,11 +392,11 @@ def main() -> None:
     show.add_argument("reference", help="RUN@CALL")
     replay_parser = sub.add_parser("replay")
     replay_parser.add_argument("run")
-    replay_parser.add_argument("--scenario")
+    replay_parser.add_argument("--brief-file", type=Path)
     replay_parser.add_argument("--name")
     fork = sub.add_parser("fork")
     fork.add_argument("reference", help="RUN@CALL or RUN@rREVIEW")
-    fork.add_argument("--scenario")
+    fork.add_argument("--brief-file", type=Path)
     fork.add_argument("--name", required=True)
     fork.add_argument("--repeat", type=int, default=1)
     fork.add_argument("--instruction-file", type=Path, help="append this targeted experiment instruction at the selected call")
@@ -432,7 +407,7 @@ def main() -> None:
     store = args.store.resolve()
 
     if args.command == "record":
-        run_scenario(args.scenario, args.name, store / args.name, None, 0, 0, 1)
+        run_checkpoint(args.brief_file.read_text(encoding="utf-8").strip(), args.name, store / args.name, None, 0, 0, 1)
     elif args.command == "turns":
         print_turns(resolve_run(args.run, store))
     elif args.command == "show":
@@ -446,23 +421,23 @@ def main() -> None:
             show_turn(run, int(ordinal))
     elif args.command == "replay":
         source = resolve_run(args.run, store)
-        scenario = args.scenario or parent_scenario(source)
+        brief = args.brief_file.read_text(encoding="utf-8").strip() if args.brief_file else parent_brief(source)
         name = args.name or f"{source.parent.name}-replay"
-        run_scenario(scenario, name, store / name, source, 0, 0, 1)
+        run_checkpoint(brief, name, store / name, source, 0, 0, 1)
     elif args.command == "fork":
         run_name, separator, ordinal = args.reference.rpartition("@")
         reviewer_fork = ordinal.startswith("r") and ordinal[1:].isdigit()
         if not separator or not (ordinal.isdigit() or reviewer_fork):
             raise SystemExit("Expected RUN@CALL or RUN@rREVIEW, for example elevator-base@42 or elevator-base@r1")
         source = resolve_run(run_name, store)
-        scenario = args.scenario or parent_scenario(source)
+        brief = args.brief_file.read_text(encoding="utf-8").strip() if args.brief_file else parent_brief(source)
         if reviewer_fork and args.instruction_file:
             raise SystemExit("--instruction-file is supported only for an author call fork")
         if reviewer_fork and not (source / "reviews" / f"{int(ordinal[1:]):06d}.json").is_file():
             raise SystemExit(f"Reviewer call {ordinal} does not exist in {source}")
         instruction = args.instruction_file.read_text(encoding="utf-8").strip() if args.instruction_file else ""
-        run_scenario(
-            scenario,
+        run_checkpoint(
+            brief,
             args.name,
             store / args.name,
             source,

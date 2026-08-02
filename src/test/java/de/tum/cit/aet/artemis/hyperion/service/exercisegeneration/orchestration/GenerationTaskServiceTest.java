@@ -10,8 +10,10 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -48,6 +51,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.Ex
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationIncompleteException;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationReviewService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -55,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import io.micrometer.observation.ObservationRegistry;
 
 class GenerationTaskServiceTest {
 
@@ -116,7 +121,7 @@ class GenerationTaskServiceTest {
         org.mockito.Mockito.doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(java.time.Duration.class));
 
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 250_000,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 250_000,
                 java.time.Duration.ofSeconds(15));
 
         user = new User();
@@ -131,7 +136,7 @@ class GenerationTaskServiceTest {
         when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(jobService.recordEvent(anyLong(), anyString(), any(), anyBoolean())).thenReturn(true);
         when(jobService.recordFileChange(anyLong(), anyString(), any())).thenReturn(true);
-        when(jobService.tokenUsageSink(any(), any(), any())).thenReturn(response -> {
+        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
         });
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
                 Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(), "main", true, 17L));
@@ -166,21 +171,21 @@ class GenerationTaskServiceTest {
     }
 
     private void run(GenerationMode mode, GenerationOutcome outcome) {
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(outcome);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(outcome);
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", mode));
     }
 
     @Test
     void originalSourceBriefIsForwardedToOrchestration() {
         GenerationOutcome outcome = GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, ""));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), eq("original instructor brief"))).thenReturn(outcome);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), eq("original instructor brief"), any())).thenReturn(outcome);
         GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "resolved instruction", GenerationMode.GENERATE, exercise.getProblemStatement(),
                 exercise.getTitle(), null, null, "original instructor brief");
 
         taskService.runAsync(event);
 
         verify(orchestrator).generate(eq(exercise), eq(user), eq("resolved instruction"), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(),
-                eq("original instructor brief"));
+                eq("original instructor brief"), any());
     }
 
     private static ChatResponse responseWithTokens(long promptTokens, long completionTokens) {
@@ -204,7 +209,7 @@ class GenerationTaskServiceTest {
     @Test
     void mixedProgressAndFileChanges_arePushedInProductionOrderOnTheSameStream() {
         GenerationOutcome outcome = outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<String> progress = invocation.getArgument(6);
             @SuppressWarnings("unchecked")
@@ -235,7 +240,7 @@ class GenerationTaskServiceTest {
     void rejectedFileChange_isNotBroadcast() {
         ExerciseGenerationFileChangeDTO fileChange = ExerciseGenerationFileChangeDTO.of("solution/src/Counter.java", ExerciseGenerationFileChangeDTO.ACTION_EDIT, 1);
         when(jobService.recordFileChange(EXERCISE_ID, JOB_ID, fileChange)).thenReturn(false);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = invocation.getArgument(7);
             fileChangeSink.accept(fileChange);
@@ -312,7 +317,7 @@ class GenerationTaskServiceTest {
     void heartbeatOwnershipValidationException_abortsBeforePersistenceOrReviewAttachment() {
         ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
         when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
             heartbeat.getValue().run();
             BooleanSupplier shouldCancel = invocation.getArgument(5);
@@ -334,7 +339,7 @@ class GenerationTaskServiceTest {
     @Test
     void persistenceOwnershipValidationException_abortsWithoutReviewAttachment() {
         when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
             BooleanSupplier stillOwnsMutationSlot = invocation.getArgument(7);
@@ -357,7 +362,7 @@ class GenerationTaskServiceTest {
         ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
         when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
         when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
             return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
         });
@@ -394,7 +399,7 @@ class GenerationTaskServiceTest {
         if (stop == PostSaveStop.HEARTBEAT_BEFORE_BASELINE || stop == PostSaveStop.HEARTBEAT_BEFORE_SUCCESS) {
             when(jobService.heartbeat(EXERCISE_ID, JOB_ID)).thenThrow(new IllegalStateException("cluster temporarily unavailable"));
         }
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             verify(taskScheduler).scheduleWithFixedDelay(heartbeat.capture(), any(java.time.Duration.class));
             return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
@@ -443,7 +448,7 @@ class GenerationTaskServiceTest {
         exercise.setTitle("Manual title edit while Hyperion was running");
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
                 Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Persisted statement", "Persisted title", "release"));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         taskService.runAsync(event);
@@ -635,7 +640,7 @@ class GenerationTaskServiceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(EXERCISE_ID)).thenReturn(Optional.of(exercise), Optional.of(exerciseToPersist));
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(
                 Map.of(RepositoryType.SOLUTION, "head-sha"), Map.of(RepositoryType.SOLUTION, "post-head-sha"), "Exact persisted statement", "Exact persisted title", "release"));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.ADAPT));
@@ -784,7 +789,7 @@ class GenerationTaskServiceTest {
     @Test
     void deadlineExceeded_stopsCooperativelyAndDiscardsOnlyWhenNoVerifiedCandidateExists() {
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             BooleanSupplier shouldCancel = invocation.getArgument(5);
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             assertThat(shouldCancel.getAsBoolean()).isFalse();
@@ -809,7 +814,7 @@ class GenerationTaskServiceTest {
         // The wall-clock deadline is a SAFETY control, not a user stop. It stops further model work, but a candidate that already passed mechanical verification is a
         // checkpointed, paid-for save obligation, and persisting it re-runs and re-bills nothing. Force-cancelling the job here would discard the run for nothing.
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             BooleanSupplier shouldCancel = invocation.getArgument(5);
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             assertThat(shouldCancel.getAsBoolean()).isFalse();
@@ -830,7 +835,7 @@ class GenerationTaskServiceTest {
     void exerciseBecomingIneligibleDuringPersistence_closesTheMutationGuard() {
         when(jobService.isOwnedActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(EXERCISE_ID)).thenReturn(true, false);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
             BooleanSupplier mutationGuard = invocation.getArgument(7);
@@ -852,9 +857,9 @@ class GenerationTaskServiceTest {
         // The budget is a cost control on provider spend: it stops further model calls, but a candidate that already passed verification is paid for — saving it consumes no
         // provider tokens, and the save-obligation doctrine applies. Discarding it (the old behavior) burned the whole budget for nothing.
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
                 java.time.Duration.ofSeconds(15));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);
             usageSink.accept(responseWithTokens(7, 3));
@@ -872,9 +877,9 @@ class GenerationTaskServiceTest {
     @Test
     void tokenBudgetExceeded_withoutAVerifiedCandidate_endsCancelledWithoutPersisting() {
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
-                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, java.time.Duration.ofMinutes(30), 10,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
                 java.time.Duration.ofSeconds(15));
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);
             usageSink.accept(responseWithTokens(7, 3));
@@ -892,10 +897,10 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenAccountingFailure_cancelsTheJobAndRetainsItsWorstCaseReservation() {
-        when(jobService.tokenUsageSink(any(), any(), any())).thenReturn(response -> {
+        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
             throw new GenerationJobService.TokenUsageAccountingException();
         });
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             @SuppressWarnings("unchecked")
             Consumer<ChatResponse> usageSink = invocation.getArgument(8);
             usageSink.accept(responseWithTokens(7, 3));
@@ -906,6 +911,7 @@ class GenerationTaskServiceTest {
                 "reservation-accounting-failed"));
 
         assertThat(sentEvents().getLast().message()).contains("token usage could not be accounted for");
+        verify(jobService).markTokenAccountingIncomplete(JOB_ID);
         verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("token usage could not be accounted for")));
         verify(generationBudgetService).retainReservationForBudgetWindow("reservation-accounting-failed");
         verify(generationBudgetService, never()).releaseReservation("reservation-accounting-failed");
@@ -913,8 +919,63 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void workerExit_sealsAccountingBeforeReleasingTheJob_andNeverSealsUnconditionallyAsComplete() {
+        // The seal must not be an unconditional "complete" written after the terminal event has already been pushed to the client. The worker hands the decision to the job
+        // service, which resolves it against the retained transcript under the same lock that made the transcript terminal.
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(outcomeWith(AgentLoopResult.Status.ERROR, new VerificationResult(false, false, false, 0, List.of())));
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
+                "reservation-sealed"));
+
+        InOrder order = inOrder(jobService);
+        order.verify(jobService).sealTokenAccountingOnWorkerExit(EXERCISE_ID, JOB_ID);
+        order.verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
+    void tokenAccountingFailure_stillSealsOnWorkerExit_soTheAccountIsNeverLeftPendingForever() {
+        // Previously the seal was skipped entirely on this path, leaving the account indistinguishable from one that had simply not been sealed yet. The sticky INCOMPLETE state
+        // set by markTokenAccountingIncomplete survives the seal, so sealing here is safe and closes the state.
+        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
+            throw new GenerationJobService.TokenUsageAccountingException();
+        });
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<ChatResponse> usageSink = invocation.getArgument(8);
+            usageSink.accept(responseWithTokens(7, 3));
+            return outcomeWith(AgentLoopResult.Status.CANCELLED, new VerificationResult(false, false, false, 0, List.of()));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
+                "reservation-accounting-failed"));
+
+        verify(jobService).markTokenAccountingIncomplete(JOB_ID);
+        verify(jobService).sealTokenAccountingOnWorkerExit(EXERCISE_ID, JOB_ID);
+    }
+
+    @Test
+    void agentTurnsAndAttempts_arePushedToTheJobServiceFromTheRunSink() {
+        // The turn/attempt counters reach the job's usage accumulator through the sink the orchestrator is handed, not through the outcome it returns, so a run abandoned at a
+        // gate still reports them.
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            ProviderUsageSink usageSink = invocation.getArgument(8);
+            usageSink.recordAttempt();
+            usageSink.recordTurn();
+            usageSink.recordTurn();
+            return GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, ""));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
+                "reservation-turns"));
+
+        verify(jobService, times(2)).recordAgentTurn(JOB_ID);
+        verify(jobService).recordAttempt(JOB_ID);
+    }
+
+    @Test
     void providerFailureWithoutUsageResponseRetainsTheWorstCaseReservation() {
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             ProviderUsageSink usageSink = invocation.getArgument(8);
             usageSink.markUncertain();
             return GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, ""));
@@ -993,7 +1054,7 @@ class GenerationTaskServiceTest {
     @Test
     void cleanup_releasesBudgetReservationEvenWhenFinalClearJobFails() {
         Mockito.doThrow(new RuntimeException("clear failed")).when(jobService).clearJob(EXERCISE_ID, JOB_ID);
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, "")));
 
         assertThatThrownBy(() -> taskService.runAsync(
@@ -1068,7 +1129,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void unexpectedFailureBeforeAnOutcome_reportsTheRunAsFailed() {
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new IllegalStateException("checkpoint replay drift"));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new IllegalStateException("checkpoint replay drift"));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
@@ -1080,7 +1141,8 @@ class GenerationTaskServiceTest {
 
     @Test
     void linkageFailureBeforeAnOutcome_stillTerminalizesTheJob() {
-        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenThrow(new NoClassDefFoundError("GenerationAttemptLoop$ExtractedCandidate"));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new NoClassDefFoundError("GenerationAttemptLoop$ExtractedCandidate"));
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
@@ -1128,4 +1190,38 @@ class GenerationTaskServiceTest {
         assertThat(sentEvents().getLast().terminationReason()).isNull();
     }
 
+    @Test
+    void tokenBudget_isTheRunsOwnBoundRatherThanTheDeploymentDefault() {
+        // The run had exactly its own bound reserved at admission; spending the deployment default here would overshoot a reservation other jobs are admitted against.
+        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30),
+                1_000_000, java.time.Duration.ofSeconds(15));
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<ChatResponse> usageSink = invocation.getArgument(8);
+            usageSink.accept(responseWithTokens(7, 3));
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, null);
+        });
+        HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, java.time.Duration.ofMinutes(12), 10L, true, "CONTINUOUS", 128_000, null,
+                false, false);
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, null,
+                null, narrowed));
+
+        // Ten tokens spent against a ten-token run bound stops the run, even though the deployment default of a million is nowhere near reached.
+        assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("token budget"));
+    }
+
+    @Test
+    void resolvedSettings_areForwardedToOrchestrationSoTheEngineRunsTheProfile() {
+        HyperionGenerationSettings thorough = new HyperionGenerationSettings("thorough", "Thorough", 90, java.time.Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 256_000,
+                null, false, false);
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), eq(thorough)))
+                .thenReturn(GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, "")));
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null, null,
+                null, thorough));
+
+        verify(orchestrator).generate(eq(exercise), eq(user), any(), eq(JOB_ID), eq(GenerationMode.GENERATE), any(), any(), any(), any(), any(), eq(thorough));
+    }
 }

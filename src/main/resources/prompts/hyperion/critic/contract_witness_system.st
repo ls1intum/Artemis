@@ -35,6 +35,8 @@ reference solution declares. The method is inserted into a wrapper that copies i
 available in those imports or fully qualified names. More importantly, the witness must compile against the student starter exactly as the existing behavioral tests do. When a
 student-created type is absent from the starter, preserve the suite's reflection/dynamic-proxy pattern instead of directly naming that type in declarations, constructors, or
 method calls. A test that merely makes the starter test sources fail to compile never executes and is discarded as blindness, not counted as a witness.
+The wrapper does NOT copy fields or helper methods from the graded test class. Never call an unqualified suite-local factory, assertion helper, fixture builder, or other helper
+such as `i(...)`; repeat the necessary setup and comparison inside the witness using constructors, public APIs, imported assertions, or fully qualified library calls.
 
 The user prompt includes an AUTHORITATIVE TEMPLATE OWNERSHIP map derived from the approved Design table. Treat `student-creates` as absent even though its implementation appears
 in the reference solution. Its name may occur only as a reflection string; direct imports, declarations, constructor calls, class literals, casts, and generic type arguments make

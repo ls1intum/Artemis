@@ -20,14 +20,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTra
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GeneratedTestPlan;
@@ -67,10 +69,8 @@ public class StagedGenerationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(StagedGenerationRunner.class);
 
-    /** One shared limit for every semantic specification repair; review labels choose the repair scope but never create extra retry channels. */
     private static final int MAX_SEMANTIC_SPEC_REFINEMENTS = 3;
 
-    /** A complete SPEC rewrite plus verification fits in five turns; a refinement competes for the same global turn and wall-clock budgets as everything else. */
     private static final int SEMANTIC_SPEC_REFINEMENT_BUDGET = 5;
 
     /**
@@ -79,7 +79,6 @@ public class StagedGenerationRunner {
      */
     private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.TESTS, GenerationStage.STATEMENT);
 
-    /** Base per-stage turn budget, in {@link #STAGE_ORDER} order. Deliberately sums to less than {@link #POOL_HARD_CAP}, leaving the difference as rollover headroom. */
     private static final int[] STAGE_BASE_BUDGETS = { 7, 54, 7 };
 
     /**
@@ -89,10 +88,8 @@ public class StagedGenerationRunner {
      */
     private static final int POOL_HARD_CAP = 83;
 
-    /** The final statement pass is cheap and prevents expensive verifier attempts from rediscovering task-binding defects. Earlier stages may not consume this reserve. */
     private static final int STATEMENT_TURN_RESERVE = STAGE_BASE_BUDGETS[2];
 
-    /** The smallest turn budget a stage can usefully run with; below this remaining pool, no further stage or re-entry is started. */
     private static final int MIN_STAGE_BUDGET = 3;
 
     private static final String CONCEPT_REPLACEMENT_FEEDBACK = """
@@ -101,7 +98,6 @@ public class StagedGenerationRunner {
             prescribed transcription and routine mechanics are removed. Do not compensate with more types, validation, exceptions, or arbitrary edge cases.
             """;
 
-    /** At most this many stage re-entries (see {@link #run}) are granted across the whole run, regardless of how many stages fail their gate on the first attempt. */
     private static final int MAX_TOTAL_REENTRIES = 2;
 
     private static final List<String> STAGE_PROGRESS_LABELS = List.of("Phase 1/3: specifying the exercise",
@@ -120,7 +116,6 @@ public class StagedGenerationRunner {
     /** Mirrors the shipped {@code artemis.hyperion.agent.max-job-duration} default; used only by the test constructors, which have no property source to read it from. */
     private static final Duration DEFAULT_MAX_JOB_DURATION = Duration.ofMinutes(30);
 
-    /** Bound on the gate-failure progress line (the full report still goes to the info log and the returned final message). */
     private static final int MAX_GATE_PROGRESS_CHARS = 140;
 
     private final AgentLoopRunner agentLoopRunner;
@@ -145,7 +140,7 @@ public class StagedGenerationRunner {
     private final Duration authoringBudget;
 
     /** Test hook so a wall-clock test can advance time deterministically instead of sleeping; production always uses the real clock. */
-    private Supplier<Instant> clock = Instant::now;
+    private Supplier<Instant> clock;
 
     enum StagedContext {
 
@@ -172,8 +167,21 @@ public class StagedGenerationRunner {
     @Autowired
     public StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, SpecFidelityCriticService specificationReviewer, ExerciseConceptSelector conceptSelector,
-            @Value("${artemis.hyperion.agent.staged-context:CONTINUOUS}") String stagedContext,
-            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration) {
+            HyperionAgentProperties agentProperties) {
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector, agentProperties.getStagedContext(),
+                agentProperties.getMaxJobDuration());
+    }
+
+    StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, @Nullable SpecFidelityCriticService specificationReviewer,
+            @Nullable ExerciseConceptSelector conceptSelector, String stagedContext, Duration maxJobDuration) {
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector, StagedContext.parse(stagedContext),
+                maxJobDuration, Instant::now);
+    }
+
+    private StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs, @Nullable SpecFidelityCriticService specificationReviewer,
+            @Nullable ExerciseConceptSelector conceptSelector, StagedContext stagedContext, Duration maxJobDuration, Supplier<Instant> clock) {
         this.agentLoopRunner = agentLoopRunner;
         this.systemPromptService = systemPromptService;
         this.stageCheckService = stageCheckService;
@@ -181,31 +189,30 @@ public class StagedGenerationRunner {
         this.approvedSpecs = approvedSpecs;
         this.specificationReviewer = specificationReviewer;
         this.conceptSelector = conceptSelector;
-        this.stagedContext = StagedContext.parse(stagedContext);
+        this.stagedContext = stagedContext;
         this.authoringBudget = authoringBudget(maxJobDuration);
+        this.clock = clock;
     }
 
-    /**
-     * How long this phase may keep starting model work, derived from the run's own deadline so it can never contradict it. The deadline cancels mid-flight; this budget is the
-     * complementary "start nothing further" rule that leaves the deadline enough room to be reached with a verified candidate in hand rather than mid-authoring. The reserve is
-     * absolute rather than proportional because what it protects — one differential verification pass — costs the same regardless of how long an operator lets a job run. It is
-     * capped at half the deadline so a short configured deadline yields a small authoring phase instead of no authoring at all; below that point, protecting the tail would cost
-     * more than the work it exists to salvage.
-     *
-     * @param maxJobDuration the configured {@code artemis.hyperion.agent.max-job-duration}
-     * @return the wall-clock budget for this authoring phase
-     */
+    StagedGenerationRunner forSettings(@Nullable HyperionGenerationSettings settings, AgentLoopRunner profileRunner, SpecFidelityCriticService profileReviewer) {
+        if (settings == null) {
+            return this;
+        }
+        ExerciseConceptSelector profileConceptSelector = conceptSelector == null ? null : new ExerciseConceptSelector(profileRunner, profileReviewer);
+        SpecFidelityCriticService profileSpecificationReviewer = specificationReviewer == null ? null : profileReviewer;
+        return new StagedGenerationRunner(profileRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, profileSpecificationReviewer,
+                profileConceptSelector, StagedContext.parse(settings.stagedContext()), settings.maxJobDuration(), clock);
+    }
+
+    /** Leaves time for differential verification without consuming more than half of a short job deadline. */
     static Duration authoringBudget(Duration maxJobDuration) {
         if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
-            // GenerationJobService and GenerationTaskService already refuse to start on a non-positive deadline, so this is unreachable in a booting application; it exists so a
-            // partially wired context cannot turn a misconfiguration into a negative budget that silently disables the whole phase.
             throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
         }
         Duration reserve = POST_AUTHORING_RESERVE.compareTo(maxJobDuration.dividedBy(2)) <= 0 ? POST_AUTHORING_RESERVE : maxJobDuration.dividedBy(2);
         return maxJobDuration.minus(reserve);
     }
 
-    /** Test constructor: an isolated registry, so a staged run under test publishes its approved specification without a Spring context. */
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPromptService systemPromptService, StageCheckService stageCheckService,
             AgentTranscriptWriter transcriptWriter, String stagedContext) {
         this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), null, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
@@ -232,14 +239,19 @@ public class StagedGenerationRunner {
      * The staged run's aggregated loop result together with the conversation it produced ({@code null} under {@link StagedContext#FRESH}), so the outer repair-attempt loop can
      * continue the same logical conversation instead of starting each repair blind.
      */
-    public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
+    public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings,
+            @Nullable TerminationReason terminationReason) {
 
         public StagedRunOutcome {
             unresolvedSpecificationFindings = List.copyOf(unresolvedSpecificationFindings);
         }
 
         public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation) {
-            this(result, conversation, List.of());
+            this(result, conversation, List.of(), null);
+        }
+
+        public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
+            this(result, conversation, unresolvedSpecificationFindings, null);
         }
     }
 
@@ -336,7 +348,7 @@ public class StagedGenerationRunner {
                 String failure = "No exercise concept passed the brief and learning-fit review. No specification or repository artifacts were produced."
                         + (selection.feedback().isBlank() ? "" : "\n" + selection.feedback());
                 emit(progress, failure);
-                return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, failure, archivedConversation, conversation);
+                return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, failure, archivedConversation, conversation, List.of(), TerminationReason.NO_ADMISSIBLE_CONCEPT);
             }
             else {
                 selectedConcept = selection.selectedConcept();
@@ -565,7 +577,8 @@ public class StagedGenerationRunner {
                                             String failure = replacement.complete() ? "No replacement exercise concept passed the learning-fit review."
                                                     : "Replacement concept discovery did not produce a reviewable decision.";
                                             return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns,
-                                                    appendGateReport(lastFinalMessage, failure + "\n" + replacement.feedback()), archivedConversation, conversation);
+                                                    appendGateReport(lastFinalMessage, failure + "\n" + replacement.feedback()), archivedConversation, conversation, List.of(),
+                                                    replacement.complete() ? TerminationReason.NO_ADMISSIBLE_CONCEPT : null);
                                         }
                                         selectedConcept = replacement.selectedConcept();
                                     }
@@ -750,12 +763,17 @@ public class StagedGenerationRunner {
 
     private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
             @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
+        return finish(exercise, status, totalTurns, finalMessage, archivedConversation, conversation, unresolvedSpecificationFindings, null);
+    }
+
+    private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
+            @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings, @Nullable TerminationReason terminationReason) {
         List<Message> transcriptConversation = new ArrayList<>(archivedConversation);
         if (conversation != null) {
             transcriptConversation.addAll(conversation);
         }
         transcriptWriter.write(exercise.getId(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), transcriptConversation);
-        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation, unresolvedSpecificationFindings);
+        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation, unresolvedSpecificationFindings, terminationReason);
     }
 
     /** A gate that reused the tools' cached check instead of re-running it says so, to keep the transcript honest about why it was instant. */

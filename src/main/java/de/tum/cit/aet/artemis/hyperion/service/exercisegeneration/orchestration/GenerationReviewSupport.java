@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -116,7 +117,7 @@ final class GenerationReviewSupport {
     }
 
     static SpecFidelityReport.Finding semanticMutantRecheckUnavailable(SemanticMutant mutant) {
-        return SpecFidelityReport.qualityReviewUnavailable("The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
+        return SpecFidelityReport.executableEvidenceUnavailable("The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
                 + " at " + mutant.solutionPath() + " (counterexample " + mutant.counterexample().testName() + ", misconception: " + mutant.counterexample().wrongBehavior()
                 + "). It remains unresolved until an executed graded test kills it.").findings().getFirst();
     }
@@ -151,7 +152,7 @@ final class GenerationReviewSupport {
         }
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
         var grouped = mutants.stream().map(mutant -> semanticMutantFinding(mutant, false))
-                .collect(Collectors.groupingBy(finding -> finding.kind() + "\n" + finding.requirement(), java.util.LinkedHashMap::new, Collectors.toList()));
+                .collect(Collectors.groupingBy(finding -> finding.kind() + "\n" + finding.requirement(), java.util.LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
         grouped.forEach((key, variants) -> {
             int existingIndex = java.util.stream.IntStream.range(0, findings.size())
                     .filter(index -> key.equals(findings.get(index).kind() + "\n" + findings.get(index).requirement())).findFirst().orElse(-1);
@@ -174,20 +175,20 @@ final class GenerationReviewSupport {
         if (omitted > 0) {
             findings.addAll(
                     SpecFidelityReport
-                            .qualityReviewUnavailable("Independent adjudication omitted " + omitted
+                            .executableEvidenceUnavailable("Independent adjudication omitted " + omitted
                                     + " environment-confirmed reference test failure(s); convergence remains blocked until every witness receives an explicit verdict.")
                             .findings());
         }
         if (pendingPass > 0) {
             findings.addAll(
                     SpecFidelityReport
-                            .qualityReviewUnavailable("The environment could not re-execute " + pendingPass
+                            .executableEvidenceUnavailable("The environment could not re-execute " + pendingPass
                                     + " previously adjudicated reference-defect witness(es); convergence remains blocked until each exact witness executes and passes.")
                             .findings());
         }
         if (pendingAdjudication > 0) {
             findings.addAll(SpecFidelityReport
-                    .qualityReviewUnavailable("The environment could not re-execute " + pendingAdjudication
+                    .executableEvidenceUnavailable("The environment could not re-execute " + pendingAdjudication
                             + " reference witness(es) awaiting independent adjudication; convergence remains blocked until each executes and receives an explicit verdict.")
                     .findings());
         }
@@ -201,14 +202,14 @@ final class GenerationReviewSupport {
         if (awaitingPass.isEmpty() && awaitingAdjudication.isEmpty()) {
             return report;
         }
-        boolean reviewUnavailable = report.findings().stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);
+        boolean evidenceUnavailable = report.findings().stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
         boolean everyAdjudicatedWitnessRepresented = awaitingPass.stream().allMatch(witness -> report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
                 .anyMatch(finding -> (finding.requirement() + "\n" + finding.detail()).contains(witness.testName())));
-        if (reviewUnavailable || (awaitingAdjudication.isEmpty() && everyAdjudicatedWitnessRepresented)) {
+        if (evidenceUnavailable || (awaitingAdjudication.isEmpty() && everyAdjudicatedWitnessRepresented)) {
             return report;
         }
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
-        findings.addAll(SpecFidelityReport.qualityReviewUnavailable("Executable reference evidence remains unresolved: " + awaitingPass.size()
+        findings.addAll(SpecFidelityReport.executableEvidenceUnavailable("Executable reference evidence remains unresolved: " + awaitingPass.size()
                 + " independently adjudicated witness(es) await an " + "environment pass and " + awaitingAdjudication.size()
                 + " environment-confirmed failure(s) await an explicit independent verdict. A text-only review cannot discharge either state.").findings());
         return new SpecFidelityReport(List.copyOf(findings));

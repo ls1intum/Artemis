@@ -11,7 +11,9 @@ Use three independent checks:
 1. Grounding: list every exact numeric value, label set, API/type/member name, formula, validation, exception, transition table, or implementation construct that the candidate
    fixes but the brief does not entail. A later specification may choose operational details; a concept may not manufacture them and count their transcription as reasoning.
 2. Observability: list every required implementation form that two public-API-equivalent implementations can satisfy differently, such as exact syntax, recursion versus
-   iteration, a loop ban, or a source-shape requirement. Preserve it only when the brief explicitly requires it, and even then identify it as unobservable.
+   iteration, a loop ban, or a source-shape requirement. A technique the brief explicitly requests is instructor provenance, not an admission finding: preserve it later as a
+   non-graded pedagogical objective and do not put it in unobservableRequirements. Never put descriptive `Student-owned reasoning` in unobservableRequirements unless the cited
+   text itself normatively requires a form with words such as must, only, required, prohibited, or never. Treat that descriptive field as non-normative otherwise.
 3. Equivalence: normalize the candidate's claimed cases into public traces: returned result or exception, mutation, collaboration, and subsequent state. List a distinction when
    removing or merging it preserves the complete public trace. In particular, adjacent numeric regions with the same outcome and state are one region, not two. Different
    evaluation orders that produce the same public partitions are alternative implementations, not redundant concept distinctions.

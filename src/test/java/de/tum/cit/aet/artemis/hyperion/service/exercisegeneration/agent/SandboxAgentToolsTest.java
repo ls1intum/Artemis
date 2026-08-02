@@ -177,9 +177,9 @@ class SandboxAgentToolsTest {
      */
     @Test
     void inlineOutputCaps_stayBelowTheAgentLoopPerToolResultCap() {
-        assertThat(SandboxAgentTools.READ_INLINE_MAX_CHARS).isLessThan(AgentLoopRunner.MAX_TOOL_RESPONSE_CHARS);
+        assertThat(SandboxAgentTools.READ_INLINE_MAX_CHARS).isLessThan(AgentConversationContext.MAX_TOOL_RESPONSE_CHARS);
         // Bytes, not characters: UTF-8 never encodes a character in fewer than one byte, so staying under the cap in bytes keeps it under in characters too.
-        assertThat(SandboxAgentTools.BASH_TAIL_BYTES).isLessThan(AgentLoopRunner.MAX_TOOL_RESPONSE_CHARS);
+        assertThat(SandboxAgentTools.BASH_TAIL_BYTES).isLessThan(AgentConversationContext.MAX_TOOL_RESPONSE_CHARS);
     }
 
     @Test

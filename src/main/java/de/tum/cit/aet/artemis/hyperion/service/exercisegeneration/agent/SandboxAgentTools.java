@@ -62,13 +62,15 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private static final String SPILL_DIR = "/tmp/hyperion";
 
     /**
-     * Bytes of the output tail returned inline. It must stay under {@link AgentLoopRunner#MAX_TOOL_RESPONSE_CHARS}, or the loop truncates again on top and the marker this tool
+     * Bytes of the output tail returned inline. It must stay under {@link AgentConversationContext#MAX_TOOL_RESPONSE_CHARS}, or the loop truncates again on top and the marker this
+     * tool
      * appends becomes a lie about what was elided. The full output stays in the spill file.
      */
     static final int BASH_TAIL_BYTES = 10_000;
 
     /**
-     * Characters {@code read_file} returns inline per call. Same {@link AgentLoopRunner#MAX_TOOL_RESPONSE_CHARS} constraint as {@link #BASH_TAIL_BYTES}, so the continuation
+     * Characters {@code read_file} returns inline per call. Same {@link AgentConversationContext#MAX_TOOL_RESPONSE_CHARS} constraint as {@link #BASH_TAIL_BYTES}, so the
+     * continuation
      * footer names a line that really is next.
      */
     static final int READ_INLINE_MAX_CHARS = 10_000;

@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
@@ -47,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.FileChan
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
@@ -109,8 +112,6 @@ public class GenerationOrchestrationService {
 
     private final DifferentialVerificationService verifier;
 
-    private final AgentLoopRunner agentLoopRunner;
-
     /** The per-session specification the spec gate approved; dropped when the session is destroyed so the registry never outlives its runs. */
     private final ApprovedSpecRegistry approvedSpecs;
 
@@ -118,19 +119,29 @@ public class GenerationOrchestrationService {
 
     private final GenerationAttemptLoop.Dependencies attemptLoopDependencies;
 
+    // Required: with the package-private test constructor also present, Spring cannot pick an injection constructor without it.
+    @Autowired
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            @Value("${artemis.hyperion.agent.max-turns:60}") int maxTurns, @Value("${artemis.hyperion.exercise-generation.max-semantic-repairs:6}") int maxSemanticRepairs,
-            StagedGenerationRunner stagedGenerationRunner, @Value("${artemis.hyperion.agent.staged-generation:true}") boolean stagedGenerationEnabled,
-            StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs) {
+            HyperionAgentProperties agentProperties, @Value("${artemis.hyperion.exercise-generation.max-semantic-repairs:6}") int maxSemanticRepairs,
+            StagedGenerationRunner stagedGenerationRunner, StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs) {
+        this(interactiveSandbox, workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic, jobService, testCaseRepository,
+                agentProperties.getMaxTurns(), maxSemanticRepairs, stagedGenerationRunner, agentProperties.isStagedGeneration(), stageCheckService, transcriptWriter,
+                approvedSpecs);
+    }
+
+    GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
+            DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
+            SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository, int maxTurns,
+            int maxSemanticRepairs, StagedGenerationRunner stagedGenerationRunner, boolean stagedGenerationEnabled, StageCheckService stageCheckService,
+            AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs) {
         // maxTurns bounds each attempt, not the whole run.
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-turns must be positive");
         }
         this.interactiveSandbox = interactiveSandbox;
         this.workspace = workspace;
-        this.agentLoopRunner = agentLoopRunner;
         this.verifier = verifier;
         this.systemPromptService = systemPromptService;
         this.structuralOracleSeeder = structuralOracleSeeder;
@@ -156,7 +167,13 @@ public class GenerationOrchestrationService {
 
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
             @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink) {
-        return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, null);
+        return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, null, null);
+    }
+
+    GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
+            @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable String originalSourceBrief) {
+        return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, fileChangeSink, usageSink, originalSourceBrief, null);
     }
 
     /**
@@ -174,11 +191,13 @@ public class GenerationOrchestrationService {
      * @param usageSink           receives token usage for every model call; {@code null} uses the default persisted run sink
      * @param originalSourceBrief the raw instructor brief when this run was started from one, kept separate from {@code userPrompt} so the review authority is not the
      *                                repair-framed prompt; {@code null} otherwise
+     * @param settings            the resolved effort profile of this run, or {@code null} to run the deployment default
      * @return the outcome including the verification verdict and the produced files
      */
     GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
             @Nullable GenerationProgressSink progress, @Nullable Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink, @Nullable Consumer<ChatResponse> usageSink,
-            @Nullable String originalSourceBrief) {
+            @Nullable String originalSourceBrief, @Nullable HyperionGenerationSettings settings) {
+        GenerationAttemptLoop.Dependencies runDependencies = attemptLoopDependencies.forSettings(settings);
         // Snapshot the pre-adapt graded test names so the verifier can reject a destructive total wipe (an adapt that retains none of them = a from-scratch regeneration mislabeled
         // as an adapt). Empty for GENERATE, which leaves the total-wipe gate inert.
         Set<String> baselineGradedTestNames = mode == GenerationMode.ADAPT ? captureBaselineGradedTestNames(exercise) : Set.of();
@@ -189,7 +208,7 @@ public class GenerationOrchestrationService {
         boolean statementAuthoritative = mode == GenerationMode.ADAPT || !generatedFromSourceBrief && systemPromptService.isAuthoritativeProblemStatement(exercise);
         String sourceBrief = generatedFromSourceBrief ? originalSourceBrief.strip() : renderReviewBrief(mode, userPrompt, statementAuthoritative ? baselineProblemStatement : null);
         Long courseId = courseIdOf(exercise);
-        Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId());
+        Consumer<ChatResponse> effectiveUsageSink = usageSink != null ? usageSink : jobService.tokenUsageSink(courseId, exercise.getId(), user.getId(), jobId);
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         GenerationWorkspaceService.WorkspaceSeed workspaceSeed = null;
@@ -240,14 +259,14 @@ public class GenerationOrchestrationService {
             // The decorator emits path/action metadata for the instructor's live activity view, never file content. It re-exposes the same @Tool surface, so the model sees an
             // identical tool set either way.
             Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink) : baseTools;
-            agentLoopRunner.beginCheckpointRun(jobId, exercise, baseTools, approvedSpecs);
+            runDependencies.agentLoopRunner().beginCheckpointRun(jobId, exercise, baseTools, approvedSpecs);
             checkpointRunStarted = true;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (an empty probe leaves the prompt unchanged) and first-attempt only: retries
             // already operate on a workspace the agent has explored.
             String firstPrompt = prependWorkspaceLayout(workspace.probeWorkspaceLayout(sandbox, sessionId), renderAuthoringBrief(sourceBrief));
 
-            attemptLoop = new GenerationAttemptLoop(this, attemptLoopDependencies,
+            attemptLoop = new GenerationAttemptLoop(this, runDependencies,
                     new GenerationAttemptLoop.RunContext(exercise, mode, jobId, sandbox, sessionId, workspaceSeed, testsSeedSnapshot, placeholderReplacements,
                             baselineRepositoryFiles, baselineProblemStatement, baselineGradedTestNames, sourceBrief, mode == GenerationMode.GENERATE, !statementAuthoritative,
                             systemPrompt, firstPrompt, baseTools, tools, cancelled, progress, effectiveUsageSink));
@@ -256,10 +275,12 @@ public class GenerationOrchestrationService {
                 return decidedInLoop.withTermination(attemptLoop.terminationReason());
             }
 
-            emit(progress, "The run used " + attemptLoop.totalAgentTurns() + " agent turn(s) in total.");
             // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
             // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
-            if ((attemptLoop.verification() == null || !attemptLoop.verification().mechanicallyVerified()) && attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
+            boolean currentCandidateRejected = attemptLoop.verification() == null || !attemptLoop.verification().mechanicallyVerified()
+                    || attemptLoop.terminationReason() == TerminationReason.REVIEW_UNAVAILABLE
+                            && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(attemptLoop.specFidelityReport());
+            if (currentCandidateRejected && attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
                 return preserveCandidate(attemptLoop.lastMechanicallyVerifiedCandidate(), sandbox, sessionId, workspaceSeed).withTermination(attemptLoop.terminationReason());
             }
             return new GenerationOutcome(attemptLoop.loopResult(), attemptLoop.verification(), sessionId, this, sandbox, attemptLoop.producedFilesByType(),
@@ -287,8 +308,7 @@ public class GenerationOrchestrationService {
             if (extractedCheckpoint != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while verifying an extracted candidate for exercise {}; preserving the captured work ({})", exercise.getId(),
                         e.getClass().getSimpleName(), e);
-                AgentLoopResult stopped = new AgentLoopResult(AgentLoopResult.Status.ERROR, extractedCheckpoint.loopResult().turns(),
-                        "Generation stopped before verification completed.");
+                AgentLoopResult stopped = AgentLoopResult.outsideSession(AgentLoopResult.Status.ERROR, "Generation stopped before verification completed.");
                 return new GenerationOutcome(stopped, null, sessionId, this, sandbox, extractedCheckpoint.producedFiles(), extractedCheckpoint.problemStatement(),
                         SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads(),
                         readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json")).withTermination(TerminationReason.RUN_FAILED);
@@ -306,7 +326,7 @@ public class GenerationOrchestrationService {
         }
         finally {
             if (checkpointRunStarted) {
-                agentLoopRunner.endCheckpointRun();
+                runDependencies.agentLoopRunner().endCheckpointRun();
             }
             jobService.deregisterCancelHook(jobId);
         }
@@ -360,7 +380,7 @@ public class GenerationOrchestrationService {
         if (!statementChanged && files.isEmpty()) {
             return null;
         }
-        AgentLoopResult loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, "Generation stopped unexpectedly before verification completed.");
+        AgentLoopResult loopResult = AgentLoopResult.outsideSession(AgentLoopResult.Status.ERROR, "Generation stopped unexpectedly before verification completed.");
         return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, files, statement,
                 SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads(),
                 readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));

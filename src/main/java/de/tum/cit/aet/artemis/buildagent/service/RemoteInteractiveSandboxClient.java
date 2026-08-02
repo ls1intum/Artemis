@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
+import static de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled.MAX_GENERATION_SANDBOX_SLOTS_PROPERTY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
@@ -133,8 +134,11 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     public String createSession(SandboxSessionSpecDTO spec) {
         List<String> candidates = selectCandidateAgents();
         if (candidates.isEmpty()) {
-            throw new LocalCIException("No build agent has a free Hyperion generation sandbox slot. Set "
-                    + "artemis.continuous-integration.build-agent.max-generation-sandbox-slots accordingly on spare agents.");
+            GenerationSandboxCapacity capacity = generationSandboxCapacity();
+            log.warn("Cannot place a Hyperion generation sandbox: {}. Set {} to a positive value on the build agents that should host generation runs.", capacity,
+                    MAX_GENERATION_SANDBOX_SLOTS_PROPERTY);
+            throw new LocalCIException(
+                    "No build agent has a free Hyperion generation sandbox slot. Set " + MAX_GENERATION_SANDBOX_SLOTS_PROPERTY + " accordingly on spare agents.");
         }
         List<String> declines = new ArrayList<>();
         for (String targetAgent : candidates) {
@@ -374,14 +378,45 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     /** Selects hosting agents with a free generation slot, least loaded first. */
     private List<String> selectCandidateAgents() {
-        List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
-        return agents.stream().filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE)
-                .filter(agent -> agent.maxGenerationSandboxSlots() > agent.reservedGenerationSandboxSlots())
+        return reachableAgents().stream().filter(agent -> agent.maxGenerationSandboxSlots() > agent.reservedGenerationSandboxSlots())
                 .sorted(Comparator.comparingInt(BuildAgentInformation::reservedGenerationSandboxSlots)).map(agent -> agent.buildAgent().name()).toList();
     }
 
+    private List<BuildAgentInformation> reachableAgents() {
+        return distributedDataAccessService.getBuildAgentInformation().stream()
+                .filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE).toList();
+    }
+
+    /** Returns whether advertised fleet state has a free generation slot; placement remains authoritative. */
     public boolean hasAvailableGenerationSandboxSlot() {
         return !selectCandidateAgents().isEmpty();
+    }
+
+    /** Returns advertised fleet capacity for health diagnostics. */
+    public GenerationSandboxCapacity generationSandboxCapacity() {
+        List<BuildAgentInformation> agents = reachableAgents();
+        int hostingAgents = 0;
+        int totalSlots = 0;
+        int reservedSlots = 0;
+        for (BuildAgentInformation agent : agents) {
+            if (agent.maxGenerationSandboxSlots() > 0) {
+                hostingAgents++;
+                totalSlots += agent.maxGenerationSandboxSlots();
+                reservedSlots += Math.min(agent.reservedGenerationSandboxSlots(), agent.maxGenerationSandboxSlots());
+            }
+        }
+        return new GenerationSandboxCapacity(agents.size(), hostingAgents, totalSlots, reservedSlots);
+    }
+
+    public record GenerationSandboxCapacity(int reachableAgents, int hostingAgents, int totalSlots, int reservedSlots) {
+
+        public boolean noAgentAdvertisesCapacity() {
+            return hostingAgents == 0;
+        }
+
+        public int freeSlots() {
+            return Math.max(0, totalSlots - reservedSlots);
+        }
     }
 
     private static String newCorrelationId() {

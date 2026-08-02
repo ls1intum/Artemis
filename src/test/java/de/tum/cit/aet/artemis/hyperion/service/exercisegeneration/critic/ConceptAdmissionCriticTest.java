@@ -65,4 +65,40 @@ class ConceptAdmissionCriticTest {
         assertThat(result.selectedCandidate()).isEqualTo(1);
         assertThat(result.auditSummary()).contains("Decision: admitted");
     }
+
+    @Test
+    void doesNotTurnDescriptiveStudentReasoningIntoANormativeImplementationConstraint() {
+        when(reviewer.call(anyString(), anyString(), any(), anyInt())).thenReturn("""
+                {"auditedCandidateEvidenceIds":["C1.2"],
+                 "smallestEquivalentImplementation":"Classify the value into the three observable boundary regions.",
+                 "observablePartitionAudit":"Each boundary region returns its corresponding category without changing state.",
+                 "unsupportedChoices":[],
+                 "unobservableRequirements":[{"candidateEvidenceIds":["C1.2"],"detail":"The reasoning describes an ordered comparison even though equivalent orders exist."}],
+                 "redundantDistinctions":[],"admissible":false,"summary":"The illustrative reasoning was mistaken for a requirement."}
+                """);
+
+        ConceptSelectionReview result = critic.admit("Teach boundary-aware conditionals.", 1,
+                "## Candidate 1\nStudent-owned reasoning: The solution conducts two comparisons and maps the value to one of three regions.", SELECTED, null, () -> false);
+
+        assertThat(result.accepted()).isTrue();
+        assertThat(result.auditSummary()).contains("Server normalization", "non-normative Student-owned reasoning");
+    }
+
+    @Test
+    void keepsANormativeStudentReasoningConstraintRejectable() {
+        when(reviewer.call(anyString(), anyString(), any(), anyInt())).thenReturn("""
+                {"auditedCandidateEvidenceIds":["C1.2"],
+                 "smallestEquivalentImplementation":"Classify the value into the three observable boundary regions.",
+                 "observablePartitionAudit":"Each boundary region returns its corresponding category without changing state.",
+                 "unsupportedChoices":[],
+                 "unobservableRequirements":[{"candidateEvidenceIds":["C1.2"],"detail":"The candidate requires one exact comparison order even though equivalent orders exist."}],
+                 "redundantDistinctions":[],"admissible":false,"summary":"The candidate imposes an exact implementation order."}
+                """);
+
+        ConceptSelectionReview result = critic.admit("Teach boundary-aware conditionals.", 1,
+                "## Candidate 1\nStudent-owned reasoning: Students must evaluate the lower boundary first and never reverse the comparisons.", SELECTED, null, () -> false);
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.findings()).singleElement().asString().contains("exact comparison order");
+    }
 }

@@ -224,8 +224,11 @@ public class InteractiveSandboxRelayHandler {
                     publishResponse(response);
                 }
             });
-            // Advertise only after the request listener is live.
+            // Advertise only after the request listener is live. Setting the local slot state is not enough: the periodic heartbeat only writes this agent's entry while it is
+            // absent from the distributed map, so an agent that gains capacity would keep advertising zero until some unrelated event happened to republish it, and core nodes
+            // would reject every generation request in the meantime. Publish it here, the same way publishSessionState does after each create/destroy.
             buildAgentInformationService.updateGenerationSandboxSlotState(0, maxGenerationSandboxSlots);
+            buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
             log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
         }
         catch (RuntimeException e) {

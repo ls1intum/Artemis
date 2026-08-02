@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -16,6 +17,9 @@ import org.jspecify.annotations.Nullable;
  * shown, and a mis-cited ID degrades to a shorter quote rather than a hallucinated one.
  */
 record EvidenceSource(Map<String, String> passages) {
+
+    private static final Pattern NORMATIVE_LANGUAGE = Pattern.compile("\\b(?:must|only|required?|shall|prohibit(?:ed|s)?|never|without)\\b|\\b(?:do|may)\\s+not\\b",
+            Pattern.CASE_INSENSITIVE);
 
     static EvidenceSource from(String prefix, @Nullable String text) {
         Map<String, String> passages = new LinkedHashMap<>();
@@ -98,5 +102,14 @@ record EvidenceSource(Map<String, String> passages) {
             return "";
         }
         return evidenceIds.stream().map(passages::get).filter(Objects::nonNull).map(String::strip).collect(Collectors.joining("\"; \""));
+    }
+
+    /**
+     * Whether every cited passage is descriptive student reasoning rather than a requirement. The concept prompt explicitly makes this field non-normative, but a reviewer can
+     * still mistake an illustrative control flow for a required implementation form. Admission uses this check to enforce that prompt contract deterministically.
+     */
+    boolean citesOnlyNonNormativeStudentReasoning(@Nullable List<String> evidenceIds) {
+        return containsAll(evidenceIds) && evidenceIds.stream().map(passages::get)
+                .allMatch(passage -> passage != null && passage.strip().startsWith("Student-owned reasoning:") && !NORMATIVE_LANGUAGE.matcher(passage).find());
     }
 }

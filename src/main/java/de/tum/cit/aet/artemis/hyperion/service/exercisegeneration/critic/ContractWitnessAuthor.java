@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -39,6 +40,9 @@ class ContractWitnessAuthor {
 
     /** Assertion calls a witness may use; a witness without one passes against every implementation and therefore pins nothing. */
     private static final Pattern ASSERTION_CALL = Pattern.compile("\\b(assert\\w*|verify|expect(That)?)\\s*\\(");
+
+    private static final Pattern TEST_METHOD_DECLARATION = Pattern.compile(
+            "(?m)^\\s*(?:(?:public|protected|private|static|final|synchronized)\\s+)*[\\w<>, ?\\[\\].]+\\s+([A-Za-z_$][A-Za-z0-9_$]*)\\s*\\([^;{}]*\\)\\s*(?:throws [^{]+)?\\{");
 
     private record ContractWitnessResponse(@Nullable List<ContractWitnessItem> witnesses) {
     }
@@ -85,7 +89,7 @@ class ContractWitnessAuthor {
                 + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
         try {
             String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
-            return parseContractWitnesses(response, specificationContract);
+            return parseContractWitnesses(response, specificationContract, testSources);
         }
         catch (RuntimeException e) {
             // Advisory by construction: the caller proceeds with the suite it already has.
@@ -118,7 +122,7 @@ class ContractWitnessAuthor {
         return stripped.length() <= MAX_ARTIFACT_EVIDENCE_CHARS ? stripped : stripped.substring(0, MAX_ARTIFACT_EVIDENCE_CHARS);
     }
 
-    private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract) {
+    private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract, String testSources) {
         if (text == null || text.isBlank()) {
             return List.of();
         }
@@ -144,7 +148,8 @@ class ContractWitnessAuthor {
             String ruleId = item.rule().strip();
             // Each check below drops a witness that would otherwise be validated on no evidence: the name must be the method the code DECLARES, or a build result could never be
             // attributed to it; a witness with no assertion passes against every implementation; and a rule the specification does not contain is an invented requirement.
-            if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId) || !seenNames.add(testName)) {
+            if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId)
+                    || usesSuiteLocalHelper(code, testName, testSources) || !seenNames.add(testName)) {
                 continue;
             }
             witnesses.add(new ContractWitness(ruleId, testName, code, item.wrongBehavior().strip()));
@@ -162,6 +167,18 @@ class ContractWitnessAuthor {
 
     private static boolean containsAssertion(String code) {
         return ASSERTION_CALL.matcher(code).find();
+    }
+
+    /** A probe copies the suite's imports, not its class body. An unqualified call to a method declared by that class would therefore make the throwaway probe uncompilable. */
+    private static boolean usesSuiteLocalHelper(String code, String testName, String testSources) {
+        Matcher declarations = TEST_METHOD_DECLARATION.matcher(testSources);
+        while (declarations.find()) {
+            String methodName = declarations.group(1);
+            if (!methodName.equals(testName) && Pattern.compile("(?<![.\\w$])" + Pattern.quote(methodName) + "\\s*\\(").matcher(code).find()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Whether the approved specification actually declares this rule ID, so a witness can never pin a requirement the contract does not state. */

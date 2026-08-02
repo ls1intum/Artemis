@@ -1,24 +1,40 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Stores the bounded reconnect replay for an exercise generation job. */
 final class GenerationJobReplayStore {
+
+    private static final Logger log = LoggerFactory.getLogger(GenerationJobReplayStore.class);
 
     private static final String JOB_MAP_NAME = "hyperion-exercise-generation-jobs";
 
@@ -28,9 +44,9 @@ final class GenerationJobReplayStore {
 
     static final String FILE_CHANGE_MAP_NAME = "hyperion-exercise-generation-file-changes";
 
-    private static final int TERMINAL_REPLAY_TTL_SECONDS = 900;
+    private static final String USAGE_MAP_NAME = "hyperion-exercise-generation-usage";
 
-    private static final int MAX_RETAINED_EVENTS = 500;
+    static final int MAX_RETAINED_EVENTS = 500;
 
     static final int MAX_RETAINED_FILE_CHANGES = 300;
 
@@ -38,6 +54,16 @@ final class GenerationJobReplayStore {
     static final int MAX_SPEC_DOCUMENT_LENGTH = 20_000;
 
     private static final String SPEC_DOCUMENT_TRUNCATION_MARKER = "\n\n[... SPEC.md truncated to " + MAX_SPEC_DOCUMENT_LENGTH + " characters for the status API ...]";
+
+    private static final String EVENT_TRUNCATION_MESSAGE_SUFFIX = " earlier progress events are no longer retained.";
+
+    /**
+     * Recovers the running dropped-event count from the retained marker so repeated overflows update one marker instead of accumulating one per drop. The count lives in the
+     * marker's own message rather than in {@code JobTranscript}, which would change the shape of an already distributed Hazelcast value for a purely presentational counter.
+     */
+    private static final Pattern EVENT_TRUNCATION_MESSAGE_PATTERN = Pattern.compile("^(\\d+)" + Pattern.quote(EVENT_TRUNCATION_MESSAGE_SUFFIX) + "$");
+
+    private final long terminalReplayTtlSeconds;
 
     private IMap<String, GenerationJobService.JobInfo> jobMap;
 
@@ -47,12 +73,20 @@ final class GenerationJobReplayStore {
 
     private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap;
 
+    private IMap<String, JobUsage> usageMap;
+
+    private final Set<String> usageWriteFailures = ConcurrentHashMap.newKeySet();
+
     private final HazelcastInstance hazelcastInstance;
 
-    GenerationJobReplayStore(HazelcastInstance hazelcastInstance) {
+    GenerationJobReplayStore(HazelcastInstance hazelcastInstance, Duration terminalReplayTtl) {
+        if (terminalReplayTtl == null || terminalReplayTtl.isZero() || terminalReplayTtl.isNegative()) {
+            throw new IllegalArgumentException("artemis.hyperion.generation.terminal-replay-ttl must be positive");
+        }
         // The maps are resolved on first use, never here: HazelcastInstance.getMap during bean construction forces the cluster to be ready before the context finishes starting,
         // which inverts the intended startup ordering.
         this.hazelcastInstance = hazelcastInstance;
+        this.terminalReplayTtlSeconds = terminalReplayTtl.toSeconds();
     }
 
     private IMap<String, GenerationJobService.JobInfo> jobMap() {
@@ -83,20 +117,30 @@ final class GenerationJobReplayStore {
         return fileChangeMap;
     }
 
-    StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode) {
+    private IMap<String, JobUsage> usageMap() {
+        if (usageMap == null) {
+            usageMap = hazelcastInstance.getMap(USAGE_MAP_NAME);
+        }
+        return usageMap;
+    }
+
+    StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode, @Nullable String effortProfile) {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
             GenerationJobService.JobTranscript previousTranscript = transcriptMap().get(key);
             GenerationJobService.JobFileChangeIndex previousFileChanges = fileChangeMap().get(key);
-            GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null);
+            GenerationJobService.JobTranscript currentTranscript = new GenerationJobService.JobTranscript(jobId, userLogin, exerciseId, mode, new ArrayList<>(), false, null,
+                    effortProfile);
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
             StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges);
             try {
                 transcriptMap().set(key, currentTranscript);
                 fileChangeMap().set(key, currentFileChanges);
+                writeUsage(jobId, JobUsage.empty());
             }
             catch (RuntimeException e) {
+                usageMap().remove(jobId);
                 restoreReplayIfStillCurrent(key, replay);
                 throw e;
             }
@@ -111,11 +155,138 @@ final class GenerationJobReplayStore {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
+            String jobId = replay.currentTranscript().jobId();
+            usageMap().remove(jobId);
+            usageWriteFailures.remove(jobId);
             restoreReplayIfStillCurrent(key, replay);
         }
         finally {
             jobMap().unlock(key);
         }
+    }
+
+    /** Adds durably recorded provider usage to the fail-soft transient aggregate. A missing accumulator is recreated as permanently incomplete. */
+    void recordUsage(String jobId, LLMRequest request) {
+        recordIntoUsage(jobId, usage -> usage.add(request));
+    }
+
+    void recordToolCalls(String jobId, long count) {
+        if (count < 0) {
+            throw new IllegalArgumentException("Tool call count cannot be negative");
+        }
+        recordIntoUsage(jobId, usage -> usage.addToolCalls(count));
+    }
+
+    void recordAgentTurn(String jobId) {
+        recordIntoUsage(jobId, JobUsage::addAgentTurn);
+    }
+
+    void recordAttempt(String jobId) {
+        recordIntoUsage(jobId, JobUsage::addAttempt);
+    }
+
+    /** Marks this run's accounting permanently incomplete after an admitted provider attempt whose usage could not be proved. Sticky: no later seal can undo it. */
+    void markUsageIncomplete(String jobId) {
+        if (transitionUsage(jobId, JobUsage::markIncomplete)) {
+            usageWriteFailures.remove(jobId);
+        }
+    }
+
+    /** Seals a pending account only after the caller can prove that no further provider call can add usage. */
+    void sealUsage(String jobId) {
+        if (usageWriteFailures.contains(jobId)) {
+            markUsageIncomplete(jobId);
+        }
+        else {
+            transitionUsage(jobId, JobUsage::seal);
+        }
+    }
+
+    /** Freezes this run's accounting as permanently incomplete, for a worker that stops without ever proving that its provider spend was fully recorded. */
+    void sealUsageIncomplete(String jobId) {
+        markUsageIncomplete(jobId);
+    }
+
+    /** Reads usage and completeness together. Missing or unreadable evidence is permanently incomplete, never pending. */
+    UsageSnapshot usageSnapshot(String jobId) {
+        try {
+            JobUsage usage = usageMap().get(jobId);
+            if (usage == null) {
+                return UsageSnapshot.EVIDENCE_GONE;
+            }
+            ExerciseGenerationAccountingState state = usageWriteFailures.contains(jobId) ? ExerciseGenerationAccountingState.INCOMPLETE : usage.accountingState();
+            return new UsageSnapshot(usage.toDTO(), state);
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not read exercise generation usage for job {}; reporting the account as incomplete", jobId, exception);
+            return UsageSnapshot.EVIDENCE_GONE;
+        }
+    }
+
+    private void recordIntoUsage(String jobId, UnaryOperator<JobUsage> record) {
+        IMap<String, JobUsage> map = null;
+        boolean locked = false;
+        try {
+            map = usageMap();
+            map.lock(jobId);
+            locked = true;
+            JobUsage current = map.get(jobId);
+            if (current == null) {
+                log.warn("Opening an unaccounted usage accumulator for exercise generation job {}: no accumulator was retained for it, so its aggregate cannot become a complete "
+                        + "account of the run. The durable per-call token usage records are unaffected.", jobId);
+                current = JobUsage.unaccounted();
+            }
+            map.set(jobId, record.apply(current), terminalReplayTtlSeconds, TimeUnit.SECONDS);
+        }
+        catch (RuntimeException exception) {
+            usageWriteFailures.add(jobId);
+            log.warn("Could not update transient exercise generation usage for job {}; the durable per-call usage record is unaffected", jobId, exception);
+        }
+        finally {
+            unlockUsage(map, jobId, locked);
+        }
+    }
+
+    /** Applies a completeness transition without inventing missing evidence. */
+    private boolean transitionUsage(String jobId, UnaryOperator<JobUsage> transition) {
+        IMap<String, JobUsage> map = null;
+        boolean locked = false;
+        try {
+            map = usageMap();
+            map.lock(jobId);
+            locked = true;
+            JobUsage current = map.get(jobId);
+            if (current == null) {
+                log.debug("Skipped a usage completeness transition for exercise generation job {}: no accumulator is retained, so it already reads as incomplete", jobId);
+                return false;
+            }
+            map.set(jobId, transition.apply(current), terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            return true;
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not transition transient exercise generation usage for job {}", jobId, exception);
+            return false;
+        }
+        finally {
+            unlockUsage(map, jobId, locked);
+        }
+    }
+
+    private static void unlockUsage(@Nullable IMap<String, JobUsage> map, String jobId, boolean locked) {
+        if (!locked || map == null) {
+            return;
+        }
+        try {
+            map.unlock(jobId);
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not unlock transient exercise generation usage for job {}", jobId, exception);
+        }
+    }
+
+    /** Applies the retention bound on every write, including runs whose worker never reaches normal cleanup. */
+    private void writeUsage(String jobId, JobUsage usage) {
+        usageMap().set(jobId, usage, terminalReplayTtlSeconds, TimeUnit.SECONDS);
     }
 
     private void restoreReplayIfStillCurrent(String key, StartedReplay replay) {
@@ -131,7 +302,7 @@ final class GenerationJobReplayStore {
             transcriptMap().remove(key, current);
         }
         else {
-            transcriptMap().set(key, previous, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            transcriptMap().set(key, previous, terminalReplayTtlSeconds, TimeUnit.SECONDS);
         }
     }
 
@@ -143,13 +314,17 @@ final class GenerationJobReplayStore {
             fileChangeMap().remove(key, current);
         }
         else {
-            fileChangeMap().set(key, previous, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            fileChangeMap().set(key, previous, terminalReplayTtlSeconds, TimeUnit.SECONDS);
         }
     }
 
     /**
      * Appends an event to the running job's transcript for reconnect replay, bounded so a long run cannot grow the distributed map without limit. Dropped when {@code jobId} does
      * not match the retained transcript (a stale or older run); {@code terminal} marks the transcript done so a reconnecting client knows not to expect more.
+     * <p>
+     * A terminal event seals the run's token accounting inside this same lock, before the transcript is published and before the caller pushes the event over the websocket. That
+     * makes "the transcript is terminal" imply "the accounting is sealed" by construction, so no consumer can observe a finished run whose reported cost is still accumulating,
+     * and none has to poll for the seal afterwards.
      */
     boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
         String key = key(exerciseId);
@@ -162,18 +337,55 @@ final class GenerationJobReplayStore {
             if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
                 return false;
             }
-            List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
-            events.add(event);
-            while (events.size() > MAX_RETAINED_EVENTS) {
-                events.remove(1);
+            List<ExerciseGenerationEventDTO> events = appendBounded(transcript.events(), event);
+            if (terminal) {
+                sealUsage(jobId);
             }
-            transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events,
-                    terminal || transcript.done(), transcript.specDocument()));
+            transcriptMap().set(key, transcript.withEvents(events, terminal || transcript.done(), transcript.specDocument()));
             return true;
         }
         finally {
             jobMap().unlock(key);
         }
+    }
+
+    /** Appends within the retention bound and keeps one updated marker for dropped events. */
+    private static List<ExerciseGenerationEventDTO> appendBounded(List<ExerciseGenerationEventDTO> existing, ExerciseGenerationEventDTO event) {
+        List<ExerciseGenerationEventDTO> events = new ArrayList<>(existing);
+        events.add(event);
+        if (events.size() <= MAX_RETAINED_EVENTS) {
+            return events;
+        }
+        // Index 0 is the run's opening event, kept so the replay always starts somewhere meaningful; index 1 is the marker's reserved slot from the first drop onwards.
+        long dropped = retainedDropCount(events);
+        if (dropped == 0) {
+            // First overflow: the marker takes over the slot held by the event at index 1, so that event is itself the first one dropped. Its count is corrected below once the
+            // rest of the overflow has been removed.
+            dropped = 1;
+            events.set(1, truncationMarker(dropped));
+        }
+        while (events.size() > MAX_RETAINED_EVENTS) {
+            events.remove(2);
+            dropped++;
+        }
+        events.set(1, truncationMarker(dropped));
+        return events;
+    }
+
+    private static long retainedDropCount(List<ExerciseGenerationEventDTO> events) {
+        if (events.size() < 2) {
+            return 0;
+        }
+        ExerciseGenerationEventDTO candidate = events.get(1);
+        if (candidate.type() != ExerciseGenerationEventDTO.Type.PROGRESS || candidate.message() == null) {
+            return 0;
+        }
+        Matcher matcher = EVENT_TRUNCATION_MESSAGE_PATTERN.matcher(candidate.message());
+        return matcher.matches() ? Long.parseLong(matcher.group(1)) : 0;
+    }
+
+    private static ExerciseGenerationEventDTO truncationMarker(long droppedEvents) {
+        return ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, droppedEvents + EVENT_TRUNCATION_MESSAGE_SUFFIX);
     }
 
     private static String truncateSpecDocument(String specDocument) {
@@ -195,8 +407,7 @@ final class GenerationJobReplayStore {
             if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
                 return false;
             }
-            transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(),
-                    transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
+            transcriptMap().set(key, transcript.withEvents(transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
             return true;
         }
         finally {
@@ -265,7 +476,8 @@ final class GenerationJobReplayStore {
                             ownedByCaller && active.cancellable()));
                 }
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
-                        latestFileChangesFor(key, transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable(), transcript.specDocument()));
+                        latestFileChangesFor(key, transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable(), transcript.specDocument())
+                        .withEffortProfile(transcript.effortProfile()));
             }
             if (transcript == null) {
                 return Optional.empty();
@@ -277,8 +489,9 @@ final class GenerationJobReplayStore {
                 }
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), List.of(terminal), List.of(), false, null, null, false, false));
             }
+            // Owner-only, like the usage aggregate: which configuration ran is part of the account a caller is asked to review, and a sanitized view carries none of it.
             return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(), latestFileChangesFor(key, transcript.jobId()),
-                    false, null, null, true, false, transcript.specDocument()));
+                    false, null, null, true, false, transcript.specDocument()).withEffortProfile(transcript.effortProfile()));
         }
         finally {
             jobMap().unlock(key);
@@ -298,6 +511,8 @@ final class GenerationJobReplayStore {
             if (index != null && index.jobId().equals(jobId)) {
                 fileChangeMap().remove(key, index);
             }
+            usageMap().remove(jobId);
+            usageWriteFailures.remove(jobId);
         }
         finally {
             jobMap().unlock(key);
@@ -321,43 +536,59 @@ final class GenerationJobReplayStore {
         if (transcript == null || !transcript.jobId().equals(job.jobId()) || transcript.done()) {
             return null;
         }
-        List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
-        ExerciseGenerationEventDTO cancellationEvent = ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, message);
-        events.add(cancellationEvent);
-        while (events.size() > MAX_RETAINED_EVENTS) {
-            events.remove(1);
-        }
-        transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
-                transcript.specDocument()));
+        ExerciseGenerationEventDTO cancellationEvent = ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, message)
+                .withTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
+        // Deliberately does not seal the accounting: cancellation is recorded by another thread while the worker is still winding down, so further provider usage can still be
+        // recorded against this job. The worker seals when it can prove otherwise, and until then the state stays PENDING rather than claiming a total it does not have.
+        List<ExerciseGenerationEventDTO> events = appendBounded(transcript.events(), cancellationEvent);
+        transcriptMap().set(key, transcript.withEvents(events, true, transcript.specDocument()));
         return cancellationEvent;
+    }
+
+    /** Seals a terminal worker's account; a worker without a terminal transcript is incomplete. */
+    void sealUsageOnWorkerExit(long exerciseId, String jobId) {
+        String key = key(exerciseId);
+        jobMap().lock(key);
+        try {
+            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
+            if (transcript != null && transcript.jobId().equals(jobId) && transcript.done()) {
+                sealUsage(jobId);
+            }
+            else {
+                sealUsageIncomplete(jobId);
+            }
+        }
+        finally {
+            jobMap().unlock(key);
+        }
     }
 
     void retainAfterJobCleared(long exerciseId, String jobId) {
         String key = key(exerciseId);
         GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript != null && transcript.jobId().equals(jobId)) {
-            GenerationJobService.JobTranscript retainedTranscript = transcript.done() ? transcript
-                    : new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true,
-                            transcript.specDocument());
-            transcriptMap().set(key, retainedTranscript, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            GenerationJobService.JobTranscript retainedTranscript = transcript.done() ? transcript : transcript.withEvents(transcript.events(), true, transcript.specDocument());
+            transcriptMap().set(key, retainedTranscript, terminalReplayTtlSeconds, TimeUnit.SECONDS);
         }
         retainFileChangesForTerminalReplay(key, jobId);
+        if (usageMap().containsKey(jobId)) {
+            usageMap().setTtl(jobId, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+        }
     }
 
-    void terminalizeStoppedJob(GenerationJobService.JobInfo job, String message) {
+    @Nullable
+    ExerciseGenerationEventDTO terminalizeStoppedJob(GenerationJobService.JobInfo job, String message, ExerciseGenerationEventDTO.TerminationReason terminationReason) {
         String key = key(job.exerciseId());
         GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript != null && transcript.jobId().equals(job.jobId()) && !transcript.done()) {
-            List<ExerciseGenerationEventDTO> events = new ArrayList<>(transcript.events());
-            ExerciseGenerationEventDTO terminalEvent = job.cancellable() ? ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message)
-                    : ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, true);
-            events.add(terminalEvent);
-            while (events.size() > MAX_RETAINED_EVENTS) {
-                events.remove(1);
-            }
-            transcriptMap().set(key, new GenerationJobService.JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, true,
-                    transcript.specDocument()));
+            ExerciseGenerationEventDTO terminalEvent = job.cancellable()
+                    ? ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message).withTerminationReason(terminationReason)
+                    : ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, true).withTerminationReason(terminationReason);
+            List<ExerciseGenerationEventDTO> events = appendBounded(transcript.events(), terminalEvent);
+            transcriptMap().set(key, transcript.withEvents(events, true, transcript.specDocument()));
+            return terminalEvent;
         }
+        return null;
     }
 
     private boolean isActiveJob(String key, String jobId) {
@@ -388,7 +619,7 @@ final class GenerationJobReplayStore {
     private void retainFileChangesForTerminalReplay(String key, String jobId) {
         GenerationJobService.JobFileChangeIndex fileChangeIndex = fileChangeMap().get(key);
         if (fileChangeIndex != null && fileChangeIndex.jobId().equals(jobId)) {
-            fileChangeMap().setTtl(key, TERMINAL_REPLAY_TTL_SECONDS, TimeUnit.SECONDS);
+            fileChangeMap().setTtl(key, terminalReplayTtlSeconds, TimeUnit.SECONDS);
         }
     }
 
@@ -401,5 +632,90 @@ final class GenerationJobReplayStore {
     }
 
     record CancellationReplayState(String userLogin, boolean done) {
+    }
+
+    /** The run's aggregate usage together with how complete that aggregate is, always read as one pair. */
+    record UsageSnapshot(@Nullable ExerciseGenerationUsageDTO usage, ExerciseGenerationAccountingState accountingState) {
+
+        static final UsageSnapshot EVIDENCE_GONE = new UsageSnapshot(null, ExerciseGenerationAccountingState.INCOMPLETE);
+    }
+
+    /**
+     * The per-job usage accumulator. {@code accountingState} is a closed tri-state rather than a pair of booleans so that "not sealed yet" and "will never be complete" cannot be
+     * conflated: {@link ExerciseGenerationAccountingState#INCOMPLETE} is absorbing, and only a caller that can prove no further provider call is possible may seal.
+     */
+    private record JobUsage(long modelCalls, long toolCalls, long agentTurns, long attempts, long inputTokens, long outputTokens, long cachedInputTokens,
+            boolean cachedInputTokensComplete, double estimatedCostEur, boolean estimatedCostEurComplete, List<String> models, List<String> providerRequestIds,
+            boolean providerRequestIdsComplete, ExerciseGenerationAccountingState accountingState) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 2L;
+
+        static JobUsage empty() {
+            return new JobUsage(0, 0, 0, 0, 0, 0, 0, true, 0, true, List.of(), List.of(), true, ExerciseGenerationAccountingState.PENDING);
+        }
+
+        /** Starts an accumulator after evidence was lost, so no later seal can make it complete. */
+        static JobUsage unaccounted() {
+            return empty().markIncomplete();
+        }
+
+        /** Recorded usage reopens a sealed account: more spend arrived than the seal claimed. An account already known to be incomplete stays incomplete. */
+        private ExerciseGenerationAccountingState afterRecordedUsage() {
+            return accountingState == ExerciseGenerationAccountingState.INCOMPLETE ? accountingState : ExerciseGenerationAccountingState.PENDING;
+        }
+
+        JobUsage add(LLMRequest request) {
+            long cached = request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens();
+            long uncached = request.numInputTokens() - cached;
+            double cost = (uncached * request.costPerMillionInputToken() + cached * request.costPerMillionCachedInputToken()
+                    + request.numOutputTokens() * request.costPerMillionOutputToken()) / 1_000_000.0;
+            LinkedHashSet<String> nextModels = new LinkedHashSet<>(models);
+            if (request.model() != null && !request.model().isBlank()) {
+                nextModels.add(request.model());
+            }
+            LinkedHashSet<String> nextProviderRequestIds = new LinkedHashSet<>(providerRequestIds);
+            boolean hasProviderRequestId = request.providerRequestId() != null && !request.providerRequestId().isBlank();
+            if (hasProviderRequestId) {
+                nextProviderRequestIds.add(request.providerRequestId());
+            }
+            return new JobUsage(modelCalls + 1, toolCalls, agentTurns, attempts, inputTokens + request.numInputTokens(), outputTokens + request.numOutputTokens(),
+                    cachedInputTokens + cached, cachedInputTokensComplete && request.numCachedInputTokens() != null, estimatedCostEur + cost,
+                    estimatedCostEurComplete && request.costEstimateComplete(), List.copyOf(nextModels), List.copyOf(nextProviderRequestIds),
+                    providerRequestIdsComplete && hasProviderRequestId, afterRecordedUsage());
+        }
+
+        JobUsage addToolCalls(long count) {
+            return new JobUsage(modelCalls, toolCalls + count, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
+                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
+        }
+
+        JobUsage addAgentTurn() {
+            return new JobUsage(modelCalls, toolCalls, agentTurns + 1, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
+                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
+        }
+
+        JobUsage addAttempt() {
+            return new JobUsage(modelCalls, toolCalls, agentTurns, attempts + 1, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
+                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, afterRecordedUsage());
+        }
+
+        JobUsage markIncomplete() {
+            return withAccountingState(ExerciseGenerationAccountingState.INCOMPLETE);
+        }
+
+        JobUsage seal() {
+            return accountingState == ExerciseGenerationAccountingState.PENDING ? withAccountingState(ExerciseGenerationAccountingState.COMPLETE) : this;
+        }
+
+        private JobUsage withAccountingState(ExerciseGenerationAccountingState nextState) {
+            return new JobUsage(modelCalls, toolCalls, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete, estimatedCostEur,
+                    estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete, nextState);
+        }
+
+        ExerciseGenerationUsageDTO toDTO() {
+            return new ExerciseGenerationUsageDTO(modelCalls, toolCalls, agentTurns, attempts, inputTokens, outputTokens, cachedInputTokens, cachedInputTokensComplete,
+                    estimatedCostEur, estimatedCostEurComplete, models, providerRequestIds, providerRequestIdsComplete);
+        }
     }
 }

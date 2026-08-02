@@ -1409,6 +1409,9 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("hyperion-exercise-generation-file-changes", createHyperionCorrectnessMapConfig());
         config.getMapConfigs().put("hyperion-generation-token-budget-reservations", createHyperionCorrectnessMapConfig());
         config.getMapConfigs().put("hyperion-exercise-generation-baselines", createHyperionCorrectnessMapConfig());
+        // Must never fall through to the default LRU map config: evicting a LIVE usage accumulator makes the next recorded provider call fail, which marks the job's token
+        // accounting uncertain and cancels a running generation while pinning its whole reservation against the user and course for the rest of the budget window.
+        config.getMapConfigs().put("hyperion-exercise-generation-usage", createHyperionCorrectnessMapConfig());
 
         // Multi-node relay copy payloads (up to 32MB tar blobs) are staged off the request/response topics. The sender normally removes each entry; the TTL reclaims entries
         // orphaned by a core-node crash.

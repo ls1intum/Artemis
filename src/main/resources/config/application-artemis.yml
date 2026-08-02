@@ -95,6 +95,11 @@ artemis:
       max-concurrent-jobs-per-core-node: 2 # Core-node worker cap with no waiting queue. Size together with provider limits and generation sandbox slots across build agents.
       test-case-sync-timeout: PT10M # Allows LocalCI queueing plus the configured four-minute maximum build duration before finalizing a saved exercise.
       test-case-sync-poll: PT3S
+      # How long a finished run's evidence (transcript, SPEC.md, file changes, usage/cost) stays available for reconnect after the job slot is released.
+      # Must comfortably exceed agent.max-job-duration: an instructor who starts a run, teaches, and comes back must still find the verdict they are asked to review,
+      # and the DB-backed revert affordance outlives this window either way. Memory is bounded by construction, not by this value: at most one retained run per exercise,
+      # each capped at 500 transcript events, a 20 000-character SPEC.md, and 300 file-change entries.
+      terminal-replay-ttl: PT4H
     agent:
       context-window-tokens: 128000
       max-turns: 60 # Bounds one attempt, not the whole run; the staged workflow needs headroom for per-test differential checks.
@@ -102,6 +107,30 @@ artemis:
       staged-context: CONTINUOUS # CONTINUOUS|FRESH. CONTINUOUS carries one conversation across the stages, so the model keeps what it learned earlier; FRESH starts each stage blank.
       max-job-duration: PT45M # Allows contract closure plus one complete review/repair cycle after staged authoring; keep provider/sandbox/repository timeouts bounded too.
       max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
+      # Named effort profiles an instructor may pick per run. The values above are the deployment default AND what every profile inherits for the keys it leaves unset, so a
+      # deployment that configures no profiles (the shipped state) behaves exactly as it did before profiles existed. Admins define, users select: model and decoding parameters
+      # live here because they pin cost and because the prompts and gates are co-tuned with the model. A request may only send a NAME from this set, plus max-tokens /
+      # max-job-duration bounds that can lower a ceiling but never raise one. An unconfigured name is rejected with 400 rather than silently defaulted.
+      # Model ids are deployment-specific (Azure deployment aliases), so this block ships commented out; enable it with your own names.
+      # default-profile: standard # Used when a request names no profile. Must name one of the profiles below; leave unset to use the values above directly.
+      # profiles:
+      #   draft:
+      #     label: "Quick draft"
+      #     model: gpt-5-mini
+      #     max-turns: 20
+      #     max-job-duration: PT12M
+      #     max-tokens-per-job: 600000
+      #   standard:
+      #     label: "Standard" # Inherits every value above.
+      #   thorough:
+      #     label: "Thorough"
+      #     model: gpt-5.4
+      #     max-turns: 90
+      #     max-job-duration: PT60M
+      #     max-tokens-per-job: 6000000
+      #     context-window-tokens: 256000 # Belongs with the model it pins.
+      # Also settable per profile: temperature, top-p, reasoning-effort, verbosity, max-completion-tokens, staged-generation, staged-context.
+      # Raising max-tokens-per-job on any profile also raises the floor the admission budgets below are validated against, and startup fails if one no longer fits.
       token-budget-window: PT24H
       admission-max-tokens-per-user: 12000000 # Four worst-case jobs per user within the rolling window; tune to provider pricing.
       admission-max-tokens-per-course: 120000000 # Forty worst-case jobs per course within the rolling window.
@@ -120,6 +149,9 @@ artemis:
     #   "[gpt-5.4]":
     #     input-cost-per-million-eur: 2.30
     #     output-cost-per-million-eur: 13.80
+    #     cached-input-cost-per-million-eur: 0.23
+    # A deployment whose provider contract is explicitly free should configure all three prices as 0.
+    # Missing prices remain distinguishable from a known zero price and make the estimate incomplete.
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini
@@ -208,7 +240,7 @@ spring:
       # HTTP client request timeout (default 60s) — LLM tool-calling loops can need several minutes.
       # Must be set at this level (spring.ai.openai.timeout); the chat-level timeout key does not feed the HTTP client.
       timeout: 5m
-      max-retries: 1 # One SDK retry after the initial request; avoid multiplying a five-minute timeout across the SDK default retry count.
+      max-retries: 1 # One SDK retry after the initial request; Hyperion reports run-level accounting as incomplete unless this is 0.
       chat:
         # The Azure deployment name; used as the request model by the default ChatClient
         model: gpt-5-mini
@@ -235,6 +267,16 @@ spring:
       # client-name: # artemis-...
 
 management:
+  # The OpenTelemetry starter also supports logs and metrics. Artemis exports metrics through its
+  # existing Prometheus integration; keep unrelated OTLP signals off unless explicitly designed.
+  logging:
+    export:
+      otlp:
+        enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false
   # Set true to display contextual name in @Observed on Langfuse
   observations:
     annotations:
@@ -246,18 +288,25 @@ management:
   tracing:
     sampling:
       probability: 1.0
-  otlp:
+    export:
+      # Artemis' Langfuse integration registers its own filtered OTLP exporter. Keep the standard
+      # exporter off by default to avoid duplicate spans; benchmark/operations deployments can
+      # explicitly enable it with MANAGEMENT_TRACING_EXPORT_OTLP_ENABLED=true.
+      otlp:
+        enabled: false
+  opentelemetry:
+    instrumentation:
+      gen-ai:
+        # Prompt, completion, and tool content is sensitive. Enable only for a protected tracing
+        # deployment. Langfuse retains its existing opt-in behavior through this default.
+        capture-content: ${management.langfuse.enabled:false}
     tracing:
-      # LangFuse accepts OTLP over HTTP at the traces path only
-      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-#     endpoint: https://example.com
-#     transport: http
-#     headers:
-        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-#        Authorization: "Basic <base64(public_key:secret_key)>"
-
-     # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-     # Hyperion uses its own custom exporter to send LLM traces to Langfuse,
-     # so disabling the default exporter will NOT stop LLM trace export.
-     export:
-       enabled: false
+      export:
+        otlp:
+          # LangFuse accepts OTLP over HTTP at the traces path only
+          # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+#         endpoint: https://example.com
+#         transport: http
+#         headers:
+          # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+#           Authorization: "Basic <base64(public_key:secret_key)>"

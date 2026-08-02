@@ -1238,6 +1238,13 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.techniqueMandates(text)).isNotEmpty();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "Create an intermediate Java exercise that teaches recursion.", "Students implement several recursive methods over numbers and strings.",
+            "Learners practice iteration over a collection.", "Students implement stream-based solutions." })
+    void techniqueMandates_recogniseInstructorPedagogicalObjectives(String text) {
+        assertThat(ExerciseIntegrityGate.techniqueMandates(text)).isNotEmpty();
+    }
+
     @Test
     void techniqueMandates_parseTheExactMarkdownLedgerDecisionWithoutReadingItsRationale() {
         String specification = """

@@ -17,6 +17,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
@@ -48,6 +50,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import io.micrometer.common.KeyValue;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Runs generation or adaptation asynchronously, streams progress, and persists mechanically verified output for instructor review. Every path closes the
@@ -82,18 +87,30 @@ public class GenerationTaskService {
 
     private final TaskScheduler taskScheduler;
 
+    private final ObservationRegistry observationRegistry;
+
     private final Duration maxJobDuration;
 
     private final long maxTokensPerJob;
 
     private final Duration ownerHeartbeatInterval;
 
+    // Required: with the package-private test constructor also present, Spring cannot pick an injection constructor without it.
+    @Autowired
     public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
-            ExerciseGenerationRevertService generationRevertService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
-            @Value("${artemis.hyperion.agent.max-job-duration:PT30M}") Duration maxJobDuration, @Value("${artemis.hyperion.agent.max-tokens-per-job:3000000}") long maxTokensPerJob,
-            @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
+            ExerciseGenerationRevertService generationRevertService, @Qualifier("taskScheduler") TaskScheduler taskScheduler, ObservationRegistry observationRegistry,
+            HyperionAgentProperties agentProperties, @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
+        this(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository, generationBudgetService,
+                generationRevertService, taskScheduler, observationRegistry, agentProperties.getMaxJobDuration(), agentProperties.getMaxTokensPerJob(), ownerHeartbeatInterval);
+    }
+
+    GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
+            HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
+            ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler, ObservationRegistry observationRegistry, Duration maxJobDuration,
+            long maxTokensPerJob, Duration ownerHeartbeatInterval) {
         if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
         }
@@ -113,6 +130,7 @@ public class GenerationTaskService {
         this.generationBudgetService = generationBudgetService;
         this.generationRevertService = generationRevertService;
         this.taskScheduler = taskScheduler;
+        this.observationRegistry = observationRegistry;
         this.maxJobDuration = maxJobDuration;
         this.maxTokensPerJob = maxTokensPerJob;
         this.ownerHeartbeatInterval = ownerHeartbeatInterval;
@@ -127,14 +145,36 @@ public class GenerationTaskService {
     @Async("hyperionGenerationExecutor")
     @EventListener
     public void runAsync(GenerationStartedEvent event) {
+        Observation observation = Observation.createNotStarted("hyperion.exercise.generation", observationRegistry).contextualName("exercise generation")
+                .lowCardinalityKeyValue(KeyValue.of("ai.span", "true")).lowCardinalityKeyValue(KeyValue.of("artemis.hyperion.mode", event.mode().name().toLowerCase(Locale.ROOT)))
+                .lowCardinalityKeyValue(KeyValue.of("artemis.hyperion.outcome", "unknown")).highCardinalityKeyValue(KeyValue.of("artemis.hyperion.job.id", event.jobId()))
+                .highCardinalityKeyValue(KeyValue.of("artemis.exercise.id", String.valueOf(event.exercise().getId()))).start();
+        try (var ignored = observation.openScope()) {
+            runObserved(event, observation);
+        }
+        catch (RuntimeException | LinkageError e) {
+            observation.error(e);
+            throw e;
+        }
+        finally {
+            observation.stop();
+        }
+    }
+
+    private void runObserved(GenerationStartedEvent event, Observation observation) {
         String jobId = event.jobId();
         User user = event.user();
         String userPrompt = event.userPrompt();
         long exerciseId = event.exercise().getId();
         String login = user.getLogin();
         String topic = TOPIC_PREFIX + jobId;
-        GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> jobService.recordEvent(exerciseId, jobId, progressEvent, terminal),
-                progressEvent -> websocket.send(login, topic, progressEvent));
+        GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> {
+            boolean accepted = jobService.recordEvent(exerciseId, jobId, progressEvent, terminal);
+            if (terminal && accepted) {
+                observation.lowCardinalityKeyValue("artemis.hyperion.outcome", progressEvent.type().name().toLowerCase(Locale.ROOT));
+            }
+            return accepted;
+        }, progressEvent -> websocket.send(login, topic, progressEvent));
         // File changes share the progress topic and are retained latest-per-path for reconnect.
         Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = change -> {
             if (jobService.recordFileChange(exerciseId, jobId, change)) {
@@ -183,13 +223,15 @@ public class GenerationTaskService {
             deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-            Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId()), exerciseId, jobId, tokenBudgetExceeded,
-                    tokenAccountingFailed);
+            // The run's own token bound, not the deployment default: a request that asked for less had exactly that much reserved at admission, so spending the deployment
+            // default here would overshoot a reservation that other jobs are already being admitted against.
+            long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
+            Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId(), jobId), exerciseId, jobId,
+                    tokenBudgetExceeded, tokenAccountingFailed, runTokenBudget);
             BooleanSupplier cancelled = () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get()
                     || heartbeatLost.get();
-            GenerationOutcome generated = event.sourceBrief() == null
-                    ? orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink)
-                    : orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink, event.sourceBrief());
+            GenerationOutcome generated = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink, event.sourceBrief(),
+                    event.settings());
             try (GenerationOutcome outcome = generated) {
                 // Why the run stopped producing candidates, decided once for every terminal branch below. The run-level controls the attempt loop cannot see refine its own
                 // cooperative stop into the specific budget that ended it.
@@ -386,13 +428,17 @@ public class GenerationTaskService {
         }
         catch (RuntimeException | LinkageError e) {
             // A live-development rebuild can briefly invalidate a lazily loaded class in bootRun. Linkage errors are not recoverable inside this worker, but they must still
-            // terminalize the durable job instead of leaving every status client polling forever. Production classpath failures receive the same honest terminal result.
+            // terminalize the retained production job instead of leaving every status client polling forever. Production classpath failures receive the same honest terminal
+            // result.
             log.error("Exercise generation job {} failed before producing a terminal outcome", jobId, e);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
         }
         finally {
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
+            // Every terminal event this run published already sealed the accounting inside the transcript lock, before the event reached a client. This only resolves the paths
+            // that reach here without one, which must close as permanently incomplete rather than staying pending until the replay evidence expires.
+            jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
             clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
         }
     }
@@ -517,9 +563,24 @@ public class GenerationTaskService {
     }
 
     private ProviderUsageSink budgetedUsageSink(Consumer<ChatResponse> delegate, long exerciseId, String jobId, AtomicBoolean tokenBudgetExceeded,
-            AtomicBoolean tokenAccountingFailed) {
+            AtomicBoolean tokenAccountingFailed, long runTokenBudget) {
         AtomicLong tokensUsed = new AtomicLong();
         return new ProviderUsageSink() {
+
+            @Override
+            public void recordToolCalls(long count) {
+                jobService.recordToolCalls(jobId, count);
+            }
+
+            @Override
+            public void recordTurn() {
+                jobService.recordAgentTurn(jobId);
+            }
+
+            @Override
+            public void recordAttempt() {
+                jobService.recordAttempt(jobId);
+            }
 
             @Override
             public void accept(ChatResponse response) {
@@ -531,11 +592,11 @@ public class GenerationTaskService {
                     return;
                 }
 
-                if (maxTokensPerJob <= 0) {
+                if (runTokenBudget <= 0) {
                     return;
                 }
                 long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
-                if (total >= maxTokensPerJob && tokenBudgetExceeded.compareAndSet(false, true)) {
+                if (total >= runTokenBudget && tokenBudgetExceeded.compareAndSet(false, true)) {
                     // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Deliberately not requestSystemCancellation, which
                     // would mark the job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.
                     log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
@@ -546,6 +607,7 @@ public class GenerationTaskService {
             public void markUncertain() {
                 if (tokenAccountingFailed.compareAndSet(false, true)) {
                     log.warn("Exercise generation job {} stopped because provider token usage could not be determined", jobId);
+                    jobService.markTokenAccountingIncomplete(jobId);
                     jobService.requestSystemCancellation(exerciseId, jobId, "Generation stopped because token usage could not be accounted for. Nothing was changed.");
                 }
             }

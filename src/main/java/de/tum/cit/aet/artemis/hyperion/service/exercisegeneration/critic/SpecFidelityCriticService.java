@@ -37,10 +37,12 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointManager;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
@@ -196,6 +198,20 @@ public class SpecFidelityCriticService {
         return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
     }
 
+    // Kept so a run can derive a profile-pinned critic without re-reading Spring configuration; the derived instance shares every collaborator that carries no per-run state.
+    @Nullable
+    private final ChatClient chatClient;
+
+    private final ObjectMapper objectMapper;
+
+    private final HyperionPromptTemplateService templateService;
+
+    private final Duration providerHardFailureCooldown;
+
+    private final ProviderFailureCooldown providerFailureCooldown;
+
+    private final AgentCheckpointManager checkpointManager;
+
     private final ReviewerClient reviewer;
 
     private final CriticVerdictParser verdictParser;
@@ -212,22 +228,24 @@ public class SpecFidelityCriticService {
 
     private final ReferenceWitnessCritic referenceWitnessCritic;
 
+    /**
+     * The model id comes from the configured {@link ChatModel} bean's options, the same place {@code AgentLoopRunner} reads it, rather than from the raw
+     * {@code spring.ai.openai.chat.model} property. Two sources for one value let a deployment that configures the model anywhere else (an effort profile, a programmatic
+     * {@code ChatModel} bean, an environment override that the property placeholder does not see) run its critics against a different model than its agent.
+     */
     @Autowired
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
-            @Value("${spring.ai.openai.chat.model:}") String configuredModel,
             @Value("${artemis.hyperion.agent.provider-hard-failure-cooldown:PT5M}") Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown,
-            @Value("${artemis.hyperion.agent.context-window-tokens:128000}") int contextWindowTokens, Collection<ChatModel> chatModels, AgentCheckpointManager checkpointManager) {
-        this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions(chatModels),
-                checkpointManager);
+            HyperionAgentProperties agentProperties, Collection<ChatModel> chatModels, AgentCheckpointManager checkpointManager) {
+        this(chatClient, objectMapper, templateService, modelOf(configuredOptions(chatModels)), providerHardFailureCooldown, providerFailureCooldown,
+                agentProperties.getContextWindowTokens(), configuredOptions(chatModels), checkpointManager);
     }
 
-    /** Full-control constructor that keeps non-Spring probes independent from development checkpoint configuration. */
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, Collection<ChatModel> chatModels) {
         this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions(chatModels));
     }
 
-    /** Full-control constructor for tests: the provider options a running server reads from its {@link ChatModel} bean are passed in directly. */
     SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions) {
         this(chatClient, objectMapper, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens, configuredOptions,
@@ -237,6 +255,12 @@ public class SpecFidelityCriticService {
     private SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper, HyperionPromptTemplateService templateService, String configuredModel,
             Duration providerHardFailureCooldown, ProviderFailureCooldown providerFailureCooldown, int contextWindowTokens, @Nullable ChatOptions configuredOptions,
             AgentCheckpointManager checkpointManager) {
+        this.chatClient = chatClient;
+        this.objectMapper = objectMapper;
+        this.templateService = templateService;
+        this.providerHardFailureCooldown = providerHardFailureCooldown;
+        this.providerFailureCooldown = providerFailureCooldown;
+        this.checkpointManager = checkpointManager;
         this.reviewer = new ReviewerClient(chatClient, templateService, configuredModel, providerHardFailureCooldown, providerFailureCooldown, contextWindowTokens,
                 configuredOptions, checkpointManager);
         this.verdictParser = new CriticVerdictParser(objectMapper);
@@ -249,12 +273,25 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Minimal constructor for callers outside this package that need a critic without a Spring context, such as a test delegating {@link #renderForRetryPrompt} to real behaviour.
-     * The prompt template service is stateless apart from its classpath cache, so constructing one here is equivalent to injecting the bean.
+     * A critic configured for one run's effort profile, so every reviewer pass runs on the same model and context window as the authoring agent. A profile that pins a different
+     * model but leaves the critics on the deployment model would review one configuration's output with another's judgement.
      *
-     * @param chatClient   the shared chat client, or {@code null} when no provider is configured and every review fails closed
-     * @param objectMapper the shared JSON mapper
+     * @param settings the resolved settings of the run
+     * @return this critic when the settings are the deployment default, or a critic pinned to the profile otherwise
      */
+    public SpecFidelityCriticService forSettings(@Nullable HyperionGenerationSettings settings) {
+        if (settings == null || settings.engineDefaults()) {
+            return this;
+        }
+        ChatOptions profileOptions = settings.chatOptions() != null ? settings.chatOptions() : reviewer.configuredOptions();
+        return new SpecFidelityCriticService(chatClient, objectMapper, templateService, modelOf(profileOptions), providerHardFailureCooldown, providerFailureCooldown,
+                settings.contextWindowTokens(), profileOptions, checkpointManager);
+    }
+
+    private static String modelOf(@Nullable ChatOptions options) {
+        return options == null || options.getModel() == null ? "" : options.getModel();
+    }
+
     public SpecFidelityCriticService(@Nullable ChatClient chatClient, ObjectMapper objectMapper) {
         this(chatClient, objectMapper, new HyperionPromptTemplateService(), "", Duration.ZERO, ProviderFailureCooldown.disabled(), 128_000, (ChatOptions) null);
     }
@@ -945,6 +982,8 @@ public class SpecFidelityCriticService {
                         .append(finding.requirement()).append("\". ").append(finding.detail());
             case TEMPLATE_QUALITY_GAP ->
                 builder.append("\n- Align the student task and starter scaffold for: \"").append(finding.requirement()).append("\". ").append(finding.detail());
+            case EXECUTABLE_EVIDENCE_UNAVAILABLE ->
+                builder.append("\n- Auxiliary executable quality evidence was unavailable; preserve the mechanically verified candidate and leave this for instructor review.");
             case QUALITY_REVIEW_UNAVAILABLE -> builder.append("\n- The full-artifact quality review was unavailable; do not claim semantic quality without a complete review.");
             case SPECIFICATION_REVIEW_FINDING -> builder.append("\n- The frozen specification still carries this pre-freeze review finding: \"").append(finding.requirement())
                     .append("\". It cannot be repaired downstream without changing the approved contract; preserve it for explicit instructor review rather than disguising it "

@@ -33,9 +33,13 @@ class HazelcastConfigurationTest {
 
     private static final String SPLIT_BRAIN_PROTECTION_NAME = "artemis-split-brain-protection";
 
+    /**
+     * Every Hazelcast map name Hyperion coordinates through, maintained as an explicit inventory rather than derived from the configuration under test. A map that Hyperion code
+     * uses but nobody registers silently inherits the default LRU-evicting map config; evicting a live entry there is a correctness failure, not a cache miss.
+     */
     private static final Set<String> HYPERION_CORRECTNESS_MAPS = Set.of("hyperion-provider-failure-cooldowns", "hyperion-exercise-generation-jobs",
             "hyperion-exercise-generation-cancellations", "hyperion-exercise-generation-transcripts", "hyperion-exercise-generation-file-changes",
-            "hyperion-generation-token-budget-reservations", "hyperion-exercise-generation-baselines", "hyperion-sandbox-payloads");
+            "hyperion-exercise-generation-usage", "hyperion-generation-token-budget-reservations", "hyperion-exercise-generation-baselines", "hyperion-sandbox-payloads");
 
     @Test
     void shouldProtectHyperionCorrectnessMapsAgainstMemberAndNetworkFailure() {
@@ -47,6 +51,15 @@ class HazelcastConfigurationTest {
 
         ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureCacheMaps", config, artemisProperties);
         ReflectionTestUtils.invokeMethod(hazelcastConfiguration, "configureSplitBrainProtection", config, true, artemisProperties);
+
+        // getMapConfigOrNull applies the same name/wildcard resolution Hazelcast performs at runtime, but unlike getMapConfig it does not register a fallback entry as a side
+        // effect, so the closure assertion below still sees only the maps the configuration itself declared.
+        for (String mapName : HYPERION_CORRECTNESS_MAPS) {
+            assertThat(config.getMapConfigOrNull(mapName)).as("%s must resolve to an explicitly declared MapConfig, not the evicting default", mapName).isNotNull();
+        }
+        // The inventory is closed in both directions: a Hyperion map added to the configuration without being added here would otherwise escape every assertion in this class.
+        assertThat(config.getMapConfigs().keySet().stream().filter(mapName -> mapName.startsWith("hyperion-")).toList())
+                .containsExactlyInAnyOrderElementsOf(HYPERION_CORRECTNESS_MAPS);
 
         SplitBrainProtectionConfig protectionConfig = config.getSplitBrainProtectionConfigs().get(SPLIT_BRAIN_PROTECTION_NAME);
         assertThat(protectionConfig).isNotNull();

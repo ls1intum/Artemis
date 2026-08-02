@@ -2,13 +2,15 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentCheckpointMessageCodec.RecordedMessage;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -23,13 +25,13 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -141,13 +143,32 @@ public class AgentCheckpointManager {
         return !checkpointDirectory.isBlank() || !replaySource.isBlank();
     }
 
-    String providerContract(@Nullable ChatModel chatModel, int contextWindowTokens) {
+    /**
+     * Fingerprints the provider contract a checkpoint was taken under, so a recorded turn can never be replayed against an incompatible configuration.
+     * <p>
+     * The fingerprint covers the options the run actually sends, not the model bean's defaults: once an effort profile can pin a different model, context window, or decoding
+     * parameter, defaults-only fingerprinting would make a checkpoint taken under one profile replayable under another. The profile name is included as well, so two profiles
+     * remain distinguishable even if their options happen to serialize identically.
+     *
+     * @param chatModel           the configured provider implementation, or {@code null} when none is configured
+     * @param contextWindowTokens the context window this run compacts against
+     * @param effectiveOptions    the options every request of this run starts from
+     * @param profileName         the resolved effort profile name, or {@code ""} for the deployment default
+     * @return the contract string, or {@code ""} when checkpointing is disabled
+     */
+    String providerContract(@Nullable ChatModel chatModel, int contextWindowTokens, @Nullable ChatOptions effectiveOptions, String profileName) {
+        return providerContract(chatModel, contextWindowTokens, effectiveOptions, profileName, null, null);
+    }
+
+    String providerContract(@Nullable ChatModel chatModel, int contextWindowTokens, @Nullable ChatOptions effectiveOptions, String profileName, @Nullable Long maxTokensPerJob,
+            @Nullable Duration maxJobDuration) {
         if (!enabled() || chatModel == null) {
             return "";
         }
         try {
             ObjectMapper canonicalMapper = objectMapper.copy().enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
-            return chatModel.getClass().getName() + "\ncontextWindow=" + contextWindowTokens + "\noptions=" + canonicalMapper.writeValueAsString(chatModel.getOptions());
+            return chatModel.getClass().getName() + "\nprofile=" + profileName + "\ncontextWindow=" + contextWindowTokens + "\nmaxTokensPerJob=" + maxTokensPerJob
+                    + "\nmaxJobDuration=" + maxJobDuration + "\noptions=" + canonicalMapper.writeValueAsString(effectiveOptions);
         }
         catch (IOException e) {
             throw new IllegalStateException("The configured provider options cannot be fingerprinted safely for checkpointing.", e);
@@ -688,14 +709,12 @@ public class AgentCheckpointManager {
         Files.createDirectories(target.getParent());
         Path temporary = tempFileUtilService.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
         try {
-            File temporaryFile = temporary.toFile();
-            File targetFile = target.toFile();
-            FileUtils.writeByteArrayToFile(temporaryFile, bytes);
-            // The temporary file is created beside the target, so renameTo is atomic on the Unix filesystems used by the development runner. Windows does not replace an
-            // existing target this way; retain a portable FileUtils fallback there rather than fail the entire development-only recording.
-            if (!temporaryFile.renameTo(targetFile)) {
-                FileUtils.delete(targetFile);
-                FileUtils.moveFile(temporaryFile, targetFile);
+            Files.write(temporary, bytes);
+            try {
+                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            }
+            catch (AtomicMoveNotSupportedException ignored) {
+                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
             }
         }
         finally {

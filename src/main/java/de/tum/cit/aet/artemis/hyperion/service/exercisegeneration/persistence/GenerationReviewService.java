@@ -113,6 +113,7 @@ public class GenerationReviewService {
                 case CONTRACT_WITNESS_AVAILABLE -> "A ready-to-adopt test for a specification rule, already passing against the reference solution: " + finding.requirement();
                 case CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
                     "An executed optional test was not adopted because its contract/ownership review was incomplete: " + finding.requirement();
+                case EXECUTABLE_EVIDENCE_UNAVAILABLE -> "Executable quality evidence could not be completed automatically";
                 case QUALITY_REVIEW_UNAVAILABLE -> "Generated exercise quality could not be reviewed automatically";
                 case SPECIFICATION_REVIEW_FINDING -> "The compiled exercise specification still has an unresolved review finding: " + finding.requirement();
             };

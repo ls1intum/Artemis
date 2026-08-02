@@ -58,8 +58,8 @@ class AgentCheckpointManagerTest {
         when(first.getOptions()).thenReturn(OpenAiChatOptions.builder().model("gpt-test").temperature(1.0).build());
         when(second.getOptions()).thenReturn(OpenAiChatOptions.builder().model("gpt-test").temperature(1.0).build());
 
-        String firstContract = manager.providerContract(first, 128_000);
-        String secondContract = manager.providerContract(second, 128_000);
+        String firstContract = manager.providerContract(first, 128_000, first.getOptions(), "");
+        String secondContract = manager.providerContract(second, 128_000, second.getOptions(), "");
 
         assertThat(firstContract).isEqualTo(secondContract).contains("\"model\":\"gpt-test\"").doesNotContainPattern("@[0-9a-f]+");
     }
@@ -473,5 +473,39 @@ class AgentCheckpointManagerTest {
         private static SandboxExecResultDTO result(int exitCode) {
             return new SandboxExecResultDTO(exitCode, "", "", false);
         }
+    }
+
+    @Test
+    void providerContract_distinguishesEffortProfilesAndTheOptionsTheyActuallySend() {
+        // A checkpoint records a turn under one provider contract. If the fingerprint ignored the profile, a turn recorded under "draft" would replay under "thorough" and the
+        // replayed run would silently claim to be the configuration it was not.
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        AgentCheckpointManager manager = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true, "");
+        ChatModel chatModel = mock(ChatModel.class);
+        OpenAiChatOptions deploymentOptions = OpenAiChatOptions.builder().model("deployment-model").build();
+        when(chatModel.getOptions()).thenReturn(deploymentOptions);
+
+        String draft = manager.providerContract(chatModel, 128_000, OpenAiChatOptions.builder().model("draft-model").build(), "draft");
+        String thorough = manager.providerContract(chatModel, 128_000, OpenAiChatOptions.builder().model("thorough-model").build(), "thorough");
+        // Same options, different profile name: still distinguishable, so two profiles cannot share a checkpoint by coincidence of serialization.
+        String sameOptionsOtherName = manager.providerContract(chatModel, 128_000, OpenAiChatOptions.builder().model("draft-model").build(), "draft-clone");
+        String deploymentDefault = manager.providerContract(chatModel, 128_000, deploymentOptions, "");
+
+        assertThat(draft).isNotEqualTo(thorough).isNotEqualTo(sameOptionsOtherName).isNotEqualTo(deploymentDefault).contains("profile=draft");
+        // A narrower context window is an incompatible replay target too.
+        assertThat(manager.providerContract(chatModel, 64_000, deploymentOptions, "")).isNotEqualTo(deploymentDefault);
+    }
+
+    @Test
+    void providerContract_distinguishesRunLimits() {
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        AgentCheckpointManager manager = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true, "");
+        ChatModel chatModel = mock(ChatModel.class);
+        OpenAiChatOptions options = OpenAiChatOptions.builder().model("deployment-model").build();
+
+        String baseline = manager.providerContract(chatModel, 128_000, options, "standard", 1_000_000L, Duration.ofMinutes(30));
+
+        assertThat(manager.providerContract(chatModel, 128_000, options, "standard", 500_000L, Duration.ofMinutes(30))).isNotEqualTo(baseline);
+        assertThat(manager.providerContract(chatModel, 128_000, options, "standard", 1_000_000L, Duration.ofMinutes(15))).isNotEqualTo(baseline);
     }
 }

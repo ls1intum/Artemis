@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -154,6 +156,64 @@ class InteractiveSandboxRelayRoundTripTest {
             assertThat(context.getBean(InteractiveSandbox.class)).isInstanceOf(RemoteInteractiveSandboxClient.class);
             assertThat(context.getBean(InteractiveSandboxService.class)).isNotNull();
         }
+    }
+
+    @Test
+    void initializeHosting_publishesTheNewSlotStateInsteadOfWaitingForAnUnrelatedRefresh() {
+        // The periodic heartbeat only writes this agent's map entry while it is absent, so setting the local slot state without publishing left an agent that had just gained
+        // capacity advertising zero — and core nodes rejecting every generation request — until something unrelated happened to republish it.
+        BuildAgentInformationService buildAgentInformationService = mock(BuildAgentInformationService.class);
+        InteractiveSandboxRelayHandler freshHandler = new InteractiveSandboxRelayHandler(applicationContext(localSandbox), handlerAccess, queueProcessingService,
+                buildAgentInformationService);
+        ReflectionTestUtils.setField(freshHandler, "buildAgentShortName", "agent-fresh");
+        ReflectionTestUtils.setField(freshHandler, "maxGenerationSandboxSlots", 3);
+
+        try {
+            freshHandler.registerRequestListener();
+
+            InOrder order = inOrder(buildAgentInformationService);
+            order.verify(buildAgentInformationService).updateGenerationSandboxSlotState(0, 3);
+            order.verify(buildAgentInformationService).refreshLocalBuildAgentInformationPreservingFailures(false);
+        }
+        finally {
+            freshHandler.shutdown();
+        }
+    }
+
+    @Test
+    void createSession_reportsTheObservedFleetCapacityAndNamesTheOptInProperty() {
+        // At the default of zero slots the run simply fails; the message and the warning it accompanies are the only way an administrator learns which property to set.
+        when(clientAccess.getBuildAgentInformation())
+                .thenReturn(List.of(new BuildAgentInformation(new BuildAgentDTO("no-gen", "127.0.0.1:5701", "no-gen"), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0)));
+
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.createSession(sessionSpec()))
+                .withMessageContaining("artemis.continuous-integration.build-agent.max-generation-sandbox-slots");
+
+        RemoteInteractiveSandboxClient.GenerationSandboxCapacity capacity = client.generationSandboxCapacity();
+        assertThat(capacity.reachableAgents()).isEqualTo(1);
+        assertThat(capacity.hostingAgents()).isZero();
+        assertThat(capacity.noAgentAdvertisesCapacity()).isTrue();
+        assertThat(capacity.freeSlots()).isZero();
+    }
+
+    @Test
+    void generationSandboxCapacity_distinguishesAFullFleetFromOneThatHostsNothing() {
+        when(clientAccess.getBuildAgentInformation())
+                .thenReturn(List.of(new BuildAgentInformation(new BuildAgentDTO("busy", "127.0.0.1:5701", "busy"), 4, 0, List.of(), BuildAgentStatus.ACTIVE, "", null, 0, 2, 2),
+                        new BuildAgentInformation(new BuildAgentDTO("no-gen", "127.0.0.1:5702", "no-gen"), 4, 0, List.of(), BuildAgentStatus.IDLE, "", null, 0, 0, 0),
+                        new BuildAgentInformation(new BuildAgentDTO("offline", "127.0.0.1:5703", "offline"), 4, 0, List.of(), BuildAgentStatus.PAUSED, "", null, 0, 0, 8)));
+
+        RemoteInteractiveSandboxClient.GenerationSandboxCapacity capacity = client.generationSandboxCapacity();
+
+        // A paused agent is not reachable capacity, so its eight advertised slots must not make an unrunnable fleet look configured.
+        assertThat(capacity.reachableAgents()).isEqualTo(2);
+        assertThat(capacity.hostingAgents()).isEqualTo(1);
+        assertThat(capacity.totalSlots()).isEqualTo(2);
+        assertThat(capacity.reservedSlots()).isEqualTo(2);
+        assertThat(capacity.freeSlots()).isZero();
+        // Busy is a load state that resolves on its own; "nothing hosts generation" is a configuration state that never does.
+        assertThat(capacity.noAgentAdvertisesCapacity()).isFalse();
+        assertThat(client.hasAvailableGenerationSandboxSlot()).isFalse();
     }
 
     @Test

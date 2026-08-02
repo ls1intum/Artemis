@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -12,7 +13,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +23,7 @@ import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
@@ -35,17 +39,24 @@ import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIndicator;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -87,20 +98,26 @@ class HyperionExerciseGenerationResourceTest {
     @Mock
     private HyperionGenerationBudgetService generationBudgetService;
 
+    @Mock
+    private HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator;
+
     private HyperionExerciseGenerationResource resource;
 
     private User testUser;
 
     private ProgrammingExercise testExercise;
 
+    /** A real resolver over the shipped defaults: the profile feature is inert unless a deployment configures profiles, which is exactly the state these tests exercise. */
+    private final HyperionEffortProfileService effortProfileService = new HyperionEffortProfileService(new HyperionAgentProperties(), List.of());
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
-                reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService);
+                reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService, generationCapacityHealthIndicator, effortProfileService);
         when(auxiliaryRepositoryRepository.findByExerciseId(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.List.of());
         when(sandboxClient.hasAvailableGenerationSandboxSlot()).thenReturn(true);
-        when(generationBudgetService.reserveGenerationBudget(any(), any())).thenReturn(HyperionGenerationBudgetService.BudgetReservation.none());
+        when(generationBudgetService.reserveGenerationBudget(any(), any(), anyLong())).thenReturn(HyperionGenerationBudgetService.BudgetReservation.none());
 
         testUser = new User();
         testUser.setLogin("testuser");
@@ -119,14 +136,15 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null, "Build a bubble sort exercise.")).thenReturn("job-123");
+        when(jobService.startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.GENERATE), eq(null), eq("Build a bubble sort exercise."), any()))
+                .thenReturn("job-123");
 
         ResponseEntity<ExerciseGenerationJobStartDTO> response = resource.generateExercise(1L, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-123");
-        verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, null, "Build a bubble sort exercise.");
+        verify(jobService).startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.GENERATE), eq(null), eq("Build a bubble sort exercise."), any());
     }
 
     @Test
@@ -136,9 +154,12 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(sandboxClient.hasAvailableGenerationSandboxSlot()).thenReturn(false);
 
-        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request))
+                .satisfies(exception -> assertThat(exception.getBody().getProperties()).containsEntry("message", "error.generationCapacityUnavailable"));
 
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
+        // The rejection must leave a trace on the server: without it the only signal is a bare 503 in the client, and the default of zero sandbox slots is undiagnosable.
+        verify(generationCapacityHealthIndicator).warnGenerationRejectedForMissingCapacity();
     }
 
     @Test
@@ -149,11 +170,11 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         org.mockito.Mockito.doThrow(new TooManyRequestsAlertException("budget exceeded", "hyperionExerciseGeneration", "generationTokenBudgetExceeded"))
-                .when(generationBudgetService).reserveGenerationBudget(eq(7L), any());
+                .when(generationBudgetService).reserveGenerationBudget(eq(7L), any(), anyLong());
 
         assertThatExceptionOfType(TooManyRequestsAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
 
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -163,13 +184,13 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.ADAPT, null)).thenReturn("job-adapt");
+        when(jobService.startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.ADAPT), eq(null), eq(null), any())).thenReturn("job-adapt");
 
         ResponseEntity<ExerciseGenerationJobStartDTO> response = resource.generateExercise(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-adapt");
-        verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.ADAPT, null);
+        verify(jobService).startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.ADAPT), eq(null), eq(null), any());
     }
 
     @Test
@@ -181,14 +202,14 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
         when(reviewCommentContextRenderer.renderWholeExerciseSelectedFeedback(1L, List.of(5L, 9L))).thenReturn("FEEDBACK_BLOCK");
         when(jobService.startJob(eq(testUser), eq(testExercise), argThat(prompt -> prompt.contains("RESOLVED") && prompt.contains("FEEDBACK_BLOCK")), eq(GenerationMode.ADAPT),
-                eq(null))).thenReturn("job-adapt-feedback");
+                eq(null), eq(null), any())).thenReturn("job-adapt-feedback");
 
         ResponseEntity<ExerciseGenerationJobStartDTO> response = resource.generateExercise(1L, request);
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-adapt-feedback");
         verify(jobService).startJob(eq(testUser), eq(testExercise), argThat(prompt -> prompt.contains("RESOLVED") && prompt.contains("FEEDBACK_BLOCK")), eq(GenerationMode.ADAPT),
-                eq(null));
+                eq(null), eq(null), any());
     }
 
     @Test
@@ -201,8 +222,8 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(IllegalStateException.class).hasMessageContaining("prompt rendering failed");
 
-        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any());
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any(), anyLong());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -278,12 +299,12 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
-        when(generationBudgetService.reserveGenerationBudget(any(), any())).thenReturn(new HyperionGenerationBudgetService.BudgetReservation("reservation-conflict"));
-        when(jobService.startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, "reservation-conflict"))
+        when(generationBudgetService.reserveGenerationBudget(any(), any(), anyLong())).thenReturn(new HyperionGenerationBudgetService.BudgetReservation("reservation-conflict"));
+        when(jobService.startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.GENERATE), eq("reservation-conflict"), eq(null), any()))
                 .thenThrow(new ConflictException("Exercise generation is already running for this exercise", "hyperionExerciseGeneration", "exerciseGenerationRunning"));
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.generateExercise(1L, request));
-        verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.GENERATE, "reservation-conflict");
+        verify(jobService).startJob(eq(testUser), eq(testExercise), eq("RESOLVED"), eq(GenerationMode.GENERATE), eq("reservation-conflict"), eq(null), any());
         verify(generationBudgetService).releaseReservation("reservation-conflict");
     }
 
@@ -298,8 +319,8 @@ class HyperionExerciseGenerationResourceTest {
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.generateExercise(1L, request));
 
         verify(sandboxClient, never()).hasAvailableGenerationSandboxSlot();
-        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any());
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any(), anyLong());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -312,7 +333,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("unsupportedGenerationLanguage"))
                 .withMessageContaining("Whole-exercise generation is not available");
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -323,7 +344,7 @@ class HyperionExerciseGenerationResourceTest {
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(false);
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("project type 'MAVEN_BLACKBOX'");
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -333,7 +354,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("unreleased draft");
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -343,7 +364,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("without student participations");
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -353,7 +374,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("build configuration");
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -362,7 +383,7 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Selected feedback thread ids must be positive");
-        verify(jobService, never()).startJob(any(), any(), any(), any(), any());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -423,6 +444,22 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().specDocument()).isEqualTo("# Spec\n## Rules\n- R1");
+    }
+
+    @Test
+    void getExerciseGenerationStatusPreservesUsageAndAccountingStateThroughRevertRemap() {
+        ExerciseGenerationUsageDTO usage = new ExerciseGenerationUsageDTO(2, 3, 9, 2, 100, 50, 0, false, 0.25, false, List.of("model"), List.of(), false);
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false, null,
+                usage, ExerciseGenerationAccountingState.INCOMPLETE, null);
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+
+        ExerciseGenerationStatusDTO response = resource.getExerciseGenerationStatus(1L).getBody();
+
+        assertThat(response).isNotNull();
+        assertThat(response.usage()).isEqualTo(usage);
+        assertThat(response.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
     }
 
     @Test
@@ -554,5 +591,129 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(revert.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         // The supported-languages endpoint is not exercise-scoped, so it is guarded by the global least-privilege editor role instead.
         assertThat(supported.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
+    }
+
+    /** A resource wired to a deployment that configures two profiles, so the endpoint's set and the accepted set can be compared. */
+    private HyperionExerciseGenerationResource resourceWithProfiles() {
+        HyperionAgentProperties properties = new HyperionAgentProperties();
+        properties.setMaxTokensPerJob(3_000_000L);
+        properties.setMaxJobDuration(Duration.ofMinutes(45));
+        LinkedHashMap<String, HyperionAgentProperties.EffortProfileProperties> profiles = new LinkedHashMap<>();
+        HyperionAgentProperties.EffortProfileProperties draft = new HyperionAgentProperties.EffortProfileProperties();
+        draft.setLabel("Quick draft");
+        draft.setModel("draft-model");
+        draft.setMaxTokensPerJob(600_000L);
+        draft.setMaxJobDuration(Duration.ofMinutes(12));
+        profiles.put("draft", draft);
+        HyperionAgentProperties.EffortProfileProperties standard = new HyperionAgentProperties.EffortProfileProperties();
+        standard.setLabel("Standard");
+        profiles.put("standard", standard);
+        properties.setProfiles(profiles);
+        return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
+                reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService, generationCapacityHealthIndicator,
+                new HyperionEffortProfileService(properties, List.of()));
+    }
+
+    private void stubHappyPath(ExerciseGenerationRequestDTO request) {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
+    }
+
+    @Test
+    void getGenerationEffortProfiles_returnsNameAndLabelOnly() {
+        List<ExerciseGenerationEffortProfileDTO> profiles = resourceWithProfiles().getGenerationEffortProfiles().getBody();
+
+        assertThat(profiles).containsExactly(new ExerciseGenerationEffortProfileDTO("draft", "Quick draft"), new ExerciseGenerationEffortProfileDTO("standard", "Standard"));
+    }
+
+    @Test
+    void getGenerationEffortProfiles_withoutConfiguredProfiles_isEmpty() {
+        assertThat(resource.getGenerationEffortProfiles().getBody()).isEmpty();
+    }
+
+    @Test
+    void generateExercise_withAnUnknownEffortProfile_isRejectedBeforeAnythingIsReserved() {
+        // Fail closed. A silent fallback is how an instructor gets a surprise bill, and how a comparison between two configurations silently becomes a comparison of one.
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "thorough", null, null);
+        HyperionExerciseGenerationResource profiled = resourceWithProfiles();
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> profiled.generateExercise(1L, request))
+                .satisfies(exception -> assertThat(exception.getBody().getProperties()).containsEntry("message", "error.unknownEffortProfile"));
+
+        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any(), anyLong());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void generateExercise_withAnEffortProfile_reservesAndStartsUnderThatProfile() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "draft", null, null);
+        stubHappyPath(request);
+        ArgumentCaptor<HyperionGenerationSettings> settings = ArgumentCaptor.forClass(HyperionGenerationSettings.class);
+
+        resourceWithProfiles().generateExercise(1L, request);
+
+        verify(generationBudgetService).reserveGenerationBudget(any(), any(), eq(600_000L));
+        verify(jobService).startJob(any(), any(), any(), any(), any(), any(), settings.capture());
+        assertThat(settings.getValue().name()).isEqualTo("draft");
+        assertThat(settings.getValue().maxJobDuration()).isEqualTo(Duration.ofMinutes(12));
+    }
+
+    @Test
+    void generateExercise_withRequestedBoundsBelowTheProfile_narrowsBoth() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "draft", 50_000L, Duration.ofMinutes(5));
+        stubHappyPath(request);
+        ArgumentCaptor<HyperionGenerationSettings> settings = ArgumentCaptor.forClass(HyperionGenerationSettings.class);
+
+        resourceWithProfiles().generateExercise(1L, request);
+
+        // The reservation is sized to what the run may actually spend, which is the point of allowing the bound at all.
+        verify(generationBudgetService).reserveGenerationBudget(any(), any(), eq(50_000L));
+        verify(jobService).startJob(any(), any(), any(), any(), any(), any(), settings.capture());
+        assertThat(settings.getValue().maxJobDuration()).isEqualTo(Duration.ofMinutes(5));
+    }
+
+    @Test
+    void generateExercise_withRequestedBoundsAboveTheProfile_clampsInsteadOfWidening() {
+        // A request may only tighten. Clamping rather than rejecting means a client never has to know the server's ceiling to construct a valid request.
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "draft", 900_000_000L, Duration.ofHours(9));
+        stubHappyPath(request);
+        ArgumentCaptor<HyperionGenerationSettings> settings = ArgumentCaptor.forClass(HyperionGenerationSettings.class);
+
+        resourceWithProfiles().generateExercise(1L, request);
+
+        verify(generationBudgetService).reserveGenerationBudget(any(), any(), eq(600_000L));
+        verify(jobService).startJob(any(), any(), any(), any(), any(), any(), settings.capture());
+        assertThat(settings.getValue().maxJobDuration()).isEqualTo(Duration.ofMinutes(12));
+    }
+
+    @Test
+    void generateExercise_withANonPositiveRequestedDuration_isRejected() {
+        // Clamping is right for "at most N"; a zero or negative N has no run it could have meant, so it is rejected rather than silently turned into the ceiling.
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, null, null, Duration.ZERO);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request))
+                .satisfies(exception -> assertThat(exception.getBody().getProperties()).containsEntry("message", "error.invalidMaxJobDuration"));
+
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void generateExercise_withoutConfiguredProfiles_stillRejectsANamedProfile() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "draft", null, null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request));
+    }
+
+    @Test
+    void getExerciseGenerationStatus_carriesTheResolvedEffortProfileThrough() {
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false, null,
+                null, ExerciseGenerationAccountingState.COMPLETE, "thorough");
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
+
+        assertThat(resource.getExerciseGenerationStatus(1L).getBody()).isNotNull().extracting(ExerciseGenerationStatusDTO::effortProfile).isEqualTo("thorough");
     }
 }

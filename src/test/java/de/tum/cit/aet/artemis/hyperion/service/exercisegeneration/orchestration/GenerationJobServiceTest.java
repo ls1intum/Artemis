@@ -17,10 +17,13 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -44,7 +47,11 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.env.PropertySource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -57,15 +64,19 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -120,6 +131,67 @@ class GenerationJobServiceTest {
 
         assertThat(jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE)).isNotBlank();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE));
+    }
+
+    @Test
+    void terminalStatusIncludesTransientCompleteJobUsageOnlyForOwner() {
+        LLMTokenUsageService tokenUsageService = mock(LLMTokenUsageService.class);
+        GenerationJobService meteredJobService = new GenerationJobService(hazelcastInstance, event -> {
+        }, tokenUsageService);
+        meteredJobService.init();
+        ProgrammingExercise exercise = exercise(47L);
+        User owner = user("owner");
+        doAnswer(invocation -> {
+            Consumer<LLMRequest> observer = invocation.getArgument(4);
+            observer.accept(new LLMRequest("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true));
+            return true;
+        }).when(tokenUsageService).trackChatResponseTokenUsage(any(), any(), anyString(), any(), any());
+
+        String jobId = meteredJobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
+        meteredJobService.tokenUsageSink(null, exercise.getId(), null, jobId).accept(mock(ChatResponse.class));
+        meteredJobService.recordToolCalls(jobId, 2);
+        meteredJobService.recordEvent(exercise.getId(), jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
+        meteredJobService.clearJob(exercise.getId(), jobId);
+
+        ExerciseGenerationStatusDTO result = meteredJobService.getStatus(owner, exercise).orElseThrow();
+
+        assertThat(result.usage()).isEqualTo(new ExerciseGenerationUsageDTO(1, 2, 0, 0, 100, 50, 20, true, 0.000182, true, List.of("model"), List.of("provider-id"), true));
+        assertThat(result.accountingState()).isEqualTo(ExerciseGenerationAccountingState.COMPLETE);
+
+        User other = user("other");
+        assertThat(meteredJobService.getStatus(other, exercise)).hasValueSatisfying(status -> {
+            assertThat(status.usage()).isNull();
+            assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+        });
+    }
+
+    @Test
+    void transientAccountingStaysIncompleteAfterAnUncertainProviderAttempt() {
+        ProgrammingExercise exercise = exercise(48L);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
+
+        jobService.markTokenAccountingIncomplete(jobId);
+        jobService.recordEvent(exercise.getId(), jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
+        jobService.sealTokenAccountingOnWorkerExit(exercise.getId(), jobId);
+
+        assertThat(jobService.getStatus(owner, exercise))
+                .hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE));
+    }
+
+    @Test
+    void providerRetriesMakeRunLevelAccountingIncompleteFromTheStart() {
+        GenerationJobService retryingProviderService = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, 1, Duration.ofHours(4), false);
+        retryingProviderService.init();
+        ProgrammingExercise exercise = exercise(49L);
+        User owner = user("owner");
+
+        String jobId = retryingProviderService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
+        retryingProviderService.recordEvent(exercise.getId(), jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
+
+        assertThat(retryingProviderService.getStatus(owner, exercise))
+                .hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE));
     }
 
     @Test
@@ -215,6 +287,38 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void shippedTerminalReplayTtl_outlastsTheShippedMaximumJobDuration() throws IOException {
+        // The product claim behind the configured window: an instructor who starts a run, teaches, and comes back must still find the verdict, the specification, the file-change
+        // list and the cost they are being asked to review. A window shorter than one run's own maximum duration cannot deliver that, and the DB-backed revert affordance would
+        // then outlive the evidence — offering a revert button for a run that can no longer be inspected. Read from the shipped configuration, not from the constant under test,
+        // so raising max-job-duration without raising the retention window fails here.
+        // The test classpath shadows config/application-artemis.yml, so select by content: the shipped configuration is the one that declares the retention window.
+        List<PropertySource<?>> shippedConfiguration = artemisConfigurationDeclaring("artemis.hyperion.generation.terminal-replay-ttl");
+        Duration shippedTerminalReplayTtl = shippedDuration(shippedConfiguration, "artemis.hyperion.generation.terminal-replay-ttl");
+        Duration shippedMaxJobDuration = shippedDuration(shippedConfiguration, "artemis.hyperion.agent.max-job-duration");
+
+        assertThat(shippedTerminalReplayTtl).isEqualTo(GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL);
+        assertThat(shippedTerminalReplayTtl).isGreaterThan(shippedMaxJobDuration.multipliedBy(2));
+    }
+
+    private static List<PropertySource<?>> artemisConfigurationDeclaring(String property) throws IOException {
+        List<PropertySource<?>> declaring = new ArrayList<>();
+        for (Resource resource : new PathMatchingResourcePatternResolver().getResources("classpath*:config/application-artemis.yml")) {
+            List<PropertySource<?>> sources = new YamlPropertySourceLoader().load("artemis-config", resource);
+            if (sources.stream().anyMatch(source -> source.getProperty(property) != null)) {
+                declaring.addAll(sources);
+            }
+        }
+        assertThat(declaring).as("exactly one classpath copy of config/application-artemis.yml declares %s", property).isNotEmpty();
+        return declaring;
+    }
+
+    private static Duration shippedDuration(List<PropertySource<?>> sources, String property) {
+        return sources.stream().map(source -> source.getProperty(property)).filter(Objects::nonNull).findFirst().map(value -> Duration.parse(String.valueOf(value)))
+                .orElseThrow(() -> new AssertionError(property + " is not declared in the shipped configuration"));
+    }
+
+    @Test
     void activeCancellationMarker_doesNotExpireBeforeTheJobClears() {
         long exerciseId = 448L;
         String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
@@ -227,7 +331,8 @@ class GenerationJobServiceTest {
 
         jobService.clearJob(exerciseId, jobId);
         assertThat(cancellationMap.get(jobId)).isNull();
-        assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isBetween(1L, TimeUnit.MINUTES.toMillis(15));
+        // Retained for the configured terminal-replay window, which must outlast the maximum job duration so an instructor who leaves and comes back still finds the verdict.
+        assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL.toMillis());
     }
 
     @Test
@@ -428,7 +533,7 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void recordEvent_beyondCap_keepsStartedHeadAndDropsIndexOne_preservingOrder() {
+    void recordEvent_beyondCap_keepsStartedHeadAndAdmitsTheGapItDropped_preservingOrder() {
         ProgrammingExercise exercise = exercise(7L);
         User owner = user("owner");
         String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
@@ -444,7 +549,11 @@ class GenerationJobServiceTest {
         assertThat(events).hasSize(500);
         assertThat(events.getFirst().type()).isEqualTo(ExerciseGenerationEventDTO.Type.STARTED);
         assertThat(events.getFirst().message()).isEqualTo("STARTED-HEAD");
-        assertThat(events.get(1).message()).isEqualTo("p" + (overflow - 499));
+        // A reconnecting instructor must not read a gapped transcript as a complete narrative: the dropped span is replaced by exactly one marker that names its size.
+        // 600 progress events follow the retained head, the tail holds 498 of them (the head and the marker occupy the other two slots), so 600 - 498 = 102 were dropped.
+        assertThat(events.get(1).message()).isEqualTo("102 earlier progress events are no longer retained.");
+        assertThat(events.stream().filter(event -> event.message() != null && event.message().endsWith("no longer retained."))).hasSize(1);
+        assertThat(events.get(2).message()).isEqualTo("p" + (overflow - 498));
         assertThat(events.getLast().message()).isEqualTo("p" + (overflow - 1));
     }
 
@@ -454,7 +563,11 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         jobService.startJob(owner, exercise, "fix it", GenerationMode.ADAPT);
 
-        assertThat(jobService.getStatus(owner, exercise).orElseThrow().mode()).isEqualTo(GenerationMode.ADAPT);
+        ExerciseGenerationStatusDTO status = jobService.getStatus(owner, exercise).orElseThrow();
+        assertThat(status.mode()).isEqualTo(GenerationMode.ADAPT);
+        assertThat(status.usage()).isNull();
+        // Still running: the cost so far is a snapshot, not a total.
+        assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.PENDING);
     }
 
     @Test
@@ -622,6 +735,7 @@ class GenerationJobServiceTest {
         assertThat(cancelled.events()).extracting(ExerciseGenerationEventDTO::type).containsExactly(ExerciseGenerationEventDTO.Type.PROGRESS,
                 ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(cancelled.events().getLast().message()).isEqualTo("Generation was cancelled. Nothing was changed.");
+        assertThat(cancelled.events().getLast().terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
         assertThat(cancelled.fileChanges()).extracting(ExerciseGenerationFileChangeDTO::path).containsExactly("solution/Before.java");
         assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
         assertThat(jobService.isCancelled(jobId)).isTrue();
@@ -1125,7 +1239,7 @@ class GenerationJobServiceTest {
         // Every other test stubs this sink out, so the accounting guard itself has never run: a run whose token spend cannot be attributed must stop rather than keep calling
         // the provider off the books.
         LLMTokenUsageService tokenUsageService = mock(LLMTokenUsageService.class);
-        when(tokenUsageService.trackChatResponseTokenUsage(any(), any(), anyString(), any())).thenReturn(recorded);
+        when(tokenUsageService.trackChatResponseTokenUsage(any(), any(), anyString(), any(), any())).thenReturn(recorded);
         GenerationJobService accountingService = new GenerationJobService(hazelcastInstance, event -> {
         }, tokenUsageService);
         accountingService.init();
@@ -1368,4 +1482,48 @@ class GenerationJobServiceTest {
         assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "retry", GenerationMode.GENERATE)).isNotBlank();
     }
 
+    @Test
+    void startJob_withANarrowedRunDeadline_recordsThatDeadlineRatherThanTheDeploymentWide() {
+        // Admission's recorded deadline and the deadline the worker enforces must be the same one, or a narrowed run gets reported as stopped by a limit it was never given.
+        List<GenerationStartedEvent> published = new ArrayList<>();
+        GenerationJobService service = new GenerationJobService(hazelcastInstance, event -> {
+            if (event instanceof GenerationStartedEvent started) {
+                published.add(started);
+            }
+        }, mock(LLMTokenUsageService.class));
+        service.init();
+        HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false,
+                false);
+        Instant before = Instant.now();
+
+        service.startJob(user("owner"), exercise(9_001L), "generate", GenerationMode.GENERATE, null, null, narrowed);
+
+        assertThat(published).hasSize(1);
+        assertThat(published.getFirst().settings()).isEqualTo(narrowed);
+        // The deployment default is 30 minutes in this test constructor, so a 12-minute profile must land well below it.
+        assertThat(published.getFirst().deadlineAt()).isBetween(before.plus(Duration.ofMinutes(12)), before.plus(Duration.ofMinutes(13)));
+    }
+
+    @Test
+    void getStatus_echoesTheEffortProfileTheRunResolvedTo() {
+        // The caller must be able to verify what ran, not what it asked for.
+        ProgrammingExercise exercise = exercise(9_002L);
+        User owner = user("owner");
+        HyperionGenerationSettings thorough = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(20), 6_000_000L, true, "CONTINUOUS", 128_000, null,
+                false, false);
+
+        jobService.startJob(owner, exercise, "generate", GenerationMode.GENERATE, null, null, thorough);
+
+        assertThat(jobService.getStatus(owner, exercise)).get().extracting(ExerciseGenerationStatusDTO::effortProfile).isEqualTo("thorough");
+    }
+
+    @Test
+    void getStatus_withoutConfiguredProfiles_omitsTheEffortProfile() {
+        ProgrammingExercise exercise = exercise(9_003L);
+        User owner = user("owner");
+
+        jobService.startJob(owner, exercise, "generate", GenerationMode.GENERATE);
+
+        assertThat(jobService.getStatus(owner, exercise)).get().extracting(ExerciseGenerationStatusDTO::effortProfile).isNull();
+    }
 }

@@ -3,13 +3,13 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -35,6 +35,7 @@ import com.openai.errors.OpenAIIoException;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
@@ -79,9 +80,10 @@ class AgentLoopRunnerTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(lengthTruncatedToolCallResponse("write_file", "{\"path\":\"solution/A.java\",\"content\":\"class A {\"}"),
                 textResponse("DONE"));
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(sandbox, "fake-session"), 10, () -> false, null, null);
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(sandbox, "fake-session"), 10, () -> false, usageSink, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(sandbox.executedCommands()).isEmpty();
@@ -90,6 +92,58 @@ class AgentLoopRunnerTest {
         Message toolFeedback = prompts.getAllValues().get(1).getInstructions().stream().filter(ToolResponseMessage.class::isInstance).reduce((first, second) -> second)
                 .orElseThrow();
         assertThat(((ToolResponseMessage) toolFeedback).getResponses().getFirst().responseData()).contains("output token limit").contains("Re-issue the call");
+        verify(usageSink).recordToolCalls(1);
+    }
+
+    @Test
+    void agentLoop_pushesOneRecordedTurnToTheSinkForEveryTurnThatBegan() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), toolCallResponse("bash", "{\"command\":\"ls\"}"),
+                textResponse("DONE"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
+
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, usageSink, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(usageSink, times(3)).recordTurn();
+        assertThat(result.turns()).isEqualTo(3);
+    }
+
+    @Test
+    void agentLoop_cancelledAtATurnBoundary_leavesTheSinkCountAndTheLoopResultCountDeliberatelyDifferent() {
+        // The two counters answer different questions and must not be "fixed" into agreement. AgentLoopResult.turns is per-session control state that a cancelled session reports
+        // as its own local count; the sink is the run-level total across every session, which is the number an administrator reads. A run whose second session is cancelled at a
+        // turn boundary has spent turns that its last result reports as zero — exactly the accounting hole that made gate-abandoned runs invisible.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), toolCallResponse("bash", "{\"command\":\"ls\"}"),
+                textResponse("DONE"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
+
+        AgentLoopResult firstSession = runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, usageSink, null);
+        AgentLoopResult cancelledSession = runner.run("system", "again", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> true, usageSink, null);
+
+        assertThat(firstSession.turns()).isEqualTo(3);
+        assertThat(cancelledSession.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        // No turn began in the cancelled session, so it records none and reports none.
+        assertThat(cancelledSession.turns()).isZero();
+        // The sink still carries the whole run: three turns were spent, and the outcome the caller ends up holding reports zero.
+        verify(usageSink, times(3)).recordTurn();
+    }
+
+    @Test
+    void agentLoop_withoutAProviderUsageSink_recordsTurnsWithoutFailing() {
+        // The default no-op on the interface keeps every plain Consumer<ChatResponse> sink, including the two-argument test sinks, working unchanged.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        List<ChatResponse> plainSink = new ArrayList<>();
+
+        AgentLoopResult result = runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, plainSink::add, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(plainSink).hasSize(1);
     }
 
     @Test
@@ -99,11 +153,13 @@ class AgentLoopRunnerTest {
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
         SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
+        ProviderUsageSink usageSink = mock(ProviderUsageSink.class);
 
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, null);
+        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, usageSink, null);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.finalMessage()).isEqualTo("DONE");
+        verify(usageSink).recordToolCalls(1);
     }
 
     @Test
@@ -167,9 +223,8 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
-        // A thrown call yields no response to meter; it must NOT be escalated through the uncertainty path,
-        // which would terminalize the whole job as cancelled instead of letting the loop report the failure.
-        verify(usageSink, never()).markUncertain();
+        // Once the provider call starts, a transport failure cannot prove that the request was never accepted, retried, or billed.
+        verify(usageSink).markUncertain();
         verify(usageSink, never()).accept(any());
         assertThat(steps).contains("The AI service could not complete the request.").noneMatch(step -> step.contains("read timed out"));
     }
@@ -186,7 +241,7 @@ class AgentLoopRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
-        verify(firstUsageSink, never()).markUncertain();
+        verify(firstUsageSink).markUncertain();
 
         ChatModel secondChatModel = mock(ChatModel.class);
         ProviderUsageSink secondUsageSink = mock(ProviderUsageSink.class);
@@ -196,7 +251,11 @@ class AgentLoopRunnerTest {
 
         assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(secondChatModel, times(0)).call(any(Prompt.class));
-        verifyNoInteractions(secondUsageSink);
+        // The turn itself is still recorded: it began and spent a turn of the budget. What must not happen is any spend or uncertainty being attributed to it, because the
+        // cooldown rejected it locally before the provider call started.
+        verify(secondUsageSink, never()).markUncertain();
+        verify(secondUsageSink, never()).accept(any());
+        verify(secondUsageSink, never()).recordToolCalls(anyLong());
     }
 
     @Test
@@ -698,7 +757,7 @@ class AgentLoopRunnerTest {
                     .toolCalls(List.of(new AssistantMessage.ToolCall("call-" + i, "function", "bash", "{\"command\":\"sh verify.sh solution\"}"))).build());
             priorConversation.add(ToolResponseMessage.builder().responses(List.of(new ToolResponseMessage.ToolResponse("call-" + i, "bash", "x".repeat(8_000)))).build());
         }
-        long priorConversationTokens = priorConversation.stream().mapToLong(AgentLoopRunner::estimateMessageTokens).sum();
+        long priorConversationTokens = priorConversation.stream().mapToLong(AgentConversationContext::estimateMessageTokens).sum();
         // Sized so the very first (pre-compaction) call still fits (needs at least ~5_120 tokens of headroom below the window) while the post-turn compaction check fires
         // (triggers once estimated usage exceeds window - 20_480): 12_800 headroom sits squarely between those two thresholds.
         int contextWindowTokens = (int) (priorConversationTokens + 12_800);
@@ -714,7 +773,7 @@ class AgentLoopRunnerTest {
 
         assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
         verify(chatModel, times(2)).call(any(Prompt.class)); // the main-loop turn, plus exactly one summarization call proves compaction actually ran
-        AgentLoopRunner.assertValidPairing(session.conversation()); // the compacted conversation still satisfies the tool-pairing contract
+        AgentConversationContext.assertValidPairing(session.conversation()); // the compacted conversation still satisfies the tool-pairing contract
         assertThat(session.conversation())
                 .anyMatch(message -> message.getText() != null && message.getText().contains("SESSION SUMMARY") && message.getText().contains("Finish the bubble-sort exercise"));
     }
@@ -730,5 +789,67 @@ class AgentLoopRunnerTest {
             }
         });
         return rendered.toString();
+    }
+
+    @Test
+    void forSettings_pinsTheProfilesModelAndDecodingParametersOnEveryCall() {
+        // The whole point of a named effort profile: what actually reaches the provider must be the profile's configuration, not the deployment model bean's.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("deployment-model").temperature(1.0).maxCompletionTokens(8_192).build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        HyperionGenerationSettings settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 64_000,
+                OpenAiChatOptions.builder().model("draft-model").temperature(0.2).maxCompletionTokens(4_096).build(), false, true);
+
+        AgentLoopRunner profileRunner = newTestRunner(List.of(chatModel), 128_000).forSettings(settings);
+        profileRunner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 5, () -> false, mock(ProviderUsageSink.class), null);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompts.capture());
+        assertThat(prompts.getValue().getOptions()).isInstanceOf(OpenAiChatOptions.class);
+        OpenAiChatOptions sent = (OpenAiChatOptions) prompts.getValue().getOptions();
+        assertThat(sent.getModel()).isEqualTo("draft-model");
+        assertThat(sent.getTemperature()).isEqualTo(0.2);
+        // The per-turn completion cap is derived from the profile's own limit, not the deployment bean's 8192.
+        assertThat(sent.getMaxCompletionTokens()).isEqualTo(4_096);
+    }
+
+    @Test
+    void forSettings_sizesThePerTurnOutputBudgetFromTheProfilesContextWindow() {
+        // A profile that pins a model also pins that model's window; sending the deployment window's output allowance to a smaller-window model overflows it provider-side.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("deployment-model").build());
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        HyperionGenerationSettings smallWindow = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 8_000, null,
+                false, false);
+
+        AgentLoopRunner profileRunner = newTestRunner(List.of(chatModel), 128_000).forSettings(smallWindow);
+        profileRunner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 5, () -> false, mock(ProviderUsageSink.class), null);
+
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel).call(prompts.capture());
+        Integer profileOutputTokens = ((OpenAiChatOptions) prompts.getValue().getOptions()).getMaxCompletionTokens();
+        assertThat(profileOutputTokens).isLessThan(8_000);
+
+        ChatModel deploymentModel = mock(ChatModel.class);
+        when(deploymentModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("deployment-model").build());
+        when(deploymentModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        newTestRunner(List.of(deploymentModel), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 5, () -> false,
+                mock(ProviderUsageSink.class), null);
+        ArgumentCaptor<Prompt> deploymentPrompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(deploymentModel).call(deploymentPrompts.capture());
+        assertThat(((OpenAiChatOptions) deploymentPrompts.getValue().getOptions()).getMaxCompletionTokens()).isGreaterThan(profileOutputTokens);
+    }
+
+    @Test
+    void forSettings_onlyNullReusesTheSharedRunner() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("deployment-model").build());
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+
+        HyperionGenerationSettings deploymentDefault = new HyperionGenerationSettings("", null, 60, Duration.ofMinutes(45), 3_000_000L, true, "CONTINUOUS", 128_000, null, true,
+                false);
+
+        assertThat(runner.forSettings(deploymentDefault)).isNotSameAs(runner);
+        assertThat(runner.forSettings(null)).isSameAs(runner);
     }
 }
