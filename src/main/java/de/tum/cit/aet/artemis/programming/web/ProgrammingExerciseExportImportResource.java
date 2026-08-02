@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -141,6 +142,8 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
@@ -148,7 +151,7 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
             Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -167,6 +170,7 @@ public class ProgrammingExerciseExportImportResource {
         this.exerciseVersionService = exerciseVersionService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -210,8 +214,9 @@ public class ProgrammingExerciseExportImportResource {
         }
 
         // Map the request onto a transient exercise at the boundary; everything below keeps working on entities.
-        // Competency links are deliberately not bound: they are not imported because competencies are course-specific,
-        // and binding them would produce detached entity errors for serialized competencies of the source instance.
+        // Unlike the two other import paths, this one never resolves the posted competency links: it copies an exercise
+        // of another course, competencies are course-specific, and the entity handler cleared them here too. Binding
+        // them would also produce detached entity errors for serialized competencies of the source instance.
         ProgrammingExercise newExercise = newExerciseRequest.toEntity();
 
         // Valid exercises have set either a course or an exerciseGroup
@@ -302,6 +307,9 @@ public class ProgrammingExerciseExportImportResource {
      * <p>
      * This will create the whole exercise, including all base build plans (template, solution) and repositories (template, solution, test) and copy
      * the content from the repositories of the zip file into the newly created repositories.
+     * <p>
+     * The client drops the archived exercise's own competency links and lets the author pick competencies of the target
+     * course instead, so the picked links are resolved here and created with the exercise.
      *
      * @param programmingExerciseRequest The exercise that should be imported
      * @param zipFile                    The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
@@ -321,6 +329,15 @@ public class ProgrammingExerciseExportImportResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        // Attach the target course, overwriting the source course an archive carries: the import writes the same course
+        // anyway, and the competency links below need it.
+        if (!programmingExercise.isExamExercise()) {
+            programmingExercise.setCourse(course);
+        }
+        // The request record does not bind the competency links itself: they need managed competencies, which only this
+        // service resolves. The import runs through the creation pipeline, which reads the links off the exercise,
+        // exactly as the entity request part used to leave them there.
+        competencyExerciseLinkService.updateCompetencyLinks(programmingExerciseRequest, programmingExercise);
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course, user);
             exerciseVersionService.createExerciseVersion(importedExercise, user);

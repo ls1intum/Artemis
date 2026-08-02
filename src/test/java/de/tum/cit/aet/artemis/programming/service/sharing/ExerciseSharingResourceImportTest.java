@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -35,8 +36,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -76,6 +81,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @Autowired
     protected UserUtilService userUtilService;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkTestRepository;
 
     @BeforeEach
     void startUp() throws Exception {
@@ -264,6 +272,10 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     /**
      * Golden path of the sharing import: the details object is posted back exactly as the client sends it, and the
      * response has to carry what the client needs to navigate to the created exercise.
+     * <p>
+     * The create form also lets the author pick competencies of the target course, and the request record cannot bind
+     * those links itself (they need managed competencies), so the import has to resolve them; without that the exercise
+     * would be created with no links at all and nothing would fail loudly.
      */
     @Test
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
@@ -275,12 +287,13 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         ImportProgrammingExerciseRequestDTO exerciseDetails = loadExerciseDetails();
 
         Course course = courseUtilService.addEmptyCourse();
+        Competency competency = competencyUtilService.createCompetency(course);
         SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exerciseDetails, course.getId(), correctSharingInfo());
 
         ProgrammingExercise savedExercise = null;
         try {
             MvcResult result = requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(setupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+                    .content(withCompetencyLink(setupInfo, competency.getId())).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
 
             JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
             assertThat(response.get("id").asLong()).isPositive();
@@ -294,12 +307,35 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
             savedExercise = programmingExerciseRepository.findByIdElseThrow(importedExerciseId);
             assertThat(savedExercise.getTitle()).isEqualTo(exerciseDetails.title());
             assertThat(savedExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course.getId());
+
+            // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
+            List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExerciseId);
+            assertThat(storedLinks).hasSize(1);
+            assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
+            assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
         }
         finally {
             // The repositories have to be removed explicitly, otherwise a repeated run fails because they already exist.
             // The project key is derived from the target course, not taken from the exported details.
             versionControlService.deleteProject(savedExercise != null ? savedExercise.getProjectKey() : exerciseDetails.projectKey());
         }
+    }
+
+    /**
+     * Serializes the setup info the way the client does and adds the one competency link the author picked in the
+     * create form. Building it on the JSON keeps the test off the 40-odd components of the exercise record.
+     *
+     * @param setupInfo    the setup info to post
+     * @param competencyId the id of the competency to link
+     * @return the request body
+     */
+    private String withCompetencyLink(SharingSetupInfoDTO setupInfo, long competencyId) throws Exception {
+        ObjectNode body = objectMapper.valueToTree(setupInfo);
+        ObjectNode link = objectMapper.createObjectNode();
+        link.putObject("competency").put("id", competencyId);
+        link.put("weight", 1);
+        ((ObjectNode) body.get("exercise")).set("competencyLinks", objectMapper.createArrayNode().add(link));
+        return objectMapper.writeValueAsString(body);
     }
 
     private SharingInfoDTO correctSharingInfo() {

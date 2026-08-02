@@ -77,7 +77,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * @param testRepositoryUri                          the URI of the test repository being imported
  * @param buildConfig                                the build configuration
  * @param gradingCriteria                            the structured grading criteria
- * @param competencyLinks                            the linked competencies; cleared by the import handlers
+ * @param competencyLinks                            the linked competencies; honoured by the from-file and sharing
+ *                                                       imports, ignored by the plain import
  * @param auxiliaryRepositories                      the auxiliary repositories
  * @param submissionPolicy                           the submission policy
  * @param plagiarismDetectionConfig                  the plagiarism detection configuration
@@ -120,8 +121,13 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
 
     /**
      * Builds the transient {@link ProgrammingExercise} the import pipeline works on. Null collections map to empty
-     * ones because the client's {@code NON_EMPTY} serialization drops empty lists. Competency links are deliberately
-     * not bound: the import handlers clear them, since competencies are course-specific.
+     * ones because the client's {@code NON_EMPTY} serialization drops empty lists.
+     * <p>
+     * Competency links are deliberately not bound here, because a link needs a managed competency and only
+     * {@code CompetencyExerciseLinkService} can resolve one. The three import handlers then differ: the from-file and
+     * the sharing import call that service, so the competencies the author picked in the create form are created with
+     * the exercise; the plain import calls it not at all, because it copies an exercise of another course and
+     * competencies are course-specific.
      *
      * @return the transient exercise described by this request
      */

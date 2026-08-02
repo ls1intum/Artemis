@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -122,6 +123,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkTestRepository;
 
     @BeforeAll
     void setupAll() {
@@ -665,6 +669,63 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(importedExercise.getTitle()).isEqualTo(importResult.parsedExercise().getTitle());
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+    }
+
+    /**
+     * The from-file create form lets the author pick competencies of the target course and posts them in the exercise
+     * part. The request record cannot bind the links itself (they need managed competencies), so the resource resolves
+     * them through the competency link service; without that call the exercise would be imported with no links at all
+     * and nothing would fail loudly.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_withCompetencyLinks_persistsTheLinks() throws Exception {
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
+            exercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exercise, 1)));
+            exercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+            return null;
+        }, course);
+
+        // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importResult.importedExercise().getId());
+        assertThat(storedLinks).hasSize(1);
+        assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
+        assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+    }
+
+    /**
+     * The plain import copies an exercise of another course, so it drops the competency links the client posts, the way
+     * it did before the request DTO existed. This pins that asymmetry with the from-file and the sharing import, which
+     * do create the links the author picked.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExercise_withCompetencyLinks_persistsNoLinks() throws Exception {
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInspectImage(dockerClient);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
+        Course targetCourse = courseUtilService.addEmptyCourse();
+        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-nolinkimport");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 1)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.OK);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
     }
 
     /**
