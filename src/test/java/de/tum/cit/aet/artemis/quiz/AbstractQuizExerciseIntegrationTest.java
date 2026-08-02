@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
@@ -326,23 +325,8 @@ public abstract class AbstractQuizExerciseIntegrationTest extends AbstractSpring
     protected void prepareQuizForImport(QuizExercise quizExercise) {
         quizExercise.setQuizBatches(Set.of());
         quizExercise.setCompetencyLinks(Set.of());
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                for (var dragItem : dragAndDropQuestion.getDragItems()) {
-                    dragItem.setId(null);
-                }
-                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
-                    dropLocation.setId(null);
-                }
-            }
-            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                for (var spot : shortAnswerQuestion.getSpots()) {
-                    spot.setId(null);
-                }
-                for (var solution : shortAnswerQuestion.getSolutions()) {
-                    solution.setId(null);
-                }
-            }
-        }
+        // Drag-and-drop and short-answer component ids (drop locations / drag items, resp. spots / solutions) are question-scoped and stored inside the JSON content; they are
+        // referenced by id from the correct mappings. Nulling them here would break mapping resolution. Import regenerates fresh question-scoped ids server-side on save, so the
+        // source ids can simply be kept (they act as temp ids).
     }
 }
