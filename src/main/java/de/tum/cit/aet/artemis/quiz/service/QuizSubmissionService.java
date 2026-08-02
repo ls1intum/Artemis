@@ -503,7 +503,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                     DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
                     dragAndDropMapping.setDragItem(dragItem);
                     dragAndDropMapping.setDropLocation(dropLocation);
-                    dragAndDropMapping.setSubmittedAnswer(dragAndDropSubmittedAnswer);
                     mappings.add(dragAndDropMapping);
                 }
                 else {
@@ -730,15 +729,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                 if (serverDragItem == null || serverDropLocation == null) {
                     continue;
                 }
+                // Resolve against the server's own drag items / drop locations; setMappings stores only their (question-scoped) ids in the JSON selection.
                 DragAndDropMapping mapping = new DragAndDropMapping();
                 mapping.setDragItem(serverDragItem);
                 mapping.setDropLocation(serverDropLocation);
-                // Recompute the denormalized positional hints from the server's own lists rather than trusting the
-                // client-sent indices. Otherwise a malicious or stale client could push indices that disagree with
-                // the resolved entities, breaking downstream consumers that index back into the question's lists.
-                mapping.setDragItemIndex(question.getDragItems().indexOf(serverDragItem));
-                mapping.setDropLocationIndex(question.getDropLocations().indexOf(serverDropLocation));
-                mapping.setSubmittedAnswer(answer);
                 mappings.add(mapping);
             }
         }
