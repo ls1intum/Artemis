@@ -92,9 +92,9 @@ public class CourseArchiveService {
      * @return A list of courses for the course archive.
      */
     public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
-        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getGroups(), ZonedDateTime.now());
+        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getId(), ZonedDateTime.now());
     }
 
     /**
@@ -105,12 +105,27 @@ public class CourseArchiveService {
      */
     @Async
     public void archiveCourse(Course course) {
+        archiveCourseSynchronously(course);
+    }
+
+    /**
+     * Synchronously archives the course by creating a zip file with student submissions for both the course exercises
+     * and exams, storing the resulting archive path on the course. Unlike {@link #archiveCourse(Course)} this runs on the
+     * calling thread, so callers can rely on {@link Course#hasCourseArchive()} being up to date once it returns. This is
+     * required by the data-privacy retention flow, which must ensure an archive exists (instructor backup) before it may
+     * reset a course's student data.
+     *
+     * @param course the course to archive
+     * @return {@code true} if an archive was created, {@code false} otherwise (e.g. the course is not over yet, or the
+     *         export failed)
+     */
+    public boolean archiveCourseSynchronously(Course course) {
         long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
 
         // Archiving a course is only possible after the course is over
-        if (ZonedDateTime.now().isBefore(course.getEndDate())) {
-            return;
+        if (course.getEndDate() == null || ZonedDateTime.now().isBefore(course.getEndDate())) {
+            return false;
         }
 
         // This contains possible errors encountered during the archive process
@@ -132,6 +147,8 @@ public class CourseArchiveService {
             if (archivedCoursePath.isPresent()) {
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.saveAndFlush(course);
+                log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
+                return true;
             }
         }
         catch (Exception e) {
@@ -141,6 +158,7 @@ public class CourseArchiveService {
         }
 
         log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
+        return false;
     }
 
     /**

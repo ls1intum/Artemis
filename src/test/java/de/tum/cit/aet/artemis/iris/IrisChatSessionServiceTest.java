@@ -137,7 +137,7 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
 
         @Test
         void throwsWhenUserNotEnrolledInCourse() {
-            Course otherCourse = courseUtilService.createCourseWithCustomStudentGroupName("iris-chat-service-other", "other-group");
+            Course otherCourse = courseUtilService.createCourse();
             IrisChatSession session = new IrisChatSession(otherCourse, student1());
             session.setId(1L);
 
@@ -360,7 +360,8 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.LECTURE_CHAT, user));
 
-            Course otherCourse = courseUtilService.createCourse();
+            // The user must be able to access the other course, otherwise the authorization check fires before the conflict check under test.
+            Course otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
             activateIrisFor(otherCourse);
 
             assertThatExceptionOfType(ConflictException.class)
@@ -382,7 +383,8 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
             User user = student1();
             IrisChatSession session = irisChatSessionRepository.save(newSessionFor(IrisChatMode.COURSE_CHAT, user));
 
-            Course otherCourse = courseUtilService.createCourse();
+            // The user must be able to access the other course, otherwise the authorization check fires before the conflict check under test.
+            Course otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
             Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
             activateIrisFor(otherCourse);
 

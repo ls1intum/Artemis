@@ -335,6 +335,11 @@
                     @if (submissionLockLimitReached() && tutorParticipationStatus() !== REVIEWED_INSTRUCTIONS) {
                         <div class="alert alert-danger" jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></div>
                     }
+                    @if (assessmentNotPossibleYetReason(); as assessmentNotPossibleYet) {
+                        <p-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mb-3">
+                            <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
+                        </p-message>
+                    }
                     @for (roundState of numberOfAssessmentsOfCorrectionRounds(); track roundState; let correctionRound = $index) {
                         <div>
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
@@ -404,20 +409,24 @@
                                                                 </td>
                                                             }
                                                             <td>
-                                                                <a
-                                                                    id="start-new-assessment"
-                                                                    class="btn btn-success btn-sm"
-                                                                    [routerLink]="getAssessmentLink('new')"
-                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                    [class.disabled]="openingAssessmentEditorForNewSubmission()"
-                                                                    [ngStyle]="{}"
-                                                                >
-                                                                    @if (openingAssessmentEditorForNewSubmission()) {
-                                                                        <fa-icon [icon]="faSpinner" animation="spin" />
-                                                                    }
-                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                    {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
-                                                                </a>
+                                                                <span [pTooltip]="assessmentNotPossibleYetTooltip()">
+                                                                    <a
+                                                                        id="start-new-assessment"
+                                                                        class="btn btn-success btn-sm"
+                                                                        [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink('new')"
+                                                                        [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                                        [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
+                                                                        [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
+                                                                        [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
+                                                                        [ngStyle]="{}"
+                                                                    >
+                                                                        @if (openingAssessmentEditorForNewSubmission()) {
+                                                                            <fa-icon [icon]="faSpinner" animation="spin" />
+                                                                        }
+                                                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                                        {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
+                                                                    </a>
+                                                                </span>
                                                             </td>
                                                         </tr>
                                                     }
@@ -439,30 +448,38 @@
                                                             }
                                                             <td>
                                                                 @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
-                                                                    @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
-                                                                        <a
-                                                                            [routerLink]="getAssessmentLink(submission)"
-                                                                            [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                            class="btn btn-warning btn-sm"
-                                                                            id="continue-assessment"
-                                                                        >
-                                                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
-                                                                                'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
-                                                                            }}
-                                                                        </a>
-                                                                    } @else {
-                                                                        @if (!!submission.results && !!submission.results[correctionRound]) {
+                                                                    <span [pTooltip]="assessmentNotPossibleYetTooltip()">
+                                                                        @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
                                                                             <a
-                                                                                [routerLink]="getAssessmentLink(submission)"
+                                                                                [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
                                                                                 [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                class="btn btn-primary btn-sm"
-                                                                                id="open-assessment"
+                                                                                class="btn btn-warning btn-sm"
+                                                                                id="continue-assessment"
+                                                                                [class.disabled]="!!assessmentNotPossibleYetReason()"
+                                                                                [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
+                                                                                [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
                                                                             >
-                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                                &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
+                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
+                                                                                    'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
+                                                                                }}
                                                                             </a>
+                                                                        } @else {
+                                                                            @if (!!submission.results && !!submission.results[correctionRound]) {
+                                                                                <a
+                                                                                    [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
+                                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"
+                                                                                    class="btn btn-primary btn-sm"
+                                                                                    id="open-assessment"
+                                                                                    [class.disabled]="!!assessmentNotPossibleYetReason()"
+                                                                                    [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
+                                                                                    [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
+                                                                                >
+                                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                                                                    &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
+                                                                                </a>
+                                                                            }
                                                                         }
-                                                                    }
+                                                                    </span>
                                                                     <!--                                                                    </ng-container>-->
                                                                 }
                                                             </td>

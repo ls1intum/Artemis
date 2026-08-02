@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -81,11 +82,14 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 2, 0, 1);
         // Initialize with 3 max team complaints and 7 days max complaint due date
-        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         modelingExercise.setMode(ExerciseMode.TEAM);
         modelingExercise = exerciseRepository.save(modelingExercise);
         team = teamUtilService.addTeamForExercise(modelingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
+        // Team students need a UCR STUDENT row to pass authorization checks (e.g. when submitting complaints).
+        // addTeamForExercise generates fresh users that are not enrolled in the course by default.
+        team.getStudents().forEach(student -> userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT));
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), Optional.empty());

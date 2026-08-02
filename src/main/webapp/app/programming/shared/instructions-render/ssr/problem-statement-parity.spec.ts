@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { of } from 'rxjs';
-import { PluginSimple } from 'markdown-it';
+import { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 import { DialogService } from 'primeng/dynamicdialog';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -471,7 +471,7 @@ function authoredRefLists(markdown: string): string[] {
 
 describe('problem statement rendering parity', () => {
     let instructionService: ProgrammingExerciseInstructionService;
-    let extensions: PluginSimple[];
+    let extensions: MarkdownItPlugin[];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -936,7 +936,7 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         notExecutedCount: 0,
     });
 
-    let taskExtension: PluginSimple;
+    let taskExtension: MarkdownItPlugin;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
