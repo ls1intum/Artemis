@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerci
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -105,11 +106,13 @@ class PyrisPipelineServiceTest {
             }
         };
 
-        service.executePipeline("chat", AiSelectionDecision.CLOUD_AI, "default", "moderate", Optional.empty(), "job-1", dto -> dto, updater);
+        var success = service.executePipeline("chat", AiSelectionDecision.CLOUD_AI, "default", "moderate", Optional.empty(), "job-1", dto -> dto, updater);
 
         // The failed run-state callback must reference the translation key the client still ships, not the removed stage key.
+        assertThat(success).isFalse();
         assertThat(capturedError.get()).isNotNull();
         assertThat(capturedError.get().message()).isEqualTo("artemisApp.iris.error.internal");
+        verify(pyrisJobService).getJob("job-1");
     }
 
     @Test
@@ -136,7 +139,7 @@ class PyrisPipelineServiceTest {
 
         var exerciseDTO = new PyrisProgrammingExerciseDTO(3L, "Exercise", null, Map.of(), Map.of(), Map.of(), "Task", null, null);
         var submissionDTO = new PyrisSubmissionDTO(4L, null, Map.of(), false, false, List.of(), null);
-        when(pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise)).thenReturn(exerciseDTO);
+        when(pyrisDTOService.toPyrisProgrammingExerciseDTOWithoutSolutionAndTests(exercise)).thenReturn(exerciseDTO);
         when(pyrisDTOService.toPyrisSubmissionDTO(submission)).thenReturn(submissionDTO);
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, pyrisDTOService, mock(IrisChatWebsocketService.class),
@@ -149,22 +152,62 @@ class PyrisPipelineServiceTest {
         session.setEntityId(3L);
         session.setUserId(7L);
 
-        service.executeAskUserPipeline("default", submission, exercise, session, Optional.of("BUILD_WITH_POINTS"), IrisAskUserModeSettings.defaultSettings());
+        var success = service.executeAskUserPipeline("default", submission, exercise, session, Optional.of("BUILD_WITH_POINTS"), IrisAskUserModeSettings.defaultSettings());
 
         var dtoCaptor = ArgumentCaptor.forClass(Object.class);
         verify(pyrisConnectorService).executePipeline(eq("ask-user"), dtoCaptor.capture(), eq(Optional.of("BUILD_WITH_POINTS")));
 
+        assertThat(success).isTrue();
         assertThat(dtoCaptor.getValue()).isInstanceOf(PyrisAskUserPipelineExecutionDTO.class);
         var dto = (PyrisAskUserPipelineExecutionDTO) dtoCaptor.getValue();
         assertThat(dto.chatMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
-        assertThat(dto.exercise()).isSameAs(exerciseDTO);
-        assertThat(dto.submission()).isSameAs(submissionDTO);
         assertThat(dto.programmingExercise()).isSameAs(exerciseDTO);
         assertThat(dto.programmingExerciseSubmission()).isSameAs(submissionDTO);
 
         var json = new ObjectMapper().writeValueAsString(dto);
-        assertThat(json).contains("\"chatMode\":\"PROGRAMMING_EXERCISE_CHAT\"", "\"exercise\":", "\"submission\":");
-        assertThat(json).doesNotContain("programmingExercise");
+        assertThat(json).contains("\"chatMode\":\"PROGRAMMING_EXERCISE_CHAT\"", "\"programmingExercise\":", "\"programmingExerciseSubmission\":");
+    }
+
+    @Test
+    void executeAskUserPipelineReportsQuizFailureKeyWhenConnectorFailsDuringActiveQuiz() {
+        var pyrisConnectorService = mock(PyrisConnectorService.class);
+        var pyrisJobService = mock(PyrisJobService.class);
+        var userRepository = mock(UserRepository.class);
+        var irisChatWebsocketService = mock(IrisChatWebsocketService.class);
+
+        var user = new User();
+        user.setId(7L);
+        user.setLogin("student");
+        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
+        when(pyrisJobService.addAskUserChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null, ChatJob.ASK_USER_PIPELINE_NAME);
+        when(pyrisJobService.getJob("run-1")).thenReturn(job);
+
+        var course = new Course();
+        course.setId(1L);
+        var exercise = new ProgrammingExercise();
+        exercise.setId(3L);
+        exercise.setCourse(course);
+        var submission = new ProgrammingSubmission();
+        submission.setId(4L);
+
+        var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), irisChatWebsocketService,
+                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class));
+        ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
+
+        doThrow(new PyrisConnectorException("boom")).when(pyrisConnectorService).executePipeline(eq("ask-user"), any(), any());
+
+        var session = session(1L, 2L, 3L, 7L);
+        session.setInAskUserModePipeline(true);
+
+        var success = service.executeAskUserPipeline("default", submission, exercise, session, Optional.empty(), IrisAskUserModeSettings.defaultSettings());
+
+        var errorCaptor = ArgumentCaptor.forClass(PyrisStatusErrorDTO.class);
+        assertThat(success).isFalse();
+        verify(irisChatWebsocketService).sendStatusUpdate(any(), eq("run-1"), eq(PyrisRunState.FAILED), errorCaptor.capture(), isNull());
+        assertThat(errorCaptor.getValue().message()).isEqualTo("artemisApp.exerciseChatbot.errors.askUserQuizFailed");
+        verify(pyrisJobService).removeJob(job);
     }
 
     private PyrisPipelineExecutionSettingsDTO executeChatPipelineAndCaptureSettings(boolean responseStreamingEnabled) {
@@ -196,5 +239,14 @@ class PyrisPipelineServiceTest {
         });
 
         return capturedSettings.get();
+    }
+
+    private IrisChatSession session(long courseId, long sessionId, long entityId, long userId) {
+        var session = new IrisChatSession();
+        session.setCourseId(courseId);
+        session.setId(sessionId);
+        session.setEntityId(entityId);
+        session.setUserId(userId);
+        return session;
     }
 }

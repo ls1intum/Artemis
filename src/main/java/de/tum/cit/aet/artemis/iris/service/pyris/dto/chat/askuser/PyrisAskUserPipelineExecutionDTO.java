@@ -16,13 +16,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisAskUserPipelineExecutionDTO(IrisChatMode chatMode, List<PyrisMessageDTO> chatHistory, PyrisPipelineExecutionSettingsDTO settings, @Nullable String sessionTitle,
-        PyrisUserDTO user, PyrisCourseDTO course, PyrisProgrammingExerciseDTO exercise, PyrisSubmissionDTO submission, int minQuestions, int maxQuestions, int questionsAsked) {
-
-    public PyrisProgrammingExerciseDTO programmingExercise() {
-        return exercise;
-    }
+        PyrisUserDTO user, PyrisCourseDTO course, PyrisProgrammingExerciseDTO programmingExercise, PyrisSubmissionDTO programmingExerciseSubmission, int minQuestions,
+        int maxQuestions, int questionsAsked) {
 
     public PyrisSubmissionDTO programmingExerciseSubmission() {
-        return submission;
+        return programmingExerciseSubmission;
     }
 }

@@ -44,15 +44,11 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisAssessmentReviewService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisJobExpiredEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisAssessmentQuizWebsocketService;
-import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -70,9 +66,7 @@ public class IrisAskUserService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisAskUserService.class);
 
-    private static final PyrisStatusErrorDTO ASK_USER_PIPELINE_TIMEOUT_ERROR = new PyrisStatusErrorDTO("artemisApp.exerciseChatbot.errors.askUserQuizTimeout", null);
-
-    private static final PyrisStatusErrorDTO ASK_USER_PIPELINE_FAILURE_ERROR = new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null);
+    public static final String ASK_USER_QUIZ_FAILED_ERROR_KEY = "artemisApp.exerciseChatbot.errors.askUserQuizFailed";
 
     private final IrisSettingsService irisSettingsService;
 
@@ -98,8 +92,6 @@ public class IrisAskUserService {
 
     private final IrisAssessmentQuizWebsocketService irisAssessmentQuizWebsocketService;
 
-    private final IrisChatWebsocketService irisChatWebsocketService;
-
     private final TaskScheduler taskScheduler;
 
     private final Map<Long, ScheduledFuture<?>> quizTimers = new ConcurrentHashMap<>();
@@ -110,8 +102,7 @@ public class IrisAskUserService {
             IrisChatSessionRepository irisChatSessionRepository, IrisChatSessionService irisChatSessionService, PyrisPipelineService pyrisPipelineService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, UserRepository userRepository, IrisAssessmentReviewService irisAssessmentReviewService,
-            IrisAssessmentQuizWebsocketService irisAssessmentQuizWebsocketService, IrisChatWebsocketService irisChatWebsocketService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+            IrisAssessmentQuizWebsocketService irisAssessmentQuizWebsocketService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
@@ -124,7 +115,6 @@ public class IrisAskUserService {
         this.userRepository = userRepository;
         this.irisAssessmentReviewService = irisAssessmentReviewService;
         this.irisAssessmentQuizWebsocketService = irisAssessmentQuizWebsocketService;
-        this.irisChatWebsocketService = irisChatWebsocketService;
         this.taskScheduler = taskScheduler;
     }
 
@@ -440,27 +430,13 @@ public class IrisAskUserService {
     }
 
     /**
-     * Resets an active ask-user quiz if the underlying Pyris job expires without any callback for the configured job TTL.
-     *
-     * @param event the expired Pyris job event
-     */
-    @EventListener
-    public void handlePyrisJobExpiredEvent(PyrisJobExpiredEvent event) {
-        if (event.getEventObject() instanceof ChatJob job && job.isAskUserPipeline()) {
-            resetAskUserPipelineAfterPyrisFailure(job, ASK_USER_PIPELINE_TIMEOUT_ERROR);
-        }
-    }
-
-    /**
      * Resets an active ask-user quiz after Pyris reports a terminal failure.
      *
-     * @param job   the failed ask-user job
-     * @param error the Pyris error, if available
+     * @param job the failed ask-user job
+     * @return true if an active quiz was reset
      */
-    public void handleAskUserPipelineFailure(ChatJob job, PyrisStatusErrorDTO error) {
-        if (job.isAskUserPipeline()) {
-            resetAskUserPipelineAfterPyrisFailure(job, error != null ? error : ASK_USER_PIPELINE_FAILURE_ERROR);
-        }
+    public boolean resetAskUserPipelineAfterPyrisFailure(ChatJob job) {
+        return job.isAskUserPipeline() && resetAskUserPipelineAfterPyrisFailure(job.sessionId(), job.jobId());
     }
 
     private void requestAndHandleResponseAskUser(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings,
@@ -482,7 +458,9 @@ public class IrisAskUserService {
         ensureAskUserSession(chatSession, exercise);
         var submission = actualLatestSubmission
                 .orElseThrow(() -> new ConflictException("Iris Ask-user Mode requires a programming submission", "Iris", "irisAskUserModeSubmissionMissing"));
-        pyrisPipelineService.executeAskUserPipeline(actualSettings.variant().jsonValue(), submission, exercise, chatSession, event, actualSettings.askUserModeSettings());
+        if (!pyrisPipelineService.executeAskUserPipeline(actualSettings.variant().jsonValue(), submission, exercise, chatSession, event, actualSettings.askUserModeSettings())) {
+            resetAskUserPipelineAfterPyrisFailure(chatSession.getId(), null);
+        }
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
@@ -603,10 +581,10 @@ public class IrisAskUserService {
         }
     }
 
-    private void resetAskUserPipelineAfterPyrisFailure(ChatJob job, PyrisStatusErrorDTO error) {
-        irisChatSessionRepository.findById(job.sessionId()).ifPresent(session -> {
+    private boolean resetAskUserPipelineAfterPyrisFailure(long sessionId, String jobId) {
+        return irisChatSessionRepository.findById(sessionId).map(session -> {
             if (!session.isInAskUserModePipeline()) {
-                return;
+                return false;
             }
 
             var inClassQuiz = session.isInClassQuiz();
@@ -616,9 +594,9 @@ public class IrisAskUserService {
             irisChatSessionRepository.save(session);
             resetAssessmentAfterPyrisFailure(session, inClassQuiz);
             stopTimerForSession(session);
-            irisChatWebsocketService.sendStatusUpdate(session, job.jobId(), PyrisRunState.FAILED, error);
-            log.warn("Reset ask-user quiz state for session {} after Pyris job {} failed or timed out", session.getId(), job.jobId());
-        });
+            log.warn("Reset ask-user quiz state for session {} after Pyris job {} failed", session.getId(), jobId);
+            return true;
+        }).orElse(false);
     }
 
     private void resetAssessmentAfterPyrisFailure(IrisChatSession session, boolean inClassQuiz) {

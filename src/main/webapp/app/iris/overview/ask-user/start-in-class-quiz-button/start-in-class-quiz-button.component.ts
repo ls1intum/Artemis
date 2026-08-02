@@ -15,6 +15,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 
 @Component({
     selector: 'jhi-start-in-class-quiz-button',
@@ -24,7 +25,8 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 })
 export class IrisStartInClassQuizButtonComponent {
     private readonly irisChatService = inject(IrisChatService);
-    private readonly askUserService = inject(IrisAskUserHttpService);
+    private readonly askUserService = inject(IrisAskUserService);
+    private readonly askUserHttpService = inject(IrisAskUserHttpService);
     private readonly assessmentReviewService = inject(IrisAssessmentReviewHttpService);
     private readonly destroyRef = inject(DestroyRef);
 
@@ -42,31 +44,6 @@ export class IrisStartInClassQuizButtonComponent {
 
     private readonly exerciseId = computed(() => this.exercise().id);
 
-    private readonly latestSubmissionHasPoints = toSignal(
-        toObservable(this.exerciseId).pipe(
-            switchMap((exerciseId) => {
-                if (exerciseId === undefined) {
-                    return of(false);
-                }
-
-                return this.askUserService.latestSubmissionHasPoints(exerciseId).pipe(catchError(() => of(false)));
-            }),
-        ),
-        { initialValue: false },
-    );
-
-    private readonly activeQuizType = toSignal(
-        toObservable(this.exerciseId).pipe(
-            switchMap((exerciseId) => {
-                if (exerciseId === undefined) {
-                    return of(undefined);
-                }
-
-                return this.askUserService.activeQuizTypeForExercise(exerciseId);
-            }),
-        ),
-        { initialValue: undefined },
-    );
     private readonly runInfo = toSignal(this.irisChatService.currentRunInfo(), { initialValue: undefined });
 
     private readonly quizAlreadyDoneFromServer = toSignal(
@@ -76,17 +53,12 @@ export class IrisStartInClassQuizButtonComponent {
                     return of(false);
                 }
 
-                return this.askUserService.isQuizAlreadyDone(exerciseId, true).pipe(catchError(() => of(false)));
+                return this.askUserHttpService.isQuizAlreadyDone(exerciseId, true).pipe(catchError(() => of(false)));
             }),
         ),
         { initialValue: false },
     );
-
-    private readonly hasSubmissionWithPoints = computed(() => this.latestSubmissionHasPoints() || this.latestSubmissionHasPointsFromEvent());
-
     protected readonly quizAlreadyDone = computed(() => this.quizAlreadyDoneFromServer() || this.quizCompletedAfterCurrentRun());
-
-    protected readonly isAnyAskUserMode = computed(() => this.activeQuizType() !== undefined || this.isInClassAskUserMode());
 
     protected readonly availableInClassQuiz = toSignal(
         toObservable(this.exerciseId).pipe(
@@ -101,13 +73,15 @@ export class IrisStartInClassQuizButtonComponent {
         { initialValue: undefined },
     );
 
-    protected readonly canBeStarted = computed(() => this.hasSubmissionWithPoints() && !this.quizAlreadyDone() && !this.isAnyAskUserMode());
+    protected readonly hasSubmissionWithPoints = computed(() => this.askUserService.latestSubmissionHasPoints() || this.latestSubmissionHasPointsFromEvent());
+
+    protected readonly canBeStarted = computed(() => this.hasSubmissionWithPoints() && !this.quizAlreadyDone() && !this.askUserService.isAnyAskUserMode());
 
     protected readonly showQuizActive = computed(
         () =>
-            this.activeQuizType() === 'inClass' ||
+            this.askUserService.activeQuizType() === 'inClass' ||
             this.isInClassAskUserMode() ||
-            (this.activeQuizType() === 'regular' && this.hasSubmissionWithPoints() && !this.quizAlreadyDone()),
+            (this.askUserService.activeQuizType() === 'regular' && this.hasSubmissionWithPoints() && !this.quizAlreadyDone()),
     );
 
     private readonly showNoSubmission = computed(() => this.availableInClassQuiz() !== undefined && !this.showQuizActive() && !this.quizAlreadyDone() && !this.canBeStarted());
@@ -130,6 +104,7 @@ export class IrisStartInClassQuizButtonComponent {
             .subscribe(() => {
                 this.latestSubmissionHasPointsFromEvent.set(false);
                 this.quizCompletedAfterCurrentRun.set(false);
+                this.latestSubmissionHasPointsFromEvent.set(false);
             });
 
         // Initial fetch if ask-user mode is currently active
@@ -140,7 +115,7 @@ export class IrisStartInClassQuizButtonComponent {
                         return of(false);
                     }
 
-                    return this.askUserService.currentStartedInClassQuizForExercise(exerciseId);
+                    return this.askUserHttpService.currentStartedInClassQuizForExercise(exerciseId);
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -159,7 +134,7 @@ export class IrisStartInClassQuizButtonComponent {
                         return of(false);
                     }
 
-                    return this.askUserService.currentStartedQuizForExercise(exerciseId);
+                    return this.askUserHttpService.currentStartedQuizForExercise(exerciseId);
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -181,7 +156,7 @@ export class IrisStartInClassQuizButtonComponent {
                         }
                         break;
                     case IrisPipeEvent.QUIZ_FINISHED: {
-                        if (this.activeQuizType() === 'inClass' || this.isInClassAskUserMode()) {
+                        if (this.askUserService.activeQuizType() === 'inClass' || this.isInClassAskUserMode()) {
                             this.quizCompletedAfterCurrentRun.set(true);
                         }
 
@@ -199,7 +174,7 @@ export class IrisStartInClassQuizButtonComponent {
 
         effect(() => {
             const exerciseId = this.exerciseId();
-            if (this.runInfo()?.state === IrisRunState.FAILED && exerciseId !== undefined && (this.activeQuizType() === 'inClass' || this.isInClassAskUserMode())) {
+            if (this.runInfo()?.state === IrisRunState.FAILED && exerciseId !== undefined && (this.askUserService.activeQuizType() === 'inClass' || this.isInClassAskUserMode())) {
                 this.isInClassAskUserMode.set(false);
                 this.askUserService.clearActiveQuizTypeForExercise(exerciseId, 'inClass');
             }

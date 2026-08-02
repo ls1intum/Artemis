@@ -1,5 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -35,13 +34,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { PageActivityService } from 'app/foundation/service/page-activity.service';
-import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
-import dayjs from 'dayjs/esm';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
-import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
-import { combineLatest, map, of, switchMap, take } from 'rxjs';
+import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -67,6 +60,7 @@ import { combineLatest, map, of, switchMap, take } from 'rxjs';
         DiscussionSectionComponent,
         PanelModule,
     ],
+    providers: [IrisAskUserService],
 })
 export class ExerciseSplitPanelComponent {
     private readonly chatService = inject(IrisChatService);
@@ -74,9 +68,7 @@ export class ExerciseSplitPanelComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
-    private readonly destroyRef = inject(DestroyRef);
-    private readonly pageActivity = inject(PageActivityService);
-    private readonly askUserService = inject(IrisAskUserHttpService);
+    private readonly askUserService = inject(IrisAskUserService);
     // Tracks whether a quiz batch is started / the quiz has ended, from the server-provided exercise data.
     // Updated via effect (safe for required inputs) rather than computed (would throw NG0950 during early init).
     private readonly _quizBatchStarted = signal(false);
@@ -106,14 +98,11 @@ export class ExerciseSplitPanelComponent {
     protected readonly ExerciseType = ExerciseType;
     protected readonly AssessmentType = AssessmentType;
     protected readonly PlagiarismVerdict = PlagiarismVerdict;
-    protected readonly quizActive = signal(false);
-    protected readonly quizStarted = signal(false);
-    protected readonly timerExpiresAt = signal<dayjs.Dayjs | undefined>(undefined);
-    protected readonly timeLimit = signal(0);
 
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
     readonly irisEnabled = input<boolean>(false);
+    readonly irisAskUserModeEnabled = input<boolean>(false);
     readonly courseId = input.required<number>();
     readonly gradedStudentParticipation = input<StudentParticipation>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
@@ -122,6 +111,16 @@ export class ExerciseSplitPanelComponent {
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
+
+    // Ask-user mode data
+    protected readonly quizActive = computed(() => this.askUserService.quizActive());
+    protected readonly quizStarted = computed(() => this.askUserService.quizStarted());
+    protected readonly timerExpiresAt = computed(() => this.askUserService.timerExpiresAt());
+    protected readonly timeLimit = computed(() => this.askUserService.timeLimit());
+    protected readonly showOnlyAskUserModeMessage = computed(() => this.askUserService.showOnlyAskUserModeMessage());
+    protected handleAskUserTimerExpired() {
+        this.askUserService.clearAskUserTimerState();
+    }
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route
@@ -278,111 +277,19 @@ export class ExerciseSplitPanelComponent {
             });
         });
 
-        this.handleAskUserDefocus();
-        this.handleAskUserEvents();
-
-        // Initial fetch if ask-user mode is already started
-        toObservable(this.exercise)
-            .pipe(
-                switchMap((exercise) => {
-                    if (exercise?.id === undefined) {
-                        return of(false);
-                    }
-
-                    return combineLatest([
-                        this.askUserService.currentStartedQuizForExercise(exercise.id),
-                        this.askUserService.currentStartedInClassQuizForExercise(exercise.id),
-                    ]).pipe(map(([isAskUserStarted, isInClassStarted]) => isAskUserStarted || isInClassStarted));
-                }),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe((isStarted) => {
-                this.quizStarted.set(isStarted);
-            });
-    }
-
-    private currentProgrammingExerciseId(): number | undefined {
-        const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING ? exercise.id : undefined;
-    }
-
-    private startAskUserTimer(): void {
-        const exerciseId = this.currentProgrammingExerciseId();
-        if (exerciseId === undefined) {
-            return;
-        }
-
-        this.askUserService
-            .startTimer(exerciseId)
-            .pipe(take(1))
-            .subscribe((response) => {
-                if (response.body) {
-                    this.timerExpiresAt.set(convertDateFromServer(response.body.timerExpiresAt));
-                    this.timeLimit.set(response.body.timeLimit);
-                } else {
-                    throw new Error(IrisErrorMessageKey.START_ASK_USER_FAILED);
-                }
-            });
-    }
-
-    protected stopAskUserTimer(): void {
-        const exerciseId = this.currentProgrammingExerciseId();
-        this.clearAskUserTimerState();
-        if (exerciseId !== undefined) {
-            this.askUserService.stopTimer(exerciseId).pipe(take(1)).subscribe();
-        }
-    }
-
-    protected handleAskUserTimerExpired(): void {
-        this.clearAskUserTimerState();
-    }
-
-    private clearAskUserTimerState(): void {
-        this.timerExpiresAt.set(undefined);
-        this.timeLimit.set(0);
-    }
-
-    private handleAskUserEvents(): void {
-        this.chatService
-            .currentLatestEvent()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((event) => {
-                if (this.currentProgrammingExerciseId() === undefined) {
-                    return;
-                }
-
-                switch (event) {
-                    case IrisPipeEvent.USER_STARTS_QUIZ:
-                        this.quizStarted.set(true);
-                        break;
-                    case IrisPipeEvent.FIRST_QUESTION:
-                        this.quizActive.set(true);
-                        this.quizStarted.set(true);
-                        this.startAskUserTimer();
-                        break;
-                    case IrisPipeEvent.NEXT_QUESTION:
-                        this.startAskUserTimer();
-                        break;
-                    case IrisPipeEvent.QUIZ_FINISHED:
-                        this.quizActive.set(false);
-                        this.quizStarted.set(false);
-                        this.clearAskUserTimerState();
-                        break;
-                    default:
-                        break;
-                }
-            });
-    }
-
-    private handleAskUserDefocus(): void {
-        this.pageActivity.pageLeaving$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-            const exerciseId = this.currentProgrammingExerciseId();
-            if (this.quizActive() && exerciseId !== undefined) {
-                this.quizActive.set(false);
-                this.quizStarted.set(false);
-                this.clearAskUserTimerState();
-                this.askUserService.registerDefocusForCurrentSession(exerciseId).subscribe();
+        effect((onCleanup) => {
+            if (!this.irisAskUserModeEnabled()) {
+                return;
             }
+
+            untracked(() => {
+                this.askUserService.exercise.set(this.exercise());
+                this.askUserService.activate();
+            });
+
+            onCleanup(() => {
+                untracked(() => this.askUserService.deactivate());
+            });
         });
     }
 

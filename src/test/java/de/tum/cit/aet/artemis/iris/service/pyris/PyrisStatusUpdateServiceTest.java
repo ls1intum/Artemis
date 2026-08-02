@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisJobExpiredEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -141,15 +142,18 @@ class PyrisStatusUpdateServiceTest {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null, ChatJob.ASK_USER_PIPELINE_NAME);
         var error = new PyrisStatusErrorDTO("artemisApp.iris.error.internal", null);
         var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FAILED, error, null, null, null, null, null);
-        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, null)).thenReturn(job);
+        var expectedStatusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.exerciseChatbot.errors.askUserQuizFailed", null),
+                null, null, null, null, null);
+        when(irisAskUserService.resetAskUserPipelineAfterPyrisFailure(job)).thenReturn(true);
+        when(irisChatSessionService.handleStatusUpdate(job, expectedStatusUpdate, null)).thenReturn(job);
         when(pyrisJobService.removeJob(job)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        var inOrder = inOrder(irisChatSessionService, pyrisJobService, irisAskUserService);
-        inOrder.verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, null);
+        var inOrder = inOrder(irisAskUserService, irisChatSessionService, pyrisJobService);
+        inOrder.verify(irisAskUserService).resetAskUserPipelineAfterPyrisFailure(job);
+        inOrder.verify(irisChatSessionService).handleStatusUpdate(job, expectedStatusUpdate, null);
         inOrder.verify(pyrisJobService).removeJob(job);
-        inOrder.verify(irisAskUserService).handleAskUserPipelineFailure(job, error);
     }
 
     @Test
@@ -161,7 +165,33 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(irisAskUserService, never()).handleAskUserPipelineFailure(job, null);
+        verify(irisAskUserService, never()).resetAskUserPipelineAfterPyrisFailure(job);
+    }
+
+    @Test
+    void expiredRegularChatJobKeepsOriginalTimeoutBehavior() {
+        var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
+
+        service.handlePyrisJobExpiredEvent(new PyrisJobExpiredEvent(job));
+
+        verifyNoMoreInteractions(irisChatSessionService, pyrisJobService, irisAskUserService);
+    }
+
+    @Test
+    void expiredAskUserChatJobIsHandledAsQuizFailureStatusUpdate() {
+        var job = new ChatJob("ask-user-run", 1L, 2L, 3L, null, null, null, ChatJob.ASK_USER_PIPELINE_NAME);
+        var expectedStatusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FAILED, new PyrisStatusErrorDTO("artemisApp.exerciseChatbot.errors.askUserQuizFailed", null),
+                null, null, null, null, null);
+        when(irisAskUserService.resetAskUserPipelineAfterPyrisFailure(job)).thenReturn(true);
+        when(irisChatSessionService.handleStatusUpdate(job, expectedStatusUpdate, null)).thenReturn(job);
+        when(pyrisJobService.removeJob(job)).thenReturn(job);
+
+        service.handlePyrisJobExpiredEvent(new PyrisJobExpiredEvent(job));
+
+        var inOrder = inOrder(irisAskUserService, irisChatSessionService, pyrisJobService);
+        inOrder.verify(irisAskUserService).resetAskUserPipelineAfterPyrisFailure(job);
+        inOrder.verify(irisChatSessionService).handleStatusUpdate(job, expectedStatusUpdate, null);
+        inOrder.verify(pyrisJobService).removeJob(job);
     }
 
     @ParameterizedTest

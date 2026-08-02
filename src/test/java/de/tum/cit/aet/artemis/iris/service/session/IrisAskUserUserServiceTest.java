@@ -19,7 +19,6 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -37,13 +36,10 @@ import de.tum.cit.aet.artemis.iris.service.IrisAssessmentReviewService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisJobExpiredEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisAssessmentQuizWebsocketService;
-import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -75,8 +71,6 @@ class IrisAskUserServiceTest {
 
     private IrisAssessmentReviewService irisAssessmentReviewService;
 
-    private IrisChatWebsocketService irisChatWebsocketService;
-
     private IrisAskUserService irisAskUserService;
 
     @BeforeEach
@@ -92,11 +86,10 @@ class IrisAskUserServiceTest {
         programmingSubmissionRepository = mock(ProgrammingSubmissionRepository.class);
         userRepository = mock(UserRepository.class);
         irisAssessmentReviewService = mock(IrisAssessmentReviewService.class);
-        irisChatWebsocketService = mock(IrisChatWebsocketService.class);
 
         irisAskUserService = new IrisAskUserService(irisSettingsService, authCheckService, irisSessionRepository, irisChatSessionRepository, irisChatSessionService,
                 pyrisPipelineService, programmingExerciseRepository, programmingExerciseStudentParticipationRepository, programmingSubmissionRepository, userRepository,
-                irisAssessmentReviewService, mock(IrisAssessmentQuizWebsocketService.class), irisChatWebsocketService, mock(TaskScheduler.class));
+                irisAssessmentReviewService, mock(IrisAssessmentQuizWebsocketService.class), mock(TaskScheduler.class));
     }
 
     @Test
@@ -160,7 +153,7 @@ class IrisAskUserServiceTest {
     }
 
     @Test
-    void expiredAskUserJobResetsActiveQuizState() {
+    void failedAskUserJobResetsActiveQuizState() {
         var exercise = new ProgrammingExercise();
         exercise.setId(3L);
         var user = new User();
@@ -177,25 +170,21 @@ class IrisAskUserServiceTest {
         when(userRepository.findByIdElseThrow(user.getId())).thenReturn(user);
         when(programmingExerciseRepository.findByIdElseThrow(exercise.getId())).thenReturn(exercise);
 
-        irisAskUserService.handlePyrisJobExpiredEvent(new PyrisJobExpiredEvent(job));
+        assertThat(irisAskUserService.resetAskUserPipelineAfterPyrisFailure(job)).isTrue();
 
         assertThat(session.isInAskUserModePipeline()).isFalse();
         assertThat(session.isInClassQuiz()).isFalse();
         assertThat(session.getQuestionsAsked()).isZero();
         verify(irisChatSessionRepository).save(session);
         verify(irisAssessmentReviewService).resetVerdictAndReasoning(user, exercise, true);
-        var errorCaptor = ArgumentCaptor.forClass(PyrisStatusErrorDTO.class);
-        verify(irisChatWebsocketService).sendStatusUpdate(eq(session), eq("ask-user-run"), eq(PyrisRunState.FAILED), errorCaptor.capture());
-        assertThat(errorCaptor.getValue().message()).isEqualTo("artemisApp.exerciseChatbot.errors.askUserQuizTimeout");
     }
 
     @Test
-    void expiredRegularChatJobDoesNotResetQuizState() {
+    void regularChatJobDoesNotResetQuizState() {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
 
-        irisAskUserService.handlePyrisJobExpiredEvent(new PyrisJobExpiredEvent(job));
+        assertThat(irisAskUserService.resetAskUserPipelineAfterPyrisFailure(job)).isFalse();
 
-        verifyNoInteractions(irisChatWebsocketService);
         verifyNoInteractions(irisChatSessionRepository);
     }
 
@@ -234,6 +223,7 @@ class IrisAskUserServiceTest {
                 .thenReturn(List.of(participation));
         when(programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId())).thenReturn(Optional.of(submission));
         when(userRepository.findByIdElseThrow(user.getId())).thenReturn(user);
+        when(pyrisPipelineService.executeAskUserPipeline(anyString(), any(), any(), any(), any(), any())).thenReturn(true);
 
         return new AskUserPipelineFixture(course, exercise, user, session, submission);
     }

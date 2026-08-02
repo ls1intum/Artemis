@@ -40,7 +40,7 @@
                 "rateMessageFailed": "Beim Bewerten der Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut!",
                 "irisDisabled": "Der Iris Chatbot wurde für diese Aufgabe ausgeschalten.",
                 "timeout": "Der Artemis-Server hat noch keine Antwort gesendet. Bitte lade die Seite nicht erneut.",
-                "askUserQuizTimeout": "Iris hat zu lange nicht geantwortet. Das Quiz wurde zurückgesetzt und kann neu gestartet werden.",
+                "askUserQuizFailed": "Bei Iris ist ein Fehler aufgetreten. Das Quiz wurde zurückgesetzt und kann neu gestartet werden.",
                 "emptyMessage": "Du kannst nicht leere Nachrichten abschicken.",
                 "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
                 "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",

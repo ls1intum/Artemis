@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 
+import jakarta.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisUserDTO(long id, String firstName, String lastName, boolean memirisEnabled, String langKey) {
+public record PyrisUserDTO(long id, @Nullable String firstName, @Nullable String lastName, boolean memirisEnabled, String langKey) {
 
     public PyrisUserDTO(User user, boolean memirisEnabled) {
         this(user.getId(), user.getFirstName(), user.getLastName(), memirisEnabled, user.getLangKey());

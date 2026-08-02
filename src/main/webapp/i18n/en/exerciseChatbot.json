@@ -40,7 +40,7 @@
                 "rateMessageFailed": "Could not rate message. Please try again later.",
                 "irisDisabled": "Iris has been disabled for this exercise.",
                 "timeout": "The Artemis server has not sent a response yet. Please don't reload the page.",
-                "askUserQuizTimeout": "Iris did not respond in time. The quiz has been reset and can be started again.",
+                "askUserQuizFailed": "An Iris error occurred. The quiz has been reset and can be started again.",
                 "emptyMessage": "You cannot submit empty messages.",
                 "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
                 "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
