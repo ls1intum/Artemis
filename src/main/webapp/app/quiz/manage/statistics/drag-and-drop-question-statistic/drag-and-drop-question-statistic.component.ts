@@ -80,7 +80,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
         this.question.dropLocations!.forEach((dropLocation) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const dropLocationCounter = (this.questionStatistic as DragAndDropQuestionStatistic).dropLocationCounters?.find(
-                (dlCounter) => dropLocation.id === dlCounter.dropLocation!.id,
+                (dlCounter) => dropLocation.id === dlCounter.dropLocationId,
             )!;
             this.addData(dropLocationCounter.ratedCounter!, dropLocationCounter.unRatedCounter!);
         });
