@@ -11,12 +11,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
@@ -31,25 +29,13 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    private final LectureUnitMetricsRepository lectureUnitMetricsRepository;
-
-    public LectureUnitRepositoryApi(LectureUnitRepository lectureUnitRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LectureUnitMetricsRepository lectureUnitMetricsRepository) {
+    public LectureUnitRepositoryApi(LectureUnitRepository lectureUnitRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
-        this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;
     }
 
     public Set<LectureUnitCompletion> findByLectureUnitsAndUserId(Collection<? extends LectureUnit> lectureUnits, Long userId) {
         return lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId);
-    }
-
-    public Set<LectureUnitInformationDTO> findAllLectureUnitInformationByCourseId(long courseId) {
-        return lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseId);
-    }
-
-    public Set<Long> findAllCompletedLectureUnitIdsForUserByLectureUnitIds(long userId, Set<Long> lectureUnitIds) {
-        return lectureUnitMetricsRepository.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
     }
 
     public Set<User> findCompletedUsersForLectureUnit(LectureUnit lectureUnit) {

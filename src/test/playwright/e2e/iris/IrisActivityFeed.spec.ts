@@ -3,12 +3,17 @@ import { Course } from 'app/course/shared/entities/course.model';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { instructor, studentOne } from '../../support/users';
+import { instructor, studentTwo } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Commands } from '../../support/commands';
 import { IrisChatbotWidget } from '../../support/pageobjects/iris/IrisChatbotWidget';
 
-// Course 9022 (lectureManagement); studentOne (artemis_test_user_1) is enrolled.
+// Course 9022 (lectureManagement); studentTwo (artemis_test_user_2) is enrolled.
+//
+// This suite deliberately uses a DIFFERENT student than IrisChatbotWidget.spec.ts: the server reuses
+// today's still-empty COURSE_CHAT session per (user, course) (IrisChatSessionService#findOrCreateEmptyCourseSession),
+// so two specs running in parallel as the same student in the same course land in the SAME chat session and
+// see each other's messages — which broke the exact-message-count assertions below (issue #13301).
 const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lectureManagement.title } as Course;
 
 /**
@@ -50,7 +55,7 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@fast' }, () => {
     test('shows the real tool call live, never the fake rotation, and persists the trail on the answer', async ({ login, page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
+        await login(studentTwo, `/courses/${course.id}/lectures/${lecture.id}`);
         await Commands.ensureRendered(page);
 
         const widget = new IrisChatbotWidget(page);

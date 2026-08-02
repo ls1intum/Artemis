@@ -32,4 +32,62 @@ describe('FeedbackNodeComponent', () => {
 
         expect(component.feedbackItemGroup()).toBeDefined();
     });
+
+    it('should render the location without displaying the file path as source code', () => {
+        fixture.componentRef.setInput('feedbackItemNode', {
+            name: 'Feedback',
+            type: 'Reviewer',
+            feedbackReference: {},
+            codeReference: {
+                filePath: 'src/main/java/Example.java',
+                line: 7,
+            },
+        } as FeedbackItem);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('src/main/java/Example.java');
+        expect(fixture.nativeElement.textContent).toContain('7');
+        expect(fixture.nativeElement.querySelector('.feedback-item__code-reference-line code')).toBeNull();
+    });
+
+    it('should highlight code references with highlight.js', () => {
+        fixture.componentRef.setInput('feedbackItemNode', {
+            name: 'Feedback',
+            type: 'Reviewer',
+            feedbackReference: {},
+            codeReference: {
+                filePath: 'src/main/java/Example.java',
+                line: 7,
+                lines: [{ line: 7, code: 'public class Example {}', referenced: true }],
+            },
+        } as FeedbackItem);
+        fixture.detectChanges();
+
+        const codeElement = fixture.nativeElement.querySelector('.feedback-item__code-reference-line code');
+        expect(codeElement.classList).toContain('hljs');
+        expect(codeElement.innerHTML).toContain('hljs-keyword');
+    });
+
+    it('should mark every referenced code line', () => {
+        fixture.componentRef.setInput('feedbackItemNode', {
+            name: 'Feedback',
+            type: 'Reviewer',
+            feedbackReference: {},
+            codeReference: {
+                filePath: 'src/main/java/Example.java',
+                line: 11,
+                lineEnd: 13,
+                lines: [
+                    { line: 10, code: 'before();', referenced: false },
+                    { line: 11, code: 'first();', referenced: true },
+                    { line: 12, code: 'second();', referenced: true },
+                    { line: 13, code: 'third();', referenced: true },
+                    { line: 14, code: 'after();', referenced: false },
+                ],
+            },
+        } as FeedbackItem);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('.feedback-item__code-reference-line--referenced')).toHaveLength(3);
+    });
 });

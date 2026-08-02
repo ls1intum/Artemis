@@ -339,7 +339,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getStudentExamForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             HttpServletRequest request) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {} for conduction", currentUser.getLogin(), examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
@@ -360,6 +360,19 @@ public class StudentExamResource {
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
         if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
             throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
+        }
+
+        // If the instructor delayed the submission overview (examSummaryPublicationDate), a student who already submitted must not be able to re-fetch the exam content via
+        // the conduction endpoint either, otherwise the summary gate could be bypassed to leak the exam content (relevant for staggered/multi-shift exams). Instructors and
+        // test runs always have access. Students who have not submitted yet are unaffected, so an ongoing conduction (incl. reload) keeps working.
+        // The instructor check is evaluated last and only when the gate could actually close: currentUser is loaded without its
+        // course roles, so isAtLeastInstructorInCourse costs an extra query, which the common conduction path must not pay.
+        if (Boolean.TRUE.equals(studentExam.isSubmitted()) && !studentExam.getExam().isExamSummaryPublished()) {
+            boolean conductionAccessAlwaysAllowed = studentExam.isTestRun()
+                    || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+            if (!conductionAccessAlwaysAllowed) {
+                throw new AccessForbiddenException("The exam content is not available after submission until the summary is published");
+            }
         }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted())) {
@@ -402,7 +415,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
         // NOTE: it is important that this method has the same logic (except really small differences) as getStudentExamForConduction
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
 
         // 1st: load the testRun with all associated exercises
@@ -436,7 +449,7 @@ public class StudentExamResource {
     @GetMapping("courses/{courseId}/test-exams-per-user")
     @EnforceAtLeastStudent
     public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
 
         List<StudentExam> studentExamList = studentExamRepository.findStudentExamsForTestExamsByUserIdAndCourseId(user.getId(), courseId);
@@ -458,7 +471,7 @@ public class StudentExamResource {
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
@@ -474,6 +487,13 @@ public class StudentExamResource {
         // 3rd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
         if (!studentExam.isSubmitted()) {
             throw new AccessForbiddenException("You are not allowed to access the summary of a student exam which was NOT submitted!");
+        }
+
+        // 3.5th: if the instructor configured a summary publication date, students may only access the summary (incl. exam questions and the PDF export)
+        // from that date onwards. This protects staggered/multi-shift exams from early submitters leaking the exam content. Instructors and test runs always have access.
+        boolean summaryAccessAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
+        if (!summaryAccessAlwaysAllowed && !studentExam.getExam().isExamSummaryPublished()) {
+            throw new AccessForbiddenException("The summary of this student exam is not available yet");
         }
 
         // 4th: Reload the Quiz-Exercises
@@ -506,9 +526,9 @@ public class StudentExamResource {
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable long courseId, @PathVariable long examId, @PathVariable long studentExamId,
             @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
-        User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        User targetUser = userId == null ? currentUser : userRepository.findByIdWithAuthoritiesElseThrow(userId);
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, studentExamId);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
@@ -535,7 +555,7 @@ public class StudentExamResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<ExamLiveEventBaseDTO>> getExamLiveEvents(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
         StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId());
