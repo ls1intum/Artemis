@@ -57,7 +57,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
     @Test

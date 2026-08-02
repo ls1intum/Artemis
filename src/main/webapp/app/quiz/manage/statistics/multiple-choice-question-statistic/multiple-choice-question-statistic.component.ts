@@ -97,7 +97,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
         // set data based on the answerCounters for each AnswerOption
         this.question.answerOptions!.forEach((answerOption) => {
             const answerOptionCounter = (this.questionStatistic as MultipleChoiceQuestionStatistic).answerCounters!.filter(
-                (answerCounter) => answerOption.id === answerCounter.answer!.id,
+                (answerCounter) => answerOption.id === answerCounter.answerId,
             )[0];
             this.addData(answerOptionCounter.ratedCounter!, answerOptionCounter.unRatedCounter!);
         });
