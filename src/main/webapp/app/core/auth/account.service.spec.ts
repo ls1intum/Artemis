@@ -31,16 +31,12 @@ describe('AccountService', () => {
 
     const getUserUrl = 'api/core/public/account';
     const updateLanguageUrl = 'api/core/public/account/change-language';
-    const user = { id: 1, groups: ['USER'] } as User;
-    const user2 = { id: 2, groups: ['USER'] } as User;
-    const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.STUDENT] } as User;
+    const user = { id: 1 } as User;
+    const user2 = { id: 2 } as User;
+    const user3 = { id: 3, authorities: [Authority.STUDENT] } as User;
 
     const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR];
-    const course = {
-        instructorGroupName: 'INSTRUCTOR',
-        editorGroupName: 'EDITOR',
-        teachingAssistantGroupName: 'TA',
-    } as Course;
+    const course = { id: 1 } as Course;
     const exercise = { course } as Exercise;
     const examExercise = { exerciseGroup: { exam: { course } } } as Exercise;
     let result: boolean;
@@ -129,14 +125,6 @@ describe('AccountService', () => {
         expect(accountService.userIdentity()).toEqual(user);
     });
 
-    it('should sync user groups', () => {
-        accountService.userIdentity.set(user);
-
-        accountService.syncGroups(user3.groups!);
-
-        expect(accountService.userIdentity()?.groups).toEqual(['USER', 'TA']);
-    });
-
     describe('test authority check', () => {
         const usedAuthorities: Authority[] = [];
         it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', async (authority: Authority) => {
@@ -160,60 +148,20 @@ describe('AccountService', () => {
         });
 
         it.each(authorities)('should return true if authority matches exactly', async (authority: Authority) => {
-            accountService.userIdentity.set({ id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User);
+            accountService.userIdentity.set({ id: authorities.indexOf(authority), authorities: [authority] } as User);
 
             await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
         });
 
         it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
             const index = authorities.indexOf(authority);
-            accountService.userIdentity.set({ id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User);
+            accountService.userIdentity.set({ id: index + 1, authorities: [authorities[(index + 1) % 5]] } as User);
 
             await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
         });
 
         it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
             await expect(accountService.hasAuthority(authority)).resolves.toBe(false);
-        });
-    });
-
-    describe('test hasGroup', () => {
-        const groups = ['USER', 'EDITOR', 'ADMIN'];
-        it.each(groups)('should return false if not authenticated', (group: string) => {
-            result = accountService.hasGroup(group);
-
-            expect(result).toBe(false);
-        });
-
-        it.each(groups)('should return false if no authorities are set', (group: string) => {
-            accountService.userIdentity.set(user);
-            result = accountService.hasGroup(group);
-
-            expect(result).toBe(false);
-        });
-
-        it.each(groups)('should return false if no groups are set', (group: string) => {
-            accountService.userIdentity.set({ id: 10, authorities } as User);
-            result = accountService.hasGroup(group);
-
-            expect(result).toBe(false);
-        });
-
-        it.each(groups)('should return false if group does not match', (group: string) => {
-            const index = groups.indexOf(group);
-            accountService.userIdentity.set({ id: 10, groups: [groups[index + (1 % 3)]], authorities } as User);
-
-            result = accountService.hasGroup(group);
-
-            expect(result).toBe(false);
-        });
-
-        it.each(groups)('should return true if group matchs', (group: string) => {
-            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
-
-            result = accountService.hasGroup(group);
-
-            expect(result).toBe(true);
         });
     });
 
@@ -226,8 +174,8 @@ describe('AccountService', () => {
             expect(result).toBe(false);
         });
 
-        it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
-            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
+        it.each(['TEACHING_ASSISTANT', 'EDITOR', 'INSTRUCTOR'])('should return true if user has at least TA role in course', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
 
             result = accountService.isAtLeastTutorInCourse(course);
 
@@ -235,7 +183,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
 
             result = accountService.isAtLeastTutorInCourse(course);
 
@@ -252,8 +200,8 @@ describe('AccountService', () => {
             expect(result).toBe(false);
         });
 
-        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
-            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
+        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user has at least editor role in course', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
 
             result = accountService.isAtLeastEditorInCourse(course);
 
@@ -261,7 +209,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
 
             result = accountService.isAtLeastEditorInCourse(course);
 
@@ -279,7 +227,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is instructor', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }], authorities: [Authority.STUDENT] } as User);
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
@@ -287,7 +235,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
@@ -308,8 +256,8 @@ describe('AccountService', () => {
             expect(result).toBe(false);
         });
 
-        it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
-            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
+        it.each(['TEACHING_ASSISTANT', 'EDITOR', 'INSTRUCTOR'])('should return true if user has at least TA role', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
@@ -321,7 +269,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
@@ -346,8 +294,8 @@ describe('AccountService', () => {
             expect(result).toBe(false);
         });
 
-        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
-            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
+        it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user has at least editor role', (role: string) => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: [role] }], authorities: [Authority.STUDENT] } as User);
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
@@ -359,7 +307,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
@@ -384,8 +332,8 @@ describe('AccountService', () => {
             expect(result).toBe(false);
         });
 
-        it('should return true if user is editor or instructor', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+        it('should return true if user is instructor', () => {
+            accountService.userIdentity.set({ id: 10, courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }], authorities: [Authority.STUDENT] } as User);
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
@@ -397,7 +345,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities: [Authority.ADMIN] } as User);
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
@@ -419,7 +367,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities } as User);
 
             result = accountService.isAdmin();
 
@@ -428,7 +376,7 @@ describe('AccountService', () => {
     });
 
     it('should set access rights for referenced course', () => {
-        accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+        accountService.userIdentity.set({ id: 10, authorities } as User);
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
 
@@ -439,7 +387,7 @@ describe('AccountService', () => {
     });
 
     it('should set access rights for referenced course in exam mode', () => {
-        accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+        accountService.userIdentity.set({ id: 10, authorities } as User);
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(examExercise);
 
@@ -451,7 +399,7 @@ describe('AccountService', () => {
 
     it('should set access rights for referenced exercise', () => {
         course.exercises = [exercise];
-        accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+        accountService.userIdentity.set({ id: 10, authorities } as User);
 
         accountService.setAccessRightsForCourseAndReferencedExercises(course);
 
@@ -671,7 +619,7 @@ describe('AccountService', () => {
 
         it('should set selectedLLMUsageTimestamp when user identity exists', () => {
             // Setup user identity
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             // Call the function
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
@@ -691,7 +639,7 @@ describe('AccountService', () => {
         });
 
         it('should set selectedLLMUsage to CLOUD_AI', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
 
@@ -699,7 +647,7 @@ describe('AccountService', () => {
         });
 
         it('should set selectedLLMUsage to LOCAL_AI', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
 
@@ -707,7 +655,7 @@ describe('AccountService', () => {
         });
 
         it('should set selectedLLMUsage to NO_AI', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
 
@@ -716,7 +664,7 @@ describe('AccountService', () => {
 
         describe('restoreUserLLMSelectionDecision', () => {
             it('should restore "no decision yet" without stamping a timestamp', () => {
-                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.CLOUD_AI, selectedLLMUsageTimestamp: dayjs() } as User);
 
                 accountService.restoreUserLLMSelectionDecision(undefined, undefined);
 
@@ -726,7 +674,7 @@ describe('AccountService', () => {
 
             it('should restore a previous decision and its original timestamp verbatim', () => {
                 const originalTimestamp = dayjs().subtract(5, 'day');
-                accountService.userIdentity.set({ id: 1, groups: ['USER'], selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+                accountService.userIdentity.set({ id: 1, selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
 
                 accountService.restoreUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI, originalTimestamp);
 
@@ -735,7 +683,7 @@ describe('AccountService', () => {
             });
 
             it('should preserve unrelated user properties', () => {
-                accountService.userIdentity.set({ id: 42, login: 'ab12cde', groups: ['USER'] } as User);
+                accountService.userIdentity.set({ id: 42, login: 'ab12cde' } as User);
 
                 accountService.restoreUserLLMSelectionDecision(undefined, undefined);
 
@@ -747,7 +695,6 @@ describe('AccountService', () => {
         it('should update existing selectedLLMUsage value', () => {
             accountService.userIdentity.set({
                 id: 1,
-                groups: ['USER'],
                 selectedLLMUsage: LLMSelectionDecision.NO_AI,
             } as User);
 
@@ -760,7 +707,6 @@ describe('AccountService', () => {
             const oldTimestamp = dayjs('2024-01-01');
             accountService.userIdentity.set({
                 id: 1,
-                groups: ['USER'],
                 selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
                 selectedLLMUsageTimestamp: oldTimestamp,
             } as User);
@@ -785,7 +731,6 @@ describe('AccountService', () => {
             const originalUser = {
                 id: 1,
                 login: 'testuser',
-                groups: ['USER', 'ADMIN'],
                 authorities: [Authority.ADMIN],
                 email: 'test@example.com',
             } as User;
@@ -797,13 +742,12 @@ describe('AccountService', () => {
             const updatedUser = accountService.userIdentity();
             expect(updatedUser?.id).toBe(1);
             expect(updatedUser?.login).toBe('testuser');
-            expect(updatedUser?.groups).toEqual(['USER', 'ADMIN']);
             expect(updatedUser?.authorities).toEqual([Authority.ADMIN]);
             expect(updatedUser?.email).toBe('test@example.com');
         });
 
         it('should set both timestamp and decision in a single update', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
 
@@ -814,7 +758,7 @@ describe('AccountService', () => {
         });
 
         it('should handle multiple consecutive updates correctly', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
             expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
@@ -842,7 +786,7 @@ describe('AccountService', () => {
 
     describe('test setImageUrl', () => {
         it('should set image url when user identity exists', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+            accountService.userIdentity.set({ id: 1 } as User);
 
             accountService.setImageUrl('new-image.png');
 
@@ -857,24 +801,15 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test syncGroups', () => {
-        it('should not throw error when user identity is undefined', () => {
-            accountService.userIdentity.set(undefined);
-
-            expect(() => accountService.syncGroups(['USER', 'ADMIN'])).not.toThrow();
-            expect(accountService.userIdentity()).toBeUndefined();
-        });
-    });
-
     describe('test isSuperAdmin', () => {
         it('should return false if user is not super admin', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.STUDENT] } as User);
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT] } as User);
 
             expect(accountService.isSuperAdmin()).toBe(false);
         });
 
         it('should return true if user is super admin', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.SUPER_ADMIN] } as User);
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.SUPER_ADMIN] } as User);
 
             expect(accountService.isSuperAdmin()).toBe(true);
         });
@@ -902,7 +837,7 @@ describe('AccountService', () => {
 
     describe('test hasAuthority with identity', () => {
         it('should resolve true when user has the authority', async () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.ADMIN] } as User);
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
 
             const result = await accountService.hasAuthority(Authority.ADMIN);
 
@@ -910,7 +845,7 @@ describe('AccountService', () => {
         });
 
         it('should resolve false when user does not have the authority', async () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], authorities: [Authority.STUDENT] } as User);
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT] } as User);
 
             const result = await accountService.hasAuthority(Authority.ADMIN);
 
@@ -950,7 +885,7 @@ describe('AccountService', () => {
             const translateService = TestBed.inject(TranslateService);
             const translateUseSpy = vi.spyOn(translateService, 'use');
 
-            const userWithoutLang = { id: 1, groups: ['USER'] } as User;
+            const userWithoutLang = { id: 1 } as User;
             const identityPromise = accountService.identity();
 
             const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
@@ -1018,7 +953,7 @@ describe('AccountService', () => {
 
     describe('test setUserEnabledMemiris', () => {
         it('should update user memiris setting on success', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
 
             accountService.setUserEnabledMemiris(true);
 
@@ -1029,7 +964,7 @@ describe('AccountService', () => {
         });
 
         it('should emit a NEW identity reference so the signal notifies', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
             const before = accountService.userIdentity();
 
             accountService.setUserEnabledMemiris(true);
@@ -1055,7 +990,7 @@ describe('AccountService', () => {
         });
 
         it('should handle error gracefully', () => {
-            accountService.userIdentity.set({ id: 1, groups: ['USER'], memirisEnabled: false } as User);
+            accountService.userIdentity.set({ id: 1, memirisEnabled: false } as User);
 
             accountService.setUserEnabledMemiris(true);
 
@@ -1082,7 +1017,7 @@ describe('AccountService', () => {
 
     describe('test setAccessRightsForExerciseAndReferencedCourse edge cases', () => {
         it('should handle exercise without course', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities } as User);
 
             const exerciseWithoutCourse = {} as Exercise;
             accountService.setAccessRightsForExerciseAndReferencedCourse(exerciseWithoutCourse);
@@ -1095,24 +1030,12 @@ describe('AccountService', () => {
 
     describe('test setAccessRightsForCourseAndReferencedExercises edge cases', () => {
         it('should handle course without exercises', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
+            accountService.userIdentity.set({ id: 10, authorities } as User);
 
-            const courseWithoutExercises = {
-                instructorGroupName: 'INSTRUCTOR',
-            } as Course;
+            const courseWithoutExercises = {} as Course;
             accountService.setAccessRightsForCourseAndReferencedExercises(courseWithoutExercises);
 
             expect(courseWithoutExercises.isAtLeastInstructor).toBe(true);
-        });
-    });
-
-    describe('test hasGroup edge cases', () => {
-        it('should return false when group is undefined', () => {
-            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
-
-            const result = accountService.hasGroup(undefined);
-
-            expect(result).toBe(false);
         });
     });
 });

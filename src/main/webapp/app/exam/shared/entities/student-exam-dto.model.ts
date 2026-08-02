@@ -13,14 +13,15 @@ export interface UserNameDTO {
 }
 
 /**
- * Matches the server-side `CourseForStudentExamDTO` record: only the fields `AccountService.setAccessRightsForCourse`
- * needs to compute the `isAtLeast*` client-only flags.
+ * Matches the server-side `CourseForStudentExamDTO` record: the course id, which is all
+ * `AccountService.setAccessRightsForCourse` needs (it resolves the `isAtLeast*` client-only flags from the user's
+ * own course roles), plus the complaint/scoring fields the exam-taking client reads off `exam.course`.
  */
 export interface CourseForStudentExamDTO {
     id: number;
-    instructorGroupName?: string;
-    editorGroupName?: string;
-    teachingAssistantGroupName?: string;
+    accuracyOfScores?: number;
+    maxComplaintTextLimit?: number;
+    maxComplaintResponseTextLimit?: number;
 }
 
 /**

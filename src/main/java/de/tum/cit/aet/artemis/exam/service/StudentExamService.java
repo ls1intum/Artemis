@@ -70,7 +70,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
@@ -424,13 +423,9 @@ public class StudentExamService {
         for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
             submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
 
-            switch (submittedAnswer) {
-                case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer ->
-                    dragAndDropSubmittedAnswer.getMappings().forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(dragAndDropSubmittedAnswer));
-                case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
-                    shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer));
-                default -> {
-                }
+            // Drag-and-drop submitted mappings are stored id-based in the JSON selection and need no back-reference fixup.
+            if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(shortAnswerSubmittedAnswer));
             }
         }
 

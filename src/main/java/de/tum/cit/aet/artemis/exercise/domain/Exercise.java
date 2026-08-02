@@ -226,6 +226,21 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Transient
     private String channelNameTransient;
 
+    /**
+     * Only set for exam exercises on the assessment dashboard: the moment the exam is over for every student, i.e. the
+     * latest individual exam end date plus the grace period. Lets the client explain why assessment is not possible yet.
+     */
+    @Transient
+    private ZonedDateTime latestExamEndDateTransient;
+
+    /**
+     * Only set for exam exercises on the assessment dashboard: the moment from which on tutors can start assessing.
+     * Equals {@link #latestExamEndDateTransient}, except for programming exercises, which additionally wait for the
+     * tests to run once more on the final submissions.
+     */
+    @Transient
+    private ZonedDateTime assessmentPossibleFromTransient;
+
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
@@ -654,6 +669,24 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setChannelName(String channelNameTransient) {
         this.channelNameTransient = channelNameTransient;
+    }
+
+    @Nullable
+    public ZonedDateTime getLatestExamEndDate() {
+        return latestExamEndDateTransient;
+    }
+
+    public void setLatestExamEndDate(@Nullable ZonedDateTime latestExamEndDateTransient) {
+        this.latestExamEndDateTransient = latestExamEndDateTransient;
+    }
+
+    @Nullable
+    public ZonedDateTime getAssessmentPossibleFrom() {
+        return assessmentPossibleFromTransient;
+    }
+
+    public void setAssessmentPossibleFrom(@Nullable ZonedDateTime assessmentPossibleFromTransient) {
+        this.assessmentPossibleFromTransient = assessmentPossibleFromTransient;
     }
 
     @Nullable

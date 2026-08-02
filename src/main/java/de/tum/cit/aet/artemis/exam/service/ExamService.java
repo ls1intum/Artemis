@@ -660,7 +660,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds) {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
-            User targetUser = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(studentId);
+            User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
@@ -1400,8 +1400,7 @@ public class ExamService {
         final long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                exerciseIds);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithAuthorities().getId(), exerciseIds);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
@@ -1478,10 +1477,10 @@ public class ExamService {
         }
         else {
             if (withExercises) {
-                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
             else {
-                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
@@ -1514,7 +1513,7 @@ public class ExamService {
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
         var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getId(), pageable, fromDate, now, toDate);
     }
 
     /**

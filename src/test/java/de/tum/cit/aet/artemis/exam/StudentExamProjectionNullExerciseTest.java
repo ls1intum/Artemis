@@ -42,7 +42,6 @@ class StudentExamProjectionNullExerciseTest {
 
         Course course = new Course();
         course.setId(3L);
-        course.setInstructorGroupName("instructors");
         course.setAccuracyOfScores(1);
 
         Exam exam = new Exam();
