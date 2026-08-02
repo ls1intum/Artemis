@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -118,7 +119,7 @@ public class GocastIntegrationResource {
         }
         catch (GocastIntegrationException ex) {
             log.warn("EP1 listAdministeredCourses failed for course {}: {}", courseId, ex.getMessage());
-            return ResponseEntity.status(ex.getUpstreamStatus()).build();
+            return ResponseEntity.status(toClientFacingStatus(ex.getUpstreamStatus())).build();
         }
     }
 
@@ -143,7 +144,7 @@ public class GocastIntegrationResource {
         }
         catch (GocastIntegrationException ex) {
             log.warn("EP8 listCourseStreams failed for Artemis course {}: {}", courseId, ex.getMessage());
-            return ResponseEntity.status(ex.getUpstreamStatus()).build();
+            return ResponseEntity.status(toClientFacingStatus(ex.getUpstreamStatus())).build();
         }
         catch (IllegalStateException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
@@ -176,7 +177,7 @@ public class GocastIntegrationResource {
         catch (GocastIntegrationException ex) {
             // EP1 threw (e.g. gocast returned 403/404/503) — propagate the upstream status instead of a generic 500.
             log.warn("EP1 listAdministeredCourses failed during createBinding for course {}: {}", courseId, ex.getMessage());
-            return ResponseEntity.status(ex.getUpstreamStatus()).build();
+            return ResponseEntity.status(toClientFacingStatus(ex.getUpstreamStatus())).build();
         }
         catch (IllegalStateException ex) {
             log.warn("Cannot create binding for course {}: {}", courseId, ex.getMessage());
@@ -255,10 +256,19 @@ public class GocastIntegrationResource {
         }
         catch (GocastIntegrationException ex) {
             log.warn("EP2 getPlaybackToken failed for course {}, stream {}: status={}", courseId, streamId, ex.getUpstreamStatus());
-            return ResponseEntity.status(ex.getUpstreamStatus()).build();
+            return ResponseEntity.status(toClientFacingStatus(ex.getUpstreamStatus())).build();
         }
         catch (IllegalStateException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
+    }
+
+    /**
+     * Prevent an upstream service-account authentication failure from being interpreted as an expired
+     * Artemis user session. The client intentionally logs users out on {@code 401}, while a TUM Live
+     * credential failure is an upstream integration failure and must therefore use a gateway status.
+     */
+    private HttpStatusCode toClientFacingStatus(HttpStatusCode upstreamStatus) {
+        return upstreamStatus.value() == HttpStatus.UNAUTHORIZED.value() ? HttpStatus.BAD_GATEWAY : upstreamStatus;
     }
 }

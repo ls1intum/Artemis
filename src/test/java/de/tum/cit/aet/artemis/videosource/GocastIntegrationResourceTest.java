@@ -463,6 +463,18 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getPlaybackTokenServiceAccountUnauthorizedReturnsBadGateway() throws Exception {
+        persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
+        when(gocastConnectorService.getPlaybackToken(anyLong(), anyLong(), anyInt(), anyString()))
+                .thenThrow(new GocastIntegrationException("service account unauthorized", org.springframework.http.HttpStatus.UNAUTHORIZED));
+
+        request.post("/api/videosource/courses/" + course.getId() + "/streams/1001/playback-tokens", null, HttpStatus.BAD_GATEWAY);
+
+        assertThat(bindingRepository.findByCourseId(course.getId()).orElseThrow().getStatus()).isEqualTo(GocastBindingStatus.ACTIVE);
+    }
+
+    @Test
     @WithMockUser(username = "outsider", roles = "USER")
     void getPlaybackTokenAsNonMemberReturnsForbidden() throws Exception {
         persistBinding(course.getId(), 42L, "eidi", GocastBindingStatus.ACTIVE);
