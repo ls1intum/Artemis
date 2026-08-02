@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -12,25 +13,33 @@ import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 @Service
 public class IrisLectureUnitSyncScheduleService {
 
-    private final IrisLectureUnitSyncEventListener syncEventListener;
+    private static final long SYNC_INTERVAL_MILLISECONDS = 300_000;
 
-    public IrisLectureUnitSyncScheduleService(IrisLectureUnitSyncEventListener syncEventListener) {
-        this.syncEventListener = syncEventListener;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public IrisLectureUnitSyncScheduleService(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     /**
      * Retries Iris/Pyris metadata and visibility updates that failed during event handling.
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = SYNC_INTERVAL_MILLISECONDS, initialDelay = SYNC_INTERVAL_MILLISECONDS)
     public void retryDirtyStates() {
-        syncEventListener.retryDirtyStates();
+        eventPublisher.publishEvent(new RetryDirtyStatesEvent());
     }
 
     /**
      * Creates visibility synchronization state for active legacy units in bounded batches.
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = SYNC_INTERVAL_MILLISECONDS, initialDelay = SYNC_INTERVAL_MILLISECONDS)
     public void backfillMissingSyncStates() {
-        syncEventListener.backfillMissingSyncStates();
+        eventPublisher.publishEvent(new BackfillMissingSyncStatesEvent());
+    }
+
+    public record RetryDirtyStatesEvent() {
+    }
+
+    public record BackfillMissingSyncStatesEvent() {
     }
 }

@@ -73,6 +73,16 @@ public class IrisLectureUnitSyncEventListener {
         synchronize(event.lectureUnitId(), LectureContentUpdateKind.VISIBILITY, event.slideHiddenUntilBySlideNumber());
     }
 
+    @EventListener
+    public void handleRetryDirtyStates(IrisLectureUnitSyncScheduleService.RetryDirtyStatesEvent event) {
+        retryDirtyStates();
+    }
+
+    @EventListener
+    public void handleBackfillMissingSyncStates(IrisLectureUnitSyncScheduleService.BackfillMissingSyncStatesEvent event) {
+        backfillMissingSyncStates();
+    }
+
     /**
      * Retries Iris/Pyris metadata and visibility updates that failed during event handling.
      */
