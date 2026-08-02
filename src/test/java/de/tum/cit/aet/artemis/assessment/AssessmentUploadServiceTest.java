@@ -156,6 +156,23 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectTextFileReusedBySuffixIdentifier() {
+        final var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1.setLogin(identifier2);
+        userTestRepository.saveAndFlush(student1);
+        final String identifierWithSuffixLogin = participation1.getId() + "-" + identifier2;
+        final String csv = "Identifier,Overall points\n%s,80\n%s,60\n".formatted(identifierWithSuffixLogin, identifier2);
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip(csv, Map.of(identifierWithSuffixLogin + ".txt", "feedback")));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.AMBIGUOUS_TEXT_FILE);
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+        assertThat(getManualResults(participation2.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReportMalformedCsvSeparatelyFromEmptyCsv() {
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
                 buildZip("Identifier,Overall points\n\"unterminated,80\n", Map.of(identifier1 + ".txt", "feedback")));
@@ -170,6 +187,16 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise,
                 buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", oversizedFeedback))))
+                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("maximum uncompressed size");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCountDirectoryEntryContentAgainstUncompressedSizeLimit() {
+        final String oversizedDirectoryContent = "x".repeat(10 * 1024 * 1024 + 1);
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of("oversized/", oversizedDirectoryContent))))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("maximum uncompressed size");
     }
 

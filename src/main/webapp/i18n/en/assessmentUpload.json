@@ -29,6 +29,7 @@
                 "IDENTIFIER_MISMATCH": "The login does not match the participant of the resolved participation.",
                 "INVALID_POINTS": "The \"Overall points\" value is missing, invalid, negative, or exceeds the maximum points including bonus points.",
                 "DUPLICATE_TEXT_FILE": "More than one .txt file has this base name.",
+                "AMBIGUOUS_TEXT_FILE": "This .txt file matches more than one CSV row, or more than one .txt file matches this row.",
                 "MISSING_TEXT_FILE": "No .txt file in the zip matches this identifier.",
                 "UNMATCHED_TEXT_FILE": "This .txt file does not match any row of the CSV file."
             }

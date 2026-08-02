@@ -10,6 +10,7 @@ export type AssessmentUploadErrorType =
     | 'MISSING_CSV'
     | 'MULTIPLE_CSV'
     | 'EMPTY_CSV'
+    | 'MALFORMED_CSV'
     | 'MISSING_OVERALL_POINTS_COLUMN'
     | 'MISSING_IDENTIFIER'
     | 'INVALID_IDENTIFIER_FORMAT'
@@ -18,6 +19,8 @@ export type AssessmentUploadErrorType =
     | 'PARTICIPATION_WRONG_EXERCISE'
     | 'IDENTIFIER_MISMATCH'
     | 'INVALID_POINTS'
+    | 'DUPLICATE_TEXT_FILE'
+    | 'AMBIGUOUS_TEXT_FILE'
     | 'MISSING_TEXT_FILE'
     | 'UNMATCHED_TEXT_FILE';
 

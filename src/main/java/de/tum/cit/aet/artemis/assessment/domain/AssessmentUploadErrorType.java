@@ -73,6 +73,11 @@ public enum AssessmentUploadErrorType {
     DUPLICATE_TEXT_FILE,
 
     /**
+     * A text file can match more than one CSV identifier, or more than one text file can match the same identifier.
+     */
+    AMBIGUOUS_TEXT_FILE,
+
+    /**
      * No {@code .txt} file in the zip matches the student identifier of a CSV row.
      */
     MISSING_TEXT_FILE,

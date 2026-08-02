@@ -29,6 +29,7 @@
                 "IDENTIFIER_MISMATCH": "Der Login stimmt nicht mit dem Teilnehmer der ermittelten Teilnahme überein.",
                 "INVALID_POINTS": "Der Wert \"Overall points\" fehlt, ist ungültig, negativ oder überschreitet die maximalen Punkte einschließlich Bonuspunkten.",
                 "DUPLICATE_TEXT_FILE": "Mehr als eine .txt-Datei hat diesen Basisnamen.",
+                "AMBIGUOUS_TEXT_FILE": "Diese .txt-Datei passt zu mehr als einer CSV-Zeile oder mehrere .txt-Dateien passen zu dieser Zeile.",
                 "MISSING_TEXT_FILE": "Keine .txt-Datei in der ZIP-Datei passt zu dieser Kennung.",
                 "UNMATCHED_TEXT_FILE": "Diese .txt-Datei passt zu keiner Zeile der CSV-Datei."
             }

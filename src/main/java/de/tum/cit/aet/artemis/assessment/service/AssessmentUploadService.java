@@ -237,6 +237,7 @@ public class AssessmentUploadService {
         assert csvFiles != null && textContentsByBaseName != null && duplicateTextFileBaseNames != null : "zip content accumulators must not be null";
         assert archiveReadState != null : "archiveReadState must not be null";
         if (entry.isDirectory()) {
+            readEntryBytes(zipInputStream, archiveReadState, false);
             return;
         }
         final String entryName = entry.getName();
@@ -416,7 +417,8 @@ public class AssessmentUploadService {
                 continue;
             }
 
-            switch (validateRow(identifier, csvRecord, csv.pointsColumn(), textContentsByBaseName, participationsById, participationIdsOutsideExercise, maximumPoints)) {
+            switch (validateRow(identifier, csvRecord, csv.pointsColumn(), textContentsByBaseName, matchedTextKeys, participationsById, participationIdsOutsideExercise,
+                    maximumPoints)) {
                 case ValidRow(ValidatedRow row, String matchedTextKey) -> {
                     matchedTextKeys.add(matchedTextKey);
                     validatedRows.add(row);
@@ -450,8 +452,8 @@ public class AssessmentUploadService {
      * Validates a single CSV row: resolves its participation by id (scoped to the exercise and cross-checked against the login part of the identifier), parses the achieved points,
      * and finds the matching text file.
      * <p>
-     * <b>Preconditions:</b> all reference parameters are non-{@code null}; {@code identifier} and {@code pointsColumn} are non-blank; and {@code maximumPoints} is finite and
-     * positive.
+     * <b>Preconditions:</b> all reference parameters are non-{@code null}; {@code identifier} and {@code pointsColumn} are non-blank; {@code matchedTextKeys} contains the keys
+     * assigned to earlier valid rows; and {@code maximumPoints} is finite and positive.
      * <p>
      * <b>Postcondition:</b> read-only; returns a {@link ValidRow} (with the matched text-file key) if all checks pass, otherwise an {@link InvalidRow} carrying the first error.
      *
@@ -459,14 +461,16 @@ public class AssessmentUploadService {
      * @param csvRecord                       the CSV row being validated
      * @param pointsColumn                    the resolved header name of the {@code Overall points} column
      * @param textContentsByBaseName          the available text files keyed by base name
+     * @param matchedTextKeys                 text-file keys already assigned to earlier valid rows
      * @param participationsById              exercise-scoped participation data resolved for the entire upload
      * @param participationIdsOutsideExercise ids that exist but belong to another exercise
      * @param maximumPoints                   maximum accepted points including bonus points
      * @return a {@link ValidRow} if the row is valid, otherwise an {@link InvalidRow}
      */
     private RowValidationResult validateRow(final String identifier, final CSVRecord csvRecord, final String pointsColumn, final Map<String, String> textContentsByBaseName,
-            final Map<Long, AssessmentUploadParticipationDTO> participationsById, final Set<Long> participationIdsOutsideExercise, final double maximumPoints) {
-        assert csvRecord != null && textContentsByBaseName != null : "csvRecord and textContentsByBaseName must not be null";
+            final Set<String> matchedTextKeys, final Map<Long, AssessmentUploadParticipationDTO> participationsById, final Set<Long> participationIdsOutsideExercise,
+            final double maximumPoints) {
+        assert csvRecord != null && textContentsByBaseName != null && matchedTextKeys != null : "CSV and text-file data must not be null";
         assert participationsById != null && participationIdsOutsideExercise != null : "resolved participation data must not be null";
         assert identifier != null && !identifier.isBlank() : "identifier must not be blank";
         assert pointsColumn != null && !pointsColumn.isBlank() : "pointsColumn must be resolved";
@@ -496,12 +500,17 @@ public class AssessmentUploadService {
             return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.INVALID_POINTS, rawPoints));
         }
 
-        final Optional<String> textKey = findMatchingTextKey(textContentsByBaseName.keySet(), identifier);
-        if (textKey.isEmpty()) {
+        final List<String> matchingTextKeys = findMatchingTextKeys(textContentsByBaseName.keySet(), identifier);
+        if (matchingTextKeys.isEmpty()) {
             return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.MISSING_TEXT_FILE));
         }
+        if (matchingTextKeys.size() > 1 || matchedTextKeys.contains(matchingTextKeys.getFirst())) {
+            final String matchingFileNames = matchingTextKeys.stream().map(key -> key + TEXT_FILE_EXTENSION).collect(Collectors.joining(", "));
+            return new InvalidRow(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.AMBIGUOUS_TEXT_FILE, matchingFileNames));
+        }
+        final String textKey = matchingTextKeys.getFirst();
 
-        return new ValidRow(new ValidatedRow(identifier, participation.participationId(), points.get(), textContentsByBaseName.get(textKey.get())), textKey.get());
+        return new ValidRow(new ValidatedRow(identifier, participation.participationId(), points.get(), textContentsByBaseName.get(textKey)), textKey);
     }
 
     /**
@@ -644,20 +653,22 @@ public class AssessmentUploadService {
     }
 
     /**
-     * Finds the text-file base name that belongs to a CSV identifier. The exported repository folder name is {@code <prefix>-<participationId>-<login>}, so the text file base name
-     * either equals the identifier or ends with {@code -<identifier>}.
+     * Finds the text-file base names that can belong to a CSV identifier. An exact match takes precedence over exported-folder suffix matches.
      * <p>
      * <b>Precondition:</b> {@code textKeys} and {@code identifier} are non-{@code null}.
      * <p>
-     * <b>Postcondition:</b> pure function (no side effects); the returned key, if present, equals {@code identifier} or ends with {@code "-" + identifier}.
+     * <b>Postcondition:</b> pure function (no side effects); returns only the exact key when it exists, otherwise all keys ending with {@code "-" + identifier} in sorted order.
      *
      * @param textKeys   the available text-file base names
      * @param identifier the student identifier to match
-     * @return the matching base name, or {@link Optional#empty()} if no text file matches
+     * @return the preferred matching base names, or an empty list if no text file matches
      */
-    private Optional<String> findMatchingTextKey(final Set<String> textKeys, final String identifier) {
+    private List<String> findMatchingTextKeys(final Set<String> textKeys, final String identifier) {
         assert textKeys != null && identifier != null : "textKeys and identifier must not be null";
-        return textKeys.stream().filter(key -> key.equals(identifier) || key.endsWith("-" + identifier)).findFirst();
+        if (textKeys.contains(identifier)) {
+            return List.of(identifier);
+        }
+        return textKeys.stream().filter(key -> key.endsWith("-" + identifier)).sorted().toList();
     }
 
     /**
