@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
-import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
@@ -88,9 +87,6 @@ public class QuizExerciseUtilService {
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
-
-    @Autowired
-    private DragAndDropMappingRepository dragAndDropMappingRepository;
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
@@ -406,19 +402,11 @@ public class QuizExerciseUtilService {
         submittedAnswerMC.setSubmission(quizSubmission);
         submittedAnswerSC.setSubmission(quizSubmission);
         submittedDragAndDropAnswer.setSubmission(quizSubmission);
-        dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
-        incorrectDragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
-        mappingWithImage.setSubmittedAnswer(submittedDragAndDropAnswer);
+        // submitted mappings are stored id-based in the JSON selection; no separate mapping rows / back-references anymore
+        submittedDragAndDropAnswer.addMappings(dragAndDropMapping);
+        submittedDragAndDropAnswer.addMappings(incorrectDragAndDropMapping);
+        submittedDragAndDropAnswer.addMappings(mappingWithImage);
         submittedAnswerRepository.save(submittedDragAndDropAnswer);
-        dragAndDropMapping.setQuestion(null);
-        incorrectDragAndDropMapping.setQuestion(null);
-        mappingWithImage.setQuestion(null);
-        dragAndDropMapping = dragAndDropMappingRepository.save(dragAndDropMapping);
-        incorrectDragAndDropMapping = dragAndDropMappingRepository.save(incorrectDragAndDropMapping);
-        mappingWithImage = dragAndDropMappingRepository.save(mappingWithImage);
-        dragAndDropMapping.setQuestion(dragAndDropQuestion);
-        incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
-        mappingWithImage.setQuestion(dragAndDropQuestion);
         quizQuestionRepository.saveAndFlush(multipleChoiceQuestion);
         quizQuestionRepository.saveAndFlush(singleChoiceQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
