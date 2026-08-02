@@ -9,6 +9,6 @@
         [buttonLabel]="buttonLabel() | artemisTranslate"
         [smallButton]="smallButtons()"
         [hideLabelMobile]="hideLabelMobile()"
-        [overwriteDisabled]="!canBeStarted()"
+        [overwriteDisabled]="!canBeStarted() || afterDueDate()"
     ></button>
 </ng-container>

@@ -75,13 +75,15 @@ export class IrisStartInClassQuizButtonComponent {
 
     protected readonly hasSubmissionWithPoints = computed(() => this.askUserService.latestSubmissionHasPoints() || this.latestSubmissionHasPointsFromEvent());
 
-    protected readonly canBeStarted = computed(() => this.hasSubmissionWithPoints() && !this.quizAlreadyDone() && !this.askUserService.isAnyAskUserMode());
-
     protected readonly showQuizActive = computed(
         () =>
             this.askUserService.activeQuizType() === 'inClass' ||
             this.isInClassAskUserMode() ||
             (this.askUserService.activeQuizType() === 'regular' && this.hasSubmissionWithPoints() && !this.quizAlreadyDone()),
+    );
+
+    protected readonly canBeStarted = computed(
+        () => this.hasSubmissionWithPoints() && !this.quizAlreadyDone() && !this.askUserService.isAnyAskUserMode() && !this.showQuizActive(),
     );
 
     private readonly showNoSubmission = computed(() => this.availableInClassQuiz() !== undefined && !this.showQuizActive() && !this.quizAlreadyDone() && !this.canBeStarted());

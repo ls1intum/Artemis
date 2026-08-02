@@ -20,6 +20,9 @@ import { of, switchMap, take } from 'rxjs';
 import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar/quiz-timer-bar.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
+import { hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-in-class-quiz-start-warning.component';
 
 interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentParticipation {
     readonly participationLink?: Array<string | number>;
@@ -65,6 +68,7 @@ export class IrisAssessmentReviewExerciseComponent {
 
     private profileService = inject(ProfileService);
     private assessmentReviewService = inject(IrisAssessmentReviewHttpService);
+    private modalService = inject(NgbModal);
 
     protected readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     private readonly exerciseId = computed(() => this.exercise().id);
@@ -109,6 +113,16 @@ export class IrisAssessmentReviewExerciseComponent {
             return;
         }
 
+        if (!hasDueDatePassed(this.exercise())) {
+            const modalRef = this.modalService.open(IrisInClassQuizStartWarningComponent, { size: 'lg', backdrop: 'static' });
+            modalRef.componentInstance.confirmed.pipe(take(1)).subscribe(() => this.startInClassQuiz(exerciseId));
+            return;
+        }
+
+        this.startInClassQuiz(exerciseId);
+    }
+
+    private startInClassQuiz(exerciseId: number): void {
         this.assessmentReviewService
             .makeInClassQuizAvailable(exerciseId)
             .pipe(take(1))

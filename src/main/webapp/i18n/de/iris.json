@@ -440,7 +440,13 @@
             "assessmentInClassQuiz": {
                 "open": "Präsenzquiz",
                 "start": "Präsenzquiz starten",
-                "restart": "Präsenzquiz neu starten"
+                "restart": "Präsenzquiz neu starten",
+                "warning": {
+                    "title": "Präsenzquiz vor Abgabefrist starten?",
+                    "message": "Wenn das Präsenzquiz vor Ablauf der Abgabefrist gestartet wird, können Studierende nach dem Quiz weiterhin neuen Code einreichen. Dadurch kann die spätere Abgabe von dem Code abweichen, auf dessen Grundlage Iris die Studierenden befragt hat.",
+                    "confirmText": "Möchtest du das Präsenzquiz trotzdem starten?",
+                    "start": "Quiz starten"
+                }
             },
             "assessmentReviewOverview": {
                 "title": "Iris Bewertungen",

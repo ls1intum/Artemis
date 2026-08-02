@@ -440,7 +440,13 @@
             "assessmentInClassQuiz": {
                 "open": "In-class quiz",
                 "start": "Start in-class quiz",
-                "restart": "Restart in-class quiz"
+                "restart": "Restart in-class quiz",
+                "warning": {
+                    "title": "Start in-class quiz before the due date?",
+                    "message": "If the in-class quiz is started before the submission due date, students can still submit new code after finishing the quiz. Their later submission may therefore differ from the code Iris asked them about.",
+                    "confirmText": "Do you still want to start the in-class quiz?",
+                    "start": "Start quiz"
+                }
             },
             "assessmentReviewOverview": {
                 "title": "Iris Assessments",

@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -180,6 +181,35 @@ class IrisAskUserServiceTest {
     }
 
     @Test
+    void buildWithPointsResetsActiveRegularQuizStateBeforeRunningBuildWithPointsPipeline() {
+        var fixture = stubBuildWithPointsPipeline(false);
+
+        irisAskUserService.handleNewResultEvent(new NewResultEvent(fixture.result()));
+
+        assertThat(fixture.session().isInAskUserModePipeline()).isFalse();
+        assertThat(fixture.session().isInClassQuiz()).isFalse();
+        assertThat(fixture.session().getQuestionsAsked()).isZero();
+        verify(irisChatSessionRepository).save(fixture.session());
+        verify(irisAssessmentReviewService).resetVerdictAndReasoning(fixture.user(), fixture.exercise(), false);
+        verify(irisAssessmentReviewService, never()).createNewAssessment(fixture.participation());
+        verify(pyrisPipelineService, timeout(1000)).executeAskUserPipeline(anyString(), same(fixture.submission()), same(fixture.exercise()), same(fixture.session()),
+                eq(Optional.of(IrisPipeEvent.BUILD_WITH_POINTS.name())), any());
+    }
+
+    @Test
+    void buildWithPointsDoesNotResetInClassQuizState() {
+        var fixture = stubBuildWithPointsPipeline(true);
+
+        irisAskUserService.handleNewResultEvent(new NewResultEvent(fixture.result()));
+
+        assertThat(fixture.session().isInAskUserModePipeline()).isTrue();
+        assertThat(fixture.session().isInClassQuiz()).isTrue();
+        assertThat(fixture.session().getQuestionsAsked()).isEqualTo(2);
+        verifyNoInteractions(pyrisPipelineService);
+        verify(irisAssessmentReviewService, never()).resetVerdictAndReasoning(fixture.user(), fixture.exercise(), true);
+    }
+
+    @Test
     void regularChatJobDoesNotResetQuizState() {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
 
@@ -228,6 +258,62 @@ class IrisAskUserServiceTest {
         return new AskUserPipelineFixture(course, exercise, user, session, submission);
     }
 
+    private BuildWithPointsFixture stubBuildWithPointsPipeline(boolean inClassQuiz) {
+        var course = new Course();
+        course.setId(1L);
+
+        var exercise = new ProgrammingExercise();
+        exercise.setId(2L);
+        exercise.setCourse(course);
+
+        var user = new User();
+        user.setId(3L);
+        user.setLogin("student1");
+        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(4L);
+        participation.setProgrammingExercise(exercise);
+        participation.setParticipant(user);
+
+        var submission = new ProgrammingSubmission();
+        submission.setId(5L);
+        participation.addSubmission(submission);
+
+        var result = new Result();
+        result.setId(6L);
+        result.setScore(80.0);
+        result.setSubmission(submission);
+        submission.addResult(result);
+
+        var session = new IrisChatSession(exercise, user, PROGRAMMING_EXERCISE_CHAT);
+        session.setId(7L);
+        session.setInAskUserModePipeline(true);
+        session.setInClassQuiz(inClassQuiz);
+        session.setQuestionsAsked(2);
+
+        when(irisSettingsService.getSettingsForExercise(exercise)).thenReturn(IrisCourseSettings.defaultSettings());
+        when(irisChatSessionService.shouldSendProgressStalledEvent(participation)).thenReturn(false);
+        when(programmingExerciseStudentParticipationRepository.findWithIrisAssessmentById(participation.getId())).thenReturn(Optional.of(participation));
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user)).thenReturn(session);
+        when(userRepository.findByIdElseThrow(user.getId())).thenReturn(user);
+        when(programmingExerciseRepository.findByIdElseThrow(exercise.getId())).thenReturn(exercise);
+
+        if (!inClassQuiz) {
+            when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId())).thenReturn(exercise);
+            when(programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId())).thenReturn(Optional.of(submission));
+            when(irisSessionRepository.findByIdWithMessagesAndContents(session.getId())).thenReturn(session);
+            when(pyrisPipelineService.executeAskUserPipeline(anyString(), any(), any(), any(), any(), any())).thenReturn(true);
+        }
+
+        return new BuildWithPointsFixture(course, exercise, user, participation, submission, result, session);
+    }
+
     private record AskUserPipelineFixture(Course course, ProgrammingExercise exercise, User user, IrisChatSession session, ProgrammingSubmission submission) {
+    }
+
+    private record BuildWithPointsFixture(Course course, ProgrammingExercise exercise, User user, ProgrammingExerciseStudentParticipation participation,
+            ProgrammingSubmission submission, Result result, IrisChatSession session) {
     }
 }

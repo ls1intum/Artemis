@@ -3,7 +3,7 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { catchError, of, switchMap, take } from 'rxjs';
 
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -36,6 +36,7 @@ export class IrisStartQuizButtonComponent {
     protected readonly faBrain = faBrain;
 
     private readonly exerciseId = computed(() => this.exercise().id);
+    protected readonly afterDueDate = computed(() => hasDueDatePassed(this.exercise()));
 
     protected readonly isAskUserMode = signal(false);
     private readonly quizCompletedAfterCurrentRun = signal(false);
@@ -68,7 +69,9 @@ export class IrisStartQuizButtonComponent {
 
     protected readonly hasSubmissionWithPoints = computed(() => this.askUserService.latestSubmissionHasPoints() || this.latestSubmissionHasPointsFromEvent());
 
-    protected readonly canBeStarted = computed(() => this.hasSubmissionWithPoints() && !this.quizAlreadyDone() && !this.askUserService.isAnyAskUserMode());
+    protected readonly canBeStarted = computed(
+        () => this.hasSubmissionWithPoints() && !this.quizAlreadyDone() && !this.askUserService.isAnyAskUserMode() && !this.showQuizActive(),
+    );
 
     protected readonly buttonLabel = computed(() => {
         if (this.showQuizActive()) {
@@ -135,6 +138,7 @@ export class IrisStartQuizButtonComponent {
             .subscribe((event) => {
                 switch (event) {
                     case IrisPipeEvent.BUILD_WITH_POINTS:
+                        this.resetActiveRegularQuiz();
                         this.latestSubmissionHasPointsFromEvent.set(true);
                         this.quizCompletedAfterCurrentRun.set(false);
                         this.quizAlreadyDoneFromServerInvalidated.set(true);
@@ -157,12 +161,18 @@ export class IrisStartQuizButtonComponent {
             });
 
         effect(() => {
-            const exerciseId = this.exerciseId();
-            if (this.runInfo()?.state === IrisRunState.FAILED && exerciseId !== undefined && (this.askUserService.activeQuizType() === 'regular' || this.isAskUserMode())) {
-                this.isAskUserMode.set(false);
-                this.askUserService.clearActiveQuizTypeForExercise(exerciseId, 'regular');
+            if (this.runInfo()?.state === IrisRunState.FAILED) {
+                this.resetActiveRegularQuiz();
             }
         });
+    }
+
+    private resetActiveRegularQuiz(): void {
+        const exerciseId = this.exerciseId();
+        if (exerciseId !== undefined && (this.askUserService.activeQuizType() === 'regular' || this.isAskUserMode())) {
+            this.isAskUserMode.set(false);
+            this.askUserService.clearActiveQuizTypeForExercise(exerciseId, 'regular');
+        }
     }
 
     protected startQuiz(): void {

@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisPipeEvent;
@@ -137,10 +136,14 @@ public class IrisAskUserService {
         if (!(result.getSubmission() instanceof ProgrammingSubmission latestSubmission)) {
             return;
         }
+        // Abort if submission has no points or is after due date
+        if (!submissionHasPoints(latestSubmission) || latestSubmission.getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
+            return;
+        }
 
         var settings = irisSettingsService.getSettingsForExercise(studentParticipation.getProgrammingExercise());
-        if (settings.enabled() && settings.askUserModeEnabled() && latestSubmission.getLatestResult() != null && latestSubmission.getLatestResult().getScore() != null
-                && latestSubmission.getLatestResult().getScore() > 0 && !irisChatSessionService.shouldSendProgressStalledEvent(studentParticipation)) {
+        if (settings.enabled() && settings.askUserModeEnabled() && !irisChatSessionService.shouldSendProgressStalledEvent(studentParticipation)
+                && !studentParticipation.isPracticeMode()) {
             explainAskUserMode(studentParticipation, latestSubmission, settings);
         }
     }
@@ -198,16 +201,13 @@ public class IrisAskUserService {
     }
 
     /**
-     * Checks whether the student's latest submission has a positive score.
+     * Checks whether the submission has a positive score.
      *
-     * @param exercise the programming exercise
-     * @param user     the student
-     * @return true if the latest submission has points
+     * @param submission the submission
+     * @return true if latest submission has points
      */
-    public boolean latestSubmissionHasPoints(ProgrammingExercise exercise, User user) {
-        return programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())
-                .flatMap(participation -> programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participation.getId()))
-                .map(Submission::getLatestResult).map(result -> result.getScore() != null && result.getScore() > 0).orElse(false);
+    private boolean submissionHasPoints(ProgrammingSubmission submission) {
+        return submission.getLatestResult() != null && submission.getLatestResult().getScore() > 0;
     }
 
     /**
@@ -409,16 +409,22 @@ public class IrisAskUserService {
         var participationWithAssessment = programmingExerciseStudentParticipationRepository.findWithIrisAssessmentById(studentParticipation.getId()).orElseThrow();
         var exercise = participationWithAssessment.getProgrammingExercise();
         var student = participationWithAssessment.getStudent().orElseThrow();
-
-        var assessment = participationWithAssessment.getIrisAssessment();
-        if (assessment == null) {
-            irisAssessmentReviewService.createNewAssessment(participationWithAssessment);
-        }
-        else {
-            irisAssessmentReviewService.resetVerdictAndReasoning(assessment);
-        }
-
         var session = getCurrentAskUserSession(exercise, student);
+
+        // In-class quiz should not be interrupted/reset there is only one try
+        if (session.isInClassQuiz()) {
+            return;
+        }
+
+        if (!resetRunningRegularQuizBeforeBuildWithPoints(session)) {
+            var assessment = participationWithAssessment.getIrisAssessment();
+            if (assessment == null) {
+                irisAssessmentReviewService.createNewAssessment(participationWithAssessment);
+            }
+            else {
+                irisAssessmentReviewService.resetVerdictAndReasoning(assessment);
+            }
+        }
 
         CompletableFuture
                 .runAsync(() -> requestAndHandleResponseAskUser(session, Optional.of(IrisPipeEvent.BUILD_WITH_POINTS.name()), Optional.of(settings), Optional.of(latestSubmission)))
@@ -449,7 +455,7 @@ public class IrisAskUserService {
 
         var actualUser = latestSubmission.flatMap(this::getStudentFromSubmission).orElseGet(() -> userRepository.findByIdElseThrow(session.getUserId()));
         var actualLatestSubmission = latestSubmission.flatMap(submission -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId()))
-                .or(() -> getLatestSubmissionIfExists(exercise, actualUser));
+                .or(() -> getLatestSubmissionWithPointsBeforeDueDateWithEagerResultsAndFeedbacksAndBuildLogsIfExists(exercise, actualUser));
 
         var loadedSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (!(loadedSession instanceof IrisChatSession chatSession)) {
@@ -463,16 +469,24 @@ public class IrisAskUserService {
         }
     }
 
-    private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
-        var participations = exercise.isTeamMode()
-                ? programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin())
-                : programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+    private Optional<ProgrammingSubmission> getLatestSubmissionWithPointsBeforeDueDateWithEagerResultsAndFeedbacksAndBuildLogsIfExists(ProgrammingExercise exercise, User user) {
+        var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
 
         if (participations.isEmpty()) {
             return Optional.empty();
         }
-        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
-                .flatMap(submission -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId()));
+        return programmingSubmissionRepository
+                .findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participations.getLast().getId());
+    }
+
+    public boolean hasLatestSubmissionWithPointsBeforeDueDateIfExists(ProgrammingExercise exercise, User user) {
+        var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+
+        if (participations.isEmpty()) {
+            return false;
+        }
+        return programmingSubmissionRepository.findLatestSubmissionIdBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participations.getLast().getId())
+                .isPresent();
     }
 
     private Optional<User> getStudentFromSubmission(ProgrammingSubmission submission) {
@@ -581,25 +595,39 @@ public class IrisAskUserService {
         }
     }
 
+    private boolean resetRunningRegularQuizBeforeBuildWithPoints(IrisChatSession session) {
+        if (!session.isInAskUserModePipeline() || session.isInClassQuiz()) {
+            return false;
+        }
+
+        resetAskUserPipeline(session);
+        log.info("Reset active regular ask-user quiz state for session {} before handling build with points", session.getId());
+        return true;
+    }
+
     private boolean resetAskUserPipelineAfterPyrisFailure(long sessionId, String jobId) {
         return irisChatSessionRepository.findById(sessionId).map(session -> {
             if (!session.isInAskUserModePipeline()) {
                 return false;
             }
 
-            var inClassQuiz = session.isInClassQuiz();
-            session.setInAskUserModePipeline(false);
-            session.setInClassQuiz(false);
-            session.setQuestionsAsked(0);
-            irisChatSessionRepository.save(session);
-            resetAssessmentAfterPyrisFailure(session, inClassQuiz);
-            stopTimerForSession(session);
+            resetAskUserPipeline(session);
             log.warn("Reset ask-user quiz state for session {} after Pyris job {} failed", session.getId(), jobId);
             return true;
         }).orElse(false);
     }
 
-    private void resetAssessmentAfterPyrisFailure(IrisChatSession session, boolean inClassQuiz) {
+    private void resetAskUserPipeline(IrisChatSession session) {
+        var inClassQuiz = session.isInClassQuiz();
+        session.setInAskUserModePipeline(false);
+        session.setInClassQuiz(false);
+        session.setQuestionsAsked(0);
+        irisChatSessionRepository.save(session);
+        resetAssessmentAfterAskUserPipelineReset(session, inClassQuiz);
+        stopTimerForSession(session);
+    }
+
+    private void resetAssessmentAfterAskUserPipelineReset(IrisChatSession session, boolean inClassQuiz) {
         try {
             var user = userRepository.findByIdElseThrow(session.getUserId());
             var exercise = programmingExerciseRepository.findByIdElseThrow(session.getEntityId());

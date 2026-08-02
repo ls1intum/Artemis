@@ -13,7 +13,7 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 export type IrisAskUserQuizType = 'regular' | 'inClass';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class IrisAskUserService {
     private readonly askUserHttpService = inject(IrisAskUserHttpService);
     private readonly chatService = inject(IrisChatService);
@@ -124,7 +124,7 @@ export class IrisAskUserService {
         this._timeLimit.set(0);
     }
 
-    private resetAskUserQuizStateAfterFailure(): void {
+    private resetAskUserQuizState(): void {
         const exerciseId = this.exerciseId();
         const activeQuizType = exerciseId === undefined ? undefined : this.activeQuizTypeState.value.get(exerciseId);
         if (!this.quizActive() && !this.quizStarted() && activeQuizType === undefined) {
@@ -137,6 +137,15 @@ export class IrisAskUserService {
         if (exerciseId !== undefined) {
             this.clearActiveQuizTypeForExercise(exerciseId);
         }
+    }
+
+    private resetRegularAskUserQuizStateAfterBuildWithPoints(): void {
+        const exerciseId = this.exerciseId();
+        if (exerciseId === undefined || this.activeQuizTypeState.value.get(exerciseId) !== 'regular') {
+            return;
+        }
+
+        this.resetAskUserQuizState();
     }
 
     private currentProgrammingExerciseId(): number | undefined {
@@ -154,6 +163,9 @@ export class IrisAskUserService {
                 }
 
                 switch (event) {
+                    case IrisPipeEvent.BUILD_WITH_POINTS:
+                        this.resetRegularAskUserQuizStateAfterBuildWithPoints();
+                        break;
                     case IrisPipeEvent.USER_STARTS_QUIZ:
                         this._quizStarted.set(true);
                         break;
@@ -179,7 +191,7 @@ export class IrisAskUserService {
     private handleDefocus(): void {
         this.pageActivity.pageLeaving$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const exerciseId = this.currentProgrammingExerciseId();
-            if (this.quizActive() && exerciseId !== undefined) {
+            if (this.quizActive() && !this.chatService.awaitingAnswer() && exerciseId !== undefined) {
                 this._quizActive.set(false);
                 this._quizStarted.set(false);
                 this.clearAskUserTimerState();
@@ -194,7 +206,7 @@ export class IrisAskUserService {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((runInfo) => {
                 if (runInfo?.state === IrisRunState.FAILED) {
-                    this.resetAskUserQuizStateAfterFailure();
+                    this.resetAskUserQuizState();
                 }
             });
     }

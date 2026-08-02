@@ -147,7 +147,7 @@ public class IrisAskUserResource {
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        return ResponseEntity.ok(irisAskUserService.latestSubmissionHasPoints(exercise, user));
+        return ResponseEntity.ok(irisAskUserService.hasLatestSubmissionWithPointsBeforeDueDateIfExists(exercise, user));
     }
 
     /**

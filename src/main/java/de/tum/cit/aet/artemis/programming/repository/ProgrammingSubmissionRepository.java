@@ -81,6 +81,46 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         return findProgrammingSubmissionWithResultsById(submissionId);
     }
 
+    /**
+     * Finds the latest programming submission for the given participation that was submitted before or at the exercise due date.
+     * Exercises without a due date are treated as accepting all submissions with a submission date.
+     * The submission is only returned if its latest result has a score greater than zero.
+     *
+     * @param participationId the id of the participation
+     * @return the latest matching programming submission with results, feedbacks and build logs,
+     *         or an empty {@code Optional} if it does not exist
+     */
+    default Optional<ProgrammingSubmission> findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(
+            long participationId) {
+        return findLatestSubmissionIdBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participationId)
+                .flatMap(this::findWithEagerResultsAndFeedbacksAndBuildLogsById);
+    }
+
+    @Query("""
+            SELECT s.id
+            FROM ProgrammingSubmission s
+                JOIN s.participation p
+                JOIN p.exercise e
+                JOIN s.results latestResult
+                LEFT JOIN ProgrammingSubmission newerSubmission
+                    ON newerSubmission.participation.id = p.id
+                    AND newerSubmission.submissionDate IS NOT NULL
+                    AND (e.dueDate IS NULL OR newerSubmission.submissionDate <= e.dueDate)
+                    AND (newerSubmission.submissionDate > s.submissionDate
+                        OR (newerSubmission.submissionDate = s.submissionDate AND newerSubmission.id > s.id))
+            WHERE p.id = :participationId
+                AND s.submissionDate IS NOT NULL
+                AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
+                AND latestResult.id = (
+                    SELECT MAX(result.id)
+                    FROM Result result
+                    WHERE result.submission.id = s.id
+                )
+                AND latestResult.score > 0
+                AND newerSubmission.id IS NULL
+            """)
+    Optional<Long> findLatestSubmissionIdBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(@Param("participationId") long participationId);
+
     @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(s.id, s.submissionDate)
             FROM ProgrammingSubmission s

@@ -60,7 +60,6 @@ import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask
         DiscussionSectionComponent,
         PanelModule,
     ],
-    providers: [IrisAskUserService],
 })
 export class ExerciseSplitPanelComponent {
     private readonly chatService = inject(IrisChatService);
@@ -274,21 +273,6 @@ export class ExerciseSplitPanelComponent {
                 } else if (type === ExerciseType.FILE_UPLOAD) {
                     void this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
                 }
-            });
-        });
-
-        effect((onCleanup) => {
-            if (!this.irisAskUserModeEnabled()) {
-                return;
-            }
-
-            untracked(() => {
-                this.askUserService.exercise.set(this.exercise());
-                this.askUserService.activate();
-            });
-
-            onCleanup(() => {
-                untracked(() => this.askUserService.deactivate());
             });
         });
     }
