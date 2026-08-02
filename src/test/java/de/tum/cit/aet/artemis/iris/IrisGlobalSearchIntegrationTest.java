@@ -219,7 +219,8 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
             long id = course.getId();
             assertThat(orEmpty(context.courseIds()).contains(id)).as("courseIds membership for course %d must match isAtLeastStudentInCourse", id)
                     .isEqualTo(authCheckService.isAtLeastStudentInCourse(course, user));
-            assertThat(orEmpty(context.staffCourseIds()).contains(id)).as("staffCourseIds (release/visibility bypass) for course %d must match isAtLeastTeachingAssistantInCourse", id)
+            assertThat(orEmpty(context.staffCourseIds()).contains(id))
+                    .as("staffCourseIds (release/visibility bypass) for course %d must match isAtLeastTeachingAssistantInCourse", id)
                     .isEqualTo(authCheckService.isAtLeastTeachingAssistantInCourse(course, user));
             assertThat(orEmpty(context.studentCourseIds()).contains(id)).as("studentCourseIds for course %d must match isOnlyStudentInCourse", id)
                     .isEqualTo(authCheckService.isOnlyStudentInCourse(course, user));

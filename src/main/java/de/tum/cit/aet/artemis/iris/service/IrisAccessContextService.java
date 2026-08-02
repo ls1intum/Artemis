@@ -18,7 +18,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDT
 /**
  * Resolves the {@link PyrisAccessContextDTO} for a user: the course IDs they can access, grouped by role, so Pyris can apply them as opaque access filters during global search.
  * <p>
- * Admins receive a present context with {@code unrestricted = true} (Pyris skips course scoping and visibility filtering for them) instead of a {@code null} context, which now means
+ * Admins receive a present context with {@code unrestricted = true} (Pyris skips course scoping and visibility filtering for them) instead of a {@code null} context, which now
+ * means
  * "apply the safe-default visibility filter". Non-admins receive their role-grouped course IDs with {@code unrestricted = false}.
  */
 @Lazy

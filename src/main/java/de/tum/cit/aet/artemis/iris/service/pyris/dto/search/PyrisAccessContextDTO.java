@@ -22,6 +22,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisAccessContextDTO(@JsonProperty("courseIds") List<Long> courseIds, @JsonProperty("editorCourseIds") List<Long> editorCourseIds,
-        @JsonProperty("taCourseIds") List<Long> taCourseIds, @JsonProperty("studentCourseIds") List<Long> studentCourseIds, @JsonProperty("staffCourseIds") List<Long> staffCourseIds,
-        @JsonProperty("now") ZonedDateTime now, @JsonProperty("unrestricted") boolean unrestricted) {
+        @JsonProperty("taCourseIds") List<Long> taCourseIds, @JsonProperty("studentCourseIds") List<Long> studentCourseIds,
+        @JsonProperty("staffCourseIds") List<Long> staffCourseIds, @JsonProperty("now") ZonedDateTime now, @JsonProperty("unrestricted") boolean unrestricted) {
 }
