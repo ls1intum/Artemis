@@ -1,200 +1,236 @@
-<div [hidden]="loading() || account()" class="module-bg container-fluid">
+<div [hidden]="loading() || account()" class="module-bg container-fluid min-vh-100 d-flex flex-column justify-content-center py-5">
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
             <h1 jhiTranslate="home.title"></h1>
             <p class="lead" jhiTranslate="home.subtitle"></p>
         </div>
     </div>
+
     <div class="row row-divided my-4 justify-content-center">
-        @if (!isPasswordLoginDisabled()) {
-            <div class="login-col col-12 col-xl-5 h-100">
-                <!-- Traditional Authentication -->
-                @if (!accountName()) {
-                    <div [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
-                } @else {
-                    <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName() }" class="lead text-center mb-4">
-                        Sign in with your account.
-                    </div>
-                }
-                <div class="login-form">
-                    <div class="mb-5">
-                        <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
-                            <div class="form-group">
-                                @if (authenticationError()) {
-                                    <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
-                                        <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
-                                    </div>
-                                }
-                            </div>
+        <div class="login-col col-12 col-xl-5 h-100">
+            <div class="login-form">
+                <div class="mb-5">
+                    <!-- STAGE 1: Username / Email Entry -->
+                    @if (currentStage() === 1) {
+                        <form (change)="inputChange($event)" (ngSubmit)="onContinue()" name="identifierForm" role="form">
                             <div class="form-group pb-2">
-                                <label class="mb-2" for="username" jhiTranslate="global.form.username"></label>
+                                <label class="mb-2" for="username" jhiTranslate="global.form.username">Login or email</label>
                                 <input
+                                    #usernameInput
                                     #usernameForm="ngModel"
                                     [(ngModel)]="username"
                                     [ngModelOptions]="{ updateOn: 'change' }"
                                     [pattern]="usernameRegexPattern()"
                                     autocomplete="username webauthn"
-                                    class="form-control"
+                                    tumUiInput
+                                    class="w-100"
                                     id="username"
                                     name="username"
                                     [placeholder]="usernamePlaceholderTranslated()"
                                     [minlength]="USERNAME_MIN_LENGTH"
                                     [maxLength]="USERNAME_MAX_LENGTH"
-                                    (ngModelChange)="checkFormValidity()"
-                                    (blur)="usernameTouched = true"
+                                    (ngModelChange)="checkIdentifierValidity()"
                                     type="text"
                                     tabindex="1"
                                 />
-                                @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
+                                @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched)) {
                                     <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername()"></span>
                                 }
                             </div>
-                            <div class="form-group">
-                                <div class="d-flex mb-2">
-                                    <label for="password" jhiTranslate="login.form.password"></label>
-                                    <div class="ms-auto">
-                                        <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="/account/reset/request" tabindex="4"></a>
-                                    </div>
-                                </div>
-                                <input
-                                    #passwordForm="ngModel"
-                                    [(ngModel)]="password"
-                                    [ngModelOptions]="{ updateOn: 'change' }"
-                                    autocomplete="current-password webauthn"
-                                    class="form-control"
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    [minlength]="PASSWORD_MIN_LENGTH"
-                                    [maxLength]="PASSWORD_MAX_LENGTH"
-                                    (ngModelChange)="checkFormValidity()"
-                                    (blur)="passwordTouched = true"
-                                    tabindex="2"
-                                />
-                                @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched) && passwordTouched) {
-                                    <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
-                                }
-                            </div>
-                            <div class="form-group">
-                                <div class="form-check">
-                                    <label class="form-check-label" for="rememberMe">
-                                        <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMe" name="rememberMe" type="checkbox" />
-                                        <span jhiTranslate="login.form.rememberme"></span>
-                                    </label>
-                                </div>
-                                @if (needsToAcceptTerms()) {
-                                    <div class="form-check">
-                                        <label class="form-check-label" for="acceptTerms">
-                                            <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
-                                            <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms"></a>
-                                        </label>
-                                    </div>
-                                }
-                            </div>
-                            <div class="btn-toolbar">
-                                <button
-                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !isFormValid()"
-                                    class="btn btn-primary w-100"
-                                    id="login-button"
+
+                            <div class="btn-toolbar mt-3">
+                                <tum-ui-button
+                                    id="continue-button"
                                     type="submit"
-                                    tabindex="3"
+                                    severity="primary"
+                                    variant="solid"
+                                    class="w-100"
+                                    [disabled]="isCheckingIdentifier() || !isIdentifierValid()"
+                                    tabindex="2"
                                 >
-                                    @if (isSubmittingLogin()) {
-                                        <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                    @if (isCheckingIdentifier()) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
                                     }
-                                    <span jhiTranslate="login.form.button"></span>
-                                </button>
+                                    <span jhiTranslate="entity.action.continue">Continue</span>
+                                </tum-ui-button>
                             </div>
                         </form>
-                        @if (isPasskeyEnabled() || isOidcEnabled()) {
-                            <div class="d-flex align-items-center my-3">
-                                <div class="flex-grow-1 border-top"></div>
-                                <span class="mx-3 text-muted" jhiTranslate="login.divider"></span>
-                                <div class="flex-grow-1 border-top"></div>
-                            </div>
-
-                            <div class="d-flex flex-column gap-2">
-                                @if (isOidcEnabled()) {
-                                    <jhi-button
-                                        class="d-block w-100"
-                                        id="oidc-login-button"
-                                        [btnType]="ButtonType.PRIMARY"
-                                        [fullWidth]="true"
-                                        [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
-                                        title="global.menu.account.loginWithOidc"
-                                        type="button"
-                                        (onClick)="loginWithOidc()"
-                                    />
-                                }
-
-                                @if (isPasskeyEnabled()) {
-                                    <jhi-button
-                                        class="d-block w-100"
-                                        id="passkey-login-button"
-                                        [btnType]="ButtonType.PRIMARY_OUTLINE"
-                                        [fullWidth]="true"
-                                        [icon]="faKey"
-                                        title="global.menu.account.loginWithPasskey"
-                                        type="button"
-                                        (onClick)="loginWithPasskey()"
-                                    />
-                                }
-                            </div>
-                        }
-                    </div>
-                    <div class="text-center">
-                        @if (isRegistrationEnabled()) {
-                            <div>
-                                <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
-                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-        @if (!isPasswordLoginDisabled() && !!profileInfo()?.saml2) {
-            <div class="col-12 col-xl-2 py-5 h-100">
-                <div class="d-none d-xl-block vertical-divider" jhiTranslate="login.divider"></div>
-                <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
-            </div>
-        }
-        @if (!!profileInfo()?.saml2) {
-            <div class="login-col col-12 col-xl-5">
-                <!-- SAML2 Authentication -->
-                <div class="h-100 d-flex flex-column align-items-center justify-content-center">
-                    @if (!profileInfo().saml2!.identityProviderName) {
-                        <div [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">Please sign in via Single Sign-on.</div>
                     }
-                    @if (profileInfo().saml2!.identityProviderName) {
-                        <div
-                            [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
-                            [translateValues]="{ provider: profileInfo().saml2!.identityProviderName }"
-                            class="lead text-center"
-                        >
-                            Please sign in.
+
+                    <!-- STAGE 2: Password or SSO Auth -->
+                    @if (currentStage() === 2) {
+                        <!-- Disabled Login/Email Field -->
+                        <div class="form-group pb-2">
+                            <label class="mb-2" for="usernameDisabled" jhiTranslate="global.form.username">Login or email</label>
+                            <input tumUiInput class="w-100" id="usernameDisabled" name="usernameDisabled" [value]="username" disabled type="text" />
                         </div>
-                    }
-                    <div class="saml2-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
-                        <div class="form-group">
-                            @if (needsToAcceptTerms()) {
-                                <div class="form-check">
-                                    <label class="form-check-label" for="acceptTerms">
-                                        <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
-                                        <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms"></a>
-                                    </label>
+
+                        <!-- Option A: Password Flow -->
+                        @if (loginMethod() === 'PASSWORD') {
+                            <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
+                                <div class="form-group">
+                                    @if (authenticationError()) {
+                                        <tum-ui-message severity="error" styleClass="my-3 w-100" aria-live="assertive">
+                                            <span [jhiTranslate]="'home.errors.failedToLogin'"> Failed to sign in! Please check your login and password and try again. </span>
+                                        </tum-ui-message>
+                                    }
                                 </div>
-                            }
+
+                                <div class="form-group pb-2">
+                                    <div class="d-flex mb-2">
+                                        <label for="password" jhiTranslate="login.form.password">Password</label>
+                                        <div class="ms-auto">
+                                            <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="/account/reset/request" tabindex="4"></a>
+                                        </div>
+                                    </div>
+                                    <input
+                                        #passwordInput
+                                        #passwordForm="ngModel"
+                                        [(ngModel)]="password"
+                                        autocomplete="current-password webauthn"
+                                        tumUiInput
+                                        class="w-100"
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        [minlength]="PASSWORD_MIN_LENGTH"
+                                        [maxLength]="PASSWORD_MAX_LENGTH"
+                                        tabindex="1"
+                                    />
+                                </div>
+
+                                <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'password' }" />
+
+                                <div class="d-flex flex-column gap-3 mt-4">
+                                    <tum-ui-button
+                                        id="login-button"
+                                        type="submit"
+                                        severity="primary"
+                                        variant="solid"
+                                        class="w-100"
+                                        [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms()) || !password"
+                                        tabindex="2"
+                                    >
+                                        @if (isSubmittingLogin()) {
+                                            <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
+                                        }
+                                        <span jhiTranslate="login.form.button">Sign in</span>
+                                    </tum-ui-button>
+
+                                    <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()" tabindex="3">
+                                        <fa-icon [icon]="faArrowLeft" class="me-1" />
+                                        <span jhiTranslate="entity.action.back">Back</span>
+                                    </tum-ui-button>
+                                </div>
+                            </form>
+                        }
+
+                        <!-- Option B: OIDC SSO Flow -->
+                        @if (loginMethod() === 'OIDC') {
+                            <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'oidc' }" />
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                <tum-ui-button
+                                    id="oidc-login-button"
+                                    type="button"
+                                    severity="primary"
+                                    variant="solid"
+                                    class="w-100"
+                                    [disabled]="isSubmittingLogin() || (!userAcceptedTerms && needsToAcceptTerms())"
+                                    (clicked)="loginWithOidc()"
+                                >
+                                    @if (isSubmittingLogin()) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
+                                    }
+                                    <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'OIDC' }">
+                                        Sign in with {{ externalIdpName() || 'OIDC' }}
+                                    </span>
+                                </tum-ui-button>
+
+                                <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
+                                    <fa-icon [icon]="faArrowLeft" class="me-1" />
+                                    <span jhiTranslate="entity.action.back">Back</span>
+                                </tum-ui-button>
+                            </div>
+                        }
+
+                        <!-- Option C: SAML2 SSO Flow -->
+                        @if (loginMethod() === 'SAML2') {
+                            <ng-container *ngTemplateOutlet="termsAndRememberMe; context: { $implicit: 'saml' }" />
+
+                            <div class="d-flex flex-column gap-3 mt-4">
+                                @if (profileInfo()?.saml2) {
+                                    <jhi-saml2-login
+                                        [acceptedTerms]="!needsToAcceptTerms() || userAcceptedTerms"
+                                        [rememberMe]="rememberMe"
+                                        [saml2Profile]="profileInfo().saml2!"
+                                        class="d-block w-100"
+                                    />
+                                } @else {
+                                    <tum-ui-button id="saml2-fallback-button" type="button" severity="primary" variant="solid" class="w-100" [disabled]="true">
+                                        <span [jhiTranslate]="'home.login.form.signInWithProvider'" [translateValues]="{ provider: externalIdpName() || 'SAML2' }">
+                                            Sign in with {{ externalIdpName() || 'SAML2 Login' }}
+                                        </span>
+                                    </tum-ui-button>
+                                }
+                                <tum-ui-button type="button" severity="secondary" variant="outlined" class="w-100" (clicked)="goBack()">
+                                    <fa-icon [icon]="faArrowLeft" class="me-1" />
+                                    <span jhiTranslate="entity.action.back">Back</span>
+                                </tum-ui-button>
+                            </div>
+                        }
+                    }
+
+                    <!-- ALWAYS VISIBLE: Passkey Option -->
+                    @if (isPasskeyEnabled()) {
+                        <div class="d-flex align-items-center my-3">
+                            <div class="flex-grow-1 border-top"></div>
+                            <span class="mx-3 text-muted" jhiTranslate="login.divider">or</span>
+                            <div class="flex-grow-1 border-top"></div>
                         </div>
-                        <jhi-saml2-login
-                            [acceptedTerms]="!needsToAcceptTerms() || userAcceptedTerms"
-                            [rememberMe]="rememberMe"
-                            [saml2Profile]="profileInfo().saml2!"
-                            class="d-block text-center"
-                        />
-                    </div>
+
+                        <div class="d-flex flex-column gap-2">
+                            <tum-ui-button
+                                id="passkey-login-button"
+                                type="button"
+                                severity="primary"
+                                variant="outlined"
+                                class="w-100"
+                                [icon]="faKey"
+                                (clicked)="loginWithPasskey()"
+                            >
+                                <span jhiTranslate="global.menu.account.loginWithPasskey">Sign in with a passkey</span>
+                            </tum-ui-button>
+                        </div>
+                    }
+
+                    <!-- Registration link (Stage 1 only) -->
+                    @if (currentStage() === 1 && isRegistrationEnabled()) {
+                        <div class="text-center mt-4">
+                            <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
+                            <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="/account/register"></a>
+                        </div>
+                    }
                 </div>
             </div>
-        }
+
+            <!-- Single shared template fragment for remember-me and terms of use -->
+            <ng-template #termsAndRememberMe let-prefix>
+                <div class="form-group my-3">
+                    <div class="form-check d-flex align-items-center gap-2 ps-0">
+                        <tum-ui-checkbox [inputId]="'rememberMe_' + prefix" name="rememberMe" [(checked)]="rememberMe" />
+                        <label class="form-check-label cursor-pointer" [for]="'rememberMe_' + prefix" jhiTranslate="login.form.rememberme">Remember me</label>
+                    </div>
+                    @if (needsToAcceptTerms()) {
+                        <div class="form-check mt-2 d-flex align-items-center gap-2 ps-0">
+                            <tum-ui-checkbox [inputId]="'acceptTerms_' + prefix" name="acceptTerms" [(checked)]="userAcceptedTerms" />
+                            <label class="form-check-label cursor-pointer" [for]="'acceptTerms_' + prefix">
+                                <a [routerLink]="['/privacy']" jhiTranslate="login.form.acceptTerms">I accept terms of use</a>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </ng-template>
+        </div>
     </div>
 </div>

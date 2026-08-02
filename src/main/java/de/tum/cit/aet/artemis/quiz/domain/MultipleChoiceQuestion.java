@@ -1,23 +1,15 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceProportionalWithPenalty;
@@ -25,34 +17,75 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceP
 
 /**
  * A MultipleChoiceQuestion.
+ * <p>
+ * Its answer options are no longer a separate JPA entity table: they are stored inside the {@code quiz_question.content} JSON column as a {@link MultipleChoiceQuestionContent}.
+ * This eliminates the eager {@code @OneToMany} fan-out. The public {@code getAnswerOptions()} accessor keeps its original signature and delegates to the content, so the
+ * REST/websocket wire format and all callers are preserved. Mirrors {@link DragAndDropQuestion}.
  */
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    // No @Cache here on purpose: the parent collection of AnswerOption references that get resolved during merge cascade.
-    // A stale cached collection here is the exact failure mode that caused #12574 / #12584 on the clustered L2 cache.
-    // Bidirectional mapping: AnswerOption.question owns the question_id FK, so a parent saveAndFlush issues targeted
-    // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced the #12584 ID-regeneration class.
-    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
-    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "answer_options_order")
-    private List<AnswerOption> answerOptions = new ArrayList<>();
-
     @Column(name = "single_choice")
     private boolean singleChoice = false;
 
+    /**
+     * @return the multiple-choice content, creating and attaching an empty one if none exists yet.
+     */
+    private MultipleChoiceQuestionContent mcContent() {
+        if (getContent() instanceof MultipleChoiceQuestionContent multipleChoiceContent) {
+            return multipleChoiceContent;
+        }
+        MultipleChoiceQuestionContent created = new MultipleChoiceQuestionContent();
+        setContent(created);
+        return created;
+    }
+
+    /**
+     * Mint a fresh, question-scoped component id: one greater than the largest id currently used by any answer option of this question.
+     *
+     * @return the next free component id
+     */
+    private long nextComponentId() {
+        long max = 0;
+        for (Long id : mcContent().componentIds()) {
+            if (id != null && id > max) {
+                max = id;
+            }
+        }
+        return max + 1;
+    }
+
+    /**
+     * Assign a fresh, question-scoped id to every component in the given list that does not have one yet. Called from the entity-level bulk setter used by the create/edit/import
+     * flows; the JSON deserialization path goes through {@link MultipleChoiceQuestionContent}'s own setter instead and therefore preserves existing ids.
+     *
+     * @param components the components to assign ids to
+     */
+    private void assignMissingComponentIds(List<? extends DomainObject> components) {
+        for (var component : components) {
+            if (component.getId() == null) {
+                component.setId(nextComponentId());
+            }
+        }
+    }
+
+    /**
+     * Mint a fresh, question-scoped id for any answer option added without one (e.g. via {@code getAnswerOptions().add(...)}, which bypasses {@link #addAnswerOption}). Called
+     * before persisting so the statistics counters (keyed by answer-option id) and the stored JSON content stay id-consistent.
+     */
+    public void assignMissingComponentIds() {
+        assignMissingComponentIds(getAnswerOptions());
+    }
+
     public List<AnswerOption> getAnswerOptions() {
-        return answerOptions;
+        return mcContent().getAnswerOptions();
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
-        // Direct field assignment so callers like filterSensitiveInformation can replace a lazy-initialized PersistentList
-        // without triggering session-less initialization. Back-references are set defensively in
-        // ensureAnswerOptionBackReferences via @PrePersist / @PreUpdate.
-        this.answerOptions = answerOptions;
+        mcContent().setAnswerOptions(answerOptions);
+        assignMissingComponentIds(mcContent().getAnswerOptions());
     }
 
     public boolean isSingleChoice() {
@@ -70,12 +103,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @return the answerOption with the given ID, or null if the answerOption is not contained in this question
      */
     public AnswerOption findAnswerOptionById(Long answerOptionId) {
-
         if (answerOptionId != null) {
-            // iterate through all answers of this quiz
-            for (AnswerOption answer : answerOptions) {
-                // return answer if the IDs are equal
-                if (answer.getId().equals(answerOptionId)) {
+            for (AnswerOption answer : mcContent().getAnswerOptions()) {
+                if (answerOptionId.equals(answer.getId())) {
                     return answer;
                 }
             }
@@ -83,100 +113,10 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return null;
     }
 
-    /**
-     * undo all answer-changes which are not allowed (adding Answers)
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
-            undoUnallowedAnswerChanges(mcOriginalQuestion);
-        }
-    }
-
-    /**
-     * undo all answer-changes which are not allowed ( adding Answers)
-     *
-     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
-     */
-    private void undoUnallowedAnswerChanges(MultipleChoiceQuestion originalQuestion) {
-
-        // find added Answers, which are not allowed to be added
-        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
-        // check every answer of the question
-        for (AnswerOption answer : this.getAnswerOptions()) {
-            // check if the answer were already in the originalQuizExercise -> if not it's an added answer
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
-                // find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
-                // correct invalid = null to invalid = false
-                if (answer.isInvalid() == null) {
-                    answer.setInvalid(false);
-                }
-                // reset invalid answer if it already set to true (it's not possible to set an answer valid again)
-                answer.setInvalid(answer.isInvalid() || (originalAnswer.isInvalid() != null && originalAnswer.isInvalid()));
-            }
-            else {
-                // mark the added Answers (adding answers is not allowed)
-                notAllowedAddedAnswers.add(answer);
-            }
-        }
-        // remove the added Answers
-        this.getAnswerOptions().removeAll(notAllowedAddedAnswers);
-    }
-
-    /**
-     * check if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the answer-changes make an update necessary and false if not
-     */
-    @Override
-    public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
-            return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);
-        }
-        return false;
-    }
-
     @Override
     @JsonIgnore
     public void initializeStatistic() {
         setQuizQuestionStatistic(new MultipleChoiceQuestionStatistic());
-    }
-
-    /**
-     * check if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the answer-changes make an update necessary and false if not
-     */
-    private boolean checkAnswersIfRecalculationIsNecessary(MultipleChoiceQuestion originalQuestion) {
-
-        boolean updateNecessary = false;
-
-        // check every answer of the question
-        for (AnswerOption answer : this.getAnswerOptions()) {
-            // check if the answer were already in the originalQuizExercise
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
-                // find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
-
-                // check if an answer is set invalid or if the correctness has changed
-                // if true an update of the Statistics and Results is necessary
-                if ((answer.isInvalid() && !this.isInvalid() && originalAnswer.isInvalid() == null) || (answer.isInvalid() && !this.isInvalid() && !originalAnswer.isInvalid())
-                        || (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
-                    updateNecessary = true;
-                }
-            }
-        }
-        // check if an answer was deleted (not allowed added answers are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (this.getAnswerOptions().size() < originalQuestion.getAnswerOptions().size()) {
-            updateNecessary = true;
-        }
-        return updateNecessary;
     }
 
     @Override
@@ -212,11 +152,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         int correctAnswerCount = 0;
 
         // check answer options
-        if (getAnswerOptions() != null) {
-            for (AnswerOption answerOption : getAnswerOptions()) {
-                if (answerOption.isIsCorrect()) {
-                    correctAnswerCount++;
-                }
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            if (Boolean.TRUE.equals(answerOption.isIsCorrect())) {
+                correctAnswerCount++;
             }
         }
 
@@ -252,47 +190,25 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     /**
-     * Adds a single answer option and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Adds a single answer option, assigning it a fresh question-scoped id if it does not have one yet.
      *
      * @param answerOption the answer option to add
      * @return this question for fluent chaining
      */
     public MultipleChoiceQuestion addAnswerOption(AnswerOption answerOption) {
-        if (answerOptions == null) {
-            answerOptions = new ArrayList<>();
+        if (answerOption.getId() == null) {
+            answerOption.setId(nextComponentId());
         }
-        answerOptions.add(answerOption);
-        answerOption.setQuestion(this);
+        mcContent().getAnswerOptions().add(answerOption);
         return this;
     }
 
     /**
-     * Removes a single answer option and clears its back-reference. Mirrors the remove* helpers on the other quiz
-     * entities for symmetry; with {@code orphanRemoval = true} the option will also be deleted on the next flush.
+     * Removes a single answer option.
      *
      * @param answerOption the answer option to remove
      */
     public void removeAnswerOption(AnswerOption answerOption) {
-        if (answerOptions != null) {
-            answerOptions.remove(answerOption);
-        }
-        answerOption.setQuestion(null);
-    }
-
-    /**
-     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any AnswerOption
-     * added via {@code getAnswerOptions().add(...)} (bypassing {@link #addAnswerOption}) would otherwise INSERT with
-     * {@code question_id = NULL}. Mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}.
-     */
-    @PrePersist
-    @PreUpdate
-    private void ensureAnswerOptionBackReferences() {
-        if (answerOptions != null) {
-            for (AnswerOption option : answerOptions) {
-                if (option != null && option.getQuestion() != this) {
-                    option.setQuestion(this);
-                }
-            }
-        }
+        mcContent().getAnswerOptions().remove(answerOption);
     }
 }
