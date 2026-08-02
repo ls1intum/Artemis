@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CustomScientificNotationValidatorDirective } from './custom-scientific-notation-validator.directive';
 
@@ -17,8 +16,6 @@ class CustomScientificNotationComponent {
 }
 
 describe('CustomScientificNotationValidatorDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CustomScientificNotationComponent>;
 
     beforeEach(async () => {
