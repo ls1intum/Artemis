@@ -1,57 +1,63 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A MultipleChoiceQuestionStatistic.
+ * <p>
+ * Its per-answer-option counters are stored as a JSON list in the {@code quiz_statistic.counters} column (see {@link AnswerCounter}) instead of separate
+ * {@code quiz_statistic_counter} rows, eliminating the eager {@code @OneToMany} counter fan-out. Counters are fully recomputed from the results on every statistics update, so no
+ * per-counter locking is required. {@link #getAnswerCounters()} keeps its signature/shape so the REST/websocket wire format is preserved. Mirrors
+ * {@link DragAndDropQuestionStatistic}.
  */
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
-    // No @Cache: counters are incremented on every evaluation while instructors watch live statistics, same class of bug as #12574.
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
-    private Set<AnswerCounter> answerCounters = new HashSet<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "counters")
+    private List<AnswerCounter> answerCounters = new ArrayList<>();
 
-    public Set<AnswerCounter> getAnswerCounters() {
+    public List<AnswerCounter> getAnswerCounters() {
         return answerCounters;
     }
 
     public void addAnswerCounters(AnswerCounter answerCounter) {
         this.answerCounters.add(answerCounter);
-        answerCounter.setMultipleChoiceQuestionStatistic(this);
     }
 
-    public void setAnswerCounters(Set<AnswerCounter> answerCounters) {
-        this.answerCounters = answerCounters;
+    public void setAnswerCounters(List<AnswerCounter> answerCounters) {
+        this.answerCounters = answerCounters != null ? answerCounters : new ArrayList<>();
     }
 
     /**
-     * 1. creates the AnswerCounter for the new AnswerOption if where is already an AnswerCounter with the given answerOption -> nothing happens
+     * 1. creates the AnswerCounter for the new AnswerOption if there is already an AnswerCounter with the given answerOption -> nothing happens
      *
      * @param answer the answer object which will be added to the MultipleChoiceStatistic
      */
     public void addAnswerOption(AnswerOption answer) {
-        if (answer == null) {
+        if (answer == null || answer.getId() == null) {
             return;
         }
         for (AnswerCounter counter : answerCounters) {
-            if (answer.equals(counter.getAnswer())) {
+            if (answer.getId().equals(counter.getAnswerId())) {
                 return;
             }
         }
         AnswerCounter answerCounter = new AnswerCounter();
-        answerCounter.setAnswer(answer);
+        answerCounter.setAnswerId(answer.getId());
         addAnswerCounters(answerCounter);
     }
 
@@ -68,17 +74,15 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
         if (!(submittedAnswer instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer)) {
             return;
         }
+        Set<Long> selectedOptionIds = mcSubmittedAnswer.toSelectedIds();
 
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
-
-            if (mcSubmittedAnswer.getSelectedOptions() != null) {
-                // change rated answerCounter if answer is selected
-                for (AnswerCounter answerCounter : answerCounters) {
-                    if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setRatedCounter(answerCounter.getRatedCounter() + change);
-                    }
+            // change rated answerCounter if answer is selected
+            for (AnswerCounter answerCounter : answerCounters) {
+                if (selectedOptionIds.contains(answerCounter.getAnswerId())) {
+                    answerCounter.setRatedCounter(answerCounter.getRatedCounter() + change);
                 }
             }
             // change rated correctCounter if answer is complete correct
@@ -90,16 +94,12 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
         else {
             // change the unrated participants
             setParticipantsUnrated(getParticipantsUnrated() + change);
-
-            if (mcSubmittedAnswer.getSelectedOptions() != null) {
-                for (AnswerCounter answerCounter : answerCounters) {
-                    // change unrated answerCounter if answer is selected
-                    if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter() + change);
-                    }
+            // change unrated answerCounter if answer is selected
+            for (AnswerCounter answerCounter : answerCounters) {
+                if (selectedOptionIds.contains(answerCounter.getAnswerId())) {
+                    answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter() + change);
                 }
             }
-
             // change unrated correctCounter if answer is complete correct
             if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
