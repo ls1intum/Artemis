@@ -50,12 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-/**
- * Single-flight slot and cancellation registry for whole-exercise agentic generation jobs.
- * <p>
- * At most one generation runs per exercise at a time (claimed atomically in a Hazelcast map), and a separate cancellation set lets the REST layer request a cooperative abort
- * that the running loop polls between turns. This per-exercise single-flight is the primary concurrency bound.
- */
+/** Coordinates distributed generation slots, cancellation, and reconnect state. */
 @Service
 @Lazy
 @Conditional(HyperionExerciseGenerationEnabled.class)
@@ -438,19 +433,12 @@ public class GenerationJobService {
     }
 
     /**
-     * Cancels the running job — but only for the instructor who started it. Cancellation closes the transcript before interrupting the disposable sandbox, so clients receive a
-     * terminal result even when a synchronous provider request cannot be aborted at the transport layer. The live slot remains claimed until the worker actually returns; this
-     * prevents a late provider response from overlapping a replacement job or escaping in-flight admission accounting. The owner check matters because the job id is observable
-     * in the client and websocket topic.
-     *
-     * Also refuses to record a cancellation once {@link #enterNonCancellablePhase(long, String)} has already flipped the job to persisting: at that point durable Git/DB
-     * mutations may already be underway and cannot be safely interrupted, so this returns {@code false} (surfaced by the REST layer as "cannot cancel") rather than reporting
-     * the dishonest "cancelled, nothing changed" outcome.
+     * Cancels a job owned by the requesting user. The slot remains claimed until the worker returns, and cancellation is refused after persistence begins.
      *
      * @param exerciseId the exercise id
      * @param jobId      the job id to cancel
      * @param user       the requesting user; must be the instructor who started the job
-     * @return {@code true} if a matching active, still-cancellable job owned by {@code user} was found and is cancelled, including an idempotent retry
+     * @return whether a matching, cancellable job was cancelled
      */
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
         String key = key(exerciseId);
@@ -491,11 +479,7 @@ public class GenerationJobService {
     }
 
     /**
-     * Cancels a job for server-side safety controls such as deadlines and token budgets, using the same atomic terminalization and late-response fence as user cancellation. The
-     * caller already owns the job id from the running task, so no user ownership check is required.
-     * <p>
-     * Like {@link #requestCancellation(long, String, User)}, this refuses once the job already entered the non-cancellable persistence phase, so a deadline or budget trip that
-     * loses the race against {@link #enterNonCancellablePhase(long, String)} never claims to have stopped a save that is already underway.
+     * Cancels a job for a server-side deadline or budget guard. This uses the same persistence fence as user cancellation but does not require a user ownership check.
      */
     boolean requestSystemCancellation(long exerciseId, String jobId, String message) {
         String key = key(exerciseId);
@@ -577,20 +561,11 @@ public class GenerationJobService {
     }
 
     /**
-     * Marks the job as past the cancellation point and returns whether it may continue into durable persistence.
-     * <p>
-     * Cancellation is meaningful while the agent is still in the disposable sandbox: the cancel hook can destroy the session and no live repository has been touched. Once the
-     * task starts saving verified output, accepting a new cancellation would be misleading because the repository operation cannot be safely interrupted. This transition and
-     * {@link #requestCancellation(long, String, User)} (and {@link #requestSystemCancellation(long, String, String)}) both hold the same distributed job-map lock for the same
-     * key, so exactly one of the two ever wins for a given job: if a cancellation was already recorded for {@code jobId} when this method acquires the lock, it returns
-     * {@code false} here so the caller never persists a run the user (or the system) was already told was cancelled; conversely, once this method has flipped the job to
-     * non-cancellable, a later {@link #requestCancellation(long, String, User)} observes {@code cancellable() == false} and refuses the cancel instead of falsely reporting
-     * that nothing was changed.
+     * Atomically fences cancellation before durable persistence. Cancellation and this transition use the same distributed lock, so only one can win.
      *
      * @param exerciseId the exercise id
      * @param jobId      the job id
-     * @return {@code true} when this node still owns the job, no cancellation has been recorded for it, and it may proceed into persistence; {@code false} when ownership was
-     *         lost or cancellation already won the race
+     * @return whether this node still owns an uncancelled job
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
         String key = key(exerciseId);
@@ -851,17 +826,8 @@ public class GenerationJobService {
     }
 
     /**
-     * Reclaims a stale slot only after Hazelcast confirms that its owner left the cluster, and only while the job is still cancellable. A stale heartbeat from a live member can
-     * be a scheduler pause, so a cancellable job is asked to stop while it keeps its slot until the worker actually drains. Once a <em>cancellable</em> generation owner has
-     * left, the worker can no longer pass its ownership checks; the job becomes terminal and its slot is released. Its worst-case budget reservation remains until the rolling
-     * budget window expires because provider usage may have become billable before the owner disappeared.
-     * <p>
-     * A <em>non-cancellable</em> job (generation past {@link #enterNonCancellablePhase(long, String)}, or a {@code revert-*} slot) is never automatically removed, regardless of
-     * heartbeat age or owner membership: absence from the local Hazelcast membership view is a failure-detector result (GC pause, network partition, false-positive detection),
-     * not proof that the owning JVM — and any Git/DB request it already issued before durable persistence or a revert reset — has actually stopped. Reclaiming the slot here
-     * could let a replacement generation start and interleave with an un-fenced writer still completing a mutation. This generalizes the same fail-closed rule already applied
-     * to {@code external-mutation-*} slots below. Availability is sacrificed only in this precisely unknowable state; the slot requires the same kind of audited, exact-token
-     * recovery as an external mutation to be released (see {@link #recoverExternalMutationSlot(long, String)}).
+     * Reclaims a cancellable stale job only after its owner leaves the cluster. Non-cancellable and external mutation slots fail closed because their durable writes may still be
+     * running after membership loss.
      *
      * @return {@code true} when the slot was reclaimed
      */
