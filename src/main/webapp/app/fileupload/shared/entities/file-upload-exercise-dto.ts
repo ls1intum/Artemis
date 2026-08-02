@@ -27,10 +27,6 @@ export interface CourseContextDto {
     testCourse?: boolean;
     presentationScore?: number;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
     accuracyOfScores?: number;
 }
 
@@ -231,10 +227,6 @@ function toCourse(dto: CourseContextDto): Course {
     course.testCourse = dto.testCourse;
     course.presentationScore = dto.presentationScore;
     course.courseInformationSharingConfiguration = dto.courseInformationSharingConfiguration;
-    course.studentGroupName = dto.studentGroupName;
-    course.teachingAssistantGroupName = dto.teachingAssistantGroupName;
-    course.editorGroupName = dto.editorGroupName;
-    course.instructorGroupName = dto.instructorGroupName;
     course.accuracyOfScores = dto.accuracyOfScores;
     return course;
 }

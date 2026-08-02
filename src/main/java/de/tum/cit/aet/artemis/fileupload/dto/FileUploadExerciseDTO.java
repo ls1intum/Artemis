@@ -146,16 +146,11 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @param testCourse                            whether this is a test course
      * @param presentationScore                     the configured number of presentation scores
      * @param courseInformationSharingConfiguration the communication and messaging configuration
-     * @param studentGroupName                      the student group name
-     * @param teachingAssistantGroupName            the teaching-assistant group name
-     * @param editorGroupName                       the editor group name
-     * @param instructorGroupName                   the instructor group name
      * @param accuracyOfScores                      the score display accuracy
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CourseContextDTO(Long id, @Nullable String title, @Nullable String shortName, @Nullable Boolean testCourse, @Nullable Integer presentationScore,
-            @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, @Nullable String studentGroupName, @Nullable String teachingAssistantGroupName,
-            @Nullable String editorGroupName, @Nullable String instructorGroupName, @Nullable Integer accuracyOfScores) {
+            @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, @Nullable Integer accuracyOfScores) {
 
         /**
          * Maps a course without exposing exercises or other course graphs.
@@ -165,8 +160,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
          */
         public static CourseContextDTO of(Course course) {
             return new CourseContextDTO(course.getId(), course.getTitle(), course.getShortName(), course.isTestCourse(), course.getPresentationScore(),
-                    course.getCourseInformationSharingConfiguration(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(),
-                    course.getInstructorGroupName(), course.getAccuracyOfScores());
+                    course.getCourseInformationSharingConfiguration(), course.getAccuracyOfScores());
         }
     }
 

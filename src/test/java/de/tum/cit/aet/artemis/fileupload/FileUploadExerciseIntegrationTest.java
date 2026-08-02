@@ -322,10 +322,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(receivedFileUploadExercise.course().testCourse()).isTrue();
         assertThat(receivedFileUploadExercise.course().presentationScore()).isEqualTo(3);
         assertThat(receivedFileUploadExercise.course().courseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
-        assertThat(receivedFileUploadExercise.course().studentGroupName()).isEqualTo(course.getStudentGroupName());
-        assertThat(receivedFileUploadExercise.course().teachingAssistantGroupName()).isEqualTo(course.getTeachingAssistantGroupName());
-        assertThat(receivedFileUploadExercise.course().editorGroupName()).isEqualTo(course.getEditorGroupName());
-        assertThat(receivedFileUploadExercise.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
         assertThat(receivedFileUploadExercise.course().accuracyOfScores()).isEqualTo(2);
         assertThat(receivedFileUploadExercise.gradingCriteria()).isNotEmpty();
         assertThat(receivedFileUploadExercise.competencyLinks()).singleElement().satisfies(link -> {
