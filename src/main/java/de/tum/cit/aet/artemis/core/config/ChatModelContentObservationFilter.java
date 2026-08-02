@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.Map.entry;
 
 import java.nio.charset.StandardCharsets;
@@ -19,6 +20,7 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -35,6 +37,7 @@ import io.micrometer.observation.ObservationFilter;
  */
 @Lazy
 @Component
+@Profile(PROFILE_CORE)
 public class ChatModelContentObservationFilter implements ObservationFilter {
 
     private static final Logger log = LoggerFactory.getLogger(ChatModelContentObservationFilter.class);

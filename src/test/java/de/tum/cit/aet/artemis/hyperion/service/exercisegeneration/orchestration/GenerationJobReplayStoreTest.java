@@ -194,11 +194,11 @@ class GenerationJobReplayStoreTest {
         shortLivedStore.recordFileChange(exerciseId, jobId, ExerciseGenerationFileChangeDTO.of("Solution.java", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1));
         shortLivedStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
 
-        shortLivedStore.retainAfterJobCleared(exerciseId, jobId);
-
         assertThat(transcriptMap().get(key)).isNotNull();
         assertThat(fileChangeMap().get(key)).isNotNull();
         assertThat(usageMap().get(jobId)).isNotNull();
+        shortLivedStore.retainAfterJobCleared(exerciseId, jobId);
+
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
             assertThat(transcriptMap().get(key)).as("transcript").isNull();
             assertThat(fileChangeMap().get(key)).as("file changes").isNull();

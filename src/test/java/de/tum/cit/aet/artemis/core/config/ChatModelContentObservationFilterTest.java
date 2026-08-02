@@ -30,7 +30,7 @@ class ChatModelContentObservationFilterTest {
 
     private final ChatModelContentObservationFilter filter = new ChatModelContentObservationFilter(objectMapper, true);
 
-    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner().withBean(ObjectMapper.class)
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner().withBean(ObjectMapper.class).withPropertyValues("spring.profiles.active=core")
             .withUserConfiguration(ChatModelContentObservationFilter.class);
 
     @Test

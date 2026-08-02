@@ -232,8 +232,8 @@ final class ProblemStatementBindingChecker {
             return List.of("these visible tests have no seam in test-plan.json: " + missingSeams + ". Assign each one the stable S1/S2/... ID from SPEC.md.");
         }
 
-        Map<String, List<String>> visibleTestsBySeam = visible.stream()
-                .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new, Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toList())));
+        Map<String, List<String>> visibleTestsBySeam = visible.stream().collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
+                Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toCollection(ArrayList::new))));
         Map<String, String> seamByTest = visible.stream()
                 .collect(Collectors.toMap(entry -> normalizeTestName(entry.name()), GeneratedTestPlan.Entry::seam, (first, ignored) -> first, LinkedHashMap::new));
         Set<String> boundNames = boundTestNames(problemStatement).stream().map(ProblemStatementBindingChecker::normalizeTestName)

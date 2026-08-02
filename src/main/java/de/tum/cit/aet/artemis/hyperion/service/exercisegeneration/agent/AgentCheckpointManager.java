@@ -4,10 +4,8 @@ import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.A
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -25,6 +23,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -706,16 +705,11 @@ public class AgentCheckpointManager {
     }
 
     private void writeAtomicBytes(Path target, byte[] bytes) throws IOException {
-        Files.createDirectories(target.getParent());
+        FileUtils.forceMkdir(target.getParent().toFile());
         Path temporary = tempFileUtilService.createTempFile(target.getParent(), target.getFileName().toString(), ".tmp");
         try {
-            Files.write(temporary, bytes);
-            try {
-                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            }
-            catch (AtomicMoveNotSupportedException ignored) {
-                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
-            }
+            FileUtils.writeByteArrayToFile(temporary.toFile(), bytes);
+            tempFileUtilService.moveReplacing(temporary, target);
         }
         finally {
             Files.deleteIfExists(temporary);

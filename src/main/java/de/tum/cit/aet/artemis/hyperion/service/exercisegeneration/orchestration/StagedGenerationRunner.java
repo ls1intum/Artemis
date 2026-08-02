@@ -907,7 +907,8 @@ public class StagedGenerationRunner {
                     + "method names. Never use `[tasks]`, `[Task]`, display names, or hidden test names. Write each task marker as plain Markdown on its own line, without inline "
                     + "backticks or a fenced code block.\nVisible tests grouped by specification seam:\n");
             plan.visibleEntries().stream()
-                    .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new, Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toList())))
+                    .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
+                            Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toCollection(ArrayList::new))))
                     .forEach((seam, names) -> handoff.append("- ").append(seam).append(": ").append(String.join(", ", names)).append("\n"));
             if (!seededStructuralTestNames.isEmpty()) {
                 handoff.append("Server-seeded structural checks grouped by owner type (all are visible and must also be bound exactly once):\n");

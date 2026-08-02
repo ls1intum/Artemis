@@ -292,9 +292,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testFileWriteUsage() {
-        ArchRule usage = noClasses().should()
+        ArchRule usage = noClasses().that(not(simpleName("TempFileUtilService"))).should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
-                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
+                .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils, or TempFileUtilService for atomic replacement.");
         usage.check(allClasses);
     }
 
