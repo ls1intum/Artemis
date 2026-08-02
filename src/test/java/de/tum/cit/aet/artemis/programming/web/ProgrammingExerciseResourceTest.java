@@ -20,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
@@ -57,11 +59,18 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private static final String TEST_PREFIX = "programmingexerciseresource";
 
     /** The timeline a variant group owns in the tests below; its members must keep exactly these dates. */
-    private static final ZonedDateTime GROUP_RELEASE_DATE = ZonedDateTime.now().plusDays(1);
+    private static final ZonedDateTime GROUP_BASE_DATE = ZonedDateTime.parse("2099-01-01T00:00:00Z");
 
-    private static final ZonedDateTime GROUP_DUE_DATE = ZonedDateTime.now().plusDays(7);
+    private static final ZonedDateTime GROUP_RELEASE_DATE = GROUP_BASE_DATE.plusDays(1);
 
-    private static final ZonedDateTime GROUP_ASSESSMENT_DUE_DATE = ZonedDateTime.now().plusDays(14);
+    private static final ZonedDateTime GROUP_START_DATE = GROUP_BASE_DATE.plusDays(2);
+
+    private static final ZonedDateTime GROUP_DUE_DATE = GROUP_BASE_DATE.plusDays(7);
+
+    private static final ZonedDateTime GROUP_ASSESSMENT_DUE_DATE = GROUP_BASE_DATE.plusDays(14);
+
+    /** Stays with the exercise rather than the group; the update only re-derives it from the group's due date. */
+    private static final ZonedDateTime EXERCISE_BUILD_AND_TEST_DATE = GROUP_DUE_DATE.plusHours(1);
 
     /** Title an update request sets alongside the (rejected) timeline change, to prove the rest of the update still lands. */
     private static final String RENAMED_VARIANT_TITLE = "Renamed variant";
@@ -552,21 +561,28 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     // The /timeline guard for group members is covered by ExerciseVariantGroupIntegrationTest.
 
     /** Puts {@link #programmingExercise} into a variant group whose timeline it already matches. */
-    private void attachProgrammingExerciseToVariantGroup() {
+    private void attachProgrammingExerciseToVariantGroup() throws JsonProcessingException {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.setTitle("Loop variants");
         group.setReleaseDate(GROUP_RELEASE_DATE);
+        group.setStartDate(GROUP_START_DATE);
         group.setDueDate(GROUP_DUE_DATE);
         group.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        // Without an AFTER_DUE_DATE phase the automatic service clears the build-and-test date on every update, which
+        // would hide whether the group guard leaves that exercise-owned date alone.
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
         programmingExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
         programmingExercise.setReleaseDate(GROUP_RELEASE_DATE);
+        programmingExercise.setStartDate(GROUP_START_DATE);
         programmingExercise.setDueDate(GROUP_DUE_DATE);
         programmingExercise.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);
-        // Set explicitly so the update does not additionally exercise the build-and-test offset logic covered above.
-        // The group does not own this date, so it stays with the exercise.
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(GROUP_DUE_DATE.plusHours(1));
+        // The group does not own this date, so it stays with the exercise (re-derived from the group's due date).
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(EXERCISE_BUILD_AND_TEST_DATE);
         programmingExerciseRepository.save(programmingExercise);
     }
 
@@ -574,6 +590,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private void requestTimelineShiftAlongsideUnownedChange() {
         programmingExercise.setTitle(RENAMED_VARIANT_TITLE);
         programmingExercise.setReleaseDate(GROUP_RELEASE_DATE.plusDays(2));
+        programmingExercise.setStartDate(GROUP_START_DATE.plusDays(2));
         programmingExercise.setDueDate(GROUP_DUE_DATE.plusDays(2));
         programmingExercise.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE.plusDays(2));
     }
@@ -582,9 +599,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         assertThat(exerciseFromDb.getReleaseDate().toInstant()).as("the group's release date wins over the request's").isCloseTo(GROUP_RELEASE_DATE.toInstant(),
                 within(1, SECONDS));
+        assertThat(exerciseFromDb.getStartDate().toInstant()).as("the group's start date wins over the request's").isCloseTo(GROUP_START_DATE.toInstant(), within(1, SECONDS));
         assertThat(exerciseFromDb.getDueDate().toInstant()).as("the group's due date wins over the request's").isCloseTo(GROUP_DUE_DATE.toInstant(), within(1, SECONDS));
         assertThat(exerciseFromDb.getAssessmentDueDate().toInstant()).as("the group's assessment due date wins over the request's").isCloseTo(GROUP_ASSESSMENT_DUE_DATE.toInstant(),
                 within(1, SECONDS));
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).as("the exercise-owned build-and-test date is left alone")
+                .isCloseTo(EXERCISE_BUILD_AND_TEST_DATE.toInstant(), within(1, SECONDS));
         assertThat(exerciseFromDb.getTitle()).as("the rest of the update still applies").isEqualTo(RENAMED_VARIANT_TITLE);
     }
 }

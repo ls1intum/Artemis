@@ -419,8 +419,9 @@ public class ProgrammingExerciseUpdateResource {
         // Update competency links using the proper mechanism
         competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
 
-        // A variant group owns its members' timeline (including the build-and-test date), so pin the dates back to the
-        // group. The dedicated timeline endpoint rejects group members outright instead.
+        // A variant group owns its members' shared dates, so pin those back to the group. The build-and-test date stays
+        // per exercise and is only re-derived from the shared due date. The dedicated timeline endpoint rejects group
+        // members outright instead.
         exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         return exercise;
