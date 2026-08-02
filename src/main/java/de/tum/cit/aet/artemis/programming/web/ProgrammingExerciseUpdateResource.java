@@ -212,10 +212,6 @@ public class ProgrammingExerciseUpdateResource {
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
 
-        // A variant group owns its members' timeline (including the build-and-test date), so pin the dates back to the
-        // group before validating. The dedicated timeline endpoint rejects group members outright instead.
-        exerciseVariantGroupService.applyOwningGroupTimeline(updatedProgrammingExercise);
-
         // Validate the updated exercise
         updatedProgrammingExercise.validateGeneralSettings();
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -327,7 +323,8 @@ public class ProgrammingExerciseUpdateResource {
 
     /**
      * Updates the existing ProgrammingExercise entity with values from the DTO.
-     * This includes updating competency links using the proper mechanism.
+     * This includes updating competency links using the proper mechanism and restoring the timeline of an owning
+     * variant group, so every caller persists a member with the group's dates.
      *
      * @param dto      the DTO containing updated values
      * @param exercise the existing exercise entity to update
@@ -421,6 +418,10 @@ public class ProgrammingExerciseUpdateResource {
 
         // Update competency links using the proper mechanism
         competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
+
+        // A variant group owns its members' timeline (including the build-and-test date), so pin the dates back to the
+        // group. The dedicated timeline endpoint rejects group members outright instead.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         return exercise;
     }
