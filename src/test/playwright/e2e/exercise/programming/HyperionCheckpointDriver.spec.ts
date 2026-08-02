@@ -28,7 +28,7 @@ test.describe('Hyperion checkpoint driver', { tag: '@slow' }, () => {
     test.describe.configure({ retries: 0 });
     test.use({ serviceWorkers: 'block' });
 
-    test('records or replays one generation run', async ({ page, login, exerciseAPIRequests, programmingExerciseCreation }) => {
+    test('records or replays one generation run', async ({ page, login, programmingExerciseCreation }) => {
         test.setTimeout(3_600_000);
         if (!brief) {
             throw new Error('HYPERION_CHECKPOINT_BRIEF must contain the instructor brief.');
@@ -105,12 +105,29 @@ test.describe('Hyperion checkpoint driver', { tag: '@slow' }, () => {
                 }
                 if (exercise?.id) {
                     await expect.poll(async () => (await getGenerationStatus(page, exercise!.id!)).running, { timeout: 90_000 }).toBe(false);
-                    await login(admin);
-                    await exerciseAPIRequests.deleteProgrammingExercise(exercise.id);
-                    await expect.poll(async () => (await page.request.get(`/api/programming/programming-exercises/${exercise!.id}`)).status()).toBe(404);
                 }
             } catch (error) {
                 cleanupError = error;
+            }
+            try {
+                if (exercise?.id) {
+                    await login(admin);
+                    await expect
+                        .poll(
+                            async () => {
+                                const response = await page.request.delete(`/api/programming/programming-exercises/${exercise!.id}`, {
+                                    params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
+                                });
+                                expect([200, 404, 409]).toContain(response.status());
+                                return response.status();
+                            },
+                            { timeout: 90_000, intervals: [1_000, 2_000, 5_000] },
+                        )
+                        .not.toBe(409);
+                    await expect.poll(async () => (await page.request.get(`/api/programming/programming-exercises/${exercise!.id}`)).status()).toBe(404);
+                }
+            } catch (error) {
+                cleanupError ??= error;
             }
         }
         if (runError) {
@@ -156,7 +173,11 @@ async function readProblemStatementEditor(page: Page): Promise<string | undefine
 
 async function getGenerationStatus(page: Page, exerciseId: number): Promise<GenerationStatus> {
     const response = await page.request.get(`/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/status`);
-    return response.status() === 404 ? { running: false } : ((await response.json()) as GenerationStatus);
+    if ([204, 404].includes(response.status())) {
+        return { running: false };
+    }
+    expect(response.ok()).toBeTruthy();
+    return (await response.json()) as GenerationStatus;
 }
 
 async function waitForTerminalStatus(page: Page, exerciseId: number, jobId: string) {

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, map, of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,11 +19,12 @@ import {
 
 type TestGenerationEvent = Omit<HyperionGenerationEvent, 'timestamp'> & { timestamp?: string };
 type TestGenerationMessage = TestGenerationEvent | ExerciseGenerationFileChange;
-type TestGenerationStatus = Omit<HyperionGenerationStatus, 'events' | 'revertAvailable' | 'ownedByCaller' | 'cancellable'> & {
+type TestGenerationStatus = Omit<HyperionGenerationStatus, 'events' | 'revertAvailable' | 'ownedByCaller' | 'cancellable' | 'accountingState'> & {
     events: TestGenerationEvent[];
     revertAvailable?: boolean;
     ownedByCaller?: boolean;
     cancellable?: boolean;
+    accountingState?: HyperionGenerationStatus['accountingState'];
 };
 
 function normalizeEvent(event: TestGenerationEvent): HyperionGenerationEvent {
@@ -41,6 +42,7 @@ function normalizeStatus(status: TestGenerationStatus): HyperionGenerationStatus
         revertAvailable: status.revertAvailable ?? false,
         ownedByCaller: status.ownedByCaller ?? true,
         cancellable: status.cancellable ?? status.running,
+        accountingState: status.accountingState ?? (status.running ? 'PENDING' : 'COMPLETE'),
     };
 }
 
@@ -51,7 +53,7 @@ class MockService {
     cancelCalls: [number, string][] = [];
 
     getStatus() {
-        return of(new HttpResponse<HyperionGenerationStatus>({ body: this.status ? normalizeStatus(this.status) : null }));
+        return of(this.status ? normalizeStatus(this.status) : null);
     }
 
     cancel(exerciseId: number, jobId: string): Observable<void> {
@@ -143,16 +145,13 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('does not let an older idle status response undo the public exercise lock', () => {
-        const staleIdleStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const staleIdleStatus = new Subject<HyperionGenerationStatus | null>();
         const runningStatus = normalizeStatus({ jobId: 'remote-job', running: true, ownedByCaller: false, events: [], fileChanges: [] });
-        service.getStatus = vi
-            .fn()
-            .mockReturnValueOnce(staleIdleStatus)
-            .mockReturnValue(of(new HttpResponse({ body: runningStatus })));
+        service.getStatus = vi.fn().mockReturnValueOnce(staleIdleStatus).mockReturnValue(of(runningStatus));
         const fixture = createWith(null);
 
         service.exerciseState$.next({ exerciseId: 42, jobId: 'remote-job', running: true });
-        staleIdleStatus.next(new HttpResponse<HyperionGenerationStatus>({ body: null }));
+        staleIdleStatus.next(null);
         fixture.detectChanges();
 
         expect(service.getStatus).toHaveBeenCalledTimes(2);
@@ -192,7 +191,7 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('shows why editing is locked while status is loading', () => {
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi.fn(() => pendingStatus);
 
         const fixture = createWith(null);
@@ -233,7 +232,7 @@ describe('HyperionGenerationActivityComponent', () => {
         service.getStatus = vi
             .fn()
             .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })))
-            .mockReturnValueOnce(of(new HttpResponse<HyperionGenerationStatus>({ body: null })));
+            .mockReturnValueOnce(of(null));
 
         vi.advanceTimersByTime(15_000);
 
@@ -262,7 +261,7 @@ describe('HyperionGenerationActivityComponent', () => {
     it('retries an authoritative status request that fails after live progress arrives', () => {
         vi.useFakeTimers();
         createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi.fn().mockReturnValueOnce(pendingStatus).mockReturnValue(EMPTY);
 
         vi.advanceTimersByTime(5_000);
@@ -278,7 +277,7 @@ describe('HyperionGenerationActivityComponent', () => {
     it('does not let a terminal stream event cancel an in-flight authoritative status request', () => {
         vi.useFakeTimers();
         createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi.fn().mockReturnValueOnce(pendingStatus).mockReturnValue(EMPTY);
 
         vi.advanceTimersByTime(5_000);
@@ -310,7 +309,7 @@ describe('HyperionGenerationActivityComponent', () => {
         service.getStatus = vi
             .fn()
             .mockReturnValueOnce(throwError(() => new Error('background poll failed')))
-            .mockReturnValueOnce(of(new HttpResponse({ body: runningStatus })));
+            .mockReturnValueOnce(of(runningStatus));
 
         vi.advanceTimersByTime(5_000);
         expect(fixture.componentInstance.statusLoadFailed()).toBe(false);
@@ -343,7 +342,7 @@ describe('HyperionGenerationActivityComponent', () => {
 
     it('releases the manual editor lock when retained-status requests never respond', () => {
         vi.useFakeTimers();
-        service.getStatus = vi.fn(() => new Subject<HttpResponse<HyperionGenerationStatus>>());
+        service.getStatus = vi.fn(() => new Subject<HyperionGenerationStatus | null>());
         const fixture = createWith(null);
 
         vi.advanceTimersByTime(18_000);
@@ -373,7 +372,7 @@ describe('HyperionGenerationActivityComponent', () => {
 
     it('keeps caller-owned terminal state usable when its authoritative refresh fails', () => {
         const fixture = createWith(null);
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi.fn(() => pendingStatus);
         fixture.componentInstance.attachToJob('j1', 'ADAPT');
 
@@ -390,8 +389,8 @@ describe('HyperionGenerationActivityComponent', () => {
 
     it('clears any status failure when a matched terminal refresh succeeds', () => {
         const fixture = createWith({ jobId: 'j1', mode: 'ADAPT', running: true, events: [], fileChanges: [] });
-        const terminalStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
-        const revertStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const terminalStatus = new Subject<HyperionGenerationStatus | null>();
+        const revertStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi.fn().mockReturnValueOnce(terminalStatus).mockReturnValueOnce(revertStatus);
 
         service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
@@ -399,15 +398,13 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.statusLoadFailed.set(true);
 
         revertStatus.next(
-            new HttpResponse({
-                body: normalizeStatus({
-                    jobId: 'j1',
-                    mode: 'ADAPT',
-                    running: false,
-                    events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
-                    fileChanges: [],
-                    revertAvailable: true,
-                }),
+            normalizeStatus({
+                jobId: 'j1',
+                mode: 'ADAPT',
+                running: false,
+                events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
+                fileChanges: [],
+                revertAvailable: true,
             }),
         );
 
@@ -416,7 +413,7 @@ describe('HyperionGenerationActivityComponent', () => {
 
     it('does not update status after the component is destroyed', () => {
         vi.useFakeTimers();
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi.fn(() => pendingStatus);
         const fixture = createWith(null);
         const component = fixture.componentInstance;
@@ -1104,11 +1101,11 @@ describe('HyperionGenerationActivityComponent', () => {
     it('does not retry a late revert-availability failure after destruction', () => {
         vi.useFakeTimers();
         const status: TestGenerationStatus = { jobId: 'j1', mode: 'ADAPT', running: true, events: [], fileChanges: [] };
-        const terminalStatus$ = new Subject<HttpResponse<HyperionGenerationStatus>>();
-        const availability$ = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const terminalStatus$ = new Subject<HyperionGenerationStatus | null>();
+        const availability$ = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = vi
             .fn()
-            .mockReturnValueOnce(of(new HttpResponse({ body: normalizeStatus(status) })))
+            .mockReturnValueOnce(of(normalizeStatus(status)))
             .mockReturnValueOnce(terminalStatus$)
             .mockReturnValueOnce(availability$);
         const fixture = createWith(status);
@@ -1205,7 +1202,7 @@ describe('HyperionGenerationActivityComponent', () => {
             fileChanges: [],
             revertAvailable: false,
         } as unknown as HyperionGenerationStatus;
-        service.getStatus = vi.fn(() => of(new HttpResponse({ body: malformedStatus })));
+        service.getStatus = vi.fn(() => of(malformedStatus));
         const subscribeToStream = vi.spyOn(service, 'subscribeToStream');
 
         const fixture = createWith(null);
@@ -1226,15 +1223,12 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [{ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true }],
             fileChanges: [],
         });
-        const initialStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
-        service.getStatus = vi
-            .fn()
-            .mockReturnValueOnce(initialStatus)
-            .mockReturnValueOnce(of(new HttpResponse({ body: done })));
+        const initialStatus = new Subject<HyperionGenerationStatus | null>();
+        service.getStatus = vi.fn().mockReturnValueOnce(initialStatus).mockReturnValueOnce(of(done));
         const subscribeToStream = vi.spyOn(service, 'subscribeToStream');
 
         const fixture = createWith(null);
-        initialStatus.next(new HttpResponse({ body: running }));
+        initialStatus.next(running);
         initialStatus.complete();
         await Promise.resolve();
 
@@ -1633,13 +1627,14 @@ describe('HyperionGenerationActivityComponent', () => {
             revertAvailable: false,
             ownedByCaller: true,
             cancellable: true,
+            accountingState: 'PENDING',
         };
-        const stoppedStatus = { ...runningStatus, running: false, events: [{ type: 'CANCELLED' as const, message: 'Cancelled' }] };
+        const stoppedStatus = { ...runningStatus, running: false, events: [{ type: 'CANCELLED' as const, message: 'Cancelled' }], accountingState: 'COMPLETE' as const };
         service.getStatus = vi
             .fn()
-            .mockReturnValueOnce(of(new HttpResponse({ body: runningStatus })))
-            .mockReturnValueOnce(of(new HttpResponse({ body: stoppedStatus })))
-            .mockReturnValueOnce(of(new HttpResponse({ body: { ...stoppedStatus, revertAvailable: true } })));
+            .mockReturnValueOnce(of(runningStatus))
+            .mockReturnValueOnce(of(stoppedStatus))
+            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true }));
         component.attachToJob('later-run', 'GENERATE');
 
         service.stream$.next({ type: 'CANCELLED', message: 'Cancelled' });
@@ -1701,7 +1696,7 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('does not let a late status response clobber a freshly attached live run', () => {
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = () => pendingStatus.asObservable();
         const fixture = createWith(null);
         const component = fixture.componentInstance;
@@ -1710,23 +1705,19 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.jobId()).toBe('live');
         expect(component.running()).toBe(true);
 
-        pendingStatus.next(new HttpResponse<HyperionGenerationStatus>({ body: normalizeStatus({ jobId: 'stale', running: false, events: [], fileChanges: [] }) }));
+        pendingStatus.next(normalizeStatus({ jobId: 'stale', running: false, events: [], fileChanges: [] }));
         expect(component.jobId()).toBe('live');
         expect(component.running()).toBe(true);
     });
 
     it('adopts a newer active run owned by the same instructor', () => {
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = () => pendingStatus.asObservable();
         const fixture = createWith(null);
         const component = fixture.componentInstance;
 
         component.attachToJob('previous', 'GENERATE');
-        pendingStatus.next(
-            new HttpResponse<HyperionGenerationStatus>({
-                body: normalizeStatus({ jobId: 'current', mode: 'ADAPT', running: true, ownedByCaller: true, events: [], fileChanges: [] }),
-            }),
-        );
+        pendingStatus.next(normalizeStatus({ jobId: 'current', mode: 'ADAPT', running: true, ownedByCaller: true, events: [], fileChanges: [] }));
 
         expect(component.jobId()).toBe('current');
         expect(component.mode()).toBe('ADAPT');
@@ -1748,7 +1739,7 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('merges a late status response without clobbering newer live fileChanges or terminal state', () => {
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = () => pendingStatus.asObservable();
         const fixture = createWith(null);
         const component = fixture.componentInstance;
@@ -1761,19 +1752,16 @@ describe('HyperionGenerationActivityComponent', () => {
             liveExerciseChanged: true,
         });
         expect(component.detailsExpanded()).toBe(true);
-        pendingStatus.next(
-            new HttpResponse<HyperionGenerationStatus>({
-                body: {
-                    jobId: 'live',
-                    running: true,
-                    events: [{ type: 'DONE', message: 'older retained terminal', liveExerciseChanged: true, timestamp: '' }],
-                    fileChanges: [fileChange('solution/A.java', 'write')],
-                    revertAvailable: false,
-                    ownedByCaller: true,
-                    cancellable: true,
-                },
-            }),
-        );
+        pendingStatus.next({
+            jobId: 'live',
+            running: true,
+            events: [{ type: 'DONE', message: 'older retained terminal', liveExerciseChanged: true, timestamp: '' }],
+            fileChanges: [fileChange('solution/A.java', 'write')],
+            revertAvailable: false,
+            ownedByCaller: true,
+            cancellable: true,
+            accountingState: 'PENDING',
+        });
 
         expect(component.running()).toBe(false);
         expect(component.events().map((event) => event.type)).toContain('DONE');
@@ -1801,14 +1789,14 @@ describe('HyperionGenerationActivityComponent', () => {
     });
 
     it('ignores a status response that arrives after the exercise is cleared', () => {
-        const pendingStatus = new Subject<HttpResponse<HyperionGenerationStatus>>();
+        const pendingStatus = new Subject<HyperionGenerationStatus | null>();
         service.getStatus = () => pendingStatus.asObservable();
         const fixture = createWith(null);
         const component = fixture.componentInstance;
 
         fixture.componentRef.setInput('exerciseId', undefined);
         fixture.detectChanges();
-        pendingStatus.next(new HttpResponse({ body: normalizeStatus({ jobId: 'stale', running: true, events: [], fileChanges: [] }) }));
+        pendingStatus.next(normalizeStatus({ jobId: 'stale', running: true, events: [], fileChanges: [] }));
 
         expect(component.jobId()).toBeUndefined();
         expect(component.running()).toBe(false);

@@ -259,7 +259,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
                 }),
             )
             .subscribe({
-                next: (response) => {
+                next: (status) => {
                     if (sequence !== this.loadSequence) {
                         return;
                     }
@@ -268,7 +268,6 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
                     this.statusLoadFailed.set(false);
                     this.statusLoadAttempts = 0;
                     this.ownershipResolved = true;
-                    const status = response.body ?? undefined;
                     if (!status) {
                         if (this.cancelRequested()) {
                             this.reset();
@@ -504,8 +503,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
             .getStatus(exerciseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (response) => {
-                    const status = response.body ?? undefined;
+                next: (status) => {
                     if (this.exerciseId() === exerciseId && this.jobId() === jobId && status?.jobId === jobId) {
                         this.clearStatusRetry();
                         this.statusLoadFailed.set(false);

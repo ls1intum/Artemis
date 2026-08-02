@@ -60,7 +60,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
 
     @BeforeEach
     void setUp() {
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithAuthorities()).thenReturn(user);
         when(userRepository.getUser()).thenReturn(user);
         when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(leaseRelease));
         resource = new ProgrammingExerciseCreationResource(authCheckService, courseService, validationService, creationUpdateService, mock(StaticCodeAnalysisService.class),

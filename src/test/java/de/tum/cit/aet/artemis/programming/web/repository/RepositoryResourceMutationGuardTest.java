@@ -161,7 +161,7 @@ class RepositoryResourceMutationGuardTest {
         when(auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId)).thenReturn(stale, current);
         when(auxiliaryRepositoryRepository.findExerciseIdById(auxiliaryRepositoryId)).thenReturn(Optional.of(EXERCISE_ID));
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities("instructor")).thenReturn(user("instructor"));
+        when(userRepository.getUserWithAuthorities("instructor")).thenReturn(user("instructor"));
         RepositoryAccessService repositoryAccessService = mock(RepositoryAccessService.class);
         GitService gitService = mock(GitService.class);
         when(gitService.getOrCheckoutRepository(currentUri, true, true)).thenReturn(mock(Repository.class));

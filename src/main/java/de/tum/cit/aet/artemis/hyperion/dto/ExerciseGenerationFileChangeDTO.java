@@ -11,12 +11,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /** A lightweight notification that the generation agent changed a file. */
 @Schema(description = "A file changed by the generation agent")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGenerationFileChangeDTO(@Schema(description = "Constant discriminator identifying a file change on the shared topic", allowableValues = TYPE) String type,
-        @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket", allowableValues = {
-                REPOSITORY_SOLUTION, REPOSITORY_TEMPLATE, REPOSITORY_TESTS, REPOSITORY_OTHER }) String repo,
-        @Schema(description = "The successful file tool operation", allowableValues = { ACTION_WRITE, ACTION_EDIT, ACTION_DELETE }) String action,
-        @Schema(description = "The agent turn the change happened on") int turn, @Schema(description = "The moment the change was produced") Instant timestamp)
-        implements Serializable{
+public record ExerciseGenerationFileChangeDTO(
+        @Schema(description = "Constant discriminator identifying a file change on the shared topic", allowableValues = TYPE, requiredMode = Schema.RequiredMode.REQUIRED) String type,
+        @Schema(description = "Workspace-relative file path", requiredMode = Schema.RequiredMode.REQUIRED) String path,
+        @Schema(description = "Owning repository bucket", allowableValues = {
+                REPOSITORY_SOLUTION, REPOSITORY_TEMPLATE, REPOSITORY_TESTS, REPOSITORY_OTHER }, requiredMode = Schema.RequiredMode.REQUIRED) String repo,
+        @Schema(description = "The successful file tool operation", allowableValues = { ACTION_WRITE, ACTION_EDIT,
+                ACTION_DELETE }, requiredMode = Schema.RequiredMode.REQUIRED) String action,
+        @Schema(description = "The agent turn the change happened on", requiredMode = Schema.RequiredMode.REQUIRED) int turn,
+        @Schema(description = "The moment the change was produced", requiredMode = Schema.RequiredMode.REQUIRED) Instant timestamp) implements Serializable{
 
     @Serial
     private static final long serialVersionUID = 1L;

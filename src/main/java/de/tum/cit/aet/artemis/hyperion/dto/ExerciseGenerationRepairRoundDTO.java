@@ -28,13 +28,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Per-round finding bookkeeping of the semantic repair loop, so a run's transcript shows whether repairing drains findings")
-public record ExerciseGenerationRepairRoundDTO(@Schema(description = "The 1-based index of this review round within the run") int round,
-        @Schema(description = "The 1-based authoring attempt whose candidate was reviewed") int attempt,
-        @Schema(description = "How many of this round's findings block acceptance") int blocking,
-        @Schema(description = "How many of this round's findings are advisory") int advisory,
-        @Schema(description = "How many of this round's findings were already present in the previous round") int carriedOver,
-        @Schema(description = "How many of the previous round's findings are gone in this round") int drained,
-        @Schema(description = "How many of this round's findings are new since the previous round") int fresh) implements Serializable {
+public record ExerciseGenerationRepairRoundDTO(
+        @Schema(description = "The 1-based index of this review round within the run", requiredMode = Schema.RequiredMode.REQUIRED) int round,
+        @Schema(description = "The 1-based authoring attempt whose candidate was reviewed", requiredMode = Schema.RequiredMode.REQUIRED) int attempt,
+        @Schema(description = "How many of this round's findings block acceptance", requiredMode = Schema.RequiredMode.REQUIRED) int blocking,
+        @Schema(description = "How many of this round's findings are advisory", requiredMode = Schema.RequiredMode.REQUIRED) int advisory,
+        @Schema(description = "How many of this round's findings were already present in the previous round", requiredMode = Schema.RequiredMode.REQUIRED) int carriedOver,
+        @Schema(description = "How many of the previous round's findings are gone in this round", requiredMode = Schema.RequiredMode.REQUIRED) int drained,
+        @Schema(description = "How many of this round's findings are new since the previous round", requiredMode = Schema.RequiredMode.REQUIRED) int fresh)
+        implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

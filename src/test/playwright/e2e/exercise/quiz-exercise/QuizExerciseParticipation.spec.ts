@@ -7,7 +7,7 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
-import { readResponseJson } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
 
@@ -441,10 +441,16 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, exerciseAPIRequests, quizExerciseCreation }) => {
             await login(admin, '/course-management/' + course.id + '/exercises');
             await courseManagementExercises.createQuizExercise();
-            await quizExerciseCreation.setTitle('Cypress Quiz');
+            // Unique per test: three tests in this block each create a quiz and nothing deletes them, so a
+            // fixed title would make the by-title recovery lookup below ambiguous.
+            const quizTitle = 'Cypress Quiz ' + generateUUID();
+            await quizExerciseCreation.setTitle(quizTitle);
             await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
             const response = await quizExerciseCreation.saveQuiz();
-            quizExercise = await readResponseJson(response);
+            // The drag-and-drop background image is a disk-backed file, so this create response cannot be held
+            // in Node and Chrome discards it when the editor navigates away on save. Fall back to an idempotent
+            // lookup instead of failing the whole describe block on a body that no longer exists.
+            quizExercise = await readResponseJson<QuizExercise>(response, () => exerciseAPIRequests.getQuizExerciseByTitle(course.id!, quizTitle));
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
         });

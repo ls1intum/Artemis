@@ -38,7 +38,7 @@ describe('HyperionExerciseGenerationService', () => {
         request.flush({ jobId: 'j1' });
     });
 
-    it('requests the run status with observed response', () => {
+    it('requests the run status', () => {
         service.getStatus(42).subscribe();
         const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/status');
         expect(request.request.method).toBe('GET');

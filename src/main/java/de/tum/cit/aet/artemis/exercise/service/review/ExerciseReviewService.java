@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service.review;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -13,13 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +50,7 @@ import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -87,9 +81,11 @@ public class ExerciseReviewService {
 
     private final ExerciseReviewRepositoryService exerciseReviewRepositoryService;
 
+    private final RepositoryService repositoryService;
+
     public ExerciseReviewService(CommentThreadGroupRepository commentThreadGroupRepository, CommentThreadRepository commentThreadRepository, CommentRepository commentRepository,
             ExerciseRepository exerciseRepository, ExerciseVersionRepository exerciseVersionRepository, UserRepository userRepository, GitService gitService,
-            ExerciseReviewRepositoryService exerciseReviewRepositoryService) {
+            ExerciseReviewRepositoryService exerciseReviewRepositoryService, RepositoryService repositoryService) {
         this.commentThreadGroupRepository = commentThreadGroupRepository;
         this.commentThreadRepository = commentThreadRepository;
         this.commentRepository = commentRepository;
@@ -98,6 +94,7 @@ public class ExerciseReviewService {
         this.userRepository = userRepository;
         this.gitService = gitService;
         this.exerciseReviewRepositoryService = exerciseReviewRepositoryService;
+        this.repositoryService = repositoryService;
     }
 
     /**
@@ -687,19 +684,8 @@ public class ExerciseReviewService {
 
     @Nullable
     private String readFileContentAtCommit(LocalVCRepositoryUri repositoryUri, String commitSha, String filePath, long exerciseId, CommentThreadLocationType targetType) {
-        try (Repository repository = gitService.getBareRepository(repositoryUri, false); RevWalk revWalk = new RevWalk(repository)) {
-            ObjectId commitId = repository.resolve(commitSha + "^{commit}");
-            if (commitId == null) {
-                return null;
-            }
-            RevCommit commit = revWalk.parseCommit(commitId);
-            try (TreeWalk treeWalk = TreeWalk.forPath(repository, filePath, commit.getTree())) {
-                if (treeWalk == null || treeWalk.getFileMode(0).getObjectType() != Constants.OBJ_BLOB) {
-                    return null;
-                }
-                ObjectLoader loader = repository.open(treeWalk.getObjectId(0));
-                return new String(loader.getBytes(), StandardCharsets.UTF_8);
-            }
+        try (Repository repository = gitService.getBareRepository(repositoryUri, false)) {
+            return repositoryService.getFileContentFromBareRepository(repository, commitSha, filePath).orElse(null);
         }
         catch (Exception ex) {
             log.warn("Failed to read expected code for exercise {} (target {}, file {}) at commit {}", exerciseId, targetType, filePath, commitSha, ex);

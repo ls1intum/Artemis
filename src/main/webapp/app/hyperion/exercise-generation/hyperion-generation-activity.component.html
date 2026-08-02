@@ -42,7 +42,7 @@
                         </tum-ui-tag>
                     }
                     @if (jobId() && hasDetails()) {
-                        <!-- Attribute form of the kit button so the disclosure semantics (aria-expanded / aria-controls) and the focus target stay on one native element. -->
+                        <!-- Use the native button for disclosure ARIA and focus semantics. -->
                         <button
                             tumUiButton
                             type="button"
@@ -118,7 +118,6 @@
             </div>
         }
 
-        <!-- role/aria-live are set explicitly: p-message carried them on its host, the kit message leaves the live-region semantics to the caller. -->
         @if (statusLoadFailed()) {
             <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite">
                 <div class="hyperion-activity-message-content">
@@ -263,11 +262,7 @@
             </div>
         }
 
-        <!--
-            Declared unconditionally on purpose: guarding it on canRevert() would destroy the dialog mid-interaction
-            whenever that predicate flips while the instructor is deciding. confirmRevert() already refuses to open it
-            when undo is unavailable, and revert() re-checks before calling the server.
-        -->
+        <!-- Keep the dialog mounted while open; action handlers re-check availability. -->
         <tum-ui-dialog
             [(visible)]="confirmRevertVisible"
             [modal]="true"

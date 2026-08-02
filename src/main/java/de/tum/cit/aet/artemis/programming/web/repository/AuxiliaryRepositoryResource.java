@@ -75,7 +75,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @Override
     Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
         final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
@@ -91,7 +91,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     boolean canAccessRepository(Long auxiliaryRepositoryId) {
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId).getExercise(),
-                    userRepository.getUserWithGroupsAndAuthorities(), "auxiliary");
+                    userRepository.getUserWithAuthorities(), "auxiliary");
         }
         catch (AccessForbiddenException e) {
             return false;
@@ -205,7 +205,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
         ProgrammingExercise exercise = auxiliaryRepository.getExercise();
 
         try {
-            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithAuthorities(principal.getName()), "test");
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "noPermissions");
@@ -217,8 +217,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
                 if (!Objects.equals(currentRepository.getExercise().getId(), exercise.getId())) {
                     throw new ResponseStatusException(HttpStatus.CONFLICT, "The auxiliary repository changed while the update was starting.");
                 }
-                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, currentRepository.getExercise(),
-                        userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
+                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, currentRepository.getExercise(), userRepository.getUserWithAuthorities(principal.getName()),
+                        "test");
                 return gitService.getOrCheckoutRepository(currentRepository.getVcsRepositoryUri(), true, true);
             }
             catch (CheckoutConflictException | WrongRepositoryStateException ex) {

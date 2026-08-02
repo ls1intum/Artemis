@@ -42,7 +42,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         when(repository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)).thenReturn(exercise);
         User user = user("editor");
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithAuthorities()).thenReturn(user);
         AuthorizationCheckService authorizationCheckService = mock(AuthorizationCheckService.class);
         ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
@@ -54,7 +54,7 @@ class ProgrammingExerciseTestCaseResourceTest {
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.updateTestCases(exerciseId, Set.of()));
 
-        verify(userRepository).getUserWithGroupsAndAuthorities();
+        verify(userRepository).getUserWithAuthorities();
         var order = inOrder(authorizationCheckService, mutationGuard);
         order.verify(authorizationCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
         order.verify(mutationGuard).claimExternalMutation(exerciseId);
@@ -69,7 +69,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         when(repository.findByIdElseThrow(exerciseId)).thenReturn(exercise);
         User user = user("editor");
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithAuthorities()).thenReturn(user);
         AuthorizationCheckService authorizationCheckService = mock(AuthorizationCheckService.class);
         ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(exerciseId)).thenThrow(new ConflictException("Exercise generation is running", "programmingExercise", "generationRunning"));
@@ -80,7 +80,7 @@ class ProgrammingExerciseTestCaseResourceTest {
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.resetTestCases(exerciseId));
 
-        verify(userRepository).getUserWithGroupsAndAuthorities();
+        verify(userRepository).getUserWithAuthorities();
         var order = inOrder(authorizationCheckService, mutationGuard);
         order.verify(authorizationCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
         order.verify(mutationGuard).claimExternalMutation(exerciseId);
@@ -97,7 +97,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         when(repository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)).thenReturn(stale, fresh);
         User user = user("editor");
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithAuthorities()).thenReturn(user);
         ProgrammingExerciseTestCaseService testCaseService = mock(ProgrammingExerciseTestCaseService.class);
         ProgrammingExerciseTestCaseDTO update = mock(ProgrammingExerciseTestCaseDTO.class);
         ProgrammingExerciseTestCase updatedTestCase = mock(ProgrammingExerciseTestCase.class);
@@ -142,7 +142,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         when(repository.findByIdElseThrow(exerciseId)).thenReturn(stale, fresh, fresh);
         User user = user("editor");
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        when(userRepository.getUserWithAuthorities()).thenReturn(user);
         ProgrammingExerciseTestCaseService testCaseService = mock(ProgrammingExerciseTestCaseService.class);
         doAnswer(invocation -> {
             assertThat(leaseHeld).isTrue();
@@ -209,7 +209,7 @@ class ProgrammingExerciseTestCaseResourceTest {
     private ProgrammingExerciseTestCaseResource resource(ProgrammingExerciseRepository repository, ProgrammingExerciseTestCaseService testCaseService,
             ProgrammingExerciseMutationGuardService mutationGuard) {
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user("editor"));
+        when(userRepository.getUserWithAuthorities()).thenReturn(user("editor"));
         return resource(repository, userRepository, mock(AuthorizationCheckService.class), testCaseService, mock(ProgrammingExerciseCreationScheduleService.class),
                 mock(ExerciseVersionService.class), mutationGuard);
     }

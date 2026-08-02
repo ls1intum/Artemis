@@ -17,6 +17,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { EMPTY, Observable, Subject, catchError, exhaustMap, interval, map, merge, takeUntil, tap, timer } from 'rxjs';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 
 @Component({
     selector: 'jhi-hyperion-generation-detail',
@@ -39,15 +40,14 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
     ],
 })
 export class HyperionGenerationDetailComponent implements OnInit {
-    /** How often the sandbox list is polled while the generation is still running. */
     private static readonly REFRESH_INTERVAL_MS = 5000;
 
-    /** How often the elapsed-duration display re-renders. */
     private static readonly CLOCK_INTERVAL_MS = 1000;
 
     private readonly route = inject(ActivatedRoute);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly serverDateService = inject(ArtemisServerDateService);
 
     readonly job = signal<GenerationSandboxJob | undefined>(undefined);
     readonly loading = signal(false);
@@ -68,24 +68,16 @@ export class HyperionGenerationDetailComponent implements OnInit {
     readonly faCircleCheck = faCircleCheck;
     readonly faTriangleExclamation = faTriangleExclamation;
 
-    /** Emits once when the generation reached a terminal state; stops both the background refresh and the elapsed-time clock. */
     private readonly generationEnded = new Subject<void>();
 
-    /** Manual (re)load requests from the retry buttons and from a completed cancellation; the value is the `showLoading` flag. */
     private readonly loadRequests = new Subject<boolean>();
 
-    /**
-     * Ticks once per second so the elapsed duration re-renders. It stops for good when the generation ends, which freezes
-     * the signal on its last value and therefore freezes the displayed duration.
-     * NOTE: for clock-skew correctness this should read `ArtemisServerDateService.now()` instead of the raw client clock;
-     * that behaviour is deliberately left unchanged here.
-     */
     private readonly now = toSignal(
         interval(HyperionGenerationDetailComponent.CLOCK_INTERVAL_MS).pipe(
             takeUntil(this.generationEnded),
-            map(() => Date.now()),
+            map(() => this.serverDateService.now().valueOf()),
         ),
-        { initialValue: Date.now() },
+        { initialValue: this.serverDateService.now().valueOf() },
     );
 
     private initialLoadResolved = false;
@@ -113,8 +105,7 @@ export class HyperionGenerationDetailComponent implements OnInit {
             ),
         )
             .pipe(
-                // exhaustMap, not switchMap: a slow refresh must not be cancelled and re-fired. It also subsumes the
-                // former re-entrancy guard, as further requests are ignored while one is still in flight.
+                // Ignore refresh requests while one is in flight instead of cancelling the active request.
                 exhaustMap((showLoading) => this.fetchJob(showLoading)),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -155,10 +146,6 @@ export class HyperionGenerationDetailComponent implements OnInit {
         return `artemisApp.buildAgents.generationSandboxes.${mode === 'ADAPT' ? 'adapt' : 'generate'}`;
     }
 
-    /**
-     * Requests the sandbox list once. Errors are handled inside this inner pipe so that a failing request can never
-     * complete the outer polling stream.
-     */
     private fetchJob(showLoading: boolean): Observable<unknown> {
         this.loading.set(showLoading);
         this.loadFailed.set(false);
@@ -201,16 +188,19 @@ export class HyperionGenerationDetailComponent implements OnInit {
     private cancel(job: GenerationSandboxJob): void {
         this.canceling.set(true);
         this.cancelFailed.set(false);
-        this.buildAgentsService.cancelGeneration(job.exerciseId, job.jobId).subscribe({
-            next: () => {
-                this.canceling.set(false);
-                this.cancellationRequested.set(true);
-                this.load(false);
-            },
-            error: () => {
-                this.canceling.set(false);
-                this.cancelFailed.set(true);
-            },
-        });
+        this.buildAgentsService
+            .cancelGeneration(job.exerciseId, job.jobId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.canceling.set(false);
+                    this.cancellationRequested.set(true);
+                    this.load(false);
+                },
+                error: () => {
+                    this.canceling.set(false);
+                    this.cancelFailed.set(true);
+                },
+            });
     }
 }

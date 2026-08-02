@@ -289,7 +289,7 @@ final class HyperionMockedLlmE2eSupport {
                 case '\t' -> escaped.append("\\t");
                 default -> {
                     if (c < 0x20) {
-                        escaped.append(String.format("\\u%04x", (int) c));
+                        escaped.append("\\u%04x".formatted((int) c));
                     }
                     else {
                         escaped.append(c);

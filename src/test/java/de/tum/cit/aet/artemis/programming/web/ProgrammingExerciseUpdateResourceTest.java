@@ -186,7 +186,7 @@ class ProgrammingExerciseUpdateResourceTest {
     private ProgrammingExerciseUpdateResource resource(ProgrammingExerciseRepository repository, ExerciseService exerciseService, ExerciseVersionService versionService,
             ProgrammingExerciseCreationUpdateService updateService) {
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user("editor"));
+        when(userRepository.getUserWithAuthorities()).thenReturn(user("editor"));
         CourseService courseService = mock(CourseService.class);
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0, ProgrammingExercise.class).getCourseViaExerciseGroupOrCourseMember());

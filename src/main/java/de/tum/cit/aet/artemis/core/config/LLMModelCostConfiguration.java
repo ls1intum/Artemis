@@ -43,7 +43,12 @@ public class LLMModelCostConfiguration {
         }
     }
 
-    /** Normalizes model names to the form supported in environment-variable map keys. */
+    /**
+     * Normalizes model names to the form supported in environment-variable map keys.
+     *
+     * @param value the model name
+     * @return the alphanumeric model name
+     */
     public static String stripToAlphanumeric(String value) {
         return NON_ALPHANUMERIC_PATTERN.matcher(value).replaceAll("");
     }

@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
+import { MAX_GRADING_POINTS } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from '../services/course-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -200,6 +201,14 @@ export class CourseOnboardingComponent implements OnInit {
                 }
                 if (current.maxPoints !== undefined && current.maxPoints <= 0) {
                     this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && !Number.isInteger(current.maxPoints)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsWholeNumber');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints > MAX_GRADING_POINTS) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsTooHigh', { max: MAX_GRADING_POINTS });
                     return false;
                 }
                 break;

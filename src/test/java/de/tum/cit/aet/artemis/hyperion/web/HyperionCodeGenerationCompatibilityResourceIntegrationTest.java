@@ -52,17 +52,13 @@ class HyperionCodeGenerationCompatibilityResourceIntegrationTest extends Abstrac
 
     @BeforeEach
     void setup() {
-        // OTHER_PREFIX must be added first: addUsers wipes the groups of every existing user, so whichever batch is added last keeps its groups. The TEST_PREFIX users need to
-        // retain their group memberships to pass the @EnforceAtLeastEditorInExercise DB check.
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        // Restrict the course's groups to TEST_PREFIX so the OTHER_PREFIX instructor is not a member of this course and the cross-course isolation branch can be exercised.
-        course.setStudentGroupName(TEST_PREFIX + "tumuser");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
-        courseRepository.save(course);
+        userUtilService.addStudentToCourse(TEST_PREFIX + "student1", course);
+        userUtilService.addTeachingAssistantToCourse(TEST_PREFIX + "tutor1", course);
+        userUtilService.addEditorToCourse(TEST_PREFIX + "editor1", course);
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", course);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         exerciseId = programmingExerciseRepository.save(programmingExercise).getId();
     }

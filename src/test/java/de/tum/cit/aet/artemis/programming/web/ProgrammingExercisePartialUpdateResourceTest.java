@@ -187,7 +187,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
     private ProgrammingExercisePartialUpdateResource resource(ProgrammingExerciseRepository repository, ProgrammingExerciseCreationUpdateService updateService,
             ProgrammingExerciseMutationGuardService mutationGuard, ExerciseVersionService versionService) {
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user("editor"));
+        when(userRepository.getUserWithAuthorities()).thenReturn(user("editor"));
         return new ProgrammingExercisePartialUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), mock(ExerciseService.class), updateService,
                 mock(ProgrammingExerciseTaskService.class), versionService, mutationGuard);
     }

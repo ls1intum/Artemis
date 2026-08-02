@@ -920,8 +920,6 @@ class GenerationTaskServiceTest {
 
     @Test
     void workerExit_sealsAccountingBeforeReleasingTheJob_andNeverSealsUnconditionallyAsComplete() {
-        // The seal must not be an unconditional "complete" written after the terminal event has already been pushed to the client. The worker hands the decision to the job
-        // service, which resolves it against the retained transcript under the same lock that made the transcript terminal.
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(outcomeWith(AgentLoopResult.Status.ERROR, new VerificationResult(false, false, false, 0, List.of())));
 
@@ -935,8 +933,6 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenAccountingFailure_stillSealsOnWorkerExit_soTheAccountIsNeverLeftPendingForever() {
-        // Previously the seal was skipped entirely on this path, leaving the account indistinguishable from one that had simply not been sealed yet. The sticky INCOMPLETE state
-        // set by markTokenAccountingIncomplete survives the seal, so sealing here is safe and closes the state.
         when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
             throw new GenerationJobService.TokenUsageAccountingException();
         });

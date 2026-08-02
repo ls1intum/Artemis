@@ -53,7 +53,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
         when(repository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesAndBuildConfigElseThrow(EXERCISE_ID)).thenReturn(exercise);
         when(repository.findByIdElseThrow(EXERCISE_ID)).thenReturn(exercise);
         UserTestRepository userRepository = mock(UserTestRepository.class);
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(new User());
+        when(userRepository.getUserWithAuthorities()).thenReturn(new User());
         ProgrammingExerciseMutationGuardService guard = mock(ProgrammingExerciseMutationGuardService.class);
         when(guard.claimExternalMutation(EXERCISE_ID)).thenThrow(new ConflictException("Generation is running", "programmingExercise", "generationRunning"));
         resource = new ProgrammingExerciseDeletionResource(repository, userRepository, mock(AuthorizationCheckService.class), Optional.of(continuousIntegrationService),
@@ -93,7 +93,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
         ProgrammingExerciseTestRepository deletionRepository = mock(ProgrammingExerciseTestRepository.class);
         when(deletionRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         UserTestRepository deletionUserTestRepository = mock(UserTestRepository.class);
-        when(deletionUserTestRepository.getUserWithGroupsAndAuthorities()).thenReturn(new User());
+        when(deletionUserTestRepository.getUserWithAuthorities()).thenReturn(new User());
         ExerciseDeletionService deletionService = mock(ExerciseDeletionService.class);
         IllegalStateException failure = new IllegalStateException("delete failed");
         doThrow(failure).when(deletionService).delete(EXERCISE_ID, true);

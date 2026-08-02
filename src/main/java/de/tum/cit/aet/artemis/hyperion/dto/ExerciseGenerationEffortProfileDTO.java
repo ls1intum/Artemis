@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * One selectable generation effort profile, as offered to an instructor.
  * <p>
@@ -13,5 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param label the instructor-facing name
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGenerationEffortProfileDTO(String name, String label) {
+public record ExerciseGenerationEffortProfileDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String label) {
 }

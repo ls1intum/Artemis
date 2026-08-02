@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.util.List;
 
 import jakarta.validation.Validation;
@@ -17,14 +18,12 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 
-/**
- * Wire-format tests for exercise-generation DTOs.
- */
 class ExerciseGenerationDtoTest {
 
     private final JsonMapper mapper = JsonMapper.builder().addModule(new JavaTimeModule()).build();
@@ -57,21 +56,16 @@ class ExerciseGenerationDtoTest {
                 .isEqualTo(ExerciseGenerationFileChangeDTO.REPOSITORY_OTHER);
     }
 
-    // ---- ExerciseGenerationEventDTO --------------------------------------------------------------------------------------------------------------------------------------------
-
     @Test
     void event_progressEvent_omitsNullTerminalFieldsAndSerialisesEnumAsName() throws Exception {
         JsonNode json = mapper.readTree(mapper.writeValueAsString(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "go")));
 
         assertThat(json.get("type").asText()).isEqualTo("STARTED");
         assertThat(json.get("message").asText()).isEqualTo("go");
-        // NON_EMPTY: the fields only a terminal DONE carries must not appear on a non-terminal event.
         assertThat(json.has("completionStatus")).isFalse();
         assertThat(json.has("verdict")).isFalse();
         assertThat(json.has("liveExerciseChanged")).isFalse();
     }
-
-    // ---- ExerciseGenerationVerdictDTO ------------------------------------------------------------------------------------------------------------------------------------------
 
     @Test
     void verdict_serializesReasonsEvenWhenEmpty_toMatchOpenApiContract() throws Exception {
@@ -83,6 +77,18 @@ class ExerciseGenerationDtoTest {
         JsonNode rejected = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationVerdictDTO(false, false, true, 2, List.of("solution failed"))));
         assertThat(rejected.get("reasons")).hasSize(1);
         assertThat(rejected.get("reasons").get(0).asText()).isEqualTo("solution failed");
+    }
+
+    @Test
+    void requiredUsageAndRevertCollectionsArePresentWhenEmpty() throws Exception {
+        ExerciseGenerationUsageDTO usage = new ExerciseGenerationUsageDTO(0, 0, 0, 0, 0, 0, 0, true, 0, true, List.of(), List.of(), true);
+
+        JsonNode usageJson = mapper.readTree(mapper.writeValueAsString(usage));
+        JsonNode revertJson = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationRevertResultDTO(false, List.of(), Instant.EPOCH)));
+
+        assertThat(usageJson.get("models")).isEmpty();
+        assertThat(usageJson.get("providerRequestIds")).isEmpty();
+        assertThat(revertJson.get("revertedRepositories")).isEmpty();
     }
 
     @Test
@@ -128,7 +134,6 @@ class ExerciseGenerationDtoTest {
         assertThat(json.get("accountingState").asText()).isEqualTo("COMPLETE");
         assertThat(json.get("usage").get("modelCalls").asLong()).isEqualTo(2);
         assertThat(json.get("usage").get("toolCalls").asLong()).isEqualTo(3);
-        // agentTurns and attempts separate a few long attempts from many short ones; modelCalls alone cannot.
         assertThat(json.get("usage").get("agentTurns").asLong()).isEqualTo(17);
         assertThat(json.get("usage").get("attempts").asLong()).isEqualTo(4);
         assertThat(json.get("usage").get("inputTokens").asLong()).isEqualTo(100);

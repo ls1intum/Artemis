@@ -214,6 +214,12 @@ public class HyperionGenerationBudgetService {
         }
     }
 
+    /**
+     * Reduces a transient reservation after usage has been persisted.
+     *
+     * @param reservationId the reservation id, if present
+     * @param tokens        the persisted token count
+     */
     public void recordPersistedUsage(@Nullable String reservationId, long tokens) {
         if (reservationId == null || reservationMap == null || tokens <= 0) {
             return;

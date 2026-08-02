@@ -153,7 +153,7 @@ class CriticSelfConsistencyProbeTest {
                         runRecord.put("error", error);
                         runRecord.put("findings", emitted);
                         runRecord.put("providerCalls", providerCalls);
-                        FileUtils.writeStringToFile(outputDir.resolve(String.format("run-%02d.json", run)).toFile(),
+                        FileUtils.writeStringToFile(outputDir.resolve("run-%02d.json".formatted(run)).toFile(),
                                 mapper.writerWithDefaultPrettyPrinter().writeValueAsString(runRecord), StandardCharsets.UTF_8);
                         log.info("{}", "[probe] run " + run + ": " + emitted.size() + " findings" + (error == null ? "" : " ERROR " + error) + " in " + runRecord.get("elapsedMs")
                                 + " ms");

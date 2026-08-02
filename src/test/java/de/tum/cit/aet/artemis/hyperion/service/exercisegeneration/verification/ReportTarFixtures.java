@@ -63,7 +63,7 @@ final class ReportTarFixtures {
                 junitXml(allNames, failedNames).getBytes(StandardCharsets.UTF_8));
         int seq = 2;
         for (Map.Entry<String, String> sca : scaReportsByCanonicalName.entrySet()) {
-            entries.put(String.format("%04d", seq++) + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + sca.getKey(), sca.getValue().getBytes(StandardCharsets.UTF_8));
+            entries.put("%04d".formatted(seq++) + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + sca.getKey(), sca.getValue().getBytes(StandardCharsets.UTF_8));
         }
         return tar(assignment, entries);
     }

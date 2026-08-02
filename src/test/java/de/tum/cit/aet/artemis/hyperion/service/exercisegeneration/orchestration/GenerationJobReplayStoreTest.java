@@ -255,7 +255,7 @@ class GenerationJobReplayStoreTest {
     }
 
     @Test
-    void recordEvent_terminal_sealsAccountingUnderTheSameLockThatMarksTheTranscriptDone() {
+    void recordEvent_terminalSealsAccountingWhenTranscriptCompletes() {
         long exerciseId = 613L;
         String key = String.valueOf(exerciseId);
         String jobId = "sealing";
@@ -267,7 +267,6 @@ class GenerationJobReplayStoreTest {
 
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
 
-        // Sealed before the transcript was published, so no reader can observe a terminal transcript whose accounting is still pending.
         assertThat(transcriptMap().get(key).done()).isTrue();
         assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.COMPLETE);
     }
@@ -386,7 +385,7 @@ class GenerationJobReplayStoreTest {
     }
 
     @Test
-    void everyUsageWriteCarriesTheRetentionBound_soAnAccumulatorCannotOutliveItsRun() {
+    void recordUsage_appliesTheRetentionBound() {
         GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofSeconds(1));
 
         shortLivedStore.recordUsage("orphan", llmRequest());

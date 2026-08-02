@@ -176,6 +176,15 @@ public class GenerationJobService {
         return tokenUsageSink(courseId, exerciseId, userId, null);
     }
 
+    /**
+     * Creates a sink that persists provider usage for a generation job.
+     *
+     * @param courseId        the course, if known
+     * @param exerciseId      the exercise, if known
+     * @param userId          the user, if known
+     * @param generationJobId the generation job, if known
+     * @return the usage sink
+     */
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId) {
         return chatResponse -> {
             boolean recorded = llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
@@ -216,6 +225,7 @@ public class GenerationJobService {
         private static final long serialVersionUID = 1L;
     }
 
+    /** Initializes distributed job state and validates timeout settings. */
     @PostConstruct
     public void init() {
         if (expectedDataMemberCount < 1) {
@@ -247,6 +257,18 @@ public class GenerationJobService {
         return startJob(user, exercise, userPrompt, mode, budgetReservationId, sourceBrief, null);
     }
 
+    /**
+     * Starts a generation job after claiming the exercise slot.
+     *
+     * @param user                the requesting user
+     * @param exercise            the target exercise
+     * @param userPrompt          the authoring prompt
+     * @param mode                the generation mode
+     * @param budgetReservationId the budget reservation, if present
+     * @param sourceBrief         the original brief, if present
+     * @param settings            the resolved generation settings, if present
+     * @return the generation job id
+     */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode, @Nullable String budgetReservationId, @Nullable String sourceBrief,
             @Nullable HyperionGenerationSettings settings) {
         String jobId = UUID.randomUUID().toString();

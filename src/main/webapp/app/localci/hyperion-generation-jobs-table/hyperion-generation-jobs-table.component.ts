@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { interval, map } from 'rxjs';
@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 
 @Component({
     selector: 'jhi-hyperion-generation-jobs-table',
@@ -18,18 +19,15 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
     imports: [RouterLink, TumUiTableDirective, TumUiTagComponent, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, ArtemisTimeAgoPipe],
 })
 export class HyperionGenerationJobsTableComponent {
-    /** How often the elapsed-duration column re-renders. */
     private static readonly CLOCK_INTERVAL_MS = 1000;
 
     readonly jobs = input.required<GenerationSandboxJob[]>();
     readonly showAgent = input(false);
+    private readonly serverDateService = inject(ArtemisServerDateService);
 
-    /**
-     * Ticks once per second so the elapsed duration column re-renders; the subscription is torn down with the component.
-     * NOTE: for clock-skew correctness this should read `ArtemisServerDateService.now()` instead of the raw client clock;
-     * that behaviour is deliberately left unchanged here.
-     */
-    private readonly now = toSignal(interval(HyperionGenerationJobsTableComponent.CLOCK_INTERVAL_MS).pipe(map(() => Date.now())), { initialValue: Date.now() });
+    private readonly now = toSignal(interval(HyperionGenerationJobsTableComponent.CLOCK_INTERVAL_MS).pipe(map(() => this.serverDateService.now().valueOf())), {
+        initialValue: this.serverDateService.now().valueOf(),
+    });
 
     elapsedSeconds(timestamp: string): number {
         return Math.max(0, Math.floor((this.now() - Date.parse(timestamp)) / 1000));

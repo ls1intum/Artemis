@@ -68,7 +68,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
         final var repoUri = exercise.getVcsTestRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
@@ -84,7 +84,7 @@ public class TestRepositoryResource extends RepositoryResource {
     boolean canAccessRepository(Long exerciseId) {
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId),
-                    userRepository.getUserWithGroupsAndAuthorities(), "test");
+                    userRepository.getUserWithAuthorities(), "test");
         }
         catch (AccessForbiddenException e) {
             return false;
@@ -100,7 +100,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     OptionalLong getExerciseIdForMutation(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, userRepository.getUserWithGroupsAndAuthorities(), "test");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, userRepository.getUserWithAuthorities(), "test");
         return OptionalLong.of(exerciseId);
     }
 
@@ -198,7 +198,7 @@ public class TestRepositoryResource extends RepositoryResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         try {
-            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithAuthorities(principal.getName()), "test");
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");

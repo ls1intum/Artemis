@@ -23,10 +23,22 @@ DEFAULT_STORE = ROOT / ".e2e-local" / "hyperion-checkpoints"
 SERVER_PID_FILE = ROOT / ".e2e-local" / "checkpoint-server.pid"
 PLAYWRIGHT = ROOT / "src/test/playwright"
 CHECKPOINT_DRIVER = "e2e/exercise/programming/HyperionCheckpointDriver.spec.ts"
+REPLAY_ENVIRONMENT = (
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_REPLAY_FROM",
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_AT",
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_REVIEW_AT",
+    "ARTEMIS_HYPERION_AGENT_CHECKPOINT_FORK_INSTRUCTION",
+)
 
 
 def read_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_json(path: Path, value: dict) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
 
 
 def completed_run(path: Path) -> bool:
@@ -309,6 +321,8 @@ def run_checkpoint(
     for repeat in range(1, repeats + 1):
         existing_runs = completed_runs(output)
         env = load_local_env()
+        for key in REPLAY_ENVIRONMENT:
+            env.pop(key, None)
         local_defaults = {
             "SPRING_PROFILES_ACTIVE": "artemis,scheduling,localvc,localci,buildagent,core,dev",
             "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5432/Artemis?sslmode=disable",
@@ -364,7 +378,7 @@ def run_checkpoint(
                 raise subprocess.CalledProcessError(result.returncode, command) from None
             raise SystemExit(f"Expected one new completed checkpoint run in {output}, found {len(new_runs)}")
         latest = new_runs.pop()
-        (latest / "checkpoint-cli.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+        write_json(latest / "checkpoint-cli.json", metadata)
         if result.returncode != 0:
             raise subprocess.CalledProcessError(result.returncode, command)
         print(f"recorded repeat {repeat}: {latest}")

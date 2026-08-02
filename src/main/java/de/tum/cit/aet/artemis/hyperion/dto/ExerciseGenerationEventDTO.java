@@ -34,7 +34,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A progress event streamed to the instructor while an agentic whole-exercise generation or adaptation runs")
-public record ExerciseGenerationEventDTO(@Schema(description = "The event kind") Type type,
+public record ExerciseGenerationEventDTO(@Schema(description = "The event kind", requiredMode = Schema.RequiredMode.REQUIRED) Type type,
         @Schema(description = "Human-readable progress or result message") @Nullable String message,
         @Schema(description = "On a terminal DONE event, whether the run succeeded, needs review, or partially completed") @Nullable CompletionStatus completionStatus,
         @Schema(description = "On a terminal event, the structured verification verdict") @Nullable ExerciseGenerationVerdictDTO verdict,
@@ -43,7 +43,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind")
         @Schema(description = "The exact saved exercise version id, on a successful terminal event") @Nullable Long savedExerciseVersionId,
         @Schema(description = "On a terminal event, why the generation run ended") @Nullable TerminationReason terminationReason,
         @Schema(description = "On a repair-round progress event, that round's finding bookkeeping") @Nullable ExerciseGenerationRepairRoundDTO repairRound,
-        @Schema(description = "The moment the event was produced") Instant timestamp) implements Serializable {
+        @Schema(description = "The moment the event was produced", requiredMode = Schema.RequiredMode.REQUIRED) Instant timestamp) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

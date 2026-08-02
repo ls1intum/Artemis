@@ -387,12 +387,20 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
                 .filter(agent -> agent.status() == BuildAgentStatus.ACTIVE || agent.status() == BuildAgentStatus.IDLE).toList();
     }
 
-    /** Returns whether advertised fleet state has a free generation slot; placement remains authoritative. */
+    /**
+     * Returns whether advertised fleet state has a free generation slot; placement remains authoritative.
+     *
+     * @return whether a generation slot appears available
+     */
     public boolean hasAvailableGenerationSandboxSlot() {
         return !selectCandidateAgents().isEmpty();
     }
 
-    /** Returns advertised fleet capacity for health diagnostics. */
+    /**
+     * Returns advertised fleet capacity for health diagnostics.
+     *
+     * @return the advertised generation sandbox capacity
+     */
     public GenerationSandboxCapacity generationSandboxCapacity() {
         List<BuildAgentInformation> agents = reachableAgents();
         int hostingAgents = 0;

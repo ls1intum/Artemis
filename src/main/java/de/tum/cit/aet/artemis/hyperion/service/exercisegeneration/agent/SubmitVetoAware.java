@@ -1,19 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
-/**
- * Implemented by a tools object that can veto the loop-ending effect of a {@code submit} tool call. The {@code submit} tool itself always runs and returns its message to the
- * model as an ordinary tool result; this interface is the separate, out-of-band signal telling {@link AgentLoopRunner} whether that call must keep the loop going.
- * <p>
- * The staged workflow uses it: {@link SandboxAgentTools#submit} re-runs the current stage's mechanical check before accepting a submission and vetoes on failure, so the agent
- * can fix the reported issues and resubmit. An unstaged session never sets the veto, so {@code submit} ends the loop on the first call.
- */
+/** Allows a tool to reject the loop-ending effect of its latest {@code submit} call. */
 public interface SubmitVetoAware {
 
     /**
-     * Reports and clears whether the most recent {@code submit} call was rejected. Reading clears the flag, so a later accepted {@code submit} can never be blocked by a stale
-     * veto from an already-fixed rejection.
+     * Returns and clears the latest submit veto.
      *
-     * @return {@code true} if the agent loop must continue instead of ending
+     * @return whether submission was vetoed
      */
     boolean consumeSubmitVeto();
 }

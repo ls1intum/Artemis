@@ -21,11 +21,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "The structured outcome of the differential verification, so the client can show which gates passed without parsing prose")
-public record ExerciseGenerationVerdictDTO(@Schema(description = "Whether the exercise passed mechanical verification") boolean mechanicallyVerified,
-        @Schema(description = "Whether the solution passed all its tests") boolean solutionPassed,
-        @Schema(description = "Whether the template compiled but correctly failed the tests") boolean templateFailed,
-        @Schema(description = "The number of tests discovered") int testCount,
-        @JsonInclude @Schema(description = "Human-readable explanations of any failed gate (empty when mechanically verified)") List<String> reasons) implements Serializable {
+public record ExerciseGenerationVerdictDTO(
+        @Schema(description = "Whether the exercise passed mechanical verification", requiredMode = Schema.RequiredMode.REQUIRED) boolean mechanicallyVerified,
+        @Schema(description = "Whether the solution passed all its tests", requiredMode = Schema.RequiredMode.REQUIRED) boolean solutionPassed,
+        @Schema(description = "Whether the template compiled but correctly failed the tests", requiredMode = Schema.RequiredMode.REQUIRED) boolean templateFailed,
+        @Schema(description = "The number of tests discovered", requiredMode = Schema.RequiredMode.REQUIRED) int testCount,
+        @JsonInclude @Schema(description = "Human-readable explanations of any failed gate (empty when mechanically verified)", requiredMode = Schema.RequiredMode.REQUIRED) List<String> reasons)
+        implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

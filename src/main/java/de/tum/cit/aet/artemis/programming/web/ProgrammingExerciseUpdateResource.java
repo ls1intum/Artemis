@@ -161,7 +161,7 @@ public class ProgrammingExerciseUpdateResource {
 
         var authorizationExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
         validateCourseAndExerciseGroupUnchanged(updateDTO, authorizationExercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course authorizationCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, authorizationCourse, user);
 
@@ -511,7 +511,7 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         var authorizationExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 

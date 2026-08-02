@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.HexFormat;
@@ -98,7 +99,7 @@ class AgentCheckpointManagerTest {
         assertThat(replaySandbox.text("/workspace", "SPEC.md")).isEqualTo("after");
         replayer.endRun();
 
-        FileUtils.writeStringToFile(recordedRun.resolve("calls/000001.json").toFile(), "\n", StandardCharsets.UTF_8, true);
+        Files.writeString(recordedRun.resolve("calls/000001.json"), "\n", StandardCharsets.UTF_8, StandardOpenOption.APPEND);
         AgentCheckpointManager tampered = new AgentCheckpointManager(mapper, "", recordedRun.toString(), 0, true, "");
         tampered.beginRun("job-tampered", exercise, new SandboxAgentTools(replaySandbox, "tampered"), new ApprovedSpecRegistry());
         assertThatThrownBy(() -> tampered.beforeTurn(1, 5, "", "tools-v1", prompt, beforeCursor)).isInstanceOf(IllegalStateException.class).hasMessageContaining("integrity check");

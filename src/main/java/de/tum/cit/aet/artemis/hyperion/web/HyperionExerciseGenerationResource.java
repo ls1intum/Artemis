@@ -146,7 +146,7 @@ public class HyperionExerciseGenerationResource {
             throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has a free sandbox slot to start a run.", ENTITY_NAME,
                     "generationCapacityUnavailable");
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Long courseId = courseIdOf(exercise);
         String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
         // Reserve what this run may actually spend rather than the fleet-wide worst case, so a course drafting small exercises is not throttled at the job count of the largest.
@@ -209,7 +209,7 @@ public class HyperionExerciseGenerationResource {
     public ResponseEntity<ExerciseGenerationStatusDTO> getExerciseGenerationStatus(@PathVariable long exerciseId) {
         log.debug("REST request to get the agentic exercise generation status for exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Optional<ExerciseGenerationRevertService.RevertibleRun> revertibleRun = generationRevertService.findRevertibleRun(exerciseId).filter(run -> canOfferRevert(exercise));
         Optional<ExerciseGenerationStatusDTO> retainedStatus = jobService.getStatus(user, exercise);
         if (retainedStatus.isPresent()) {
@@ -238,7 +238,7 @@ public class HyperionExerciseGenerationResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<Void> cancelExerciseGeneration(@PathVariable long exerciseId, @PathVariable String jobId) {
         log.debug("REST request to cancel agentic exercise generation job [{}] for exercise [{}]", jobId, exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         boolean cancelled = jobService.requestCancellation(exerciseId, jobId, user);
         return cancelled ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
@@ -256,7 +256,7 @@ public class HyperionExerciseGenerationResource {
         log.debug("REST request to revert the last saved agentic generation run of exercise [{}]", exerciseId);
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Optional<String> revertibleJobId = generationRevertService.findRevertibleJobId(exerciseId);
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         try {

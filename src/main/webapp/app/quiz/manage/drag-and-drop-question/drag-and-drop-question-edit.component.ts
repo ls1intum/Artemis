@@ -249,9 +249,16 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         if (question.dragItems) {
             for (const dragItem in question.dragItems) {
-                const path = question.dragItems[dragItem].pictureFilePath;
+                const item = question.dragItems[dragItem];
+                const path = item.pictureFilePath;
                 if (path && !this.filePreviewPaths().has(path)) {
-                    this.filePreviewPaths.update((map) => new Map(map).set(path, path));
+                    // Map the saved image to its question-scoped file URL. Drag item ids are only unique within their question, so the flat legacy image URL no longer exists; the
+                    // stored pictureFilePath keeps the old shape, so rebuild the URL from the question and drag item ids (mirrors jhi-drag-item's imageSrc).
+                    const previewPath =
+                        question.id !== undefined && item.id !== undefined
+                            ? `drag-and-drop/questions/${question.id}/drag-items/${item.id}/${path.substring(path.lastIndexOf('/') + 1)}`
+                            : path;
+                    this.filePreviewPaths.update((map) => new Map(map).set(path, previewPath));
                 }
             }
         }

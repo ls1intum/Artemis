@@ -6,6 +6,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * The reconnection view of an exercise-generation run, returned when a client (re)loads the page so it can replay the transcript and decide whether to keep listening.
  *
@@ -29,9 +31,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                            and for deployments that configure no profiles
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, @JsonInclude List<ExerciseGenerationEventDTO> events,
-        @JsonInclude List<ExerciseGenerationFileChangeDTO> fileChanges, boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode,
-        boolean ownedByCaller, boolean cancellable, @Nullable String specDocument, @Nullable ExerciseGenerationUsageDTO usage, ExerciseGenerationAccountingState accountingState,
+public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String jobId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean running,
+        @Nullable GenerationMode mode, @JsonInclude @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<ExerciseGenerationEventDTO> events,
+        @JsonInclude @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<ExerciseGenerationFileChangeDTO> fileChanges,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean revertAvailable, @Nullable String revertJobId, @Nullable GenerationMode revertMode,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean ownedByCaller, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean cancellable,
+        @Nullable String specDocument, @Nullable ExerciseGenerationUsageDTO usage,
+        @Schema(description = "Whether the reported usage is a complete account of a generation run's provider spend", requiredMode = Schema.RequiredMode.REQUIRED) ExerciseGenerationAccountingState accountingState,
         @Nullable String effortProfile) {
 
     public ExerciseGenerationStatusDTO(String jobId, boolean running, @Nullable GenerationMode mode, List<ExerciseGenerationEventDTO> events,

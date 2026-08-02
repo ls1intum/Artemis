@@ -23,19 +23,15 @@ public class UserFactory {
      *
      * @param loginPrefix        The prefix that will be added in front of every User's username
      * @param commonPasswordHash The password hash that will be set for every User
-     * @param groups             The groups that the Users will be added to
      * @param authorities        The authorities that the Users will have
      * @param amount             The amount of Users to generate
      * @return The List of generated Users
      */
-    public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
+    public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
             User user = generateActivatedUser(loginPrefix + i, commonPasswordHash);
-            if (groups != null) {
-                user.setGroups(Set.of(groups));
-                user.setAuthorities(authorities);
-            }
+            user.setAuthorities(authorities);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -45,28 +41,25 @@ public class UserFactory {
      * Generates the given amount of Users with the given arguments.
      *
      * @param loginPrefix The prefix that will be added in front of every User's username
-     * @param groups      The groups that the Users will be added to
      * @param authorities The authorities that the Users will have
      * @param amount      The amount of Users to generate
      * @return The List of generated Users
      */
-    public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
-        return generateActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
+    public static List<User> generateActivatedUsers(String loginPrefix, Set<Authority> authorities, int amount) {
+        return generateActivatedUsers(loginPrefix, USER_PASSWORD, authorities, amount);
     }
 
     /**
      * Generates the given amount of Users with the given arguments.
      *
      * @param loginPrefix              The prefix that will be added in front of every User's username
-     * @param groups                   The groups that the Users will be added to
      * @param authorities              The authorities that the Users will have
      * @param amount                   The amount of Users to generate
      * @param registrationNumberPrefix The prefix that will be added in front of every User's registration number
      * @return The List of generated Users
      */
-    public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount,
-            String registrationNumberPrefix) {
-        List<User> generatedUsers = generateActivatedUsers(loginPrefix, groups, authorities, amount);
+    public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
+        List<User> generatedUsers = generateActivatedUsers(loginPrefix, authorities, amount);
         for (int i = 0; i < amount; i++) {
             generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
         }
@@ -89,7 +82,6 @@ public class UserFactory {
         user.setEmail(login + "@test.de");
         user.setActivated(true);
         user.setLangKey("en");
-        user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
         user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
         user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);

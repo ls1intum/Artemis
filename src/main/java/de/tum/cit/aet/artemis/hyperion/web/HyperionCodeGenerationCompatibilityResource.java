@@ -67,7 +67,7 @@ public class HyperionCodeGenerationCompatibilityResource {
     @PostMapping("programming-exercises/{exerciseId}/generate-code")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ProblemDetail> generateCodeRetired(@PathVariable long exerciseId, @RequestBody(required = false) JsonNode ignoredLegacyBody) {
-        String successorPath = String.format(SUCCESSOR_PATH_TEMPLATE, exerciseId);
+        String successorPath = SUCCESSOR_PATH_TEMPLATE.formatted(exerciseId);
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.GONE, "Per-repository code generation ('generate-code') was retired. Callers must adopt POST "
                 + successorPath + " (agentic whole-exercise generation) and its status/event contract.");

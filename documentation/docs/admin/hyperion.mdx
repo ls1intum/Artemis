@@ -144,8 +144,9 @@ spring:
 
 ### Token Usage Tracking
 
-Artemis tracks LLM token usage and cost per request. A small set of models ships with seeded prices; add an entry under `artemis.llm.model-costs` for any other model you use, or
-to override a seeded price.
+Artemis tracks LLM token usage per request and estimates cost only from prices supplied by the deployment operator. No prices are built in because provider rates and currencies
+change independently of an Artemis release. Record the rate source and retrieval time in your deployment or evaluation evidence, then configure the corresponding EUR rates under
+`artemis.llm.model-costs`.
 
 ```yaml
 artemis:
@@ -155,107 +156,52 @@ artemis:
             my-model-name:
                 input-cost-per-million-eur: 0.23
                 output-cost-per-million-eur: 1.84
+                cached-input-cost-per-million-eur: 0.05 # Required for a complete estimate when cache-read tokens are nonzero
 ```
 
 The key must match the model name your provider returns. Date suffixes such as `-2024-07-18` are stripped before the lookup, and so is every other non-alphanumeric character, so
 `gpt-5.4` and its environment-variable form `GPT54` resolve to the same entry — which is also why configuring one model both in YAML and through an environment variable fails at
-startup. A model with no matching entry is recorded with zero cost and logs a warning naming the keys it does know.
+startup. A model with no matching complete price is recorded with a zero estimate marked incomplete; token accounting remains available and a warning names the configured keys.
 
 ### Observability (Optional)
 
-Enabling observability during development helps you understand how LLM-based features behave, why they produce certain outputs, and how to optimize them. Since LLMs are non-deterministic and sensitive to prompts, parameters, and context, traditional logging is often not enough.
+Artemis can export only spans marked `ai.span=true` to any OTLP/HTTP-compatible backend. Content capture is off by default. For compatibility, enabling Langfuse also opts into
+capturing prompt, completion, reasoning, and tool content unless `management.opentelemetry.instrumentation.gen-ai.capture-content=false` is set explicitly. Protect the collector
+and apply an appropriate retention policy before enabling content capture.
 
-Key benefits of adding observability:
-
-- Full visibility into prompts, responses, parameters, and token usage
-- Reproducible debugging through stored traces
-- Faster prompt iteration with comparison and tracking
-- Early cost and token monitoring
-- Insight into multi-step pipelines and performance bottlenecks
-- Primarily used in development, but can also be enabled in production environments if deeper analysis or incident debugging is required
-
-#### Langfuse
-
-Langfuse is a platform for observability and tracing of LLM applications and agents. It captures everything happening during an LLM interaction: inputs, outputs, tool usage, retries, latencies and costs.
-
-#### Setup Guide
-
-1. See how to create and setup a Langfuse account (See only "Get API keys") [here](https://langfuse.com/docs/observability/get-started).
-
-2. Request to join a Organization from an Edutelligence maintainer.
-
-3. You will be added to the Project as **Member**.
-
-    > ℹ️ **Note**
-    > Project Members can _use_ Langfuse and access existing API keys.
-    > Only **Project Admins** can create new API keys.
-    > If you cannot view API keys, ask the maintainer to generate them for you.
-
-4. Once the Project Admin provides the **Public Key** and **Secret Key**, store them securely.
-   These keys authenticate your application when sending observability data to Langfuse.
-
-5. Identify your Langfuse host URL.
-   It appears in the Langfuse UI as: **https://\<host\>**.
-
-Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
-**https://\<host\>/api/public/otel/v1/traces**
-
-- `/api/public/otel` → Langfuse OTLP receiver root
-- `/v1/traces` → Standard OTLP HTTP route
-    > For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
-
-6. Generate the Basic Authentication token for Langfuse.
-   Use Base64 encoding with the format: base64(public_key:secret_key)
-
-Example generation command:
+For Langfuse, create or obtain project API keys as described in the [Langfuse OpenTelemetry guide](https://langfuse.com/integrations/native/opentelemetry). Its trace endpoint is
+`https://<host>/api/public/otel/v1/traces`. Generate the required Basic authentication value without storing the keys in the repository:
 
 ```bash
 echo -n "<public_key>:<secret_key>" | base64
 ```
 
-7. Add the OTLP endpoint and authorization header to your Spring configuration.
-
-Use the OTLP endpoint constructed in Step 5 and the Base64 token generated in Step 6.
-These values can be provided through **active Spring profile YAML** (e.g. `application-local.yaml`, `application-dev.yaml`) or via **environment variables**.
-
-You will need to set the following properties:
-
-- `management.otlp.tracing.endpoint` → `https://<host>/api/public/otel/v1/traces`
-- `management.otlp.tracing.headers.Authorization` → `Basic <base64(public_key:secret_key)>`
-
-To avoid committing secrets, prefer supplying these values via environment variables and referencing them in YAML.
-
-#### Configure Langfuse
-
-> Below is the current configuration used in development profile to view the LLM traces of Hyperion services on Langfuse.
-
 ```yaml
 management:
-    # Set true to display contextual name in @Observed on Langfuse
-    observations:
-        annotations:
-            enabled: true
-    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
     langfuse:
         enabled: true
     tracing:
         sampling:
             probability: 1.0
-    otlp:
+        export:
+            otlp:
+                enabled: false # Avoid duplicate export through Spring Boot's unfiltered exporter
+    opentelemetry:
+        instrumentation:
+            gen-ai:
+                capture-content: false # Set true only for an approved, protected collector
         tracing:
-            # LangFuse accepts OTLP over HTTP at the traces path only
-            # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
-            endpoint: https://example.com
-            transport: http
-            headers:
-                # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-                Authorization: 'Basic <base64(public_key:secret_key)>'
-            # Important: Set export.enabled: false to disable the *default* OTLP exporter.
-            # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-            # so disabling the default exporter will NOT stop LLM trace export.
             export:
-                enabled: false
+                otlp:
+                    endpoint: https://<host>/api/public/otel/v1/traces
+                    headers:
+                        Authorization: 'Basic <base64(public_key:secret_key)>'
 ```
+
+Supply the endpoint and authorization header through deployment secrets. The corresponding property names are
+`management.opentelemetry.tracing.export.otlp.endpoint` and `management.opentelemetry.tracing.export.otlp.headers.Authorization`. `management.langfuse.enabled=true` enables the
+filtered exporter; it also preserves the historical default of content capture unless `management.opentelemetry.instrumentation.gen-ai.capture-content=false` is set explicitly,
+as above.
 
 ## Configure exercise generation
 
