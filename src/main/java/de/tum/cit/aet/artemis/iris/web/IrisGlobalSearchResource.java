@@ -64,7 +64,7 @@ public class IrisGlobalSearchResource {
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
-        var user = userRepository.getUserWithAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
     }
@@ -81,7 +81,7 @@ public class IrisGlobalSearchResource {
     @EnforceAtLeastStudent
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
     public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
-        var user = userRepository.getUserWithAuthorities();
+        var user = userRepository.getUserWithCourseRolesAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
