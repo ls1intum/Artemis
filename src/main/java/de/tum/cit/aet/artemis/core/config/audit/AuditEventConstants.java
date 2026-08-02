@@ -6,6 +6,8 @@ public class AuditEventConstants {
 
     public static final String AUTHENTICATION_PASSKEY_SUCCESS = "AUTHENTICATION_PASSKEY_SUCCESS";
 
+    public static final String SAML2_AUTHENTICATION_SUCCESS = "SAML2_AUTHENTICATION_SUCCESS";
+
     public static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
     /**
