@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -75,6 +76,13 @@ public class PyrisHealthIndicator implements HealthIndicator {
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
+    /**
+     * The Iris instance id observed on the last successful health check. A change means Iris genuinely restarted; this is
+     * authoritative over the DOWN -> UP heuristic, so a transient health blip (Iris slow to answer while still running,
+     * same instance id) never triggers a false restart. Null until the first id-bearing response.
+     */
+    private final java.util.concurrent.atomic.AtomicReference<String> lastInstanceId = new java.util.concurrent.atomic.AtomicReference<>(null);
+
     public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi,
             Optional<IngestionProgressService> ingestionProgressService) {
         this.restTemplate = restTemplate;
@@ -110,6 +118,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
         URI healthUri = UriComponentsBuilder.fromUri(irisUrl).path("/api/v1/health/").build(true).toUri();
         var additionalInfo = new HashMap<String, Object>();
         additionalInfo.put(IRIS_URL_KEY, irisUrl);
+        String instanceId = null;
 
         try {
             ResponseEntity<String> response = restTemplate.getForEntity(healthUri, String.class);
@@ -122,6 +131,7 @@ public class PyrisHealthIndicator implements HealthIndicator {
                 try {
                     PyrisHealthStatusDTO body = objectMapper.readValue(json, PyrisHealthStatusDTO.class);
                     flattenModulesInto(additionalInfo, body.modules());
+                    instanceId = body.instanceId();
                     connectorHealth = new ConnectorHealth(body.isHealthy(), additionalInfo, null);
                 }
                 catch (JsonProcessingException e) {
@@ -139,24 +149,49 @@ public class PyrisHealthIndicator implements HealthIndicator {
         var newHealth = connectorHealth.asActuatorHealth();
         boolean currentlyUp = newHealth.getStatus() == Status.UP;
         boolean wasUp = previouslyUp.getAndSet(currentlyUp);
-        if (currentlyUp && !wasUp) {
-            log.info("Iris restarted (DOWN → UP) — resetting in-flight ingestion jobs");
-            processingStateRecoveryApi.ifPresent(api -> {
-                try {
-                    api.handleIrisReset();
-                }
-                catch (Exception e) {
-                    previouslyUp.set(false);
-                    log.error("Failed to reset in-flight jobs after Iris restart", e);
-                }
-            });
-            // Any ingestion that was in flight across the restart is definitively dead: fail it and move it from the
-            // active view into the recent history so the admin dashboard reflects the failure deterministically.
-            ingestionProgressService.ifPresent(service -> service.failActive("No response from Iris (it restarted or was shut down)"));
+        if (currentlyUp) {
+            handleRestartDetection(instanceId, wasUp);
         }
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();
         return newHealth;
+    }
+
+    /**
+     * Decides whether Iris genuinely restarted and, if so, resets in-flight state.
+     * <p>
+     * When Iris reports an instance id, a <em>change</em> of that id is the authoritative restart signal: a transient
+     * health blip (Iris slow but still running, same id) is ignored, eliminating false failures. When no id is reported
+     * (older Iris), it falls back to the previous DOWN -&gt; UP heuristic.
+     *
+     * @param instanceId the instance id from this health response, or null when not reported
+     * @param wasUp      whether Iris was up on the previous check
+     */
+    private void handleRestartDetection(@Nullable String instanceId, boolean wasUp) {
+        boolean restarted;
+        if (instanceId != null) {
+            String previousId = lastInstanceId.getAndSet(instanceId);
+            restarted = previousId != null && !previousId.equals(instanceId);
+        }
+        else {
+            restarted = !wasUp;
+        }
+        if (!restarted) {
+            return;
+        }
+        log.info("Iris restart detected — resetting in-flight ingestion jobs");
+        processingStateRecoveryApi.ifPresent(api -> {
+            try {
+                api.handleIrisReset();
+            }
+            catch (Exception e) {
+                previouslyUp.set(false);
+                log.error("Failed to reset in-flight jobs after Iris restart", e);
+            }
+        });
+        // Any ingestion that was in flight across the restart is definitively dead: fail it and move it from the active
+        // view into the recent history so the admin dashboard reflects the failure deterministically.
+        ingestionProgressService.ifPresent(service -> service.failActive("No response from Iris (it restarted or was shut down)"));
     }
 
     private static void flattenModulesInto(Map<String, Object> target, Map<String, PyrisHealthStatusDTO.ModuleStatusDTO> modules) {
