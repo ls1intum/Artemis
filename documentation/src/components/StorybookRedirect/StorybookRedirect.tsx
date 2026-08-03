@@ -2,25 +2,14 @@ import { useLocation } from '@docusaurus/router';
 import { useColorMode } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useEffect } from 'react';
+import { storybookStoryFromHash } from './storybook-reference.generated';
 
-const DEFAULT_STORY = 'introduction--docs';
-
-function storyFromHash(hash: string, storyAnchors: readonly string[]) {
-    try {
-        const anchor = decodeURIComponent(hash.replace(/^#/, ''));
-        const storyAnchor = storyAnchors.find((candidate) => candidate === anchor);
-        return storyAnchor ? `${storyAnchor}--docs` : DEFAULT_STORY;
-    } catch {
-        return DEFAULT_STORY;
-    }
-}
-
-export default function StorybookRedirect({ storyAnchors }: { storyAnchors: readonly string[] }) {
+export default function StorybookRedirect() {
     const { siteConfig } = useDocusaurusContext();
     const { colorMode } = useColorMode();
     const { hash } = useLocation();
     const storybookIncluded = siteConfig.customFields?.tumUiStorybookIncluded === true;
-    const story = storyFromHash(hash, storyAnchors);
+    const story = storybookStoryFromHash(hash);
     const storybookUrl = `/developer/tum-ui/?path=/docs/${story}&globals=theme:${colorMode}`;
 
     useEffect(() => {
