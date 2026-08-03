@@ -136,7 +136,12 @@
                         exercise().type === ExerciseType.PROGRAMMING &&
                         exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC
                     ) {
-                        <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
+                        <jhi-request-feedback-button
+                            [exercise]="exercise()"
+                            [smallButtons]="smallButtons()"
+                            [isSubmitted]="hasGradedSubmission()"
+                            [participationId]="gradedParticipation()?.id"
+                        />
                     }
                     <!--                    </ng-container>-->
                 }
@@ -236,9 +241,8 @@
                         <jhi-request-feedback-button
                             [exercise]="exercise()"
                             [smallButtons]="smallButtons()"
-                            [isGeneratingFeedback]="isGeneratingFeedback()"
-                            (generatingFeedback)="generatingFeedback.emit()"
-                            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
+                            [isSubmitted]="hasGradedSubmission()"
+                            [participationId]="gradedParticipation()?.id"
                         />
                     }
                 }

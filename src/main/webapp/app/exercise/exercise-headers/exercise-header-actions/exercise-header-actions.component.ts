@@ -1,5 +1,7 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -33,7 +35,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { finalize } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
@@ -50,7 +51,6 @@ import {
 } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
@@ -111,15 +111,14 @@ export class ExerciseHeaderActionsComponent {
     private readonly alertService = inject(AlertService);
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly participationService = inject(ParticipationService);
-    private readonly profileService = inject(ProfileService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
-    readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
     readonly onContinueExercise = input<() => void>();
     readonly onRestartPractice = input<() => boolean>();
@@ -128,7 +127,6 @@ export class ExerciseHeaderActionsComponent {
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 
-    readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
     readonly participationModeChange = output<ParticipationMode>();
 
@@ -222,6 +220,7 @@ export class ExerciseHeaderActionsComponent {
             (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)
         );
     });
+    readonly hasProgrammingSubmission = computed(() => !!this.activeParticipationForCode()?.submissions?.some((submission) => submission.submitted));
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();
