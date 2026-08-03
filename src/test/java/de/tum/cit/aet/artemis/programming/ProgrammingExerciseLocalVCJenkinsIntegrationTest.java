@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -447,6 +448,50 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
                 FileUtils.deleteQuietly(targetRepositoryPath.get().toFile());
             }
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void copyRepository_testRuntimeExceptionCleansUpTarget() throws Exception {
+        AtomicReference<Path> targetRepositoryPath = new AtomicReference<>();
+        try {
+            doAnswer(invocation -> {
+                LocalVCRepositoryUri targetRepoUri = invocation.getArgument(1);
+                Path localTargetRepositoryPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
+                Files.createDirectories(localTargetRepositoryPath);
+                targetRepositoryPath.set(localTargetRepositoryPath);
+                throw new JGitInternalException("Simulated JGit runtime failure!");
+            }).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+
+            programmingExerciseTestService.copyRepository_testNotCreatedError();
+
+            // a RuntimeException during the copy must clean up the just-created target repository like an IOException does
+            assertThat(targetRepositoryPath.get()).isNotNull().doesNotExist();
+        }
+        finally {
+            if (targetRepositoryPath.get() != null) {
+                FileUtils.deleteQuietly(targetRepositoryPath.get().toFile());
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void copyRepository_selfHealsUnbornTargetRepository() throws Exception {
+        programmingExerciseTestService.copyRepository_selfHealsBrokenTargetRepository(true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void copyRepository_selfHealsCorruptTargetRepository() throws Exception {
+        programmingExerciseTestService.copyRepository_selfHealsBrokenTargetRepository(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void copyRepository_keepsHealthyPreexistingTargetOnFailedCopy() throws Exception {
+        doThrow(new IOException("Copy failed!")).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
+        programmingExerciseTestService.copyRepository_keepsHealthyPreexistingTargetOnFailedCopy();
     }
 
     @Test

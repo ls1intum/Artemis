@@ -22,10 +22,8 @@ export class ExerciseSubmitButtonComponent {
     readonly title = input('entity.action.submit');
     readonly btnType = input(ButtonType.PRIMARY);
     readonly tooltip = input('');
-    readonly isGeneratingFeedback = input(false);
 
     readonly onSubmit = output<void>();
-    readonly generatingFeedback = output<void>();
 
     readonly popover = viewChild<NgbPopover>('popoverRef');
 
