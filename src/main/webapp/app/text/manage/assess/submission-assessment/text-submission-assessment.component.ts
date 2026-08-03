@@ -25,6 +25,7 @@ import {
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -131,6 +132,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private get assessments(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
+
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return this.assessments;
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     // Icons
     farListAlt = faListAlt;

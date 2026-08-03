@@ -166,7 +166,8 @@
             (feedbacksChange)="validateFeedback()"
             [resultId]="result()!.id!"
             [gradingCriteria]="exercise?.gradingCriteria ?? []"
-            [maxPoints]="exercise?.maxPoints"
+            [allFeedbacks]="allAssessmentFeedbacks()"
+            [maxPoints]="getTotalMaxPoints(exercise)"
         />
     }
 }

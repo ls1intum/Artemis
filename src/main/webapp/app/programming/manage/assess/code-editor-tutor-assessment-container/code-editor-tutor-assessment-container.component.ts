@@ -147,6 +147,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
+    /** Full assessment feedback for the unreferenced-feedback score summary. */
+    allAssessmentFeedbacks(): Feedback[] {
+        return [...this.referencedFeedback, ...this.unreferencedFeedback(), ...this.automaticFeedback()];
+    }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     isFirstAssessment = false;
     readonly lockLimitReached = signal(false);
 

@@ -152,7 +152,8 @@
                         (onDiscardSuggestion)="removeSuggestion($event)"
                         [resultId]="resultId"
                         [gradingCriteria]="exercise()?.gradingCriteria ?? []"
-                        [maxPoints]="exercise()?.maxPoints"
+                        [allFeedbacks]="allAssessmentFeedbacks()"
+                        [maxPoints]="getTotalMaxPoints(exercise())"
                     />
                 }
             </div>

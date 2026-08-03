@@ -115,6 +115,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     assessments = computed(() => [...this.referencedFeedback(), ...this.unreferencedFeedback()]);
 
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
     // Apollon paints the highlight as an HTML overlay div (inline background/box-shadow), so a CSS token
