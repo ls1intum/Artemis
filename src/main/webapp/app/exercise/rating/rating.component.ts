@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./rating.component.scss'],
     imports: [TranslateDirective, StarRatingComponent],
 })
-export class RatingComponent implements OnInit, OnChanges {
+export class RatingComponent {
     private ratingService = inject(RatingService);
     private accountService = inject(AccountService);
 
@@ -23,21 +23,32 @@ export class RatingComponent implements OnInit, OnChanges {
 
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
+    readonly isOwnerOfParticipation = input<boolean>();
 
-    ngOnInit(): void {
-        this.loadRating();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['result'] && changes['result'].currentValue?.id !== this.previousResultId) {
-            this.previousResultId = changes['result'].currentValue?.id;
-            this.loadRating();
-        }
+    constructor() {
+        // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the
+        // result changes to a *different* id. The effect's first run handles the initial load (so a separate ngOnInit
+        // is no longer needed — it would only duplicate the request). previousResultId guards against reloading when
+        // the result reference changes but its id does not (the same guard the former hook applied). The reload runs
+        // untracked so participation()/account reads inside loadRating() are not themselves triggers.
+        effect(() => {
+            const result = this.result();
+            untracked(() => {
+                if (result?.id !== this.previousResultId) {
+                    this.previousResultId = result?.id;
+                    this.loadRating();
+                }
+            });
+        });
     }
 
     loadRating() {
         const result = this.result();
-        if (!result?.id || !this.participation() || !this.accountService.isOwnerOfParticipation(this.participation())) {
+        const participation = this.participation();
+        if (!result?.id || !participation) {
+            return;
+        }
+        if (!(this.isOwnerOfParticipation() ?? this.accountService.isOwnerOfParticipation(participation))) {
             return;
         }
         this.ratingService.getRating(result.id).subscribe((rating) => {

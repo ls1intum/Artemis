@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { CdkTable, CdkTableModule } from '@angular/cdk/table';
 import {
     ChangeDetectionStrategy,
@@ -27,6 +27,16 @@ import { CellRendererParams, ColumnDef, TumUiSortDirection, TumUiSortState, TumU
 const ACTIONS_COLUMN = '__tum_ui_actions__';
 const SEARCH_DEBOUNCE_MS = 300;
 
+// Full literal class strings (not interpolated) so Tailwind, which scans .ts via @source, generates these responsive utilities.
+// `hidden` collapses the cell by default; the breakpoint-prefixed `table-cell` restores it from that breakpoint up.
+const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, string> = {
+    sm: 'hidden sm:table-cell',
+    md: 'hidden md:table-cell',
+    lg: 'hidden lg:table-cell',
+    xl: 'hidden xl:table-cell',
+    '2xl': 'hidden 2xl:table-cell',
+};
+
 /**
  * Owned data table on Angular CDK (@angular/cdk/table), part of the tum-aet-ui kit.
  *
@@ -39,7 +49,7 @@ const SEARCH_DEBOUNCE_MS = 300;
     selector: 'tum-ui-table',
     templateUrl: './tum-ui-table.component.html',
     styleUrl: './tum-ui-table.component.scss',
-    imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiPaginatorComponent],
+    imports: [CdkTableModule, NgClass, NgTemplateOutlet, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiPaginatorComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumUiTableComponent<T> {
@@ -62,6 +72,11 @@ export class TumUiTableComponent<T> {
     readonly emptyMessage = input('artemisApp.dataTable.search.noResults');
     readonly pageSize = input(50);
     readonly pageSizeOptions = input<number[]>([10, 20, 50, 100, 200]);
+    /** Forwarded to the embedded paginator. Set false to hide the rows-per-page select (e.g. the legacy
+     *  table-view `hidePageSizeOptions`) so a fixed-page-size table shows no pointless single-option dropdown. */
+    readonly showRowsPerPage = input(true);
+    /** Forwarded to the embedded paginator's "Showing X to Y of Z" report. */
+    readonly showCurrentPageReport = input(true);
     readonly initialSortField = input<string | undefined>(undefined);
     readonly initialSortDirection = input<TumUiSortDirection>('asc');
 
@@ -139,6 +154,14 @@ export class TumUiTableComponent<T> {
 
     protected cellParams(row: T, col: ColumnDef<T>, rowIndex: number): CellRendererParams<T> {
         return { data: row, col, value: this.resolveValue(row, col), rowIndex };
+    }
+
+    /**
+     * Responsive-visibility classes for a column's header and body cells, so a column with {@link ColumnDef.hideBelow} collapses below that breakpoint (keeping the table usable on
+     * small screens without horizontal scrolling). Empty string for always-visible columns.
+     */
+    protected columnVisibilityClasses(col: ColumnDef<T>): string {
+        return col.hideBelow ? HIDE_BELOW_CLASSES[col.hideBelow] : '';
     }
 
     protected ariaSortFor(col: ColumnDef<T>): 'ascending' | 'descending' | 'none' | undefined {

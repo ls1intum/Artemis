@@ -55,10 +55,6 @@ export interface CourseInfoDTO {
     id: number;
     title?: string;
     semester?: string;
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
 }
 
 export interface LinkedCourseCompetencyDTO {
@@ -159,15 +155,12 @@ const toCourse = (dto?: CourseInfoDTO): Course | undefined => {
     if (!dto) {
         return undefined;
     }
-    return {
+    const course: Course = {
         id: dto.id,
         title: dto.title,
         semester: dto.semester,
-        studentGroupName: dto.studentGroupName,
-        teachingAssistantGroupName: dto.teachingAssistantGroupName,
-        editorGroupName: dto.editorGroupName,
-        instructorGroupName: dto.instructorGroupName,
     };
+    return course;
 };
 
 const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise | undefined => {

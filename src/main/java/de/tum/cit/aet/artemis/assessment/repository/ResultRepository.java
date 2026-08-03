@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -28,15 +27,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.core.util.RoundingUtil;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -138,6 +133,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
     List<Result> findResultsWithFeedbacksAndTestCaseByIdIn(List<Long> ids);
+
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase", "assessor" })
+    List<Result> findResultsWithFeedbacksTestCaseAndAssessorByIdIn(Collection<Long> ids);
 
     /**
      * Get the latest results for each programming exercise student participation in an exercise from the database together with the list of feedback items.
@@ -791,48 +789,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             }
         }
         return totalPoints;
-    }
-
-    /**
-     * Calculates the sum of points of all feedbacks. Additionally, computes the sum of points of feedbacks belonging to the same {@link GradingCriterion}.
-     * Points are rounded as defined by the course settings.
-     *
-     * @param result for which the points should be summed up.
-     * @param course with the exercise the result belongs to.
-     * @return the result together with the total points and the points per criterion.
-     */
-    default ResultWithPointsPerGradingCriterionDTO calculatePointsPerGradingCriterion(final Result result, final Course course) {
-        final Map<Long, Double> pointsPerCriterion = new HashMap<>();
-        final Map<Long, Integer> gradingInstructionsUseCount = new HashMap<>();
-
-        for (final Feedback feedback : result.getFeedbacks()) {
-            final double feedbackPoints;
-            final Long criterionId;
-
-            if (feedback.getGradingInstruction() != null) {
-                feedbackPoints = feedback.computeTotalScore(0, gradingInstructionsUseCount);
-                criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
-            }
-            else {
-                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
-                criterionId = null;
-            }
-
-            pointsPerCriterion.compute(criterionId, (_, oldPoints) -> (oldPoints == null) ? feedbackPoints : oldPoints + feedbackPoints);
-        }
-
-        final double totalPoints = RoundingUtil.roundScoreSpecifiedByCourseSettings(pointsPerCriterion.values().stream().mapToDouble(points -> points).sum(), course);
-
-        // points for feedbacks without criterion were only needed for totalPoints calculation
-        pointsPerCriterion.remove(null);
-
-        // round the point sums per criterion once at the end
-        pointsPerCriterion.entrySet().forEach(entry -> {
-            Double rounded = RoundingUtil.roundScoreSpecifiedByCourseSettings(entry.getValue(), course);
-            entry.setValue(rounded);
-        });
-
-        return new ResultWithPointsPerGradingCriterionDTO(result, totalPoints, pointsPerCriterion);
     }
 
     /**

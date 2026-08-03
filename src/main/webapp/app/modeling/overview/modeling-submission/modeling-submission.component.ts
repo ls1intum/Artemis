@@ -137,7 +137,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isAfterAssessmentDueDate = false;
     readonly isLoading = signal(true);
     readonly isLate = signal<boolean>(undefined!); // indicates if the submission is late
-    readonly isGeneratingFeedback = signal(false);
     ComplaintType = ComplaintType;
     readonly examMode = signal(false);
 
@@ -530,8 +529,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
         }
-
-        this.isGeneratingFeedback.set(false);
     }
 
     /**

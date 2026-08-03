@@ -16,6 +16,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -29,6 +33,10 @@ interface ExerciseDetailsRef {
 
 function isExerciseDetailsRef(component: unknown): component is ExerciseDetailsRef {
     return !!component && typeof (component as ExerciseDetailsRef).setSidebarToggle === 'function';
+}
+
+function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
+    return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
 }
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -70,6 +78,7 @@ export class CourseExercisesComponent implements SidebarView {
     private ltiService = inject(LtiService);
     private exerciseService = inject(ExerciseService);
     private sessionStorageService = inject(SessionStorageService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
     private changeDetectorRef = inject(ChangeDetectorRef);
 
@@ -125,6 +134,11 @@ export class CourseExercisesComponent implements SidebarView {
         this.ltiService.isMultiLaunch$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isMultiLaunch) => {
             this._isMultiLaunch.set(isMultiLaunch);
         });
+
+        this.participationWebsocketService
+            .subscribeForParticipationChanges()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((changedParticipation) => this.handleParticipationChange(changedParticipation));
 
         effect(() => {
             this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
@@ -218,11 +232,122 @@ export class CourseExercisesComponent implements SidebarView {
     }
 
     processExercises(exercises: Exercise[]): void {
-        const sortedExercises = this.courseOverviewService.sortExercises(exercises);
+        const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
         this._sortedExercises.set(sortedExercises);
         this._sidebarExercises.set(this.courseOverviewService.mapExercisesToSidebarCardElements(sortedExercises));
         this._accordionExerciseGroups.set(this.courseOverviewService.groupExercisesByDueDate(sortedExercises));
         this.updateSidebarData();
+    }
+
+    private preserveSidebarParticipationSnapshots(exercises: Exercise[]): Exercise[] {
+        const sidebarParticipationsByExerciseId = this.getSidebarParticipationsByExerciseId();
+        if (!sidebarParticipationsByExerciseId.size) {
+            return exercises;
+        }
+
+        let didUpdate = false;
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id === undefined) {
+                return exercise;
+            }
+
+            const sidebarParticipation = sidebarParticipationsByExerciseId.get(exercise.id);
+            if (!sidebarParticipation) {
+                return exercise;
+            }
+
+            const participations = exercise.studentParticipations ?? [];
+            const currentParticipation = participations.find((participation) => this.isSameParticipationSlot(participation, sidebarParticipation));
+            if (!this.shouldPreserveSidebarParticipation(sidebarParticipation, currentParticipation)) {
+                return exercise;
+            }
+
+            didUpdate = true;
+            const updatedParticipations = currentParticipation
+                ? participations.map((participation) => (this.isSameParticipationSlot(participation, sidebarParticipation) ? sidebarParticipation : participation))
+                : participations.concat(sidebarParticipation);
+            return { ...exercise, studentParticipations: updatedParticipations };
+        });
+        return didUpdate ? updatedExercises : exercises;
+    }
+
+    private getSidebarParticipationsByExerciseId(): Map<number, StudentParticipation> {
+        const sidebarParticipationsByExerciseId = new Map<number, StudentParticipation>();
+        this._sidebarExercises().forEach((sidebarExercise) => {
+            const exerciseId = sidebarExercise.exercise?.id ?? (typeof sidebarExercise.id === 'number' ? sidebarExercise.id : undefined);
+            if (exerciseId !== undefined && sidebarExercise.studentParticipation) {
+                sidebarParticipationsByExerciseId.set(exerciseId, sidebarExercise.studentParticipation);
+            }
+        });
+        return sidebarParticipationsByExerciseId;
+    }
+
+    private shouldPreserveSidebarParticipation(sidebarParticipation: StudentParticipation, currentParticipation: StudentParticipation | undefined): boolean {
+        if (!currentParticipation) {
+            return !!sidebarParticipation.initializationState || !!sidebarParticipation.submissions?.length;
+        }
+
+        const sidebarResultCount = getAllResultsOfAllSubmissions(sidebarParticipation.submissions).length;
+        const currentResultCount = getAllResultsOfAllSubmissions(currentParticipation.submissions).length;
+        return (
+            sidebarResultCount > currentResultCount ||
+            ((sidebarParticipation.submissions?.length ?? 0) > (currentParticipation.submissions?.length ?? 0) && sidebarResultCount >= currentResultCount) ||
+            (sidebarParticipation.initializationState === InitializationState.FINISHED && currentParticipation.initializationState !== InitializationState.FINISHED)
+        );
+    }
+
+    private handleParticipationChange(changedParticipation: Participation | undefined): void {
+        if (!isStudentParticipationChange(changedParticipation) || changedParticipation.exercise?.id === undefined) {
+            return;
+        }
+
+        this.updateCourseParticipationSnapshot(changedParticipation);
+        const sourceExercises = this._sortedExercises() ?? this._course()?.exercises;
+        const updatedExercises = this.updateExercisesWithParticipation(sourceExercises, changedParticipation);
+        if (!updatedExercises || updatedExercises === sourceExercises) {
+            return;
+        }
+        this.processExercises(updatedExercises);
+        this.changeDetectorRef.markForCheck();
+    }
+
+    private updateCourseParticipationSnapshot(changedParticipation: StudentParticipation): void {
+        const course = this._course();
+        const updatedCourseExercises = this.updateExercisesWithParticipation(course?.exercises, changedParticipation);
+        if (!course || !updatedCourseExercises || updatedCourseExercises === course.exercises) {
+            return;
+        }
+        this._course.set({ ...course, exercises: updatedCourseExercises });
+    }
+
+    private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {
+        const exerciseId = changedParticipation.exercise?.id;
+        if (exerciseId === undefined || !exercises?.length) {
+            return exercises;
+        }
+
+        let didUpdate = false;
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id !== exerciseId) {
+                return exercise;
+            }
+
+            didUpdate = true;
+            const participations = exercise.studentParticipations ?? [];
+            const hasParticipation = participations.some((participation) => this.isSameParticipationSlot(participation, changedParticipation));
+            const updatedParticipations = hasParticipation
+                ? participations.map((participation) => (this.isSameParticipationSlot(participation, changedParticipation) ? changedParticipation : participation))
+                : participations.concat(changedParticipation);
+            return { ...exercise, studentParticipations: updatedParticipations };
+        });
+        return didUpdate ? updatedExercises : exercises;
+    }
+
+    private isSameParticipationSlot(participation: StudentParticipation, otherParticipation: StudentParticipation): boolean {
+        if (participation.id !== undefined && otherParticipation.id !== undefined) {
+            return participation.id === otherParticipation.id;
+        }
+        return !!participation.testRun === !!otherParticipation.testRun;
     }
 
     updateSidebarData() {

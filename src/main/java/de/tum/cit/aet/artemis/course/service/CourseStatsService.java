@@ -338,15 +338,14 @@ public class CourseStatsService {
         stats.setNumberOfComplaints(numberOfComplaints);
         final long numberOfComplaintResponses = complaintService.countComplaintResponsesByExerciseIds(courseExerciseIds);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                course.getId());
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), course.getId());
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(course.getId());
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(courseExerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
         List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIdsWithManualAssessments);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
-        stats.setNumberOfRatings(ratingRepository.countByResult_Submission_Participation_Exercise_Course_Id(course.getId()));
+        stats.setNumberOfRatings(ratingRepository.countByResultExerciseIds(courseExerciseIds));
         return stats;
     }
 

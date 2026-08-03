@@ -52,6 +52,13 @@ import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 
+/**
+ * Duck-type guard for route-activated components that expose a `setPageTitle` method.
+ */
+function hasSetPageTitle(componentRef: unknown): componentRef is { setPageTitle(title: string): void } {
+    return !!componentRef && typeof (componentRef as { setPageTitle?: unknown }).setPageTitle === 'function';
+}
+
 @Component({
     selector: 'jhi-course-management-container',
     templateUrl: './course-management-container.component.html',
@@ -254,6 +261,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (courseView) {
             const isCollapsed = typeof courseView.isCollapsed === 'function' ? courseView.isCollapsed() : courseView.isCollapsed;
             this.isSidebarCollapsed.set(isCollapsed ?? false);
+        }
+        if (hasSetPageTitle(componentRef)) {
+            // Show the page title inside the conversations sidebar header, mirroring the student overview.
+            componentRef.setPageTitle(this.pageTitle());
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
         if (this.courseBody()) {

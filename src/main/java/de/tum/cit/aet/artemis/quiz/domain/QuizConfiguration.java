@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface QuizConfiguration {
@@ -21,18 +20,13 @@ public interface QuizConfiguration {
 
     /**
      * Recreate missing pointers from children to parents that were removed by {@code @JsonIgnore}.
-     *
      * <p>
-     * <strong>Contract:</strong> back-references are set unconditionally on every reachable child, including
-     * those with {@code id == null}. Prior to the bidirectional {@code mappedBy} mapping introduced for issues
-     * #12574 / #12584 this method silently skipped transient questions; that guard has been removed because
-     * the child {@code @ManyToOne} now owns the FK and would otherwise INSERT with a null {@code question_id}.
-     * Callers passing partially-deserialised graphs must ensure those graphs are valid for persistence
-     * (e.g. no orphaned components without their parent type).
+     * Since all three question types now store their components (answer options / drop locations / drag items / correct mappings, resp. spots / solutions / correct mappings) and
+     * their statistics counters id-based inside the {@code content} / {@code counters} JSON columns, there are no more {@code @JsonIgnore} child back-references to reconnect
+     * except
+     * the question's own statistic (a {@code @OneToOne} whose back-reference is {@code @JsonIgnore}d) and the question's parent exercise/pool.
      */
-    default void reconnectJSONIgnoreAttributes() {// iterate through quizQuestions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @JsonIgnore in question and answerOption
-        // that prevents infinite recursive JSON serialization.
+    default void reconnectJSONIgnoreAttributes() {
         if (getQuizQuestions() == null) {
             return;
         }
@@ -41,105 +35,11 @@ public interface QuizConfiguration {
                 continue;
             }
             setQuestionParent(quizQuestion);
-            // reconnect QuestionStatistics
-            if (quizQuestion.getQuizQuestionStatistic() != null) {
-                setQuizQuestion(quizQuestion.getQuizQuestionStatistic(), quizQuestion);
+            // reconnect the question statistic's back-reference to its question (statistic is null on transient questions before initializeStatistic())
+            QuizQuestionStatistic quizQuestionStatistic = quizQuestion.getQuizQuestionStatistic();
+            if (quizQuestionStatistic != null) {
+                quizQuestionStatistic.setQuizQuestion(quizQuestion);
             }
-            // do the same for answerOptions (if quizQuestion is multiple choice)
-            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                // reconnect answerCounters (statistic is null on transient questions before initializeStatistic())
-                if (mcStatistic != null) {
-                    setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
-                }
-                // reconnect answerOptions
-                setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
-            }
-            if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
-                // reconnect dropLocations
-                setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
-                // reconnect dragItems
-                setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
-                // reconnect correctMappings
-                setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
-                // reconnect dropLocationCounters (statistic is null on transient questions before initializeStatistic())
-                if (dragAndDropStatistic != null) {
-                    setQuizQuestionStatistics(dragAndDropStatistic.getDropLocationCounters(), dragAndDropQuestion, dragAndDropStatistic);
-                }
-            }
-            if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
-                // reconnect spots
-                setQuizQuestions(shortAnswerQuestion.getSpots(), shortAnswerQuestion);
-                // reconnect solutions
-                setQuizQuestions(shortAnswerQuestion.getSolutions(), shortAnswerQuestion);
-                // reconnect correctMappings
-                setQuizQuestions(shortAnswerQuestion.getCorrectMappings(), shortAnswerQuestion);
-                // reconnect spotCounters (statistic is null on transient questions before initializeStatistic())
-                if (shortAnswerStatistic != null) {
-                    setQuizQuestionStatistics(shortAnswerStatistic.getShortAnswerSpotCounters(), shortAnswerQuestion, shortAnswerStatistic);
-                }
-            }
-        }
-    }
-
-    /**
-     * Set the QuizQuestion of the given components
-     *
-     * @param components   the QuizQuestionComponent of which the given quizQuestion to be set to
-     * @param quizQuestion the QuizQuestion to be set to
-     * @param <C>          the class that implements QuizQuestionComponent
-     * @param <Q>          the subclass of QuizQuestion to be set to
-     */
-    default <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestions(Collection<C> components, Q quizQuestion) {
-        if (components == null) {
-            return;
-        }
-        for (QuizQuestionComponent<Q> mapping : components) {
-            setQuizQuestion(mapping, quizQuestion);
-        }
-    }
-
-    /**
-     * Set the QuizQuestionStatistic and the QuizQuestion of the given statisticComponents
-     *
-     * @param statisticComponents   the QuizQuestionStatisticComponent of which the QuizQuestionStatistic to be set
-     * @param quizQuestion          the QuizQuestion to be set to
-     * @param quizQuestionStatistic the QuizQuestionStatistic to be set to
-     * @param <SC>                  the class that implements QuizQuestionStatisticComponent of which the QuizQuestionStatistic to be set
-     * @param <S>                   the subclass that implements QuizQuestionStatistic to be set to
-     * @param <C>                   the class that implements QuizQuestionComponent
-     * @param <Q>                   the subclass of QuizQuestion to be set to
-     */
-    default <SC extends QuizQuestionStatisticComponent<S, C, Q>, S extends QuizQuestionStatistic, C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestionStatistics(
-            Collection<SC> statisticComponents, Q quizQuestion, S quizQuestionStatistic) {
-        // Back-references are set unconditionally (including for entities with id == null) to match the parent
-        // setQuizQuestion contract above; otherwise transient counters created during reevaluate would INSERT with
-        // a null FK to the statistic.
-        if (statisticComponents == null) {
-            return;
-        }
-        for (SC statisticComponent : statisticComponents) {
-            if (statisticComponent != null) {
-                statisticComponent.setQuizQuestionStatistic(quizQuestionStatistic);
-                if (!(quizQuestion instanceof MultipleChoiceQuestion)) {
-                    setQuizQuestion(statisticComponent.getQuizQuestionComponent(), quizQuestion);
-                }
-            }
-        }
-    }
-
-    /**
-     * Set the QuizQuestion of the given component
-     *
-     * @param component    the QuizQuestionComponent of which the QuizQuestion to be set
-     * @param quizQuestion the QuizQuestion to be set to
-     * @param <Q>          the subclass of QuizQuestion to be set to
-     */
-    default <Q extends QuizQuestion> void setQuizQuestion(QuizQuestionComponent<Q> component, Q quizQuestion) {
-        if (component != null) {
-            component.setQuestion(quizQuestion);
         }
     }
 }
