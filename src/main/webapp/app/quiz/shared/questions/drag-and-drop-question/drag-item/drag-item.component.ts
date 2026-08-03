@@ -25,6 +25,30 @@ export class DragItemComponent {
     clickDisabled = input<boolean>();
     invalid = input<boolean>();
     filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+    // The owning drag-and-drop question id, needed to build the (question-scoped) drag item image URL. Drag item ids are only unique within their question.
+    questionId = input<number>();
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
+    /**
+     * Builds the image source for the drag item. A locally uploaded, not-yet-saved image is shown from its client-side preview (a data URL) if present; otherwise the saved picture is
+     * served via the question-scoped file URL {@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/{filename}}.
+     */
+    protected imageSrc(): string | undefined {
+        const picturePath = this.dragItem().pictureFilePath;
+        if (!picturePath) {
+            return undefined;
+        }
+        const preview = this.filePreviewPaths().get(picturePath);
+        if (preview) {
+            return addPublicFilePrefix(preview);
+        }
+        const questionId = this.questionId();
+        const dragItemId = this.dragItem().id;
+        if (questionId !== undefined && dragItemId !== undefined) {
+            const filename = picturePath.substring(picturePath.lastIndexOf('/') + 1);
+            return addPublicFilePrefix(`drag-and-drop/questions/${questionId}/drag-items/${dragItemId}/${filename}`);
+        }
+        return addPublicFilePrefix(picturePath);
+    }
 }

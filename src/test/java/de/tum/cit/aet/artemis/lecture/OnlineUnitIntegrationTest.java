@@ -46,6 +46,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
 
     private static final String TEST_PREFIX = "onlineunitintegration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private OnlineUnitRepository onlineUnitRepository;
 
@@ -69,7 +71,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         this.onlineUnit = new OnlineUnit();
         this.onlineUnit.setDescription("LoremIpsum");
         this.onlineUnit.setName("LoremIpsum");
@@ -77,9 +79,9 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         this.onlineUnit.setLecture(this.lecture1);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         competency = competencyUtilService.createCompetency(lecture1.getCourse());
 
@@ -144,7 +146,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", OnlineUnitDTO.of(onlineUnit), OnlineUnitDTO.class, HttpStatus.FORBIDDEN);
@@ -210,7 +212,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 

@@ -9,6 +9,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { CourseConfiguration } from 'app/course/shared/entities/course-configuration.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
@@ -56,10 +57,6 @@ export class Course implements BaseEntity {
     public title?: string;
     public description?: string;
     public shortName?: string;
-    public studentGroupName?: string;
-    public teachingAssistantGroupName?: string;
-    public editorGroupName?: string;
-    public instructorGroupName?: string;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
     public enrollmentStartDate?: dayjs.Dayjs;
@@ -118,6 +115,7 @@ export class Course implements BaseEntity {
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
+    public courseConfiguration?: CourseConfiguration;
     public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     public courseInformationSharingMessagingCodeOfConduct?: string;
 
@@ -180,11 +178,15 @@ export class CourseForImportDTO {
     semester?: string;
 }
 
-export const enum CourseGroup {
+/**
+ * URL path segments used by the REST API and Angular router to identify course roles.
+ * These are the string values sent to/from the server; they are distinct from the {@link CourseRole} Java enum.
+ */
+export const enum CourseRoleSlug {
     STUDENTS = 'students',
     TUTORS = 'tutors',
     EDITORS = 'editors',
     INSTRUCTORS = 'instructors',
 }
 
-export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.EDITORS, CourseGroup.INSTRUCTORS];
+export const courseRoleSegments = [CourseRoleSlug.STUDENTS, CourseRoleSlug.TUTORS, CourseRoleSlug.EDITORS, CourseRoleSlug.INSTRUCTORS];

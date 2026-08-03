@@ -33,6 +33,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     private static final String TEST_PREFIX = "tutorialgroupconfiguration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     Long exampleTutorialGroupId;
 
     private Long courseId;
@@ -42,8 +44,8 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
-        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "instructor42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "instructor42"));
         }
         this.exampleTutorialGroupId = tutorialGroupUtilService
                 .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
@@ -57,7 +59,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testJustForInstructorEndpoints();
     }
@@ -82,7 +84,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @BeforeEach
     void deleteExistingConfiguration() {
-        var course = courseUtilService.createCourse();
+        var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
         courseId = course.getId();

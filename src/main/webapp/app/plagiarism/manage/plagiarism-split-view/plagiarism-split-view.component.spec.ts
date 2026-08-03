@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
@@ -65,21 +64,20 @@ describe('Plagiarism Split View Component', () => {
     });
 
     it('checks type of text exercise', () => {
-        comp.ngOnChanges({
-            exercise: { currentValue: textExercise } as SimpleChange,
-        });
+        // isProgrammingOrTextExercise is now a computed derived from exercise() (replaces the former ngOnChanges branch).
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
 
         expect(comp.isProgrammingOrTextExercise()).toBe(true);
     });
 
     it('should parse text matches for comparison', async () => {
-        fixture.componentRef.setInput('exercise', textExercise as Exercise);
         vi.spyOn(comp, 'parseTextMatches');
         vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
-        comp.ngOnChanges({
-            exercise: { currentValue: textExercise } as SimpleChange,
-            comparison: { currentValue: comparison } as SimpleChange,
-        });
+
+        // The constructor effect fetches and parses the comparison whenever comparison() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
+        fixture.componentRef.setInput('comparison', comparison);
+        fixture.detectChanges();
 
         await Promise.resolve();
 
@@ -87,20 +85,32 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     });
 
-    it('should not fetch comparison until course id and comparison id are available', () => {
+    it('should not fetch comparison until the course id can be resolved', () => {
         const getComparisonSpy = vi
             .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
             .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
 
-        comp.ngOnChanges({
-            comparison: { currentValue: { id: 1 } } as SimpleChange,
-        });
-        comp.ngOnChanges({
-            exercise: { currentValue: textExercise } as SimpleChange,
-            comparison: { currentValue: {} } as SimpleChange,
-        });
+        // With a comparison set but no exercise, courseId() is undefined, so the effect must not fetch.
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
 
         expect(getComparisonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should fetch the comparison when the exercise is bound after the comparison', () => {
+        const getComparisonSpy = vi
+            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
+            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+
+        // The parent may bind the inputs in either order. The effect tracks the derived course id as well, so the late exercise still triggers the fetch.
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
+        expect(getComparisonSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
+        fixture.detectChanges();
+
+        expect(getComparisonSpy).toHaveBeenCalledExactlyOnceWith(textExercise.course!.id, 1);
     });
 
     it('should subscribe to the split control subject', () => {
@@ -293,7 +303,9 @@ describe('Plagiarism Split View Component', () => {
         fixture.componentRef.setInput('sortByStudentLogin', studentLogin);
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
 
-        comp.ngOnChanges({ comparison: { currentValue: { id: 1 } } as SimpleChange });
+        // The constructor effect fetches and swaps the comparison whenever comparison() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
 
         const originalPlagComp = createPlagiarismComparison();
         const plagComp = comp.plagiarismComparison()!;
