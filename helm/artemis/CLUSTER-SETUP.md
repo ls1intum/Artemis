@@ -60,7 +60,8 @@ kubectl auth can-i create jobs.batch \
   --as system:serviceaccount:artemis:artemis-localci-controller \
   -n artemis-builds
 kubectl auth can-i list secrets \
-  --as system:serviceaccount:artemis-builds:artemis-localci-workload
+  --as system:serviceaccount:artemis-builds:artemis-localci-workload \
+  -n artemis-builds
 ```
 
 The first authorization check should return `yes`; the workload check should return `no`.

@@ -17,6 +17,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -35,6 +37,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
 @Profile(PROFILE_BUILDAGENT)
 @ConditionalOnProperty(prefix = "artemis.continuous-integration", name = "build-runner", havingValue = "kubernetes")
 public class KubernetesBuildArchiveService {
+
+    private static final Logger log = LoggerFactory.getLogger(KubernetesBuildArchiveService.class);
 
     private static final String TESTING_DIRECTORY = "testing-dir";
 
@@ -63,13 +67,13 @@ public class KubernetesBuildArchiveService {
                             RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
                     String testCheckoutPath = checkoutPath(buildJob.buildConfig().testCheckoutPath(),
                             RepositoryCheckoutPath.TEST.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
-                    addDirectory(tar, preparedBuildJob.testRepository(), TESTING_DIRECTORY + "/" + testCheckoutPath);
-                    addDirectory(tar, preparedBuildJob.assignmentRepository(), TESTING_DIRECTORY + "/" + assignmentCheckoutPath);
+                    addDirectory(tar, preparedBuildJob.testRepository(), targetDirectory(testCheckoutPath));
+                    addDirectory(tar, preparedBuildJob.assignmentRepository(), targetDirectory(assignmentCheckoutPath));
 
                     if (preparedBuildJob.solutionRepository() != null) {
                         String solutionCheckoutPath = checkoutPath(buildJob.buildConfig().solutionCheckoutPath(),
                                 RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(buildJob.buildConfig().programmingLanguage()));
-                        addDirectory(tar, preparedBuildJob.solutionRepository(), TESTING_DIRECTORY + "/" + solutionCheckoutPath);
+                        addDirectory(tar, preparedBuildJob.solutionRepository(), targetDirectory(solutionCheckoutPath));
                     }
 
                     List<Path> auxiliaryRepositories = preparedBuildJob.auxiliaryRepositories();
@@ -113,6 +117,7 @@ public class KubernetesBuildArchiveService {
 
     private void addDirectory(TarArchiveOutputStream tar, Path sourceRoot, String targetRoot) throws IOException {
         String normalizedTarget = validateRelativePath(targetRoot);
+        Path normalizedSourceRoot = sourceRoot.toAbsolutePath().normalize();
         Files.walkFileTree(sourceRoot, new SimpleFileVisitor<>() {
 
             @Override
@@ -153,8 +158,17 @@ public class KubernetesBuildArchiveService {
             }
 
             private void addSymbolicLink(Path path, String entryName) throws IOException {
+                Path linkTarget = Files.readSymbolicLink(path);
+                Path parent = path.toAbsolutePath().getParent();
+                Path resolvedTarget = (parent == null ? linkTarget.toAbsolutePath() : parent.resolve(linkTarget)).normalize();
+                // A repository may contain a symbolic link that escapes its own root. Archiving it would let the extraction in the build container write outside the
+                // workspace, so such links are dropped instead of being carried into the archive.
+                if (!resolvedTarget.startsWith(normalizedSourceRoot)) {
+                    log.warn("Skipping symbolic link {} because its target {} points outside the repository", path, linkTarget);
+                    return;
+                }
                 TarArchiveEntry entry = new TarArchiveEntry(entryName, TarConstants.LF_SYMLINK);
-                entry.setLinkName(Files.readSymbolicLink(path).toString().replace(path.getFileSystem().getSeparator(), "/"));
+                entry.setLinkName(linkTarget.toString().replace(path.getFileSystem().getSeparator(), "/"));
                 entry.setMode(0777);
                 tar.putArchiveEntry(entry);
                 tar.closeArchiveEntry();
@@ -162,8 +176,23 @@ public class KubernetesBuildArchiveService {
         });
     }
 
+    /**
+     * Resolves the checkout path of a repository, falling back to the language default when the exercise does not customise it.
+     * <p>
+     * The language default is intentionally empty for several languages (for example the test repository of a Java exercise), which means that the repository is checked out
+     * into the working directory itself rather than into a subdirectory.
+     *
+     * @param configuredPath the checkout path configured on the exercise, may be blank
+     * @param defaultPath    the language default, may be empty
+     * @return the validated relative checkout path, or an empty string for the working directory itself
+     */
     private String checkoutPath(String configuredPath, String defaultPath) {
-        return validateRelativePath(StringUtils.isBlank(configuredPath) ? defaultPath : configuredPath);
+        String path = StringUtils.isBlank(configuredPath) ? defaultPath : configuredPath;
+        return StringUtils.isBlank(path) ? "" : validateRelativePath(path);
+    }
+
+    private static String targetDirectory(String checkoutPath) {
+        return checkoutPath.isEmpty() ? TESTING_DIRECTORY : TESTING_DIRECTORY + "/" + checkoutPath;
     }
 
     static String validateRelativePath(String path) {

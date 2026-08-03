@@ -30,8 +30,8 @@ data:
   ARTEMIS_BUILDLOGSPATH: "/opt/artemis/data/build-logs"
 
   # ---- Service discovery (Eureka) + Hazelcast ----
+  # EUREKA_CLIENT_SERVICEURL_DEFAULTZONE lives in the Secret because the URL embeds the registry password.
   EUREKA_CLIENT_ENABLED: "true"
-  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: {{ include "artemis.eurekaUrl" . | quote }}
   EUREKA_INSTANCE_PREFERIPADDRESS: "true"
   EUREKA_INSTANCE_APPNAME: "Artemis"
   # Evict dead pod IPs quickly so Hazelcast stops dialing gone pods on churn.

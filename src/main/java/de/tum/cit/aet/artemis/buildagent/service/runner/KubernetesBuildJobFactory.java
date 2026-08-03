@@ -27,6 +27,8 @@ import io.fabric8.kubernetes.api.model.LocalObjectReference;
 import io.fabric8.kubernetes.api.model.LocalObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
+import io.fabric8.kubernetes.api.model.SeccompProfileBuilder;
+import io.fabric8.kubernetes.api.model.SecurityContext;
 import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.Toleration;
 import io.fabric8.kubernetes.api.model.TolerationBuilder;
@@ -138,8 +140,24 @@ public class KubernetesBuildJobFactory {
                 + "/artemis-exit-code\n" + "exit \"$code\"\n";
 
         return new ContainerBuilder().withName(BUILDER_CONTAINER).withImage(buildJob.buildConfig().dockerImage()).withImagePullPolicy(properties.imagePullPolicy())
-                .withCommand("bash", "-c", command).withEnv(environment(runConfig)).withResources(builderResources(runConfig))
+                .withCommand("bash", "-c", command).withEnv(environment(runConfig)).withResources(builderResources(runConfig)).withSecurityContext(builderSecurityContext())
                 .withVolumeMounts(new VolumeMountBuilder().withName(WORKSPACE_VOLUME).withMountPath(WORKSPACE_PATH).build()).build();
+    }
+
+    /**
+     * Security context for the container that executes untrusted student code.
+     * <p>
+     * Kubernetes leaves seccomp unconfined unless a profile is requested, while the Docker build runner always applies the container runtime's default profile. Requesting
+     * {@code RuntimeDefault} therefore restores parity with the Docker runner instead of silently running with a weaker sandbox.
+     * <p>
+     * {@code allowPrivilegeEscalation} and the default capability set are deliberately left untouched: exercise images legitimately install packages as root and use setuid
+     * tooling such as {@code sudo} or {@code gosu}. Disabling either would break those exercises, and the Docker runner does not restrict them either. Isolation of the builder
+     * relies on the Pod boundary, the disabled service account token, and the optional network isolation init container.
+     *
+     * @return the security context applied to the builder container
+     */
+    private SecurityContext builderSecurityContext() {
+        return new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build()).build();
     }
 
     private Container helperContainer() {
@@ -154,8 +172,18 @@ public class KubernetesBuildJobFactory {
     }
 
     private Container networkIsolationContainer() {
-        String command = "iptables -A INPUT -i lo -j ACCEPT; iptables -A OUTPUT -o lo -j ACCEPT; iptables -P INPUT DROP; iptables -P OUTPUT DROP; "
-                + "ip6tables -A INPUT -i lo -j ACCEPT; ip6tables -A OUTPUT -o lo -j ACCEPT; ip6tables -P INPUT DROP; ip6tables -P OUTPUT DROP";
+        // One rule per line with "set -eu" so that a failing rule aborts the init container instead of leaving the build partially isolated.
+        String command = """
+                set -eu
+                iptables -A INPUT -i lo -j ACCEPT
+                iptables -A OUTPUT -o lo -j ACCEPT
+                iptables -P INPUT DROP
+                iptables -P OUTPUT DROP
+                ip6tables -A INPUT -i lo -j ACCEPT
+                ip6tables -A OUTPUT -o lo -j ACCEPT
+                ip6tables -P INPUT DROP
+                ip6tables -P OUTPUT DROP
+                """;
         return new ContainerBuilder().withName("network-isolation").withImage(properties.helperImage()).withImagePullPolicy(properties.imagePullPolicy())
                 .withCommand("sh", "-c", command)
                 .withSecurityContext(new SecurityContextBuilder().withRunAsUser(0L).withRunAsNonRoot(false).withAllowPrivilegeEscalation(false)
@@ -226,7 +254,15 @@ public class KubernetesBuildJobFactory {
         return properties.imagePullSecrets().stream().map(value -> new LocalObjectReferenceBuilder().withName(value).build()).toList();
     }
 
-    private int effectiveBuildTimeout(BuildJobQueueItem buildJob) {
+    /**
+     * Caps the timeout requested by a build job with the configured maximum.
+     * <p>
+     * Shared with {@link KubernetesBuildJobRunner} so that the time the runner waits for an execution and the {@code activeDeadlineSeconds} of the Job stay consistent.
+     *
+     * @param buildJob the build job whose requested timeout should be capped
+     * @return the effective build timeout in seconds
+     */
+    int effectiveBuildTimeout(BuildJobQueueItem buildJob) {
         int requestedTimeout = buildJob.buildConfig().timeoutSeconds();
         return requestedTimeout > 0 && requestedTimeout < maximumBuildTimeoutSeconds ? requestedTimeout : maximumBuildTimeoutSeconds;
     }

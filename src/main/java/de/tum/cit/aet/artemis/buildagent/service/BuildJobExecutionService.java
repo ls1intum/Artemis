@@ -187,7 +187,8 @@ public class BuildJobExecutionService {
             }
 
             PreparedBuildJob preparedBuildJob = new PreparedBuildJob(assignmentRepositoryPath, testRepositoryPath, solutionRepositoryPath, List.of(auxiliaryRepositoryPaths));
-            try (BuildJobRunnerResult runnerResult = buildJobRunner.execute(buildJob, preparedBuildJob)) {
+            BuildJobRunnerResult runnerResult = buildJobRunner.execute(buildJob, preparedBuildJob);
+            try {
                 if (runnerResult.resultArchive() == null) {
                     String message = "The build execution did not produce a result archive for build job " + buildJob.id();
                     buildLogsMap.appendBuildLogEntry(buildJob.id(), message);
@@ -207,6 +208,16 @@ public class BuildJobExecutionService {
                 String message = "Error while parsing build results";
                 buildLogsMap.appendBuildLogEntry(buildJob.id(), message);
                 throw new LocalCIException(message, e);
+            }
+            finally {
+                // Closing the runner result also runs the runner cleanup (for Docker: stopping the container). A cleanup failure must not discard an already parsed
+                // build result, and it must not be reported as a result parsing error.
+                try {
+                    runnerResult.close();
+                }
+                catch (IOException | RuntimeException e) {
+                    log.warn("Could not release the execution resources for build job {}", buildJob.id(), e);
+                }
             }
         }
         finally {

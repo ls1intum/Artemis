@@ -97,7 +97,7 @@ class KubernetesBuildJobRunnerTest {
     }
 
     @Test
-    void deletesCollectedResultWhenStoppingHelperFails() throws Exception {
+    void keepsCollectedResultWhenStoppingHelperFails() throws Exception {
         KubernetesClient client = mock(KubernetesClient.class);
         KubernetesBuildArchiveService archiveService = mock(KubernetesBuildArchiveService.class);
         TempFileUtilService tempFileUtilService = new TempFileUtilService(temporaryDirectory);
@@ -108,8 +108,13 @@ class KubernetesBuildJobRunnerTest {
         KubernetesBuildJobRunner runner = runner(client, archiveService, mock(BuildLogsMap.class), tempFileUtilService);
         configureSuccessfulExecution(client, KubernetesBuildJobRunner.jobName(buildJob, "Agent One"), resultArchive(), true);
 
-        assertThatThrownBy(() -> runner.execute(buildJob, preparedBuildJob())).isInstanceOf(LocalCIException.class).hasMessageContaining("Kubernetes helper")
-                .hasRootCauseMessage("helper stop failed");
+        // Stopping the helper happens after the result archive was collected and the Job is deleted right afterwards, so a failing stop signal must not fail the build.
+        try (BuildJobRunnerResult result = runner.execute(buildJob, preparedBuildJob())) {
+            assertThat(result.exitCode()).isZero();
+            assertThat(result.resultArchive()).isNotNull();
+            assertThat(result.resultArchive().readAllBytes()).isNotEmpty();
+        }
+
         assertTemporaryFilesAreDeleted();
     }
 
@@ -217,10 +222,26 @@ class KubernetesBuildJobRunnerTest {
         assertThat(wait).isEqualTo(Duration.ofSeconds(75));
     }
 
+    @Test
+    void waitsOnlyForTheTimeoutCappedByTheJobFactory() {
+        // The Job factory caps the requested timeout with artemis.continuous-integration.build-timeout-seconds.max and uses it for activeDeadlineSeconds. Waiting longer
+        // than that would keep the runner blocked after Kubernetes already terminated the Job.
+        KubernetesBuildJobFactory factory = mock(KubernetesBuildJobFactory.class);
+        when(factory.effectiveBuildTimeout(any())).thenReturn(30);
+        var runner = new KubernetesBuildJobRunner(mock(KubernetesClient.class), properties(), factory, mock(KubernetesBuildArchiveService.class), mock(BuildLogsMap.class),
+                new TempFileUtilService(temporaryDirectory), 1024);
+
+        Duration wait = ReflectionTestUtils.invokeMethod(runner, "effectiveExecutionWait", buildJob());
+
+        assertThat(wait).isEqualTo(Duration.ofSeconds(45));
+    }
+
     private KubernetesBuildJobRunner runner(KubernetesClient client, KubernetesBuildArchiveService archiveService, BuildLogsMap buildLogsMap,
             TempFileUtilService tempFileUtilService) {
         KubernetesBuildJobFactory factory = mock(KubernetesBuildJobFactory.class);
         when(factory.createJob(any(), any(), any())).thenReturn(new JobBuilder().build());
+        // The runner reuses the capping of the factory, which leaves the 60 seconds requested by the test build job untouched.
+        when(factory.effectiveBuildTimeout(any())).thenReturn(60);
         var runner = new KubernetesBuildJobRunner(client, properties(), factory, archiveService, buildLogsMap, tempFileUtilService, 1024);
         ReflectionTestUtils.setField(runner, "buildAgentName", "Agent One");
         return runner;

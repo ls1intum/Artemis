@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.buildagent.config.KubernetesBuildRunnerProperties;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.BuildLogsMap;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.localci.exception.ImagePullException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
@@ -73,8 +75,10 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private static final String INPUT_ARCHIVE_FILE = "/var/tmp/artemis-localci-input.tar";
 
-    private static final List<String> TERMINAL_START_FAILURES = List.of("CreateContainerConfigError", "CreateContainerError", "ErrImagePull", "ImagePullBackOff",
-            "InvalidImageName", "RunContainerError");
+    private static final List<String> TERMINAL_IMAGE_PULL_FAILURES = List.of("ErrImagePull", "ImagePullBackOff", "InvalidImageName");
+
+    private static final List<String> TERMINAL_START_FAILURES = Stream
+            .concat(Stream.of("CreateContainerConfigError", "CreateContainerError", "RunContainerError"), TERMINAL_IMAGE_PULL_FAILURES.stream()).toList();
 
     private final KubernetesClient kubernetesClient;
 
@@ -303,9 +307,15 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
 
     private void signalHelperStop(String podName) {
         ByteArrayOutputStream error = new ByteArrayOutputStream();
-        int exitCode = exec(podName, OutputStream.nullOutputStream(), error, Duration.ofSeconds(10), "touch", HELPER_STOP_FILE);
-        if (exitCode != 0) {
-            log.warn("Could not stop Kubernetes helper in Pod {}: {}", podName, error.toString(StandardCharsets.UTF_8));
+        try {
+            int exitCode = exec(podName, OutputStream.nullOutputStream(), error, Duration.ofSeconds(10), "touch", HELPER_STOP_FILE);
+            if (exitCode != 0) {
+                log.warn("Could not stop Kubernetes helper in Pod {}: {}", podName, error.toString(StandardCharsets.UTF_8));
+            }
+        }
+        catch (RuntimeException e) {
+            // This runs after the result archive has been collected. The Job is deleted afterwards anyway, so a failed stop signal must not discard a successful build.
+            log.warn("Could not signal the Kubernetes helper in Pod {} to stop", podName, e);
         }
     }
 
@@ -327,8 +337,8 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
     }
 
     private Duration effectiveExecutionWait(BuildJobQueueItem buildJob) {
-        int timeout = buildJob.buildConfig().timeoutSeconds() > 0 ? buildJob.buildConfig().timeoutSeconds() : 240;
-        return Duration.ofSeconds(timeout + properties.activeDeadlineGraceSeconds());
+        // Reuse the capping of the Job factory so that this wait never outlives the activeDeadlineSeconds of the Job it waits for.
+        return Duration.ofSeconds(jobFactory.effectiveBuildTimeout(buildJob) + properties.activeDeadlineGraceSeconds());
     }
 
     private boolean containersStarted(Pod pod) {
@@ -350,8 +360,14 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
         }
         for (ContainerStatus status : pod.getStatus().getContainerStatuses()) {
             if (status.getState() != null && status.getState().getWaiting() != null && TERMINAL_START_FAILURES.contains(status.getState().getWaiting().getReason())) {
-                throw new LocalCIException("Kubernetes container " + status.getName() + " could not start: " + status.getState().getWaiting().getReason() + " - "
-                        + status.getState().getWaiting().getMessage());
+                String reason = status.getState().getWaiting().getReason();
+                String message = "Kubernetes container " + status.getName() + " could not start: " + reason + " - " + status.getState().getWaiting().getMessage();
+                // A missing or misconfigured exercise image is a problem of the exercise, not of this agent. Reporting it as a typed image-pull failure keeps it out of the
+                // consecutive failure counter that pauses the agent, exactly like the Docker runner does. The helper image belongs to the agent, so it stays an agent failure.
+                if (BUILDER_CONTAINER.equals(status.getName()) && TERMINAL_IMAGE_PULL_FAILURES.contains(reason)) {
+                    throw new ImagePullException(message);
+                }
+                throw new LocalCIException(message);
             }
         }
     }

@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.runner.BuildJobRunner;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
+import de.tum.cit.aet.artemis.localci.exception.ImagePullException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -1292,15 +1293,18 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Check if a throwable is caused by local CI failing to pull the docker image
+     * Check if a throwable is caused by local CI failing to pull the exercise image.
+     * <p>
+     * Covers every build runner: the Docker runner reports {@link DockerImagePullException}, the Kubernetes runner reports the runner-neutral {@link ImagePullException} for
+     * terminal image-pull reasons on the builder container.
      *
      * @param throwable throwable to check
-     * @return {@code true} if the throwable is caused by local CI failing to pull the docker image, {@code false} otherwise
+     * @return {@code true} if the throwable is caused by local CI failing to pull the exercise image, {@code false} otherwise
      */
     static boolean isCausedByImagePullFailedException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            if (current instanceof DockerImagePullException) {
+            if (current instanceof ImagePullException) {
                 return true;
             }
             current = current.getCause();
@@ -1345,11 +1349,12 @@ public class SharedQueueProcessingService {
         }
 
         boolean requestInternalRequeue(BuildJobQueueItem requeuedBuildJob) {
-            this.requeuedBuildJob = requeuedBuildJob;
+            // The stale-detection scheduler and the pause handler can request a requeue concurrently. Only the caller that wins the transition may publish its job,
+            // otherwise the loser would null out the winner's value and requeuedBuildJob() would fail before the attempt is reported.
             if (lifecycle.compareAndSet(AttemptLifecycle.RUNNING, AttemptLifecycle.INTERNAL_REQUEUE)) {
+                this.requeuedBuildJob = requeuedBuildJob;
                 return true;
             }
-            this.requeuedBuildJob = null;
             return false;
         }
 

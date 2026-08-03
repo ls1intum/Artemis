@@ -4,15 +4,24 @@
 {{- $_ := set $workloadNodeSelector (printf "[%s]" $key) $value -}}
 {{- end -}}
 {{- $kubernetesConfig := dict "namespace" .Values.buildAgents.namespace "helper-image" (printf "%s:%s" .Values.buildAgents.helperImage.repository .Values.buildAgents.helperImage.tag) "image-pull-policy" .Values.buildAgents.helperImage.pullPolicy "workload-service-account" (include "artemis.workloadServiceAccountName" .) "pod-start-timeout-seconds" .Values.buildAgents.podStartTimeoutSeconds "result-collection-timeout-seconds" .Values.buildAgents.resultCollectionTimeoutSeconds "job-ttl-seconds" .Values.buildAgents.jobTtlSeconds "workspace-size-limit" .Values.buildAgents.workspaceSizeLimit "default-resources" .Values.buildAgents.defaultResources "node-selector" $workloadNodeSelector "tolerations" .Values.buildAgents.workloadTolerations "image-pull-secrets" .Values.buildAgents.imagePullSecrets -}}
+{{- /*
+A StatefulSet, not a Deployment: the pod name is the build agent's identity. It is published as the
+build agent short name, and every Kubernetes Job the agent creates carries it as ownership label.
+Deployment pod names change on every reschedule or rollout, so a replacement pod could neither adopt
+nor clean up the Jobs of the pod it replaced, and an orphaned build would keep running next to the
+requeued attempt until its deadline expired. StatefulSet ordinals keep that identity stable.
+*/ -}}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "artemis.buildAgentName" . }}
   labels:
     {{- include "artemis.labels" . | nindent 4 }}
     app.kubernetes.io/component: build-agent
 spec:
+  serviceName: {{ include "artemis.buildAgentName" . }}
   replicas: {{ .Values.buildAgents.replicaCount }}
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       {{- include "artemis.selectorLabels" . | nindent 6 }}

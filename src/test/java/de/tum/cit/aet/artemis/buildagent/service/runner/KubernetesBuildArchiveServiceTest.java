@@ -85,6 +85,38 @@ class KubernetesBuildArchiveServiceTest {
     }
 
     @Test
+    void checksOutRepositoriesIntoTheLanguageDefaultPathsWhenTheExerciseDoesNotCustomiseThem() throws Exception {
+        Path assignment = repository("assignment", "Main.hs", "main");
+        Path tests = repository("tests", "Spec.hs", "spec");
+        Path solution = repository("solution", "Solution.hs", "solution");
+        var preparedJob = new PreparedBuildJob(assignment, tests, solution, List.of());
+
+        Path archive = archiveService.createInputArchive(buildJob(null, null, null, new String[0]), preparedJob);
+        Map<String, byte[]> entries = readEntries(archive);
+
+        // The Haskell defaults are "assignment" and "solution", while the test repository has no default subdirectory and is checked out into the working directory itself.
+        assertThat(entries).containsKeys("testing-dir/assignment/Main.hs", "testing-dir/Spec.hs", "testing-dir/solution/Solution.hs", "script.sh");
+        Files.delete(archive);
+    }
+
+    @Test
+    void skipsSymbolicLinksThatPointOutsideTheRepository() throws Exception {
+        Path assignment = repository("assignment", "src/main.c", "main");
+        Path outside = repository("outside", "secret.txt", "secret");
+        Files.createSymbolicLink(assignment.resolve("escape"), outside);
+        Files.createSymbolicLink(assignment.resolve("root-link"), Path.of("/"));
+        Path tests = repository("tests", "test.c", "test");
+
+        Path archive = archiveService.createInputArchive(buildJob("student", "tests", "solution", new String[0]), new PreparedBuildJob(assignment, tests, null, List.of()));
+
+        Map<String, byte[]> entries = readEntries(archive);
+        assertThat(entries).containsKey("testing-dir/student/src/main.c");
+        assertThatThrownBy(() -> readEntry(archive, "testing-dir/student/escape")).isInstanceOf(AssertionError.class);
+        assertThatThrownBy(() -> readEntry(archive, "testing-dir/student/root-link")).isInstanceOf(AssertionError.class);
+        Files.delete(archive);
+    }
+
+    @Test
     void preservesRepositorySymbolicLinks() throws Exception {
         Path assignment = repository("assignment", "src/main.c", "main");
         Files.createSymbolicLink(assignment.resolve("main-link.c"), Path.of("src/main.c"));

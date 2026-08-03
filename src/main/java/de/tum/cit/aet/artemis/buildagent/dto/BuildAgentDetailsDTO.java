@@ -30,8 +30,16 @@ public record BuildAgentDetailsDTO(long averageBuildDuration, long successfulBui
         @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion,
         @NotNull String buildRunner, @Nullable String buildRunnerVersion) implements Serializable {
 
+    /**
+     * Deliberately kept at 2 even though runner metadata was added.
+     * <p>
+     * Hazelcast stores this DTO with plain Java serialization, and a rolling upgrade temporarily runs nodes of both versions. Bumping the serial version would make each
+     * version reject the other's entries with an {@code InvalidClassException}, so the build agent overview would break for the duration of every upgrade. Record
+     * deserialization tolerates the added components on its own: a stream written by an older node simply leaves them at their default value, which {@link #readResolve()}
+     * then fills in.
+     */
     @Serial
-    private static final long serialVersionUID = 3L;
+    private static final long serialVersionUID = 2L;
 
     /**
      * Compatibility constructor for callers created before runner metadata was added.
@@ -40,5 +48,22 @@ public record BuildAgentDetailsDTO(long averageBuildDuration, long successfulBui
             @Nullable ZonedDateTime lastBuildDate, @NotNull ZonedDateTime startDate, @Nullable String gitRevision, int consecutiveBuildFailures, @Nullable String dockerVersion) {
         this(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuild, totalBuilds, lastBuildDate, startDate, gitRevision, consecutiveBuildFailures,
                 dockerVersion, dockerVersion != null ? "Docker" : "Unknown", dockerVersion);
+    }
+
+    /**
+     * Supplies runner metadata for entries written by a node that did not know about it yet.
+     * <p>
+     * Record deserialization passes the default value for every component missing from the stream, so {@code buildRunner} arrives as null from an older node. Deriving the
+     * runner from the Docker version keeps the build agent overview readable until that node is upgraded and republishes its information.
+     *
+     * @return this instance, or a copy with the runner metadata derived from the Docker version
+     */
+    @Serial
+    private Object readResolve() {
+        if (buildRunner != null) {
+            return this;
+        }
+        return new BuildAgentDetailsDTO(averageBuildDuration, successfulBuilds, failedBuilds, cancelledBuilds, timedOutBuild, totalBuilds, lastBuildDate, startDate, gitRevision,
+                consecutiveBuildFailures, dockerVersion);
     }
 }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -80,6 +82,11 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 public class BuildJobManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);
+
+    /**
+     * Upper bound for waiting on a cancelled execution to leave its cleanup block, so that a build callable that ignores the interrupt cannot block a build-result thread.
+     */
+    private static final Duration CANCELLATION_TERMINATION_TIMEOUT = Duration.ofSeconds(30);
 
     /**
      * Interval between retries when waiting for cluster connection during startup.
@@ -377,7 +384,9 @@ public class BuildJobManagementService {
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 if (cancelledBuildJobs.contains(buildJobItem.id())) {
-                    executionTracker.awaitTermination();
+                    if (!executionTracker.awaitTermination(CANCELLATION_TERMINATION_TIMEOUT)) {
+                        log.warn("Build job {} did not release its execution resources within {}", buildJobItem.id(), CANCELLATION_TERMINATION_TIMEOUT);
+                    }
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id());
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(ex);
@@ -539,8 +548,10 @@ public class BuildJobManagementService {
             Future<BuildResult> future = runningFutures.get(buildJobId);
             if (future != null) {
                 try {
-                    cancelledBuildJobs.add(buildJobId);
-                    boolean cancellationAccepted = future.cancel(true); // Attempt to interrupt the build job
+                    boolean markerAdded = cancelledBuildJobs.add(buildJobId);
+                    // A future that is already cancelled returns false, but the job is still being cancelled. Treating that as accepted keeps repeated cancel signals
+                    // idempotent; otherwise the second signal would drop the marker set by the first one and the job would be reported as FAILED instead of CANCELLED.
+                    boolean cancellationAccepted = future.cancel(true) || future.isCancelled(); // Attempt to interrupt the build job
                     if (cancellationAccepted) {
                         BuildExecutionTracker executionTracker = runningExecutionTrackers.get(buildJobId);
                         if (executionTracker != null) {
@@ -548,7 +559,7 @@ public class BuildJobManagementService {
                         }
                         buildJobRunner.cancel(buildJobId);
                     }
-                    else {
+                    else if (markerAdded) {
                         cancelledBuildJobs.remove(buildJobId);
                     }
                 }
@@ -615,8 +626,31 @@ public class BuildJobManagementService {
             }
         }
 
-        void awaitTermination() {
-            termination.join();
+        /**
+         * Waits until the execution left its cleanup block, but never longer than the given timeout.
+         * <p>
+         * A build callable that ignores the interrupt would otherwise block a build-result thread forever, so the public future would never complete and the queue
+         * bookkeeping in {@code SharedQueueProcessingService} would never release the attempt.
+         *
+         * @param timeout the maximum time to wait for the execution to terminate
+         * @return {@code true} if the execution terminated within the timeout, {@code false} otherwise
+         */
+        boolean awaitTermination(Duration timeout) {
+            try {
+                termination.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                return true;
+            }
+            catch (TimeoutException e) {
+                return false;
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            catch (ExecutionException e) {
+                // The execution terminated, the outcome itself is handled by the caller of the public future.
+                return true;
+            }
         }
 
         private enum ExecutionState {
