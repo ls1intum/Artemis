@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of, switchMap, timer } from 'rxjs';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,12 +11,29 @@ import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-messa
 import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
 import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDatabase, faLayerGroup, faSync, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
+import { faCheck, faChevronRight, faCircle, faCircleCheck, faDatabase, faLayerGroup, faSpinner, faSync, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { CourseIngestionDashboardService } from './course-ingestion-dashboard.service';
-import { ContentCensus, CourseIndexCensus, IndexOverview, TypeIndexCensus } from './course-ingestion-dashboard.model';
+import {
+    ActiveIngestion,
+    ContentCensus,
+    CourseIndexCensus,
+    DisplayStep,
+    IndexOverview,
+    IngestionActivity,
+    RecentIngestion,
+    TypeIndexCensus,
+} from './course-ingestion-dashboard.model';
+
+/** No status callback for this long (ms) marks a run as possibly stalled - fast enough to catch a killed Iris. */
+const STALL_THRESHOLD_MS = 90000;
+
+/** How often the active-ingestions section polls the backend for live progress. */
+const ACTIVE_POLL_INTERVAL_MS = 3000;
 
 type CellStatus = 'incomplete' | 'unknown' | 'ok' | 'na';
 type ScopeFilter = 'all' | 'active' | 'archived';
@@ -51,6 +69,7 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
         TumUiSelectComponent,
         TumUiInputDirective,
         TumUiPaginatorComponent,
+        TumUiDialogComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -61,12 +80,30 @@ export class CourseIngestionDashboardComponent implements OnInit {
     private dashboardService = inject(CourseIngestionDashboardService);
     private destroyRef = inject(DestroyRef);
     private translateService = inject(TranslateService);
+    private router = inject(Router);
 
     protected readonly faSync = faSync;
     protected readonly faDatabase = faDatabase;
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly faXmark = faXmark;
+    protected readonly faCheck = faCheck;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faCircle = faCircle;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faCircleCheck = faCircleCheck;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly types = MATRIX_TYPES;
+
+    // Live active ingestions, polled every few seconds so the milestone view auto-updates. A ticking clock signal
+    // drives the elapsed-time display between polls.
+    readonly activeIngestions = signal<ActiveIngestion[]>([]);
+    readonly recentIngestions = signal<RecentIngestion[]>([]);
+    private readonly nowMillis = signal(Date.now());
+
+    // The run whose milestone detail drawer is open. Keyed by job id so the drawer content follows live poll updates.
+    readonly selectedJobId = signal<string | undefined>(undefined);
+    readonly selectedRun = computed(() => this.activeIngestions().find((run) => run.jobId === this.selectedJobId()));
+    readonly selectedRecent = computed(() => this.recentIngestions().find((run) => run.jobId === this.selectedJobId()));
     protected readonly contentTypes = CONTENT_TYPES;
     protected readonly pageSizeOptions = PAGE_SIZE_OPTIONS;
 
@@ -215,6 +252,34 @@ export class CourseIngestionDashboardComponent implements OnInit {
 
     ngOnInit(): void {
         this.refresh();
+        this.pollActiveIngestions();
+        // A 1-second clock so elapsed times count up visibly between the 3-second data polls.
+        timer(1000, 1000)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                if (this.activeIngestions().length > 0) {
+                    this.nowMillis.set(Date.now());
+                }
+            });
+    }
+
+    /** Polls the active and recent ingestion endpoints on an interval so the views update live. Errors yield empty lists. */
+    private pollActiveIngestions(): void {
+        timer(0, ACTIVE_POLL_INTERVAL_MS)
+            .pipe(
+                switchMap(() =>
+                    forkJoin({
+                        active: this.dashboardService.getActiveIngestions().pipe(catchError(() => of([] as ActiveIngestion[]))),
+                        recent: this.dashboardService.getRecentIngestions().pipe(catchError(() => of([] as RecentIngestion[]))),
+                    }),
+                ),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(({ active, recent }) => {
+                this.activeIngestions.set(active);
+                this.recentIngestions.set(recent);
+                this.nowMillis.set(Date.now());
+            });
     }
 
     refresh(): void {
@@ -347,6 +412,215 @@ export class CourseIngestionDashboardComponent implements OnInit {
             default:
                 return undefined;
         }
+    }
+
+    /** Whether any lecture-content ingestion is currently in flight. */
+    protected hasActiveIngestions(): boolean {
+        return this.activeIngestions().length > 0;
+    }
+
+    /** The name of the step a run is currently on (the running activity), or a "starting" placeholder when none yet. */
+    protected currentStepName(run: ActiveIngestion): string {
+        const running = (run.activities ?? []).find((activity) => activity.state === 'RUNNING');
+        if (running) {
+            return running.name;
+        }
+        return this.translateService.instant('artemisApp.courseIngestionDashboard.active.starting');
+    }
+
+    /** The live detail of the currently running step (e.g. "page 3/9"), or empty when there is none. */
+    protected currentStepDetail(run: ActiveIngestion): string {
+        return (run.activities ?? []).find((activity) => activity.state === 'RUNNING')?.detail ?? '';
+    }
+
+    /** Whether a run looks stalled: no status callback for longer than the threshold (catches a killed Iris quickly). */
+    protected isStalled(run: ActiveIngestion): boolean {
+        if (!run.lastUpdatedAt) {
+            return false;
+        }
+        const lastMillis = Date.parse(run.lastUpdatedAt);
+        return !Number.isNaN(lastMillis) && this.nowMillis() - lastMillis > STALL_THRESHOLD_MS;
+    }
+
+    /** Human-readable time since a run's last status callback, for the stalled warning. */
+    protected sinceUpdate(run: ActiveIngestion): string {
+        if (!run.lastUpdatedAt) {
+            return '';
+        }
+        const lastMillis = Date.parse(run.lastUpdatedAt);
+        return Number.isNaN(lastMillis) ? '' : this.formatDuration(Math.max(0, this.nowMillis() - lastMillis));
+    }
+
+    /** The lecture + course context line shown under a run's unit name. */
+    protected runContext(run: { lectureName?: string; courseId: number }): string {
+        const course = this.courseTitleFor(run.courseId);
+        return run.lectureName ? `${run.lectureName} · ${course}` : course;
+    }
+
+    protected recentIcon(recent: RecentIngestion) {
+        return recent.outcome === 'FAILED' ? this.faTriangleExclamation : this.faCircleCheck;
+    }
+
+    protected recentColor(recent: RecentIngestion): string {
+        return recent.outcome === 'FAILED' ? 'var(--danger)' : 'var(--success)';
+    }
+
+    protected recentTitle(recent: RecentIngestion): string {
+        return recent.lectureUnitName || `${this.translateService.instant('artemisApp.courseIngestionDashboard.active.unit')} ${recent.lectureUnitId}`;
+    }
+
+    /** Opens the milestone detail drawer for a recent (finished or failed) run. */
+    protected openRecent(recent: RecentIngestion): void {
+        this.selectedJobId.set(recent.jobId);
+    }
+
+    /** Human-readable elapsed time since a run started (e.g. "1m 12s"), or empty when the start time is unknown. */
+    protected elapsed(startedAt?: string): string {
+        if (!startedAt) {
+            return '';
+        }
+        const startMillis = Date.parse(startedAt);
+        if (Number.isNaN(startMillis)) {
+            return '';
+        }
+        return this.formatDuration(Math.max(0, this.nowMillis() - startMillis));
+    }
+
+    /** Formats a millisecond duration as "Xm Ys" (or "Ys" under a minute). */
+    protected formatDuration(millis?: number): string {
+        if (millis === undefined || millis === null) {
+            return '';
+        }
+        if (millis > 0 && millis < 1000) {
+            return '<1s';
+        }
+        const totalSeconds = Math.round(millis / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+    }
+
+    /**
+     * The ordered step list for a run, built directly from the activities Iris actually reports (no hardcoded step
+     * names), so the milestone view matches the real pipeline for any content type and never shows phantom steps.
+     */
+    protected runSteps(run: { activities?: IngestionActivity[] }): DisplayStep[] {
+        return (run.activities ?? []).map((activity) => ({
+            name: activity.name,
+            label: activity.name,
+            state: activity.state,
+            durationMillis: activity.durationMillis,
+            detail: activity.detail,
+        }));
+    }
+
+    /** The icon for one pipeline step, by its state: check when done, a spinner while running, a dot when pending. */
+    protected stepIcon(state: DisplayStep['state']) {
+        switch (state) {
+            case 'FINISHED':
+                return this.faCheck;
+            case 'RUNNING':
+                return this.faSpinner;
+            case 'FAILED':
+                return this.faXmark;
+            default:
+                return this.faCircle;
+        }
+    }
+
+    /**
+     * Builds the milestone roadmap for a run: each node plus the color of the connector line on its left and right. A
+     * segment is green when the step before it is finished, amber when it leads into the currently running step (so the
+     * in-progress line and node share one color and never clash with the green "done" line), and grey otherwise.
+     */
+    protected roadmap(run: {
+        activities?: IngestionActivity[];
+    }): { label: string; state: DisplayStep['state']; durationMillis?: number; detail?: string; leftColor: string; rightColor: string }[] {
+        const steps = this.runSteps(run);
+        const segmentColor = (index: number): string => {
+            const next = steps[index + 1];
+            if (next && next.state === 'RUNNING') {
+                return 'var(--warning)';
+            }
+            if (steps[index].state === 'FINISHED') {
+                return 'var(--success)';
+            }
+            return 'var(--border, #d0d0d0)';
+        };
+        return steps.map((step, index) => ({
+            label: step.label,
+            state: step.state,
+            durationMillis: step.durationMillis,
+            detail: step.detail,
+            leftColor: index === 0 ? 'transparent' : segmentColor(index - 1),
+            rightColor: index === steps.length - 1 ? 'transparent' : segmentColor(index),
+        }));
+    }
+
+    /**
+     * Live elapsed time spent in the currently running step. Steps run sequentially, so it is the total run elapsed
+     * minus the time already accounted for by the finished steps. Ticks with the poll clock, so it counts up live.
+     */
+    protected runningStepElapsed(run: ActiveIngestion): string {
+        if (!run.startedAt) {
+            return '';
+        }
+        const startMillis = Date.parse(run.startedAt);
+        if (Number.isNaN(startMillis)) {
+            return '';
+        }
+        const finishedMillis = (run.activities ?? []).filter((activity) => activity.state === 'FINISHED').reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
+        return this.formatDuration(Math.max(0, this.nowMillis() - startMillis - finishedMillis));
+    }
+
+    /** The color for one pipeline step: green when done, amber while running, red on failure, muted when pending. */
+    protected stepColor(state: DisplayStep['state']): string {
+        switch (state) {
+            case 'FINISHED':
+                return 'var(--success)';
+            case 'RUNNING':
+                return 'var(--warning)';
+            case 'FAILED':
+                return 'var(--danger)';
+            default:
+                return 'var(--border-strong, #ccc)';
+        }
+    }
+
+    /** Thin colored ring for a milestone node (outline style keeps the stepper light rather than heavy solid badges). */
+    protected nodeBorder(state: DisplayStep['state']): string {
+        return `1.5px solid ${this.stepColor(state)}`;
+    }
+
+    /** The display name of the course a run belongs to, taken from the loaded census, or the id as a fallback. */
+    protected courseTitleFor(courseId: number): string {
+        const course = (this.census() ?? []).find((entry) => entry.courseId === courseId);
+        return course?.courseTitle ?? `${courseId}`;
+    }
+
+    protected navigateToCourse(courseId: number): void {
+        void this.router.navigate(['/course-management', courseId]);
+    }
+
+    protected navigateToLecture(courseId: number, lectureId: number): void {
+        void this.router.navigate(['/course-management', courseId, 'lectures', lectureId]);
+    }
+
+    /** Opens the milestone detail drawer for a run. */
+    protected openRun(run: ActiveIngestion): void {
+        this.selectedJobId.set(run.jobId);
+    }
+
+    /** Clears the selected run when the drawer is dismissed. */
+    protected onDrawerVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.selectedJobId.set(undefined);
+        }
+    }
+
+    /** Display title for a run: its lecture unit name, or the unit id as a fallback. */
+    protected runTitle(run: ActiveIngestion): string {
+        return run.lectureUnitName || `${this.translateService.instant('artemisApp.courseIngestionDashboard.active.unit')} ${run.lectureUnitId}`;
     }
 
     private translate(key: string): string {

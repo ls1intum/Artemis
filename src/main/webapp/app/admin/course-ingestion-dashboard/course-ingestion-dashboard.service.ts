@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CourseIndexCensus, IndexOverview } from './course-ingestion-dashboard.model';
+import { ActiveIngestion, CourseIndexCensus, IndexOverview, RecentIngestion } from './course-ingestion-dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseIngestionDashboardService {
@@ -21,5 +21,19 @@ export class CourseIngestionDashboardService {
      */
     getIndexCensus(): Observable<CourseIndexCensus[]> {
         return this.http.get<CourseIndexCensus[]>(`${this.baseUrl}/index-census`);
+    }
+
+    /**
+     * The lecture ingestions currently in flight, each with its live per-step progress.
+     */
+    getActiveIngestions(): Observable<ActiveIngestion[]> {
+        return this.http.get<ActiveIngestion[]>('api/iris/admin/lecture-ingestion/active');
+    }
+
+    /**
+     * The most recently finished or failed lecture ingestions, with per-step durations and failure details.
+     */
+    getRecentIngestions(): Observable<RecentIngestion[]> {
+        return this.http.get<RecentIngestion[]>('api/iris/admin/lecture-ingestion/recent');
     }
 }

@@ -19,6 +19,23 @@
                 "objects": "Objects",
                 "unavailable": "not ingested yet"
             },
+            "active": {
+                "title": "Active ingestions",
+                "contentTitle": "Lecture content",
+                "metadataTitle": "Lecture metadata",
+                "noneContent": "No lecture content ingestions in progress.",
+                "noneMetadata": "No lecture metadata ingestions in progress.",
+                "unit": "Lecture unit",
+                "starting": "Starting...",
+                "openLecture": "Open lecture",
+                "stalled": "Stalled - no update"
+            },
+            "recent": {
+                "title": "Recent ingestions",
+                "contentTitle": "Lecture content",
+                "none": "No recent lecture content ingestions.",
+                "failedAt": "Failed at"
+            },
             "matrix": {
                 "title": "Completeness by course",
                 "subtitle": "Indexed vs expected entities per type, worst-first. Each cell shows indexed / expected; a plain number means the expected count is not computed for that type yet.",

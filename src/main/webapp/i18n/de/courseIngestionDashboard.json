@@ -19,6 +19,23 @@
                 "objects": "Objekte",
                 "unavailable": "noch nicht ingestiert"
             },
+            "active": {
+                "title": "Aktive Ingestions",
+                "contentTitle": "Vorlesungsinhalte",
+                "metadataTitle": "Vorlesungs-Metadaten",
+                "noneContent": "Keine Ingestion von Vorlesungsinhalten in Bearbeitung.",
+                "noneMetadata": "Keine Ingestion von Vorlesungs-Metadaten in Bearbeitung.",
+                "unit": "Vorlesungseinheit",
+                "starting": "Wird gestartet...",
+                "openLecture": "Vorlesung öffnen",
+                "stalled": "Blockiert - keine Aktualisierung"
+            },
+            "recent": {
+                "title": "Letzte Ingestions",
+                "contentTitle": "Vorlesungsinhalte",
+                "none": "Keine letzten Ingestions von Vorlesungsinhalten.",
+                "failedAt": "Fehlgeschlagen bei"
+            },
             "matrix": {
                 "title": "Vollständigkeit nach Kurs",
                 "subtitle": "Indexierte vs. erwartete Entitäten pro Typ, schlechteste zuerst. Jede Zelle zeigt indexiert / erwartet; eine einfache Zahl bedeutet, dass die erwartete Anzahl für diesen Typ noch nicht berechnet wird.",

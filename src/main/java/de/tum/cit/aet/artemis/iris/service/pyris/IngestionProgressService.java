@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -13,17 +16,20 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.ActiveIngestionDTO;
+import de.tum.cit.aet.artemis.iris.dto.RecentIngestionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 
 /**
- * In-memory registry of the lecture ingestions currently in flight, fed by the Pyris status callbacks. Each running
- * job's latest activity snapshot (the named pipeline steps with their state and duration) is kept here so the admin
- * ingestion dashboard can show live per-step progress; the entry is removed when the run reaches a terminal state.
+ * In-memory registry of lecture ingestions for the admin ingestion dashboard, fed by the Pyris status callbacks.
  * <p>
- * This is a transient view for observability only, not an authority: it lives in memory on the node that receives the
- * callbacks and is intentionally not persisted.
+ * It keeps two views: the ingestions currently in flight (with each run's live activity snapshot and last-update time,
+ * so a stalled run can be detected), and a bounded history of the most recently finished or failed runs (with the full
+ * per-step timeline and, for failures, the step it failed at and the error). Observability only, not an authority: the
+ * state lives in memory on the node that receives the callbacks and is intentionally not persisted.
  */
 @Lazy
 @Service
@@ -32,62 +38,164 @@ public class IngestionProgressService {
 
     private static final Logger log = LoggerFactory.getLogger(IngestionProgressService.class);
 
-    private final Map<String, ActiveIngestionDTO> activeByJobId = new ConcurrentHashMap<>();
+    private static final int MAX_RECENT = 50;
 
-    // Lecture unit names change rarely and are looked up across a module boundary, so they are cached by unit id.
+    private record ActiveEntry(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO status, String lastUpdatedAt) {
+    }
+
+    private final Map<String, ActiveEntry> activeByJobId = new ConcurrentHashMap<>();
+
+    private final Deque<RecentIngestionDTO> recent = new ArrayDeque<>();
+
+    // Names change rarely and are looked up across a module boundary, so they are cached by id.
     private final Map<Long, String> unitNameCache = new ConcurrentHashMap<>();
+
+    private final Map<Long, String> lectureNameCache = new ConcurrentHashMap<>();
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    public IngestionProgressService(Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
+
+    public IngestionProgressService(Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi) {
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.lectureRepositoryApi = lectureRepositoryApi;
     }
 
     /**
-     * Records the latest status of a lecture ingestion job. A terminal update removes the job from the active set; any
-     * other update stores its current activity snapshot.
+     * Records the latest status of a lecture ingestion job. A terminal update moves the run into the recent history
+     * (finished or failed); any other update stores its current activity snapshot as active.
      *
      * @param job          the lecture ingestion job
      * @param statusUpdate the status update received from Pyris
      * @param terminal     whether the run has reached a terminal state (finished or failed)
      */
     public void record(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate, boolean terminal) {
+        String now = Instant.now().toString();
         if (terminal) {
-            activeByJobId.remove(job.jobId());
+            ActiveEntry previous = activeByJobId.remove(job.jobId());
+            addRecent(job, statusUpdate, previous, now);
             return;
         }
-        String runState = statusUpdate.runState() != null ? statusUpdate.runState().name() : null;
-        activeByJobId.put(job.jobId(),
-                new ActiveIngestionDTO(job.jobId(), job.courseId(), job.lectureId(), job.lectureUnitId(), null, runState, statusUpdate.startedAt(), statusUpdate.activities()));
+        activeByJobId.put(job.jobId(), new ActiveEntry(job, statusUpdate, now));
     }
 
-    /**
-     * @return a snapshot of all lecture ingestions currently in flight, enriched with the lecture unit name
-     */
-    public List<ActiveIngestionDTO> getActiveIngestions() {
-        return activeByJobId.values().stream().map(ingestion -> ingestion.withLectureUnitName(resolveUnitName(ingestion.lectureUnitId()))).toList();
-    }
+    private void addRecent(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate, ActiveEntry previous, String finishedAt) {
+        boolean failed = statusUpdate.runState() != null && "FAILED".equals(statusUpdate.runState().name());
+        String startedAt = statusUpdate.startedAt() != null ? statusUpdate.startedAt() : (previous != null ? previous.status().startedAt() : null);
+        List<PyrisActivityDTO> activities = statusUpdate.activities() != null ? statusUpdate.activities() : (previous != null ? previous.status().activities() : null);
+        Long totalMillis = totalMillis(startedAt, finishedAt);
+        String failedStepName = failed ? failedStepName(activities) : null;
+        String errorMessage = failed && statusUpdate.error() != null ? statusUpdate.error().message() : null;
 
-    /**
-     * Resolves the lecture unit name for display, caching successful lookups. Returns null when the name cannot be read.
-     */
-    private String resolveUnitName(long lectureUnitId) {
-        String cached = unitNameCache.get(lectureUnitId);
-        if (cached != null) {
-            return cached;
+        RecentIngestionDTO entry = new RecentIngestionDTO(job.jobId(), job.courseId(), job.lectureId(), job.lectureUnitId(), resolveUnitName(job.lectureUnitId()),
+                resolveLectureName(job.lectureId()), failed ? "FAILED" : "FINISHED", startedAt, finishedAt, totalMillis, activities, failedStepName, errorMessage);
+        synchronized (recent) {
+            recent.addFirst(entry);
+            while (recent.size() > MAX_RECENT) {
+                recent.removeLast();
+            }
         }
-        if (lectureUnitRepositoryApi.isEmpty()) {
+    }
+
+    /**
+     * Fails every in-flight ingestion and moves it into the recent history with the given reason. Called when Iris is
+     * detected to have restarted: any run that was in flight across the restart is definitively dead, so this is a
+     * deterministic signal rather than a silence timeout.
+     *
+     * @param reason the failure reason recorded on each moved run
+     */
+    public void failActive(String reason) {
+        String finishedAt = Instant.now().toString();
+        for (String jobId : List.copyOf(activeByJobId.keySet())) {
+            ActiveEntry entry = activeByJobId.remove(jobId);
+            if (entry == null) {
+                continue;
+            }
+            String startedAt = entry.status().startedAt();
+            List<PyrisActivityDTO> activities = entry.status().activities();
+            RecentIngestionDTO recentEntry = new RecentIngestionDTO(entry.job().jobId(), entry.job().courseId(), entry.job().lectureId(), entry.job().lectureUnitId(),
+                    resolveUnitName(entry.job().lectureUnitId()), resolveLectureName(entry.job().lectureId()), "FAILED", startedAt, finishedAt, totalMillis(startedAt, finishedAt),
+                    activities, failedStepName(activities), reason);
+            synchronized (recent) {
+                recent.addFirst(recentEntry);
+                while (recent.size() > MAX_RECENT) {
+                    recent.removeLast();
+                }
+            }
+        }
+    }
+
+    /**
+     * The name of the step a failed run failed at: the last activity that did not finish (the one it died on), or null.
+     */
+    private static String failedStepName(List<PyrisActivityDTO> activities) {
+        if (activities == null || activities.isEmpty()) {
+            return null;
+        }
+        for (int i = activities.size() - 1; i >= 0; i--) {
+            PyrisActivityDTO activity = activities.get(i);
+            if (activity.state() == null || !"FINISHED".equals(activity.state().name())) {
+                return activity.name();
+            }
+        }
+        return activities.getLast().name();
+    }
+
+    private static Long totalMillis(String startedAt, String finishedAt) {
+        if (startedAt == null) {
             return null;
         }
         try {
-            String name = lectureUnitRepositoryApi.get().findByIdElseThrow(lectureUnitId).getName();
+            return Math.max(0, Instant.parse(finishedAt).toEpochMilli() - Instant.parse(startedAt).toEpochMilli());
+        }
+        catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return a snapshot of all lecture ingestions currently in flight, enriched with the lecture unit and lecture names
+     */
+    public List<ActiveIngestionDTO> getActiveIngestions() {
+        return activeByJobId.values().stream()
+                .map(entry -> new ActiveIngestionDTO(entry.job().jobId(), entry.job().courseId(), entry.job().lectureId(), entry.job().lectureUnitId(),
+                        resolveUnitName(entry.job().lectureUnitId()), resolveLectureName(entry.job().lectureId()),
+                        entry.status().runState() != null ? entry.status().runState().name() : null, entry.status().startedAt(), entry.lastUpdatedAt(),
+                        entry.status().activities()))
+                .toList();
+    }
+
+    /**
+     * @return the most recently finished or failed lecture ingestions, newest first
+     */
+    public List<RecentIngestionDTO> getRecentIngestions() {
+        synchronized (recent) {
+            return List.copyOf(recent);
+        }
+    }
+
+    private String resolveUnitName(long lectureUnitId) {
+        return resolveName(unitNameCache, lectureUnitId, id -> lectureUnitRepositoryApi.map(api -> api.findByIdElseThrow(id).getName()).orElse(null));
+    }
+
+    private String resolveLectureName(long lectureId) {
+        return resolveName(lectureNameCache, lectureId, id -> lectureRepositoryApi.map(api -> api.findByIdElseThrow(id).getTitle()).orElse(null));
+    }
+
+    private String resolveName(Map<Long, String> cache, long id, java.util.function.LongFunction<String> lookup) {
+        String cached = cache.get(id);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            String name = lookup.apply(id);
             if (name != null) {
-                unitNameCache.put(lectureUnitId, name);
+                cache.put(id, name);
             }
             return name;
         }
         catch (Exception e) {
-            log.debug("Could not resolve lecture unit name for {}: {}", lectureUnitId, e.getMessage());
+            log.debug("Could not resolve name for id {}: {}", id, e.getMessage());
             return null;
         }
     }

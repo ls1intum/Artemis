@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.ActiveIngestionDTO;
+import de.tum.cit.aet.artemis.iris.dto.RecentIngestionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.IngestionProgressService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,8 +32,11 @@ public class IrisIngestionAdminResource {
 
     private final IngestionProgressService ingestionProgressService;
 
-    public IrisIngestionAdminResource(IngestionProgressService ingestionProgressService) {
+    private final PyrisHealthIndicator pyrisHealthIndicator;
+
+    public IrisIngestionAdminResource(IngestionProgressService ingestionProgressService, PyrisHealthIndicator pyrisHealthIndicator) {
         this.ingestionProgressService = ingestionProgressService;
+        this.pyrisHealthIndicator = pyrisHealthIndicator;
     }
 
     /**
@@ -47,6 +51,24 @@ public class IrisIngestionAdminResource {
     @ApiResponse(responseCode = "200", description = "The active lecture ingestions")
     public ResponseEntity<List<ActiveIngestionDTO>> getActiveLectureIngestions() {
         log.debug("REST request to get the active lecture ingestions");
+        // Refresh Iris health (cached): a detected DOWN -> UP transition deterministically fails any ingestion that was
+        // in flight across an Iris restart and moves it into the recent history, so the dashboard stays truthful.
+        pyrisHealthIndicator.health(true);
         return ResponseEntity.ok(ingestionProgressService.getActiveIngestions());
+    }
+
+    /**
+     * GET api/iris/admin/lecture-ingestion/recent : the most recently finished or failed lecture ingestions, each with
+     * its full per-step timeline and, for failures, the step it failed at and the error, for the admin dashboard.
+     *
+     * @return the recent lecture ingestions, newest first
+     */
+    @GetMapping("lecture-ingestion/recent")
+    @EnforceAdmin
+    @Operation(summary = "Recent lecture ingestions", description = "Recently finished or failed lecture ingestions with per-step durations and failure details")
+    @ApiResponse(responseCode = "200", description = "The recent lecture ingestions")
+    public ResponseEntity<List<RecentIngestionDTO>> getRecentLectureIngestions() {
+        log.debug("REST request to get the recent lecture ingestions");
+        return ResponseEntity.ok(ingestionProgressService.getRecentIngestions());
     }
 }

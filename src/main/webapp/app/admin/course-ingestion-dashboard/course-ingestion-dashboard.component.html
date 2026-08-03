@@ -70,6 +70,109 @@
 
     <div class="mt-4">
         <div class="flex items-center gap-2 mb-2">
+            <fa-icon [icon]="faSync" [class.animate-spin]="hasActiveIngestions()" />
+            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.active.title"></h4>
+            @if (hasActiveIngestions()) {
+                <span class="text-sm text-muted-color">({{ activeIngestions().length }})</span>
+            }
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.active.contentTitle' | artemisTranslate">
+                @if (activeIngestions().length === 0) {
+                    <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.active.noneContent"></div>
+                } @else {
+                    <div class="flex flex-col" style="max-height: 22rem; overflow-y: auto">
+                        @for (run of activeIngestions(); track run.jobId) {
+                            <div
+                                class="flex items-center gap-3 py-2 px-2 border-t border-surface-200 dark:border-surface-700 first:border-t-0 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
+                                role="button"
+                                tabindex="0"
+                                (click)="openRun(run)"
+                                (keyup.enter)="openRun(run)"
+                            >
+                                @if (isStalled(run)) {
+                                    <fa-icon [icon]="faTriangleExclamation" class="shrink-0" [style.color]="'var(--danger)'" />
+                                } @else {
+                                    <fa-icon [icon]="faSpinner" class="animate-spin shrink-0" [style.color]="'var(--warning)'" />
+                                }
+                                <div class="min-w-0 flex-1">
+                                    <div class="truncate">
+                                        <span class="font-medium">
+                                            {{ run.lectureUnitName || ('artemisApp.courseIngestionDashboard.active.unit' | artemisTranslate) + ' ' + run.lectureUnitId }}
+                                        </span>
+                                        <span class="text-xs text-muted-color ms-2">{{ runContext(run) }}</span>
+                                    </div>
+                                    @if (isStalled(run)) {
+                                        <div class="flex items-center gap-1.5 mt-0.5 truncate">
+                                            <span class="text-xs font-medium truncate" [style.color]="'var(--danger)'">
+                                                {{ 'artemisApp.courseIngestionDashboard.active.stalled' | artemisTranslate }} · {{ currentStepName(run) }}
+                                            </span>
+                                            <span class="text-xs text-muted-color font-mono shrink-0">{{ sinceUpdate(run) }}</span>
+                                        </div>
+                                    } @else {
+                                        <div class="flex items-center gap-1.5 mt-0.5 truncate">
+                                            <span class="inline-block rounded-full shrink-0" style="width: 0.4rem; height: 0.4rem" [style.background]="'var(--warning)'"></span>
+                                            <span class="text-xs font-medium truncate" [style.color]="'var(--warning)'">{{ currentStepName(run) }}</span>
+                                            @if (currentStepDetail(run)) {
+                                                <span class="text-xs text-muted-color font-mono shrink-0">{{ currentStepDetail(run) }}</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <span class="text-xs text-muted-color font-mono shrink-0">{{ elapsed(run.startedAt) }}</span>
+                                <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" />
+                            </div>
+                        }
+                    </div>
+                }
+            </tum-ui-panel>
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.active.metadataTitle' | artemisTranslate">
+                <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.active.noneMetadata"></div>
+            </tum-ui-panel>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h4 class="mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.title"></h4>
+        <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.recent.contentTitle' | artemisTranslate">
+            @if (recentIngestions().length === 0) {
+                <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.none"></div>
+            } @else {
+                <div class="flex flex-col" style="max-height: 22rem; overflow-y: auto">
+                    @for (recent of recentIngestions(); track recent.jobId) {
+                        <div
+                            class="flex items-center gap-3 py-2 px-2 border-t border-surface-200 dark:border-surface-700 first:border-t-0 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
+                            role="button"
+                            tabindex="0"
+                            (click)="openRecent(recent)"
+                            (keyup.enter)="openRecent(recent)"
+                        >
+                            <fa-icon [icon]="recentIcon(recent)" class="shrink-0" [style.color]="recentColor(recent)" />
+                            <div class="min-w-0 flex-1">
+                                <div class="truncate">
+                                    <span class="font-medium">{{ recentTitle(recent) }}</span>
+                                    <span class="text-xs text-muted-color ms-2">{{ runContext(recent) }}</span>
+                                </div>
+                                @if (recent.outcome === 'FAILED') {
+                                    <div class="text-xs truncate" [style.color]="'var(--danger)'">
+                                        {{ 'artemisApp.courseIngestionDashboard.recent.failedAt' | artemisTranslate }} {{ recent.failedStepName }}
+                                        @if (recent.errorMessage) {
+                                            <span class="text-muted-color"> · {{ recent.errorMessage }}</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <span class="text-xs text-muted-color font-mono shrink-0">{{ formatDuration(recent.totalMillis) }}</span>
+                            <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" />
+                        </div>
+                    }
+                </div>
+            }
+        </tum-ui-panel>
+    </div>
+
+    <div class="mt-4">
+        <div class="flex items-center gap-2 mb-2">
             <fa-icon [icon]="faLayerGroup" />
             <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.title"></h4>
         </div>
@@ -167,7 +270,7 @@
                         </thead>
                         <tbody>
                             @for (course of pagedCourses(); track course.courseId) {
-                                <tr>
+                                <tr class="cursor-pointer" (click)="navigateToCourse(course.courseId)">
                                     <td>
                                         <div class="font-medium">
                                             @if (course.courseTitle) {
@@ -235,4 +338,117 @@
             </tum-ui-panel>
         }
     </div>
+
+    @if (selectedRun(); as run) {
+        <tum-ui-dialog
+            [visible]="true"
+            (visibleChange)="onDrawerVisibleChange($event)"
+            [header]="runTitle(run)"
+            [dismissableMask]="true"
+            [style]="{ width: '30rem', 'max-width': '92vw' }"
+        >
+            <div class="flex items-center justify-between text-sm mb-4">
+                <span class="text-muted-color">{{ courseTitleFor(run.courseId) }}</span>
+                <span class="text-muted-color font-mono">{{ elapsed(run.startedAt) }}</span>
+            </div>
+
+            <div class="flex flex-col">
+                @for (node of roadmap(run); track node.label; let last = $last) {
+                    <div class="flex gap-3">
+                        <div class="flex flex-col items-center">
+                            <span
+                                class="flex items-center justify-center rounded-full shrink-0 bg-surface-0 dark:bg-surface-900"
+                                style="width: 1.15rem; height: 1.15rem"
+                                [style.border]="nodeBorder(node.state)"
+                            >
+                                <fa-icon
+                                    [icon]="stepIcon(node.state)"
+                                    [style.color]="stepColor(node.state)"
+                                    [class.animate-spin]="node.state === 'RUNNING'"
+                                    style="font-size: 0.6rem"
+                                />
+                            </span>
+                            @if (!last) {
+                                <div class="w-px flex-1" style="min-height: 1.25rem" [style.background]="node.rightColor"></div>
+                            }
+                        </div>
+                        <div class="pb-3 min-w-0">
+                            <div class="text-sm" [class.font-medium]="node.state === 'RUNNING'" [class.text-muted-color]="node.state === 'PENDING'">{{ node.label }}</div>
+                            @if (node.state === 'FINISHED' && node.durationMillis !== undefined && node.durationMillis !== null) {
+                                <div class="text-xs text-muted-color font-mono">{{ formatDuration(node.durationMillis) }}</div>
+                            } @else if (node.state === 'RUNNING') {
+                                <div class="text-xs font-mono" [style.color]="'var(--warning)'">
+                                    {{ runningStepElapsed(run) }}
+                                    @if (node.detail) {
+                                        <span class="text-muted-color"> · {{ node.detail }}</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="flex justify-end mt-2">
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faChevronRight" (clicked)="navigateToLecture(run.courseId, run.lectureId)">
+                    {{ 'artemisApp.courseIngestionDashboard.active.openLecture' | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+        </tum-ui-dialog>
+    }
+
+    @if (selectedRecent(); as recent) {
+        <tum-ui-dialog
+            [visible]="true"
+            (visibleChange)="onDrawerVisibleChange($event)"
+            [header]="recentTitle(recent)"
+            [dismissableMask]="true"
+            [style]="{ width: '30rem', 'max-width': '92vw' }"
+        >
+            <div class="flex items-center justify-between text-sm mb-4">
+                <span class="text-muted-color">{{ runContext(recent) }}</span>
+                <span class="font-mono" [style.color]="recentColor(recent)">{{ formatDuration(recent.totalMillis) }}</span>
+            </div>
+
+            @if (recent.outcome === 'FAILED') {
+                <tum-ui-message severity="error" styleClass="w-full mb-3">
+                    {{ 'artemisApp.courseIngestionDashboard.recent.failedAt' | artemisTranslate }} {{ recent.failedStepName }}
+                    @if (recent.errorMessage) {
+                        <span> · {{ recent.errorMessage }}</span>
+                    }
+                </tum-ui-message>
+            }
+
+            <div class="flex flex-col">
+                @for (node of roadmap(recent); track node.label; let last = $last) {
+                    <div class="flex gap-3">
+                        <div class="flex flex-col items-center">
+                            <span
+                                class="flex items-center justify-center rounded-full shrink-0 bg-surface-0 dark:bg-surface-900"
+                                style="width: 1.15rem; height: 1.15rem"
+                                [style.border]="nodeBorder(node.state)"
+                            >
+                                <fa-icon [icon]="stepIcon(node.state)" [style.color]="stepColor(node.state)" style="font-size: 0.6rem" />
+                            </span>
+                            @if (!last) {
+                                <div class="w-px flex-1" style="min-height: 1.25rem" [style.background]="node.rightColor"></div>
+                            }
+                        </div>
+                        <div class="pb-3 min-w-0">
+                            <div class="text-sm" [class.text-muted-color]="node.state === 'PENDING'">{{ node.label }}</div>
+                            @if (node.durationMillis !== undefined && node.durationMillis !== null) {
+                                <div class="text-xs text-muted-color font-mono">{{ formatDuration(node.durationMillis) }}</div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="flex justify-end mt-2">
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faChevronRight" (clicked)="navigateToLecture(recent.courseId, recent.lectureId)">
+                    {{ 'artemisApp.courseIngestionDashboard.active.openLecture' | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+        </tum-ui-dialog>
+    }
 </div>

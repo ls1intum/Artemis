@@ -53,6 +53,8 @@ public class PyrisHealthIndicator implements HealthIndicator {
 
     private final Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi;
 
+    private final Optional<IngestionProgressService> ingestionProgressService;
+
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     private static final String IRIS_URL_KEY = "url";
@@ -73,9 +75,11 @@ public class PyrisHealthIndicator implements HealthIndicator {
      */
     private final AtomicBoolean previouslyUp = new AtomicBoolean(true);
 
-    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi) {
+    public PyrisHealthIndicator(@Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate restTemplate, Optional<ProcessingStateRecoveryApi> processingStateRecoveryApi,
+            Optional<IngestionProgressService> ingestionProgressService) {
         this.restTemplate = restTemplate;
         this.processingStateRecoveryApi = processingStateRecoveryApi;
+        this.ingestionProgressService = ingestionProgressService;
     }
 
     /**
@@ -146,6 +150,9 @@ public class PyrisHealthIndicator implements HealthIndicator {
                     log.error("Failed to reset in-flight jobs after Iris restart", e);
                 }
             });
+            // Any ingestion that was in flight across the restart is definitively dead: fail it and move it from the
+            // active view into the recent history so the admin dashboard reflects the failure deterministically.
+            ingestionProgressService.ifPresent(service -> service.failActive("No response from Iris (it restarted or was shut down)"));
         }
         cachedHealth = newHealth;
         lastUpdated = System.currentTimeMillis();

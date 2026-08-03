@@ -8,6 +8,57 @@ export interface IndexCollectionCount {
     available: boolean;
 }
 
+/** One live pipeline step of an in-flight ingestion: its name, state, and (once finished) its duration. */
+export interface IngestionActivity {
+    id: string;
+    kind: string;
+    name: string;
+    state: 'RUNNING' | 'FINISHED' | 'FAILED';
+    detail?: string;
+    result?: string;
+    durationMillis?: number;
+}
+
+/** A lecture ingestion currently in flight, with its live per-step activity list. */
+export interface ActiveIngestion {
+    jobId: string;
+    courseId: number;
+    lectureId: number;
+    lectureUnitId: number;
+    lectureUnitName?: string;
+    lectureName?: string;
+    runState: string;
+    startedAt?: string;
+    lastUpdatedAt?: string;
+    activities?: IngestionActivity[];
+}
+
+/** A finished or failed lecture ingestion kept for the recent-history view. */
+export interface RecentIngestion {
+    jobId: string;
+    courseId: number;
+    lectureId: number;
+    lectureUnitId: number;
+    lectureUnitName?: string;
+    lectureName?: string;
+    outcome: 'FINISHED' | 'FAILED';
+    startedAt?: string;
+    finishedAt: string;
+    totalMillis?: number;
+    activities?: IngestionActivity[];
+    failedStepName?: string;
+    errorMessage?: string;
+}
+
+/** A pipeline step for display: its label, its state (including pending steps not yet started), and its duration. */
+export interface DisplayStep {
+    name: string;
+    label: string;
+    state: 'PENDING' | 'RUNNING' | 'FINISHED' | 'FAILED';
+    durationMillis?: number;
+    detail?: string;
+}
+
 /**
  * Read-only snapshot of the Weaviate index: reachability plus per-collection object counts.
  */
