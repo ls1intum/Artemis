@@ -346,6 +346,20 @@ public class WeaviateService {
     }
 
     /**
+     * Gets a collection handle for a collection by its exact name, WITHOUT applying the Artemis collection prefix.
+     * <p>
+     * Used to read externally owned collections - the Pyris/Iris lecture-content collections ({@code Lectures},
+     * {@code LectureTranscriptions}, {@code LectureUnits}, {@code LectureUnitSegments}) - which Iris creates without the
+     * Artemis prefix. Reading them through {@link #getCollection(String)} would prepend the prefix and never find them.
+     *
+     * @param exactCollectionName the exact Weaviate collection name, used verbatim
+     * @return the collection handle
+     */
+    public CollectionHandle<Map<String, Object>> getExternalCollection(String exactCollectionName) {
+        return client.collections.use(exactCollectionName);
+    }
+
+    /**
      * Returns whether a text vectorizer is configured that can automatically
      * create embeddings from text. When this returns {@code false}, only keyword
      * (BM25) search should be used instead of hybrid search because hybrid search

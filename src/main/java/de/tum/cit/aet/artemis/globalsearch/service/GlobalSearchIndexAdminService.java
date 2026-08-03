@@ -33,10 +33,12 @@ public class GlobalSearchIndexAdminService {
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchIndexAdminService.class);
 
     /**
-     * The collections whose object counts are surfaced. {@code SearchableEntities} is written by Artemis
-     * (entity metadata); the rest are written by Iris (lecture content) into the shared Weaviate instance.
+     * The Pyris/Iris-owned lecture-content collections. These are created by Iris WITHOUT the Artemis collection
+     * prefix (the prefix exists precisely to avoid colliding with them), so they must be read by their exact name via
+     * {@link WeaviateService#getExternalCollection(String)} rather than the prefix-applying
+     * {@link WeaviateService#getCollection(String)}.
      */
-    private static final List<String> COLLECTIONS = List.of(SearchableEntitySchema.COLLECTION_NAME, "Lectures", "LectureTranscriptions", "LectureUnits", "LectureUnitSegments");
+    private static final List<String> PYRIS_COLLECTIONS = List.of("Lectures", "LectureTranscriptions", "LectureUnits", "LectureUnitSegments");
 
     private final WeaviateService weaviateService;
 
@@ -61,19 +63,31 @@ public class GlobalSearchIndexAdminService {
         String address = health != null && health.getDetails().get("Address") != null ? String.valueOf(health.getDetails().get("Address")) : null;
 
         List<IndexCollectionCountDTO> counts = new ArrayList<>();
-        for (String collection : COLLECTIONS) {
-            counts.add(countCollection(collection));
+        // SearchableEntities is Artemis-owned, so it is read through the prefix-applying accessor.
+        counts.add(countArtemisCollection(SearchableEntitySchema.COLLECTION_NAME));
+        // The Pyris lecture-content collections are unprefixed, so they are read by their exact name.
+        for (String collection : PYRIS_COLLECTIONS) {
+            counts.add(countExternalCollection(collection));
         }
         return new IndexOverviewDTO(up, address, counts);
     }
 
-    private IndexCollectionCountDTO countCollection(String collection) {
+    private IndexCollectionCountDTO countArtemisCollection(String collection) {
         try {
-            long count = weaviateService.getCollection(collection).size();
-            return IndexCollectionCountDTO.available(collection, count);
+            return IndexCollectionCountDTO.available(collection, weaviateService.getCollection(collection).size());
         }
         catch (Exception e) {
-            log.debug("Could not read Weaviate collection '{}' for the index overview: {}", collection, e.getMessage());
+            log.debug("Could not read Artemis Weaviate collection '{}' for the index overview: {}", collection, e.getMessage());
+            return IndexCollectionCountDTO.unavailable(collection);
+        }
+    }
+
+    private IndexCollectionCountDTO countExternalCollection(String collection) {
+        try {
+            return IndexCollectionCountDTO.available(collection, weaviateService.getExternalCollection(collection).size());
+        }
+        catch (Exception e) {
+            log.debug("Could not read external Weaviate collection '{}' for the index overview: {}", collection, e.getMessage());
             return IndexCollectionCountDTO.unavailable(collection);
         }
     }
