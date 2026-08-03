@@ -39,9 +39,12 @@ const moduleThresholds = {
     admin: {
         // Angular 22 / TS 6 upgrade (#13189) shifted line counts; statements measured 93.02 (under the old 93.1)
         // and lines sat at only +0.05 headroom (93.35). Lowered both to measured minus a small headroom.
+        // The course-role migration removed the group-management functions from user-management-update together with
+        // their tests. Deleting fully covered functions lowers the ratio ((C-N)/(T-N) < C/T), so functions measured
+        // 89.29 against the old 89.4 without any code becoming untested. Lowered to measured minus a small headroom.
         statements: 92.7,
         branches: 78.0,
-        functions: 89.4,
+        functions: 89.0,
         lines: 93.0,
     },
     assessment: {

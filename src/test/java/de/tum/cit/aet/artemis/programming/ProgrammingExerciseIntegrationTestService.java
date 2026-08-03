@@ -116,6 +116,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationU
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -263,10 +264,10 @@ public class ProgrammingExerciseIntegrationTestService {
         localVCLocalCITestService.setPort(serverPort);
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(userPrefix);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExercise.getId()).orElseThrow();
-        programmingExerciseInExam = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseInExam = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(userPrefix);
         programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
                 .orElseThrow();
 
@@ -582,7 +583,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
@@ -714,7 +714,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
         request.delete(path, HttpStatus.FORBIDDEN);
     }
@@ -744,7 +743,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId();
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -789,7 +787,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/with-participations";
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -808,7 +805,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         final var path = "/api/programming/courses/" + programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/programming-exercises";
         request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
@@ -899,7 +895,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.FORBIDDEN);
     }
 
@@ -945,7 +940,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         // Create a new course with different id.
-        Course newCourse = courseUtilService.createCourse();
+        Course newCourse = courseUtilService.createEnrolledCourse(userPrefix);
 
         // Assign new course to the programming exercise.
         ProgrammingExercise newProgrammingExercise = programmingExercise;
@@ -1018,7 +1013,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         final var endpoint = "/api/programming/programming-exercises/timeline";
         MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
@@ -1041,7 +1035,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
@@ -1068,7 +1061,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         programmingExercise.setId(null);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.FORBIDDEN);
     }
@@ -1290,14 +1282,12 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(0.0);
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
@@ -1306,7 +1296,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
@@ -1336,7 +1325,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1381,7 +1369,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
         params.add("updateTemplate", String.valueOf(updateTemplate));
-        var programmingExerciseSca = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        var programmingExerciseSca = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(userPrefix);
 
         setupMocksForConsistencyChecksOnImport(programmingExercise);
         setupMocksForConsistencyChecksOnImport(programmingExerciseSca);
@@ -1460,7 +1448,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
         request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
     }
 
@@ -1479,7 +1466,6 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
@@ -1498,7 +1484,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
-        userUtilService.addTeachingAssistant("other-tutors", userPrefix + "tutoralt1");
+        userUtilService.addTeachingAssistant(userPrefix + "tutoralt1");
         request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -1516,7 +1502,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
-        userUtilService.addTeachingAssistant("other-teaching-assistants", userPrefix + "other-teaching-assistant1");
+        userUtilService.addTeachingAssistant(userPrefix + "other-teaching-assistant1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases";
 
         request.getList("/api" + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
@@ -1569,7 +1555,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor1");
+        userUtilService.addInstructor(userPrefix + "other-instructor1");
         final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
@@ -1656,14 +1642,14 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor1");
+        userUtilService.addInstructor(userPrefix + "other-instructor1");
         final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/test-cases/reset";
         request.patchWithResponseBody("/api" + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 
     void testCheckPlagiarism() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1");
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1", userPrefix);
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
 
@@ -1687,7 +1673,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarismForTeamExercise() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2");
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2", userPrefix);
 
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
@@ -1705,7 +1691,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarismJplagReport() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3");
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3", userPrefix);
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         // Clean up any stale LocalVC project folder BEFORE creating participations
@@ -1882,7 +1868,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResult() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(programmingExercise.getId()).orElseThrow();
 
@@ -1893,7 +1879,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResultWithoutResult() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
@@ -2190,9 +2176,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
-        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt1");
-        programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise),
                 HttpStatus.FORBIDDEN);
@@ -2203,8 +2188,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
-        programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
 
@@ -2236,6 +2221,23 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(files).containsEntry("A.java", "abc").containsEntry("B.java", "cde").containsEntry("C.java", "efg");
     }
 
+    void testGetTemplateRepositoryFilesWithContentReflectsLatestCommit() throws Exception {
+        // The endpoint reads the latest commit of the bare repository rather than a checked-out working copy, so a
+        // newly pushed commit has to be visible immediately without the server checking the repository out again.
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "first"), "seed template files");
+        var filesAfterFirstPush = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(filesAfterFirstPush).containsEntry("A.java", "first");
+
+        RepositoryExportTestUtil.writeFilesAndPush(baseRepos.templateRepository(), Map.of("A.java", "second", "New.java", "added"), "update template files");
+        var filesAfterSecondPush = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK, String.class,
+                String.class);
+        assertThat(filesAfterSecondPush).containsEntry("A.java", "second").containsEntry("New.java", "added");
+    }
+
     void testGetSolutionRepositoryFilesWithContent() throws Exception {
         // Wire base repos and push through the working copy the wiring created (see testGetTemplateRepositoryFilesWithContentOmitBinaries).
         var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
@@ -2250,15 +2252,18 @@ public class ProgrammingExerciseIntegrationTestService {
     // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(String testPrefix) throws Exception {
+        programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Test", "CLT");
+        // The helper creates a fresh course, so the calling instructor needs a course role in it to read the files.
+        userUtilService.enrollPrefixedUsersInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), testPrefix);
+
         // Ensure base repositories (template, solution, tests) exist and URIs are wired for this exercise
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // Create student participation with LocalVC repo
-        // Use a unique student to avoid repo collisions with other tests in this class
         String studentLogin = testPrefix + "student3";
         var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
-        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely
@@ -2271,9 +2276,6 @@ public class ProgrammingExerciseIntegrationTestService {
             Map.entry("C.java", "efg")
         ), "seed student files");
         // @formatter:on
-        // The endpoint under test resolves the bare repo by commit hash; ensure that specific
-        // hash is visible in the bare repo (not just HEAD) before issuing the request.
-        RepositoryExportTestUtil.waitForBareRepositoryToContainCommit(repo, commit.getId().getName());
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();
@@ -2299,10 +2301,13 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
-        // Seed LocalVC repo for existing participation1 and create a submission for its latest commit
-        var studentLogin = participation1.getParticipantIdentifier();
-        var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
-        programmingExerciseStudentParticipationRepository.save(participation1);
+        programmingExercise = createProgrammingExerciseWithUniqueProjectKey("Commit Lookup Forbidden Test", "CLF");
+
+        var studentLogin = testPrefix + "student1";
+        var studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        // The participation helper creates and seeds the bare LocalVC repository; clone it here instead of creating a second root commit.
+        var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, studentParticipation, localVCBasePath);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files, commit, and push via util
         var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg"),
@@ -2315,8 +2320,15 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
 
         // Expect forbidden for current user
-        request.get("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content?commitId=" + submission.getCommitHash(),
+        request.get("/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content?commitId=" + submission.getCommitHash(),
                 HttpStatus.FORBIDDEN, Map.class);
+    }
+
+    private ProgrammingExercise createProgrammingExerciseWithUniqueProjectKey(String title, String shortNamePrefix) {
+        var uniqueShortName = shortNamePrefix + ShortNameGenerator.generateRandomShortName(6);
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, title, uniqueShortName);
+        return programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId())
+                .orElseThrow();
     }
 
     private long getMaxProgrammingExerciseId() {

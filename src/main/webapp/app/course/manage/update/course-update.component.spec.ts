@@ -135,7 +135,91 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = undefined;
     });
 
+    describe('max points validation', () => {
+        it('should invalidate the form and block submission when max points exceed the limit', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+            maxPointsControl.setValue(10000);
+            expect(maxPointsControl.hasError('max')).toBe(true);
+            expect(comp.courseForm.invalid).toBe(true);
+
+            maxPointsControl.setValue(9999);
+            expect(maxPointsControl.hasError('max')).toBe(false);
+        });
+
+        it('should reject max points below the lower bound and non-integer values', () => {
+            const profileInfo = { activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const maxPointsControl = comp.courseForm.get('maxPoints')!;
+
+            maxPointsControl.setValue(0);
+            expect(maxPointsControl.hasError('min')).toBe(true);
+
+            maxPointsControl.setValue(10.5);
+            expect(maxPointsControl.hasError('notInteger')).toBe(true);
+
+            maxPointsControl.setValue(10);
+            expect(maxPointsControl.hasError('notInteger')).toBe(false);
+            expect(maxPointsControl.hasError('min')).toBe(false);
+        });
+    });
+
     describe('ngOnInit', () => {
+        it('should load a grade-relevance opt-out (gradeRelevant=false) as an unchecked control', () => {
+            // A course that opted out of grade relevance must load unchecked, otherwise a later save would silently flip
+            // it back to grade-relevant and extend its data-retention period.
+            course.courseConfiguration = { gradeRelevant: false };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(false);
+        });
+
+        it('should default the grade-relevance control to checked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(true);
+        });
+
+        it('should load an active data-retention hold as a checked control', () => {
+            // A course held because of a pending objection must load checked, otherwise saving the form would silently
+            // lift the hold and expose the course to the automatic student-data reset again.
+            course.courseConfiguration = { dataRetentionHold: true };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(true);
+        });
+
+        it('should default the data-retention hold control to unchecked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(false);
+        });
+
         it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
             const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -151,18 +235,9 @@ describe('Course Management Update Component', () => {
             expect(getOrganizationsStub).toHaveBeenCalled();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalled();
-            expect(comp.customizeGroupNames()).toBe(true);
-            expect(comp.course.studentGroupName).toBe('artemis-dev');
-            expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
-            expect(comp.course.editorGroupName).toBe('artemis-dev');
-            expect(comp.course.instructorGroupName).toBe('artemis-dev');
             expect(comp.courseForm.get(['id'])?.value).toBe(course.id);
             expect(comp.courseForm.get(['title'])?.value).toBe(course.title);
             expect(comp.shortName.value).toBe(course.shortName);
-            expect(comp.courseForm.get(['studentGroupName'])?.value).toBe(course.studentGroupName);
-            expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).toBe(course.teachingAssistantGroupName);
-            expect(comp.courseForm.get(['editorGroupName'])?.value).toBe(course.editorGroupName);
-            expect(comp.courseForm.get(['instructorGroupName'])?.value).toBe(course.instructorGroupName);
             expect(comp.courseForm.get(['startDate'])?.value).toBe(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).toBe(course.endDate);
             expect(comp.courseForm.get(['semester'])?.value).toBe(course.semester);
@@ -215,6 +290,8 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -251,6 +328,8 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -280,6 +359,29 @@ describe('Course Management Update Component', () => {
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should map the grade-relevance form control into the course configuration on save', async () => {
+            // GIVEN
+            const entity = new Course();
+            entity.id = 123;
+            comp.course = entity;
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            comp.courseForm = new FormGroup({
+                id: new FormControl(entity.id),
+                // instructor opted out of grade relevance
+                gradeRelevant: new FormControl(false),
+            });
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(updateStub).toHaveBeenCalledOnce();
+            const savedCourse = updateStub.mock.calls[0][1];
+            expect(savedCourse.courseConfiguration?.gradeRelevant).toBe(false);
         });
 
         it('should broadcast course modification on delete', async () => {
@@ -646,31 +748,6 @@ describe('Course Management Update Component', () => {
             comp.changeUnenrollmentEnabled();
             expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeFalsy();
             expect(comp.course.unenrollmentEndDate).toBeUndefined();
-        });
-    });
-
-    describe('changeCustomizeGroupNames', () => {
-        it('should initialize values if enabled and reset if disabled', () => {
-            comp.course = new Course();
-            comp.courseForm = new FormGroup({
-                studentGroupName: new FormControl('noname'),
-                teachingAssistantGroupName: new FormControl('noname'),
-                editorGroupName: new FormControl('noname'),
-                instructorGroupName: new FormControl('noname'),
-            });
-            comp.customizeGroupNames.set(false);
-            comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
-            expect(comp.customizeGroupNames()).toBe(true);
-            comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
-            expect(comp.customizeGroupNames()).toBe(false);
         });
     });
 
@@ -1254,11 +1331,12 @@ describe('Course Management Update Component', () => {
     });
 
     it('should open organizations modal', () => {
-        const mockDialogRef = {
-            onClose: of(new Organization()),
-        } as unknown as DynamicDialogRef;
-        vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         comp.openOrganizationsModal();
+        expect(comp.orgSelectorVisible()).toBe(true);
+    });
+
+    it('should add the selected organization to the course', () => {
+        comp.onOrgSelected(new Organization());
         expect(comp.courseOrganizations()).toHaveLength(1);
     });
 

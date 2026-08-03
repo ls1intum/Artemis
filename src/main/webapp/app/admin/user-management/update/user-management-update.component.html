@@ -12,7 +12,7 @@
                     <input
                         id="login"
                         type="text"
-                        pInputText
+                        tumUiInput
                         class="w-full"
                         name="login"
                         required
@@ -47,7 +47,7 @@
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="firstName" jhiTranslate="artemisApp.userManagement.firstName"></label>
-                    <input id="firstName" type="text" pInputText class="w-full" name="firstName" formControlName="firstName" [maxlength]="USERNAME_MAX_LENGTH" required />
+                    <input id="firstName" type="text" tumUiInput class="w-full" name="firstName" formControlName="firstName" [maxlength]="USERNAME_MAX_LENGTH" required />
                     @if (editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid) {
                         <div>
                             @if (editForm.get('firstName')!.errors?.maxlength) {
@@ -58,7 +58,7 @@
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
                     <label for="lastName" jhiTranslate="artemisApp.userManagement.lastName"></label>
-                    <input id="lastName" type="text" pInputText class="w-full" name="lastName" formControlName="lastName" [maxlength]="USERNAME_MAX_LENGTH" required />
+                    <input id="lastName" type="text" tumUiInput class="w-full" name="lastName" formControlName="lastName" [maxlength]="USERNAME_MAX_LENGTH" required />
                     @if (editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid) {
                         <div>
                             @if (editForm.get('lastName')!.errors?.maxlength) {
@@ -68,21 +68,19 @@
                     }
                 </div>
                 <div class="mb-2 flex items-center gap-2">
-                    <p-checkbox
+                    <tum-ui-checkbox
                         inputId="internal"
-                        [binary]="true"
                         name="internal"
                         formControlName="internal"
-                        [pTooltip]="'artemisApp.userManagement.passwordTooltip' | artemisTranslate"
+                        [tumUiTooltip]="'artemisApp.userManagement.passwordTooltip' | artemisTranslate"
                     />
                     <label for="internal" jhiTranslate="artemisApp.userManagement.internal"></label>
                     <jhi-help-icon text="artemisApp.userManagement.passwordTooltip" />
                 </div>
                 @if (editForm.get('internal')?.value) {
                     <div class="mb-2 flex items-center gap-2">
-                        <p-checkbox
+                        <tum-ui-checkbox
                             inputId="randomPassword"
-                            [binary]="true"
                             name="randomPassword"
                             [ngModel]="useRandomPassword()"
                             [ngModelOptions]="{ standalone: true }"
@@ -95,7 +93,7 @@
                         <div class="mb-3 flex flex-col gap-2">
                             <input
                                 type="password"
-                                pInputText
+                                tumUiInput
                                 class="w-full"
                                 name="password"
                                 id="password"
@@ -127,42 +125,16 @@
                     }
                 }
                 <div class="mb-3 flex flex-col gap-2">
-                    <label jhiTranslate="artemisApp.userManagement.groups"></label>
-                    <p-autocomplete
-                        class="w-full"
-                        styleClass="w-full"
-                        [multiple]="true"
-                        [ngModel]="user().groups ?? []"
-                        [ngModelOptions]="{ standalone: true }"
-                        [suggestions]="groupSuggestions()"
-                        (completeMethod)="filterGroups($event)"
-                        (onSelect)="onGroupSelect($event)"
-                        (onUnselect)="onGroupUnselect($event)"
-                        (keydown.enter)="onGroupAdd(user(), $event)"
-                        [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
-                        data-testid="group-autocomplete"
-                    >
-                        <!-- Use the FontAwesome times icon for the built-in chip remove control -->
-                        <ng-template #removeicon let-removeCallback="removeCallback" let-index="index">
-                            <fa-icon [icon]="faTimes" class="group-tag-remove" (click)="removeCallback($event, index)" />
-                        </ng-template>
-                    </p-autocomplete>
-                </div>
-                <div class="mb-3 flex flex-col gap-2">
                     <label jhiTranslate="artemisApp.userManagement.organizations"></label>
                     <div class="flex flex-wrap gap-2">
                         @for (organization of user().organizations; track organization) {
-                            <p-chip [label]="organization.name" [removable]="true" (onRemove)="removeOrganizationFromUser(organization)" data-testid="organization-chip" />
+                            <tum-ui-chip [label]="organization.name" [removable]="true" (onRemove)="removeOrganizationFromUser(organization)" data-testid="organization-chip" />
                         }
                     </div>
                     <div>
-                        <p-button
-                            [outlined]="true"
-                            size="small"
-                            (onClick)="openOrganizationsModal()"
-                            data-testid="add-organization-button"
-                            [label]="'entity.action.add' | artemisTranslate"
-                        />
+                        <tum-ui-button variant="outlined" size="small" (clicked)="openOrganizationsModal()" data-testid="add-organization-button">
+                            {{ 'entity.action.add' | artemisTranslate }}
+                        </tum-ui-button>
                     </div>
                 </div>
                 <div class="mb-3 flex flex-col gap-2">
@@ -170,7 +142,7 @@
                     <input
                         id="email"
                         type="email"
-                        pInputText
+                        tumUiInput
                         class="w-full"
                         name="email"
                         formControlName="email"
@@ -208,7 +180,7 @@
                     <input
                         id="visibleRegistrationNumber"
                         type="text"
-                        pInputText
+                        tumUiInput
                         class="w-full"
                         name="visibleRegistrationNumber"
                         formControlName="visibleRegistrationNumber"
@@ -223,13 +195,18 @@
                     }
                 </div>
                 <div class="mb-3 flex items-center gap-2">
-                    <p-checkbox inputId="activated" [binary]="true" name="activated" formControlName="activated" />
+                    <tum-ui-checkbox inputId="activated" name="activated" formControlName="activated" />
                     <label for="activated" jhiTranslate="artemisApp.userManagement.activated"></label>
+                </div>
+                <div class="mb-3 flex items-center gap-2">
+                    <tum-ui-checkbox inputId="isTestUser" name="isTestUser" formControlName="isTestUser" />
+                    <label for="isTestUser" jhiTranslate="artemisApp.userManagement.isTestUser"></label>
+                    <jhi-help-icon text="artemisApp.userManagement.isTestUserTooltip" />
                 </div>
                 @if (languages() && languages().length > 0) {
                     <div class="mb-3 flex flex-col gap-2">
                         <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey"></label>
-                        <p-select
+                        <tum-ui-select
                             inputId="langKey"
                             name="langKey"
                             formControlName="langKey"
@@ -249,7 +226,7 @@
                                 [class]="hasAuthority(authority) ? 'border-primary bg-primary/12' : ''"
                                 data-testid="global-role-item"
                             >
-                                <p-checkbox [binary]="true" [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (onChange)="toggleAuthority(authority)" />
+                                <tum-ui-checkbox [ngModel]="hasAuthority(authority)" [ngModelOptions]="{ standalone: true }" (onChange)="toggleAuthority(authority)" />
                                 <span class="font-medium">{{ getAuthorityTranslationKey(authority) | artemisTranslate }}</span>
                             </label>
                         }
@@ -257,8 +234,10 @@
                 </div>
             </div>
             <div class="flex gap-2">
-                <p-button severity="secondary" size="small" (onClick)="previousState()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></p-button>
-                <button type="submit" pButton size="small" [disabled]="editForm.invalid || isSaving()" data-testid="save-user-button">
+                <tum-ui-button severity="secondary" size="small" (clicked)="previousState()"
+                    ><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span
+                ></tum-ui-button>
+                <button type="submit" tumUiButton size="small" [disabled]="editForm.invalid || isSaving()" data-testid="save-user-button">
                     <fa-icon [icon]="faSave" />
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
@@ -266,3 +245,20 @@
         </form>
     </div>
 </div>
+
+<!-- Organization selector dialog (declarative replacement for the former programmatic dialog open) -->
+<tum-ui-dialog
+    [(visible)]="orgSelectorVisible"
+    [modal]="true"
+    [dismissableMask]="true"
+    [style]="{ width: '80vw' }"
+    [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate"
+>
+    @if (orgSelectorVisible()) {
+        <jhi-organization-selector
+            [assignedOrganizations]="user().organizations ?? []"
+            (selected)="onOrgSelected($event); orgSelectorVisible.set(false)"
+            (cancelled)="orgSelectorVisible.set(false)"
+        />
+    }
+</tum-ui-dialog>

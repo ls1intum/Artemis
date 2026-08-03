@@ -7,11 +7,11 @@
             jhiTranslate="{{ !platform()?.id ? 'artemisApp.lti.addLtiPlatform' : 'artemisApp.lti.editLtiPlatform' }}"
         ></h5>
         @if (loadFailed()) {
-            <p-message severity="error" styleClass="mt-3 w-full" data-testid="lti-load-error">
+            <tum-ui-message severity="error" styleClass="mt-3 w-full" data-testid="lti-load-error">
                 <span jhiTranslate="artemisApp.lti.editConfiguration.loadError"></span>
-            </p-message>
+            </tum-ui-message>
         } @else {
-            <p-message severity="info" styleClass="mt-3 w-full" data-testid="lti-documentation-message">
+            <tum-ui-message severity="info" styleClass="mt-3 w-full" data-testid="lti-documentation-message">
                 <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
                 <a
                     href="https://docs.artemis.tum.de/instructor/lti-configuration/"
@@ -20,7 +20,7 @@
                     jhiTranslate="artemisApp.lti.edit.documentationLinkText"
                 ></a
                 >.
-            </p-message>
+            </tum-ui-message>
             <form [formGroup]="platformConfigurationForm" (ngSubmit)="save()" #editForm="ngForm">
                 <div class="mt-3">
                     <div class="mb-3 flex flex-col gap-2" [hidden]="!platform()?.registrationId">
@@ -28,21 +28,21 @@
                             <label jhiTranslate="artemisApp.lti.registrationId" for="field_registrationId"></label>
                             <jhi-help-icon text="artemisApp.lti.edit.registrationIdTooltip" />
                         </div>
-                        <input type="text" pInputText class="w-full" name="registrationId" id="field_registrationId" formControlName="registrationId" />
+                        <input type="text" tumUiInput class="w-full" name="registrationId" id="field_registrationId" formControlName="registrationId" />
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.customName" for="field_customName"></label>
                             <jhi-help-icon text="artemisApp.lti.edit.customNameIdTooltip" />
                         </div>
-                        <input type="text" pInputText class="w-full" name="customName" id="field_customName" formControlName="customName" />
+                        <input type="text" tumUiInput class="w-full" name="customName" id="field_customName" formControlName="customName" />
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.toolUrl" for="field_toolUrl"></label>
                             <jhi-help-icon text="artemisApp.lti.edit.originalUrlTooltip" />
                         </div>
-                        <input type="text" pInputText class="w-full" name="originalUrl" id="field_toolUrl" formControlName="originalUrl" />
+                        <input type="text" tumUiInput class="w-full" name="originalUrl" id="field_toolUrl" formControlName="originalUrl" />
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
@@ -50,7 +50,15 @@
                             <span class="text-state-danger">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.clientIdTooltip" />
                         </div>
-                        <input type="text" pInputText class="w-full" name="clientId" id="field_clientId" formControlName="clientId" [invalid]="isFieldInvalid('clientId')" />
+                        <input
+                            type="text"
+                            tumUiInput
+                            class="w-full"
+                            name="clientId"
+                            id="field_clientId"
+                            formControlName="clientId"
+                            [tumUiInputInvalid]="isFieldInvalid('clientId')"
+                        />
                         @if (isFieldInvalid('clientId')) {
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.clientIdRequired"></small>
                         }
@@ -63,12 +71,12 @@
                         </div>
                         <input
                             type="text"
-                            pInputText
+                            tumUiInput
                             class="w-full"
                             name="authorizationUri"
                             id="field_authorizationUri"
                             formControlName="authorizationUri"
-                            [invalid]="isFieldInvalid('authorizationUri')"
+                            [tumUiInputInvalid]="isFieldInvalid('authorizationUri')"
                         />
                         @if (isFieldInvalid('authorizationUri')) {
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.authorizationUriRequired"></small>
@@ -80,7 +88,15 @@
                             <span class="text-state-danger">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.tokenUriTooltip" />
                         </div>
-                        <input type="text" pInputText class="w-full" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" [invalid]="isFieldInvalid('tokenUri')" />
+                        <input
+                            type="text"
+                            tumUiInput
+                            class="w-full"
+                            name="tokenUri"
+                            id="field_tokenUri"
+                            formControlName="tokenUri"
+                            [tumUiInputInvalid]="isFieldInvalid('tokenUri')"
+                        />
                         @if (isFieldInvalid('tokenUri')) {
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.tokenUriRequired"></small>
                         }
@@ -91,7 +107,15 @@
                             <span class="text-state-danger">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.jwkSetUriTooltip" />
                         </div>
-                        <input type="text" pInputText class="w-full" name="jwkSetUri" id="field_jwkSetUri" formControlName="jwkSetUri" [invalid]="isFieldInvalid('jwkSetUri')" />
+                        <input
+                            type="text"
+                            tumUiInput
+                            class="w-full"
+                            name="jwkSetUri"
+                            id="field_jwkSetUri"
+                            formControlName="jwkSetUri"
+                            [tumUiInputInvalid]="isFieldInvalid('jwkSetUri')"
+                        />
                         @if (isFieldInvalid('jwkSetUri')) {
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.jwkSetUriRequired"></small>
                         }
@@ -99,11 +123,18 @@
                 </div>
 
                 <div class="mt-3 flex items-center justify-end gap-2">
-                    <p-button type="button" id="cancel-save" size="small" severity="secondary" (onClick)="navigateToLtiConfigurationPage()" data-testid="cancel-platform-button">
+                    <tum-ui-button
+                        type="button"
+                        id="cancel-save"
+                        size="small"
+                        severity="secondary"
+                        (clicked)="navigateToLtiConfigurationPage()"
+                        data-testid="cancel-platform-button"
+                    >
                         <fa-icon [icon]="faBan" />
                         <span jhiTranslate="entity.action.cancel"></span>
-                    </p-button>
-                    <button type="submit" id="save-entity" pButton size="small" [disabled]="isSaving() || platformConfigurationForm.invalid" data-testid="save-platform-button">
+                    </tum-ui-button>
+                    <button type="submit" id="save-entity" tumUiButton size="small" [disabled]="isSaving() || platformConfigurationForm.invalid" data-testid="save-platform-button">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>

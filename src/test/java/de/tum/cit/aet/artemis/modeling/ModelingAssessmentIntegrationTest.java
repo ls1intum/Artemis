@@ -128,7 +128,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 6, 2, 0, 1);
-        this.course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
+        this.course = modelingExerciseUtilService.addEnrolledCourseWithDifferentModelingExercises(TEST_PREFIX);
         classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
         objectExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");

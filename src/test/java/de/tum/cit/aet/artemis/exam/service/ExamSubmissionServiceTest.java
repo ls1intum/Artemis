@@ -75,7 +75,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        exercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exam = examRepository.findByCourseId(course.getId()).getFirst();
         studentExam = examUtilService.addStudentExam(exam);
@@ -88,7 +88,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_passIfNonExamSubmission() {
-        Course tmpCourse = courseUtilService.addEmptyCourse();
+        Course tmpCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exercise nonExamExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         // should not throw
         examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, student1);
@@ -160,7 +160,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckSubmissionAllowance_testRun() {
-        final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        final var instructor = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         studentExam.setTestRun(true);
         studentExam.setUser(instructor);
         studentExamRepository.save(studentExam);

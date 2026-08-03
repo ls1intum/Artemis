@@ -1,12 +1,12 @@
-import type MarkdownIt from 'markdown-it';
-import type { PluginSimple } from 'markdown-it';
+import type { MarkdownIt } from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 
 /**
  * Markdown-It plugin that allows replacing text in the raw markdown before tokenizing.
  * See more about Markdown-It plugins here: https://github.com/markdown-it/markdown-it/tree/master/docs
  */
 export abstract class ArtemisTextReplacementPlugin {
-    getExtension(): PluginSimple {
+    getExtension(): MarkdownItPlugin {
         return (md: MarkdownIt): void => {
             md.core.ruler.before('normalize', 'artemis_text_replacement', (state) => {
                 // Perform the replacement on the raw markdown text
