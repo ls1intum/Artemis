@@ -18,6 +18,22 @@
                 "collection": "Collection",
                 "objects": "Objects",
                 "unavailable": "unavailable"
+            },
+            "drift": {
+                "title": "Per-course index drift",
+                "subtitle": "Rows indexed in Weaviate vs. rows the database expects, per entity type, computed live for one course.",
+                "courseId": "Course ID",
+                "load": "Load drift",
+                "error": "Failed to load index drift. Check the course ID and try again.",
+                "resultTitle": "Index drift for course",
+                "type": "Type",
+                "present": "Indexed",
+                "expected": "Expected",
+                "status": "Status",
+                "complete": "Complete",
+                "incomplete": "Missing",
+                "unknown": "Unknown",
+                "notComputed": "not computed"
             }
         }
     }

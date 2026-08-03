@@ -71,4 +71,76 @@
             </tum-ui-panel>
         </div>
     }
+
+    <div class="mt-4">
+        <div class="flex items-center gap-2 mb-2">
+            <fa-icon [icon]="faMagnifyingGlass" />
+            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.drift.title"></h4>
+        </div>
+        <p class="text-muted-color mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.drift.subtitle"></p>
+
+        <div class="flex items-end gap-2 mb-3">
+            <div class="flex flex-col">
+                <label class="text-muted-color mb-1" for="drift-course-id" jhiTranslate="artemisApp.courseIngestionDashboard.drift.courseId"></label>
+                <tum-ui-input-number
+                    inputId="drift-course-id"
+                    [min]="1"
+                    [useGrouping]="false"
+                    [ngModel]="courseId()"
+                    (ngModelChange)="courseId.set($event)"
+                    [ariaLabel]="'artemisApp.courseIngestionDashboard.drift.courseId' | artemisTranslate"
+                />
+            </div>
+            <tum-ui-button severity="primary" size="small" [icon]="faMagnifyingGlass" [loading]="driftLoading()" [disabled]="courseId() === undefined" (clicked)="loadDrift()">
+                {{ 'artemisApp.courseIngestionDashboard.drift.load' | artemisTranslate }}
+            </tum-ui-button>
+        </div>
+
+        @if (driftError()) {
+            <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.courseIngestionDashboard.drift.error' | artemisTranslate }}</tum-ui-message>
+        }
+
+        @if (drift(); as d) {
+            <tum-ui-panel [header]="('artemisApp.courseIngestionDashboard.drift.resultTitle' | artemisTranslate) + ' ' + d.courseId">
+                <table tumUiTable size="small">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.courseIngestionDashboard.drift.type"></th>
+                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.drift.present"></th>
+                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.drift.expected"></th>
+                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.drift.status"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (type of d.types; track type.type) {
+                            <tr>
+                                <td class="font-mono">{{ type.type }}</td>
+                                <td class="text-end">{{ type.present | number }}</td>
+                                <td class="text-end">
+                                    @if (type.expected !== null) {
+                                        {{ type.expected | number }}
+                                    } @else {
+                                        <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.drift.notComputed"></span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @switch (driftStatus(type)) {
+                                        @case ('complete') {
+                                            <span class="font-semibold" [style.color]="'var(--success)'" jhiTranslate="artemisApp.courseIngestionDashboard.drift.complete"></span>
+                                        }
+                                        @case ('incomplete') {
+                                            <span class="font-semibold" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.drift.incomplete"></span>
+                                        }
+                                        @default {
+                                            <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.drift.unknown"></span>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </tum-ui-panel>
+        }
+    </div>
 </div>

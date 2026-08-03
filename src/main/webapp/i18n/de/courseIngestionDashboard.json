@@ -18,6 +18,22 @@
                 "collection": "Collection",
                 "objects": "Objekte",
                 "unavailable": "nicht verfügbar"
+            },
+            "drift": {
+                "title": "Index-Drift pro Kurs",
+                "subtitle": "In Weaviate indexierte Zeilen im Vergleich zu den in der Datenbank erwarteten Zeilen, pro Entitätstyp, live für einen Kurs berechnet.",
+                "courseId": "Kurs-ID",
+                "load": "Drift laden",
+                "error": "Der Index-Drift konnte nicht geladen werden. Bitte prüfen Sie die Kurs-ID und versuchen Sie es erneut.",
+                "resultTitle": "Index-Drift für Kurs",
+                "type": "Typ",
+                "present": "Indexiert",
+                "expected": "Erwartet",
+                "status": "Status",
+                "complete": "Vollständig",
+                "incomplete": "Fehlend",
+                "unknown": "Unbekannt",
+                "notComputed": "nicht berechnet"
             }
         }
     }

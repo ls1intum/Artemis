@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IndexOverview } from './course-ingestion-dashboard.model';
+import { CourseIndexDrift, IndexOverview } from './course-ingestion-dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseIngestionDashboardService {
@@ -14,5 +14,12 @@ export class CourseIngestionDashboardService {
      */
     getOverview(): Observable<IndexOverview> {
         return this.http.get<IndexOverview>(`${this.baseUrl}/index/overview`);
+    }
+
+    /**
+     * Live per-type indexed-vs-expected drift for a single course.
+     */
+    getCourseDrift(courseId: number): Observable<CourseIndexDrift> {
+        return this.http.get<CourseIndexDrift>(`${this.baseUrl}/courses/${courseId}/index-drift`);
     }
 }
