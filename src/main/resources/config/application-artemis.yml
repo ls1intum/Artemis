@@ -136,9 +136,44 @@ artemis:
     programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
     vulnerability-scan-time: 0 0 8 * * MON # every Monday at 8am
+    # Data-privacy cleanup jobs (only run when the matching artemis.cleanup.*-schedule-enabled flag is true).
+    old-courses-warning-time: 0 0 2 * * SUN # every Sunday at 2am: archive + warn instructors of old courses due for reset
+    old-courses-reset-time: 0 0 3 * * SUN # every Sunday at 3am: reset student data of old courses past the grace period
+    old-feedback-cleanup-time: 0 30 4 * * SUN # every Sunday at 4:30am: delete feedback of non-latest results of old courses
+    old-submission-versions-cleanup-time: 0 45 4 * * SUN # every Sunday at 4:45am: delete submission versions of old courses
+    not-enrolled-users-warning-time: 0 0 5 1 * * # 1st of every month at 5am: warn inactive users enrolled in no course
+    not-enrolled-users-cleanup-time: 0 0 6 1 * * # 1st of every month at 6am: soft-delete warned users enrolled in no course
+    plagiarism-cases-cleanup-time: 0 30 3 * * SUN # every Sunday at 3:30am: delete plagiarism cases of courses ended > 5 years ago
 
   data-export:
     days-between-data-exports: 14
+
+  cleanup: # Data-privacy (GDPR) retention cutoffs and schedule kill switches for the admin data cleanup jobs.
+    # Legal basis (defaults chosen for TUM / Bavaria; adjust per your institution's regulations):
+    #  - GDPR Art. 5(1)(e) storage limitation + Art. 17 (erasure): personal data must be deleted once no longer needed.
+    #  - Grade-relevant courses hold examination data (Prüfungsunterlagen). For Bavarian universities these must be kept
+    #    5 years (Bavarian State Ministry circular; the 2-year RaPO period applies to Fachhochschulen, not universities),
+    #    then destroyed. The authoritative long-term grade/degree record (reduced exam file, 50 years) is kept in the
+    #    campus-management system (e.g. TUMonline), not in Artemis. See the privacy statement (BayHSchG Art. 61, TUM APSO).
+    #  - Non-grade-relevant courses carry no exam-retention obligation, so their student data is minimized after 1 year.
+    #  NOTE: a pending objection/legal proceeding legally extends retention. Enable the affected course's data-retention
+    #  hold (course settings -> data privacy) until the proceeding concludes: held courses are skipped by the warning and
+    #  reset jobs for as long as the hold lasts, regardless of the cutoffs below.
+    grade-relevant-retention-years: 5 # reset student data of grade-relevant courses 5 years after they end
+    non-grade-relevant-retention-years: 1 # reset student data of non-grade-relevant courses 1 year after they end
+    reset-warning-grace-period-days: 30 # days between warning instructors and actually resetting the student data
+    old-feedback-cutoff-weeks: 8 # weeks after course end before feedback of non-latest results is purged (final result's feedback is kept)
+    old-submission-versions-cutoff-weeks: 8 # weeks after course end before submission versions (editor history) are purged
+    not-enrolled-users-inactivity-months: 6 # months of inactivity (by last login) before a not-enrolled user is warned and later deleted
+    not-enrolled-users-warning-grace-period-days: 30 # days between warning a not-enrolled user and deleting the account (logging in cancels it)
+    # Schedule kill switches (all off by default: nothing runs automatically until an admin opts in).
+    old-courses-warning-schedule-enabled: false
+    old-courses-reset-schedule-enabled: false
+    old-feedback-schedule-enabled: false
+    old-submission-versions-schedule-enabled: false
+    not-enrolled-users-warning-schedule-enabled: false
+    not-enrolled-users-schedule-enabled: false
+    plagiarism-cases-schedule-enabled: false
 
   plagiarism-checks:
     plagiarism-results-limit: 100
