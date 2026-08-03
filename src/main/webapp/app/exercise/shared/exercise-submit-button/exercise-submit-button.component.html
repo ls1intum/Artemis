@@ -21,11 +21,6 @@
     </div>
     <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
     <span (click)="popover()?.close()">
-        <jhi-request-feedback-button
-            [exercise]="exercise()"
-            [isGeneratingFeedback]="isGeneratingFeedback()"
-            (generatingFeedback)="generatingFeedback.emit()"
-            [isSubmitted]="isSubmitted()"
-        />
+        <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="isSubmitted()" />
     </span>
 </ng-template>
