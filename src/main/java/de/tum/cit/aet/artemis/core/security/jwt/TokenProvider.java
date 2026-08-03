@@ -53,6 +53,13 @@ public class TokenProvider {
 
     public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 
+    /**
+     * Identifies the passkey a token was issued for, so that a later silent rotation can check whether that passkey still
+     * exists. Without it a token outlives the credential that created it: deleting a passkey would not stop the sessions
+     * it had already produced from being extended.
+     */
+    public static final String PASSKEY_CREDENTIAL_ID = "passkey-credential-id";
+
     private static final String TOOLS_KEY = "tools";
 
     private SecretKey key;
@@ -146,8 +153,12 @@ public class TokenProvider {
         }
 
         boolean isPasskeyApproved = false;
+        String passkeyCredentialId = null;
         if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
             isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+            if (details.get(PASSKEY_CREDENTIAL_ID) instanceof String credentialId) {
+                passkeyCredentialId = credentialId;
+            }
         }
 
         // @formatter:off
@@ -158,6 +169,10 @@ public class TokenProvider {
             .claim(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved)
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
+
+        if (passkeyCredentialId != null) {
+            jwtBuilder.claim(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
 
         if (tool != null) {
             jwtBuilder.claim(TOOLS_KEY, tool);
@@ -238,6 +253,15 @@ public class TokenProvider {
     }
 
     @NonNull
+    /**
+     * @param authToken the token to read
+     * @return the passkey this token was issued for, or {@code null} for tokens that are not passkey tokens and for
+     *         passkey tokens issued before the claim was introduced
+     */
+    public String getPasskeyCredentialId(String authToken) {
+        return parseClaims(authToken).get(PASSKEY_CREDENTIAL_ID, String.class);
+    }
+
     public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
         return claims.get(claimName, claimType);

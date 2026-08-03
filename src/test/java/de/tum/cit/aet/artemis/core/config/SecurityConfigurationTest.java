@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 class SecurityConfigurationTest {
@@ -38,7 +39,7 @@ class SecurityConfigurationTest {
         moduleFeatureService = mock(ModuleFeatureService.class);
 
         securityConfiguration = new SecurityConfiguration(corsFilter, customLti13Configurer, passkeyWebAuthnConfigurer, passwordService, tokenProvider, jwtCookieService,
-                moduleFeatureService);
+                mock(PasskeyTokenRenewalService.class), moduleFeatureService);
     }
 
     @Test

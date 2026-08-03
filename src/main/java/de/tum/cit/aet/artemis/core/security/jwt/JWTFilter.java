@@ -32,6 +32,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
+
 /**
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
  */
@@ -43,11 +45,14 @@ public class JWTFilter extends GenericFilterBean {
 
     private final JWTCookieService jwtCookieService;
 
+    private final PasskeyTokenRenewalService passkeyTokenRenewalService;
+
     private final long tokenValidityInSecondsForPasskey;
 
-    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey) {
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
+        this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
@@ -68,9 +73,10 @@ public class JWTFilter extends GenericFilterBean {
      * <b>Security:</b>
      * </p>
      * <p>
-     * This mechanism relies on secure cookie storage and HTTPS. Note that no token revocation
-     * mechanism is implemented. Role changes are not checked, as resources for non-admin roles
-     * will validate the current role during access.
+     * This mechanism relies on secure cookie storage and HTTPS. An issued token is still not revocable on demand - it is
+     * validated from its claims alone - but a passkey session is no longer extended once the passkey it was issued for has
+     * been deleted, so deleting a passkey bounds the session to its current token. Role changes are not checked, as
+     * resources for non-admin roles will validate the current role during access.
      * </p>
      *
      * @param jwtToken       The current JWT token to evaluate for renewal.
@@ -97,6 +103,14 @@ public class JWTFilter extends GenericFilterBean {
         // Trigger rotation if token has less than half of its validity period remaining
         boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMs / 2;
         if (isRemainingLifetimeBelowHalf) {
+            // A rotation is the one moment in a passkey session's life where a database lookup is affordable - it happens
+            // once per rotation interval, not per request - so it is where the credential is re-checked. Without this the
+            // session outlives the passkey that created it, and deleting the passkey does not end it.
+            String passkeyCredentialId = this.tokenProvider.getPasskeyCredentialId(jwtToken);
+            if (!passkeyTokenRenewalService.mayExtendSession(passkeyCredentialId)) {
+                return;
+            }
+
             // Compute the new expiration time, respecting the original token's max lifetime
             long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
             // Determine the lifetime of the rotated token

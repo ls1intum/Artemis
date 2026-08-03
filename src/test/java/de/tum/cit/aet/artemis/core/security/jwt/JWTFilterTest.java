@@ -1,9 +1,16 @@
 package de.tum.cit.aet.artemis.core.security.jwt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.Cookie;
 
@@ -11,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -23,6 +31,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -35,6 +44,8 @@ class JWTFilterTest {
 
     private JWTFilter jwtFilter;
 
+    private PasskeyTokenRenewalService passkeyTokenRenewalService;
+
     @BeforeEach
     void setup() {
         ArtemisProperties jHipsterProperties = new ArtemisProperties();
@@ -46,10 +57,19 @@ class JWTFilterTest {
         tokenProvider = new TokenProvider(jHipsterProperties, securityMetersService);
         ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", TOKEN_VALIDITY_IN_MILLISECONDS);
+        // Silent rotation compares the remaining lifetime against half of the remember-me validity, so it has to be set
+        // for any rotation to be due at all.
+        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TOKEN_VALIDITY_IN_MILLISECONDS);
 
         JWTCookieService jwtCookieService = mock(JWTCookieService.class);
+        // The filter calls toString() on whatever the service returns, so a real cookie is needed rather than null.
+        when(jwtCookieService.buildRotatedCookie(any(), anyLong())).thenReturn(ResponseCookie.from(Constants.JWT_COOKIE_NAME, "rotated").build());
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000);
+        passkeyTokenRenewalService = mock(PasskeyTokenRenewalService.class);
+        // Default to "the passkey still exists", so the existing rotation tests keep exercising rotation itself.
+        when(passkeyTokenRenewalService.mayExtendSession(any())).thenReturn(true);
+
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -124,6 +144,70 @@ class JWTFilterTest {
         jwtFilter.doFilter(request, response, filterChain);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    /**
+     * Builds a passkey token that is already past half its lifetime, i.e. one a rotation is due for.
+     */
+    private String createRotationDuePasskeyToken(String credentialId) {
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Map<String, Object> details = new HashMap<>();
+        details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, false);
+        if (credentialId != null) {
+            details.put(TokenProvider.PASSKEY_CREDENTIAL_ID, credentialId);
+        }
+        authentication.setDetails(details);
+
+        Date issuedAt = new Date(System.currentTimeMillis() - TOKEN_VALIDITY_IN_MILLISECONDS);
+        Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
+        return tokenProvider.createToken(authentication, issuedAt, expiration, null, true);
+    }
+
+    private MockHttpServletResponse filterWithToken(String jwt) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(Constants.JWT_COOKIE_NAME, jwt));
+        request.setRequestURI("/api/core/test");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        jwtFilter.doFilter(request, response, new MockFilterChain());
+        return response;
+    }
+
+    @Test
+    void aPasskeySessionIsExtendedWhileItsPasskeyStillExists() throws Exception {
+        when(passkeyTokenRenewalService.mayExtendSession("credential-1")).thenReturn(true);
+
+        MockHttpServletResponse response = filterWithToken(createRotationDuePasskeyToken("credential-1"));
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).as("the session is extended").isNotNull();
+    }
+
+    @Test
+    void aPasskeySessionIsNotExtendedOnceItsPasskeyIsGone() throws Exception {
+        // Deleting a passkey - the remediation after a compromise - has to stop the sessions it created from being
+        // extended, otherwise the credential is gone but the session it minted lives on for months.
+        when(passkeyTokenRenewalService.mayExtendSession("credential-1")).thenReturn(false);
+
+        MockHttpServletResponse response = filterWithToken(createRotationDuePasskeyToken("credential-1"));
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).as("the session is not extended").isNull();
+    }
+
+    @Test
+    void theCredentialIdIsCarriedInThePasskeyTokenSoItCanBeChecked() {
+        String jwt = createRotationDuePasskeyToken("credential-1");
+
+        assertThat(tokenProvider.getPasskeyCredentialId(jwt)).isEqualTo("credential-1");
+    }
+
+    @Test
+    void aTokenWithoutACredentialIdIsPassedToTheValidatorAsNull() throws Exception {
+        // Tokens issued before the claim existed carry no credential id; the validator decides what to do with them, and
+        // this asserts the filter does not invent one.
+        when(passkeyTokenRenewalService.mayExtendSession(null)).thenReturn(true);
+
+        filterWithToken(createRotationDuePasskeyToken(null));
+
+        verify(passkeyTokenRenewalService).mayExtendSession(null);
     }
 
     @Test
