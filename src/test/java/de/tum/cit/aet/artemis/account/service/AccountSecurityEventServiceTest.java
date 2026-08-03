@@ -2,11 +2,11 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_REGISTERED;
-import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_SECURITY_EVENT_TYPES;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.AUTHENTICATION_SUCCESS;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_COMPLETED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUESTED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.SECURITY_EVENT_TYPES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,8 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventTypeClassifier;
+import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
@@ -149,11 +152,14 @@ class AccountSecurityEventServiceTest {
     }
 
     @Test
-    void testAccountSecurityEventTypesCoverEveryEventThisServiceEmitsAndExcludeLoginNoise() {
-        // The retention split keys off this set, so an event type that is emitted but not listed would be pruned on the
-        // short login schedule and silently disappear from investigations.
-        assertThat(ACCOUNT_SECURITY_EVENT_TYPES).containsExactlyInAnyOrder(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED,
-                ACCOUNT_EMAIL_CHANGED, ACCOUNT_REGISTERED);
-        assertThat(ACCOUNT_SECURITY_EVENT_TYPES).doesNotContain(AUTHENTICATION_SUCCESS);
+    void everyEventTypeThisServiceEmitsIsClassifiedAsASecurityEvent() {
+        // Routing and retention both key off the classifier: a type this service emits that is not classified as SECURITY
+        // would be written to the wrong table and pruned on the short general schedule. The exact contents of the type
+        // sets are asserted in AuditEventTypeClassifierTest; here the point is that this service's own events are covered.
+        for (String emittedType : List.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED, ACCOUNT_REGISTERED)) {
+            assertThat(AuditEventTypeClassifier.classify(emittedType)).as("%s must be routed to the security audit log", emittedType).isEqualTo(AuditLogType.SECURITY);
+            assertThat(SECURITY_EVENT_TYPES).contains(emittedType);
+        }
+        assertThat(SECURITY_EVENT_TYPES).doesNotContain(AUTHENTICATION_SUCCESS);
     }
 }

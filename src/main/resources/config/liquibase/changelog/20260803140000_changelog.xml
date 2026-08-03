@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Split the single audit log into three, so events can be filtered and retained per category instead of scanning one
+    ever-growing table:
+
+      jhi_persistent_audit_event  general      authentication / login events        short retention (1 year)
+      security_audit_event        security     account credential/identity changes  long retention (5 years)
+      application_audit_event     application  domain actions (DELETE_EXERCISE ...) long retention (5 years)
+
+    The two new tables mirror the existing structure exactly (same column names and types, same key/value child table),
+    so the entities, the converter and the admin read path stay uniform across all three.
+
+    Existing rows are migrated below: everything that is not an authentication event moves out of
+    jhi_persistent_audit_event into the table its type now belongs to. Without that, the general log's short retention
+    would delete historical domain events that must be kept for years. The moved subset is small relative to the table
+    (logins dominate), but on a large installation this migration still touches a lot of rows - see the note on the
+    migration changesets.
+    -->
+
+    <!-- ===================================================================== -->
+    <!-- security_audit_event                                                  -->
+    <!-- ===================================================================== -->
+
+    <changeSet id="20260803140000-01-create-security-audit-event" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="security_audit_event"/>
+            </not>
+        </preConditions>
+        <createTable tableName="security_audit_event">
+            <column autoIncrement="true" name="event_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="principal" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_date" type="datetime(3)"/>
+            <column name="event_type" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260803140000-02-create-security-audit-evt-data" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="security_audit_evt_data"/>
+            </not>
+        </preConditions>
+        <createTable tableName="security_audit_evt_data">
+            <column name="event_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="event_data" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <!-- ON DELETE CASCADE (the pre-existing jhi_persistent_audit_evt_data foreign key uses RESTRICT): the child rows are
+         an @ElementCollection with no independent meaning, so the database may remove them with their parent. -->
+    <changeSet id="20260803140000-03-add-security-audit-evt-data-fk" author="krusche">
+        <addForeignKeyConstraint baseColumnNames="event_id" baseTableName="security_audit_evt_data"
+                                 constraintName="fk_security_audit_evt_data_event" onDelete="CASCADE" onUpdate="RESTRICT"
+                                 referencedColumnNames="event_id" referencedTableName="security_audit_event"/>
+    </changeSet>
+
+    <!-- (event_date) drives the nightly retention pruning; (principal, event_date, event_type) mirrors the covering
+         index on the general table for the admin view's filtering and sorting. -->
+    <changeSet id="20260803140000-04-index-security-audit-event" author="krusche">
+        <createIndex indexName="idx_security_audit_event_date" tableName="security_audit_event">
+            <column name="event_date"/>
+        </createIndex>
+        <createIndex indexName="idx_security_audit_event_principal_date_type" tableName="security_audit_event">
+            <column name="principal"/>
+            <column name="event_date"/>
+            <column name="event_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- application_audit_event                                               -->
+    <!-- ===================================================================== -->
+
+    <changeSet id="20260803140000-05-create-application-audit-event" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="application_audit_event"/>
+            </not>
+        </preConditions>
+        <createTable tableName="application_audit_event">
+            <column autoIncrement="true" name="event_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="principal" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_date" type="datetime(3)"/>
+            <column name="event_type" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260803140000-06-create-application-audit-evt-data" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="application_audit_evt_data"/>
+            </not>
+        </preConditions>
+        <createTable tableName="application_audit_evt_data">
+            <column name="event_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="event_data" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260803140000-07-add-application-audit-evt-data-fk" author="krusche">
+        <addForeignKeyConstraint baseColumnNames="event_id" baseTableName="application_audit_evt_data"
+                                 constraintName="fk_application_audit_evt_data_event" onDelete="CASCADE" onUpdate="RESTRICT"
+                                 referencedColumnNames="event_id" referencedTableName="application_audit_event"/>
+    </changeSet>
+
+    <changeSet id="20260803140000-08-index-application-audit-event" author="krusche">
+        <createIndex indexName="idx_application_audit_event_date" tableName="application_audit_event">
+            <column name="event_date"/>
+        </createIndex>
+        <createIndex indexName="idx_application_audit_event_principal_date_type" tableName="application_audit_event">
+            <column name="principal"/>
+            <column name="event_date"/>
+            <column name="event_type"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- The general log had no index on event_date alone; its nightly pruning needs one. -->
+    <changeSet id="20260803140000-09-index-persistent-audit-event-date" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_persistent_audit_event_date" tableName="jhi_persistent_audit_event"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="idx_persistent_audit_event_date" tableName="jhi_persistent_audit_event">
+            <column name="event_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Migrate existing rows out of the general log                          -->
+    <!-- ===================================================================== -->
+    <!--
+    The event_id values are carried over unchanged, which keeps the child rows joinable without an id mapping and keeps
+    any externally noted event id meaningful. The type lists below must stay in sync with AuditEventConstants:
+    GENERAL_EVENT_TYPES stays behind, SECURITY_EVENT_TYPES moves to security_audit_event, and everything else - including
+    rows with a NULL type - moves to application_audit_event, matching AuditEventTypeClassifier's default.
+
+    Parents are inserted before children, and the old rows are deleted children-first, because
+    jhi_persistent_audit_evt_data's foreign key is ON DELETE RESTRICT.
+    -->
+
+    <changeSet id="20260803140000-10-migrate-security-events" author="krusche">
+        <sql>
+            INSERT INTO security_audit_event (event_id, principal, event_date, event_type)
+            SELECT event_id, principal, event_date, event_type
+            FROM jhi_persistent_audit_event
+            WHERE event_type IN ('PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
+                                 'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE');
+        </sql>
+        <sql>
+            INSERT INTO security_audit_evt_data (event_id, name, event_data)
+            SELECT d.event_id, d.name, d.event_data
+            FROM jhi_persistent_audit_evt_data d
+            JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
+            WHERE e.event_type IN ('PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
+                                   'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE');
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260803140000-11-migrate-application-events" author="krusche">
+        <sql>
+            INSERT INTO application_audit_event (event_id, principal, event_date, event_type)
+            SELECT event_id, principal, event_date, event_type
+            FROM jhi_persistent_audit_event
+            WHERE event_type IS NULL
+               OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS',
+                                     'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
+                                     'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE');
+        </sql>
+        <sql>
+            INSERT INTO application_audit_evt_data (event_id, name, event_data)
+            SELECT d.event_id, d.name, d.event_data
+            FROM jhi_persistent_audit_evt_data d
+            JOIN jhi_persistent_audit_event e ON e.event_id = d.event_id
+            WHERE e.event_type IS NULL
+               OR e.event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS',
+                                       'PASSWORD_RESET_REQUESTED', 'PASSWORD_RESET_REQUEST_REJECTED', 'PASSWORD_RESET_COMPLETED',
+                                       'ACCOUNT_EMAIL_CHANGED', 'ACCOUNT_REGISTERED', 'SAML2_ACCOUNT_CREATE');
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260803140000-12-delete-migrated-rows-from-general-log" author="krusche">
+        <sql>
+            DELETE FROM jhi_persistent_audit_evt_data
+            WHERE event_id IN (
+                SELECT event_id FROM jhi_persistent_audit_event
+                WHERE event_type IS NULL
+                   OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS')
+            );
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_event
+            WHERE event_type IS NULL
+               OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS');
+        </sql>
+    </changeSet>
+
+    <!-- PostgreSQL identity columns do not advance their sequence when explicit values are inserted, so the next
+         generated id would collide with a migrated row. MySQL/H2 update AUTO_INCREMENT automatically and need no reset. -->
+    <changeSet id="20260803140000-13-reset-identity-sequences" author="krusche" dbms="postgresql">
+        <sql>
+            SELECT setval(pg_get_serial_sequence('security_audit_event', 'event_id'),
+                          COALESCE((SELECT MAX(event_id) FROM security_audit_event), 1));
+        </sql>
+        <sql>
+            SELECT setval(pg_get_serial_sequence('application_audit_event', 'event_id'),
+                          COALESCE((SELECT MAX(event_id) FROM application_audit_event), 1));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

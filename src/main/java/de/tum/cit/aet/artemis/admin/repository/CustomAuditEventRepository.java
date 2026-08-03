@@ -20,13 +20,21 @@ import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenti
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.ApplicationAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.SecurityAuditEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventTypeClassifier;
 
 /**
  * An implementation of Spring Boot's {@link AuditEventRepository}.
+ * <p>
+ * This is the single write path for audit events, and therefore the place where each event is routed to one of the three
+ * audit logs: authentication events stay in {@code jhi_persistent_audit_event}, account credential/identity changes go to
+ * {@code security_audit_event}, and everything else (domain actions, and any unrecognised type) goes to
+ * {@code application_audit_event}. See {@link AuditEventTypeClassifier}.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -42,20 +50,34 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
 
+    private final SecurityAuditEventRepository securityAuditEventRepository;
+
+    private final ApplicationAuditEventRepository applicationAuditEventRepository;
+
     private final AuditEventConverter auditEventConverter;
 
     private final UserRepository userRepository;
 
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
-    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter,
+    public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository,
+            SecurityAuditEventRepository securityAuditEventRepository, ApplicationAuditEventRepository applicationAuditEventRepository, AuditEventConverter auditEventConverter,
             UserRepository userRepository) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
+        this.securityAuditEventRepository = securityAuditEventRepository;
+        this.applicationAuditEventRepository = applicationAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
         this.userRepository = userRepository;
         this.isSaml2Active = new ArtemisConfigHelper().isSaml2Enabled(environment);
     }
 
+    /**
+     * Finds events in the general (authentication) audit log.
+     * <p>
+     * Only the general log is searched. This method exists to satisfy Spring Boot's {@link AuditEventRepository}
+     * contract, whose only caller is the actuator {@code auditevents} endpoint; the admin audit view reads each log
+     * explicitly through {@code AuditEventService} instead.
+     */
     @Override
     public List<AuditEvent> find(String principal, Instant after, String type) {
         Iterable<PersistentAuditEvent> persistentAuditEvents = persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after, type);
@@ -67,27 +89,57 @@ public class CustomAuditEventRepository implements AuditEventRepository {
         String eventType = event.getType();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!AuditEventConstants.AUTHORIZATION_FAILURE.equals(eventType)) {
-            if (isSaml2Active && AuditEventConstants.AUTHENTICATION_SUCCESS.equals(eventType) && authentication == null) {
-                // If authentication is null, Auth is a success, and SAML2 profile is active => SAML2 authentication is running.
-                // Logging is handled manually.
-                return;
+        if (AuditEventConstants.AUTHORIZATION_FAILURE.equals(eventType)) {
+            // Not persisted: Spring Security emits one of these for every denied request, which is noise rather than an audit trail.
+            return;
+        }
+
+        if (isSaml2Active && AuditEventConstants.AUTHENTICATION_SUCCESS.equals(eventType) && authentication == null) {
+            // If authentication is null, Auth is a success, and SAML2 profile is active => SAML2 authentication is running.
+            // Logging is handled manually.
+            return;
+        }
+
+        if (authentication instanceof WebAuthnAuthentication) {
+            eventType = AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS;
+        }
+
+        Map<String, String> eventData = truncate(auditEventConverter.convertDataToStrings(event.getData()));
+        persist(eventType, event.getPrincipal(), event.getTimestamp(), eventData);
+
+        if (isLoginSuccess(eventType)) {
+            recordLastLogin(event.getPrincipal(), event.getTimestamp());
+        }
+    }
+
+    /**
+     * Writes the event into the audit log its type belongs to.
+     */
+    private void persist(String eventType, String principal, Instant timestamp, Map<String, String> eventData) {
+        switch (AuditEventTypeClassifier.classify(eventType)) {
+            case SECURITY -> {
+                SecurityAuditEvent securityEvent = new SecurityAuditEvent();
+                securityEvent.setPrincipal(principal);
+                securityEvent.setAuditEventType(eventType);
+                securityEvent.setAuditEventDate(timestamp);
+                securityEvent.setData(eventData);
+                securityAuditEventRepository.save(securityEvent);
             }
-
-            if (authentication instanceof WebAuthnAuthentication) {
-                eventType = AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS;
+            case APPLICATION -> {
+                ApplicationAuditEvent applicationEvent = new ApplicationAuditEvent();
+                applicationEvent.setPrincipal(principal);
+                applicationEvent.setAuditEventType(eventType);
+                applicationEvent.setAuditEventDate(timestamp);
+                applicationEvent.setData(eventData);
+                applicationAuditEventRepository.save(applicationEvent);
             }
-
-            PersistentAuditEvent persistentAuditEvent = new PersistentAuditEvent();
-            persistentAuditEvent.setPrincipal(event.getPrincipal());
-            persistentAuditEvent.setAuditEventType(eventType);
-            persistentAuditEvent.setAuditEventDate(event.getTimestamp());
-            Map<String, String> eventData = auditEventConverter.convertDataToStrings(event.getData());
-            persistentAuditEvent.setData(truncate(eventData));
-            persistenceAuditEventRepository.save(persistentAuditEvent);
-
-            if (isLoginSuccess(eventType)) {
-                recordLastLogin(event.getPrincipal(), event.getTimestamp());
+            case GENERAL -> {
+                PersistentAuditEvent generalEvent = new PersistentAuditEvent();
+                generalEvent.setPrincipal(principal);
+                generalEvent.setAuditEventType(eventType);
+                generalEvent.setAuditEventDate(timestamp);
+                generalEvent.setData(eventData);
+                persistenceAuditEventRepository.save(generalEvent);
             }
         }
     }

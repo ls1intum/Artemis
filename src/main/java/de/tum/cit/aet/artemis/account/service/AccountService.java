@@ -110,7 +110,8 @@ public class AccountService {
 
         // The service lower-cases the address before storing it, so compare case-insensitively to avoid reporting a
         // change when the user only altered their name and the address round-tripped with different casing.
-        boolean emailChanged = previousEmail != null && !previousEmail.equalsIgnoreCase(userDTO.getEmail());
+        // StringUtils.equalsIgnoreCase is null-safe on both arguments, so a null previous or new e-mail cannot NPE here.
+        boolean emailChanged = !StringUtils.equalsIgnoreCase(previousEmail, userDTO.getEmail());
         if (emailChanged) {
             User updatedUser = userRepository.getUserByLoginElseThrow(userLogin);
             accountSecurityEventService.recordEmailChanged(updatedUser, previousEmail, previousLangKey);

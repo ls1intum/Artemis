@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { Audit } from './audit.model';
 import { AuditsService } from './audits.service';
+import { AuditLogType } from './audit-log-type.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -22,6 +23,7 @@ import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-messa
 import { TumUiInputGroupComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group.component';
 import { TumUiInputGroupAddonComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group-addon.component';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TabsModule } from 'primeng/tabs';
 
 /**
  * Admin component for viewing system audit logs.
@@ -45,6 +47,7 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         TumUiInputGroupComponent,
         TumUiInputGroupAddonComponent,
         FormDateTimePickerComponent,
+        TabsModule,
     ],
 })
 export class AuditsComponent implements OnInit {
@@ -55,6 +58,19 @@ export class AuditsComponent implements OnInit {
 
     /** Audit log entries */
     readonly audits = signal<Audit[]>([]);
+
+    /**
+     * Which of the three audit logs is shown. Each is a separate table with its own retention period, so switching tabs
+     * queries a different (and much smaller) table rather than filtering one large one.
+     */
+    readonly logType = signal<AuditLogType>(AuditLogType.GENERAL);
+
+    /** The tabs rendered above the table, in display order. */
+    readonly logTypeTabs: readonly { value: AuditLogType; labelKey: string }[] = [
+        { value: AuditLogType.GENERAL, labelKey: 'audits.logType.general' },
+        { value: AuditLogType.SECURITY, labelKey: 'audits.logType.security' },
+        { value: AuditLogType.APPLICATION, labelKey: 'audits.logType.application' },
+    ];
 
     /** Date range filter - from date */
     readonly fromDate = signal('');
@@ -105,6 +121,7 @@ export class AuditsComponent implements OnInit {
                     sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
                     from: this.fromDate(),
                     to: this.toDate(),
+                    logType: this.logType(),
                 },
             });
         } else {
@@ -150,6 +167,21 @@ export class AuditsComponent implements OnInit {
         }
         const parsed = dayjs(value);
         return parsed.isValid() ? parsed.toDate() : null;
+    }
+
+    /**
+     * Switches to another audit log. Resets to the first page, because page numbers do not carry over between logs.
+     *
+     * @param value the selected tab value, as emitted by the PrimeNG tabs component
+     */
+    onLogTypeChange(value: string | number): void {
+        const selected = value as AuditLogType;
+        if (selected === this.logType()) {
+            return;
+        }
+        this.logType.set(selected);
+        this.page.set(1);
+        this.transition();
     }
 
     /** Updates the current page */
@@ -199,6 +231,11 @@ export class AuditsComponent implements OnInit {
             if (params.get('to')) {
                 this.toDate.set(this.datePipe.transform(params.get('to'), this.dateFormat)!);
             }
+            const logTypeParam = params.get('logType');
+            // Guard against an unknown value in a hand-edited URL, which would otherwise be sent to the server verbatim.
+            if (logTypeParam && Object.values(AuditLogType).includes(logTypeParam as AuditLogType)) {
+                this.logType.set(logTypeParam as AuditLogType);
+            }
             this.loadData();
         });
     }
@@ -211,6 +248,7 @@ export class AuditsComponent implements OnInit {
                 sort: this.sort(),
                 fromDate: this.fromDate(),
                 toDate: this.toDate(),
+                logType: this.logType(),
             })
             .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
     }

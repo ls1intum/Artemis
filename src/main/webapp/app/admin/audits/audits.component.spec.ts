@@ -13,6 +13,7 @@ import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { AuditLogType } from 'app/admin/audits/audit-log-type.model';
 
 function build2DigitsDatePart(datePart: number) {
     return `0${datePart}`.slice(-2);
@@ -236,6 +237,66 @@ describe('AuditsComponent', () => {
                     sort: ['timestamp,asc', 'id'],
                 }),
             );
+        });
+    });
+
+    describe('audit log tabs', () => {
+        it('defaults to the general log and sends it with the query', () => {
+            comp.ngOnInit();
+
+            expect(comp.logType()).toBe(AuditLogType.GENERAL);
+            expect(service.query).toHaveBeenCalledWith(expect.objectContaining({ logType: AuditLogType.GENERAL }));
+        });
+
+        it('offers exactly the three audit logs as tabs, in a stable order', () => {
+            expect(comp.logTypeTabs.map((tab) => tab.value)).toEqual([AuditLogType.GENERAL, AuditLogType.SECURITY, AuditLogType.APPLICATION]);
+        });
+
+        it('navigates with the selected log when a different tab is chosen, so the reload picks it up from the URL', () => {
+            // Switching tabs goes through the router: transition() navigates, and the queryParamMap subscription then
+            // reloads. The router is mocked here, so the observable contract to assert on is the navigation itself.
+            comp.ngOnInit();
+            const router = TestBed.inject(Router);
+
+            comp.onLogTypeChange(AuditLogType.SECURITY);
+
+            expect(comp.logType()).toBe(AuditLogType.SECURITY);
+            expect(router.navigate).toHaveBeenCalledWith(['/admin/audits'], expect.objectContaining({ queryParams: expect.objectContaining({ logType: AuditLogType.SECURITY }) }));
+        });
+
+        it('resets to the first page when switching tabs, because page numbers do not carry over between logs', () => {
+            comp.ngOnInit();
+            comp.updatePage(4);
+
+            comp.onLogTypeChange(AuditLogType.APPLICATION);
+
+            expect(comp.page()).toBe(1);
+        });
+
+        it('ignores a re-selection of the tab that is already active', () => {
+            comp.ngOnInit();
+            const callsBefore = vi.mocked(service.query).mock.calls.length;
+
+            comp.onLogTypeChange(AuditLogType.GENERAL);
+
+            expect(vi.mocked(service.query).mock.calls).toHaveLength(callsBefore);
+        });
+
+        it('restores the log from the URL so a tab can be bookmarked', () => {
+            mockActivatedRoute.setParameters({ sort: 'id,desc', logType: AuditLogType.APPLICATION });
+
+            comp.ngOnInit();
+
+            expect(comp.logType()).toBe(AuditLogType.APPLICATION);
+            expect(service.query).toHaveBeenCalledWith(expect.objectContaining({ logType: AuditLogType.APPLICATION }));
+        });
+
+        it('falls back to the general log for an unknown value in a hand-edited URL', () => {
+            mockActivatedRoute.setParameters({ sort: 'id,desc', logType: 'NOT_A_LOG' });
+
+            comp.ngOnInit();
+
+            expect(comp.logType()).toBe(AuditLogType.GENERAL);
         });
     });
 });

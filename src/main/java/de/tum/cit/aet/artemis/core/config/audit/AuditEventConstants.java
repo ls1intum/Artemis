@@ -2,7 +2,25 @@ package de.tum.cit.aet.artemis.core.config.audit;
 
 import java.util.Set;
 
+/**
+ * Audit event type constants and the taxonomy that maps each type to one of the three audit logs.
+ * <p>
+ * Audit events are split across three physical tables so they can be filtered and retained independently instead of
+ * scanning one ever-growing table:
+ * <ul>
+ * <li><b>General</b> ({@code jhi_persistent_audit_event}) - authentication / login events. High volume, short retention.</li>
+ * <li><b>Security</b> ({@code security_audit_event}) - account credential and identity changes. Low volume, long retention
+ * (needed to prove account provenance, e.g. for exam disputes).</li>
+ * <li><b>Application</b> ({@code application_audit_event}) - domain actions such as {@code DELETE_EXERCISE} or
+ * {@code RESET_EXAM}. Long retention for the same reason, and the default bucket for any unrecognised type so a newly
+ * added domain event is over-retained rather than silently lost.</li>
+ * </ul>
+ * {@link AuditEventTypeClassifier} is the single place that turns a type string into an {@link AuditLogType}; the sets
+ * below are its source of truth.
+ */
 public class AuditEventConstants {
+
+    // --- General / authentication events (Spring Boot's AuthenticationAuditListener emits these on every login) ---
 
     public static final String AUTHENTICATION_SUCCESS = "AUTHENTICATION_SUCCESS";
 
@@ -10,12 +28,10 @@ public class AuditEventConstants {
 
     public static final String SAML2_AUTHENTICATION_SUCCESS = "SAML2_AUTHENTICATION_SUCCESS";
 
+    /** Emitted by Spring Security on an access-denied decision. Deliberately not persisted (see CustomAuditEventRepository). */
     public static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
-    // Account lifecycle events. Unlike the authentication events above - which Spring Boot's AuthenticationAuditListener
-    // emits automatically on every single login - these are recorded explicitly at the point an account actually changes.
-    // They are low-volume by nature and describe changes to credentials or identity, which is why they are tracked
-    // separately from the high-volume login records (see ACCOUNT_SECURITY_EVENT_TYPES).
+    // --- Security events: changes to an account's credentials or identity. Recorded explicitly at the point of change. ---
 
     /** A password reset was requested for an existing, resettable account, and the reset mail was sent. */
     public static final String PASSWORD_RESET_REQUESTED = "PASSWORD_RESET_REQUESTED";
@@ -32,17 +48,28 @@ public class AuditEventConstants {
     /** A new account was created through self-registration. */
     public static final String ACCOUNT_REGISTERED = "ACCOUNT_REGISTERED";
 
+    /** A new account was provisioned from a SAML2 assertion on first login. */
+    public static final String SAML2_ACCOUNT_CREATE = "SAML2_ACCOUNT_CREATE";
+
     /**
-     * The audit event types that record a change to an account's credentials or identity.
-     * <p>
-     * These are grouped because they have a fundamentally different retention profile from the authentication events.
-     * Login events are high-volume and individually uninteresting after a short while, and they are what makes the audit
-     * table large. The events below are rare and are the ones needed to reconstruct how an account reached its current
-     * state - a question typically asked long after the fact - so they need to outlive the login records. Any pruning of
-     * the audit table should use this set to retain them longer than the general retention period.
+     * Authentication / login event types. These stay in the general audit log ({@code jhi_persistent_audit_event}) with
+     * the short retention: they are high-volume and an individual login is rarely of interest after a short while.
      */
-    public static final Set<String> ACCOUNT_SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED,
-            ACCOUNT_EMAIL_CHANGED, ACCOUNT_REGISTERED);
+    public static final Set<String> GENERAL_EVENT_TYPES = Set.of(AUTHENTICATION_SUCCESS, AUTHENTICATION_PASSKEY_SUCCESS, SAML2_AUTHENTICATION_SUCCESS);
+
+    /**
+     * Security event types: changes to an account's credentials or identity. Routed to {@code security_audit_event} and
+     * retained for years, because they are exactly what an investigation into account provenance (e.g. an exam dispute)
+     * reconstructs a timeline from, and such investigations often start long after the fact.
+     */
+    public static final Set<String> SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
+            ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE);
+
+    /**
+     * @deprecated use {@link #SECURITY_EVENT_TYPES}. Retained as an alias so existing references keep compiling.
+     */
+    @Deprecated
+    public static final Set<String> ACCOUNT_SECURITY_EVENT_TYPES = SECURITY_EVENT_TYPES;
 
     /**
      * Utility class, should not be instantiated.

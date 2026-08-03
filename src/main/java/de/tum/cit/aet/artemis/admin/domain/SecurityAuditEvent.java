@@ -23,14 +23,14 @@ import org.jspecify.annotations.NonNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Persist AuditEvent managed by the Spring Boot actuator.
- *
- * @see org.springframework.boot.actuate.audit.AuditEvent
+ * A persisted audit event recording a change to an account's credentials or identity (password reset, e-mail change,
+ * registration, ...). Structurally identical to {@link PersistentAuditEvent}, but stored in its own table so security
+ * events can be filtered and retained (years) independently from the high-volume general/authentication log.
  */
 @Entity
-@Table(name = "jhi_persistent_audit_event")
+@Table(name = "security_audit_event")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
+public class SecurityAuditEvent implements Serializable, PersistedAuditEvent {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -53,9 +53,10 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
     @ElementCollection
     @MapKeyColumn(name = "name")
     @Column(name = "event_data")
-    @CollectionTable(name = "jhi_persistent_audit_evt_data", joinColumns = @JoinColumn(name = "event_id"))
+    @CollectionTable(name = "security_audit_evt_data", joinColumns = @JoinColumn(name = "event_id"))
     private Map<String, String> data = new HashMap<>();
 
+    @Override
     public Long getId() {
         return id;
     }
@@ -64,6 +65,7 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
         this.id = id;
     }
 
+    @Override
     public String getPrincipal() {
         return principal;
     }
@@ -72,6 +74,7 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
         this.principal = principal;
     }
 
+    @Override
     public Instant getAuditEventDate() {
         return auditEventDate;
     }
@@ -80,6 +83,7 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
         this.auditEventDate = auditEventDate;
     }
 
+    @Override
     public String getAuditEventType() {
         return auditEventType;
     }
@@ -88,6 +92,7 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
         this.auditEventType = auditEventType;
     }
 
+    @Override
     public Map<String, String> getData() {
         return data;
     }
@@ -104,12 +109,11 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-
-        PersistentAuditEvent persistentAuditEvent = (PersistentAuditEvent) obj;
-        if (persistentAuditEvent.getId() == null || getId() == null) {
+        SecurityAuditEvent that = (SecurityAuditEvent) obj;
+        if (that.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(getId(), persistentAuditEvent.getId());
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
@@ -119,6 +123,6 @@ public class PersistentAuditEvent implements Serializable, PersistedAuditEvent {
 
     @Override
     public String toString() {
-        return "PersistentAuditEvent{" + "principal='" + principal + '\'' + ", auditEventDate=" + auditEventDate + ", auditEventType='" + auditEventType + '\'' + '}';
+        return "SecurityAuditEvent{" + "principal='" + principal + '\'' + ", auditEventDate=" + auditEventDate + ", auditEventType='" + auditEventType + '\'' + '}';
     }
 }

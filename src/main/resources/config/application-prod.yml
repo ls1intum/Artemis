@@ -121,10 +121,11 @@ jhipster:
             ring-buffer-size: 512
     audit-events:
         retention-period: 365 # Number of days before VCS access logs are deleted.
-        # Audit events are pruned on two schedules, because the table mixes high-volume login records with rare
-        # account-security records (password reset, e-mail change, registration) that an investigation needs much later.
-        authentication-retention-period: 90 # Number of days before login/authentication audit events are deleted.
-        account-security-retention-period: 730 # Number of days before account-security audit events are deleted.
+        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
+        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
 
 # Properties to be exposed on the /info management endpoint
 info:

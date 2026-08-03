@@ -1,5 +1,16 @@
 <div>
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
+    <!-- One tab per audit log. Each log is a separate table with its own retention period, so switching tabs queries a
+         different, much smaller table instead of filtering one large one. -->
+    <p-tabs class="mb-4" [value]="logType()" (valueChange)="onLogTypeChange($event)" data-testid="audits-log-type-tabs">
+        <p-tablist>
+            @for (tab of logTypeTabs; track tab.value) {
+                <p-tab [value]="tab.value" [attr.data-testid]="'audits-log-type-tab-' + tab.value">
+                    <span [jhiTranslate]="tab.labelKey"></span>
+                </p-tab>
+            }
+        </p-tablist>
+    </p-tabs>
     <div class="mb-4">
         <h4 jhiTranslate="audits.filter.title"></h4>
         <div class="flex flex-wrap gap-2 items-center" data-testid="audits-date-filter">
