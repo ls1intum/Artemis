@@ -115,6 +115,55 @@ set. While it is off, the trigger buttons are hidden and the REST endpoints retu
 - Maximum participations per run: **5000**. A run exceeding this is rejected.
 - Runs execute on a dedicated bounded executor; when its queue is full the endpoint returns `503`.
 
+## Choosing a model
+
+The model you configure decides the quality of the feature more than anything else you control. A bachelor's thesis at
+TUM benchmarked eighteen self-hosted configurations against 398 programming submissions, 80 of them
+malicious.<sup>[1](#source)</sup> The spread between configurations is large enough that a poor choice makes the
+feature unusable rather than merely weaker:
+
+| Configuration | Benign submissions falsely flagged | Malicious submissions missed | Throughput |
+| --- | --- | --- | --- |
+| Gemma 3 27B, temperature 0 | 1.6% | 15.0% | 5.9 per minute |
+| GPT-OSS 120B, reasoning on | 0.0% | 36.3% | 1.8 per minute |
+| Magistral 24B, reasoning on | 26.4% | 2.5% | 8.2 per minute |
+| Llama 3.3, temperature 0 | 23.0% | 7.5% | 0.33 per minute |
+
+Read the table as a set of failure modes rather than a ranking. The two bottom rows are unusable in practice: at a 23
+to 26 percent false-positive rate, a course-wide run over a thousand participations hands the instructor hundreds of
+flags to discard, and the last row is additionally slow enough that a large run does not finish in a useful time. The
+conservative configuration in row two produces no false alarms but misses over a third of real cases, which is the
+opposite failure and just as misleading if nobody says so.
+
+Practical guidance:
+
+- **Keep `temperature` at `0`.** Running the same configuration at the model's default temperature measurably degraded
+  classification quality in the benchmark. The shipped default is `0`; there is no good reason to raise it.
+- **Prefer a model in the shape of the first row**: an instruction-following mid-size model at deterministic settings.
+- **Re-check after a model upgrade.** These numbers describe specific model versions. Swapping the model out silently
+  changes the behaviour instructors were told to expect.
+- The benchmark's best overall result came from chaining two models, a fast screening pass followed by a heavier one
+  for escalated cases. Artemis does not implement this: each participation is classified by exactly one model.
+
+## Sizing the executor
+
+Deimos runs on its own bounded executor, configured under `artemis.deimos.executor`. It is deliberately separate from
+the general task executor so that a long analysis cannot starve unrelated background work.
+
+| Property | Meaning |
+| --- | --- |
+| `core-pool-size` | Threads kept alive. Each one occupies a model slot for the duration of a participation. |
+| `max-pool-size` | Upper bound on concurrent analysis threads. |
+| `queue-capacity` | Runs waiting for a thread. When this is full, triggering returns `503`. |
+
+Size `max-pool-size` against what your inference endpoint tolerates, not against the Artemis host: the work is almost
+entirely spent waiting on the model. Raising it beyond the endpoint's concurrency only converts throughput into rate
+limits, which instructors then see as failed analyses. The defaults are conservative on purpose.
+
+The queue holds whole runs, not participations, so a capacity of 25 means 25 pending runs. Instructors receive no
+feedback while a run executes, so a deep queue mostly produces confusion; leaving it small and letting the trigger
+fail visibly is usually the better trade.
+
 ## Interpreting the results
 
 The completion email reports how many participations were analysed, how many were classified malicious or benign, and
@@ -131,3 +180,41 @@ and the run should be repeated for the affected window.
 Deimos is also an adversarial setting: the analysed code is written by the people the analysis is meant to catch.
 Prompts fence student content between random per-request markers and instruct the model to treat it strictly as
 evidence, but no prompt construction makes injection impossible. Treat the output accordingly.
+
+## Diagnosing a failing run
+
+Instructors see failures only as categories in their completion email, and they will bring them to you. The mapping
+from what they report to what you should check:
+
+| Category in the instructor's email | Where to look |
+| --- | --- |
+| *Nothing to analyze* | Nothing. This is a normal outcome for participations without observable changes. |
+| *Repository could not be read* | Server log for the run id. Points at version control or repository access, not at the model. |
+| *Analysis model did not respond in time* | `timeout-seconds` versus what your endpoint actually needs for a 128 KiB payload, and the endpoint's own load. |
+| *Analysis model rate limit reached* | Endpoint concurrency limits against `max-pool-size`. This is usually an executor sizing problem, not a model problem. |
+| *Analysis model returned an unusable answer* | The model itself. A model that will not emit a plain JSON object with `malicious` and `rationale` is the wrong model for this feature. |
+| *Analysis model could not be reached* | Endpoint address, credentials, and network path. Also check `completions-path`. |
+| *Other failure* | Server log. The instructor's email carries the technical reason per participation. |
+
+Ask the instructor for the technical reason lines in the *Failure details* block; they carry the exception type and
+message directly. Runs are identified by a generated run id that appears in the server log, so
+`Deimos manual batch <id>` is the search term worth knowing.
+
+<Callout variant={CalloutVariant.info}>
+    Runs are not persisted. Once the completion email has been sent there is no record inside Artemis of which windows
+    were analysed or what the outcome was, beyond the log. Consider that before promising anyone an audit trail.
+</Callout>
+
+## Related pages
+
+- [Malicious participation analysis](/instructor/assessment-grading/deimos): the instructor's workflow and how to read
+  the completion email.
+- [Deimos LLM endpoint](/instructor/integrations/deimos): what instructors are told to clarify with you before their
+  first run.
+- [Automated security screening](/student/assessment-grades/deimos): what students are told about the feature.
+- [Deimos](/developer/deimos): module internals for developers.
+
+## Source
+
+[1] Kevin Fischer, *Securing Learning Management System Programming Exercises via Large Language Models*, Bachelor's
+Thesis in Informatics, Technical University of Munich, School of Computation, Information and Technology, 2026.

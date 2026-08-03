@@ -208,6 +208,43 @@ Never act on a classification alone. For each flagged participation:
 Keep in mind that the participation ID identifies the participation, not the person. Resolving it to a student is a
 deliberate second step, and one you should only take once the finding survives technical review.
 
+### If the finding holds
+
+Artemis offers no workflow for this. Unlike a plagiarism case, there is no case object, no student notification, no
+statement request and no verdict field. Whatever happens next happens outside the platform, which means the sequence
+is yours to run:
+
+1. **Write down what you saw**, not what the model said. The rationale is machine-generated and will not survive
+   scrutiny as a description of the facts. The commits, the diffs and their effect will.
+2. **Get a second reviewer** before the student is contacted. Someone who did not see the flag should be able to reach
+   the same reading of the code.
+3. **Consider intent honestly.** Curiosity, a misunderstood task, and a deliberate attack can produce similar code.
+   Escalation across commits distinguishes them better than any single commit does.
+4. **Follow your institution's misconduct process** from that point. The analysis is what brought the case to your
+   attention; it is not part of the evidence you present.
+5. **Preserve the completion email.** It is the only record that the run happened, and Artemis keeps nothing.
+
+If the finding does not hold, there is nothing to record and nothing to do. Deimos has no feedback channel, so a
+dismissed false alarm cannot be fed back to improve later runs.
+
+## Deimos and plagiarism checks
+
+These two features are easy to confuse and answer completely different questions.
+
+| | Malicious participation analysis | [Plagiarism checks](/instructor/assessment-grading/plagiarism-check) |
+| --- | --- | --- |
+| Question | Did this participation attack the build infrastructure? | Is this submission too similar to another one? |
+| Compares against | The participation's own history and the exercise template | All other submissions of the exercise |
+| Exercise types | Programming only | Programming, modelling, text |
+| Method | A language model reading diffs | JPlag structural similarity |
+| Output | An email to whoever triggered it | Plagiarism cases inside Artemis |
+| Student-facing workflow | None | Notification, statement request, verdict |
+| Continuous mode | No, manual runs only | Yes, continuous plagiarism control |
+| Persisted | No | Yes |
+
+A submission can trip both, neither, or either one alone. Copying somebody else's solution is not a Deimos concern,
+and attacking the CI with entirely original code is not a plagiarism concern.
+
 ## How reliable is it
 
 The module was evaluated in a bachelor's thesis at TUM on a benchmark of 398 programming submissions, 80 of which were
@@ -236,6 +273,31 @@ zero measurably degraded classification quality. Artemis defaults to temperature
 The best benchmark result overall came from chaining two models, a fast screening model followed by a heavier one for
 escalated cases. **Artemis does not implement this.** Each participation is classified by exactly one model, so the
 staged results do not describe your instance.
+
+### A worked example
+
+The numbers above are per participation, which makes them easy to misread. Applied to a realistic course they behave
+differently from what the percentages suggest.
+
+Take a course with 900 participations in your window, of which five are genuinely malicious. With the rates above:
+
+| | Calculation | Result |
+| --- | --- | --- |
+| False alarms | 1.6% of the 895 benign participations | about 14 |
+| Real cases found | 85% of the 5 malicious ones | about 4 |
+| Flags in your email | 14 + 4 | about 18 |
+| Real cases missed | the remaining malicious ones | about 1 |
+| Runtime | 900 at roughly 6 per minute | about 2.5 hours |
+
+<Callout variant={CalloutVariant.warning}>
+    Roughly **four out of five flags in that email are false alarms**, even though the false-positive rate is only
+    1.6%. That is not a flaw in the numbers, it is what a low error rate does when the thing you are looking for is
+    rare. A flag is therefore weak evidence on its own, and the review step is not a formality.
+</Callout>
+
+The same arithmetic explains why a narrower scope is worth the effort. Running the analysis on one suspicious exercise
+with 60 participations produces about one false alarm instead of fourteen, and the flags you do get are worth much
+more.
 
 ## Limitations
 
@@ -274,6 +336,14 @@ between raters and between institutions, so the rates above should be read as in
 | Everything failed with one category | See the failure table above. Anything other than *Nothing to analyze* means the run must be repeated. |
 | An implausible share of participations is flagged | Most likely an over-sensitive model. Report it to your administrator with the numbers from the email; see [How reliable is it](#how-reliable-is-it). |
 | A run takes far longer than expected | Either the window covers many participations, or the configured model is slow. Both are worth raising with your administrator before you repeat the run. |
+
+## Related pages
+
+- [Analysing a single programming exercise](/instructor/exercises/deimos): the exercise-scoped run and what the
+  analysis observes.
+- [Deimos LLM endpoint](/instructor/integrations/deimos): which data leaves your instance.
+- [Automated security screening](/student/assessment-grades/deimos): what your students can read about the feature.
+- [Deimos setup](/admin/deimos): the administrator's configuration and model-selection reference.
 
 ## Source
 

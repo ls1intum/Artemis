@@ -47,6 +47,7 @@ const sidebars: SidebarsConfig = {
         'e2e-testing-playwright',
         'spring-ai',
         'ai-pipelines',
+        'deimos',
         'aeolus',
         'openapi',
         'docker-compose',
