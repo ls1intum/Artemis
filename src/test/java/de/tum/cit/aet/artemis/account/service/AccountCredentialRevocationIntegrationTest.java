@@ -8,11 +8,15 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
@@ -24,9 +28,10 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * used instead of the password.
  * <p>
  * These are the cases where a silent gap is expensive: a user who resets their password because they suspect a
- * compromise, and an administrator who deactivates an account. Each one is asserted per credential type, because the
- * failure mode is one type being forgotten - which is how passkeys and the personal VCS access token came to be missing
- * from the soft-delete cleanup in the first place.
+ * compromise, and an administrator who deactivates an account. Each transition is asserted per credential type - the
+ * passkeys, the personal VCS access token together with its expiry date, and the SSH keys - because the failure mode is
+ * one type being forgotten, which is how passkeys and the personal VCS access token came to be missing from the
+ * soft-delete cleanup in the first place.
  */
 class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -48,6 +53,12 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     @Autowired
+    private PasskeyCredentialsRepository passkeyCredentialsRepository;
+
+    @Autowired
+    private PasskeyCredentialUtilService passkeyCredentialUtilService;
+
+    @Autowired
     private UserUtilService userUtilService;
 
     private User user;
@@ -59,10 +70,13 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     /**
-     * Gives the account a personal VCS access token and an SSH key, i.e. two credentials that are on their own enough to
-     * read and write the user's repositories.
+     * Gives the account one of each credential this service revokes: a passkey, a personal VCS access token and an SSH
+     * key. The latter two are on their own enough to read and write the user's repositories, and the passkey is on its
+     * own enough to log in.
      */
     private void giveUserCredentials() {
+        passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
         user.setVcsAccessToken("vcs-token-" + user.getId());
         user.setVcsAccessTokenExpiryDate(ZonedDateTime.now().plusMonths(6));
         userRepository.save(user);
@@ -80,15 +94,38 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         return userRepository.getUserByLoginElseThrow(user.getLogin());
     }
 
+    /**
+     * Asserts that the personal VCS access token is gone, expiry date included: clearing only the token would leave a
+     * dangling expiry date, and a later change that forgot the token itself would still look like a revocation.
+     */
+    private void assertVcsAccessTokenRevoked() {
+        assertVcsAccessTokenRevoked(reloadUser());
+    }
+
+    /**
+     * @param reloaded the account as it was read back from the database; a soft-deleted account has to be loaded by id,
+     *                     because it can no longer be looked up by login
+     */
+    private void assertVcsAccessTokenRevoked(User reloaded) {
+        assertThat(reloaded.getVcsAccessToken()).isNull();
+        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isNull();
+    }
+
+    private void assertVcsAccessTokenKept() {
+        User reloaded = reloadUser();
+        assertThat(reloaded.getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
+        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isNotNull();
+    }
+
     @Test
-    void revokeAllCredentialsRemovesTheTokenAndTheSshKeys() {
+    void revokeAllCredentialsRemovesEveryCredentialType() {
         giveUserCredentials();
 
         accountCredentialRevocationService.revokeAllCredentials(user, "test");
 
-        assertThat(reloadUser().getVcsAccessToken()).isNull();
-        assertThat(reloadUser().getVcsAccessTokenExpiryDate()).isNull();
+        assertVcsAccessTokenRevoked();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
     }
 
     @Test
@@ -101,8 +138,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         userService.completePasswordReset("new-Password-123", "reset-key-" + user.getId()).orElseThrow();
 
-        assertThat(reloadUser().getVcsAccessToken()).isNull();
+        assertVcsAccessTokenRevoked();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
     }
 
     @Test
@@ -114,8 +152,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         userCreationService.deactivateUser(user);
 
         assertThat(reloadUser().getActivated()).isFalse();
-        assertThat(reloadUser().getVcsAccessToken()).isNull();
+        assertVcsAccessTokenRevoked();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
     }
 
     @Test
@@ -128,42 +167,54 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         User deleted = userRepository.findById(user.getId()).orElseThrow();
         assertThat(deleted.isDeleted()).isTrue();
-        assertThat(deleted.getVcsAccessToken()).isNull();
+        assertVcsAccessTokenRevoked(deleted);
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
     }
 
+    /**
+     * Goes through {@link UserService#changePassword} rather than the revocation service directly, because the wiring is
+     * the part that can break: a change that dropped the revocation call from the password-change flow would still leave
+     * a direct call to the service passing.
+     */
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void aPasswordChangeRevokesOnlyWhatTheUserSelected() {
         // The user decides, because only they know whether the old password may have been seen by someone else. Selecting
         // the tokens must not take away the SSH keys they use from their machines.
         giveUserCredentials();
 
-        accountCredentialRevocationService.revokeSelectedCredentials(user, new CredentialRevocationChoiceDTO(false, false, true), "test");
+        userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", new CredentialRevocationChoiceDTO(false, false, true));
 
-        assertThat(reloadUser().getVcsAccessToken()).isNull();
+        assertVcsAccessTokenRevoked();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void aPasswordChangeCanRevokeOnlyTheSshKeys() {
         giveUserCredentials();
 
-        accountCredentialRevocationService.revokeSelectedCredentials(user, new CredentialRevocationChoiceDTO(false, true, false), "test");
+        userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", new CredentialRevocationChoiceDTO(false, true, false));
 
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
-        assertThat(reloadUser().getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
+        assertVcsAccessTokenKept();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void aRoutinePasswordChangeRevokesNothing() {
         // The default when the request expresses no choice: a routine rotation should not cost the user their
         // authenticators, keys and tokens.
         giveUserCredentials();
 
-        accountCredentialRevocationService.revokeSelectedCredentials(user, CredentialRevocationChoiceDTO.none(), "test");
+        userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", CredentialRevocationChoiceDTO.none());
 
-        assertThat(reloadUser().getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
+        assertVcsAccessTokenKept();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
     }
 
     @Test
@@ -172,7 +223,8 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         accountCredentialRevocationService.revokeAllCredentials(user, "test");
         accountCredentialRevocationService.revokeAllCredentials(user, "test");
 
-        assertThat(reloadUser().getVcsAccessToken()).isNull();
+        assertVcsAccessTokenRevoked();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
     }
 }

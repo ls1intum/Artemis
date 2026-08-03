@@ -16,6 +16,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Password Component Tests', () => {
     describe('PasswordComponent', () => {
@@ -144,6 +146,50 @@ describe('Password Component Tests', () => {
             await vi.waitFor(() => expect(comp.user()).toBeDefined());
             const expectedUser = { id: 99, login: 'admin' } as User;
             expect(comp.user()).toEqual(expectedUser);
+        });
+    });
+
+    /**
+     * Renders the real template, which the suite above replaces with an empty one. The revocation checkboxes sit inside
+     * the reactive passwordForm, so binding them without {@code standalone: true} would throw at render time rather than
+     * at compile time, and no test that only drives the component class would notice.
+     */
+    describe('PasswordComponent revocation options', () => {
+        let comp: PasswordComponent;
+        let fixture: ComponentFixture<PasswordComponent>;
+
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [PasswordComponent],
+                providers: [
+                    LocalStorageService,
+                    SessionStorageService,
+                    { provide: AccountService, useClass: MockAccountService },
+                    { provide: ProfileService, useClass: MockProfileService },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                ],
+            }).compileComponents();
+
+            fixture = TestBed.createComponent(PasswordComponent);
+            comp = fixture.componentInstance;
+            comp.passwordResetEnabled.set(true);
+            comp.user.set({ id: 99, login: 'admin' } as User);
+        });
+
+        it('should render the options only once the user says the password may be compromised', () => {
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="password-may-be-compromised"]')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="password-revocation-options"]')).toBeNull();
+
+            comp.onPasswordMayBeCompromisedChange(true);
+            fixture.detectChanges();
+
+            const options = fixture.nativeElement.querySelector('[data-testid="password-revocation-options"]');
+            expect(options).not.toBeNull();
+            expect(options.querySelectorAll('p-checkbox')).toHaveLength(3);
         });
     });
 });
