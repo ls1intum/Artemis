@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -59,7 +60,12 @@ public record CourseCreateDTO(
 
         // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
         // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
-        Boolean gradeRelevant) {
+        Boolean gradeRelevant,
+
+        // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides. Creating a course is
+        // admin-only, so the same admin-gated settings the update form exposes are accepted here; without them, enabling
+        // the pipeline on the create form would be silently dropped and only take effect after a second (edit) save.
+        boolean autoOrchestratorEnabled, @Min(1) Integer debounceWindowSecondsOverride, @Min(1) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -124,6 +130,17 @@ public record CourseCreateDTO(
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
+
+        // Atlas auto-orchestration: mirror the lazy-row invariant of CourseUpdateDTO#applyTo — only courses that
+        // actually customize the pipeline get a configuration row, so the default course keeps a null association.
+        if (autoOrchestratorEnabled || debounceWindowSecondsOverride != null || maxDailyOrchestrationOverride != null) {
+            CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration = new CourseAutoOrchestrationConfiguration();
+            autoOrchestrationConfiguration.setEnabled(autoOrchestratorEnabled);
+            autoOrchestrationConfiguration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+            autoOrchestrationConfiguration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+            autoOrchestrationConfiguration.setCourse(course);
+            course.setAutoOrchestrationConfiguration(autoOrchestrationConfiguration);
+        }
 
         return course;
     }

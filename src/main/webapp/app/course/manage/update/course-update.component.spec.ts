@@ -11,7 +11,7 @@ import { LoadImageService } from 'app/shared-ui/image-cropper/services/load-imag
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/update/course-update.component';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
-import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { toCourseCreateDTO, toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
@@ -1648,6 +1648,17 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
     it('should map the auto-orchestration fields into the update DTO', async () => {
         await setupWithCourse(buildCourse(true, 900, 3));
         const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);
+
+        expect(dto.autoOrchestratorEnabled).toBe(true);
+        expect(dto.debounceWindowSecondsOverride).toBe(900);
+        expect(dto.maxDailyOrchestrationOverride).toBe(3);
+    });
+
+    it('should map the auto-orchestration fields into the create DTO', async () => {
+        // The create route posts through toCourseCreateDTO, so the settings must survive the very first save rather
+        // than only taking effect after a subsequent edit.
+        await setupWithCourse(buildCourse(true, 900, 3));
+        const dto = toCourseCreateDTO(comp.courseForm.getRawValue() as Course);
 
         expect(dto.autoOrchestratorEnabled).toBe(true);
         expect(dto.debounceWindowSecondsOverride).toBe(900);

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -17,14 +18,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
+import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Verifies that enabling auto-orchestration through the course update endpoint persists the
- * configuration even though the shared {@code findForUpdateById} graph no longer eagerly loads it: the
- * update flow attaches the managed configuration via a dedicated query so {@code applyTo} mutates the
- * existing row in place instead of orphaning it.
+ * Verifies that the per-course Atlas auto-orchestration configuration survives the course create and update flows.
+ * <p>
+ * The configuration row lives in its own table and is reached through the {@code Course} association, so the update
+ * path only behaves correctly if that association is loaded before {@code CourseUpdateDTO.applyTo} runs: otherwise
+ * {@code orphanRemoval} replaces the persisted row, and the admin-only change detection compares the submitted values
+ * against defaults and rejects unrelated instructor edits. Loading happens through the shared
+ * {@code CourseRepository#findForUpdateById} graph rather than the Atlas-conditional {@code CourseAutoOrchestrationApi}
+ * precisely so this holds with the Atlas module disabled as well.
  */
 class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -33,12 +39,15 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     @Autowired
     private CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
 
+    @Autowired
+    private CourseTestService courseTestService;
+
     private Course course;
 
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
     private Course updateCourse(Course courseToUpdate) throws Exception {
@@ -50,9 +59,26 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         return mapper.readValue(result.getResponse().getContentAsString(), Course.class);
     }
 
+    /**
+     * Persists an auto-orchestration configuration for the test course, as an admin save would.
+     *
+     * @param debounceWindowSecondsOverride the debounce override to store, or {@code null} for none
+     * @return the id of the persisted configuration row
+     */
+    private long persistConfiguration(Integer debounceWindowSecondsOverride) {
+        Course managed = courseRepository.findByIdElseThrow(course.getId());
+        var configuration = new CourseAutoOrchestrationConfiguration();
+        configuration.setEnabled(true);
+        configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+        configuration.setCourse(managed);
+        managed.setAutoOrchestrationConfiguration(configuration);
+        courseRepository.save(managed);
+        return autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
+    }
+
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateCourse_enableAutoOrchestration_persistsConfigViaDedicatedQuery() throws Exception {
+    void updateCourse_enableAutoOrchestration_persistsConfiguration() throws Exception {
         // A fresh course has no configuration row at all.
         assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId())).isEmpty();
 
@@ -64,8 +90,6 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         // asserted on the round-tripped response Course; the persistence check below is the authoritative assertion.
         updateCourse(course);
 
-        // Verify the configuration was persisted, proving the update path loaded and attached the managed
-        // entity without relying on the eager findForUpdateById graph.
         var persisted = autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId());
         assertThat(persisted).isPresent();
         assertThat(persisted.get().autoOrchestratorEnabled()).isTrue();
@@ -74,16 +98,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateCourse_withExistingConfig_reusesManagedRowInsteadOfOrphaningIt() throws Exception {
-        // Pre-persist a configuration row for the course (cascade from the owning course side).
-        Course managed = courseRepository.findByIdElseThrow(course.getId());
-        var existingConfiguration = new CourseAutoOrchestrationConfiguration();
-        existingConfiguration.setEnabled(true);
-        existingConfiguration.setDebounceWindowSecondsOverride(120);
-        existingConfiguration.setCourse(managed);
-        managed.setAutoOrchestrationConfiguration(existingConfiguration);
-        courseRepository.save(managed);
-
-        Long originalConfigId = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
+        long originalConfigId = persistConfiguration(120);
 
         // Update a single field through the endpoint (change the debounce override, keep it enabled).
         var updatedConfiguration = new CourseAutoOrchestrationConfiguration();
@@ -92,8 +107,8 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         course.setAutoOrchestrationConfiguration(updatedConfiguration);
         updateCourse(course);
 
-        // The attach path must mutate the existing row in place; a broken path would create a new row and
-        // orphan the old one (which the insertion-only test above would not catch).
+        // The load path must mutate the existing row in place; a broken path would create a new row and orphan the old
+        // one (which the insertion-only test above would not catch).
         var persisted = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.getId()).isEqualTo(originalConfigId);
         assertThat(persisted.isEnabled()).isTrue();
@@ -117,5 +132,76 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
 
         // The setting is admin-only, so no configuration row may be created by the rejected instructor request.
         assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_asInstructor_unrelatedChange_keepsExistingConfiguration() throws Exception {
+        long originalConfigId = persistConfiguration(120);
+
+        // Reopen the course the way the settings form does, then save an unrelated field. The configuration must round
+        // trip untouched: if the update path did not load it, the submitted (stored) values would be diffed against the
+        // defaults and this instructor edit would be rejected as an admin-only change.
+        Course loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, Course.class);
+        assertThat(loaded.getAutoOrchestratorEnabled()).isTrue();
+        assertThat(loaded.getDebounceWindowSecondsOverride()).isEqualTo(120);
+        loaded.setDescription("Unrelated description change");
+
+        Course updated = updateCourse(loaded);
+        assertThat(updated.getDescription()).isEqualTo("Unrelated description change");
+
+        var persisted = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getId()).isEqualTo(originalConfigId);
+        assertThat(persisted.isEnabled()).isTrue();
+        assertThat(persisted.getDebounceWindowSecondsOverride()).isEqualTo(120);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void updateCourse_loadsConfigurationWithoutTheAtlasApi() {
+        long originalConfigId = persistConfiguration(120);
+
+        // The update flow reads the configuration off this graph. Asserting it here pins the module-independent load:
+        // routing it through the Atlas-conditional CourseAutoOrchestrationApi would silently yield null when Atlas is
+        // disabled, and applyTo would then replace the persisted row.
+        var loaded = courseRepository.findByIdForUpdateElseThrow(course.getId()).getAutoOrchestrationConfiguration();
+        assertThat(loaded).isNotNull();
+        assertThat(loaded.getId()).isEqualTo(originalConfigId);
+        assertThat(loaded.isEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void createCourse_withAutoOrchestration_persistsConfiguration() throws Exception {
+        Course newCourse = courseUtilService.createCourse();
+        newCourse.setId(null);
+        newCourse.setShortName("autoorchcreate");
+        var configuration = new CourseAutoOrchestrationConfiguration();
+        configuration.setEnabled(true);
+        configuration.setDebounceWindowSecondsOverride(600);
+        configuration.setMaxDailyOrchestrationOverride(5);
+        newCourse.setAutoOrchestrationConfiguration(configuration);
+
+        MvcResult result = request.performMvcRequest(courseTestService.buildCreateCourse(newCourse)).andExpect(status().isCreated()).andReturn();
+        Course created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), Course.class);
+
+        var persisted = autoOrchestrationConfigurationRepository.findConfigByCourseId(created.getId()).orElseThrow();
+        assertThat(persisted.autoOrchestratorEnabled()).isTrue();
+        assertThat(persisted.debounceWindowSecondsOverride()).isEqualTo(600);
+        assertThat(persisted.maxDailyOrchestrationOverride()).isEqualTo(5);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void createCourse_withoutAutoOrchestration_createsNoConfigurationRow() throws Exception {
+        Course newCourse = courseUtilService.createCourse();
+        newCourse.setId(null);
+        newCourse.setShortName("autoorchdefault");
+
+        MvcResult result = request.performMvcRequest(courseTestService.buildCreateCourse(newCourse)).andExpect(status().isCreated()).andReturn();
+        Course created = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), Course.class);
+
+        // The overwhelming majority of courses never customize the pipeline and must not get an empty configuration row.
+        assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(created.getId())).isEmpty();
     }
 }
