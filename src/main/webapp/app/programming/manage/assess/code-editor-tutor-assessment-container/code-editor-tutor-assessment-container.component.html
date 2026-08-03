@@ -1,6 +1,12 @@
-@if (participationCouldNotBeFetched() || lockLimitReached()) {
+@if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet()) {
     <nav class="card">
         <div class="card-body">
+            @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
+                <span id="assessment-not-possible-yet">
+                    <fa-icon [icon]="faCircleInfo" class="text-state-info" [fixedWidth]="true" />
+                    <span [jhiTranslate]="assessmentNotPossibleYetReason.translationKey" [translateValues]="{ date: assessmentNotPossibleYetReason.date | artemisDate }"></span>
+                </span>
+            }
             @if (participationCouldNotBeFetched()) {
                 <span>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
@@ -146,7 +152,8 @@
     </ng-template>
 
     <ng-template #noSubmission>
-        @if (!loadingInitialSubmission()) {
+        <!-- while assessment is not possible yet the submission does exist, so the card above explains that instead -->
+        @if (!loadingInitialSubmission() && !assessmentNotPossibleYet()) {
             <div class="alert alert-warning text-center mt-4" role="alert">
                 <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
