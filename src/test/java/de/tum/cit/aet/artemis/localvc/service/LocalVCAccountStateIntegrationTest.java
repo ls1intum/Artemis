@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  * token they already held remained valid. During an exam that is also an integrity hole, because an excluded student
  * could still push.
  * <p>
- * Each test reactivates the account afterwards and shows the fetch working again, so a passing test cannot be explained
- * by the token itself having become invalid.
+ * The token tests reactivate the account and show the fetch working again, so a passing test cannot be explained by the
+ * token itself having become invalid. The SSH counterpart lives in {@link LocalVCSshIntegrationTest}, where the key-pair
+ * and client setup it needs already exists.
  */
 class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
@@ -50,7 +51,26 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
 
     @AfterEach
     void removeRepository() throws IOException {
-        assignmentRepository.resetLocalRepo();
+        // Guarded, because a failure inside initRepository leaves the field unassigned and the resulting
+        // NullPointerException here would replace the real cause in the report.
+        if (assignmentRepository != null) {
+            assignmentRepository.resetLocalRepo();
+        }
+    }
+
+    /**
+     * The account state is fixture data, so it is restored unconditionally: the tests below deactivate or soft-delete
+     * the user, and an assertion failing before they restore it themselves would otherwise hand a disabled user to every
+     * later test in this class.
+     */
+    @AfterEach
+    void restoreAccountState() {
+        if (student1 == null) {
+            return;
+        }
+        student1.setActivated(true);
+        student1.setDeleted(false);
+        userTestRepository.save(student1);
     }
 
     @Test

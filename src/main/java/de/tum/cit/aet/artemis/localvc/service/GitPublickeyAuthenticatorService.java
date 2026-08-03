@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -99,14 +100,15 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
         }
 
         try {
-            var user = userRepository.findById(storedKey.getUserId());
-            if (user.isEmpty()) {
+            var storedKeyOwner = userRepository.findById(storedKey.getUserId());
+            if (storedKeyOwner.isEmpty()) {
                 return false;
             }
+            User user = storedKeyOwner.get();
             // An SSH key is a credential of its own: nothing else on this path consults account state, so without this a
             // deactivated or soft-deleted user could still read and write their repositories with a key issued earlier.
-            if (!user.get().getActivated() || user.get().isDeleted()) {
-                log.warn("SSH authentication attempt for user {} whose account is deactivated or deleted", user.get().getLogin());
+            if (!user.getActivated() || user.isDeleted()) {
+                log.warn("SSH authentication attempt for user {} whose account is deactivated or deleted", user.getLogin());
                 return false;
             }
             // Retrieve and parse the stored public key string
@@ -115,13 +117,13 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
             // Compare the stored public key with the provided public key
             if (Objects.equals(storedPublicKey, providedKey)) {
-                log.debug("Found user {} for public key authentication", user.get().getLogin());
-                session.setAttribute(SshConstants.USER_KEY, user.get());
+                log.debug("Found user {} for public key authentication", user.getLogin());
+                session.setAttribute(SshConstants.USER_KEY, user);
                 session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, false);
                 return true;
             }
             else {
-                log.warn("Public key mismatch for user {}", user.get().getLogin());
+                log.warn("Public key mismatch for user {}", user.getLogin());
             }
         }
         catch (Exception e) {
