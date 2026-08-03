@@ -99,6 +99,22 @@ class ConfigurationValidatorTest {
                     .hasMessageContaining("jhipster.security.authentication.jwt.secret");
         }
 
+        /**
+         * A shipped key has more than one Base64 spelling, and only one of them is listed as a literal. Encoding the
+         * published plaintext without its trailing newline yields a different string that still decodes to the very same
+         * publicly known signing key, so the check has to look at the decoded bytes.
+         */
+        @Test
+        void testAReEncodedShippedJwtSecretIsRejectedUnderProdProfile() {
+            String reEncodedShippedSecret = java.util.Base64.getEncoder()
+                    .encodeToString("my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+            ConfigurationValidator validator = createCredentialValidator(true, reEncodedShippedSecret, null, null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("published in the Artemis repository");
+        }
+
         @Test
         void testMissingJwtSecretIsRejectedUnderProdProfile() {
             ConfigurationValidator validator = createCredentialValidator(true, null, null, null, null, null);

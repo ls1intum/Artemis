@@ -85,6 +85,16 @@ public class ConfigurationValidator {
             "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n", "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded");
 
     /**
+     * The same shipped keys as plaintext, compared against the decoded key bytes.
+     * <p>
+     * Comparing spellings alone is not enough: a shipped key has more than one Base64 encoding - with or without the
+     * trailing newline, and padded or not - and only one of them is listed above, while all of them decode to a signing
+     * key that anyone can read in this repository. The byte comparison covers every representation at once.
+     */
+    private static final Set<String> KNOWN_DEFAULT_JWT_SECRET_PLAINTEXTS = Set.of("my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n",
+            "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded");
+
+    /**
      * Internal-admin passwords that Artemis has shipped as examples: {@code artemis_admin} from
      * {@code config/application-artemis.yml}, {@code artemis-admin} from the production-setup security documentation, and
      * {@code SecureP@ss123}, which released versions of {@code InvalidAdminConfigurationFailureAnalyzer} printed as the
@@ -240,11 +250,33 @@ public class ConfigurationValidator {
             }
         }
 
+        // Checked on the decoded bytes, so a re-encoding of a shipped key is rejected no matter how it was spelled.
+        rejectIfKeyIsAKnownDefault(keyBytes, effectiveProperty);
+
         // HS512 needs a 512-bit key; Keys.hmacShaKeyFor would reject a shorter one, but with a stack trace rather than guidance.
         if (keyBytes.length < MIN_JWT_SECRET_LENGTH_IN_BYTES) {
             throw new InsecureDefaultCredentialException(effectiveProperty,
                     "the signing key is only %d bytes; HS512 requires at least %d".formatted(keyBytes.length, MIN_JWT_SECRET_LENGTH_IN_BYTES),
                     "Generate a longer key with `openssl rand -base64 64`.");
+        }
+    }
+
+    /**
+     * Rejects a signing key whose bytes are one of the shipped example keys, whatever spelling it arrived in.
+     *
+     * @param keyBytes     the decoded signing key
+     * @param propertyPath the configuration path the key came from, used in the error message
+     */
+    private static void rejectIfKeyIsAKnownDefault(byte[] keyBytes, String propertyPath) {
+        // Non-short-circuiting for the same reason as in rejectIfKnownDefault.
+        boolean matchesDefault = false;
+        for (String knownDefault : KNOWN_DEFAULT_JWT_SECRET_PLAINTEXTS) {
+            matchesDefault |= MessageDigest.isEqual(keyBytes, knownDefault.getBytes(StandardCharsets.UTF_8));
+        }
+        if (matchesDefault) {
+            throw new InsecureDefaultCredentialException(propertyPath,
+                    "the configured signing key decodes to a value published in the Artemis repository, so anyone can forge a token for any user with any authority",
+                    "Generate a fresh key, e.g. `openssl rand -base64 64`.");
         }
     }
 
