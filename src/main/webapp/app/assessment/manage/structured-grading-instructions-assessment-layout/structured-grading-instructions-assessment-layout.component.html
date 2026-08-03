@@ -49,7 +49,7 @@
                                         <tum-ui-checkbox
                                             [checked]="isApplied(instruction)"
                                             [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
-                                            (onChange)="toggleApplied(instruction, $event.checked)"
+                                            (click)="toggleApplied($event, instruction)"
                                         />
                                     } @else {
                                         @if (instruction!.usageCount && instruction!.usageCount !== 0) {

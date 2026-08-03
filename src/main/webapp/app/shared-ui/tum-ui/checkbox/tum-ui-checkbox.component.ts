@@ -83,11 +83,15 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
     private onModelTouched: () => void = () => {};
 
     protected onInputChange(event: Event): void {
-        const newChecked = (event.target as HTMLInputElement).checked;
+        const nativeInput = event.target as HTMLInputElement;
+        const newChecked = nativeInput.checked;
         this.checked.set(newChecked);
         this.onModelChange(newChecked);
         this.onModelTouched();
         this.onChange.emit({ originalEvent: event, checked: newChecked });
+        /** A host may reject the toggle (e.g. a confirmation dialog that gets cancelled) by writing the previous
+         * value back into `checked`. */
+        nativeInput.checked = this.checked();
     }
 
     protected onBlur(): void {

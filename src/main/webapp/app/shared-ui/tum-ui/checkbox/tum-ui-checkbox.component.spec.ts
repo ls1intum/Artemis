@@ -168,6 +168,51 @@ describe('TumUiCheckboxComponent (one-way [ngModel] + (onChange) controlled patt
 });
 
 @Component({
+    // Mirrors the "toggle needs confirmation" pattern: the host owns the state and rejects the user's toggle by
+    // writing the previous value back into `checked` while handling `(onChange)`.
+    template: `<tum-ui-checkbox #checkbox [checked]="applied()" (onChange)="rejectToggle(checkbox)" />`,
+    imports: [TumUiCheckboxComponent],
+})
+class RejectingHostComponent {
+    readonly applied = signal(true);
+    rejectToggle(checkbox: TumUiCheckboxComponent): void {
+        checkbox.checked.set(this.applied());
+    }
+}
+
+describe('TumUiCheckboxComponent (host rejects the toggle)', () => {
+    it('keeps the rendered and native state on the host value, so the next click still reports a toggle away from it', async () => {
+        await TestBed.configureTestingModule({
+            imports: [RejectingHostComponent, FontAwesomeTestingModule],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(RejectingHostComponent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const checkbox = fixture.debugElement.query(By.directive(TumUiCheckboxComponent));
+        const input = checkbox.query(By.css('input[type="checkbox"]')).nativeElement as HTMLInputElement;
+        const events: TumUiCheckboxChangeEvent[] = [];
+        (checkbox.componentInstance as TumUiCheckboxComponent).onChange.subscribe((event) => events.push(event));
+        expect(input.checked).toBe(true);
+
+        input.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(events.map((event) => event.checked)).toEqual([false]);
+        expect((checkbox.componentInstance as TumUiCheckboxComponent).checked()).toBe(true);
+        expect(input.checked).toBe(true);
+        expect(checkbox.query(By.css('.tum-ui-checkbox-icon'))).not.toBeNull();
+
+        input.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(events.map((event) => event.checked)).toEqual([false, false]);
+    });
+});
+
+@Component({
     template: `<tum-ui-checkbox [formControl]="control" />`,
     imports: [TumUiCheckboxComponent, ReactiveFormsModule],
 })

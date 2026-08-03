@@ -142,6 +142,16 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
         });
 
+        /** The kit checkbox renders a real, visually hidden input that covers it, so a click always lands there. */
+        function checkboxInput(): HTMLInputElement {
+            return fixture.debugElement.query(By.directive(TumUiCheckboxComponent)).query(By.css('input[type="checkbox"]')).nativeElement;
+        }
+
+        function clickCheckbox(): void {
+            checkboxInput().click();
+            fixture.detectChanges();
+        }
+
         it('should render a checkbox instead of the usage count', () => {
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
@@ -155,15 +165,22 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(comp.isApplied(instruction)).toBe(true);
         });
 
-        it('should apply the instruction immediately when the checkbox is checked', () => {
-            comp.toggleApplied(instruction, true);
+        it('should apply the instruction immediately when the checkbox is ticked', () => {
+            clickCheckbox();
+
             expect(host.applyInstruction).toHaveBeenCalledWith(instruction);
+            // The box follows the applied instructions rather than ticking itself.
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            expect(checkboxInput().checked).toBe(true);
         });
 
         it('should ask for confirmation before un-applying, and not un-apply until confirmed', () => {
             const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
 
-            comp.toggleApplied(instruction, false);
+            clickCheckbox();
 
             // Unticking must not remove the feedback before the tutor confirms — same as the trash icon.
             expect(host.unapplyInstruction).not.toHaveBeenCalled();
@@ -174,6 +191,40 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             // Simulate the tutor confirming in the dialog.
             triggerDeleteDialogDelete(dialogData.delete, {});
             expect(host.unapplyInstruction).toHaveBeenCalledWith(instruction);
+        });
+
+        it('should keep the checkbox ticked while the confirmation is open and when the tutor cancels', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            expect(checkboxInput().checked).toBe(true);
+
+            // Cancelling means the dialog closes without ever invoking its `delete` callback.
+            clickCheckbox();
+
+            expect(host.unapplyInstruction).not.toHaveBeenCalled();
+            expect(checkboxInput().checked).toBe(true);
+            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).not.toBeNull();
+
+            // Clicking again must ask to un-apply once more instead of applying a duplicate feedback.
+            clickCheckbox();
+
+            expect(host.applyInstruction).not.toHaveBeenCalled();
+            expect(openDeleteDialogSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should untick the checkbox once the un-apply is confirmed', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            clickCheckbox();
+            triggerDeleteDialogDelete(openDeleteDialogSpy.mock.calls[0][0].delete, {});
+            appliedIds.set(new Set());
+            fixture.detectChanges();
+
+            expect(checkboxInput().checked).toBe(false);
+            expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
         });
     });
 
