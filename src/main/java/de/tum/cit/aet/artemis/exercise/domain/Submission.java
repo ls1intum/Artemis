@@ -284,10 +284,26 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstManualResult() {
-        if (results != null && !results.isEmpty()) {
-            return this.getManualResults().getFirst();
-        }
-        return null;
+        // Guard on the manual results, not on all results: a submission can carry only automatic or Athena results, and
+        // getFirst() on the then empty manual list would throw instead of returning null as declared.
+        List<Result> manualResults = results == null ? List.of() : getManualResults();
+        return manualResults.isEmpty() ? null : manualResults.getFirst();
+    }
+
+    /**
+     * Get the last manual result of the submission, i.e. the newest correction round.
+     * <p>
+     * Deliberately different from {@link #getLatestResult()}, which returns the result with the highest id and therefore
+     * can return an automatic or Athena result. Operations that act on what a tutor is assessing have to use this one,
+     * because automatic results are not correction rounds and never carry an assessor.
+     *
+     * @return a {@link Result} or null if the submission has no manual result
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestManualResult() {
+        List<Result> manualResults = results == null ? List.of() : getManualResults();
+        return manualResults.isEmpty() ? null : manualResults.getLast();
     }
 
     /**

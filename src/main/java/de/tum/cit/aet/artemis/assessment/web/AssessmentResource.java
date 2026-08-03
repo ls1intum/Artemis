@@ -202,10 +202,17 @@ public abstract class AssessmentResource {
         }
     }
 
-    protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
+    protected ResponseEntity<Void> cancelAssessment(long submissionId) {
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        if (submission.getLatestResult() == null) {
+        // Release the newest correction round, not the result with the highest id: an automatic or Athena result can be
+        // newer than the assessment the tutor is working on, and it carries no assessor, so resolving by id made the
+        // authorization check below dereference null and the lock was never released.
+        Result resultToCancel = submission.getLatestManualResult();
+        // The permission decision falls back to the latest result: a submission whose only result is automatic has nothing
+        // to cancel, but another tutor still has to be rejected rather than silently told everything is fine.
+        Result resultForAuthorization = resultToCancel != null ? resultToCancel : submission.getLatestResult();
+        if (resultForAuthorization == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
@@ -215,11 +222,12 @@ public abstract class AssessmentResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
+        boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
+        if (!(isAtLeastInstructor || isAssessorOfResult)) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             throw new AccessForbiddenException();
         }
-        assessmentService.cancelAssessmentOfSubmission(submission);
+        assessmentService.cancelAssessmentOfSubmission(submission, resultToCancel);
         return ResponseEntity.ok().build();
     }
 

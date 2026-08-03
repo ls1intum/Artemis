@@ -925,6 +925,31 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
                 expectedStatus, null);
     }
 
+    /**
+     * An Athena result is created after the tutor's assessment and therefore has a higher id, but it is not a correction
+     * round and carries no assessor. Cancelling used to resolve the submission's "latest" result by id, hit that Athena
+     * result, and fail before releasing anything, so the tutor's lock survived (issue #13396).
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cancelAssessmentReleasesTheTutorsLockEvenWhenAnAthenaResultIsNewer() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final long tutorResultId = textSubmission.getLatestResult().getId();
+        // Saved last, so it holds the highest id of the submission.
+        final long athenaResultId = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now(), textSubmission).getId();
+        assertThat(athenaResultId).as("setup: the Athena result is the newest by id").isGreaterThan(tutorResultId);
+
+        request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
+                HttpStatus.OK, null);
+
+        // Deleting an entry of an @OrderColumn list leaves a null hole behind, which getResultForCorrectionRound also
+        // documents, so the raw list is filtered before comparing ids.
+        var remainingResults = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow().getResults();
+        var remainingResultIds = remainingResults.stream().filter(Objects::nonNull).map(Result::getId).toList();
+        assertThat(remainingResultIds).as("the tutor's assessment is released and the Athena result is kept").containsExactly(athenaResultId);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void cancelOwnAssessmentAsStudent() throws Exception {
