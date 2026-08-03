@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -103,7 +102,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         student2.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student2);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -229,10 +228,12 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        // Joining the returned future waits for the asynchronous dispatch itself instead of polling for its side
+        // effect with a fixed deadline, which timed out whenever the shared task executor was saturated on a loaded
+        // CI runner. The event listener runs inside that async task, so the verification below cannot race it.
+        pyrisEventService.trigger(event).join();
 
-        // Wrap the following code into await() to ensure that the pipeline is executed before the test finishes.
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event));
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
@@ -252,14 +253,13 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(event).join();
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(
-                () -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any()));
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
     }
 
     @Test
@@ -275,14 +275,13 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(event).join();
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(
-                () -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any()));
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
     }
 
     @Test
@@ -298,17 +297,16 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(event).join();
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event));
         // No pre-existing session here (unlike the sibling tests above), so the handler first creates the fallback
         // course session and applies the exercise context before the pipeline runs; allow the same 5s budget used
         // for the slower progress-stalled case above instead of the 2s used where a session is already prepared.
         await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         ArgumentCaptor<IrisChatSession> sessionCaptor = ArgumentCaptor.forClass(IrisChatSession.class);
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(
-                () -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), sessionCaptor.capture(), eq(Optional.of("build_failed")), any()));
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), sessionCaptor.capture(), eq(Optional.of("build_failed")), any());
 
         IrisChatSession usedSession = sessionCaptor.getValue();
         assertThat(usedSession.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
@@ -347,19 +345,14 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 100);
         Result result = createSubmissionWithScore(studentParticipation, 50);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
-
-        await().atMost(2, TimeUnit.SECONDS);
+        pyrisEventService.trigger(new NewResultEvent(result)).join();
 
         result = createSubmissionWithScore(studentParticipation, 50);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
-        await().atMost(2, TimeUnit.SECONDS);
+        pyrisEventService.trigger(new NewResultEvent(result)).join();
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(irisChatSessionService, times(2)).handleNewResultEvent(any(NewResultEvent.class));
-            verify(pyrisPipelineService, never()).executeChatPipeline(any(), any(), any(), any(), any());
-        });
+        verify(irisChatSessionService, times(2)).handleNewResultEvent(any(NewResultEvent.class));
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -370,9 +363,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 20);
         var result = createSubmissionWithScore(studentParticipation, 20);
 
-        pyrisEventService.trigger(new NewResultEvent(result));
+        pyrisEventService.trigger(new NewResultEvent(result)).join();
 
-        verify(irisChatSessionService, timeout(2000).times(1)).handleNewResultEvent(any(NewResultEvent.class));
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(any(NewResultEvent.class));
         verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 
@@ -386,9 +379,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         Result result = createSubmissionWithScore(studentParticipation, 40);
 
         var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(event).join();
 
-        verify(irisChatSessionService, timeout(2000).times(1)).handleNewResultEvent(event);
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(event);
         verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 
@@ -401,9 +394,9 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         Result result = createFailingSubmission(teamParticipation);
         var event = new NewResultEvent(result);
 
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(event).join();
 
-        verify(irisChatSessionService, timeout(2000).times(1)).handleNewResultEvent(event);
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(event);
         verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 
@@ -439,14 +432,13 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var event = new NewResultEvent(result);
-        pyrisEventService.trigger(event);
+        pyrisEventService.trigger(event).join();
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event));
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(
-                () -> verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any()));
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
     }
 
 }
