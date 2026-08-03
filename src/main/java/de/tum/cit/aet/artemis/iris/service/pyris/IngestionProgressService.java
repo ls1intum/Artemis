@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -9,15 +10,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.IngestionHistoryEntry;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageToolActivityConverter;
 import de.tum.cit.aet.artemis.iris.dto.ActiveIngestionDTO;
 import de.tum.cit.aet.artemis.iris.dto.RecentIngestionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IngestionHistoryRepository;
@@ -30,10 +38,10 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 /**
  * Registry of lecture ingestions for the admin ingestion dashboard, fed by the Pyris status callbacks.
  * <p>
- * The ingestions currently in flight are kept in memory (with each run's live activity snapshot and last-update time, so
- * a stalled run can be detected). Finished and failed runs are persisted to {@link IngestionHistoryEntry} so the recent
- * history survives an Artemis restart; old entries are pruned by a scheduled retention job. Observability only, not an
- * authority.
+ * The ingestions currently in flight are held in a Hazelcast map so the live active view survives an Artemis restart or
+ * node failover and is shared across the cluster (mirroring {@code PyrisJobService}). Finished and failed runs are
+ * persisted to {@link IngestionHistoryEntry} so the recent history is durable too; old entries are pruned by a
+ * scheduled retention job. Observability only, not an authority.
  */
 @Lazy
 @Service
@@ -42,14 +50,24 @@ public class IngestionProgressService {
 
     private static final Logger log = LoggerFactory.getLogger(IngestionProgressService.class);
 
+    private static final String ACTIVE_MAP = "iris-active-ingestions";
+
     private static final int MAX_RECENT = 100;
 
     private static final int MAX_ERROR_LENGTH = 2000;
 
-    private record ActiveEntry(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO status, String lastUpdatedAt) {
+    private static final IrisMessageToolActivityConverter ACTIVITIES_CONVERTER = new IrisMessageToolActivityConverter();
+
+    /**
+     * Serializable snapshot of one in-flight ingestion, so it can live in the Hazelcast map. The job is already
+     * serializable; the activity list is stored as JSON to avoid making the wire DTOs serializable.
+     */
+    private record ActiveEntry(LectureIngestionWebhookJob job, String runState, String startedAt, String lastUpdatedAt, String activitiesJson) implements Serializable {
     }
 
-    private final Map<String, ActiveEntry> activeByJobId = new ConcurrentHashMap<>();
+    private final HazelcastInstance hazelcastInstance;
+
+    private IMap<String, ActiveEntry> activeByJobId;
 
     // Names change rarely and are looked up across a module boundary, so they are cached by id.
     private final Map<Long, String> unitNameCache = new ConcurrentHashMap<>();
@@ -62,11 +80,25 @@ public class IngestionProgressService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    public IngestionProgressService(IngestionHistoryRepository ingestionHistoryRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureRepositoryApi> lectureRepositoryApi) {
+    public IngestionProgressService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, IngestionHistoryRepository ingestionHistoryRepository,
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi) {
+        this.hazelcastInstance = hazelcastInstance;
         this.ingestionHistoryRepository = ingestionHistoryRepository;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
+    }
+
+    @PostConstruct
+    public void init() {
+        // A generous TTL so a run whose terminal callback is missed (e.g. lost across a restart) does not linger forever.
+        hazelcastInstance.getConfig().getMapConfig(ACTIVE_MAP).setTimeToLiveSeconds((int) Duration.ofHours(6).toSeconds());
+    }
+
+    private IMap<String, ActiveEntry> activeMap() {
+        if (activeByJobId == null) {
+            activeByJobId = hazelcastInstance.getMap(ACTIVE_MAP);
+        }
+        return activeByJobId;
     }
 
     /**
@@ -79,15 +111,16 @@ public class IngestionProgressService {
      */
     public void record(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate, boolean terminal) {
         if (terminal) {
-            ActiveEntry previous = activeByJobId.remove(job.jobId());
+            ActiveEntry previous = activeMap().remove(job.jobId());
             boolean failed = statusUpdate.runState() != null && "FAILED".equals(statusUpdate.runState().name());
-            String startedAt = statusUpdate.startedAt() != null ? statusUpdate.startedAt() : (previous != null ? previous.status().startedAt() : null);
-            List<PyrisActivityDTO> activities = statusUpdate.activities() != null ? statusUpdate.activities() : (previous != null ? previous.status().activities() : null);
+            String startedAt = statusUpdate.startedAt() != null ? statusUpdate.startedAt() : (previous != null ? previous.startedAt() : null);
+            List<PyrisActivityDTO> activities = statusUpdate.activities() != null ? statusUpdate.activities() : (previous != null ? fromJson(previous.activitiesJson()) : null);
             String errorMessage = failed && statusUpdate.error() != null ? statusUpdate.error().message() : null;
             saveHistory(job, failed, startedAt, activities, errorMessage);
             return;
         }
-        activeByJobId.put(job.jobId(), new ActiveEntry(job, statusUpdate, Instant.now().toString()));
+        String runState = statusUpdate.runState() != null ? statusUpdate.runState().name() : null;
+        activeMap().put(job.jobId(), new ActiveEntry(job, runState, statusUpdate.startedAt(), Instant.now().toString(), toJson(statusUpdate.activities())));
     }
 
     /**
@@ -98,13 +131,21 @@ public class IngestionProgressService {
      * @param reason the failure reason recorded on each failed run
      */
     public void failActive(String reason) {
-        for (String jobId : List.copyOf(activeByJobId.keySet())) {
-            ActiveEntry entry = activeByJobId.remove(jobId);
+        for (String jobId : List.copyOf(activeMap().keySet())) {
+            ActiveEntry entry = activeMap().remove(jobId);
             if (entry == null) {
                 continue;
             }
-            saveHistory(entry.job(), true, entry.status().startedAt(), entry.status().activities(), reason);
+            saveHistory(entry.job(), true, entry.startedAt(), fromJson(entry.activitiesJson()), reason);
         }
+    }
+
+    private static String toJson(List<PyrisActivityDTO> activities) {
+        return activities == null ? null : ACTIVITIES_CONVERTER.convertToDatabaseColumn(activities);
+    }
+
+    private static List<PyrisActivityDTO> fromJson(String json) {
+        return json == null ? null : ACTIVITIES_CONVERTER.convertToEntityAttribute(json);
     }
 
     private void saveHistory(LectureIngestionWebhookJob job, boolean failed, String startedAtIso, List<PyrisActivityDTO> activities, String errorMessage) {
@@ -136,11 +177,10 @@ public class IngestionProgressService {
      * @return a snapshot of all lecture ingestions currently in flight, enriched with the lecture unit and lecture names
      */
     public List<ActiveIngestionDTO> getActiveIngestions() {
-        return activeByJobId.values().stream()
+        return activeMap().values().stream()
                 .map(entry -> new ActiveIngestionDTO(entry.job().jobId(), entry.job().courseId(), entry.job().lectureId(), entry.job().lectureUnitId(),
-                        resolveUnitName(entry.job().lectureUnitId()), resolveLectureName(entry.job().lectureId()),
-                        entry.status().runState() != null ? entry.status().runState().name() : null, entry.status().startedAt(), entry.lastUpdatedAt(),
-                        entry.status().activities()))
+                        resolveUnitName(entry.job().lectureUnitId()), resolveLectureName(entry.job().lectureId()), entry.runState(), entry.startedAt(), entry.lastUpdatedAt(),
+                        fromJson(entry.activitiesJson())))
                 .toList();
     }
 
