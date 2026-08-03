@@ -70,7 +70,7 @@ public class CourseTabAccessService {
     public CourseTabAccessDTO getCourseTabAccess(Course course, User user) {
         long courseId = course.getId();
         boolean lecturesEnabled = lectureApi.map(api -> api.existsByCourseId(courseId)).orElse(false);
-        boolean examsVisible = examRepositoryApi.map(api -> api.existsVisibleExamForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())).orElse(false);
+        boolean examsVisible = examRepositoryApi.map(api -> api.existsVisibleExamForUser(courseId, user.getId(), ZonedDateTime.now())).orElse(false);
         // courseHasCompetencies covers both competencies and prerequisites (single-table inheritance) in one query
         boolean competenciesOrPrerequisites = courseCompetencyApi.map(api -> api.courseHasCompetencies(courseId)).orElse(false);
         boolean tutorialGroups = tutorialGroupApi.map(api -> api.countByCourseId(courseId) > 0).orElse(false);

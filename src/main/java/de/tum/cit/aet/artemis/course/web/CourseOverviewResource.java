@@ -183,7 +183,7 @@ public class CourseOverviewResource {
     @EnforceAtLeastStudent
     public ResponseEntity<CourseTabAccessDTO> getCourseTabAccess(@PathVariable long courseId) {
         log.debug("REST request to get the course tab access flags for course {}", courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         return ResponseEntity.ok(courseTabAccessService.getCourseTabAccess(course, user));

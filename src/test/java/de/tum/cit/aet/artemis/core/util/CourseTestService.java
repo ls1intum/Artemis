@@ -1068,7 +1068,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTabAccess() throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         CourseTabAccessDTO access = request.get("/api/course/courses/" + courses.getFirst().getId() + "/access", HttpStatus.OK, CourseTabAccessDTO.class);
 
         // The created course has lectures and competencies, but no exams visible to the student
@@ -1081,7 +1081,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseTabAccessWithVisibleExam() throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
         // A visible exam the student is registered for must make the exams tab accessible (the user-scoped visibility check)
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
@@ -1095,7 +1095,7 @@ public class CourseTestService {
     // Test
     public void testGetCourseTabAccessForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
-        removeAllGroupsFromStudent1();
+        unenrollStudent1FromAllCourses();
         request.get("/api/course/courses/" + course.getId() + "/access", HttpStatus.FORBIDDEN, CourseTabAccessDTO.class);
     }
 

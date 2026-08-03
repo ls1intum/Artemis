@@ -95,10 +95,9 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * Mirrors the visibility predicate of {@link #findByCourseIdForUser} but only checks existence, so it can drive a cheap access decision
      * without loading any exam data.
      *
-     * @param courseId   the course for which exam visibility should be checked
-     * @param userId     the id of the user requesting access
-     * @param groupNames the groups of the user requesting access
-     * @param now        the current date, typically ZonedDateTime.now()
+     * @param courseId the course for which exam visibility should be checked
+     * @param userId   the id of the user requesting access
+     * @param now      the current date, typically ZonedDateTime.now()
      * @return true if at least one exam is visible to the user
      */
     @Query("""
@@ -110,13 +109,11 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND e.visibleDate <= :now
                 AND (
                     eu.user.id = :userId
-                    OR c.teachingAssistantGroupName IN :groupNames
-                    OR c.editorGroupName IN :groupNames
-                    OR c.instructorGroupName IN :groupNames
+                    OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = c.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                     OR e.testExam = TRUE
                 )
             """)
-    boolean existsVisibleExamForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
+    boolean existsVisibleExamForUser(@Param("courseId") long courseId, @Param("userId") long userId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT exam
