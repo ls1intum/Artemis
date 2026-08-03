@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -208,6 +210,69 @@ public class ExerciseDateService {
     public boolean hasExerciseStarted(Exercise exercise) {
         ZonedDateTime exerciseStartDate = exercise.getParticipationStartDate();
         return exerciseStartDate == null || exerciseStartDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * The two points in time an exam exercise needs so that a tutor can be told whether assessment is possible yet, and
+     * if not, from when on it is.
+     *
+     * @param latestExamEndDate      the moment the last student can no longer hand in, i.e. the latest individual exam
+     *                                   end date plus the exam's grace period. This is the same notion of "the exam is
+     *                                   over" that {@link ExamDateService#isExamWithGracePeriodOver} and
+     *                                   {@code AutomaticAfterDueDateService} use.
+     * @param assessmentPossibleFrom the moment tutors can start assessing. Equals {@code latestExamEndDate}, except for
+     *                                   programming exercises, which additionally wait for the tests to run once more on
+     *                                   the final submissions (see
+     *                                   {@link ProgrammingExercise#getBuildAndTestStudentSubmissionsAfterDueDate()},
+     *                                   which the server defaults to shortly after the exam ends) so that the automatic
+     *                                   result a tutor sees is the final one.
+     */
+    public record ExamAssessmentDates(ZonedDateTime latestExamEndDate, ZonedDateTime assessmentPossibleFrom) {
+    }
+
+    /**
+     * Determines when the given exam exercise becomes assessable. Until then submissions can still change, so grading
+     * one would mean grading something the student may still replace.
+     *
+     * @param exercise an exam exercise
+     * @return both relevant dates, or {@code null} if the exam has no dates yet and it is therefore unknown when it is
+     *         over
+     * @throws IllegalArgumentException if the given exercise is not an exam exercise
+     */
+    @Nullable
+    public ExamAssessmentDates getExamAssessmentDates(Exercise exercise) {
+        if (!exercise.isExamExercise()) {
+            throw new IllegalArgumentException("This method should only be used for exam exercises");
+        }
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+        return computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+    }
+
+    /**
+     * Applies the assessment availability rule to an already determined latest individual exam end date, so that callers
+     * which have that date at hand do not need this service (and another query) just to add the grace period and the
+     * programming build-and-test date on top.
+     *
+     * @param exercise                    an exam exercise
+     * @param latestIndividualExamEndDate the latest individual exam end date, as returned by
+     *                                        {@code ExamDateApi#getLatestIndividualExamEndDate}
+     * @return both relevant dates, or {@code null} if the given end date is {@code null}, i.e. the exam has no dates yet
+     */
+    @Nullable
+    public static ExamAssessmentDates computeExamAssessmentDates(Exercise exercise, @Nullable ZonedDateTime latestIndividualExamEndDate) {
+        if (latestIndividualExamEndDate == null) {
+            return null;
+        }
+        ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exercise.getExam().getGracePeriod(), 0));
+
+        ZonedDateTime assessmentPossibleFrom = latestExamEndDate;
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            ZonedDateTime buildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
+            if (buildAndTestDate != null && buildAndTestDate.isAfter(latestExamEndDate)) {
+                assessmentPossibleFrom = buildAndTestDate;
+            }
+        }
+        return new ExamAssessmentDates(latestExamEndDate, assessmentPossibleFrom);
     }
 
     /**

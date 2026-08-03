@@ -1,0 +1,68 @@
+---
+id: oidc-login-registration
+title: OpenID Connect (OIDC) Login & Registration
+sidebar_label: OpenID Connect Login
+---
+
+# OpenID Connect (OIDC) Login & Registration
+
+Artemis supports decentralized user login and identity synchronization using OpenID Connect (OIDC). 
+The OIDC feature acts as a secure, high-precedence authentication bridge. It allows identity providers to securely transmit verified student claims, including the **matriculation number**, name, and email directly into the Artemis ecosystem.
+
+When a user authenticates via the OIDC provider for the first time, Artemis invokes Just-In-Time (JIT) provisioning. This automatically builds a native, stateless account record in the local database, extracting and mapping key attributes dynamically from the secure ID token.
+
+- The feature is fully controlled by the `artemis.user-management.oidc.enabled: true` module-feature flag.
+- If you run the system behind a **reverse proxy**, you must explicitly forward the following secure endpoints to the Artemis core instance: **/oauth2/** and **/login/oauth2/**.
+
+---
+
+## Architecture and Filtering Mechanics
+
+The OIDC ecosystem leverages Spring Security's OAuth2 Client libraries to inject an isolated, decoupled filter chain. This chain intercepts requests, ensuring OIDC callbacks are parsed and verified before hitting default platform filters.
+
+Unlike standard stateless operations, the initialization flow briefly establishes a highly secured, short-lived HTTP session in RAM. This session acts as an anti-tampering buffer, storing state and cryptographic nonce parameters to shield the system against Cross-Site Request Forgery (CSRF) or token-replay mutations.
+
+---
+
+## Configuration Specification
+
+The structure of the OIDC infrastructure configuration (standardized inside `application-oidc.yml`) dictates how Artemis bonds with the university identity pool:
+```yaml
+artemis:
+  user-management:
+    oidc:
+      enabled: true
+      mappings:
+        username: "preferred_username"
+        matriculation-number: "matriculation_number"
+        first-name: "given_name"
+        last-name: "family_name"
+        email: "email"
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          oidc:
+            provider: oidc
+            client-id: "${ARTEMIS_OIDC_CLIENT_ID:placeholder-artemis-client-id}"
+            client-secret: "${ARTEMIS_OIDC_CLIENT_SECRET:placeholder-artemis-client-secret}"
+            scope:
+              - "openid"
+              - "profile"
+              - "email"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: "authorization_code"
+        provider:
+          oidc:
+            issuer-uri: "${ARTEMIS_OIDC_ISSUER_URI:https://tumidp.lrz.de/idp/shibboleth}"
+            authorization-uri: "${ARTEMIS_OIDC_AUTHORIZATION_URI:https://login.tum.de/idp/profile/oidc/authorize}"
+            token-uri: "${ARTEMIS_OIDC_TOKEN_URI:https://login.tum.de/idp/profile/oidc/token}"
+            user-info-uri: "${ARTEMIS_OIDC_USER_INFO_URI:https://login.tum.de/idp/profile/oidc/userinfo}"
+            jwk-set-uri: "${ARTEMIS_OIDC_JWK_SET_URI:https://login.tum.de/idp/profile/oidc/keyset}"
+
+info:
+  oidc:
+    # Customizable string used for the external login selection screen button (e.g. 'TUM Login')
+    buttonLabel: "${ARTEMIS_OIDC_DISPLAY_NAME:TUM Login}"

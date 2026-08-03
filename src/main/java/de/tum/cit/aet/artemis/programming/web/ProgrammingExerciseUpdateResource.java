@@ -214,7 +214,7 @@ public class ProgrammingExerciseUpdateResource {
         programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // Fetch course from database to make sure client didn't change groups
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
@@ -508,7 +508,7 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Fetch course from database to make sure client didn't change groups
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 

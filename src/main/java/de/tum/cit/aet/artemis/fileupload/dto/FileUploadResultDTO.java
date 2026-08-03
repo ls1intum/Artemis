@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -32,8 +33,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * @param submission     the submission context if requested
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, AssessmentType assessmentType, Boolean hasComplaint,
-        Boolean exampleResult, FileUploadAssessmentNoteDTO assessmentNote, FileUploadUserDTO assessor, List<FileUploadFeedbackDTO> feedbacks, FileUploadSubmissionDTO submission) {
+public record FileUploadResultDTO(Long id, @Nullable ZonedDateTime completionDate, @Nullable Boolean successful, @Nullable Double score, boolean rated,
+        @Nullable AssessmentType assessmentType, @Nullable Boolean hasComplaint, @Nullable Boolean exampleResult, @Nullable FileUploadAssessmentNoteDTO assessmentNote,
+        @Nullable FileUploadUserDTO assessor, @Nullable List<FileUploadFeedbackDTO> feedbacks, @Nullable FileUploadSubmissionDTO submission) {
 
     /**
      * Factory method to map a {@link Result} entity to a nested {@link FileUploadResultDTO} (without including submission loop).
@@ -41,7 +43,7 @@ public record FileUploadResultDTO(Long id, ZonedDateTime completionDate, Boolean
      * @param result the result entity to map
      * @return the mapped DTO, or null if input was null
      */
-    public static FileUploadResultDTO ofNested(Result result) {
+    public static @Nullable FileUploadResultDTO ofNested(@Nullable Result result) {
         return of(result, false);
     }
 
@@ -51,7 +53,7 @@ public record FileUploadResultDTO(Long id, ZonedDateTime completionDate, Boolean
      * @param result the result entity to map
      * @return the mapped DTO, or null if input was null
      */
-    public static FileUploadResultDTO ofTopLevel(Result result) {
+    public static @Nullable FileUploadResultDTO ofTopLevel(@Nullable Result result) {
         return of(result, true);
     }
 
@@ -62,7 +64,7 @@ public record FileUploadResultDTO(Long id, ZonedDateTime completionDate, Boolean
      * @param includeSubmission whether to include the submission details
      * @return the mapped DTO, or null if input was null
      */
-    private static FileUploadResultDTO of(Result result, boolean includeSubmission) {
+    private static @Nullable FileUploadResultDTO of(@Nullable Result result, boolean includeSubmission) {
         if (result == null) {
             return null;
         }

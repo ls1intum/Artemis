@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,9 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -52,15 +52,15 @@ public class RepositoryVcsAccessTokenService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final UserRepository userRepository;
+    private final UserCourseRoleRepository userCourseRoleRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     public RepositoryVcsAccessTokenService(RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+            UserCourseRoleRepository userCourseRoleRepository, AuthorizationCheckService authorizationCheckService) {
         this.repositoryVCSAccessTokenRepository = repositoryVCSAccessTokenRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -373,14 +373,6 @@ public class RepositoryVcsAccessTokenService {
     }
 
     private Set<User> staffUsersOf(Course course) {
-        Set<String> staffGroups = new HashSet<>();
-        staffGroups.add(course.getTeachingAssistantGroupName());
-        staffGroups.add(course.getEditorGroupName());
-        staffGroups.add(course.getInstructorGroupName());
-        staffGroups.removeIf(group -> !StringUtils.hasText(group));
-        if (staffGroups.isEmpty()) {
-            return Set.of();
-        }
-        return userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(staffGroups);
+        return userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
     }
 }
