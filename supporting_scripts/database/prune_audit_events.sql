@@ -17,7 +17,8 @@
 --
 -- Usage (from a machine that can reach the database, e.g. via ssh to the database host):
 --
---     mysql Artemis < prune_audit_events.sql          # step 0 and 1 only report; nothing is deleted until step 3
+--     mysql Artemis < prune_audit_events.sql          # steps 0 and 2 only read; step 1 creates the index if it is
+--                                                     # missing; nothing is deleted until you enable step 3
 --
 -- Read the output of steps 0-2, then uncomment the CALL statements in step 3.
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -103,8 +104,24 @@ BEGIN
     DECLARE v_total INT DEFAULT 0;
     DECLARE v_drained BOOLEAN DEFAULT FALSE;
 
-    IF p_bucket NOT IN ('LOGIN', 'OTHER') THEN
+    -- Validate before deleting anything. NULL needs its own check: "NULL NOT IN (...)" is unknown rather than true, so a
+    -- NULL bucket would pass this test, then fail the LOGIN comparison too and silently fall through to the OTHER branch.
+    IF p_bucket IS NULL OR p_bucket NOT IN ('LOGIN', 'OTHER') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'p_bucket must be LOGIN or OTHER';
+    END IF;
+
+    -- A negative retention would make DATE_SUB return a cutoff in the future, so every row would look expired and the
+    -- procedure would delete the whole table batch by batch. Zero would delete everything up to this moment.
+    IF p_retention_days IS NULL OR p_retention_days <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'p_retention_days must be a positive number of days';
+    END IF;
+
+    IF p_batch_size IS NULL OR p_batch_size <= 0 OR p_max_batches IS NULL OR p_max_batches <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'p_batch_size and p_max_batches must be positive';
+    END IF;
+
+    IF p_sleep_seconds IS NULL OR p_sleep_seconds < 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'p_sleep_seconds must not be negative';
     END IF;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_audit_event_ids;

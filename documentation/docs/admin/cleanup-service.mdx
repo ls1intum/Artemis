@@ -215,6 +215,8 @@ Two retention periods apply, because the table mixes records with opposite chara
 
 One row is written per login attempt, so the login record is the bulk of the table and tells you little a few weeks later. The remaining rows are rare and are what has to be reconstructed when a question is raised long after the fact, an exam dispute in particular. Anything not recognised as a login gets the long retention, so an event type added in a later version is over-retained rather than silently dropped.
 
+Both values must be positive and are validated when the configuration is bound, so a typo such as `0` or a negative number fails startup instead of being applied — this job has no kill switch and its deletions are irreversible, so a cutoff in the future would delete records written minutes ago.
+
 The job runs at 03:10 every night on the node with the scheduling profile active. It deletes in batches of 5 000 rows, up to 200 batches per retention period per night, so a backlog that has accumulated over years is drained over several nights rather than in one very long transaction. The log line reports how many rows each period removed, and says explicitly when the per-run cap was reached and rows remain.
 
 ### Pruning a large backlog manually

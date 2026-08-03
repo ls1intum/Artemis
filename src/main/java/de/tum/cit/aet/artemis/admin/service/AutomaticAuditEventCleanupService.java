@@ -9,13 +9,13 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.config.AuditEventRetentionProperties;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 
 /**
@@ -36,6 +36,9 @@ import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
  * <p>
  * Everything that is not an authentication event gets the long retention, including event types added later. That is the
  * safe direction: a new type is over-retained rather than silently dropped on the short schedule.
+ * <p>
+ * The two periods are bound through {@link AuditEventRetentionProperties}, which validates them as positive, so a
+ * configuration typo fails startup instead of deleting recent records.
  * <p>
  * Deletion goes through the entities rather than a bulk {@code DELETE}, because {@code jhi_persistent_audit_evt_data} is
  * an {@code @ElementCollection} whose foreign key is {@code ON DELETE RESTRICT}, so a bulk delete of the parent rows
@@ -62,24 +65,11 @@ public class AutomaticAuditEventCleanupService {
 
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
 
-    /**
-     * Retention for the login record: successful, failed and passkey logins, and logouts. Short, because this is the bulk
-     * of the table and an individual login attempt is rarely of interest after a while. One year by default, so that
-     * year-over-year usage statistics (which read {@code AUTHENTICATION_SUCCESS} rows) still have a full year to report on.
-     */
-    @Value("${artemis.audit-events.general-retention-period:365}")
-    private int generalRetentionPeriodInDays;
+    private final AuditEventRetentionProperties retentionProperties;
 
-    /**
-     * Retention for everything else: deliberate actions on courses, exercises, exams and accounts. Five years by default,
-     * because these are the records an investigation into how something reached its current state relies on, and such
-     * questions - an exam dispute in particular - can be raised years later.
-     */
-    @Value("${artemis.audit-events.application-retention-period:1825}")
-    private int applicationRetentionPeriodInDays;
-
-    public AutomaticAuditEventCleanupService(PersistenceAuditEventRepository persistenceAuditEventRepository) {
+    public AutomaticAuditEventCleanupService(PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventRetentionProperties retentionProperties) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
+        this.retentionProperties = retentionProperties;
     }
 
     /**
@@ -88,17 +78,19 @@ public class AutomaticAuditEventCleanupService {
     // execute this every night at 3:10:00 am, offset from the other nightly cleanups so they do not contend
     @Scheduled(cron = "0 10 3 * * *")
     public void cleanup() {
-        Instant generalCutoff = Instant.now().minus(generalRetentionPeriodInDays, ChronoUnit.DAYS);
-        Instant applicationCutoff = Instant.now().minus(applicationRetentionPeriodInDays, ChronoUnit.DAYS);
+        int generalRetentionInDays = retentionProperties.generalRetentionPeriod();
+        int applicationRetentionInDays = retentionProperties.applicationRetentionPeriod();
+        Instant generalCutoff = Instant.now().minus(generalRetentionInDays, ChronoUnit.DAYS);
+        Instant applicationCutoff = Instant.now().minus(applicationRetentionInDays, ChronoUnit.DAYS);
 
-        int deletedGeneralEvents = pruneIsolated("general", generalRetentionPeriodInDays,
+        int deletedGeneralEvents = pruneIsolated("general", generalRetentionInDays,
                 pageable -> persistenceAuditEventRepository.findExpiredIdsOfTypes(generalCutoff, GENERAL_EVENT_TYPES, pageable));
-        int deletedApplicationEvents = pruneIsolated("application", applicationRetentionPeriodInDays,
+        int deletedApplicationEvents = pruneIsolated("application", applicationRetentionInDays,
                 pageable -> persistenceAuditEventRepository.findExpiredIdsExcludingTypes(applicationCutoff, GENERAL_EVENT_TYPES, pageable));
 
         if (deletedGeneralEvents > 0 || deletedApplicationEvents > 0) {
             log.info("Scheduled deletion of expired audit events: removed {} general/authentication events (older than {} days) and {} application events (older than {} days)",
-                    deletedGeneralEvents, generalRetentionPeriodInDays, deletedApplicationEvents, applicationRetentionPeriodInDays);
+                    deletedGeneralEvents, generalRetentionInDays, deletedApplicationEvents, applicationRetentionInDays);
         }
     }
 

@@ -15,14 +15,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.admin.config.AuditEventRetentionProperties;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 
@@ -44,9 +49,7 @@ class AutomaticAuditEventCleanupServiceTest {
     @BeforeEach
     void init() {
         persistenceAuditEventRepository = mock(PersistenceAuditEventRepository.class);
-        service = new AutomaticAuditEventCleanupService(persistenceAuditEventRepository);
-        ReflectionTestUtils.setField(service, "generalRetentionPeriodInDays", GENERAL_RETENTION_DAYS);
-        ReflectionTestUtils.setField(service, "applicationRetentionPeriodInDays", APPLICATION_RETENTION_DAYS);
+        service = new AutomaticAuditEventCleanupService(persistenceAuditEventRepository, new AuditEventRetentionProperties(GENERAL_RETENTION_DAYS, APPLICATION_RETENTION_DAYS));
     }
 
     @Test
@@ -144,6 +147,21 @@ class AutomaticAuditEventCleanupServiceTest {
         verify(persistenceAuditEventRepository).findExpiredIdsOfTypes(any(), included.capture(), any());
         verify(persistenceAuditEventRepository).findExpiredIdsExcludingTypes(any(), excluded.capture(), any());
         assertThat(included.getValue()).isEqualTo(excluded.getValue()).isEqualTo(AuditEventConstants.GENERAL_EVENT_TYPES);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1, -365 })
+    void aNonPositiveRetentionPeriodIsRejectedRatherThanApplied(int invalidRetention) {
+        // Nothing gates this job, and its deletions are irreversible: 0 would make almost every existing event eligible,
+        // and a negative value would put the cutoff in the future and delete records written minutes ago. Validation has
+        // to reject the configuration at startup rather than let a typo run.
+        try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            Validator validator = validatorFactory.getValidator();
+
+            assertThat(validator.validate(new AuditEventRetentionProperties(invalidRetention, APPLICATION_RETENTION_DAYS))).isNotEmpty();
+            assertThat(validator.validate(new AuditEventRetentionProperties(GENERAL_RETENTION_DAYS, invalidRetention))).isNotEmpty();
+            assertThat(validator.validate(new AuditEventRetentionProperties(GENERAL_RETENTION_DAYS, APPLICATION_RETENTION_DAYS))).isEmpty();
+        }
     }
 
     private static List<Long> idsOfSize(int size) {
