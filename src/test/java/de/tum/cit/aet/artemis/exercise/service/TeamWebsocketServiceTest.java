@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,8 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -36,9 +38,6 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     private static final String TEST_PREFIX = "teamwebsocketservice";
 
     @Autowired
-    private UserTestRepository userRepo;
-
-    @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
@@ -49,6 +48,9 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     @Autowired
     private TeamUtilService teamUtilService;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private ModelingExercise modelingExercise;
 
@@ -70,7 +72,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course = courseUtilService.addCourseWithModelingAndTextExercise();
+        Course course = courseUtilService.addEnrolledCourseWithModelingAndTextExercise(TEST_PREFIX);
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 exercise.setMode(ExerciseMode.TEAM);
@@ -83,7 +85,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentBatch
         }
         assertThat(modelingExercise).isNotNull();
         assertThat(textExercise).isNotNull();
-        students = new HashSet<>(userRepo.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains("tumuser"));
+        students = userCourseRoleTestRepository.findByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().map(UserCourseRole::getUser).collect(Collectors.toSet());
     }
 
     @Test

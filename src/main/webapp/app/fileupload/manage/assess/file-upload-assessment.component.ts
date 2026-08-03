@@ -26,6 +26,9 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { onError } from 'app/foundation/util/global.utils';
+import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
@@ -54,10 +57,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         RouterLink,
         UpperCasePipe,
         ArtemisTranslatePipe,
+        AssessmentNotPossibleYetComponent,
     ],
 })
 export class FileUploadAssessmentComponent implements OnInit {
     private alertService = inject(AlertService);
+    private datePipe = inject(ArtemisDatePipe);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
@@ -97,6 +102,9 @@ export class FileUploadAssessmentComponent implements OnInit {
     exerciseGroupId?: number;
     readonly exerciseDashboardLink = signal<string[]>([]);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of showing its "submission not found" state.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
 
     private cancelConfirmationText!: string; // set in constructor from a synchronous translate subscription
@@ -133,6 +141,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
 
         this.route.params.subscribe((params) => {
+            this.resetSubmissionState();
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
             this.resultId = Number(params['resultId']) || 0;
@@ -187,7 +196,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
-                } else {
+                } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                 }
             },
@@ -209,11 +218,44 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
-                    } else {
+                    } else if (!this.explainIfAssessmentNotPossibleYet(error)) {
                         onError(this.alertService, error);
                     }
                 },
             });
+    }
+
+    /**
+     * Clears everything that belongs to the previously assessed submission. Angular reuses this component for
+     * param-only navigations, so without this the page would keep showing the previous assessment while the next one
+     * loads — and would keep showing it instead of the explanation if that load is refused because the exam is not over
+     * yet, for example because a student was granted more working time in the meantime.
+     */
+    private resetSubmissionState(): void {
+        this.loadingInitialSubmission.set(true);
+        this.isLoading.set(true);
+        this.assessmentNotPossibleYet.set(undefined);
+        this.submission.set(undefined);
+        this.result.set(undefined);
+        this.unreferencedFeedback.set([]);
+        this.complaint.set(undefined!);
+    }
+
+    /**
+     * Keeps the server's "assessment is not possible yet" explanation on the page, in place of the "submission not
+     * found" state that would otherwise contradict it. A toast would fade and leave only the wrong message behind.
+     *
+     * @param error the failed response of the endpoint that opens the assessment
+     * @returns true if the error was the "assessment is not possible yet" one and is now explained on the page
+     */
+    private explainIfAssessmentNotPossibleYet(error: HttpErrorResponse): boolean {
+        const assessmentNotPossibleYet = getAssessmentNotPossibleYetState(error);
+        if (!assessmentNotPossibleYet) {
+            return false;
+        }
+        this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
+        this.alertService.closeAll();
+        return true;
     }
 
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
@@ -322,7 +364,11 @@ export class FileUploadAssessmentComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
-                onError(this.alertService, error);
+                // the current assessment stays on the page, so here the explanation belongs in an alert rather than in
+                // place of it — without this the tutor would read "You are not authorized to access this page"
+                if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                    onError(this.alertService, error);
+                }
             },
         });
     }
@@ -344,7 +390,10 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.saveSuccessful');
                 },
-                error: () => {
+                error: (error: HttpErrorResponse) => {
+                    if (alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                        return;
+                    }
                     this.alertService.closeAll();
                     this.alertService.error('artemisApp.assessment.messages.saveFailed');
                 },
@@ -375,7 +424,11 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.submitSuccessful');
                 },
-                error: (error: HttpErrorResponse) => this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`),
+                error: (error: HttpErrorResponse) => {
+                    if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
+                        this.onError(`artemisApp.${error.error.entityName}.${error.error.message}`);
+                    }
+                },
             });
     }
 

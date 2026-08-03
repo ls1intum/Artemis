@@ -70,6 +70,17 @@ describe('CleanupOperationModalComponent', () => {
     const deleteOldRatedOperation = createOperation('deleteOldRatedResults');
     const deleteSubmissionVersionsOperation = createOperation('deleteOldSubmissionVersions');
 
+    function createAgeBasedOperation(name: OperationName): CleanupOperation {
+        const operation = new CleanupOperation();
+        operation.name = name;
+        operation.deleteFrom = undefined;
+        operation.deleteTo = undefined;
+        operation.lastExecuted = undefined;
+        operation.datesValid = signal(true);
+        operation.ageBased = true;
+        return operation;
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CleanupOperationModalComponent],
@@ -82,11 +93,23 @@ describe('CleanupOperationModalComponent', () => {
                         countNonRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockNonRatedCounts }))),
                         countOldRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockOldRatedCounts }))),
                         countOldSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockSubmissionVersionCounts }))),
+                        countOldCoursesResetWarning: vi.fn().mockReturnValue(of(new HttpResponse({ body: { courses: 3 } }))),
+                        countOldCoursesReset: vi.fn().mockReturnValue(of(new HttpResponse({ body: { courses: 2 } }))),
+                        countOldFeedback: vi.fn().mockReturnValue(of(new HttpResponse({ body: { longFeedbackText: 1, textBlock: 2, feedback: 3 } }))),
+                        countOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockSubmissionVersionCounts }))),
+                        countNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 4 } }))),
+                        countPlagiarismCases: vi.fn().mockReturnValue(of(new HttpResponse({ body: { plagiarismCases: 3 } }))),
                         deleteOrphans: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         deletePlagiarismComparisons: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         deleteNonRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         deleteOldRatedResults: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         deleteOldSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        warnOldCoursesReset: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        resetOldCourses: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        deleteOldFeedback: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        deleteOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        deleteNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({}))),
+                        deletePlagiarismCases: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                     },
                 },
             ],
@@ -164,6 +187,33 @@ describe('CleanupOperationModalComponent', () => {
 
             expect(dataCleanupService.countOldSubmissionVersions).toHaveBeenCalledWith(deleteSubmissionVersionsOperation.deleteFrom, deleteSubmissionVersionsOperation.deleteTo);
             expect(component.counts()).toEqual(mockSubmissionVersionCounts);
+        });
+
+        it('should fetch warn counts for the age-based warnOldCoursesReset operation without a date range', () => {
+            componentRef.setInput('operation', createAgeBasedOperation('warnOldCoursesReset'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(dataCleanupService.countOldCoursesResetWarning).toHaveBeenCalled();
+            expect(component.counts()).toEqual({ courses: 3 });
+        });
+
+        it('should fetch user counts for the age-based deleteNotEnrolledUsers operation without a date range', () => {
+            componentRef.setInput('operation', createAgeBasedOperation('deleteNotEnrolledUsers'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(dataCleanupService.countNotEnrolledUsers).toHaveBeenCalled();
+            expect(component.counts()).toEqual({ users: 4 });
+        });
+
+        it('should fetch plagiarism-case counts for the age-based deletePlagiarismCases operation without a date range', () => {
+            componentRef.setInput('operation', createAgeBasedOperation('deletePlagiarismCases'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(dataCleanupService.countPlagiarismCases).toHaveBeenCalled();
+            expect(component.counts()).toEqual({ plagiarismCases: 3 });
         });
 
         it('should set dialogError when fetching counts fails', () => {
@@ -320,6 +370,39 @@ describe('CleanupOperationModalComponent', () => {
             component.executeCleanupOperation();
 
             expect(dataCleanupService.deletePlagiarismComparisons).toHaveBeenCalledWith(deletePlagiarismOperation.deleteFrom, deletePlagiarismOperation.deleteTo);
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should execute the age-based resetOldCourses operation without a date range', () => {
+            componentRef.setInput('operation', createAgeBasedOperation('resetOldCourses'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService.resetOldCourses).toHaveBeenCalled();
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should execute the age-based deleteNotEnrolledUsers operation without a date range', () => {
+            componentRef.setInput('operation', createAgeBasedOperation('deleteNotEnrolledUsers'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService.deleteNotEnrolledUsers).toHaveBeenCalled();
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should execute the age-based deletePlagiarismCases operation without a date range', () => {
+            componentRef.setInput('operation', createAgeBasedOperation('deletePlagiarismCases'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService.deletePlagiarismCases).toHaveBeenCalled();
             expect(component.operationExecuted()).toBe(true);
         });
 

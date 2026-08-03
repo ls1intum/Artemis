@@ -115,7 +115,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     public ResponseEntity<FileUploadResultDTO> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId,
             @Valid @RequestBody FileUploadAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

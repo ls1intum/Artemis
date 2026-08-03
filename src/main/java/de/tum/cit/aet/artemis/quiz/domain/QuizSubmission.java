@@ -31,8 +31,7 @@ public class QuizSubmission extends Submission {
 
     // No @Cache: actively mutated on every autosave / submit / evaluation; NONSTRICT reads caused #12574.
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @Valid
-    private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
+    private Set<@Valid SubmittedAnswer> submittedAnswers = new HashSet<>();
 
     // The use of id here is on purpose because @ManyToOne relation cannot be lazily fetched and typically, QuizBatch is not needed when loading QuizSubmission
     @Column(name = "quiz_batch")
