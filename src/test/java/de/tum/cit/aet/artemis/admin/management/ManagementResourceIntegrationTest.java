@@ -202,6 +202,24 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAuditEventByIdDoesNotFallBackToAnotherLog() throws Exception {
+        // Each log has its own id sequence, so the same id can exist in more than one of them. Asking for a security
+        // event's id under the application log must therefore never answer with the security event: either that id does
+        // not exist in the application log (404), or it identifies a different, unrelated application event (200).
+        Long securityEventId = securityAuditEvent.getId();
+        boolean idAlsoExistsInApplicationLog = applicationAuditEventRepository.findById(securityEventId).isPresent();
+
+        if (idAlsoExistsInApplicationLog) {
+            var event = request.get("/api/core/admin/audits/" + securityEventId + "?logType=APPLICATION", HttpStatus.OK, PersistentAuditEvent.class);
+            assertThat(event.getPrincipal()).isNotEqualTo(TEST_PREFIX + "securityprincipal");
+        }
+        else {
+            request.get("/api/core/admin/audits/" + securityEventId + "?logType=APPLICATION", HttpStatus.NOT_FOUND, PersistentAuditEvent.class);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void getAllAuditEventsWithUnknownLogTypeIsRejected() throws Exception {
         request.getList("/api/core/admin/audits?logType=DOES_NOT_EXIST", HttpStatus.BAD_REQUEST, PersistentAuditEvent.class);
     }
