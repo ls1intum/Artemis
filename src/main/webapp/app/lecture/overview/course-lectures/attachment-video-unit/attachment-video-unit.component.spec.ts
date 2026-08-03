@@ -1288,5 +1288,135 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeDefined();
         });
+
+        describe('interaction with slide/video synchronization', () => {
+            // PDF page 1/2/3 carry display page numbers 7/8/9; the video shows slide 7 from 0s, slide 8 from 10s
+            // and slide 9 from 20s. So page 2 and timestamp 12 mean the same slide, while page 2 and timestamp 25
+            // contradict each other.
+            const transcript = [
+                { startTime: 0, endTime: 10, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 10, endTime: 20, text: 'Slide 8', slideNumber: 8 },
+                { startTime: 20, endTime: 30, text: 'Slide 9', slideNumber: 9 },
+            ];
+
+            // Mirrors VideoPlayerComponent.updateCurrentSegment including its 0.3s tolerance, so that a timestamp on
+            // a shared boundary resolves to the earlier segment here just as it does in the real player.
+            const slideAtTimestamp = (timestamp: number) => transcript.find((s) => timestamp >= s.startTime - 0.3 && timestamp <= s.endTime + 0.3)?.slideNumber;
+
+            /**
+             * Installs viewers that complete the synchronization handshake the way the real ones do: the PDF viewer
+             * reports the new page from inside goToPage (as it emits currentPageChange), and the player updates its
+             * active slide from inside seekTo. Without that echo a pane could not drag the other one at all, which is
+             * the very thing these tests are about.
+             */
+            function mockSynchronizedViewers(totalPages: number) {
+                let currentPage = 1;
+                let currentSlideNumber: number | undefined;
+                const goToPage = vi.fn((page: number) => {
+                    if (page < 1 || page > totalPages) {
+                        return false;
+                    }
+                    currentPage = page;
+                    component['onPdfCurrentPageChange'](page);
+                    return true;
+                });
+                const seekTo = vi.fn((timestamp: number) => {
+                    currentSlideNumber = slideAtTimestamp(timestamp);
+                    component['onVideoSlideNumberChange'](currentSlideNumber);
+                });
+                Object.defineProperty(component, 'pdfViewer', {
+                    value: () => ({ goToPage, getTotalPages: () => totalPages, getCurrentPage: () => currentPage }),
+                    writable: true,
+                    configurable: true,
+                });
+                Object.defineProperty(component, 'videoPlayer', {
+                    value: () => ({ seekTo, isPlaying: () => false, getCurrentSlideNumber: () => currentSlideNumber }),
+                    writable: true,
+                    configurable: true,
+                });
+                return { goToPage, seekTo };
+            }
+
+            beforeEach(() => {
+                component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+                component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+                component.transcriptSegments.set(transcript);
+                component['fullscreenState'].set(true);
+                component.synchronizeVideoAndSlides.set(true);
+            });
+
+            it('keeps the toggle on and both panes on Iris position when the two positions agree', () => {
+                const { goToPage, seekTo } = mockSynchronizedViewers(3);
+
+                component['handlePointOut'](pointOutRequest({ correlationId: 's1', page: 2, displayPage: 8, timestamp: 12 }));
+                fixture.detectChanges();
+
+                // The page jump lets synchronization seek to the slide's segment start first; what counts is that
+                // Iris's more precise timestamp lands last and that the echo does not drag the PDF off page 2.
+                expect(seekTo).toHaveBeenLastCalledWith(12, false);
+                expect(goToPage).toHaveBeenCalledTimes(1);
+                expect(goToPage).toHaveBeenCalledWith(2);
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+                expect(component.syncDisabledByPointOut()).toBeUndefined();
+                expect(ackSpy).toHaveBeenCalledWith('s1', true);
+            });
+
+            it('turns the toggle off and applies both positions when they show different slides', () => {
+                // Page 2 is slide 8 while timestamp 25 is slide 9. Synchronization is the weaker statement, so it
+                // gives way rather than dragging the PDF to slide 9's page.
+                const { goToPage, seekTo } = mockSynchronizedViewers(3);
+
+                component['handlePointOut'](pointOutRequest({ correlationId: 's2', page: 2, displayPage: 8, timestamp: 25 }));
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledTimes(1);
+                expect(goToPage).toHaveBeenCalledWith(2);
+                expect(seekTo).toHaveBeenCalledTimes(1);
+                expect(seekTo).toHaveBeenCalledWith(25, false);
+                expect(component.synchronizeVideoAndSlides()).toBe(false);
+                // Labelled with the number printed on the slide, so the notice agrees with the chip in the chat.
+                expect(component.syncDisabledByPointOut()).toEqual({ page: 8, time: '0:25' });
+                expect(ackSpy).toHaveBeenCalledWith('s2', true);
+            });
+
+            it('turns the toggle off for a timestamp on a segment boundary, where the players disagree', () => {
+                // Timestamp 10 ends slide 7's segment and starts slide 8's. The video player reports the earlier
+                // slide 7 there, so treating the point-out as agreeing with page 2 would let that echo drag the PDF
+                // to slide 7's page 1 — off the page Iris named.
+                const { goToPage } = mockSynchronizedViewers(3);
+
+                component['handlePointOut'](pointOutRequest({ correlationId: 's4', page: 2, displayPage: 8, timestamp: 10 }));
+                fixture.detectChanges();
+
+                expect(goToPage).toHaveBeenCalledTimes(1);
+                expect(goToPage).toHaveBeenCalledWith(2);
+                expect(component.synchronizeVideoAndSlides()).toBe(false);
+            });
+
+            it('lets synchronization derive the video position from a point-out that only names a page', () => {
+                // Nothing contradicts synchronization here: the video following Iris to the slide it named is the
+                // whole point of the toggle.
+                const { seekTo } = mockSynchronizedViewers(3);
+
+                component['handlePointOut'](pointOutRequest({ correlationId: 's3', page: 2, displayPage: 8 }));
+                fixture.detectChanges();
+
+                expect(seekTo).toHaveBeenCalledWith(10, false);
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+                expect(component.syncDisabledByPointOut()).toBeUndefined();
+            });
+
+            it('drops the explanation once the student decides about the toggle themselves', () => {
+                mockSynchronizedViewers(3);
+                component['handlePointOut'](pointOutRequest({ correlationId: 's5', page: 2, displayPage: 8, timestamp: 25 }));
+                fixture.detectChanges();
+                expect(component.syncDisabledByPointOut()).toBeDefined();
+
+                component['onSynchronizationToggleChange'](true);
+
+                expect(component.synchronizeVideoAndSlides()).toBe(true);
+                expect(component.syncDisabledByPointOut()).toBeUndefined();
+            });
+        });
     });
 });

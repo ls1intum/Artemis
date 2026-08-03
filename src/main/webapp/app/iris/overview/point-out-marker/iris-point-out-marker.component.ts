@@ -6,7 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { IrisMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
-import { IrisPointOut, getPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisPointOut, formatTimestamp, getPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 
@@ -105,19 +105,4 @@ export class IrisPointOutMarkerComponent {
         }
         return this.translateService.instant('artemisApp.iris.pointOut.labelNoUnit', { target });
     }
-}
-
-/**
- * Formats a number of seconds as mm:ss, or h:mm:ss for videos of an hour or longer.
- * @param seconds the video position in seconds
- * @return the formatted timestamp
- */
-function formatTimestamp(seconds: number): string {
-    const total = Math.max(0, Math.floor(seconds));
-    const hrs = Math.floor(total / 3600);
-    const mins = Math.floor((total % 3600) / 60);
-    const secs = total % 60;
-    const mm = hrs > 0 ? String(mins).padStart(2, '0') : String(mins);
-    const ss = String(secs).padStart(2, '0');
-    return hrs > 0 ? `${hrs}:${mm}:${ss}` : `${mm}:${ss}`;
 }

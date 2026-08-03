@@ -61,3 +61,19 @@ export function parsePointOut(parameters: Record<string, unknown> | undefined): 
 export function getPointOut(marker: Record<string, unknown>): IrisPointOut | undefined {
     return parsePointOut(marker['parameters'] as Record<string, unknown> | undefined);
 }
+
+/**
+ * Formats a number of seconds as mm:ss, or h:mm:ss for videos of an hour or longer. Shared by everything that
+ * names a point-out's video position to the student, so a position is printed the same way wherever it appears.
+ * @param seconds the video position in seconds
+ * @return the formatted timestamp
+ */
+export function formatTimestamp(seconds: number): string {
+    const total = Math.max(0, Math.floor(seconds));
+    const hrs = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    const mm = hrs > 0 ? String(mins).padStart(2, '0') : String(mins);
+    const ss = String(secs).padStart(2, '0');
+    return hrs > 0 ? `${hrs}:${mm}:${ss}` : `${mm}:${ss}`;
+}

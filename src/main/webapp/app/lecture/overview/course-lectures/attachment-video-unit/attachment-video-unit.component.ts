@@ -57,7 +57,7 @@ import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lectu
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { IrisPointOut, formatTimestamp } from 'app/iris/shared/entities/iris-point-out.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -66,6 +66,10 @@ import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
+
+/** Tolerance the video player applies when matching a position to a transcript segment; mirrored where we have to
+ * anticipate which segment a player will report for a timestamp. */
+const SEGMENT_BOUNDARY_TOLERANCE = 0.3;
 
 /** Sentinel in {@link Attachment.displayPageNumbers} meaning the slide has no detected display page number. */
 const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
@@ -165,6 +169,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     // A point-out navigation target waiting to be applied once the combined view is open and the
     // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
     private readonly pendingPointOut = signal<IrisPointOut | undefined>(undefined);
+
+    // The position a point-out turned synchronization off for, ready to be named in the notice that explains the
+    // switched-off toggle. The page is the number printed on the slide, so the notice agrees with the chip in the chat.
+    private readonly syncDisabledByPointOutState = signal<{ page: number; time: string } | undefined>(undefined);
+    readonly syncDisabledByPointOut = this.syncDisabledByPointOutState.asReadonly();
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -339,22 +348,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
             untracked(() => {
-                // Iris proposes the page, so it can name one the deck does not have (a slide's printed number rather
-                // than its index, say). The viewer rejects such a target and stays put, which must be reported back as
-                // not applied: an unconditional success would leave Iris claiming a jump that never happened and put a
-                // dead point-out chip into the chat history.
-                let applied = true;
-                if (pointOut.page != undefined) {
-                    applied = this.pdfViewer()?.goToPage(pointOut.page) ?? false;
-                }
-                if (pointOut.timestamp != undefined) {
-                    const videoPlayer = this.videoPlayer();
-                    if (videoPlayer) {
-                        videoPlayer.seekTo(pointOut.timestamp, false);
-                    } else {
-                        this.youtubePlayer()?.seekTo(pointOut.timestamp, false);
-                    }
-                }
+                const applied = this.applyPointOut(pointOut);
                 // Acknowledge a waiting pipeline only now — once the view has really moved — so Iris learns
                 // "applied" for the actual navigation, not merely because the combined view was open.
                 if (pointOut.correlationId) {
@@ -388,6 +382,79 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
         this.acknowledgeAsDropped(this.pendingPointOut());
         this.pendingPointOut.set(pointOut);
+    }
+
+    /**
+     * Moves the viewers to a point-out's position, with both viewers ready.
+     *
+     * A point-out naming only a page (or only a timestamp) leaves the other pane to synchronization on purpose —
+     * the video following Iris to the slide it named is what the toggle is for. A point-out naming both is applied
+     * as given, and where that contradicts synchronization the toggle gives way first, so the seek cannot drag the
+     * PDF back off the page Iris named.
+     *
+     * @param pointOut the navigation target to apply
+     * @return whether the view really moved to it. Iris proposes the page, so it can name one the deck does not
+     *         have (a slide's printed number rather than its index, say), which must be reported back as not
+     *         applied: an unconditional success would leave Iris claiming a jump that never happened and put a
+     *         dead point-out chip into the chat history.
+     */
+    private applyPointOut(pointOut: IrisPointOut): boolean {
+        const page = pointOut.page;
+        const timestamp = pointOut.timestamp;
+
+        // A point-out supersedes the explanation left by an earlier one, whether or not it disables the toggle again.
+        this.syncDisabledByPointOutState.set(undefined);
+        if (page != undefined && timestamp != undefined && this.contradictsSynchronization(page, timestamp)) {
+            this.synchronizeVideoAndSlides.set(false);
+            this.clearSynchronizationTargets();
+            this.syncDisabledByPointOutState.set({ page: pointOut.displayPage ?? page, time: formatTimestamp(timestamp) });
+        }
+
+        let applied = true;
+        if (page != undefined) {
+            applied = this.pdfViewer()?.goToPage(page) ?? false;
+        }
+        if (timestamp != undefined) {
+            const videoPlayer = this.videoPlayer();
+            if (videoPlayer) {
+                videoPlayer.seekTo(timestamp, false);
+            } else {
+                this.youtubePlayer()?.seekTo(timestamp, false);
+            }
+        }
+        return applied;
+    }
+
+    /**
+     * Whether a point-out asks for a position the two panes cannot hold while synchronized — the page it names is
+     * not the one synchronization pairs with the slide its timestamp falls on. Left switched on, the toggle would
+     * undo the point-out: the student's next scroll or the video playing on would snap one pane away from where
+     * Iris pointed them, which reads as a glitch. So the point-out wins and the toggle is switched off, honestly
+     * showing the mismatch and leaving it to the student to re-synchronize.
+     *
+     * That Iris contradicts synchronization does not make Iris wrong: synchronization pairs a slide with the
+     * *first* transcript segment mentioning it and rests on the slide detection in the transcript, which makes it
+     * the weaker of the two statements.
+     *
+     * @param page the slide page the point-out asks for
+     * @param timestamp the video position the point-out asks for
+     * @return whether synchronization has to give way for them
+     */
+    private contradictsSynchronization(page: number, timestamp: number): boolean {
+        if (!this.synchronizeVideoAndSlides()) {
+            return false;
+        }
+        // Each player resolves a timestamp to a segment itself, and at a shared boundary the two disagree: the video
+        // player takes the earlier segment (it allows a 0.3s tolerance), the YouTube player the later one. Since Iris
+        // tends to name exactly such boundary timestamps, every segment either of them could land on has to map back
+        // to the page Iris named — judging by one player's rule would let the other's echo drag the PDF off it.
+        const candidates = this.transcriptSegments().filter(
+            (segment) => timestamp >= (segment.startTime ?? Infinity) - SEGMENT_BOUNDARY_TOLERANCE && timestamp <= (segment.endTime ?? -Infinity) + SEGMENT_BOUNDARY_TOLERANCE,
+        );
+        const pdfPages = this.synchronizationState().displayedPageNumberToPdfPage;
+        // No segment at all, or a slide with no page of its own, has no synchronization partner either, so it is
+        // just as little a position the toggle can hold.
+        return candidates.length === 0 || candidates.some((segment) => segment.slideNumber == undefined || pdfPages.get(segment.slideNumber) !== page);
     }
 
     /**
@@ -662,10 +729,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // out in) keeps it from being applied on a later, unrelated reopen.
             this.acknowledgeAsDropped(this.pendingPointOut());
             this.pendingPointOut.set(undefined);
+            // The toggle it explains goes away with the view; a later reopen starts without a stale explanation.
+            this.syncDisabledByPointOutState.set(undefined);
         }
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {
+        // The student is deciding about the toggle themselves, so the explanation for its state has served its purpose.
+        this.syncDisabledByPointOutState.set(undefined);
         if (!enabled || !this.synchronizationAvailable()) {
             this.synchronizeVideoAndSlides.set(false);
             this.clearSynchronizationTargets();
