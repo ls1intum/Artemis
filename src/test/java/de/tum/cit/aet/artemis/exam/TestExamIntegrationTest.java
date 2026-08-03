@@ -15,8 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.user.PasswordService;
-import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -38,14 +36,14 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "testexamintegration";
 
+    /** Student not enrolled in either test course; exercises the wrong-course branches. */
+    private static final String OTHER_PREFIX = "testexamintegrationother";
+
     @Autowired
     private ExamTestRepository examRepository;
 
     @Autowired
     private ExamUserRepository examUserRepository;
-
-    @Autowired
-    private PasswordService passwordService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -74,11 +72,10 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
-        // Add a student that is not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.addUsers(OTHER_PREFIX, 1, 0, 0, 0); // outsider student — never enrolled in either course
 
-        course1 = courseUtilService.addEmptyCourse();
-        course2 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         testExam1 = examUtilService.addTestExam(course1);
@@ -213,7 +210,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // ExamResource - getStudentExamForTestExamForStart
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExamForStart_notRegisteredInCourse() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, String.class);
     }

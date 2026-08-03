@@ -62,6 +62,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -156,7 +157,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
             queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
             data: of({
-                studentParticipation: participation,
+                textAssessmentData: { participation },
             }),
         } as unknown as ActivatedRoute;
 
@@ -220,7 +221,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should show jhi-text-assessment-area', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -233,8 +234,37 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(sharedLayout).not.toBeNull();
     });
 
+    describe('when assessment is not possible yet', () => {
+        // The resolver swallows the load error so that the page renders, so it has to hand over the reason: without it
+        // the page cannot tell "nothing to assess" apart from "the exam is still running" and claims the former.
+        const assessmentNotPossibleYet = { translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' };
+
+        it('should explain the wait instead of claiming that the submission was not found', async () => {
+            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toEqual(assessmentNotPossibleYet);
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.textAssessment.notFound"]'))).toBeNull();
+            expect(fixture.nativeElement.textContent).not.toContain('No Submission for specified ID');
+        });
+
+        it('should clear the explanation once a submission is loaded', async () => {
+            component['setPropertiesFromServerResponse']({ assessmentNotPossibleYet });
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            component['setPropertiesFromServerResponse']({ participation });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(fixture.debugElement.query(By.css('#assessment-not-possible-yet'))).toBeNull();
+        });
+    });
+
     it('should update score', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -248,7 +278,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should save the assessment with correct parameters', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         const handleFeedbackStub = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
         fixture.detectChanges();
@@ -339,7 +369,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should submit the assessment with correct parameters', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -372,7 +402,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should handle error if saving fails', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         component.assessmentsAreValid.set(true);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -400,7 +430,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should cancel assessment', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -417,7 +447,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should go to next submission', async () => {
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         const routerSpy = vi.spyOn(router, 'navigate');
 
         await component.ngOnInit();
@@ -488,7 +518,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as Feedback);
         // END: Adding a new block (with feedback) that overlaps with an existing block
 
-        component['setPropertiesFromServerResponse'](participation);
+        component['setPropertiesFromServerResponse']({ participation });
         fixture.detectChanges();
         await fixture.whenStable();
 

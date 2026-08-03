@@ -48,11 +48,11 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
                 LEFT JOIN FETCH conversationParticipant.user user
-                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.courseRoles
                 LEFT JOIN FETCH user.authorities
             WHERE conversationParticipant.conversation.id = :conversationId
             """)
-    Set<ConversationParticipant> findConversationParticipantsWithUserGroupsByConversationId(@Param("conversationId") Long conversationId);
+    Set<ConversationParticipant> findConversationParticipantsWithUserCourseRolesByConversationId(@Param("conversationId") Long conversationId);
 
     @Async
     @Transactional // ok because of modifying query
@@ -174,6 +174,21 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByConversationId(Long conversationId);
+
+    /**
+     * Deletes all conversation participants (channel/conversation memberships and their read state) of every
+     * conversation belonging to the given course. Used by the course reset to remove the per-user membership data while
+     * the conversation/channel structure itself is preserved.
+     *
+     * @param courseId the id of the course whose conversation participants should be deleted
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("""
+            DELETE FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.course.id = :courseId
+            """)
+    void deleteAllByConversationCourseId(@Param("courseId") long courseId);
 
     /**
      * Increment unreadMessageCount field of ConversationParticipant

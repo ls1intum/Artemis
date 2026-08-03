@@ -76,25 +76,28 @@ record ShortAnswerQuestionStatisticDTO(Set<ShortAnswerSpotCounterDTO> shortAnswe
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerSpotCounterDTO(ShortAnswerSpotDTO spot, @JsonUnwrapped QuizStatisticCounterDTO quizStatisticCounter) {
+record ShortAnswerSpotCounterDTO(Long spotId, @JsonUnwrapped QuizStatisticCounterDTO quizStatisticCounter) {
 
     public static ShortAnswerSpotCounterDTO of(ShortAnswerSpotCounter shortAnswerSpotCounter) {
-        return new ShortAnswerSpotCounterDTO(ShortAnswerSpotDTO.of(shortAnswerSpotCounter.getSpot()), QuizStatisticCounterDTO.of(shortAnswerSpotCounter));
+        QuizStatisticCounterDTO counterDTO = new QuizStatisticCounterDTO(null, shortAnswerSpotCounter.getRatedCounter(), shortAnswerSpotCounter.getUnRatedCounter());
+        return new ShortAnswerSpotCounterDTO(shortAnswerSpotCounter.getSpotId(), counterDTO);
     }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DropLocationCounterDTO(DropLocationDTO dropLocation, @JsonUnwrapped QuizStatisticCounterDTO quizStatisticCounter) {
+record DropLocationCounterDTO(Long dropLocationId, @JsonUnwrapped QuizStatisticCounterDTO quizStatisticCounter) {
 
     public static DropLocationCounterDTO of(DropLocationCounter dropLocationCounter) {
-        return new DropLocationCounterDTO(DropLocationDTO.of(dropLocationCounter.getDropLocation()), QuizStatisticCounterDTO.of(dropLocationCounter));
+        QuizStatisticCounterDTO counterDTO = new QuizStatisticCounterDTO(null, dropLocationCounter.getRatedCounter(), dropLocationCounter.getUnRatedCounter());
+        return new DropLocationCounterDTO(dropLocationCounter.getDropLocationId(), counterDTO);
     }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record AnswerCounterDTO(AnswerOptionWithSolutionDTO answer, @JsonUnwrapped QuizStatisticCounterDTO quizStatisticCounter) {
+record AnswerCounterDTO(Long answerId, @JsonUnwrapped QuizStatisticCounterDTO quizStatisticCounter) {
 
     public static AnswerCounterDTO of(AnswerCounter answerCounter) {
-        return new AnswerCounterDTO(AnswerOptionWithSolutionDTO.of(answerCounter.getAnswer()), QuizStatisticCounterDTO.of(answerCounter));
+        QuizStatisticCounterDTO counterDTO = new QuizStatisticCounterDTO(null, answerCounter.getRatedCounter(), answerCounter.getUnRatedCounter());
+        return new AnswerCounterDTO(answerCounter.getAnswerId(), counterDTO);
     }
 }

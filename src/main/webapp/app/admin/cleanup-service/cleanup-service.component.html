@@ -18,7 +18,7 @@
                     <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
                 </td>
                 <td>
-                    @if (operation.name !== 'deleteOrphans') {
+                    @if (!operation.ageBased) {
                         <tum-ui-date-picker
                             [inputId]="'deleteFromDate-' + operation.name"
                             [value]="operation.deleteFrom"
@@ -35,7 +35,7 @@
                     }
                 </td>
                 <td>
-                    @if (operation.name !== 'deleteOrphans') {
+                    @if (!operation.ageBased) {
                         <tum-ui-date-picker
                             [inputId]="'deleteToDate-' + operation.name"
                             [value]="operation.deleteTo"
