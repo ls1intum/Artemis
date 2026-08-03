@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Introduce a lazily-loaded per-course configuration entity so course-level settings do not widen the (already
+         large) course table. Currently stores the grade-relevance flag driving the GDPR data-retention period, the
+         data-retention hold suspending that cleanup, and the retention lifecycle timestamps. -->
+    <changeSet id="20260717095457-01-create-course-configuration" author="krusche">
+        <createTable tableName="course_configuration">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueBoolean="true" name="grade_relevant" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="data_retention_hold" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reset_warning_sent_date" type="datetime(3)"/>
+            <column name="student_data_reset_date" type="datetime(3)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260717095457-02-add-course-configuration-fk" author="krusche">
+        <addColumn tableName="course">
+            <column name="course_configuration_id" type="bigint"/>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="course_configuration_id" baseTableName="course"
+                                 constraintName="fk_course_course_configuration" onDelete="SET NULL" onUpdate="RESTRICT"
+                                 referencedColumnNames="id" referencedTableName="course_configuration"/>
+    </changeSet>
+</databaseChangeLog>
