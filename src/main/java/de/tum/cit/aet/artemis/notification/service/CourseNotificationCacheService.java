@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -14,8 +16,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * Service for managing course notification caches.
@@ -40,11 +40,8 @@ public class CourseNotificationCacheService {
 
     private final CacheManager cacheManager;
 
-    private final DistributedDataProvider distributedDataProvider;
-
-    public CourseNotificationCacheService(CacheManager cacheManager, DistributedDataProvider distributedDataProvider) {
+    public CourseNotificationCacheService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
-        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -94,36 +91,59 @@ public class CourseNotificationCacheService {
      * Since we cannot tag our cache, this method is used to clear paging-related caches
      * by matching and removing entries with keys that start with the given prefix.
      *
-     * @param cache The name of the cache to invalidate entries from
-     * @param key   The key prefix to match against cache entries
+     * @param cacheName The name of the cache to invalidate entries from
+     * @param keyPrefix The key prefix to match against cache entries
      */
-    private void invalidateCacheForKeyStartingWith(String cache, String key) {
-        // Spring's Cache API cannot enumerate keys, so the prefix scan goes through the distributed map that backs the
-        // cache. Both are addressed by the cache name, which is what makes this work without reaching for a
-        // backend-specific cache manager.
-        DistributedMap<Object, Object> cacheMap = distributedDataProvider.getMap(cache);
-        cacheMap.keySet().stream().filter(k -> k.toString().startsWith(key)).forEach(k -> {
-            try {
-                cacheMap.remove(k);
+    private void invalidateCacheForKeyStartingWith(String cacheName, String keyPrefix) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            log.warn("Cannot invalidate entries of cache '{}' with prefix '{}': the cache is not configured", cacheName, keyPrefix);
+            return;
+        }
+        // Spring's Cache API cannot enumerate keys, so the prefix scan has to reach the store that backs this cache.
+        // It must be *this* cache's store and not the configured distributed data provider: @Cacheable resolves against
+        // the primary RoutingCacheManager, which serves every non-blob cache from the Hazelcast-backed manager on core
+        // nodes regardless of which provider is configured. Scanning the provider's map would therefore be a no-op under
+        // the Redis and Local providers and leave users looking at stale notifications.
+        if (!(cache.getNativeCache() instanceof Map<?, ?> nativeCache)) {
+            log.warn("Cannot invalidate entries of cache '{}' by key prefix: its backing store does not expose its keys", cacheName);
+            return;
+        }
+        // Copy first: the keys are removed while iterating, and the backing store may be a concurrently modified distributed map.
+        for (Object cacheKey : new HashSet<>(nativeCache.keySet())) {
+            if (cacheKey != null && cacheKey.toString().startsWith(keyPrefix)) {
+                evict(cache, cacheKey);
             }
-            catch (ClassCastException | NullPointerException e) {
-                log.error("Failed to delete cache entry with key: {}", k, e);
-            }
-        });
+        }
     }
 
     /**
-     * Invalidates cache entries with a specified key.
+     * Invalidates the cache entry with the specified key.
      *
-     * @param cache The name of the cache to invalidate entries from
-     * @param key   The key to delete
+     * @param cacheName The name of the cache to invalidate the entry from
+     * @param key       The key to delete
      */
-    private void invalidateCacheForKey(String cache, String key) {
-        try {
-            distributedDataProvider.getMap(cache).remove(key);
+    private void invalidateCacheForKey(String cacheName, String key) {
+        Cache cache = cacheManager.getCache(cacheName);
+        if (cache == null) {
+            log.warn("Cannot invalidate key '{}': cache '{}' is not configured", key, cacheName);
+            return;
         }
-        catch (ClassCastException | NullPointerException e) {
-            // Nothing needs to be done
+        evict(cache, key);
+    }
+
+    /**
+     * Evicts a single entry, keeping a failure for one key from abandoning the rest of an invalidation.
+     *
+     * @param cache the cache to evict from
+     * @param key   the key to evict
+     */
+    private void evict(Cache cache, Object key) {
+        try {
+            cache.evict(key);
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to delete entry with key {} from cache '{}'", key, cache.getName(), e);
         }
     }
 }
