@@ -172,8 +172,9 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         oidcService.loadUser(createMockUserRequest(createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName")));
         assertStudentExists();
 
-        User student = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        User student = userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
+        student.setInternal(true); // OIDC users are external by default; make internal for password auth test
         userTestRepository.saveAndFlush(student);
 
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -253,7 +254,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         createUser(STUDENT_NAME + "@artemis.local");
 
         // Deactivate user
-        User student = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        User student = userTestRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setActivated(false);
         userTestRepository.saveAndFlush(student);
 

@@ -129,7 +129,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         // Create learner profiles for test users
         learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
-        var textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var textCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textSubmission = ParticipationFactory.generateTextSubmission("This is a test sentence. This is a second test sentence. This is a third test sentence.", Language.ENGLISH,
                 true);
@@ -139,7 +139,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
 
-        var programmingCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var programmingCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
         // Allow manual results
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -153,7 +153,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingSubmission.setParticipation(programmingParticipation);
         programmingSubmissionRepository.save(programmingSubmission);
 
-        var modelingCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        var modelingCourse = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(modelingCourse.getExercises(), "ClassDiagram");
         modelingSubmission = ParticipationFactory.generateModelingSubmission("", true);
         var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,

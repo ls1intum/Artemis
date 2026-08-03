@@ -68,7 +68,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportRepository() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
@@ -99,7 +99,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldExportAllValidInstructorRepositoryTypes() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);

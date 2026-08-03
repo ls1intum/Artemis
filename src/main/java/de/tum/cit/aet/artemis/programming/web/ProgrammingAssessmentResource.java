@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -63,13 +64,17 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final SubmissionService submissionService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            SubmissionService submissionService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -84,7 +89,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdateDTO assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
@@ -136,7 +141,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         log.debug("REST request to save a new result : {}", newManualResult);
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
         Result existingManualResult = participation.getSubmissions().stream()
@@ -159,6 +164,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
+        submissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         boolean isFeedbackRequest = participation.getIndividualDueDate() != null && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
         if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");

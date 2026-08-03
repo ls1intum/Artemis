@@ -4,7 +4,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Observable, firstValueFrom, forkJoin, of, tap } from 'rxjs';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { integerValidator } from 'app/shared-ui/form/integer-validator.directive';
@@ -29,7 +28,7 @@ import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-messa
 import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
 import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteComponent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
 import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
@@ -52,9 +51,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
-import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
-
-const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
 @Component({
     selector: 'jhi-course-update',
@@ -77,8 +73,6 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         ArtemisTranslatePipe,
         RemoveKeysPipe,
         FeatureOverlayComponent,
-        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
-        HasAnyAuthorityDirective,
         RouterLink,
         TumUiDialogComponent,
         TumUiCheckboxComponent,
@@ -107,7 +101,6 @@ export class CourseUpdateComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
     protected readonly MAX_GRADING_POINTS = MAX_GRADING_POINTS;
@@ -116,7 +109,6 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly faBan = faBan;
     protected readonly faTrash = faTrash;
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faPen = faPen;
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
@@ -147,7 +139,6 @@ export class CourseUpdateComponent implements OnInit {
     readonly croppedImage = signal<string | undefined>(undefined);
     readonly complaintsEnabled = signal(true);
     readonly requestMoreFeedbackEnabled = signal(true);
-    readonly customizeGroupNames = signal(false);
     readonly courseOrganizations = signal<Organization[]>(undefined!);
     /** Controls visibility of the declarative organization-selector dialog. */
     readonly orgSelectorVisible = signal(false);
@@ -209,22 +200,6 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
-        if (!this.profileService.isProduction()) {
-            // developers may want to customize the groups
-            this.customizeGroupNames.set(true);
-            if (!this.course.studentGroupName) {
-                this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-            if (!this.course.teachingAssistantGroupName) {
-                this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-            if (!this.course.editorGroupName) {
-                this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-            if (!this.course.instructorGroupName) {
-                this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-        }
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
@@ -247,18 +222,14 @@ export class CourseUpdateComponent implements OnInit {
                         updateOn: 'blur',
                     },
                 ),
-                // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
-                customizeGroupNames: new FormControl(this.customizeGroupNames()),
-                studentGroupName: new FormControl(this.course.studentGroupName),
-                teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
-                editorGroupName: new FormControl(this.course.editorGroupName),
-                instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
                 startDate: new FormControl(this.course.startDate),
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
+                gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
+                dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
@@ -356,10 +327,18 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue() as Course;
+        const rawValue = this.courseForm.getRawValue();
+        const course = rawValue as Course;
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
+
+        // Map the flat data-privacy form controls into the nested course configuration expected by the update DTO mapper.
+        course.courseConfiguration = {
+            id: this.course.courseConfiguration?.id,
+            gradeRelevant: rawValue.gradeRelevant ?? true,
+            dataRetentionHold: rawValue.dataRetentionHold ?? false,
+        };
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -604,41 +583,6 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Enable or disable the customization of groups
-     */
-    changeCustomizeGroupNames() {
-        if (!this.customizeGroupNames()) {
-            this.customizeGroupNames.set(true);
-            this.setGroupNameValuesInCourseForm(
-                this.course.studentGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-                this.course.teachingAssistantGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-                this.course.editorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-                this.course.instructorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-            );
-        } else {
-            this.customizeGroupNames.set(false);
-            if (!this.course.id) {
-                // Creating: clear the values so groups are no longer customized
-                this.setGroupNameValuesInCourseForm(undefined, undefined, undefined, undefined);
-            } else {
-                // Editing: restore the old values -> no change.
-                this.setGroupNameValuesInCourseForm(
-                    this.course.studentGroupName,
-                    this.course.teachingAssistantGroupName,
-                    this.course.editorGroupName,
-                    this.course.instructorGroupName,
-                );
-            }
-        }
-    }
-
-    private setGroupNameValuesInCourseForm(studentGroupName?: string, teachingAssistantGroupName?: string, editorGroupName?: string, instructorGroupName?: string) {
-        this.courseForm.controls['studentGroupName'].setValue(studentGroupName);
-        this.courseForm.controls['teachingAssistantGroupName'].setValue(teachingAssistantGroupName);
-        this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
-        this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
-    }
-
     /**
      * Enable or disable test course
      */

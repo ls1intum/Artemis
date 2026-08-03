@@ -57,8 +57,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
-    // TODO: delete publish_build_plan_url from exercise using liquibase
-
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     @Override
     public String getType() {
@@ -617,7 +615,29 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Check if the exercise is configured for manual assessment at all, independently of any date.
+     *
+     * @return true if tutors are meant to assess this exercise manually, false if it is assessed purely automatically
+     */
+    @JsonIgnore
+    public boolean isManualAssessmentConfigured() {
+        return getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments();
+    }
+
+    /**
      * Check if manual results are allowed for the exercise.
+     * <p>
+     * For exam exercises only the configuration is checked here. The point in time from which on assessment is possible
+     * depends on the individual student exams and is enforced by
+     * {@code SubmissionService#checkThatAssessmentIsPossibleElseThrow}, which additionally tells the tutor when they can
+     * start. Evaluating the build-and-test date here as well would also block instructor test runs, which happen before
+     * the exam starts and must stay assessable.
+     * <p>
+     * One caller is deliberately not behind that gate: {@code StudentExamService#prepareProgrammingSubmission}, used by
+     * "assess unsubmitted / empty student exams". It now also creates the empty submission in the window between the end
+     * of the exam and the build-and-test date, where it previously skipped programming participations. That endpoint
+     * already requires the exam and its grace period to be over, and creating the submission is what lets the
+     * participation be graded with 0 points at all, so this is intended.
      * <p>
      * {@code isFeedbackRequest} must reflect whether the concrete participation/submission being assessed is an actual feedback
      * request (i.e. has an individual due date before the exercise due date), not merely whether the course allows Athena
@@ -629,18 +649,20 @@ public class ProgrammingExercise extends Exercise {
      */
     public boolean areManualResultsAllowed(boolean isFeedbackRequest) {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
-        if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
-            // The relevantDueDate check below keeps us from assessing feedback requests,
-            // as their relevantDueDate is before the due date
-            if (isFeedbackRequest) {
-                return true;
-            }
-
-            final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-            return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        if (!isManualAssessmentConfigured()) {
+            return false;
+        }
+        if (isExamExercise()) {
+            return true;
+        }
+        // The relevantDueDate check below keeps us from assessing feedback requests,
+        // as their relevantDueDate is before the due date
+        if (isFeedbackRequest) {
+            return true;
         }
 
-        return false;
+        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+        return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
     }
 
     @Override

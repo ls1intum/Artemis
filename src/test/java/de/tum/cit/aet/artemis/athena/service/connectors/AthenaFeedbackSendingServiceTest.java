@@ -231,6 +231,16 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    void testFeedbackSendingProgrammingWithLineRange() {
+        programmingFeedback.setReference("file:src/Test.java_line:12-14");
+
+        athenaRequestMockProvider.mockSendFeedbackAndExpect("programming", jsonPath("$.feedbacks[0].lineStart").value(12), jsonPath("$.feedbacks[0].lineEnd").value(14));
+
+        athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
+        await().untilAsserted(() -> athenaRequestMockProvider.verify());
+    }
+
+    @Test
     void testEmptyFeedbackNotSending() {
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of());
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of());

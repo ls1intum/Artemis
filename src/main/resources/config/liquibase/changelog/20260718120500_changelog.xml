@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Data-privacy (GDPR) not-enrolled-user cleanup: track the last login (a real activity signal, unlike the
+         auditing lastModifiedDate) and the date the user was warned about an upcoming deletion (two-phase warn -> grace
+         -> delete, mirroring the old-course reset). -->
+    <changeSet id="20260718120500-01-add-user-activity-columns" author="krusche">
+        <addColumn tableName="jhi_user">
+            <column name="last_login_date" type="datetime(3)"/>
+            <column name="deletion_warning_sent_date" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Backfill the last login for existing users to the migration time so nobody is instantly considered inactive on
+         the first (opt-in) cleanup run. The inactivity clock therefore starts at deployment; real logins update it from
+         then on. -->
+    <changeSet id="20260718120500-02-backfill-last-login-date" author="krusche">
+        <update tableName="jhi_user">
+            <column name="last_login_date" valueComputed="CURRENT_TIMESTAMP"/>
+            <where>last_login_date IS NULL</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

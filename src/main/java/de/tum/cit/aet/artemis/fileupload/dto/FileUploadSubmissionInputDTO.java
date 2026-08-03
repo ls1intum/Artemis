@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -12,7 +14,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * @param exerciseId the ID of the file upload exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadSubmissionInputDTO(Long id, boolean submitted, Long exerciseId) {
+public record FileUploadSubmissionInputDTO(@Nullable Long id, boolean submitted, @Nullable Long exerciseId) {
 
     /**
      * Converts this DTO to a {@link FileUploadSubmission} entity.

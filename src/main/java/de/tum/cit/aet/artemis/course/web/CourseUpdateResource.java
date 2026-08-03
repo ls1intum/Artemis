@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -40,6 +38,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseValidator;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
@@ -77,14 +76,16 @@ public class CourseUpdateResource {
 
     private final CourseRepository courseRepository;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     private final UserRepository userRepository;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository, UserRepository userRepository,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
+            CourseConfigurationRepository courseConfigurationRepository, UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -93,18 +94,9 @@ public class CourseUpdateResource {
         this.conductAgreementService = conductAgreementService;
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
         this.userRepository = userRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
-    }
-
-    private static Set<String> getChangedGroupNames(CourseUpdateDTO courseUpdateDTO, Course existingCourse) {
-        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
-                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
-        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdateDTO.studentGroupName(), courseUpdateDTO.teachingAssistantGroupName(), courseUpdateDTO.editorGroupName(),
-                courseUpdateDTO.instructorGroupName()));
-        Set<String> changedGroupNames = new HashSet<>(newGroupNames);
-        changedGroupNames.removeAll(existingGroupNames);
-        return changedGroupNames;
     }
 
     /**
@@ -120,13 +112,12 @@ public class CourseUpdateResource {
     public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") CourseUpdateDTO courseUpdateDTO,
             @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
-        // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException
-        // in the instructor permission check below and in courseUpdateDTO.applyTo()
+        // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException in courseUpdateDTO.applyTo()
         existingCourse.setAthenaConfig(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId).getAthenaConfig());
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
@@ -143,15 +134,6 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        if (!authCheckService.isAdmin(user)) {
-            // this means the user must be an instructor, who has NO Admin rights.
-            // instructors are not allowed to change group names, because this would lead to security problems
-            final var changedGroupNames = getChangedGroupNames(courseUpdateDTO, existingCourse);
-            if (!changedGroupNames.isEmpty()) {
-                throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
-            }
-        }
-
         if (courseUpdateDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
@@ -161,6 +143,10 @@ public class CourseUpdateResource {
         // Save values that are checked AFTER applyTo mutates the entity
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
+
+        // Attach the (lazily-stored) course configuration so applyTo updates the grade-relevance flag in place instead of
+        // creating a duplicate. Fetched via its own repository to keep the course update entity graph small.
+        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);

@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { EntityArrayResponseType } from 'app/course/manage/services/course-management.service';
 
@@ -31,7 +31,7 @@ export class MockCourseManagementService {
         return of();
     };
 
-    getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
+    getAllUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug): Observable<HttpResponse<User[]>> {
         return of(new HttpResponse({ body: [] }));
     }
 
