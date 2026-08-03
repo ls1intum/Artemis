@@ -116,7 +116,11 @@ public class JWTFilter extends GenericFilterBean {
             // Determine the lifetime of the rotated token
             long rotatedTokenDurationInMs = newTokenExpirationTimeInMs - nowInMs;
             // Create the rotated token with updated expiration and same issued time/tools
-            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken), true);
+            // The passkey claims are read from the expiring token and passed on explicitly: the authentication was rebuilt
+            // from that token and carries no details, so deriving them from it would drop the credential id (defeating the
+            // check above from the second rotation onwards) and reset the super-admin approval flag.
+            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken), true,
+                    passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(jwtToken));
 
             // Build and set the new token as a response cookie
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);

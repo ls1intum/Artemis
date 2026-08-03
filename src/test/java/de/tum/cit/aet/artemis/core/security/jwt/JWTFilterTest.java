@@ -16,6 +16,7 @@ import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -46,6 +47,8 @@ class JWTFilterTest {
 
     private PasskeyTokenRenewalService passkeyTokenRenewalService;
 
+    private JWTCookieService jwtCookieServiceMock;
+
     @BeforeEach
     void setup() {
         ArtemisProperties jHipsterProperties = new ArtemisProperties();
@@ -61,7 +64,8 @@ class JWTFilterTest {
         // for any rotation to be due at all.
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TOKEN_VALIDITY_IN_MILLISECONDS);
 
-        JWTCookieService jwtCookieService = mock(JWTCookieService.class);
+        jwtCookieServiceMock = mock(JWTCookieService.class);
+        JWTCookieService jwtCookieService = jwtCookieServiceMock;
         // The filter calls toString() on whatever the service returns, so a real cookie is needed rather than null.
         when(jwtCookieService.buildRotatedCookie(any(), anyLong())).thenReturn(ResponseCookie.from(Constants.JWT_COOKIE_NAME, "rotated").build());
 
@@ -190,6 +194,39 @@ class JWTFilterTest {
         MockHttpServletResponse response = filterWithToken(createRotationDuePasskeyToken("credential-1"));
 
         assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).as("the session is not extended").isNull();
+    }
+
+    @Test
+    void aRotatedTokenKeepsTheCredentialIdSoLaterRotationsCanStillCheckIt() throws Exception {
+        // Without this the check works exactly once: the authentication is rebuilt from the expiring token and carries no
+        // details, so the rotated token would lose the claim, and every later rotation would look like a legacy token and
+        // be extended unconditionally.
+        when(passkeyTokenRenewalService.mayExtendSession("credential-1")).thenReturn(true);
+        ArgumentCaptor<String> rotatedToken = ArgumentCaptor.forClass(String.class);
+
+        filterWithToken(createRotationDuePasskeyToken("credential-1"));
+
+        verify(jwtCookieServiceMock).buildRotatedCookie(rotatedToken.capture(), anyLong());
+        assertThat(tokenProvider.getPasskeyCredentialId(rotatedToken.getValue())).isEqualTo("credential-1");
+    }
+
+    @Test
+    void aRotatedTokenKeepsTheSuperAdminApprovalFlag() {
+        // Same root cause: deriving the passkey claims from the rebuilt authentication silently reset this flag on every
+        // rotation, quietly downgrading an approved super admin.
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Map<String, Object> details = new HashMap<>();
+        details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, true);
+        details.put(TokenProvider.PASSKEY_CREDENTIAL_ID, "credential-1");
+        authentication.setDetails(details);
+        String original = tokenProvider.createToken(authentication, new Date(), new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS), null, true);
+
+        var rebuiltAuthentication = tokenProvider.getAuthentication(original);
+        String rotated = tokenProvider.createToken(rebuiltAuthentication, new Date(), new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS), null, true,
+                tokenProvider.getPasskeyCredentialId(original), tokenProvider.isPasskeySuperAdminApproved(original));
+
+        assertThat(tokenProvider.isPasskeySuperAdminApproved(rotated)).isTrue();
+        assertThat(tokenProvider.getPasskeyCredentialId(rotated)).isEqualTo("credential-1");
     }
 
     @Test

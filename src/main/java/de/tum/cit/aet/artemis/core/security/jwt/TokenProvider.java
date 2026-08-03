@@ -145,6 +145,35 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
+        boolean isPasskeyApproved = false;
+        String passkeyCredentialId = null;
+        if (authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+            if (details.get(PASSKEY_CREDENTIAL_ID) instanceof String credentialId) {
+                passkeyCredentialId = credentialId;
+            }
+        }
+        return createToken(authentication, issuedAt, expiration, tool, authenticatedWithPasskey, passkeyCredentialId, isPasskeyApproved);
+    }
+
+    /**
+     * Creates a token with the passkey claims supplied explicitly rather than read from the authentication details.
+     * <p>
+     * Silent rotation needs this: the {@link Authentication} it works with was rebuilt from the expiring token and carries
+     * no details, so deriving the passkey claims from it would drop them. Losing the credential id would defeat the check
+     * that the passkey still exists, and losing the approval flag would silently downgrade a super admin.
+     *
+     * @param authentication              the authentication to create the token for
+     * @param issuedAt                    when the token was originally issued, preserved across rotations
+     * @param expiration                  when the token expires
+     * @param tool                        the tool the token is scoped to, if any
+     * @param authenticatedWithPasskey    whether the session was established with a passkey
+     * @param passkeyCredentialId         the passkey the session belongs to, or {@code null} if it is not a passkey session
+     * @param isPasskeySuperAdminApproved whether the passkey is approved for super-admin access
+     * @return the signed token
+     */
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
+            @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
@@ -152,14 +181,7 @@ public class TokenProvider {
             authenticationMethod = AuthenticationMethod.PASSKEY;
         }
 
-        boolean isPasskeyApproved = false;
-        String passkeyCredentialId = null;
-        if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
-            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
-            if (details.get(PASSKEY_CREDENTIAL_ID) instanceof String credentialId) {
-                passkeyCredentialId = credentialId;
-            }
-        }
+        boolean isPasskeyApproved = authenticationMethod == AuthenticationMethod.PASSKEY && isPasskeySuperAdminApproved;
 
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
@@ -252,16 +274,17 @@ public class TokenProvider {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    @NonNull
     /**
      * @param authToken the token to read
      * @return the passkey this token was issued for, or {@code null} for tokens that are not passkey tokens and for
      *         passkey tokens issued before the claim was introduced
      */
+    @Nullable
     public String getPasskeyCredentialId(String authToken) {
         return parseClaims(authToken).get(PASSKEY_CREDENTIAL_ID, String.class);
     }
 
+    @NonNull
     public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
         return claims.get(claimName, claimType);
