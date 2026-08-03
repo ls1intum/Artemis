@@ -8,6 +8,8 @@ import java.util.Locale;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -85,15 +87,20 @@ class TeamStudentUniquenessViolationTest {
      * turn the client-facing 400 into a 500 for every concurrent team conflict on that node.
      */
     @Test
+    @ResourceLock(Resources.LOCALE)
     void matchesRegardlessOfTheDefaultLocale() {
-        Locale defaultLocale = Locale.getDefault();
+        // The default locale is JVM-wide state, so the resource lock keeps a parallel test from observing tr_TR. Both
+        // categories are captured because setDefault(Locale) overwrites DISPLAY and FORMAT, which need not be equal.
+        Locale displayLocale = Locale.getDefault(Locale.Category.DISPLAY);
+        Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
         try {
             Locale.setDefault(Locale.of("tr", "TR"));
 
             assertThat(TeamStudentUniquenessViolation.matches(constraintViolation("UK_TEAM_STUDENT_EXERCISE_STUDENT"))).isTrue();
         }
         finally {
-            Locale.setDefault(defaultLocale);
+            Locale.setDefault(Locale.Category.DISPLAY, displayLocale);
+            Locale.setDefault(Locale.Category.FORMAT, formatLocale);
         }
     }
 
