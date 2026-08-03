@@ -172,11 +172,12 @@ export class AuditsComponent implements OnInit {
     /**
      * Switches to another audit log. Resets to the first page, because page numbers do not carry over between logs.
      *
-     * @param value the selected tab value, as emitted by the PrimeNG tabs component
+     * @param value the selected tab value, as emitted by the PrimeNG tabs component. Its emitted type includes
+     *                  `undefined`, which is ignored here: only a value matching a known log triggers a switch.
      */
-    onLogTypeChange(value: string | number): void {
+    onLogTypeChange(value: string | number | undefined): void {
         const selected = value as AuditLogType;
-        if (selected === this.logType()) {
+        if (!Object.values(AuditLogType).includes(selected) || selected === this.logType()) {
             return;
         }
         this.logType.set(selected);
