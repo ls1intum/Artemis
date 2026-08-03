@@ -81,6 +81,38 @@ const createRule = ESLintUtils.RuleCreator(() => '');
  * ```
  */
 
+const HOOK_NAME = 'ngOnChanges';
+
+/**
+ * Whether a class-member key names the `ngOnChanges` lifecycle hook.
+ *
+ * All of these declare the very same prototype member, and Angular invokes each of them identically, so the ban has
+ * to recognise every spelling — matching only `key.name` would let the quoted and computed forms straight through:
+ *
+ * ```ts
+ * ngOnChanges() {}        // Identifier
+ * 'ngOnChanges'() {}      // Literal (quoted, not computed)
+ * ['ngOnChanges']() {}    // Literal (computed)
+ * [`ngOnChanges`]() {}    // TemplateLiteral without substitutions
+ * ```
+ *
+ * A key computed from a variable (`[hookName]() {}`) cannot be resolved statically and is therefore out of reach for
+ * any lint rule; nobody writes a lifecycle hook that way by accident, and doing it deliberately to dodge this rule is
+ * indistinguishable from disabling it.
+ */
+function isNgOnChangesKey(key) {
+    switch (key?.type) {
+        case 'Identifier':
+            return key.name === HOOK_NAME;
+        case 'Literal':
+            return key.value === HOOK_NAME;
+        case 'TemplateLiteral':
+            return key.expressions.length === 0 && key.quasis[0]?.value.cooked === HOOK_NAME;
+        default:
+            return false;
+    }
+}
+
 export default createRule({
     name: 'prefer-signal-reactivity-over-ngonchanges',
     meta: {
@@ -98,6 +130,9 @@ export default createRule({
     defaultOptions: [],
     create(context) {
         const report = (node) => {
+            if (!isNgOnChangesKey(node.key)) {
+                return;
+            }
             // Static members are never Angular lifecycle hooks (Angular only invokes the instance `ngOnChanges`),
             // so an unrelated `static ngOnChanges` helper must not be flagged.
             if (node.static) {
@@ -114,9 +149,11 @@ export default createRule({
         };
 
         return {
-            // Covers both `ngOnChanges() {}` (method) and the rare `ngOnChanges = (changes) => {}` (property).
-            "MethodDefinition[key.name='ngOnChanges']": report,
-            "PropertyDefinition[key.name='ngOnChanges']": report,
+            // Every class member is visited and its key resolved by isNgOnChangesKey(), rather than filtering on
+            // `key.name` in the selector: that would only match the plain identifier form and silently let the
+            // string-literal and computed-literal spellings through.
+            MethodDefinition: report,
+            PropertyDefinition: report,
         };
     },
 });

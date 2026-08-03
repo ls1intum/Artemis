@@ -44,6 +44,27 @@ describe('prefer-signal-reactivity-over-ngonchanges', () => {
                 { code: 'const mock = { ngOnChanges: () => {} };' },
                 // A local variable or function merely named ngOnChanges is not a class member either.
                 { code: 'function ngOnChanges() {}' },
+                // A key computed from a variable cannot be resolved statically, so no lint rule can see it. Recorded
+                // here as a known, accepted limitation: writing a lifecycle hook this way is indistinguishable from
+                // deliberately disabling the rule.
+                {
+                    code: `
+                        const hookName = 'ngOnChanges';
+                        @Component({ selector: 'jhi-example' })
+                        export class ExampleComponent {
+                            [hookName]() {}
+                        }
+                    `,
+                },
+                // A static member is never a lifecycle hook, in the quoted form either.
+                {
+                    code: `
+                        @Component({ selector: 'jhi-example' })
+                        export class ExampleComponent {
+                            static ['ngOnChanges']() {}
+                        }
+                    `,
+                },
             ],
             invalid: [
                 // The plain case: a decorated component.
@@ -104,6 +125,44 @@ describe('prefer-signal-reactivity-over-ngonchanges', () => {
                         @Component
                         export class ExampleComponent {
                             ngOnChanges() {}
+                        }
+                    `,
+                    errors: [{ messageId: 'preferSignalReactivity' }],
+                },
+                // The quoted and computed spellings declare the same prototype member and Angular calls them the
+                // same way, so the ban must cover them too — matching only `key.name` let all three through.
+                {
+                    code: `
+                        @Component({ selector: 'jhi-example' })
+                        export class ExampleComponent {
+                            'ngOnChanges'() {}
+                        }
+                    `,
+                    errors: [{ messageId: 'preferSignalReactivity' }],
+                },
+                {
+                    code: `
+                        @Component({ selector: 'jhi-example' })
+                        export class ExampleComponent {
+                            ['ngOnChanges']() {}
+                        }
+                    `,
+                    errors: [{ messageId: 'preferSignalReactivity' }],
+                },
+                {
+                    code: `
+                        @Component({ selector: 'jhi-example' })
+                        export class ExampleComponent {
+                            ['ngOnChanges'] = (changes: SimpleChanges) => this.recompute(changes);
+                        }
+                    `,
+                    errors: [{ messageId: 'preferSignalReactivity' }],
+                },
+                {
+                    code: `
+                        @Component({ selector: 'jhi-example' })
+                        export class ExampleComponent {
+                            [\`ngOnChanges\`]() {}
                         }
                     `,
                     errors: [{ messageId: 'preferSignalReactivity' }],

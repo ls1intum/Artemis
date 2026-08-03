@@ -18,7 +18,8 @@
  */
 import { createRequire } from 'node:module';
 import * as templateParser from '@angular-eslint/template-parser';
-import * as tsParser from '@typescript-eslint/parser';
+// Imported as a default export, matching how eslint.config.mjs consumes this same parser.
+import tsParser from '@typescript-eslint/parser';
 
 const require = createRequire(import.meta.url);
 // Resolve ajv the way ESLint does: pnpm's hoisted symlink and the `.pnpm` realpath are distinct module
