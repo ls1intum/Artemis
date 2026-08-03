@@ -89,8 +89,10 @@ class TeamStudentUniquenessViolationTest {
     @Test
     @ResourceLock(Resources.LOCALE)
     void matchesRegardlessOfTheDefaultLocale() {
-        // The default locale is JVM-wide state, so the resource lock keeps a parallel test from observing tr_TR. Both
-        // categories are captured because setDefault(Locale) overwrites DISPLAY and FORMAT, which need not be equal.
+        // The default locale is JVM-wide state, so the resource lock keeps a parallel test from observing tr_TR. All three
+        // defaults are captured because setDefault(Locale) overwrites the base default as well as DISPLAY and FORMAT, and
+        // the three need not have been equal beforehand.
+        Locale baseLocale = Locale.getDefault();
         Locale displayLocale = Locale.getDefault(Locale.Category.DISPLAY);
         Locale formatLocale = Locale.getDefault(Locale.Category.FORMAT);
         try {
@@ -99,6 +101,8 @@ class TeamStudentUniquenessViolationTest {
             assertThat(TeamStudentUniquenessViolation.matches(constraintViolation("UK_TEAM_STUDENT_EXERCISE_STUDENT"))).isTrue();
         }
         finally {
+            // The base default goes first: setDefault(Locale) also overwrites both categories, which are restored after it.
+            Locale.setDefault(baseLocale);
             Locale.setDefault(Locale.Category.DISPLAY, displayLocale);
             Locale.setDefault(Locale.Category.FORMAT, formatLocale);
         }
