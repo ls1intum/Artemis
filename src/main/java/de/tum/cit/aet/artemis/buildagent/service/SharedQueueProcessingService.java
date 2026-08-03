@@ -100,6 +100,12 @@ public class SharedQueueProcessingService {
     private static final Duration CLUSTER_CONNECTION_RETRY_INTERVAL = Duration.ofSeconds(5);
 
     /**
+     * Maximum number of times a build job may be requeued before it is given up on. Every requeue path has to honour it,
+     * otherwise a job that keeps failing its agent can be handed around the cluster forever.
+     */
+    private static final int MAX_BUILD_JOB_RETRIES = 5;
+
+    /**
      * Maximum number of consecutive stale detections before force-cleaning a job.
      * With a 5-second detection interval, 6 detections = 30 seconds grace period.
      * This only applies AFTER the minimum job age has been reached.
@@ -503,7 +509,7 @@ public class SharedQueueProcessingService {
                         log.error("Build job {} has been stale for {} consecutive checks (~{} seconds). Force-cancelling and requeuing.", jobId, consecutiveCount,
                                 consecutiveCount * 5);
 
-                        if (job != null && job.retryCount() < 5) {
+                        if (job != null && job.retryCount() < MAX_BUILD_JOB_RETRIES) {
                             if (cancelAndRequeueInternalAttempt(job, job.retryCount() + 1)) {
                                 log.info("Requeuing stale build job {} with retry count {}", jobId, job.retryCount() + 1);
                             }
@@ -515,7 +521,7 @@ public class SharedQueueProcessingService {
                             buildJobManagementService.cancelBuildJob(jobId);
                             distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
                             if (job != null) {
-                                log.error("Stale build job {} exceeded maximum retry count ({}). Not requeuing.", jobId, job.retryCount());
+                                log.error("Stale build job {} exceeded the maximum retry count ({}). Not requeuing.", jobId, job.retryCount());
                             }
                         }
 
@@ -607,10 +613,10 @@ public class SharedQueueProcessingService {
             if (buildJob != null) {
                 distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
 
-                // At most try out the build job 5 times when they get rejected
-                if (buildJob.retryCount() >= 5) {
+                // At most try out the build job MAX_BUILD_JOB_RETRIES times when they get rejected
+                if (buildJob.retryCount() >= MAX_BUILD_JOB_RETRIES) {
                     // TODO: we should log this centrally and not on the local node
-                    log.error("Build job was rejected 5 times. Not adding build job back to the queue: {}", buildJob);
+                    log.error("Build job was rejected {} times. Not adding build job back to the queue: {}", MAX_BUILD_JOB_RETRIES, buildJob);
                 }
                 else {
                     // NOTE: we increase the retry count here, because the build job was not processed successfully
@@ -1180,6 +1186,14 @@ public class SharedQueueProcessingService {
             if (buildJob == null) {
                 log.warn("Cancelling local build job {} without a matching distributed processing entry", buildJobId);
                 buildJobManagementService.cancelBuildJob(buildJobId);
+            }
+            else if (buildJob.retryCount() >= MAX_BUILD_JOB_RETRIES) {
+                // Same cap as the stale-detection and rejected-submission paths. Without it, repeated pause cycles keep
+                // requeueing the same attempt and incrementing its retry count without bound, so a job that reliably
+                // pauses its agent (for example by failing it into a self-pause) could bounce around the cluster forever.
+                log.error("Build job {} exceeded the maximum retry count ({}). Cancelling it instead of requeueing.", buildJobId, buildJob.retryCount());
+                buildJobManagementService.cancelBuildJob(buildJobId);
+                distributedDataAccessService.getDistributedProcessingJobs().remove(buildJobId);
             }
             else if (cancelAndRequeueInternalAttempt(buildJob, buildJob.retryCount() + 1)) {
                 requeuedBuildJobIds.add(buildJobId);
