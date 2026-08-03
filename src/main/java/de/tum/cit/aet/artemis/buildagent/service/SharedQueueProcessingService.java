@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
@@ -1340,30 +1339,49 @@ public class SharedQueueProcessingService {
 
         private final BuildJobQueueItem buildJob;
 
-        private final AtomicReference<AttemptLifecycle> lifecycle = new AtomicReference<>(AttemptLifecycle.RUNNING);
+        /**
+         * Guards the lifecycle and the replacement job together.
+         * <p>
+         * They cannot be two independent atomics. Publishing the state first lets a naturally completing future observe {@code INTERNAL_REQUEUE} before the
+         * replacement is stored, so {@link #requeuedBuildJob()} would fail and the attempt would be cancelled without ever being queued again. Publishing the job
+         * first lets a losing requeue caller overwrite the winner's job. Under one monitor, observing {@code INTERNAL_REQUEUE} always implies that the matching
+         * replacement is visible.
+         */
+        private final Object lifecycleMonitor = new Object();
 
-        private volatile BuildJobQueueItem requeuedBuildJob;
+        private AttemptLifecycle lifecycle = AttemptLifecycle.RUNNING;
+
+        private BuildJobQueueItem requeuedBuildJob;
 
         BuildAttemptState(BuildJobQueueItem buildJob) {
             this.buildJob = buildJob;
         }
 
         boolean requestInternalRequeue(BuildJobQueueItem requeuedBuildJob) {
-            // The stale-detection scheduler and the pause handler can request a requeue concurrently. Only the caller that wins the transition may publish its job,
-            // otherwise the loser would null out the winner's value and requeuedBuildJob() would fail before the attempt is reported.
-            if (lifecycle.compareAndSet(AttemptLifecycle.RUNNING, AttemptLifecycle.INTERNAL_REQUEUE)) {
+            synchronized (lifecycleMonitor) {
+                // The stale-detection scheduler and the pause handler can request a requeue concurrently, and the attempt may already be completing. Only the caller
+                // that wins the transition publishes its job; a losing caller leaves the state untouched.
+                if (lifecycle != AttemptLifecycle.RUNNING) {
+                    return false;
+                }
                 this.requeuedBuildJob = requeuedBuildJob;
+                lifecycle = AttemptLifecycle.INTERNAL_REQUEUE;
                 return true;
             }
-            return false;
         }
 
         boolean beginCompletion() {
-            return lifecycle.getAndSet(AttemptLifecycle.COMPLETING) == AttemptLifecycle.INTERNAL_REQUEUE;
+            synchronized (lifecycleMonitor) {
+                boolean internallyRequeued = lifecycle == AttemptLifecycle.INTERNAL_REQUEUE;
+                lifecycle = AttemptLifecycle.COMPLETING;
+                return internallyRequeued;
+            }
         }
 
         BuildJobQueueItem requeuedBuildJob() {
-            return Objects.requireNonNull(requeuedBuildJob);
+            synchronized (lifecycleMonitor) {
+                return Objects.requireNonNull(requeuedBuildJob);
+            }
         }
 
         private enum AttemptLifecycle {
