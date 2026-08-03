@@ -14,14 +14,15 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { User } from 'app/account/user/user.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatService, IrisRunInfo } from 'app/iris/overview/services/iris-chat.service';
 import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-details/exercise-split-panel/exercise-split-panel.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
-import { Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { PageActivityService } from 'app/foundation/service/page-activity.service';
 import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
+import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import dayjs from 'dayjs/esm';
 
@@ -58,13 +59,16 @@ describe('ExerciseSplitPanelComponent', () => {
     let fixture: ComponentFixture<ExerciseSplitPanelComponent>;
     let component: ExerciseSplitPanelComponent;
     let accountService: MockAccountService;
+    let irisAskUserService: IrisAskUserService;
+    let runInfoSubject: BehaviorSubject<IrisRunInfo | undefined>;
     let latestEventSubject: Subject<IrisPipeEvent | undefined>;
     let stopTimerSubject: Subject<void>;
     let pageLeavingSubject: Subject<void>;
-    let askUserService: IrisAskUserHttpService;
+    let askUserHttpService: IrisAskUserHttpService;
 
     beforeEach(async () => {
         vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+        runInfoSubject = new BehaviorSubject<IrisRunInfo | undefined>(undefined);
         latestEventSubject = new Subject<IrisPipeEvent | undefined>();
         stopTimerSubject = new Subject<void>();
         pageLeavingSubject = new Subject<void>();
@@ -72,11 +76,22 @@ describe('ExerciseSplitPanelComponent', () => {
             imports: [ExerciseSplitPanelComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: IrisChatService, useValue: { openChat: vi.fn(), currentLatestEvent: vi.fn(() => latestEventSubject.asObservable()), stopTimer$: stopTimerSubject } },
+                IrisAskUserService,
+                {
+                    provide: IrisChatService,
+                    useValue: {
+                        openChat: vi.fn(),
+                        currentLatestEvent: vi.fn(() => latestEventSubject.asObservable()),
+                        currentRunInfo: vi.fn(() => runInfoSubject.asObservable()),
+                        awaitingAnswer: vi.fn(() => false),
+                        stopTimer$: stopTimerSubject,
+                    },
+                },
                 { provide: PageActivityService, useValue: { pageLeaving$: pageLeavingSubject.asObservable() } },
                 {
                     provide: IrisAskUserHttpService,
                     useValue: {
+                        latestSubmissionHasPoints: vi.fn(() => of(false)),
                         startTimer: vi.fn(() => of(new HttpResponse({ body: { timerExpiresAt: dayjs().add(30, 'seconds'), timeLimit: 30 } }))),
                         stopTimer: vi.fn(() => of(new HttpResponse<void>())),
                         registerDefocusForCurrentSession: vi.fn(() => of(new HttpResponse<void>())),
@@ -111,11 +126,15 @@ describe('ExerciseSplitPanelComponent', () => {
         fixture = TestBed.createComponent(ExerciseSplitPanelComponent);
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
-        askUserService = TestBed.inject(IrisAskUserHttpService);
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+        irisAskUserService = TestBed.inject(IrisAskUserService);
+        askUserHttpService = TestBed.inject(IrisAskUserHttpService);
+        const exercise = { id: 1, type: ExerciseType.TEXT } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+        irisAskUserService.exercise.set(exercise);
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('irisEnabled', true);
         fixture.detectChanges();
+        irisAskUserService.activate();
     });
 
     afterEach(() => {
@@ -232,49 +251,78 @@ describe('ExerciseSplitPanelComponent', () => {
         });
     });
 
+    it('should activate the Iris panel when the user starts an ask-user quiz', () => {
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+        irisAskUserService.exercise.set(exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(resizablePanels.activeRightIndex()).toBe(0);
+
+        resizablePanels.collapseRightPanel();
+        fixture.detectChanges();
+
+        latestEventSubject.next(IrisPipeEvent.USER_STARTS_QUIZ);
+        fixture.detectChanges();
+
+        expect((component as any).quizStarted()).toBe(true);
+        expect(resizablePanels.isRightPanelCollapsed()).toBe(false);
+        expect(resizablePanels.activeRightIndex()).toBe(1);
+    });
+
     it('should start the embedded ask-user timer on the first question event', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+        irisAskUserService.exercise.set(exercise);
         fixture.detectChanges();
 
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
-        expect(askUserService.startTimer).toHaveBeenCalledWith(1);
+        expect(askUserHttpService.startTimer).toHaveBeenCalledWith(1);
         expect((component as any).quizActive()).toBe(true);
         expect((component as any).timeLimit()).toBe(30);
     });
 
     it('should not stop the backend ask-user timer when the embedded timer expires locally', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+        irisAskUserService.exercise.set(exercise);
         fixture.detectChanges();
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
         (component as any).handleAskUserTimerExpired();
 
-        expect(askUserService.stopTimer).not.toHaveBeenCalled();
+        expect(askUserHttpService.stopTimer).not.toHaveBeenCalled();
         expect((component as any).timerExpiresAt()).toBeUndefined();
         expect((component as any).timeLimit()).toBe(0);
     });
 
     it('should stop the backend ask-user timer when the current answer arrives', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+        irisAskUserService.exercise.set(exercise);
         fixture.detectChanges();
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
         stopTimerSubject.next();
 
-        expect(askUserService.stopTimer).toHaveBeenCalledWith(1);
+        expect(askUserHttpService.stopTimer).toHaveBeenCalledWith(1);
         expect((component as any).timerExpiresAt()).toBeUndefined();
         expect((component as any).timeLimit()).toBe(0);
     });
 
     it('should register defocus for the embedded ask-user session when the page is left', () => {
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+        irisAskUserService.exercise.set(exercise);
         fixture.detectChanges();
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
         pageLeavingSubject.next();
 
-        expect(askUserService.registerDefocusForCurrentSession).toHaveBeenCalledWith(1);
+        expect(askUserHttpService.registerDefocusForCurrentSession).toHaveBeenCalledWith(1);
         expect((component as any).quizActive()).toBe(false);
         expect((component as any).timerExpiresAt()).toBeUndefined();
         expect((component as any).timeLimit()).toBe(0);

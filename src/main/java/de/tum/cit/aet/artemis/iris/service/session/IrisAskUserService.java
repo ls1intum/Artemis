@@ -127,7 +127,9 @@ public class IrisAskUserService {
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
 
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || participation.getExercise().isExamExercise()) {
+        // Ask-user quiz is disabled for practice participation
+        if (participation.isPracticeMode() || !(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)
+                || participation.getExercise().isExamExercise()) {
             return;
         }
         if (!studentParticipation.getStudent().map(User::hasOptedIntoLLMUsage).orElse(false)) {
@@ -136,14 +138,13 @@ public class IrisAskUserService {
         if (!(result.getSubmission() instanceof ProgrammingSubmission latestSubmission)) {
             return;
         }
-        // Abort if submission has no points or is after due date
-        if (!submissionHasPoints(latestSubmission) || latestSubmission.getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
+        // Abort if submission has no points
+        if (!submissionHasPoints(latestSubmission)) {
             return;
         }
 
         var settings = irisSettingsService.getSettingsForExercise(studentParticipation.getProgrammingExercise());
-        if (settings.enabled() && settings.askUserModeEnabled() && !irisChatSessionService.shouldSendProgressStalledEvent(studentParticipation)
-                && !studentParticipation.isPracticeMode()) {
+        if (settings.enabled() && settings.askUserModeEnabled() && !irisChatSessionService.shouldSendProgressStalledEvent(studentParticipation)) {
             explainAskUserMode(studentParticipation, latestSubmission, settings);
         }
     }
@@ -219,7 +220,7 @@ public class IrisAskUserService {
      * @return true if a verdict exists
      */
     public boolean isQuizAlreadyDone(ProgrammingExercise exercise, User user, boolean inClass) {
-        return programmingExerciseStudentParticipationRepository.findWithIrisAssessmentByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin(), inClass)
+        return programmingExerciseStudentParticipationRepository.findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), inClass, false)
                 .map(participation -> inClass ? participation.getIrisAssessmentInClass() : participation.getIrisAssessment()).map(assessment -> assessment.getVerdict() != null)
                 .orElse(false);
     }
@@ -343,7 +344,7 @@ public class IrisAskUserService {
 
         var session = getCurrentAskUserSession(exercise, user);
         if (!session.isInAskUserModePipeline()) {
-            throw new IllegalStateException("Tab defocus was detected while not in ask-user mode");
+            return;
         }
 
         stopTimerForSession(session);
@@ -360,13 +361,13 @@ public class IrisAskUserService {
      *
      * @param exercise the programming exercise
      * @param user     the student
-     * @return timer information for the current question
+     * @return timer information for the current question, with null values if no timer was started
      */
     public IrisQuizTimerDTO startTimerForCurrentSession(ProgrammingExercise exercise, User user) {
         validateAskUserAvailable(exercise, user);
         var session = getCurrentAskUserSession(exercise, user);
         if (!session.isInAskUserModePipeline()) {
-            throw new IllegalStateException("Timer was started while not in ask-user mode");
+            return new IrisQuizTimerDTO(null, 0);
         }
         var settings = irisSettingsService.getSettingsForExercise(exercise).askUserModeSettings();
         ZonedDateTime expiresAt = ZonedDateTime.now().plusSeconds(settings.timeLimitQuestion());
@@ -470,17 +471,19 @@ public class IrisAskUserService {
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionWithPointsBeforeDueDateWithEagerResultsAndFeedbacksAndBuildLogsIfExists(ProgrammingExercise exercise, User user) {
-        var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).stream()
+                .filter(p -> !p.isPracticeMode()).toList();
 
         if (participations.isEmpty()) {
             return Optional.empty();
         }
         return programmingSubmissionRepository
-                .findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participations.getLast().getId());
+                .findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participations.getFirst().getId());
     }
 
     public boolean hasLatestSubmissionWithPointsBeforeDueDateIfExists(ProgrammingExercise exercise, User user) {
-        var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).stream()
+                .filter(p -> !p.isPracticeMode()).toList();
 
         if (participations.isEmpty()) {
             return false;

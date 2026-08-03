@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -62,12 +62,15 @@ import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask
     ],
 })
 export class ExerciseSplitPanelComponent {
+    private static readonly IRIS_PANEL_LABEL = 'artemisApp.courseOverview.exerciseDetails.iris';
+
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
     private readonly askUserService = inject(IrisAskUserService);
+    private readonly resizablePanels = viewChild(ResizablePanelsComponent);
     // Tracks whether a quiz batch is started / the quiz has ended, from the server-provided exercise data.
     // Updated via effect (safe for required inputs) rather than computed (would throw NG0950 during early init).
     private readonly _quizBatchStarted = signal(false);
@@ -79,6 +82,7 @@ export class ExerciseSplitPanelComponent {
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
     private quizPracticeParticipationSubscription: { unsubscribe(): void } | undefined;
     private liveQuizResultSubscription: { unsubscribe(): void } | undefined;
+    private handledIrisPanelActivationSequence = 0;
 
     readonly quizSubmitted = output<QuizSubmission>();
     readonly quizPracticeParticipationChanged = output<StudentParticipation>();
@@ -241,6 +245,27 @@ export class ExerciseSplitPanelComponent {
             }
         });
         effect(() => {
+            const request = this.askUserService.irisPanelActivationRequest();
+            const resizablePanels = this.resizablePanels();
+            const panelCount = resizablePanels?.panels().length ?? 0;
+            if (
+                !request ||
+                request.sequence === this.handledIrisPanelActivationSequence ||
+                !resizablePanels ||
+                panelCount === 0 ||
+                this.exercise().id !== request.exerciseId ||
+                !this.showIris()
+            ) {
+                return;
+            }
+
+            untracked(() => {
+                if (this.activateIrisPanel(resizablePanels)) {
+                    this.handledIrisPanelActivationSequence = request.sequence;
+                }
+            });
+        });
+        effect(() => {
             // Depend ONLY on the stable target identity, so object-reference churn (e.g. an incoming result that
             // replaces the participation object but keeps its id) does not re-run this navigation. The imperative
             // navigation runs untracked so it cannot add the exercise/participation objects as dependencies — that
@@ -275,6 +300,16 @@ export class ExerciseSplitPanelComponent {
                 }
             });
         });
+    }
+
+    private activateIrisPanel(resizablePanels: ResizablePanelsComponent): boolean {
+        const irisPanelIndex = resizablePanels.panels().findIndex((panel) => panel.label() === ExerciseSplitPanelComponent.IRIS_PANEL_LABEL);
+        if (irisPanelIndex < 0) {
+            return false;
+        }
+
+        resizablePanels.activatePanel(irisPanelIndex);
+        return true;
     }
 
     readonly canSubmit = computed(() => {

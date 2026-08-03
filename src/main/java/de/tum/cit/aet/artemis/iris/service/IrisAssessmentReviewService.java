@@ -159,6 +159,10 @@ public class IrisAssessmentReviewService {
      * @return the created assessment
      */
     public IrisAssessment createNewAssessment(ProgrammingExerciseStudentParticipation participation, boolean inClass) {
+        if (participation.isPracticeMode()) {
+            throw new Error("Tried to create an assessment for a practice participation");
+        }
+
         var student = participation.getStudent().orElseThrow();
         var exercise = participation.getExercise();
 
@@ -192,8 +196,8 @@ public class IrisAssessmentReviewService {
     }
 
     private IrisAssessment findOrCreateAssessment(User user, Exercise exercise, boolean inClass, boolean withReasoning) {
-        var participation = programmingExerciseStudentParticipationRepository.findWithIrisAssessmentByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin(), inClass)
-                .orElseThrow();
+        var participation = programmingExerciseStudentParticipationRepository
+                .findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), inClass, false).orElseThrow();
         var assessment = inClass ? participation.getIrisAssessmentInClass() : participation.getIrisAssessment();
 
         if (assessment == null) {

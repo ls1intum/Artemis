@@ -97,6 +97,19 @@ describe('IrisAskUserService', () => {
         expect(askUserHttpService.stopTimer).not.toHaveBeenCalled();
     });
 
+    it('should request the Iris panel activation when the user starts a quiz', () => {
+        expect(service.irisPanelActivationRequest()).toBeUndefined();
+
+        latestEventSubject.next(IrisPipeEvent.USER_STARTS_QUIZ);
+
+        expect(service.quizStarted()).toBeTrue();
+        expect(service.irisPanelActivationRequest()).toEqual({ sequence: 1, exerciseId });
+
+        latestEventSubject.next(IrisPipeEvent.USER_STARTS_QUIZ);
+
+        expect(service.irisPanelActivationRequest()).toEqual({ sequence: 2, exerciseId });
+    });
+
     it('should reset a regular quiz when a build with points arrives during the quiz', async () => {
         service.setActiveQuizTypeForExercise(exerciseId, 'regular');
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);

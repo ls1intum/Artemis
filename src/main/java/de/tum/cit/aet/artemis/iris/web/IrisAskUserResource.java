@@ -120,7 +120,8 @@ public class IrisAskUserResource {
      * The current time is saved.
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data ( undefined timerExpired if no timer was started, because quiz was
+     *         just stopped by something else)
      */
     @PatchMapping("{exerciseId}/ask-user/start-timer")
     @EnforceAtLeastStudentInExercise

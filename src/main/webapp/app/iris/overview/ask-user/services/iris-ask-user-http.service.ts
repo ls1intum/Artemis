@@ -47,6 +47,7 @@ export class IrisAskUserHttpService {
     /**
      * starts the instructor-controlled in-class quiz for the exercise for a student
      * @param exerciseId The unique identifier of the exercise
+     * @return returns DTO with undefined timerExpired if no timer was started (because quiz was just stopped by something else)
      */
     startInClassQuiz(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.patch<void>(`${this.resourceUrl}/${exerciseId}/ask-user/in-class/start`, null, { observe: 'response' });

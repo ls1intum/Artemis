@@ -102,12 +102,6 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                 JOIN s.participation p
                 JOIN p.exercise e
                 JOIN s.results latestResult
-                LEFT JOIN ProgrammingSubmission newerSubmission
-                    ON newerSubmission.participation.id = p.id
-                    AND newerSubmission.submissionDate IS NOT NULL
-                    AND (e.dueDate IS NULL OR newerSubmission.submissionDate <= e.dueDate)
-                    AND (newerSubmission.submissionDate > s.submissionDate
-                        OR (newerSubmission.submissionDate = s.submissionDate AND newerSubmission.id > s.id))
             WHERE p.id = :participationId
                 AND s.submissionDate IS NOT NULL
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
@@ -117,7 +111,22 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                     WHERE result.submission.id = s.id
                 )
                 AND latestResult.score > 0
-                AND newerSubmission.id IS NULL
+                AND NOT EXISTS (
+                    SELECT newerSubmission.id
+                    FROM ProgrammingSubmission newerSubmission
+                        JOIN newerSubmission.results newerLatestResult
+                    WHERE newerSubmission.participation.id = p.id
+                        AND newerSubmission.submissionDate IS NOT NULL
+                        AND (e.dueDate IS NULL OR newerSubmission.submissionDate <= e.dueDate)
+                        AND (newerSubmission.submissionDate > s.submissionDate
+                            OR (newerSubmission.submissionDate = s.submissionDate AND newerSubmission.id > s.id))
+                        AND newerLatestResult.id = (
+                            SELECT MAX(newerResult.id)
+                            FROM Result newerResult
+                            WHERE newerResult.submission.id = newerSubmission.id
+                        )
+                        AND newerLatestResult.score > 0
+                )
             """)
     Optional<Long> findLatestSubmissionIdBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(@Param("participationId") long participationId);
 

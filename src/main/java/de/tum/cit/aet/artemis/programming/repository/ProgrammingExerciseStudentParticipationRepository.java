@@ -86,13 +86,15 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "irisAssessment")
-    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLogin(long exerciseId, String username);
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
     @EntityGraph(type = LOAD, attributePaths = "irisAssessmentInClass")
-    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentInClassByExerciseIdAndStudentLogin(long exerciseId, String username);
+    Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentInClassByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
-    default Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLogin(long exerciseId, String username, boolean inClass) {
-        return inClass ? findWithIrisAssessmentInClassByExerciseIdAndStudentLogin(exerciseId, username) : findWithIrisAssessmentByExerciseIdAndStudentLogin(exerciseId, username);
+    default Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean inClass,
+            boolean testRun) {
+        return inClass ? findWithIrisAssessmentInClassByExerciseIdAndStudentLoginAndTestRun(exerciseId, username, testRun)
+                : findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(exerciseId, username, testRun);
     }
 
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
@@ -238,9 +240,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @param exerciseId the exercise id
      * @return matching participation projections
      */
-    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
             long exerciseId) {
-        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZero(exerciseId);
+        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(exerciseId);
         if (participationIds.isEmpty()) {
             return Set.of();
         }
@@ -253,16 +255,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @param exerciseId the exercise id
      * @return matching participation projections
      */
-    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
             long exerciseId) {
-        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZero(exerciseId);
+        var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(exerciseId);
         if (participationIds.isEmpty()) {
             return Set.of();
         }
         return findAllIrisAssessmentInClassParticipationProjectionsByIdIn(participationIds);
     }
 
-    private Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZero(long exerciseId) {
+    private Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(long exerciseId) {
         var latestSubmissionIds = findLatestSubmissionIdsByExerciseId(exerciseId);
         if (latestSubmissionIds.isEmpty()) {
             return Set.of();
@@ -273,21 +275,37 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             return Set.of();
         }
 
-        return findParticipationIdsByResultIdsAndScoreGreaterThanZero(latestResultIds);
+        return findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(latestResultIds);
     }
 
     @Query("""
             SELECT submission.id
             FROM ProgrammingExerciseStudentParticipation participation
                 JOIN participation.submissions submission
-                LEFT JOIN participation.submissions newerSubmission ON (
-                    (submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
-                    OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
-                        AND newerSubmission.id > submission.id)
-                )
+                JOIN submission.results latestResult
             WHERE participation.exercise.id = :exerciseId
                 AND participation.student IS NOT NULL
-                AND newerSubmission.id IS NULL
+                AND latestResult.id = (
+                    SELECT MAX(result.id)
+                    FROM Result result
+                    WHERE result.submission.id = submission.id
+                )
+                AND latestResult.score > 0
+                AND NOT EXISTS (
+                    SELECT newerSubmission.id
+                    FROM ProgrammingSubmission newerSubmission
+                        JOIN newerSubmission.results newerLatestResult
+                    WHERE newerSubmission.participation.id = participation.id
+                        AND ((submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                            OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                                AND newerSubmission.id > submission.id))
+                        AND newerLatestResult.id = (
+                            SELECT MAX(newerResult.id)
+                            FROM Result newerResult
+                            WHERE newerResult.submission.id = newerSubmission.id
+                        )
+                        AND newerLatestResult.score > 0
+                )
             """)
     Set<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
@@ -304,8 +322,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             FROM Result result
             WHERE result.id IN :resultIds
                 AND result.score > 0
+                AND result.submission.participation.testRun = false
             """)
-    Set<Long> findParticipationIdsByResultIdsAndScoreGreaterThanZero(@Param("resultIds") Set<Long> resultIds);
+    Set<Long> findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(@Param("resultIds") Set<Long> resultIds);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(

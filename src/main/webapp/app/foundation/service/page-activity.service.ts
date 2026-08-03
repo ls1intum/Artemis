@@ -7,6 +7,7 @@ export class PageActivityService {
     private readonly router = inject(Router);
 
     readonly pageLeaving$: Observable<void> = merge(
+        fromEvent(window, 'beforeunload'),
         fromEvent(document, 'visibilitychange').pipe(filter(() => document.visibilityState === 'hidden')),
         fromEvent(window, 'blur'),
         fromEvent(window, 'pagehide'),

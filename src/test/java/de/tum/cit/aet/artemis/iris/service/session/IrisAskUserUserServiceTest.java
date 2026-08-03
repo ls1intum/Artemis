@@ -249,9 +249,10 @@ class IrisAskUserServiceTest {
         when(irisSessionRepository.findByIdWithMessagesAndContents(session.getId())).thenReturn(session);
         when(irisChatSessionRepository.findByIdElseThrow(session.getId())).thenReturn(session);
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId())).thenReturn(exercise);
-        when(programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()))
-                .thenReturn(List.of(participation));
-        when(programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(submission.getId())).thenReturn(Optional.of(submission));
+        when(programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin())).thenReturn(List.of(participation));
+        when(programmingSubmissionRepository
+                .findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participation.getId()))
+                .thenReturn(Optional.of(submission));
         when(userRepository.findByIdElseThrow(user.getId())).thenReturn(user);
         when(pyrisPipelineService.executeAskUserPipeline(anyString(), any(), any(), any(), any(), any())).thenReturn(true);
 

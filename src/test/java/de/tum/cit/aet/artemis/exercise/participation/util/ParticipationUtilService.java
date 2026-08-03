@@ -200,7 +200,7 @@ public class ParticipationUtilService {
             studentParticipation = studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
         }
         else {
-            studentParticipation = storedParticipation.get();
+            studentParticipation = studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).orElseThrow();
         }
         var submission = this.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         return addResultToSubmission(null, null, submission);

@@ -158,13 +158,15 @@ public class IrisAssessmentReviewResource {
     public ResponseEntity<Set<IrisAssessmentProgrammingStudentParticipationDTO>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean inClass) {
         log.info("REST request to get all Participations with non-zero highest score for Exercise {} for Iris assessment overview, inClass: {}", exerciseId, inClass);
-        return ResponseEntity.ok(getAllParticipationsNonZeroLatestScoreForExerciseId(exerciseId, inClass));
+        return ResponseEntity.ok(getAllNonPracticeParticipationsNonZeroLatestScoreForExerciseId(exerciseId, inClass));
     }
 
-    private Set<IrisAssessmentProgrammingStudentParticipationDTO> getAllParticipationsNonZeroLatestScoreForExerciseId(long exerciseId, boolean inClass) {
-        var participationProjections = inClass
-                ? programmingExerciseStudentParticipationRepository.findAllIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId)
-                : programmingExerciseStudentParticipationRepository.findAllIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId);
+    private Set<IrisAssessmentProgrammingStudentParticipationDTO> getAllNonPracticeParticipationsNonZeroLatestScoreForExerciseId(long exerciseId, boolean inClass) {
+        var participationProjections = (inClass
+                ? programmingExerciseStudentParticipationRepository
+                        .findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId)
+                : programmingExerciseStudentParticipationRepository
+                        .findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId));
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository
                 .countSubmissionsPerParticipationByIdsAsMap(participationProjections.stream().map(projection -> projection.id()).toList());

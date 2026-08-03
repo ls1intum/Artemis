@@ -13,6 +13,11 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 export type IrisAskUserQuizType = 'regular' | 'inClass';
 
+export interface IrisPanelActivationRequest {
+    readonly sequence: number;
+    readonly exerciseId: number;
+}
+
 @Injectable()
 export class IrisAskUserService {
     private readonly askUserHttpService = inject(IrisAskUserHttpService);
@@ -28,6 +33,7 @@ export class IrisAskUserService {
     private readonly _timerExpiresAt = signal<dayjs.Dayjs | undefined>(undefined);
     private readonly _timeLimit = signal(0);
     private readonly _showOnlyAskUserModeMessage = signal(false);
+    private readonly _irisPanelActivationRequest = signal<IrisPanelActivationRequest | undefined>(undefined);
 
     readonly enabled = this._enabled.asReadonly();
     readonly quizActive = this._quizActive.asReadonly();
@@ -35,6 +41,7 @@ export class IrisAskUserService {
     readonly timerExpiresAt = this._timerExpiresAt.asReadonly();
     readonly timeLimit = this._timeLimit.asReadonly();
     readonly showOnlyAskUserModeMessage = this._showOnlyAskUserModeMessage.asReadonly();
+    readonly irisPanelActivationRequest = this._irisPanelActivationRequest.asReadonly();
 
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly exerciseId = computed(() => this.exercise()?.id);
@@ -102,12 +109,12 @@ export class IrisAskUserService {
             .startTimer(exerciseId)
             .pipe(take(1))
             .subscribe((response) => {
-                if (response.body) {
-                    this._timerExpiresAt.set(convertDateFromServer(response.body.timerExpiresAt));
-                    this._timeLimit.set(response.body.timeLimit);
-                } else {
-                    throw new Error(IrisErrorMessageKey.START_ASK_USER_FAILED);
+                if (response.body?.timerExpiresAt === undefined) {
+                    return;
                 }
+
+                this._timerExpiresAt.set(convertDateFromServer(response.body.timerExpiresAt));
+                this._timeLimit.set(response.body.timeLimit);
             });
     }
 
@@ -158,7 +165,8 @@ export class IrisAskUserService {
             .currentLatestEvent()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((event) => {
-                if (this.currentProgrammingExerciseId() === undefined) {
+                const exerciseId = this.currentProgrammingExerciseId();
+                if (exerciseId === undefined) {
                     return;
                 }
 
@@ -168,6 +176,7 @@ export class IrisAskUserService {
                         break;
                     case IrisPipeEvent.USER_STARTS_QUIZ:
                         this._quizStarted.set(true);
+                        this.requestIrisPanelActivation(exerciseId);
                         break;
                     case IrisPipeEvent.FIRST_QUESTION:
                         this._quizActive.set(true);
@@ -186,6 +195,11 @@ export class IrisAskUserService {
                         break;
                 }
             });
+    }
+
+    private requestIrisPanelActivation(exerciseId: number): void {
+        const previousRequest = this._irisPanelActivationRequest();
+        this._irisPanelActivationRequest.set({ sequence: (previousRequest?.sequence ?? 0) + 1, exerciseId });
     }
 
     private handleDefocus(): void {

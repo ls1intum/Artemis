@@ -189,6 +189,19 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    activatePanel(index: number): void {
+        if (index < 0 || index >= this.panels().length) {
+            return;
+        }
+        if (this.isNarrow()) {
+            this.setActiveSingle(index);
+            return;
+        }
+        if (index > 0) {
+            this.expandRightPanel(index - 1);
+        }
+    }
+
     expandRightPanel(index?: number): void {
         if (index !== undefined) {
             this._activeRightIndex.set(index);
