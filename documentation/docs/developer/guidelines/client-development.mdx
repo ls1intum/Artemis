@@ -72,9 +72,9 @@ Key principles:
 
 <Callout variant={CalloutVariant.danger}>
     **Bootstrap and PrimeNG are deprecated.** The long-term direction is to migrate the client **entirely** onto our own [tum-ui component kit](/developer/guidelines/tum-ui-kit)
-    (built on Angular CDK + Tailwind tokens) and drop Bootstrap, PrimeNG, and ng-bootstrap. They coexist only for the duration of the migration: **prefer a `tum-ui-*` component when one
-    exists**, and use PrimeNG only for widgets the kit does not provide yet. The PrimeNG guidance in this section applies to that shrinking fallback set — do not read it as "PrimeNG is
-    the end target". Never introduce new Bootstrap.
+    (built on Angular CDK + Tailwind tokens) and drop Bootstrap, PrimeNG, and ng-bootstrap. They coexist only for the duration of the migration: **prefer a `tum-ui-*` component
+    when one exists**, and use PrimeNG only for widgets the kit does not provide yet. The PrimeNG guidance in this section applies to that shrinking fallback set — do not read it
+    as "PrimeNG is the end target". Never introduce new Bootstrap.
 </Callout>
 
 <Callout variant={CalloutVariant.danger}>
@@ -197,7 +197,7 @@ set course(course: Course) {
 
 **Never navigate, and avoid writing template-bound signals, from an `effect()` — it can crash the client.** Both are imperative side effects that feed back into change detection and can form an infinite loop:
 
-- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions, route guards/resolvers, or `ngOnChanges`. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
+- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions or route guards/resolvers. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
 - **Writing a signal in an effect** carries the same loop risk (an effect that writes a signal it also reads re-triggers itself forever). Prefer `computed()` for derived state; if a write is truly necessary, never write a signal the effect reads and wrap the write in `untracked()`. This case cannot be linted reliably (`.set()` / `.update()` are indistinguishable from `Map`/`Set` mutations at the syntax level), so it is on the author and reviewer to avoid it.
 
 ```ts
@@ -257,9 +257,7 @@ So `ngOnChanges` is functional and not a correctness bug — but the Angular doc
 
 ```ts
 // Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
-@Component({
-    /* ... */
-})
+@Component({/* ... */})
 export class ExampleComponent implements OnChanges {
     value = input.required<number>();
     doubled = 0;
@@ -269,18 +267,18 @@ export class ExampleComponent implements OnChanges {
 }
 
 // Do - derive declaratively; it can never go stale
-@Component({
-    /* ... */
-})
+@Component({/* ... */})
 export class ExampleComponent {
     value = input.required<number>();
     doubled = computed(() => this.value() * 2);
 }
 ```
 
-An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes across Angular client files that have a clean baseline. Known migration-backlog files are temporarily excluded in `eslint.config.mjs` so `pnpm run lint` stays warning-clean for unchanged code; remove an entry as soon as its hook is migrated or explicitly justified. The rule is intentionally a warning, not an error.
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **errors** on `ngOnChanges` anywhere in the client — `src/main/webapp/app` (including specs) and the test infrastructure under `src/test/javascript`. The client is completely free of the hook, and the error severity is what keeps it that way: `pnpm run lint` runs without `--max-warnings`, so at warning severity a reintroduced hook would pass CI unnoticed.
 
-The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `computed()` (derived state) or `effect()` (genuine side effects). For the rare cases that still genuinely need `ngOnChanges` (the bottom two rows above — `SimpleChanges.previousValue` / `isFirstChange()`, or logic that must run before child components initialise), add a **detailed comment** explaining why a signal-based replacement is not yet possible. If a covered file must keep `ngOnChanges`, use a narrowly scoped `eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges` with a justification that references why `computed()` or `effect()` would change the behavior; do not blanket-disable the rule for a file.
+The rule deliberately does **not** require an `@Component` / `@Directive` decorator. Angular invokes `ngOnChanges` on the component _instance_, so a hook inherited from an undecorated base class runs exactly like one declared on the component — requiring the decorator would leave that route open. Type-only declarations (`interface X { ngOnChanges(...) }`), object-literal properties, and `static ngOnChanges` helpers are not flagged, because Angular never calls those.
+
+`ngOnChanges` has been **removed entirely** from the client: use `computed()` (derived state) or `effect()` (genuine side effects) instead. For the rare case that genuinely needs `ngOnChanges` (the bottom two rows above — `SimpleChanges.previousValue` / `isFirstChange()`, or logic that must run before child components initialise), add a **detailed comment** explaining why a signal-based replacement is not possible and use a narrowly scoped `eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges` with a justification that references why `computed()` or `effect()` would change the behavior; do not blanket-disable the rule for a file.
 
 `ngOnInit` and `ngOnDestroy` are **not** affected by signals — they fire regardless of the input mechanism and remain valid. For teardown, prefer `DestroyRef` + `takeUntilDestroyed()` or an `effect()` (which cleans itself up) over manual `ngOnDestroy` bookkeeping where practical; the `localRules/enforce-cleanup-on-destroy` rule already guards subscription cleanup.
 
