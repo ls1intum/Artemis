@@ -185,11 +185,18 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         return !isInstanceRunning();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Redis has no concept of connected clients in the same way as Hazelcast, so the client list is used. The caller filters the build agent overview to the names in
+     * this set, so a partial answer would hide every agent connected to a different Redis Cluster node. An incomplete lookup therefore yields an empty set, which the
+     * caller already reads as "connectivity cannot be determined" and shows all agents instead of hiding some.
+     */
     @Override
     public Set<String> getConnectedClientNames() {
-        // Redis doesn't have the concept of connected clients in the same way as Hazelcast
-        // Return all known clients from the Redis client list
-        return redisClientListResolver.getUniqueClients();
+        var snapshot = redisClientListResolver.resolveClients();
+        return snapshot.complete() ? snapshot.clientNames() : Set.of();
     }
 
     @Override
@@ -304,7 +311,14 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         }
 
         try {
-            Set<String> currentClients = redisClientListResolver.getUniqueClients();
+            var snapshot = redisClientListResolver.resolveClients();
+            if (!snapshot.complete()) {
+                // A partial client list would make every client that this lookup did not see look disconnected and fire the listeners for it. Skip the round instead;
+                // the next one runs a few seconds later.
+                log.debug("Skipping the Redis client disconnection check because the client list was incomplete");
+                return;
+            }
+            Set<String> currentClients = snapshot.clientNames();
             Set<String> disconnectedClients = new HashSet<>(previouslyKnownClients);
             disconnectedClients.removeAll(currentClients);
 
