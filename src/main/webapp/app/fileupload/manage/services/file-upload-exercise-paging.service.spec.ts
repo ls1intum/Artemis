@@ -50,4 +50,18 @@ describe('FileUploadExercisePagingService', () => {
         expect(result.resultsOnPage[0].teamMode).toBe(true);
         expect(result.resultsOnPage[0].course?.title).toBe('Course');
     });
+
+    it('normalizes an omitted empty result page to an empty array', async () => {
+        const resultPromise = firstValueFrom(
+            service.search(
+                { page: 0, pageSize: 10, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'id', searchTerm: 'missing' },
+                { isCourseFilter: true, isExamFilter: true },
+            ),
+        );
+
+        const request = httpMock.expectOne((req) => req.url === 'api/fileupload/file-upload-exercises');
+        request.flush({ numberOfPages: 0 });
+
+        await expect(resultPromise).resolves.toEqual({ resultsOnPage: [], numberOfPages: 0 });
+    });
 });

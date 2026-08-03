@@ -7,6 +7,11 @@ import { SearchResult, SearchTermPageableSearch } from 'app/foundation/paginatio
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { Observable, map } from 'rxjs';
 
+interface FileUploadExerciseSearchResultDto {
+    resultsOnPage?: FileUploadExerciseDto[];
+    numberOfPages: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FileUploadExercisePagingService extends ExercisePagingService<FileUploadExercise> {
     private static readonly RESOURCE_URL = 'api/fileupload/file-upload-exercises';
@@ -23,9 +28,9 @@ export class FileUploadExercisePagingService extends ExercisePagingService<FileU
     ): Observable<SearchResult<FileUploadExercise>> {
         let params = this.createHttpParams(pageable);
         params = params.set('isCourseFilter', String(options.isCourseFilter)).set('isExamFilter', String(options.isExamFilter));
-        return this.http.get<SearchResult<FileUploadExerciseDto>>(this.resourceUrl, { params }).pipe(
+        return this.http.get<FileUploadExerciseSearchResultDto>(this.resourceUrl, { params }).pipe(
             map((result) => ({
-                resultsOnPage: result.resultsOnPage.map(fromFileUploadExerciseDTO),
+                resultsOnPage: (result.resultsOnPage ?? []).map(fromFileUploadExerciseDTO),
                 numberOfPages: result.numberOfPages,
             })),
         );
