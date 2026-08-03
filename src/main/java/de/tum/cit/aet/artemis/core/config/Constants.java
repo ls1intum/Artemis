@@ -384,11 +384,6 @@ public final class Constants {
     public static final String PROFILE_ARTEMIS = "artemis";
 
     /**
-     * The name of the Spring profile used for Iris functionality.
-     */
-    public static final String PROFILE_IRIS = "iris";
-
-    /**
      * The name of the Spring profile used for Artemis core functionality.
      */
     public static final String PROFILE_CORE = "core";

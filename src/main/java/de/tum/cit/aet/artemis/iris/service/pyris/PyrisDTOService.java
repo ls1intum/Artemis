@@ -115,20 +115,6 @@ public class PyrisDTOService {
     }
 
     /**
-     * Helper method to convert a ProgrammingSubmission to a PyrisSubmissionDTO.
-     * This notably includes fetching the contents of the student repository, if it exists.
-     * This version does not include fetching the build logs because these are not always needed.
-     *
-     * @param submission the students submission
-     * @return the converted PyrisSubmissionDTO
-     */
-    public PyrisSubmissionDTO toPyrisSubmissionDTOWithoutBuildLogs(ProgrammingSubmission submission) {
-        var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
-        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
-                submission.isBuildFailed(), null, getLatestResult(submission));
-    }
-
-    /**
      * Helper method to convert a list of IrisMessages to a list of PyrisMessageDTOs.
      * This needs separate handling for the different types of message content.
      *

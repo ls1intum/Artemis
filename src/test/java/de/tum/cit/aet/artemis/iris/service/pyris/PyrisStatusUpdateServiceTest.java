@@ -110,6 +110,20 @@ class PyrisStatusUpdateServiceTest {
     }
 
     @Test
+    void chatJobResultWithAskUserEventButJobAlreadyRemovedDoesNotTriggerAskUserService() {
+        var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,
+                IrisPipeEvent.NEXT_QUESTION.name(), null);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, statusUpdate.event())).thenReturn(job);
+        when(pyrisJobService.removeJob(job)).thenReturn(null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(pyrisJobService).removeJob(job);
+        verify(irisAskUserService, never()).handleStatusUpdate(job, statusUpdate);
+    }
+
+    @Test
     void duplicateChatJobResultWithAskUserEventDoesNotTriggerAskUserServiceAgain() {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
         var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,

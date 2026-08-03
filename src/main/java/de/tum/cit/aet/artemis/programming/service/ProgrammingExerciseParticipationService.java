@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -79,13 +78,10 @@ public class ProgrammingExerciseParticipationService {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository) {
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -96,7 +92,6 @@ public class ProgrammingExerciseParticipationService {
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**

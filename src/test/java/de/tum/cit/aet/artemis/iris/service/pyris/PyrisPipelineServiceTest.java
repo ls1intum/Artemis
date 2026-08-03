@@ -151,6 +151,7 @@ class PyrisPipelineServiceTest {
         session.setId(2L);
         session.setEntityId(3L);
         session.setUserId(7L);
+        session.setQuestionsAsked(2);
 
         var success = service.executeAskUserPipeline("default", submission, exercise, session, Optional.of("BUILD_WITH_POINTS"), IrisAskUserModeSettings.defaultSettings());
 
@@ -163,6 +164,10 @@ class PyrisPipelineServiceTest {
         assertThat(dto.chatMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         assertThat(dto.programmingExercise()).isSameAs(exerciseDTO);
         assertThat(dto.programmingExerciseSubmission()).isSameAs(submissionDTO);
+        // minQuestions/maxQuestions must come from the ask-user-mode settings, and questionsAsked from the session's own counter.
+        assertThat(dto.minQuestions()).isEqualTo(IrisAskUserModeSettings.defaultSettings().minQuestions());
+        assertThat(dto.maxQuestions()).isEqualTo(IrisAskUserModeSettings.defaultSettings().maxQuestions());
+        assertThat(dto.questionsAsked()).isEqualTo(2);
 
         var json = new ObjectMapper().writeValueAsString(dto);
         assertThat(json).contains("\"chatMode\":\"PROGRAMMING_EXERCISE_CHAT\"", "\"programmingExercise\":", "\"programmingExerciseSubmission\":");

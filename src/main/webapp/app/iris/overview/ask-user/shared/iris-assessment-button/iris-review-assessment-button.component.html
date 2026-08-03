@@ -4,7 +4,7 @@
     [severity]="buttonSeverity()"
     [size]="buttonSize()"
     [jhiFeatureToggle]="FeatureToggle.AskUserMode"
-    [disabled]="irisAssessment()?.verdict === undefined || irisAssessment()?.verdict === null"
+    [overwriteDisabled]="irisAssessment()?.verdict === undefined || irisAssessment()?.verdict === null"
     [routerLink]="['/course-management', course().id, assessmentReviewPath(), irisAssessment()?.id, 'details']"
 >
     <fa-icon [icon]="faBrain" />

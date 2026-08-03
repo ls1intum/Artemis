@@ -7,7 +7,7 @@
         [severity]="buttonSeverity()"
         [size]="buttonSize()"
         [jhiFeatureToggle]="FeatureToggle.AskUserMode"
-        [disabled]="!canBeStarted() || afterDueDate()"
+        [overwriteDisabled]="!canBeStarted() || afterDueDate()"
     >
         <fa-icon [icon]="faBrain" />
         <span class="md:inline" [class.hidden]="hideLabelMobile()">{{ buttonLabel() | artemisTranslate }}</span>
