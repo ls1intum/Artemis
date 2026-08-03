@@ -26,6 +26,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { IrisVerdict } from 'app/iris/shared/entities/iris-verdict.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -99,6 +102,8 @@ describe('Exercise Scores Component', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: IrisSettingsService, useValue: { getCourseSettingsWithRateLimit: () => of({ settings: { askUserModeEnabled: false } }) } },
+                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(true) } },
             ],
         })
             .compileComponents()
@@ -308,11 +313,14 @@ describe('Exercise Scores Component', () => {
 
             const result = component.toResult(dto);
 
-            expect(result).toBeDefined();
-            expect(result!.id).toBe(42);
-            expect(result!.score).toBe(75);
-            expect(result!.successful).toBe(true);
-            expect(result!.assessmentType).toBe(AssessmentType.AUTOMATIC);
+            expect(result).toEqual(
+                expect.objectContaining({
+                    id: 42,
+                    score: 75,
+                    successful: true,
+                    assessmentType: AssessmentType.AUTOMATIC,
+                }),
+            );
         });
     });
 
@@ -379,6 +387,27 @@ describe('Exercise Scores Component', () => {
             expect(participation.submissions).toHaveLength(1);
             expect((participation.submissions![0] as any).submissionExerciseType).toBe('programming');
             expect((participation.submissions![0] as any).buildFailed).toBe(true);
+        });
+    });
+
+    describe('toProgrammingParticipation', () => {
+        it('should keep the programming exercise and iris assessment from the score dto', () => {
+            const irisAssessment = { id: 19, verdict: IrisVerdict.SUSPICIOUS };
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING } as ProgrammingExercise);
+            const dto: ParticipationScoreDTO = {
+                ...sampleDto,
+                participationId: 10,
+                submissionCount: 3,
+                irisAssessment,
+            };
+
+            const participation = component.toProgrammingParticipation(dto);
+
+            expect(participation.id).toBe(10);
+            expect(participation.type).toBe(ParticipationType.PROGRAMMING);
+            expect(participation.exercise).toBe(component.toProgrammingExercise());
+            expect(participation.submissionCount).toBe(3);
+            expect(participation.irisAssessment).toBe(irisAssessment);
         });
     });
 

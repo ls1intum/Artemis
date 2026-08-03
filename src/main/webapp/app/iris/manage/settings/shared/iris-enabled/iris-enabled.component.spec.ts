@@ -57,11 +57,14 @@ describe('IrisEnabledComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should initialize with loaded settings', () => {
         vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
         componentRef.setInput('course', course);
         fixture.detectChanges();
-        expect(comp).toBeDefined();
+
+        expect(comp.settings()).toEqual(mockSettings);
+        expect(comp.isEnabled()).toBeTrue();
+        expect(comp.isDisabled()).toBeFalse();
     });
 
     describe('ngOnInit', () => {

@@ -79,8 +79,11 @@ describe('IrisSettingsUpdateComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeDefined();
+    it('should initialize with default tab and idle state', () => {
+        expect(component.activeTab()).toBe('general');
+        expect(component.isLoading()).toBeFalse();
+        expect(component.isSaving()).toBeFalse();
+        expect(component.settings()).toBeUndefined();
     });
 
     describe('ngOnInit', () => {

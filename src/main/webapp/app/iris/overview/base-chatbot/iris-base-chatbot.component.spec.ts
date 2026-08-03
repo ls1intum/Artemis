@@ -9,14 +9,14 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/account/user/shared/user.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -458,7 +458,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             pushDraft('run-1', 'This partial answer is long enough to keep the animation interval active.');
 
-            expect(component['liveDraftAnimationIntervalId']).toBeDefined();
+            expect(['number', 'object']).toContain(typeof component['liveDraftAnimationIntervalId']);
 
             fixture.destroy();
 
@@ -2066,7 +2066,6 @@ describe('IrisBaseChatbotComponent', () => {
             const textContent = new IrisTextMessageContent('hello');
 
             const data = getMcqData(mcqContent);
-            expect(data).toBeDefined();
             expect(data?.question).toBe('Q?');
             expect(data?.options).toHaveLength(2);
 

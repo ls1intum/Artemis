@@ -108,13 +108,16 @@ export class IrisAskUserService {
         this.askUserHttpService
             .startTimer(exerciseId)
             .pipe(take(1))
-            .subscribe((response) => {
-                if (response.body?.timerExpiresAt === undefined) {
-                    return;
-                }
+            .subscribe({
+                next: (response) => {
+                    if (response.body?.timerExpiresAt === undefined) {
+                        return;
+                    }
 
-                this._timerExpiresAt.set(convertDateFromServer(response.body.timerExpiresAt));
-                this._timeLimit.set(response.body.timeLimit);
+                    this._timerExpiresAt.set(convertDateFromServer(response.body.timerExpiresAt));
+                    this._timeLimit.set(response.body.timeLimit);
+                },
+                error: () => this.clearAskUserTimerState(),
             });
     }
 
@@ -122,7 +125,10 @@ export class IrisAskUserService {
         const exerciseId = this.currentProgrammingExerciseId();
         this.clearAskUserTimerState();
         if (exerciseId !== undefined) {
-            this.askUserHttpService.stopTimer(exerciseId).pipe(take(1)).subscribe();
+            this.askUserHttpService
+                .stopTimer(exerciseId)
+                .pipe(take(1))
+                .subscribe({ error: () => undefined });
         }
     }
 
@@ -209,7 +215,7 @@ export class IrisAskUserService {
                 this._quizActive.set(false);
                 this._quizStarted.set(false);
                 this.clearAskUserTimerState();
-                this.askUserHttpService.registerDefocusForCurrentSession(exerciseId).subscribe();
+                this.askUserHttpService.registerDefocusForCurrentSession(exerciseId).subscribe({ error: () => undefined });
             }
         });
     }

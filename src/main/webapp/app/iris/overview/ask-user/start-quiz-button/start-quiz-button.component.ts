@@ -15,6 +15,8 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 
 @Component({
     selector: 'jhi-start-quiz-button',
@@ -26,6 +28,7 @@ export class IrisStartQuizButtonComponent {
     private readonly irisChatService = inject(IrisChatService);
     private readonly askUserService = inject(IrisAskUserService);
     private readonly askUserHttpService = inject(IrisAskUserHttpService);
+    private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly exercise = input.required<Exercise>();
@@ -105,7 +108,7 @@ export class IrisStartQuizButtonComponent {
                         return of(false);
                     }
 
-                    return this.askUserHttpService.currentStartedQuizForExercise(exerciseId);
+                    return this.askUserHttpService.currentStartedQuizForExercise(exerciseId).pipe(catchError(() => of(false)));
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -124,7 +127,7 @@ export class IrisStartQuizButtonComponent {
                         return of(false);
                     }
 
-                    return this.askUserHttpService.currentStartedInClassQuizForExercise(exerciseId);
+                    return this.askUserHttpService.currentStartedInClassQuizForExercise(exerciseId).pipe(catchError(() => of(false)));
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -194,6 +197,7 @@ export class IrisStartQuizButtonComponent {
                 error: () => {
                     this.isAskUserMode.set(false);
                     this.askUserService.clearActiveQuizTypeForExercise(exerciseId, 'regular');
+                    this.alertService.error(IrisErrorMessageKey.START_ASK_USER_FAILED);
                 },
             });
     }

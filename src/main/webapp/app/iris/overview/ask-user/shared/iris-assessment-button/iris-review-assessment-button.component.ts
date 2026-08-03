@@ -9,7 +9,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -37,7 +36,7 @@ export class IrisReviewAssessmentButtonComponent {
     protected readonly verdict = computed(() => this.irisAssessment()?.verdict);
     protected readonly buttonSize = computed<'small' | undefined>(() => (this.smallButton() ? 'small' : undefined));
 
-    // Returns true when the assessment is either suspicious but not yet reviewed, reviewed as rejected oder the quiz has not been done yet (verdict is missing)
+    // Returns true when the assessment is either suspicious but not yet reviewed, reviewed as rejected, or the quiz has not been done yet (verdict is missing).
     protected readonly needsAttention = computed(() => {
         const verdictReview = this.verdictReview();
         const verdict = this.verdict();
@@ -70,5 +69,4 @@ export class IrisReviewAssessmentButtonComponent {
                 }
         }
     });
-    protected readonly IrisPipeEvent = IrisPipeEvent;
 }

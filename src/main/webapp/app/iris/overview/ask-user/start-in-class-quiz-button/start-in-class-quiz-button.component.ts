@@ -17,6 +17,8 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 
 @Component({
     selector: 'jhi-start-in-class-quiz-button',
@@ -29,6 +31,7 @@ export class IrisStartInClassQuizButtonComponent {
     private readonly askUserService = inject(IrisAskUserService);
     private readonly askUserHttpService = inject(IrisAskUserHttpService);
     private readonly assessmentReviewService = inject(IrisAssessmentReviewHttpService);
+    private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
 
     readonly exercise = input.required<Exercise>();
@@ -70,7 +73,7 @@ export class IrisStartInClassQuizButtonComponent {
                     return of(undefined);
                 }
 
-                return this.assessmentReviewService.availableInClassQuizForExercise(exerciseId);
+                return this.assessmentReviewService.availableInClassQuizForExercise(exerciseId).pipe(catchError(() => of(undefined)));
             }),
         ),
         { initialValue: undefined },
@@ -109,7 +112,6 @@ export class IrisStartInClassQuizButtonComponent {
             .subscribe(() => {
                 this.latestSubmissionHasPointsFromEvent.set(false);
                 this.quizCompletedAfterCurrentRun.set(false);
-                this.latestSubmissionHasPointsFromEvent.set(false);
             });
 
         // Initial fetch if ask-user mode is currently active
@@ -120,7 +122,7 @@ export class IrisStartInClassQuizButtonComponent {
                         return of(false);
                     }
 
-                    return this.askUserHttpService.currentStartedInClassQuizForExercise(exerciseId);
+                    return this.askUserHttpService.currentStartedInClassQuizForExercise(exerciseId).pipe(catchError(() => of(false)));
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -139,7 +141,7 @@ export class IrisStartInClassQuizButtonComponent {
                         return of(false);
                     }
 
-                    return this.askUserHttpService.currentStartedQuizForExercise(exerciseId);
+                    return this.askUserHttpService.currentStartedQuizForExercise(exerciseId).pipe(catchError(() => of(false)));
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -210,6 +212,7 @@ export class IrisStartInClassQuizButtonComponent {
                 error: () => {
                     this.isInClassAskUserMode.set(false);
                     this.askUserService.clearActiveQuizTypeForExercise(exerciseId, 'inClass');
+                    this.alertService.error(IrisErrorMessageKey.START_ASK_USER_FAILED);
                 },
             });
     }

@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Signal, WritableSignal, computed, signal } from '@angular/core';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
@@ -11,6 +12,11 @@ import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import { IrisStartQuizButtonComponent } from 'app/iris/overview/ask-user/start-quiz-button/start-quiz-button.component';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { IrisAskUserQuizType, IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 
 describe('IrisStartQuizButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -20,6 +26,12 @@ describe('IrisStartQuizButtonComponent', () => {
     let latestEventSubject: Subject<IrisPipeEvent | undefined>;
     let activeQuizType: WritableSignal<IrisAskUserQuizType | undefined>;
     let runInfoSubject: BehaviorSubject<IrisRunInfo | undefined>;
+    let alertService: AlertService;
+    let askUserHttpService: {
+        isQuizAlreadyDone: ReturnType<typeof vi.fn>;
+        currentStartedQuizForExercise: ReturnType<typeof vi.fn>;
+        currentStartedInClassQuizForExercise: ReturnType<typeof vi.fn>;
+    };
     let askUserService: {
         activeQuizType: WritableSignal<IrisAskUserQuizType | undefined>;
         latestSubmissionHasPoints: WritableSignal<boolean>;
@@ -44,6 +56,11 @@ describe('IrisStartQuizButtonComponent', () => {
                 return of(undefined);
             }),
         };
+        askUserHttpService = {
+            isQuizAlreadyDone: vi.fn(() => of(true)),
+            currentStartedQuizForExercise: vi.fn(() => of(false)),
+            currentStartedInClassQuizForExercise: vi.fn(() => of(false)),
+        };
 
         await TestBed.configureTestingModule({
             imports: [IrisStartQuizButtonComponent],
@@ -56,29 +73,41 @@ describe('IrisStartQuizButtonComponent', () => {
                     },
                 },
                 { provide: IrisAskUserService, useValue: askUserService },
-                {
-                    provide: IrisAskUserHttpService,
-                    useValue: {
-                        isQuizAlreadyDone: vi.fn(() => of(true)),
-                        currentStartedQuizForExercise: vi.fn(() => of(false)),
-                        currentStartedInClassQuizForExercise: vi.fn(() => of(false)),
-                    },
-                },
+                MockProvider(AlertService),
+                { provide: IrisAskUserHttpService, useValue: askUserHttpService },
             ],
         })
             .overrideComponent(IrisStartQuizButtonComponent, {
-                set: {
-                    template: '',
-                    imports: [],
+                remove: {
+                    imports: [FeatureToggleDirective, ArtemisTranslatePipe, FaIconComponent],
+                },
+                add: {
+                    imports: [MockDirective(FeatureToggleDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key), MockComponent(FaIconComponent)],
                 },
             })
             .compileComponents();
 
         fixture = TestBed.createComponent(IrisStartQuizButtonComponent);
         component = fixture.componentInstance;
+        alertService = TestBed.inject(AlertService);
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
         fixture.componentRef.setInput('smallButtons', false);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should start the quiz from the rendered button', () => {
+        latestEventSubject.next(IrisPipeEvent.BUILD_WITH_POINTS);
+        fixture.detectChanges();
+
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        button.click();
+        fixture.detectChanges();
+
+        expect(askUserService.startQuiz).toHaveBeenCalledExactlyOnceWith(1);
     });
 
     it('should show currently quiz active while a new ask-user quiz is active even if the server still reports the previous quiz as completed', () => {
@@ -152,5 +181,38 @@ describe('IrisStartQuizButtonComponent', () => {
 
         expect((component as any).buttonLabel()).toBe('artemisApp.exerciseActions.askUser.start');
         expect(askUserService.clearActiveQuizTypeForExercise).toHaveBeenCalledWith(1, 'regular');
+    });
+
+    it('should reset local state and show an alert when starting the quiz fails', () => {
+        latestEventSubject.next(IrisPipeEvent.BUILD_WITH_POINTS);
+        askUserService.startQuiz.mockReturnValue(throwError(() => new Error('boom')));
+        const alertSpy = vi.spyOn(alertService, 'error');
+        fixture.detectChanges();
+
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        button.click();
+        fixture.detectChanges();
+
+        expect((component as any).buttonLabel()).toBe('artemisApp.exerciseActions.askUser.start');
+        expect(askUserService.clearActiveQuizTypeForExercise).toHaveBeenCalledWith(1, 'regular');
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith(IrisErrorMessageKey.START_ASK_USER_FAILED);
+    });
+
+    it('should keep the inactive state when initial started quiz checks fail', () => {
+        fixture.destroy();
+        activeQuizType.set(undefined);
+        askUserService.setActiveQuizTypeForExercise.mockClear();
+        askUserHttpService.currentStartedQuizForExercise.mockReturnValue(throwError(() => new Error('regular failed')));
+        askUserHttpService.currentStartedInClassQuizForExercise.mockReturnValue(throwError(() => new Error('in-class failed')));
+
+        fixture = TestBed.createComponent(IrisStartQuizButtonComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('smallButtons', false);
+        fixture.detectChanges();
+
+        expect(activeQuizType()).toBeUndefined();
+        expect(askUserService.setActiveQuizTypeForExercise).not.toHaveBeenCalled();
+        expect((component as any).buttonLabel()).toBe('artemisApp.exerciseActions.askUser.finished');
     });
 });

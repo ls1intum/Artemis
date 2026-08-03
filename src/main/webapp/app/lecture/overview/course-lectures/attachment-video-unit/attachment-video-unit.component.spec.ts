@@ -971,9 +971,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
             const provider = component.contextProvider();
 
-            expect(provider).toBeDefined();
-            expect(provider.getCurrentPdfPage).toBeDefined();
-            expect(provider.getCurrentPdfPage!()).toBe(5);
+            expect(provider).toEqual(expect.objectContaining({ getCurrentPdfPage: expect.any(Function) }));
+            expect(provider.getCurrentPdfPage?.()).toBe(5);
         });
 
         it('contextProvider: getCurrentPdfPage returns undefined when no PDF viewer', () => {

@@ -1,24 +1,21 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 
-import { IrisAskUserHttpService, IrisAskUserQuizType } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
 
 describe('IrisAskUserHttpService', () => {
     let service: IrisAskUserHttpService;
     let httpMock: HttpTestingController;
-    let clearChatSpy: ReturnType<typeof vi.fn>;
 
     const exerciseId = 42;
-    const completedUrl = `api/iris/programming-exercises/${exerciseId}/ask-user/completed`;
+    const resourceUrl = `api/iris/programming-exercises/${exerciseId}/ask-user`;
 
     beforeEach(() => {
-        clearChatSpy = vi.fn(() => Promise.resolve());
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), IrisAskUserHttpService, { provide: IrisChatService, useValue: { clearChat: clearChatSpy } }],
+            providers: [provideHttpClient(), provideHttpClientTesting(), IrisAskUserHttpService],
         });
 
         service = TestBed.inject(IrisAskUserHttpService);
@@ -27,38 +24,13 @@ describe('IrisAskUserHttpService', () => {
 
     afterEach(() => {
         httpMock.verify();
-    });
-
-    it('should clear the chat before starting ask-user mode', async () => {
-        const result = firstValueFrom(service.startQuiz(exerciseId));
-
-        expect(clearChatSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-
-        const request = httpMock.expectOne(`api/iris/programming-exercises/${exerciseId}/ask-user/start`);
-        expect(request.request.method).toBe('PATCH');
-        request.flush(null);
-
-        await expect(result).resolves.toBeUndefined();
-    });
-
-    it('should clear the chat before starting in-class ask-user mode', async () => {
-        const result = firstValueFrom(service.startInClassQuiz(exerciseId));
-
-        expect(clearChatSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-
-        const request = httpMock.expectOne(`api/iris/programming-exercises/${exerciseId}/ask-user/in-class/start`);
-        expect(request.request.method).toBe('PATCH');
-        request.flush(null);
-
-        await expect(result).resolves.toBeUndefined();
+        vi.restoreAllMocks();
     });
 
     it('should check whether ask-user mode is started', () => {
         service.currentStartedQuizForExercise(exerciseId).subscribe((started) => expect(started).toBeTrue());
 
-        const request = httpMock.expectOne(`api/iris/programming-exercises/${exerciseId}/ask-user/is-quiz-started`);
+        const request = httpMock.expectOne(`${resourceUrl}/is-quiz-started`);
         expect(request.request.method).toBe('GET');
         request.flush(true);
     });
@@ -66,27 +38,55 @@ describe('IrisAskUserHttpService', () => {
     it('should check whether in-class ask-user mode is started', () => {
         service.currentStartedInClassQuizForExercise(exerciseId).subscribe((started) => expect(started).toBeTrue());
 
-        const request = httpMock.expectOne(`api/iris/programming-exercises/${exerciseId}/ask-user/in-class/is-quiz-started`);
+        const request = httpMock.expectOne(`${resourceUrl}/in-class/is-quiz-started`);
         expect(request.request.method).toBe('GET');
         request.flush(true);
     });
 
-    it('should expose the active ask-user quiz type', () => {
-        const activeQuizTypes: (IrisAskUserQuizType | undefined)[] = [];
-        const subscription = service.activeQuizTypeForExercise(exerciseId).subscribe((activeQuizType) => activeQuizTypes.push(activeQuizType));
+    it('should register a defocus event for the current session', () => {
+        service.registerDefocusForCurrentSession(exerciseId).subscribe((response) => expect(response.status).toBe(200));
 
-        service.setActiveQuizTypeForExercise(exerciseId, 'regular');
-        service.setActiveQuizTypeForExercise(exerciseId, 'inClass');
-        service.clearActiveQuizTypeForExercise(exerciseId);
+        const request = httpMock.expectOne(`${resourceUrl}/defocus`);
+        expect(request.request.method).toBe('PATCH');
+        expect(request.request.body).toEqual({});
+        request.flush(null);
+    });
 
-        expect(activeQuizTypes).toEqual([undefined, 'regular', 'inClass', undefined]);
-        subscription.unsubscribe();
+    it('should start the ask-user timer', () => {
+        const timerExpiresAt = dayjs().add(20, 'seconds').toJSON();
+
+        service.startTimer(exerciseId).subscribe((response) => {
+            expect(response.body).toEqual({ timerExpiresAt, timeLimit: 20 });
+        });
+
+        const request = httpMock.expectOne(`${resourceUrl}/start-timer`);
+        expect(request.request.method).toBe('PATCH');
+        expect(request.request.body).toEqual({});
+        request.flush({ timerExpiresAt, timeLimit: 20 });
+    });
+
+    it('should start the regular ask-user quiz', () => {
+        service.startQuiz(exerciseId).subscribe((response) => expect(response.status).toBe(200));
+
+        const request = httpMock.expectOne(`${resourceUrl}/start`);
+        expect(request.request.method).toBe('PATCH');
+        expect(request.request.body).toBeNull();
+        request.flush(null);
+    });
+
+    it('should start the in-class ask-user quiz', () => {
+        service.startInClassQuiz(exerciseId).subscribe((response) => expect(response.status).toBe(200));
+
+        const request = httpMock.expectOne(`${resourceUrl}/in-class/start`);
+        expect(request.request.method).toBe('PATCH');
+        expect(request.request.body).toBeNull();
+        request.flush(null);
     });
 
     it('should check whether the latest submission has points', () => {
         service.latestSubmissionHasPoints(exerciseId).subscribe((hasPoints) => expect(hasPoints).toBeTrue());
 
-        const request = httpMock.expectOne(`api/iris/programming-exercises/${exerciseId}/ask-user/latest-submission-has-points`);
+        const request = httpMock.expectOne(`${resourceUrl}/latest-submission-has-points`);
         expect(request.request.method).toBe('GET');
         request.flush(true);
     });
@@ -94,7 +94,7 @@ describe('IrisAskUserHttpService', () => {
     it('should check whether the in-class quiz is already done', () => {
         service.isQuizAlreadyDone(exerciseId, true).subscribe((quizAlreadyDone) => expect(quizAlreadyDone).toBeTrue());
 
-        const request = httpMock.expectOne((req) => req.url === completedUrl && req.params.get('inClass') === 'true');
+        const request = httpMock.expectOne((req) => req.url === `${resourceUrl}/completed` && req.params.get('inClass') === 'true');
         expect(request.request.method).toBe('GET');
         request.flush(true);
     });
@@ -102,8 +102,17 @@ describe('IrisAskUserHttpService', () => {
     it('should check whether the regular quiz is already done', () => {
         service.isQuizAlreadyDone(exerciseId, false).subscribe((quizAlreadyDone) => expect(quizAlreadyDone).toBeFalse());
 
-        const request = httpMock.expectOne((req) => req.url === completedUrl && req.params.get('inClass') === 'false');
+        const request = httpMock.expectOne((req) => req.url === `${resourceUrl}/completed` && req.params.get('inClass') === 'false');
         expect(request.request.method).toBe('GET');
         request.flush(false);
+    });
+
+    it('should stop the ask-user timer', () => {
+        service.stopTimer(exerciseId).subscribe((response) => expect(response.status).toBe(200));
+
+        const request = httpMock.expectOne(`${resourceUrl}/stop-timer`);
+        expect(request.request.method).toBe('PATCH');
+        expect(request.request.body).toEqual({});
+        request.flush(null);
     });
 });

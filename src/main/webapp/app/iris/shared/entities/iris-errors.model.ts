@@ -47,6 +47,7 @@ const IrisErrors: IrisErrorType[] = [
     { key: IrisErrorMessageKey.IRIS_NOT_AVAILABLE, fatal: true },
     { key: IrisErrorMessageKey.RATE_LIMIT_EXCEEDED, fatal: true },
     { key: IrisErrorMessageKey.AI_USAGE_DECLINED, fatal: true },
+    { key: IrisErrorMessageKey.START_ASK_USER_FAILED, fatal: false },
 ];
 
 export const errorMessages: Readonly<Partial<{ [key in IrisErrorMessageKey]: IrisErrorType }>> = Object.freeze(

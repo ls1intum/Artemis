@@ -32,6 +32,8 @@ import { signal } from '@angular/core';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { IrisStartQuizButtonComponent } from 'app/iris/overview/ask-user/start-quiz-button/start-quiz-button.component';
+import { IrisStartInClassQuizButtonComponent } from 'app/iris/overview/ask-user/start-in-class-quiz-button/start-in-class-quiz-button.component';
 
 describe('ExerciseHeaderComponent', () => {
     let fixture: ComponentFixture<ExerciseHeaderComponent>;
@@ -57,8 +59,15 @@ describe('ExerciseHeaderComponent', () => {
 
         // Mock child components of ExerciseHeaderComponent not under test
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ExerciseHeadersInformationComponent, ParticipationModeToggleComponent] },
-            add: { imports: [MockComponent(ExerciseHeadersInformationComponent), MockComponent(ParticipationModeToggleComponent)] },
+            remove: { imports: [ExerciseHeadersInformationComponent, ParticipationModeToggleComponent, IrisStartQuizButtonComponent, IrisStartInClassQuizButtonComponent] },
+            add: {
+                imports: [
+                    MockComponent(ExerciseHeadersInformationComponent),
+                    MockComponent(ParticipationModeToggleComponent),
+                    MockComponent(IrisStartQuizButtonComponent),
+                    MockComponent(IrisStartInClassQuizButtonComponent),
+                ],
+            },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
@@ -274,6 +283,34 @@ describe('ExerciseHeaderComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+    });
+
+    it('should show the ask-user quiz buttons for non-exam programming exercises when enabled', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.PROGRAMMING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('irisAskUserModeEnabled', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('jhi-start-quiz-button'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('jhi-start-in-class-quiz-button'))).not.toBeNull();
+    });
+
+    it('should hide the ask-user quiz buttons for exam programming exercises', () => {
+        const exercise = new ProgrammingExercise(undefined, { id: 4 } as any);
+        exercise.id = 1;
+        exercise.type = ExerciseType.PROGRAMMING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('irisAskUserModeEnabled', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('jhi-start-quiz-button'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('jhi-start-in-class-quiz-button'))).toBeNull();
     });
 
     describe('hasGradedSubmission', () => {
@@ -538,7 +575,7 @@ describe('ExerciseHeaderComponent', () => {
             fixture.componentInstance.isViewingSubmission.set(true);
 
             expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
-            expect(fixture.componentInstance.onContinueExercise()).toBeDefined();
+            expect(fixture.componentInstance.onContinueExercise()).toEqual(expect.any(Function));
         });
     });
 

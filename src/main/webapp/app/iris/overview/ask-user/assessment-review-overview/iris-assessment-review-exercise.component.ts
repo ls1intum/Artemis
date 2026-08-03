@@ -16,7 +16,7 @@ import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/featur
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/ask-user/shared/iris-assessment-button/iris-review-assessment-button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { of, switchMap, take } from 'rxjs';
+import { catchError, of, switchMap, take } from 'rxjs';
 import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar/quiz-timer-bar.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
@@ -26,6 +26,9 @@ import { ButtonModule } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TableModule } from 'primeng/table';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/foundation/util/global.utils';
 
 interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentParticipation {
     readonly participationLink?: Array<string | number>;
@@ -76,6 +79,7 @@ export class IrisAssessmentReviewExerciseComponent {
     private readonly assessmentReviewService = inject(IrisAssessmentReviewHttpService);
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
 
     protected readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     private readonly exerciseId = computed(() => this.exercise().id);
@@ -87,7 +91,12 @@ export class IrisAssessmentReviewExerciseComponent {
                     return of(undefined);
                 }
 
-                return this.assessmentReviewService.availableInClassQuizForExercise(exerciseId);
+                return this.assessmentReviewService.availableInClassQuizForExercise(exerciseId).pipe(
+                    catchError((error: HttpErrorResponse) => {
+                        onError(this.alertService, error);
+                        return of(undefined);
+                    }),
+                );
             }),
         ),
         { initialValue: undefined },
@@ -128,6 +137,10 @@ export class IrisAssessmentReviewExerciseComponent {
                 closable: false,
             });
 
+            if (!dialogRef) {
+                return;
+            }
+
             dialogRef.onClose.pipe(take(1)).subscribe((confirmed?: boolean) => {
                 if (confirmed) {
                     this.startInClassQuiz(exerciseId);
@@ -143,7 +156,10 @@ export class IrisAssessmentReviewExerciseComponent {
         this.assessmentReviewService
             .makeInClassQuizAvailable(exerciseId)
             .pipe(take(1))
-            .subscribe(() => this.refresh.emit());
+            .subscribe({
+                next: () => this.refresh.emit(),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
     }
 
     handleInClassQuizTimerExpired(): void {

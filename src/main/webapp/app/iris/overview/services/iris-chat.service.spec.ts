@@ -395,7 +395,7 @@ describe('IrisChatService', () => {
             // session/message state but no longer owns the context lifecycle: the pending override is only
             // discarded once the next session's server context is adopted.
             service.stagePendingContext(ChatServiceMode.LECTURE, 7, 'Lecture 7');
-            expect(service.displayContext()).toBeDefined();
+            expect(service.displayContext()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 7, entityName: 'Lecture 7' });
 
             service['close']();
             expect(service['contextService']['_pending']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 7, entityName: 'Lecture 7' });
@@ -1458,7 +1458,7 @@ describe('IrisChatService', () => {
             // startFreshChat only spins up a new session-loading subscription when the current session is non-empty.
             scopedService.messages.next([mockServerMessage]);
             scopedService.startFreshChat();
-            expect(scopedService['sessionLoadingSubscription']).toBeDefined();
+            expect(scopedService['sessionLoadingSubscription']?.closed).toBeFalse();
 
             authState.next(undefined);
 
@@ -1478,7 +1478,7 @@ describe('IrisChatService', () => {
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
 
             scopedService.switchToSession({ id: 7, mode: ChatServiceMode.COURSE, entityId: 1, creationDate: new Date() } as IrisSessionDTO);
-            expect(scopedService['chatSessionByIdSubscription']).toBeDefined();
+            expect(scopedService['chatSessionByIdSubscription']?.closed).toBeFalse();
 
             authState.next(undefined);
 
@@ -1496,7 +1496,7 @@ describe('IrisChatService', () => {
             vi.spyOn(httpServiceMock, 'getChatSessions').mockReturnValue(inFlight.asObservable());
 
             scopedService['loadChatSessions']();
-            expect(scopedService['chatSessionSubscription']).toBeDefined();
+            expect(scopedService['chatSessionSubscription']?.closed).toBeFalse();
 
             authState.next(undefined);
 

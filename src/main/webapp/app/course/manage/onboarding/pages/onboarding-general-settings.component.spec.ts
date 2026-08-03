@@ -97,7 +97,6 @@ describe('OnboardingGeneralSettingsComponent', () => {
     });
 
     it('should have semesters available', () => {
-        expect(comp.semesters).toBeDefined();
         expect(comp.semesters.length).toBeGreaterThan(0);
     });
 

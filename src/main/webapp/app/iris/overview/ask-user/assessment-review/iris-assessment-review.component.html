@@ -25,7 +25,7 @@
         </ng-template>
     </p-table>
 </div>
-@if (assessment() && assessment().verdict !== null) {
+@if (assessment() && assessment().verdict !== undefined && assessment().verdict !== null) {
     <span class="iris-verdict">
         {{ 'artemisApp.iris.assessmentReview.verdict.assessedAs' | artemisTranslate }}
         {{ 'artemisApp.iris.assessmentReview.verdict.' + verdictTranslationSuffix() | artemisTranslate }}.

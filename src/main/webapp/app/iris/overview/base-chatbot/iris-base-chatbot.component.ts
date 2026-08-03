@@ -97,6 +97,7 @@ import { IrisContextSwitchDividerComponent } from 'app/iris/overview/context-sel
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { onError } from 'app/foundation/util/global.utils';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -950,7 +951,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!sessionId) {
             return;
         }
-        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, { selectedIndex: event.selectedIndex, submitted: true }).subscribe();
+        this.saveMcqResponse(sessionId, message.id, { selectedIndex: event.selectedIndex, submitted: true });
     }
 
     onMcqResponseSaved(message: IrisMessage, response: McqResponseData): void {
@@ -961,7 +962,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (!sessionId) {
             return;
         }
-        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, response).subscribe();
+        this.saveMcqResponse(sessionId, message.id, response);
+    }
+
+    private saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): void {
+        this.irisChatHttpService
+            .saveMcqResponse(sessionId, messageId, response)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                error: (error) => onError(this.alertService, error),
+            });
     }
 
     copyMessage(message: IrisMessage, messageIndex?: number) {

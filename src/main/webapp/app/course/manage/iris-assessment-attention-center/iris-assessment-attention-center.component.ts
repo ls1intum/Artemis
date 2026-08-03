@@ -34,7 +34,7 @@ export class IrisAssessmentAttentionCenterComponent {
     protected readonly needsAttention = toSignal(
         combineLatest([toObservable(this.course), toObservable(this.assessmentEnabled)]).pipe(
             switchMap(([course, assessmentEnabled]) => {
-                if (!assessmentEnabled || course.id === undefined) {
+                if (!assessmentEnabled || !course.isAtLeastInstructor || course.id === undefined) {
                     return of(false);
                 }
 

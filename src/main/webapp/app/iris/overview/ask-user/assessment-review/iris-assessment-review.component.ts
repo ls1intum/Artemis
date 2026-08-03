@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { faCheck, faX } from '@fortawesome/free-solid-svg-icons';
 import { map, take } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { Course } from 'app/course/shared/entities/course.model';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
@@ -16,6 +17,8 @@ import { IrisAssessmentReviewResolvedData } from 'app/iris/overview/ask-user/ser
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-iris-assessment-review',
@@ -27,6 +30,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class IrisAssessmentReviewComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly irisAssessmentReviewService = inject(IrisAssessmentReviewHttpService);
+    private readonly alertService = inject(AlertService);
 
     private readonly resolvedData = toSignal(this.route.data.pipe(map((data) => data['reviewData'] as IrisAssessmentReviewResolvedData)), { requireSync: true });
 
@@ -102,9 +106,10 @@ export class IrisAssessmentReviewComponent {
                 : this.irisAssessmentReviewService.rejectAnswers(currentAssessment.id);
 
         request$.pipe(take(1)).subscribe({
-            error: () => {
+            error: (error: HttpErrorResponse) => {
                 // Restore the previous state if the server request fails.
                 this.assessment.set(previousAssessment);
+                onError(this.alertService, error);
             },
         });
     }

@@ -440,6 +440,13 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
     });
 
+    it('should get the Iris assessment attention state', () => {
+        courseManagementService.getAssessmentAttentionState(course.id!).subscribe((res) => expect(res.body).toEqual({ needsAttention: true }));
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/assessment-attention-state` });
+        req.flush({ needsAttention: true });
+    });
+
     it('should find all locked submissions of course', () => {
         const submission = new ModelingSubmission();
         const submissions = [submission];
