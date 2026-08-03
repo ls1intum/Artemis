@@ -319,14 +319,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             if (!pointOut || !this.isFullscreen()) {
                 return;
             }
-            const pdfReady = pointOut.page == undefined || this.pdfViewer() !== undefined;
+            // A rendered viewer whose document is still loading reports 0 pages and would reject every target, so wait
+            // for the page count as well — otherwise a perfectly valid point-out would be reported as not applied.
+            const pdfReady = pointOut.page == undefined || (this.pdfViewer()?.getTotalPages() ?? 0) > 0;
             const videoReady = pointOut.timestamp == undefined || this.videoPlayer() !== undefined || this.youtubePlayer() !== undefined;
             if (!pdfReady || !videoReady) {
                 return;
             }
             untracked(() => {
+                // Iris proposes the page, so it can name one the deck does not have (a slide's printed number rather
+                // than its index, say). The viewer rejects such a target and stays put, which must be reported back as
+                // not applied: an unconditional success would leave Iris claiming a jump that never happened and put a
+                // dead point-out chip into the chat history.
+                let applied = true;
                 if (pointOut.page != undefined) {
-                    this.pdfViewer()?.goToPage(pointOut.page);
+                    applied = this.pdfViewer()?.goToPage(pointOut.page) ?? false;
                 }
                 if (pointOut.timestamp != undefined) {
                     const videoPlayer = this.videoPlayer();
@@ -339,7 +346,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 // Acknowledge a waiting pipeline only now — once the view has really moved — so Iris learns
                 // "applied" for the actual navigation, not merely because the combined view was open.
                 if (pointOut.correlationId) {
-                    this.chatService.sendCommandAck(pointOut.correlationId, true);
+                    this.chatService.sendCommandAck(pointOut.correlationId, applied);
                 }
                 this.pendingPointOut.set(undefined);
             });
@@ -350,8 +357,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Handles a point-out targeting this unit; requests for other units are ignored (the matching unit, or the
      * server-side timeout, handles them). If the combined view is closed, a marker click (forceOpen) opens it
      * first, while a server-pushed point-out is acknowledged straight away as not applied. The actual page jump
-     * / video seek is deferred to the pendingPointOut effect, which waits until the relevant viewer has rendered
-     * and only then acknowledges success.
+     * / video seek is deferred to the pendingPointOut effect, which waits until the relevant viewer is ready and then
+     * acknowledges the outcome that viewer reported.
      * @param pointOut the requested navigation target
      */
     private handlePointOut(pointOut: IrisPointOut): void {

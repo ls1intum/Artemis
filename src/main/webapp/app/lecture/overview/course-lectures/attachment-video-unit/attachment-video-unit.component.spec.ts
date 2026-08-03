@@ -39,6 +39,7 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
+import { WritableSignal, signal } from '@angular/core';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -1087,6 +1088,21 @@ describe('AttachmentVideoUnitComponent', () => {
             return { correlationId: 'corr', lectureUnitId: 1, ...overrides } as IrisPointOut;
         }
 
+        /**
+         * Installs a stand-in for the pdfViewer viewChild. Its page count comes from a real signal so that "the
+         * document finished loading" re-runs the pending-point-out effect the same way it does in production, and
+         * goToPage mirrors the real viewer by rejecting targets outside that range.
+         */
+        function mockPdfViewer(totalPages: WritableSignal<number>) {
+            const goToPage = vi.fn((page: number) => page >= 1 && page <= totalPages());
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue({ goToPage, getTotalPages: () => totalPages() }),
+                writable: true,
+                configurable: true,
+            });
+            return goToPage;
+        }
+
         beforeEach(() => {
             chatService = TestBed.inject(IrisChatService);
             ackSpy = vi.spyOn(chatService, 'sendCommandAck').mockImplementation(() => {});
@@ -1110,12 +1126,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('defers the success ack until the point-out navigation has actually been applied', () => {
-            const goToPage = vi.fn();
-            Object.defineProperty(component, 'pdfViewer', {
-                value: vi.fn().mockReturnValue({ goToPage }),
-                writable: true,
-                configurable: true,
-            });
+            const goToPage = mockPdfViewer(signal(10));
             component['fullscreenState'].set(true);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c3', page: 3 }));
@@ -1129,16 +1140,47 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).toHaveBeenCalledWith('c3', true);
         });
 
+        it('acknowledges as not applied when the viewer rejects the requested page', () => {
+            // Iris names a page the deck does not have, so the viewer stays put. Reporting success here would leave
+            // Iris claiming a jump that never happened and persist a point-out chip that does nothing when clicked.
+            const goToPage = mockPdfViewer(signal(4));
+            component['fullscreenState'].set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c8', page: 99 }));
+            fixture.detectChanges();
+
+            expect(goToPage).toHaveBeenCalledWith(99);
+            expect(ackSpy).toHaveBeenCalledWith('c8', false);
+            // Settled either way: the target is known to be unreachable, so it must not linger and fire later.
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('waits for the PDF document to finish loading before judging the target', () => {
+            // The viewer component renders before its document does and reports 0 pages until then. Acting on that
+            // would reject every target; the point-out has to stay pending until the page count is known.
+            const totalPages = signal(0);
+            const goToPage = mockPdfViewer(totalPages);
+            component['fullscreenState'].set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c9', page: 3 }));
+            fixture.detectChanges();
+
+            expect(goToPage).not.toHaveBeenCalled();
+            expect(ackSpy).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeDefined();
+
+            totalPages.set(10);
+            fixture.detectChanges();
+
+            expect(goToPage).toHaveBeenCalledWith(3);
+            expect(ackSpy).toHaveBeenCalledWith('c9', true);
+        });
+
         it('keeps a marker click pending while the combined view is still opening', () => {
             // openFullscreen() does not set the fullscreen state synchronously: it goes through the layout,
             // which reports back via onFullscreenChange. A forceOpen point-out therefore starts out with
             // isFullscreen() === false and must survive until the view is actually up.
-            const goToPage = vi.fn();
-            Object.defineProperty(component, 'pdfViewer', {
-                value: vi.fn().mockReturnValue({ goToPage }),
-                writable: true,
-                configurable: true,
-            });
+            const goToPage = mockPdfViewer(signal(10));
             component['fullscreenState'].set(false);
             vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
 
