@@ -141,6 +141,11 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
             }
         });
 
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): it writes the
+        // isTutorialLecture toggle into the (non-signal) lecture entity in place, a side effect that a computed()
+        // cannot perform, so the value is present on the object that save() later sends, and refreshes the derived
+        // "changes made" flag. (The other effects above track model signals and scroll the DOM, so they are genuine
+        // side effects too.)
         effect(() => {
             this.lecture().isTutorialLecture = this.isTutorialLecture();
             this.updateIsChangesMadeToTitleOrPeriodSection();

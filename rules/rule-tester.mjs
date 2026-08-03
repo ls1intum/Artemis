@@ -1,10 +1,10 @@
 /**
- * Shared RuleTester setup for the custom rules in this directory.
+ * Shared RuleTester setup for the custom ESLint rules in this directory.
  *
- * Two flavours, because the rules parse two different languages:
- *  - `createTemplateRuleTester()` for rules visiting `TextAttribute` / `BoundAttribute` nodes produced by
- *    the Angular HTML template parser.
- *  - `createTypeScriptRuleTester()` for rules visiting the TS-ESTree AST.
+ * The template rules visit `TextAttribute` / `BoundAttribute` nodes produced by the Angular HTML template
+ * parser, so their tests must run RuleTester with `@angular-eslint/template-parser`; the TypeScript rules
+ * visit class members and decorators and need `@typescript-eslint/parser` instead. Hence the two factories
+ * below — both share the ajv workaround documented next.
  *
  * Environment workaround
  * ----------------------
@@ -18,7 +18,8 @@
  */
 import { createRequire } from 'node:module';
 import * as templateParser from '@angular-eslint/template-parser';
-import * as typescriptParser from '@typescript-eslint/parser';
+// Imported as a default export, matching how eslint.config.mjs consumes this same parser.
+import tsParser from '@typescript-eslint/parser';
 
 const require = createRequire(import.meta.url);
 // Resolve ajv the way ESLint does: pnpm's hoisted symlink and the `.pnpm` realpath are distinct module
@@ -46,12 +47,17 @@ export function createTemplateRuleTester() {
 }
 
 /**
- * A RuleTester preconfigured with the TypeScript parser, for rules visiting the TS-ESTree AST.
+ * A RuleTester preconfigured with the TypeScript parser, for the rules in this directory that visit
+ * TypeScript AST nodes (class members, decorators, …) rather than Angular template nodes.
  *
- * No `parserOptions.project` is set, so only syntactic rules can be tested with it. A type-aware rule would
- * additionally need a fixture tsconfig and `tsconfigRootDir`, because the tester feeds RuleTester's virtual
- * filename to the parser rather than a real file on disk.
+ * No `project`/`projectService` is configured on purpose: these rules are purely syntactic, so type
+ * information is unnecessary and requiring a tsconfig would make the tests depend on the client build.
  */
 export function createTypeScriptRuleTester() {
-    return new RuleTester({ languageOptions: { parser: typescriptParser } });
+    return new RuleTester({
+        languageOptions: {
+            parser: tsParser,
+            parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+        },
+    });
 }

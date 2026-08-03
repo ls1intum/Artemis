@@ -1,4 +1,4 @@
-import { Component, Injector, OnChanges, OnInit, SimpleChanges, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TagModule } from 'primeng/tag';
@@ -42,7 +42,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
@@ -68,7 +67,7 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
         ArtemisTimeAgoPipe,
     ],
 })
-export class FeedbackComponent implements OnInit, OnChanges {
+export class FeedbackComponent implements OnInit {
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private feedbackService = inject(FeedbackService);
@@ -162,11 +161,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     feedbackItemService!: FeedbackItemService; // set in ngOnInit() (selected based on exercise type)
     readonly feedbackItemNodes = signal<FeedbackNode[] | undefined>(undefined);
-    /**
-     * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes
-     * from true to false
-     */
-    private feedbackItemNodesBeforePrinting?: FeedbackNode[];
 
     /**
      * Load the result feedbacks if necessary and assign them to the component.
@@ -192,21 +186,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
                 evaluateTemplateStatus(this.resolvedExercise(), this.result().submission?.participation, this.result(), false),
             ),
         );
-    }
-
-    /**
-     * Expand the feedback items groups while the exam summary is printed and
-     * collapse them again (if collapsed before) when the printing is done
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.isPrinting) {
-            if (changes.isPrinting.currentValue) {
-                this.feedbackItemNodesBeforePrinting = deepClone(this.feedbackItemNodes());
-                this.expandFeedbackItemGroups();
-            } else {
-                this.feedbackItemNodes.set(this.feedbackItemNodesBeforePrinting);
-            }
-        }
     }
 
     /**
