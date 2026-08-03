@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.util;
 
+import java.util.Locale;
+
 import org.hibernate.exception.ConstraintViolationException;
 import org.jspecify.annotations.Nullable;
 
@@ -48,7 +50,10 @@ public final class TeamStudentUniquenessViolation {
         for (int depth = 0; cause != null && depth < MAXIMUM_CAUSE_DEPTH; depth++) {
             if (cause instanceof ConstraintViolationException constraintViolation) {
                 String constraintName = constraintViolation.getConstraintName();
-                if (constraintName != null && constraintName.toLowerCase().contains(CONSTRAINT_NAME)) {
+                // Locale.ROOT, not the default locale: under tr_TR, "I".toLowerCase() is the dotless "ı", so
+                // "UK_TEAM_STUDENT_EXERCISE_STUDENT" would fold to "…exercıse_student", stop matching, and turn the
+                // client-facing 400 into a 500 on Turkish-locale JVMs.
+                if (constraintName != null && constraintName.toLowerCase(Locale.ROOT).contains(CONSTRAINT_NAME)) {
                     return true;
                 }
             }

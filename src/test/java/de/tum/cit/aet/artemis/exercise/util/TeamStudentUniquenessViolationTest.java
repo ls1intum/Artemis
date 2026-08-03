@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.exercise.util.TeamStudentUniquenessViolatio
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.sql.SQLException;
+import java.util.Locale;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -76,6 +77,24 @@ class TeamStudentUniquenessViolationTest {
     @Test
     void doesNotMatchNull() {
         assertThat(TeamStudentUniquenessViolation.matches(null)).isFalse();
+    }
+
+    /**
+     * The case folding must not depend on the JVM's default locale. Under {@code tr_TR}, {@code "I".toLowerCase()} is the
+     * dotless {@code "ı"}, so an upper-cased constraint name would fold to {@code "…exercıse_student"}, stop matching, and
+     * turn the client-facing 400 into a 500 for every concurrent team conflict on that node.
+     */
+    @Test
+    void matchesRegardlessOfTheDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.of("tr", "TR"));
+
+            assertThat(TeamStudentUniquenessViolation.matches(constraintViolation("UK_TEAM_STUDENT_EXERCISE_STUDENT"))).isTrue();
+        }
+        finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     @Test
