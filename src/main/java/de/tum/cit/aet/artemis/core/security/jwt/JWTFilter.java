@@ -122,7 +122,9 @@ public class JWTFilter extends GenericFilterBean {
             // re-checked: the passkey still exists, the account is still active, and its credentials have not changed since
             // the session started.
             String passkeyCredentialId = this.tokenProvider.getPasskeyCredentialId(jwtToken);
-            if (!passkeyTokenRenewalService.mayExtendSession(passkeyCredentialId)) {
+            // Only a passkey session has a passkey to verify. Asking for a password session too would refuse every
+            // "remember me" extension on an installation that does not have passkeys enabled.
+            if (isPasskeySession && !passkeyTokenRenewalService.mayExtendPasskeySession(passkeyCredentialId)) {
                 return;
             }
             if (!passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), issuedAt.toInstant())) {

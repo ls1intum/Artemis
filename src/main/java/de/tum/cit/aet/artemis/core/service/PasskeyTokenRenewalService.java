@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Instant;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -25,8 +26,9 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
  * The check runs only when a rotation is actually due, not on every request, which is what makes it affordable: it is one
  * indexed lookup per rotation interval per session rather than one per authenticated request.
  * <p>
- * A token issued before this check existed carries no credential id. Those are still extended, because refusing them
- * would log every passkey user out on deployment; they age out on their own once the passkey lifetime elapses.
+ * A token issued before this check existed carries no credential id. Those are still extended while passkeys are
+ * enabled, because refusing them would log every passkey user out on deployment; they age out on their own once the
+ * passkey lifetime elapses. Once passkey support is off, no passkey session is extended at all, not even those.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -79,17 +81,23 @@ public class PasskeyTokenRenewalService {
     }
 
     /**
+     * Whether a passkey session may still be extended. Only to be called for a passkey session: a password session has no
+     * passkey to verify, and refusing it here would stop "remember me" sessions from being extended on every installation
+     * that does not use passkeys.
+     *
      * @param credentialId the passkey the token was issued for, or {@code null} for a token issued before the claim existed
      * @return {@code true} if the session may be extended
      */
-    public boolean mayExtendSession(String credentialId) {
-        if (credentialId == null) {
-            return true;
-        }
+    public boolean mayExtendPasskeySession(@Nullable String credentialId) {
         if (passkeyCredentialsRepository.isEmpty()) {
-            // Passkeys were disabled after this token was issued, so the credential can no longer be verified.
+            // Passkeys were disabled after this token was issued, so no passkey session can be verified any more. Checked
+            // before the missing-credential-id case below, which would otherwise keep extending pre-claim tokens for the
+            // full passkey lifetime after passkeys were turned off.
             log.debug("Not extending a passkey session because passkey support is disabled");
             return false;
+        }
+        if (credentialId == null) {
+            return true;
         }
 
         boolean passkeyStillExists = passkeyCredentialsRepository.orElseThrow().findByCredentialId(credentialId).isPresent();

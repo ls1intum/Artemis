@@ -73,7 +73,7 @@ class JWTFilterTest {
 
         passkeyTokenRenewalService = mock(PasskeyTokenRenewalService.class);
         // Default to "the passkey still exists", so the existing rotation tests keep exercising rotation itself.
-        when(passkeyTokenRenewalService.mayExtendSession(any())).thenReturn(true);
+        when(passkeyTokenRenewalService.mayExtendPasskeySession(any())).thenReturn(true);
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
         jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_EXTENSIONS);
@@ -181,7 +181,7 @@ class JWTFilterTest {
 
     @Test
     void aPasskeySessionIsExtendedWhileItsPasskeyStillExists() throws Exception {
-        when(passkeyTokenRenewalService.mayExtendSession("credential-1")).thenReturn(true);
+        when(passkeyTokenRenewalService.mayExtendPasskeySession("credential-1")).thenReturn(true);
 
         MockHttpServletResponse response = filterWithToken(createRotationDuePasskeyToken("credential-1"));
 
@@ -192,7 +192,7 @@ class JWTFilterTest {
     void aPasskeySessionIsNotExtendedOnceItsPasskeyIsGone() throws Exception {
         // Deleting a passkey - the remediation after a compromise - has to stop the sessions it created from being
         // extended, otherwise the credential is gone but the session it minted lives on for months.
-        when(passkeyTokenRenewalService.mayExtendSession("credential-1")).thenReturn(false);
+        when(passkeyTokenRenewalService.mayExtendPasskeySession("credential-1")).thenReturn(false);
 
         MockHttpServletResponse response = filterWithToken(createRotationDuePasskeyToken("credential-1"));
 
@@ -204,7 +204,7 @@ class JWTFilterTest {
         // Without this the check works exactly once: the authentication is rebuilt from the expiring token and carries no
         // details, so the rotated token would lose the claim, and every later rotation would look like a legacy token and
         // be extended unconditionally.
-        when(passkeyTokenRenewalService.mayExtendSession("credential-1")).thenReturn(true);
+        when(passkeyTokenRenewalService.mayExtendPasskeySession("credential-1")).thenReturn(true);
         ArgumentCaptor<String> rotatedToken = ArgumentCaptor.forClass(String.class);
 
         filterWithToken(createRotationDuePasskeyToken("credential-1"));
@@ -300,11 +300,11 @@ class JWTFilterTest {
     void aTokenWithoutACredentialIdIsPassedToTheValidatorAsNull() throws Exception {
         // Tokens issued before the claim existed carry no credential id; the validator decides what to do with them, and
         // this asserts the filter does not invent one.
-        when(passkeyTokenRenewalService.mayExtendSession(null)).thenReturn(true);
+        when(passkeyTokenRenewalService.mayExtendPasskeySession(null)).thenReturn(true);
 
         filterWithToken(createRotationDuePasskeyToken(null));
 
-        verify(passkeyTokenRenewalService).mayExtendSession(null);
+        verify(passkeyTokenRenewalService).mayExtendPasskeySession(null);
     }
 
     @Test
