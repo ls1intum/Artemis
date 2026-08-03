@@ -4,9 +4,9 @@
         <div>{{ displayedRemainingTime() }} {{ remainingTimeTranslationKey() | artemisTranslate }}</div>
     </div>
     @if (showProgress()) {
-        <div class="progress-bar">
+        <div class="quiz-timer-progress">
             <div
-                class="progress-fill"
+                class="quiz-timer-progress-fill"
                 [style.width.%]="progress()"
                 [class.success]="progress() > 50"
                 [class.warning]="progress() <= 50 && progress() > 20"

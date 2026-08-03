@@ -198,6 +198,7 @@ public class PyrisJobService {
      * Remove a job from the job map.
      *
      * @param job the job to remove
+     * @return the removed job, or {@code null} if no job existed for the id
      */
     public PyrisJob removeJob(PyrisJob job) {
         return getPyrisJobMap().remove(job.jobId());

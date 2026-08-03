@@ -27,6 +27,8 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Filter properties for a result
@@ -67,6 +69,8 @@ interface FilterOption {
         HelpIconComponent,
         SearchFilterComponent,
         PaginatorModule,
+        ButtonModule,
+        MessageModule,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -119,6 +123,13 @@ export class IrisAssessmentReviewOverviewComponent {
                 count: this.participationsPerFilter().get(value) ?? 0,
             })),
     );
+    protected readonly selectedFilterOptions = computed<FilterOption[]>(() =>
+        this.selectedFilters().map((value) => ({
+            value,
+            translationKey: `artemisApp.iris.assessmentReviewOverview.show${value}`,
+            count: this.participationsPerFilter().get(value) ?? 0,
+        })),
+    );
 
     private currentLoadRequestId = 0;
     private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -165,14 +176,6 @@ export class IrisAssessmentReviewOverviewComponent {
         this.first.set(event.first ?? 0);
         this.rows.set(event.rows ?? this.rows());
         this.loadPage();
-    }
-
-    /**
-     * The selecteditems template may expose either the raw enum value or the option object,
-     * depending on the installed PrimeNG version/configuration.
-     */
-    protected getFilterValue(filter: FilterProp | FilterOption): FilterProp {
-        return typeof filter === 'string' ? filter : filter.value;
     }
 
     refresh(): void {

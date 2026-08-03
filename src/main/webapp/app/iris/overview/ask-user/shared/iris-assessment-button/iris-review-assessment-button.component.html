@@ -1,14 +1,12 @@
 <button
-    jhi-exercise-action-button
-    [buttonIcon]="faBrain"
-    [class.btn-success]="!needsAttention()"
-    [class.btn-danger]="needsAttention()"
+    pButton
+    type="button"
+    [severity]="buttonSeverity()"
+    [size]="buttonSize()"
     [jhiFeatureToggle]="FeatureToggle.AskUserMode"
-    [overwriteDisabled]="irisAssessment()?.verdict === undefined || irisAssessment()?.verdict === null"
-    [buttonLabel]="label() | artemisTranslate"
-    [smallButton]="smallButton()"
-    [hideLabelMobile]="hideLabelMobile()"
+    [disabled]="irisAssessment()?.verdict === undefined || irisAssessment()?.verdict === null"
     [routerLink]="['/course-management', course().id, assessmentReviewPath(), irisAssessment()?.id, 'details']"
-    placement="right auto"
-    container="body"
-></button>
+>
+    <fa-icon [icon]="faBrain" />
+    <span class="md:inline" [class.hidden]="hideLabelMobile()">{{ label() | artemisTranslate }}</span>
+</button>

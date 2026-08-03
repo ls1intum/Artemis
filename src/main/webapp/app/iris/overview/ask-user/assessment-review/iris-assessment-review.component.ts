@@ -10,16 +10,18 @@ import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
 import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.model';
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisAssessmentReviewResolvedData } from 'app/iris/overview/ask-user/services/iris-assessment-review-resolver.service';
+import { ButtonModule } from 'primeng/button';
+import { TableModule } from 'primeng/table';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-iris-assessment-review',
     templateUrl: './iris-assessment-review.component.html',
     styleUrl: './iris-assessment-review.component.scss',
-    imports: [TranslateDirective, ArtemisTranslatePipe, ExerciseActionButtonComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, ButtonModule, TableModule, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisAssessmentReviewComponent {

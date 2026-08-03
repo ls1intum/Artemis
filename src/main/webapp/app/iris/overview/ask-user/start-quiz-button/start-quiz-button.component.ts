@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 import { catchError, of, switchMap, take } from 'rxjs';
@@ -7,18 +7,19 @@ import { Exercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercis
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { IrisAskUserHttpService } from 'app/iris/overview/ask-user/services/iris-ask-user-http.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
+import { ButtonModule } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-start-quiz-button',
     templateUrl: './start-quiz-button.component.html',
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe],
+    imports: [FeatureToggleDirective, ArtemisTranslatePipe, ButtonModule, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisStartQuizButtonComponent {
@@ -59,6 +60,8 @@ export class IrisStartQuizButtonComponent {
     );
 
     protected readonly quizAlreadyDone = computed(() => (this.quizAlreadyDoneFromServer() && !this.quizAlreadyDoneFromServerInvalidated()) || this.quizCompletedAfterCurrentRun());
+    protected readonly buttonSeverity = computed<'success' | undefined>(() => (this.quizAlreadyDone() && !this.showQuizActive() ? 'success' : undefined));
+    protected readonly buttonSize = computed<'small' | undefined>(() => (this.smallButtons() ? 'small' : undefined));
 
     protected readonly showQuizActive = computed(
         () =>
@@ -162,7 +165,7 @@ export class IrisStartQuizButtonComponent {
 
         effect(() => {
             if (this.runInfo()?.state === IrisRunState.FAILED) {
-                this.resetActiveRegularQuiz();
+                untracked(() => this.resetActiveRegularQuiz());
             }
         });
     }

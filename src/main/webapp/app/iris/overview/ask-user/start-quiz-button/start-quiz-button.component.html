@@ -1,14 +1,15 @@
 <ng-container>
     <button
+        pButton
+        type="button"
         (click)="startQuiz()"
-        jhi-exercise-action-button
         [id]="'start-askUser-' + exercise().id!"
-        [buttonIcon]="faBrain"
-        [class.btn-success]="quizAlreadyDone() && !showQuizActive()"
+        [severity]="buttonSeverity()"
+        [size]="buttonSize()"
         [jhiFeatureToggle]="FeatureToggle.AskUserMode"
-        [buttonLabel]="buttonLabel() | artemisTranslate"
-        [smallButton]="smallButtons()"
-        [hideLabelMobile]="hideLabelMobile()"
-        [overwriteDisabled]="!canBeStarted() || afterDueDate()"
-    ></button>
+        [disabled]="!canBeStarted() || afterDueDate()"
+    >
+        <fa-icon [icon]="faBrain" />
+        <span class="md:inline" [class.hidden]="hideLabelMobile()">{{ buttonLabel() | artemisTranslate }}</span>
+    </button>
 </ng-container>

@@ -308,7 +308,8 @@
                                         @if (!message.inAskUserMode) {
                                             <div class="rate-message-buttons toolbox">
                                                 <button
-                                                    class="btn btn-sm rate-button-not-clicked"
+                                                    type="button"
+                                                    class="rate-message-button rate-button-not-clicked"
                                                     (click)="copyMessage(message, i)"
                                                     [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
                                                     [title]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
@@ -317,7 +318,8 @@
                                                 </button>
                                                 @if (canRateMessage(message)) {
                                                     <button
-                                                        class="btn btn-sm"
+                                                        type="button"
+                                                        class="rate-message-button"
                                                         [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
                                                         [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
                                                         [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
@@ -329,7 +331,8 @@
                                                         <fa-icon [icon]="faThumbsUp" />
                                                     </button>
                                                     <button
-                                                        class="btn btn-sm"
+                                                        type="button"
+                                                        class="rate-message-button"
                                                         [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
                                                         [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
                                                         [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"

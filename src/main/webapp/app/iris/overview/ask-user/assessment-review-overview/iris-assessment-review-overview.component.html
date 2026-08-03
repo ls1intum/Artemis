@@ -1,9 +1,9 @@
-<div class="d-flex flex-wrap">
-    <div class="d-flex flex-fill align-items-center mr-auto">
-        <div class="me-2">
+<div class="flex flex-wrap">
+    <div class="mr-auto flex flex-1 items-center">
+        <div class="mr-2">
             <jhi-search-filter [placeholderKey]="'artemisApp.exercise.searchForStudents'" (newSearchEvent)="onSearch($event)" />
         </div>
-        <div class="me-2">
+        <div class="mr-2">
             <div class="filter-multiselect-wrapper">
                 <fa-icon class="filter-multiselect-icon" [icon]="faFilter" />
 
@@ -20,13 +20,11 @@
                     [placeholder]="'artemisApp.iris.assessmentReviewOverview.showAll' | artemisTranslate"
                     [ariaLabel]="'artemisApp.exercise.scoresFilter' | artemisTranslate"
                 >
-                    <ng-template #selecteditems let-selectedItems>
-                        <span class="d-none d-md-inline">
-                            @for (selectedItem of selectedItems; track getFilterValue(selectedItem); let last = $last) {
-                                @let filter = getFilterValue(selectedItem);
-
-                                {{ 'artemisApp.iris.assessmentReviewOverview.show' + filter | artemisTranslate }}
-                                ({{ participationsPerFilter().get(filter) ?? 0 }})
+                    <ng-template #selecteditems>
+                        <span class="hidden md:inline">
+                            @for (filter of selectedFilterOptions(); track filter.value; let last = $last) {
+                                {{ filter.translationKey | artemisTranslate }}
+                                ({{ filter.count }})
 
                                 @if (!last) {
                                     <span>, </span>
@@ -44,12 +42,12 @@
                 </p-multiselect>
             </div>
         </div>
-        <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.nonZeroLatestScoreTooltip" class="ms-1" />
+        <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.nonZeroLatestScoreTooltip" class="ml-1" />
         <div class="p-3">
-            <div class="button-toolbar d-flex align-items-center gap-2">
-                <button class="btn btn-primary btn-sm" (click)="refresh()">
+            <div class="flex items-center gap-2">
+                <button pButton type="button" size="small" (click)="refresh()">
                     <fa-icon [icon]="faSync" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
+                    <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
                 </button>
             </div>
         </div>
@@ -57,13 +55,15 @@
 </div>
 
 @if (searchNoResults()) {
-    <div class="alert alert-info mt-3" jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></div>
+    <p-message severity="info" class="mt-3 block">
+        <span jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></span>
+    </p-message>
 }
 
 @for (viewExercise of exercises(); track viewExercise.id ?? viewExercise.exercise.id ?? $index) {
     @if (viewExercise.searchedAndFilteredParticipations.length) {
         <jhi-iris-assessment-review-exercise
-            style="width: 100%; display: block"
+            class="block w-full"
             [exercise]="viewExercise.exercise"
             [participations]="viewExercise.searchedAndFilteredParticipations"
             [course]="course()"

@@ -115,6 +115,7 @@ public class PyrisPipelineService {
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
+     * @return true if Pyris accepted the pipeline execution, false otherwise
      */
     public boolean executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, PipelineStatusUpdater statusUpdater) {
@@ -297,6 +298,7 @@ public class PyrisPipelineService {
      * @param session             the chat session
      * @param event               if this function triggers a pipeline execution due to a specific event, this can be used
      * @param settings            ask-user-mode quiz settings
+     * @return true if Pyris accepted the pipeline execution, false otherwise
      */
     public boolean executeAskUserPipeline(String variant, ProgrammingSubmission latestSubmission, ProgrammingExercise programmingExercise, IrisChatSession session,
             Optional<String> event, IrisAskUserModeSettings settings) {

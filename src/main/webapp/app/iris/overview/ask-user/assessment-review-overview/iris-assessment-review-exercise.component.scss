@@ -2,24 +2,28 @@
     flex-wrap: nowrap;
 }
 
-.assessment-review-participations-table {
+.assessment-review-participations-table .p-datatable-table {
     table-layout: fixed;
     min-width: 68rem;
 }
 
-.assessment-review-name-column {
+.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(1),
+.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(1) {
     width: 20%;
 }
 
-.assessment-review-login-column {
+.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(2),
+.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(2) {
     width: 15%;
 }
 
-.assessment-review-submission-column {
+.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(3),
+.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(3) {
     width: 9rem;
 }
 
-.assessment-review-actions-column {
+.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(4),
+.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(4) {
     width: 34rem;
 }
 
@@ -48,19 +52,22 @@
 }
 
 @media (max-width: 1199.98px) {
-    .assessment-review-participations-table {
+    .assessment-review-participations-table .p-datatable-table {
         min-width: 54rem;
     }
 
-    .assessment-review-name-column {
+    .assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(1),
+    .assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(1) {
         width: 36%;
     }
 
-    .assessment-review-login-column {
+    .assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(2),
+    .assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(2) {
         width: 20%;
     }
 
-    .assessment-review-actions-column {
+    .assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(4),
+    .assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(4) {
         width: 24rem;
     }
 }

@@ -21,8 +21,11 @@ import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-in-class-quiz-start-warning.component';
+import { ButtonModule } from 'primeng/button';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TableModule } from 'primeng/table';
+import { TranslateService } from '@ngx-translate/core';
 
 interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentParticipation {
     readonly participationLink?: Array<string | number>;
@@ -46,6 +49,8 @@ interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentPar
         IrisReviewAssessmentButtonComponent,
         QuizTimerBarComponent,
         HelpIconComponent,
+        ButtonModule,
+        TableModule,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,9 +72,10 @@ export class IrisAssessmentReviewExerciseComponent {
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
 
-    private profileService = inject(ProfileService);
-    private assessmentReviewService = inject(IrisAssessmentReviewHttpService);
-    private modalService = inject(NgbModal);
+    private readonly profileService = inject(ProfileService);
+    private readonly assessmentReviewService = inject(IrisAssessmentReviewHttpService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     private readonly exerciseId = computed(() => this.exercise().id);
@@ -115,8 +121,18 @@ export class IrisAssessmentReviewExerciseComponent {
         }
 
         if (!hasDueDatePassed(this.exercise())) {
-            const modalRef = this.modalService.open(IrisInClassQuizStartWarningComponent, { size: 'lg', backdrop: 'static' });
-            modalRef.componentInstance.confirmed.pipe(take(1)).subscribe(() => this.startInClassQuiz(exerciseId));
+            const dialogRef = this.dialogService.open(IrisInClassQuizStartWarningComponent, {
+                header: this.translateService.instant('artemisApp.iris.assessmentInClassQuiz.warning.title'),
+                width: '50rem',
+                modal: true,
+                closable: false,
+            });
+
+            dialogRef.onClose.pipe(take(1)).subscribe((confirmed?: boolean) => {
+                if (confirmed) {
+                    this.startInClassQuiz(exerciseId);
+                }
+            });
             return;
         }
 

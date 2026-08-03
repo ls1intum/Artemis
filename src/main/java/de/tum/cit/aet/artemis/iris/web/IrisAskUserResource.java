@@ -15,9 +15,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
-import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.session.IrisAskUserService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -34,26 +31,17 @@ public class IrisAskUserResource {
 
     private final IrisAskUserService irisAskUserService;
 
-    protected final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    protected final IrisSessionService irisSessionService;
+    private final IrisSettingsService irisSettingsService;
 
-    protected final IrisSettingsService irisSettingsService;
-
-    protected final PyrisHealthIndicator pyrisHealthIndicator;
-
-    protected final IrisRateLimitService irisRateLimitService;
-
-    protected final ProgrammingExerciseRepository exerciseRepository;
+    private final ProgrammingExerciseRepository exerciseRepository;
 
     protected IrisAskUserResource(IrisAskUserService irisAskUserService, UserRepository userRepository, ProgrammingExerciseRepository exerciseRepository,
-            IrisSessionService irisSessionService, IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService) {
+            IrisSettingsService irisSettingsService) {
         this.irisAskUserService = irisAskUserService;
         this.userRepository = userRepository;
-        this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.pyrisHealthIndicator = pyrisHealthIndicator;
-        this.irisRateLimitService = irisRateLimitService;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -65,7 +53,7 @@ public class IrisAskUserResource {
      */
     @PatchMapping("{exerciseId}/ask-user/start")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Void> startQuizForCurrentSession(@PathVariable Long exerciseId) {
+    public ResponseEntity<Void> startQuizForCurrentSession(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
@@ -85,7 +73,7 @@ public class IrisAskUserResource {
      */
     @PatchMapping("{exerciseId}/ask-user/in-class/start")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Void> startInClassQuizForCurrentSession(@PathVariable Long exerciseId) {
+    public ResponseEntity<Void> startInClassQuizForCurrentSession(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
@@ -98,14 +86,14 @@ public class IrisAskUserResource {
 
     /**
      * PATCH programming-exercises/{exerciseId}/ask-user/defocus: Signals a tab-defocus event while ask-user.
-     * The quiz is stopped and the corresponding verdict and reasoning is saved. Also, the tab_defocus event is sent to te pipeline.
+     * The quiz is stopped and the corresponding verdict and reasoning is saved. Also, the tab_defocus event is sent to the pipeline.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)}
      */
     @PatchMapping("{exerciseId}/ask-user/defocus")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Void> registerDefocusForCurrentSession(@PathVariable Long exerciseId) {
+    public ResponseEntity<Void> registerDefocusForCurrentSession(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
@@ -120,12 +108,12 @@ public class IrisAskUserResource {
      * The current time is saved.
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data ( undefined timerExpired if no timer was started, because quiz was
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data (undefined timerExpired if no timer was started, because quiz was
      *         just stopped by something else)
      */
     @PatchMapping("{exerciseId}/ask-user/start-timer")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisQuizTimerDTO> startTimerForCurrentSession(@PathVariable Long exerciseId) {
+    public ResponseEntity<IrisQuizTimerDTO> startTimerForCurrentSession(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
@@ -142,7 +130,7 @@ public class IrisAskUserResource {
      */
     @GetMapping("{exerciseId}/ask-user/latest-submission-has-points")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Boolean> latestSubmissionHasPoints(@PathVariable Long exerciseId) {
+    public ResponseEntity<Boolean> latestSubmissionHasPoints(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
@@ -160,7 +148,7 @@ public class IrisAskUserResource {
      */
     @GetMapping("{exerciseId}/ask-user/completed")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Boolean> isQuizAlreadyDone(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean inClass) {
+    public ResponseEntity<Boolean> isQuizAlreadyDone(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean inClass) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
@@ -177,7 +165,7 @@ public class IrisAskUserResource {
      */
     @PatchMapping("{exerciseId}/ask-user/stop-timer")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Void> stopTimerForCurrentSession(@PathVariable Long exerciseId) {
+    public ResponseEntity<Void> stopTimerForCurrentSession(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
@@ -195,7 +183,7 @@ public class IrisAskUserResource {
      */
     @GetMapping("{exerciseId}/ask-user/is-quiz-started")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Boolean> isQuizStartedForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<Boolean> isQuizStartedForExercise(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
@@ -212,7 +200,7 @@ public class IrisAskUserResource {
      */
     @GetMapping("{exerciseId}/ask-user/in-class/is-quiz-started")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Boolean> isInClassQuizStartedForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<Boolean> isInClassQuizStartedForExercise(@PathVariable long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);

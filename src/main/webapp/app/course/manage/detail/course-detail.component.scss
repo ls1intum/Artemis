@@ -93,6 +93,16 @@ jhi-image {
     padding: 1.25rem 1.5rem;
 }
 
+.iris-course-action-stack {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 1rem;
+}
+
+.iris-assessment-attention-panel {
+    min-height: 13rem;
+}
+
 .section-card--actions {
     --section-color: #3b82f6;
     --section-bg-start: rgba(59, 130, 246, 0.06);

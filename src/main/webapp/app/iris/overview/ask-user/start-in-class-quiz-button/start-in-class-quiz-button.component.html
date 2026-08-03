@@ -1,17 +1,18 @@
 @if (availableInClassQuiz(); as inClassQuiz) {
-    <span class="d-inline-flex align-items-center gap-1">
+    <span class="inline-flex items-center gap-1">
         <button
+            pButton
+            type="button"
             (click)="startInClassQuiz()"
-            jhi-exercise-action-button
             [id]="'start-in-class-quiz-' + exercise().id!"
-            [buttonIcon]="faBrain"
-            [class.btn-success]="quizAlreadyDone() && !showQuizActive()"
+            [severity]="buttonSeverity()"
+            [size]="buttonSize()"
             [jhiFeatureToggle]="FeatureToggle.AskUserMode"
-            [buttonLabel]="buttonLabel() | artemisTranslate"
-            [smallButton]="smallButtons()"
-            [hideLabelMobile]="hideLabelMobile()"
-            [overwriteDisabled]="!canBeStarted()"
-        ></button>
+            [disabled]="!canBeStarted()"
+        >
+            <fa-icon [icon]="faBrain" />
+            <span class="md:inline" [class.hidden]="hideLabelMobile()">{{ buttonLabel() | artemisTranslate }}</span>
+        </button>
         <jhi-quiz-timer-bar
             [open]="true"
             [timeLimit]="inClassQuiz.timeLimit"

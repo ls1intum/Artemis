@@ -20,9 +20,9 @@
                 <div class="section-body d-flex flex-column flex-xl-row">
                     <jhi-quick-actions #quickActions [course]="course()!" class="mb-3 mb-xl-0" [class.me-xl-3]="course()!.isAtLeastInstructor && irisEnabled()" />
                     @if (course()!.isAtLeastInstructor && irisEnabled()) {
-                        <div class="flex flex-row flex-nowrap gap-3 xl:flex-row">
+                        <div class="iris-course-action-stack">
                             <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
-                            <jhi-iris-assessment-attention-center [course]="course()!" [assessmentEnabled]="irisAskUserModeEnabled()" style="min-height: 13rem" />
+                            <jhi-iris-assessment-attention-center class="iris-assessment-attention-panel" [course]="course()!" [assessmentEnabled]="irisAskUserModeEnabled()" />
                         </div>
                     }
                 </div>

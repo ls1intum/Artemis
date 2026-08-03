@@ -115,15 +115,14 @@ public class ParticipationService {
 
     private final ModuleFeatureService moduleFeatureService;
 
-    // ObjectProvider is needed here, because IrisSettingsService is not injected if Iris module is not enabled
-    private final ObjectProvider<IrisSettingsService> irisSettingsServiceProvider;
+    private final Optional<IrisSettingsService> irisSettingsService;
 
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                ModuleFeatureService moduleFeatureService, ObjectProvider<IrisSettingsService> irisSettingsServiceProvider) {
+                                ModuleFeatureService moduleFeatureService, Optional<IrisSettingsService> irisSettingsService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -137,7 +136,7 @@ public class ParticipationService {
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.moduleFeatureService = moduleFeatureService;
-        this.irisSettingsServiceProvider = irisSettingsServiceProvider;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -1023,7 +1022,7 @@ public class ParticipationService {
         }
         else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()) {
 
-            loadIrisAssessment = Optional.ofNullable(irisSettingsServiceProvider.getIfAvailable()).map(service -> service.isAskUserModeEnabledForExercise(exercise)).orElse(false);
+            loadIrisAssessment = irisSettingsService.map(service -> service.isAskUserModeEnabledForExercise(exercise)).orElse(false);
 
             if (loadIrisAssessment) {
                 participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));

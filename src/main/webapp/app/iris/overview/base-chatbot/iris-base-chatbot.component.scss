@@ -11,14 +11,14 @@ $iris-z-index-dropdown: 1050;
 
 @mixin custom-scrollbar($width: 6px) {
     scrollbar-width: thin;
-    scrollbar-color: var(--bs-border-color) transparent;
+    scrollbar-color: var(--border-color) transparent;
 
     &::-webkit-scrollbar {
         width: $width;
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: var(--bs-border-color);
+        background-color: var(--border-color);
         border-radius: $iris-border-radius-md;
     }
 
@@ -248,7 +248,7 @@ $iris-z-index-dropdown: 1050;
     vertical-align: middle;
     padding-left: 3px;
     font-size: 13px;
-    color: var(--blue);
+    color: var(--info);
 }
 
 .chat-body {
@@ -272,14 +272,14 @@ $iris-z-index-dropdown: 1050;
         flex: 1;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: var(--bs-border-color) transparent;
+        scrollbar-color: var(--border-color) transparent;
 
         &::-webkit-scrollbar {
             width: 6px;
         }
 
         &::-webkit-scrollbar-thumb {
-            background-color: var(--bs-border-color);
+            background-color: var(--border-color);
             border-radius: 6px;
         }
 
@@ -457,7 +457,7 @@ jhi-iris-mcq-question {
 
 .client-chat-info {
     background-color: var(--artemis-alert-info-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     padding: 5px;
     border-top: 1px solid var(--artemis-alert-info-border);
     display: flex;
@@ -884,18 +884,25 @@ pre {
     display: flex;
     justify-content: flex-end;
     width: fit-content;
+}
 
-    button.btn {
-        padding: 4px 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
+.rate-message-button {
+    padding: 4px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: $iris-border-radius-sm;
+    background-color: transparent;
+    color: var(--body-color);
+    cursor: pointer;
 
-        &:hover {
-            background-color: var(--iris-tertiary-background);
-            border-radius: $iris-border-radius-sm;
-        }
+    &:not(:disabled):hover {
+        background-color: var(--iris-tertiary-background);
+    }
+
+    &:disabled {
+        cursor: default;
     }
 }
 
@@ -908,7 +915,7 @@ pre {
 }
 
 .rate-button-not-clicked {
-    color: var(--secondary);
+    color: var(--body-color);
 }
 
 #irisSendButton {

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { faBrain } from '@fortawesome/free-solid-svg-icons';
 
@@ -7,16 +6,17 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisPipeEvent } from 'app/iris/shared/entities/iris-pipe-event.model';
+import { ButtonModule } from 'primeng/button';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-iris-review-assessment-button',
     templateUrl: './iris-review-assessment-button.component.html',
-    imports: [ExerciseActionButtonComponent, FeatureToggleDirective, ArtemisTranslatePipe, RouterLink, CommonModule],
+    imports: [FeatureToggleDirective, ArtemisTranslatePipe, RouterLink, ButtonModule, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisReviewAssessmentButtonComponent {
@@ -35,6 +35,7 @@ export class IrisReviewAssessmentButtonComponent {
 
     protected readonly verdictReview = computed(() => this.irisAssessment()?.verdictReview);
     protected readonly verdict = computed(() => this.irisAssessment()?.verdict);
+    protected readonly buttonSize = computed<'small' | undefined>(() => (this.smallButton() ? 'small' : undefined));
 
     // Returns true when the assessment is either suspicious but not yet reviewed, reviewed as rejected oder the quiz has not been done yet (verdict is missing)
     protected readonly needsAttention = computed(() => {
@@ -48,6 +49,7 @@ export class IrisReviewAssessmentButtonComponent {
             verdict === null
         );
     });
+    protected readonly buttonSeverity = computed<'danger' | 'success'>(() => (this.needsAttention() ? 'danger' : 'success'));
 
     protected readonly label = computed(() => {
         const labelPrefix = 'artemisApp.exerciseActions.reviewIrisAssessment.';

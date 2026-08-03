@@ -93,7 +93,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
 
         var sessionsById = findSessionsWithMessagesByIdIn(ids).stream().collect(Collectors.toMap(IrisChatSession::getId, session -> session));
 
-        // Die Reihenfolge der ersten, sortierten Abfrage wiederherstellen
+        // Restore the order from the first sorted query
         return ids.stream().map(sessionsById::get).filter(session -> session != null).toList();
     }
 
@@ -102,6 +102,7 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      *
      * @param exerciseId the programming exercise id, stored as {@code entityId}
      * @param userId     the user id
+     * @param inClass    whether the finished session must be an in-class quiz session
      * @return the latest finished ask-user-mode session
      * @throws EntityNotFoundException if no finished ask-user-mode session exists
      */

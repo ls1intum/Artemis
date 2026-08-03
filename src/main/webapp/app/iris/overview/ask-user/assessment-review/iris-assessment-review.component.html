@@ -1,31 +1,29 @@
 <h2 class="mb-5">
     <span>{{ course().title }} - {{ exercise().title }} - {{ assessment().student?.name }} ({{ assessment().student?.login }})</span>
 </h2>
-<div class="table-responsive">
-    <table class="table table-striped separated-columns">
-        <thead>
+<div class="overflow-x-auto">
+    <p-table [value]="rows()" [size]="'small'" [stripedRows]="true" class="iris-assessment-review-table">
+        <ng-template #header>
             <tr>
-                <th jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.question"></th>
-                <th jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.answer"></th>
-                <th jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.reasoning"></th>
+                <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.question"></th>
+                <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.answer"></th>
+                <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.reasoning"></th>
             </tr>
-        </thead>
-        <tbody>
-            @for (row of rows(); track row.id ?? $index) {
-                <tr>
-                    <td>
-                        <div class="wrapped-content">{{ row.question }}</div>
-                    </td>
-                    <td>
-                        <div class="wrapped-content">{{ row.answer }}</div>
-                    </td>
-                    <td>
-                        <div class="wrapped-content">{{ row.reasoning }}</div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        </ng-template>
+        <ng-template #body let-row>
+            <tr>
+                <td>
+                    <div class="wrapped-content">{{ row.question }}</div>
+                </td>
+                <td>
+                    <div class="wrapped-content">{{ row.answer }}</div>
+                </td>
+                <td>
+                    <div class="wrapped-content">{{ row.reasoning }}</div>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
 </div>
 @if (assessment() && assessment().verdict !== null) {
     <span class="iris-verdict">
@@ -33,31 +31,15 @@
         {{ 'artemisApp.iris.assessmentReview.verdict.' + verdictTranslationSuffix() | artemisTranslate }}.
     </span>
 }
-<div class="d-flex align-items-center gap-2 ms-auto mt-3">
-    <button
-        jhi-exercise-action-button
-        class="btn-success"
-        [buttonIcon]="faCheck"
-        [overwriteDisabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED"
-        [buttonLabel]="'artemisApp.iris.assessmentReview.accept' | artemisTranslate"
-        [smallButton]="true"
-        [hideLabelMobile]="false"
-        (click)="acceptAnswers()"
-        placement="right auto"
-        container="body"
-    ></button>
-    <button
-        jhi-exercise-action-button
-        class="btn-danger"
-        [buttonIcon]="faX"
-        [overwriteDisabled]="assessment().verdictReview === IrisVerdictReview.REJECTED"
-        [buttonLabel]="'artemisApp.iris.assessmentReview.reject' | artemisTranslate"
-        [smallButton]="true"
-        [hideLabelMobile]="false"
-        (click)="rejectAnswers()"
-        placement="right auto"
-        container="body"
-    ></button>
+<div class="flex items-center gap-2 mt-3">
+    <button pButton type="button" severity="success" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED" (click)="acceptAnswers()">
+        <fa-icon [icon]="faCheck" />
+        <span>{{ 'artemisApp.iris.assessmentReview.accept' | artemisTranslate }}</span>
+    </button>
+    <button pButton type="button" severity="danger" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.REJECTED" (click)="rejectAnswers()">
+        <fa-icon [icon]="faX" />
+        <span>{{ 'artemisApp.iris.assessmentReview.reject' | artemisTranslate }}</span>
+    </button>
     @if (assessment() && (assessment().verdictReview === IrisVerdictReview.ACCEPTED || assessment().verdictReview === IrisVerdictReview.REJECTED)) {
         <span>
             {{ 'artemisApp.iris.assessmentReview.review.reviewedAs' | artemisTranslate }}

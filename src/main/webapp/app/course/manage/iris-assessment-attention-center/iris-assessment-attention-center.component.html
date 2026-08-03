@@ -1,25 +1,24 @@
-@if (course().isAtLeastInstructor && this.assessmentEnabled()) {
+@if (course().isAtLeastInstructor && assessmentEnabled()) {
     <div class="iris-panel">
         <div class="iris-header">
             <div class="iris-title">
-                <fa-icon [icon]="faBrain" class="me-2" size="lg" />
+                <fa-icon [icon]="faBrain" class="mr-2" size="lg" />
                 <span jhiTranslate="artemisApp.iris.assessmentAttentionCenter.title"></span>
-                <jhi-help-icon text="artemisApp.iris.assessmentAttentionCenter.tooltip" class="ms-1" />
+                <jhi-help-icon text="artemisApp.iris.assessmentAttentionCenter.tooltip" class="ml-1" />
             </div>
         </div>
         <div class="iris-toggle">
-            <button
-                type="button"
-                class="iris-assessment-btn"
-                [class.iris-assessment-btn--suspicious]="needsAttention()"
-                [class.iris-assessment-btn--unsuspicious]="!needsAttention()"
-                [routerLink]="reviewLink()"
-                [jhiTranslate]="needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'"
-            ></button>
-            <button type="button" class="iris-assessment-btn iris-assessment-btn--in-class" [routerLink]="inClassQuizLink()">
-                <fa-icon class="jhi-btn__icon sm" [icon]="faListAlt" [fixedWidth]="true" />
+            <a pButton size="small" class="flex-1 justify-center" [severity]="needsAttention() ? 'danger' : 'success'" [routerLink]="reviewLink()">
+                <span
+                    [jhiTranslate]="
+                        needsAttention() ? 'artemisApp.iris.assessmentAttentionCenter.state.needsAttention' : 'artemisApp.iris.assessmentAttentionCenter.state.nothingToDo'
+                    "
+                ></span>
+            </a>
+            <a pButton size="small" class="flex-1 justify-center" [routerLink]="inClassQuizLink()">
+                <fa-icon class="mr-2" [icon]="faListAlt" [fixedWidth]="true" />
                 {{ 'artemisApp.iris.assessmentInClassQuiz.open' | artemisTranslate }}
-            </button>
+            </a>
         </div>
     </div>
 }

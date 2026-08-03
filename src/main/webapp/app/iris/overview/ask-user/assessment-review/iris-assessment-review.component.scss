@@ -1,10 +1,6 @@
-:host ::ng-deep .bootstrap.separated-columns .datatable-header-cell:not(:last-child),
-:host ::ng-deep .bootstrap.separated-columns .datatable-body-cell:not(:last-child) {
-    border-right: 10px solid var(--secondary);
-}
-
-::ng-deep .ngx-datatable .datatable-body-cell {
-    overflow: visible;
+:host ::ng-deep .iris-assessment-review-table .p-datatable-thead > tr > th:not(:last-child),
+:host ::ng-deep .iris-assessment-review-table .p-datatable-tbody > tr > td:not(:last-child) {
+    border-right: 10px solid var(--p-content-border-color);
 }
 
 .wrapped-content {
