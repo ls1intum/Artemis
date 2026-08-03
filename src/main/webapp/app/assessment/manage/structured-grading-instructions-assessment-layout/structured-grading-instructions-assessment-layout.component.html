@@ -30,9 +30,10 @@
                 }
             </ng-container>
             @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
+                <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be draggable. -->
                 <div
                     class="rounded"
-                    draggable="{{ allowDrop() }}"
+                    [draggable]="isDraggable(instruction)"
                     (dragstart)="disableDrag()"
                     (dragstart)="drag($event, instruction)"
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"

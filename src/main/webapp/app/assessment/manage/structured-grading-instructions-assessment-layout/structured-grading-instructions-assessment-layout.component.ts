@@ -108,6 +108,14 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
+     * An already applied instruction must not be dragged onto a second target: that would add another feedback for
+     * it, which either duplicates the credits or is silently ignored once its usage limit is reached.
+     */
+    isDraggable(instruction: GradingInstruction): boolean {
+        return this.allowDrop() && !this.isApplied(instruction);
+    }
+
+    /**
      * Applying an instruction via its checkbox is equivalent to dropping it onto the feedback list. Un-applying it
      * deletes every feedback card that instruction produced.
      */
@@ -163,6 +171,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * the corresponding drop method is in AssessmentDetailComponent
      */
     drag(event: DragEvent, instruction: GradingInstruction) {
+        if (!this.isDraggable(instruction)) {
+            event.preventDefault();
+            return;
+        }
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }

@@ -231,6 +231,34 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
         });
 
+        /** The draggable attribute of the row that carries the instruction. */
+        function instructionRowDraggable(): string | null {
+            return fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('draggable');
+        }
+
+        it('should stop an applied instruction from being dragged onto a second target', () => {
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            expect(comp.isDraggable(instruction)).toBe(false);
+            expect(instructionRowDraggable()).toBe('false');
+        });
+
+        it('should not hand over any instruction data once it is applied', () => {
+            appliedIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+            const dataTransfer = { setData: vi.fn() };
+            const dragEvent = { dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent;
+
+            comp.drag(dragEvent, instruction);
+
+            expect(dataTransfer.setData).not.toHaveBeenCalled();
+            expect(dragEvent.preventDefault).toHaveBeenCalledOnce();
+        });
+
         it('should show an instruction applied to a referenced element as ticked but locked', () => {
             const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
             appliedIds.set(new Set([instruction.id!]));
