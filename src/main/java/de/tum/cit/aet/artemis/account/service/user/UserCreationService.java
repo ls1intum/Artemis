@@ -149,7 +149,7 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         user.setActivated(true);
-        user.setInternal(true);
+        user.setInternal(userDTO.isInternal());
         user.setTestUser(userDTO.isTestUser());
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {

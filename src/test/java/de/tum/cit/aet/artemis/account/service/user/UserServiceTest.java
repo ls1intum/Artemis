@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -32,6 +33,9 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserCreationService userCreationService;
 
     @BeforeEach
     void initTestCase() {
@@ -150,6 +154,22 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // isTestUser = false -> the flag is cleared
         userService.importUsers(List.of(new StudentDTO(login, null, null, null, null, false)));
         assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("flag is cleared when explicitly false").isFalse();
+    }
+
+    @Test
+    void testCreateUser_withManagedUserVM_respectsIsInternalFlag() {
+        ManagedUserVM externalUserDTO = new ManagedUserVM();
+        externalUserDTO.setLogin(TEST_PREFIX + "external_user");
+        externalUserDTO.setFirstName("External");
+        externalUserDTO.setLastName("User");
+        externalUserDTO.setEmail("external_test@example.com");
+        externalUserDTO.setInternal(false);
+
+        User createdUser = userCreationService.createUser(externalUserDTO);
+
+        assertThat(createdUser.isInternal()).as("created user should be external").isFalse();
+
+        userRepository.delete(createdUser);
     }
 
     @Test
