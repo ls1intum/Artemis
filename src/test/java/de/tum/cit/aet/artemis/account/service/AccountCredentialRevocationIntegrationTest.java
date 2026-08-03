@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -75,6 +76,11 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      * own enough to log in.
      */
     private void giveUserCredentials() {
+        // Cleared first: the fixture user is reused across the tests in this class, so a test that deliberately leaves a
+        // credential in place would otherwise make a later test see two of them.
+        passkeyCredentialsRepository.deleteAllByUserId(user.getId());
+        userSshPublicKeyRepository.deleteAll(userSshPublicKeyRepository.findAllByUserId(user.getId()));
+
         passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
         user.setVcsAccessToken("vcs-token-" + user.getId());
@@ -211,6 +217,47 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
 
         userService.changePassword(UserFactory.USER_PASSWORD, "new-Password-123", CredentialRevocationChoiceDTO.none());
+
+        assertVcsAccessTokenKept();
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).hasSize(1);
+    }
+
+    /**
+     * Deactivation through the admin edit form has to revoke the same credentials as the dedicated deactivate endpoint:
+     * {@code updateUser} writes the {@code activated} flag itself, so without this an account the administrator sees as
+     * deactivated keeps working over git and keeps its passkeys.
+     */
+    @Test
+    void deactivatingAUserThroughTheAdminUpdateRevokesEverything() {
+        giveUserCredentials();
+
+        // Loaded with authorities, because updateUser reconciles them and the admin resource loads the user the same way.
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword(null);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertThat(reloadUser().getActivated()).isFalse();
+        assertVcsAccessTokenRevoked();
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(passkeyCredentialsRepository.findByUser(user.getId())).isEmpty();
+    }
+
+    /**
+     * The mirror image: an unrelated edit must not cost the user their credentials, otherwise every admin who fixes a
+     * typo in a name logs that user out of their repositories.
+     */
+    @Test
+    void anUnrelatedAdminUpdateKeepsTheCredentials() {
+        giveUserCredentials();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setPassword(null);
+        update.setFirstName("Renamed");
+        userCreationService.updateUser(userWithAuthorities, update);
 
         assertVcsAccessTokenKept();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);

@@ -232,6 +232,9 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
+        // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
+        // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
+        boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
@@ -243,7 +246,11 @@ public class UserCreationService {
 
         log.debug("Changed Information for User: {}", user);
 
-        return saveUser(user);
+        User savedUser = saveUser(user);
+        if (isBeingDeactivated) {
+            accountCredentialRevocationService.revokeAllCredentials(savedUser, "user deactivated by an administrator");
+        }
+        return savedUser;
     }
 
     /**
