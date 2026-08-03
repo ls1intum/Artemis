@@ -88,9 +88,10 @@ class AccountSecurityEventServiceTest {
         AuditEvent event = capturedAuditEvent();
         assertThat(event.getType()).isEqualTo(PASSWORD_RESET_REQUEST_REJECTED);
         assertThat(event.getPrincipal()).isEqualTo("anonymous");
+        // Unauthenticated free-form input must not reach the audit table: the recorded data is limited to the fixed
+        // reason describing why the request was rejected, and carries nothing derived from what the caller submitted.
+        assertThat(event.getData()).containsOnlyKeys("reason", "category");
         assertThat(event.getData()).containsEntry("reason", "unknown-identifier");
-        // Unauthenticated free-form input must not reach the audit table.
-        assertThat(event.getData().values()).doesNotContain("victim@tum.de");
     }
 
     @Test

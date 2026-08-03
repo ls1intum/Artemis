@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
@@ -29,6 +30,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "auditrouting";
+
+    /**
+     * Without an explicit order the database may return any 100 rows, so an event created by this test could fall outside
+     * the first page once a log holds more than a page of rows.
+     */
+    private static final PageRequest NEWEST_FIRST = PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "auditEventDate"));
 
     @Autowired
     private AuditEventRepository auditEventRepository;
@@ -112,7 +119,7 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
     void eventsAreReadBackUnderTheirOwnLogTypeWithTheirDataPreserved() {
         addEvent(AuditEventConstants.ACCOUNT_EMAIL_CHANGED);
 
-        List<AuditEvent> securityEvents = auditEventService.findAll(AuditLogType.SECURITY, PageRequest.of(0, 100)).getContent();
+        List<AuditEvent> securityEvents = auditEventService.findAll(AuditLogType.SECURITY, NEWEST_FIRST).getContent();
         assertThat(securityEvents).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(AuditEventConstants.ACCOUNT_EMAIL_CHANGED);
             assertThat(event.getPrincipal()).isEqualTo(TEST_PREFIX + "-" + AuditEventConstants.ACCOUNT_EMAIL_CHANGED);
@@ -121,8 +128,46 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
         });
 
         // ... and must not leak into another tab's log.
-        assertThat(auditEventService.findAll(AuditLogType.GENERAL, PageRequest.of(0, 100)).getContent())
+        assertThat(auditEventService.findAll(AuditLogType.GENERAL, NEWEST_FIRST).getContent())
                 .noneMatch(event -> AuditEventConstants.ACCOUNT_EMAIL_CHANGED.equals(event.getType()));
+    }
+
+    @Test
+    void failedLoginGoesToTheGeneralLog() {
+        // Failed logins are part of the login record: they belong with the successful ones, under the short retention,
+        // and must stay visible in the Login tab rather than being treated as an unrecognised application event.
+        addEvent(AuditEventConstants.AUTHENTICATION_FAILURE);
+
+        assertThat(persistenceAuditEventRepository.count()).isEqualTo(generalCountBefore + 1);
+        assertThat(securityAuditEventRepository.count()).isEqualTo(securityCountBefore);
+        assertThat(applicationAuditEventRepository.count()).isEqualTo(applicationCountBefore);
+    }
+
+    @Test
+    void findRetrievesEventsFromWhicheverLogHoldsTheType() {
+        // Spring Boot's AuditEventRepository contract is also used directly (e.g. by IrisChatSessionResource), so a
+        // lookup has to reach the log that add() routed the event to, not just the general one.
+        Instant before = Instant.now().minusSeconds(60);
+        for (String type : List.of(AuditEventConstants.AUTHENTICATION_FAILURE, AuditEventConstants.PASSWORD_RESET_COMPLETED, Constants.DELETE_EXERCISE)) {
+            // A principal unique to this test, because the other tests share the database and write the same types.
+            String principal = TEST_PREFIX + "-find-" + type;
+            auditEventRepository.add(new AuditEvent(Instant.now(), principal, type, Map.of("detail", "value")));
+
+            assertThat(auditEventRepository.find(principal, before, type)).as("lookup of %s", type).singleElement()
+                    .satisfies(event -> assertThat(event.getData()).containsEntry("detail", "value"));
+        }
+    }
+
+    @Test
+    void findWithoutATypeFilterSearchesEveryLog() {
+        String principal = TEST_PREFIX + "-untyped-lookup";
+        Instant before = Instant.now().minusSeconds(60);
+        for (String type : List.of(AuditEventConstants.AUTHENTICATION_FAILURE, AuditEventConstants.PASSWORD_RESET_COMPLETED, Constants.DELETE_EXERCISE)) {
+            auditEventRepository.add(new AuditEvent(Instant.now(), principal, type, Map.of("detail", "value")));
+        }
+
+        assertThat(auditEventRepository.find(principal, before, null)).extracting(AuditEvent::getType).containsExactlyInAnyOrder(AuditEventConstants.AUTHENTICATION_FAILURE,
+                AuditEventConstants.PASSWORD_RESET_COMPLETED, Constants.DELETE_EXERCISE);
     }
 
     @Test
@@ -132,9 +177,7 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
         Instant from = Instant.now().minusSeconds(300);
         Instant to = Instant.now().plusSeconds(300);
 
-        assertThat(auditEventService.findByDates(AuditLogType.APPLICATION, from, to, PageRequest.of(0, 100)).getContent())
-                .anyMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
-        assertThat(auditEventService.findByDates(AuditLogType.SECURITY, from, to, PageRequest.of(0, 100)).getContent())
-                .noneMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
+        assertThat(auditEventService.findByDates(AuditLogType.APPLICATION, from, to, NEWEST_FIRST).getContent()).anyMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
+        assertThat(auditEventService.findByDates(AuditLogType.SECURITY, from, to, NEWEST_FIRST).getContent()).noneMatch(event -> Constants.RESET_EXAM.equals(event.getType()));
     }
 }

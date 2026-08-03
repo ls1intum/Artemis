@@ -56,6 +56,12 @@ public interface SecurityAuditEventRepository extends ArtemisJpaRepository<Secur
             """)
     List<Long> findIdsByAuditEventDateBetween(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate, Pageable pageable);
 
+    @EntityGraph(type = LOAD, attributePaths = { "data" })
+    List<SecurityAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principal, Instant after, String type);
+
+    @EntityGraph(type = LOAD, attributePaths = { "data" })
+    List<SecurityAuditEvent> findByPrincipalAndAuditEventDateAfter(String principal, Instant after);
+
     @EntityGraph(type = LOAD, attributePaths = "data")
     List<SecurityAuditEvent> findWithDataByIdIn(List<Long> ids);
 

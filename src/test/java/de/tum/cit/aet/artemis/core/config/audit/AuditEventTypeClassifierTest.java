@@ -15,14 +15,16 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 class AuditEventTypeClassifierTest {
 
     @ParameterizedTest
-    @ValueSource(strings = { AuditEventConstants.AUTHENTICATION_SUCCESS, AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS, AuditEventConstants.SAML2_AUTHENTICATION_SUCCESS })
+    @ValueSource(strings = { AuditEventConstants.AUTHENTICATION_SUCCESS, AuditEventConstants.AUTHENTICATION_PASSKEY_SUCCESS, AuditEventConstants.SAML2_AUTHENTICATION_SUCCESS,
+            AuditEventConstants.AUTHENTICATION_FAILURE, AuditEventConstants.LOGOUT_SUCCESS })
     void authenticationEventsBelongToTheGeneralLog(String eventType) {
         assertThat(AuditEventTypeClassifier.classify(eventType)).isEqualTo(AuditLogType.GENERAL);
     }
 
     @ParameterizedTest
     @ValueSource(strings = { AuditEventConstants.PASSWORD_RESET_REQUESTED, AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED, AuditEventConstants.PASSWORD_RESET_COMPLETED,
-            AuditEventConstants.ACCOUNT_EMAIL_CHANGED, AuditEventConstants.ACCOUNT_REGISTERED, AuditEventConstants.SAML2_ACCOUNT_CREATE })
+            AuditEventConstants.ACCOUNT_EMAIL_CHANGED, AuditEventConstants.ACCOUNT_REGISTERED, AuditEventConstants.SAML2_ACCOUNT_CREATE,
+            AuditEventConstants.AUTHENTICATION_SWITCH })
     void accountCredentialAndIdentityChangesBelongToTheSecurityLog(String eventType) {
         assertThat(AuditEventTypeClassifier.classify(eventType)).isEqualTo(AuditLogType.SECURITY);
     }
@@ -41,6 +43,17 @@ class AuditEventTypeClassifierTest {
         // being dropped on the short general schedule, which is the safe direction if the record is needed later.
         assertThat(AuditEventTypeClassifier.classify("SOME_FUTURE_EVENT_NOBODY_CLASSIFIED")).isEqualTo(AuditLogType.APPLICATION);
         assertThat(AuditEventTypeClassifier.classify(null)).isEqualTo(AuditLogType.APPLICATION);
+    }
+
+    @Test
+    void everyEventTypeSpringBootPublishesIsClassifiedDeliberately() {
+        // These are the types Spring Boot's AuthenticationAuditListener and AuthorizationAuditListener can publish.
+        // Any of them falling through to the APPLICATION default would give a login record five-year retention and hide
+        // it from the Login tab, so each one is asserted explicitly rather than relying on the default.
+        assertThat(AuditEventConstants.GENERAL_EVENT_TYPES).contains(AuditEventConstants.AUTHENTICATION_SUCCESS, AuditEventConstants.AUTHENTICATION_FAILURE,
+                AuditEventConstants.LOGOUT_SUCCESS);
+        assertThat(AuditEventConstants.SECURITY_EVENT_TYPES).contains(AuditEventConstants.AUTHENTICATION_SWITCH);
+        assertThat(AuditEventTypeClassifier.classify(AuditEventConstants.AUTHORIZATION_FAILURE)).isEqualTo(AuditLogType.APPLICATION);
     }
 
     @Test

@@ -28,6 +28,12 @@ public class AuditEventConstants {
 
     public static final String SAML2_AUTHENTICATION_SUCCESS = "SAML2_AUTHENTICATION_SUCCESS";
 
+    /** Emitted by Spring Boot on a failed login attempt (wrong password, unknown user, locked account, ...). */
+    public static final String AUTHENTICATION_FAILURE = "AUTHENTICATION_FAILURE";
+
+    /** Emitted by Spring Boot when a session is logged out. */
+    public static final String LOGOUT_SUCCESS = "LOGOUT_SUCCESS";
+
     /** Emitted by Spring Security on an access-denied decision. Deliberately not persisted (see CustomAuditEventRepository). */
     public static final String AUTHORIZATION_FAILURE = "AUTHORIZATION_FAILURE";
 
@@ -52,10 +58,22 @@ public class AuditEventConstants {
     public static final String SAML2_ACCOUNT_CREATE = "SAML2_ACCOUNT_CREATE";
 
     /**
+     * Emitted by Spring Boot when one account assumes another account's identity. Artemis does not currently configure
+     * Spring Security's switch-user filter, so this is not expected to occur; it is classified as a security event
+     * because if it ever did occur, who acted as whom is precisely what an investigation would need to reconstruct.
+     */
+    public static final String AUTHENTICATION_SWITCH = "AUTHENTICATION_SWITCH";
+
+    /**
      * Authentication / login event types. These stay in the general audit log ({@code jhi_persistent_audit_event}) with
      * the short retention: they are high-volume and an individual login is rarely of interest after a short while.
+     * Failed logins belong here too: they are part of the login record and are the highest-volume type of all, so the
+     * five-year retention of the other logs would be the wrong trade for them.
+     * <p>
+     * Keep in sync with the event type lists in {@code 20260803140000_changelog.xml}, which migrates existing rows.
      */
-    public static final Set<String> GENERAL_EVENT_TYPES = Set.of(AUTHENTICATION_SUCCESS, AUTHENTICATION_PASSKEY_SUCCESS, SAML2_AUTHENTICATION_SUCCESS);
+    public static final Set<String> GENERAL_EVENT_TYPES = Set.of(AUTHENTICATION_SUCCESS, AUTHENTICATION_PASSKEY_SUCCESS, SAML2_AUTHENTICATION_SUCCESS, AUTHENTICATION_FAILURE,
+            LOGOUT_SUCCESS);
 
     /**
      * Security event types: changes to an account's credentials or identity. Routed to {@code security_audit_event} and
@@ -63,7 +81,7 @@ public class AuditEventConstants {
      * reconstructs a timeline from, and such investigations often start long after the fact.
      */
     public static final Set<String> SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
-            ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE);
+            ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH);
 
     /**
      * @deprecated use {@link #SECURITY_EVENT_TYPES}. Retained as an alias so existing references keep compiling.

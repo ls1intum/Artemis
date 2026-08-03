@@ -233,10 +233,11 @@ export class AuditsComponent implements OnInit {
                 this.toDate.set(this.datePipe.transform(params.get('to'), this.dateFormat)!);
             }
             const logTypeParam = params.get('logType');
-            // Guard against an unknown value in a hand-edited URL, which would otherwise be sent to the server verbatim.
-            if (logTypeParam && Object.values(AuditLogType).includes(logTypeParam as AuditLogType)) {
-                this.logType.set(logTypeParam as AuditLogType);
-            }
+            // Set the log on every emission rather than only for a valid parameter: Angular reuses this component across
+            // query-parameter-only navigations, so leaving the signal untouched would keep querying the previously
+            // selected log. An absent or unknown value (e.g. a hand-edited URL) falls back to the general log.
+            const isKnownLogType = !!logTypeParam && Object.values(AuditLogType).includes(logTypeParam as AuditLogType);
+            this.logType.set(isKnownLogType ? (logTypeParam as AuditLogType) : AuditLogType.GENERAL);
             this.loadData();
         });
     }

@@ -33,6 +33,9 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
 
+    @EntityGraph(type = LOAD, attributePaths = { "data" })
+    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfter(String principal, Instant after);
+
     /**
      * Finds a bounded page of expired event ids, oldest first, so pruning can run in batches. Batching matters because
      * the log was never pruned before, so the first run has to clear a backlog that may span years; deleting all of it in

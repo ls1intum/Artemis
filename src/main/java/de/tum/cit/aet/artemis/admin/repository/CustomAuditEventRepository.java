@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.admin.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.ApplicationAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.PersistedAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.SecurityAuditEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
@@ -72,16 +74,29 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     }
 
     /**
-     * Finds events in the general (authentication) audit log.
+     * Finds events across the three audit logs, mirroring how {@link #add(AuditEvent)} routes them.
      * <p>
-     * Only the general log is searched. This method exists to satisfy Spring Boot's {@link AuditEventRepository}
-     * contract, whose only caller is the actuator {@code auditevents} endpoint; the admin audit view reads each log
-     * explicitly through {@code AuditEventService} instead.
+     * A given event type lives in exactly one log, so a type filter is answered from the log the classifier assigns it
+     * to. Without a type filter every log has to be searched, because the caller cannot know which one holds the event.
+     * Callers are Spring Boot's actuator {@code auditevents} endpoint and {@code IrisChatSessionResource}; the admin
+     * audit view instead reads one specific log through {@code AuditEventService}.
      */
     @Override
     public List<AuditEvent> find(String principal, Instant after, String type) {
-        Iterable<PersistentAuditEvent> persistentAuditEvents = persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after, type);
-        return auditEventConverter.convertToAuditEvent(persistentAuditEvents);
+        if (type == null) {
+            List<AuditEvent> events = new ArrayList<>();
+            events.addAll(auditEventConverter.convertToAuditEvent(persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after)));
+            events.addAll(auditEventConverter.convertToAuditEvent(securityAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after)));
+            events.addAll(auditEventConverter.convertToAuditEvent(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after)));
+            return events;
+        }
+
+        Iterable<? extends PersistedAuditEvent> events = switch (AuditEventTypeClassifier.classify(type)) {
+            case GENERAL -> persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after, type);
+            case SECURITY -> securityAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after, type);
+            case APPLICATION -> applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(principal, after, type);
+        };
+        return auditEventConverter.convertToAuditEvent(events);
     }
 
     @Override

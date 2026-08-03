@@ -298,5 +298,28 @@ describe('AuditsComponent', () => {
 
             expect(comp.logType()).toBe(AuditLogType.GENERAL);
         });
+
+        it('returns to the general log when a later navigation drops the parameter', () => {
+            // Angular reuses the component across query-parameter-only navigations, so a stale signal would keep
+            // querying the previously selected log even though the URL no longer names one.
+            mockActivatedRoute.setParameters({ sort: 'id,desc', logType: AuditLogType.SECURITY });
+            comp.ngOnInit();
+            expect(comp.logType()).toBe(AuditLogType.SECURITY);
+
+            mockActivatedRoute.setParameters({ sort: 'id,desc' });
+
+            expect(comp.logType()).toBe(AuditLogType.GENERAL);
+            expect(service.query).toHaveBeenLastCalledWith(expect.objectContaining({ logType: AuditLogType.GENERAL }));
+        });
+
+        it('returns to the general log when a later navigation carries an unknown value', () => {
+            mockActivatedRoute.setParameters({ sort: 'id,desc', logType: AuditLogType.APPLICATION });
+            comp.ngOnInit();
+            expect(comp.logType()).toBe(AuditLogType.APPLICATION);
+
+            mockActivatedRoute.setParameters({ sort: 'id,desc', logType: 'NOT_A_LOG' });
+
+            expect(comp.logType()).toBe(AuditLogType.GENERAL);
+        });
     });
 });
