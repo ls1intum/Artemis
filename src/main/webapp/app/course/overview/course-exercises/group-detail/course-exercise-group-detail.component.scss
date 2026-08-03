@@ -20,7 +20,7 @@
 
 .variant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr));
     gap: 0.75rem;
     align-items: start;
 }
@@ -57,7 +57,8 @@
         background-color: var(--danger);
     }
 
-    &:hover {
+    &:hover,
+    &:focus-within {
         background-color: var(--link-item-bg);
     }
 
@@ -103,7 +104,10 @@
         }
     }
 
-    &:hover &__ps {
+    // Also expand on focus: the preview sits inside the focusable `&__link`, so keyboard
+    // users would otherwise never reach the truncated part of the problem statement.
+    &:hover &__ps,
+    &:focus-within &__ps {
         max-height: 22rem;
         overflow-y: auto;
         overflow-x: hidden;
