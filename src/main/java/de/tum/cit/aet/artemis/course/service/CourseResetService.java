@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.course.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,11 +53,15 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Communication</td>
- * <td>Channel/conversation structure (but not messages)</td>
+ * <td>Channel/conversation structure (but not messages or per-user membership)</td>
  * </tr>
  * <tr>
  * <td>Staff</td>
  * <td>Instructor assignments only</td>
+ * </tr>
+ * <tr>
+ * <td>Plagiarism</td>
+ * <td>Plagiarism cases (retained under their own retention period; removed separately by the age-based cleanup)</td>
  * </tr>
  * </table>
  * <p>
@@ -68,11 +73,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Exercise Data</td>
- * <td>Participations, submissions, results, feedbacks, build results, plagiarism cases</td>
+ * <td>Participations, submissions, results, feedbacks, plagiarism results</td>
  * </tr>
  * <tr>
  * <td>Exam Data</td>
- * <td>Student exams, exam participations, exam submissions, exam grades</td>
+ * <td>Student exams, exam participations, exam submissions, exam grades, exam users (seating, identity checks, signature/photo files)</td>
  * </tr>
  * <tr>
  * <td>Learning Analytics</td>
@@ -80,7 +85,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * </tr>
  * <tr>
  * <td>Communication</td>
- * <td>Posts, answer posts, reactions, notifications, notification settings</td>
+ * <td>Posts, answer posts, reactions, conversation participants (channel membership), notifications, notification settings</td>
  * </tr>
  * <tr>
  * <td>AI Features</td>
@@ -197,15 +202,19 @@ public class CourseResetService {
         double totalWeight = CourseOperationWeights.calculateResetTotalWeight(summary, actualExamWeight);
         double completedWeight = 0;
 
+        // Per-exercise/exam failures are collected rather than aborting the whole batch at the first bad item; if any
+        // occurred, the reset is reported as incomplete at the end so the caller retries it (the reset is idempotent).
+        List<Long> failedItems = new ArrayList<>();
+
         try {
             progressService.startOperation(courseId, CourseOperationType.RESET, "Resetting exercises", TOTAL_RESET_STEPS);
 
             // Step 1: Reset exercises (with per-exercise progress updates)
-            completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight);
+            completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, startedAt, completedWeight, totalWeight, failedItems);
             stepsCompleted++;
 
             // Step 2: Reset exams (with per-exam progress updates)
-            completedWeight = resetExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, startedAt, completedWeight, totalWeight);
+            completedWeight = resetExamsWithWeightedProgress(courseId, examInfoList, stepsCompleted, startedAt, completedWeight, totalWeight, failedItems);
             stepsCompleted++;
 
             // Step 3: Delete competency progress
@@ -278,6 +287,12 @@ public class CourseResetService {
             completedWeight += unenrollWeight;
             stepsCompleted++;
 
+            // If any individual exercise/exam could not be reset, report the reset as incomplete so it is retried
+            // (the retry is a no-op for the items that already succeeded) rather than silently marking it done.
+            if (!failedItems.isEmpty()) {
+                throw new IllegalStateException("Reset of course " + courseId + " is incomplete; failed to reset exercise/exam id(s): " + failedItems);
+            }
+
             progressService.completeOperation(courseId, CourseOperationType.RESET, TOTAL_RESET_STEPS, 0, startedAt);
             log.info("Successfully reset all student data for course {}", courseId);
         }
@@ -307,7 +322,8 @@ public class CourseResetService {
      * @param totalWeight     the total weight for the entire reset
      * @return the updated completed weight after resetting all exercises
      */
-    private double resetExercisesWithWeightedProgress(long courseId, int stepsCompleted, ZonedDateTime startedAt, double completedWeight, double totalWeight) {
+    private double resetExercisesWithWeightedProgress(long courseId, int stepsCompleted, ZonedDateTime startedAt, double completedWeight, double totalWeight,
+            List<Long> failedItems) {
         Set<ExerciseDeletionInfoDTO> exercises = exerciseRepository.findDeletionInfoByCourseId(courseId);
         int totalExercises = exercises.size();
         int processed = 0;
@@ -329,7 +345,13 @@ public class CourseResetService {
             progressService.updateProgress(courseId, CourseOperationType.RESET, "Resetting exercise: " + exercise.title(), stepsCompleted, TOTAL_RESET_STEPS, processed,
                     totalExercises, 0, startedAt, calculateProgressPercent(completedWeight, totalWeight));
 
-            exerciseDeletionService.reset(exercise.id());
+            try {
+                exerciseDeletionService.reset(exercise.id());
+            }
+            catch (Exception e) {
+                log.error("Failed to reset exercise {} of course {}; continuing with the remaining exercises", exercise.id(), courseId, e);
+                failedItems.add(exercise.id());
+            }
             completedWeight += exerciseWeight;
             processed++;
 
@@ -353,7 +375,7 @@ public class CourseResetService {
      * @return the updated completed weight after resetting all exams
      */
     private double resetExamsWithWeightedProgress(long courseId, List<ExamDeletionInfoDTO> examInfoList, int stepsCompleted, ZonedDateTime startedAt, double completedWeight,
-            double totalWeight) {
+            double totalWeight, List<Long> failedItems) {
         if (examDeletionApi.isEmpty()) {
             return completedWeight;
         }
@@ -368,7 +390,13 @@ public class CourseResetService {
             progressService.updateProgress(courseId, CourseOperationType.RESET, "Resetting exam", stepsCompleted, TOTAL_RESET_STEPS, processed, totalExams, 0, startedAt,
                     calculateProgressPercent(completedWeight, totalWeight));
 
-            examDeletionApi.get().reset(examInfo.examId());
+            try {
+                examDeletionApi.get().reset(examInfo.examId());
+            }
+            catch (Exception e) {
+                log.error("Failed to reset exam {} of course {}; continuing with the remaining exams", examInfo.examId(), courseId, e);
+                failedItems.add(examInfo.examId());
+            }
             completedWeight += examWeight;
             processed++;
 
