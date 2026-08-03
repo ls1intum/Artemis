@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutono
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
@@ -193,6 +194,10 @@ public class IrisRequestMockProvider {
 
     public void mockCourseMemoryIngestionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/course-memory/ingest", PyrisWebhookCourseMemoryIngestionExecutionDTO.class, responseConsumer, count);
+    }
+
+    public void mockCourseMemoryDeletionWebhookRunResponse(Consumer<PyrisWebhookCourseMemoryDeletionExecutionDTO> responseConsumer) {
+        mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer);
     }
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {

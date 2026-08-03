@@ -48,6 +48,8 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisCourseMemoryStatusService } from 'app/iris/overview/services/iris-course-memory-status.service';
+import { CourseMemoryOperation, CourseMemoryStage, IrisCourseMemoryStatusDTO } from 'app/iris/shared/entities/iris-course-memory-status-dto.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { provideTranslateService } from '@ngx-translate/core';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -76,6 +78,7 @@ examples.forEach((activeConversation) => {
         let courseSidebarService: CourseSidebarService;
         let activatedRoute: ActivatedRoute;
         let breakpoint$: BehaviorSubject<BreakpointState>;
+        const courseMemoryStatus$ = new Subject<IrisCourseMemoryStatusDTO>();
 
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -128,6 +131,12 @@ examples.forEach((activeConversation) => {
                         },
                     },
                     { provide: Router, useValue: router },
+                    // Stubbed so the component's Course Memory subscription does not open a real
+                    // STOMP connection during the test run.
+                    {
+                        provide: IrisCourseMemoryStatusService,
+                        useValue: { subscribeToCourse: () => courseMemoryStatus$.asObservable(), unsubscribeFromCourse: () => true },
+                    },
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -994,6 +1003,32 @@ examples.forEach((activeConversation) => {
             component.setPageTitle('overview.communication');
 
             expect(component.pageTitle()).toBe('overview.communication');
+        });
+
+        describe('course memory status alerts', () => {
+            const statusOf = (operation: CourseMemoryOperation, stage: CourseMemoryStage): IrisCourseMemoryStatusDTO => ({
+                operation,
+                stage,
+                courseId: 1,
+                postId: '7',
+            });
+
+            it.each([
+                [CourseMemoryOperation.INGEST, CourseMemoryStage.TRIGGERED, 'info', 'artemisApp.iris.courseMemoryAlert.ingestionStarted'],
+                [CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED, 'success', 'artemisApp.iris.courseMemoryAlert.ingestionSuccess'],
+                [CourseMemoryOperation.INGEST, CourseMemoryStage.FAILED, 'error', 'artemisApp.iris.courseMemoryAlert.ingestionError'],
+                [CourseMemoryOperation.DELETE, CourseMemoryStage.TRIGGERED, 'info', 'artemisApp.iris.courseMemoryAlert.removalStarted'],
+                [CourseMemoryOperation.DELETE, CourseMemoryStage.COMPLETED, 'success', 'artemisApp.iris.courseMemoryAlert.removalSuccess'],
+                [CourseMemoryOperation.DELETE, CourseMemoryStage.FAILED, 'error', 'artemisApp.iris.courseMemoryAlert.removalError'],
+            ])('should map %s/%s to alertService.%s', (operation, stage, method, key) => {
+                const alertService = TestBed.inject(AlertService);
+                const spy = vi.spyOn(alertService, method as 'info' | 'success' | 'error').mockReturnValue({} as never);
+                component.ngOnInit();
+
+                courseMemoryStatus$.next(statusOf(operation as CourseMemoryOperation, stage as CourseMemoryStage));
+
+                expect(spy).toHaveBeenCalledWith(key);
+            });
         });
     });
 });

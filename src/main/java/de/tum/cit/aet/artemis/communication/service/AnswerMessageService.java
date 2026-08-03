@@ -233,8 +233,8 @@ public class AnswerMessageService extends PostingService {
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.content());
 
-        // determine if the update operation is to mark the answer message as resolving the original post
-        boolean markedAsResolving = false;
+        // determine if the update operation changes whether the answer message resolves the original post
+        boolean resolutionChanged = false;
         if (existingAnswerMessage.doesResolvePost() != answerMessage.resolvesPost()) {
             // check if requesting user is allowed to mark this answer message as resolving, i.e. if user is author or original message or at least tutor
             mayMarkAnswerMessageAsResolvingElseThrow(existingAnswerMessage, user, course);
@@ -242,7 +242,7 @@ public class AnswerMessageService extends PostingService {
             // sets the message as resolved if there exists any resolving answer
             existingAnswerMessage.getPost().setResolved(existingAnswerMessage.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerMessage.getPost());
-            markedAsResolving = Boolean.TRUE.equals(answerMessage.resolvesPost());
+            resolutionChanged = true;
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
@@ -258,13 +258,14 @@ public class AnswerMessageService extends PostingService {
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
 
-        // Trigger B: a thread was marked resolved without going through verification -> ingest into Course Memory
-        if (markedAsResolving) {
+        // Trigger B: the thread's resolution state changed. Fires in both directions so un-marking the
+        // last resolving answer retracts the Course Memory entry instead of leaving it served as verified.
+        if (resolutionChanged) {
             try {
-                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolved(updatedAnswerMessage, course));
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedAnswerMessage.getPost(), updatedAnswerMessage, user, course));
             }
             catch (Exception e) {
-                log.error("Failed to ingest resolved thread for answer post {} into course memory", updatedAnswerMessage.getId(), e);
+                log.error("Failed to update course memory after resolution change on answer post {}", updatedAnswerMessage.getId(), e);
             }
         }
         return updatedAnswerMessage;
@@ -312,6 +313,11 @@ public class AnswerMessageService extends PostingService {
         }
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
 
+        // An answer that resolved the thread or that was a verified Iris answer is what the thread's
+        // Course Memory entry was built from, so its removal has to be reflected there too.
+        boolean contributedToCourseMemory = Boolean.TRUE.equals(answerMessage.doesResolvePost())
+                || (answerMessage.getAuthor() != null && answerMessage.getAuthor().isBot() && answerMessage.isVerified());
+
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
@@ -330,6 +336,17 @@ public class AnswerMessageService extends PostingService {
         savedPostRepository.deleteAll(savedPosts);
 
         broadcastForPost(updatedMessage, MetisCrudAction.UPDATE, course.getId(), null);
+
+        // Re-ingest from whatever verified answer survives, or delete the entry if none does. Runs after
+        // the delete is committed so the re-fetched thread no longer contains the removed answer.
+        if (contributedToCourseMemory) {
+            try {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedMessage, null, user, course));
+            }
+            catch (Exception e) {
+                log.error("Failed to update course memory after deletion of answer post {}", answerMessageId, e);
+            }
+        }
     }
 
     /**

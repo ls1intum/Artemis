@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -421,10 +422,30 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send course memory ingestion for message {} to Pyris: {}", executionDTO.messageId(), e.getMessage());
+            log.error("Failed to send course memory ingestion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
         }
         catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send course memory ingestion for message {} to Pyris: {}", executionDTO.messageId(), e.getMessage());
+            log.error("Failed to send course memory ingestion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Executes the Course Memory deletion webhook, removing the entry of a thread that stopped being
+     * resolved. Like ingestion, Pyris responds with {@code 202 Accepted} and the failure handling is
+     * best-effort so a Pyris outage never breaks the calling communication request.
+     *
+     * @param executionDTO the DTO sent as the request body
+     */
+    public void executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO executionDTO) {
+        var endpoint = "/api/v1/webhooks/course-memory/delete";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send course memory deletion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send course memory deletion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
         }
     }
 

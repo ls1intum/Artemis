@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.iris.api;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
@@ -38,12 +40,27 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     }
 
     /**
-     * Trigger B: a thread was marked resolved by a tutor/student answer.
+     * Trigger B: a thread's resolution state changed — an answer was marked resolving, un-marked, or
+     * deleted. Ingests the thread while it still holds an answer someone stands behind, and deletes
+     * its entry once none remains.
      *
-     * @param resolvingAnswer the answer post that resolves the thread
-     * @param course          the course the thread belongs to
+     * @param post             the thread's root post
+     * @param triggeringAnswer the answer whose flag changed, or {@code null} when it was deleted
+     * @param marker           the user who changed the resolution state, if known
+     * @param course           the course the thread belongs to
      */
-    public void onThreadResolved(AnswerPost resolvingAnswer, Course course) {
-        courseMemoryIngestionService.ingestResolvedThread(resolvingAnswer, course);
+    public void onThreadResolutionChanged(Post post, @Nullable AnswerPost triggeringAnswer, @Nullable User marker, Course course) {
+        courseMemoryIngestionService.handleResolutionChange(post, triggeringAnswer, marker, course);
+    }
+
+    /**
+     * The whole thread was deleted, so its Course Memory entry is removed with it.
+     *
+     * @param post   the thread's root post, before deletion
+     * @param actor  the user who deleted the thread, notified about the removal
+     * @param course the course the thread belongs to
+     */
+    public void onThreadDeleted(Post post, @Nullable User actor, Course course) {
+        courseMemoryIngestionService.handleThreadDeleted(post, actor, course);
     }
 }

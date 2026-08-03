@@ -14,13 +14,16 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  * {@code POST /api/v1/webhooks/course-memory/ingest}).
  * <p>
  * Unlike FAQ/lecture ingestion the payload is flat: the memory fields live at the top level next to
- * {@code settings}. Artemis ids are stringified ({@code conversationId}, {@code messageId}) and
- * {@code messageId} is the dedup/upsert key on the Pyris side.
+ * {@code settings}. Artemis ids are stringified and {@code postId} is the dedup/upsert key on the
+ * Pyris side, so one resolved thread yields exactly one Course Memory entry however many of its
+ * answers resolve it and however often it is corrected.
  *
  * @param settings        pipeline execution settings (auth token, base url, selection, variant)
  * @param courseId        scopes storage and retrieval; entries are never returned cross-course
- * @param conversationId  stringified id of the originating thread, stored for backlinking
- * @param messageId       stringified stable id of the answer message; dedup/upsert key
+ * @param conversationId  stringified id of the <em>channel</em> the thread lives in; backlinking only
+ * @param postId          stringified id of the thread's root post; the dedup/upsert key
+ * @param messageId       stringified id of the answer message that triggered this ingestion; provenance
+ *                            only, and deliberately never matched against {@code thread} ids
  * @param source          origin of the ingestion request, see {@link PyrisCourseMemorySource}
  * @param isPublicChannel must be {@code true}; non-public channels are skipped by Pyris
  * @param thread          full thread ordered oldest&rarr;newest
@@ -30,7 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  *                            {@link PyrisCourseMemorySource#IRIS_CORRECTED}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisWebhookCourseMemoryIngestionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, String conversationId, String messageId,
+public record PyrisWebhookCourseMemoryIngestionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, String conversationId, String postId, String messageId,
         PyrisCourseMemorySource source, @JsonProperty("isPublicChannel") boolean isPublicChannel, List<PyrisCourseMemoryThreadMessageDTO> thread, @Nullable String verifiedBy,
         @Nullable String verifiedAt, @Nullable String existingAnswer) {
 }

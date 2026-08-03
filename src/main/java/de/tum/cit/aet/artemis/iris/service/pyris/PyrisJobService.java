@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.CourseMemoryOperation;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
@@ -180,16 +181,22 @@ public class PyrisJobService {
     }
 
     /**
-     * Adds a new course memory ingestion webhook job to the job map with a timeout.
+     * Adds a new course memory ingestion or deletion webhook job to the job map with a timeout.
+     * Deletion reuses this job type because Pyris drives both through the same status callback.
      *
      * @param courseId       the id of the course the memory entry is scoped to
-     * @param conversationId the stringified id of the originating thread
-     * @param messageId      the stringified stable id of the answer message
+     * @param conversationId the stringified id of the channel the thread lives in
+     * @param postId         the stringified id of the thread's root post (dedup/upsert key)
+     * @param messageId      the stringified id of the answer message that triggered the run, or
+     *                           {@code null} for a deletion, which targets the thread as a whole
+     * @param userLogin      login of the user to notify when the run terminates, or {@code null}
+     * @param operation      whether the run writes or removes the entry
      * @return a unique token identifying the created webhook job
      */
-    public String addCourseMemoryIngestionWebhookJob(long courseId, String conversationId, String messageId) {
+    public String addCourseMemoryIngestionWebhookJob(long courseId, String conversationId, String postId, @Nullable String messageId, @Nullable String userLogin,
+            CourseMemoryOperation operation) {
         var token = generateJobIdToken();
-        var job = new CourseMemoryIngestionWebhookJob(token, courseId, conversationId, messageId);
+        var job = new CourseMemoryIngestionWebhookJob(token, courseId, conversationId, postId, messageId, userLogin, operation);
         getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
         return token;
     }

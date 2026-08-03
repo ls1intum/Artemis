@@ -58,6 +58,8 @@ import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/fea
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { IrisCourseMemoryStatusService } from 'app/iris/overview/services/iris-course-memory-status.service';
+import { CourseMemoryOperation, CourseMemoryStage, IrisCourseMemoryStatusDTO } from 'app/iris/shared/entities/iris-course-memory-status-dto.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
@@ -238,6 +240,43 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly channelActions$ = output<ChannelAction>();
 
     private courseSidebarService = inject(CourseSidebarService);
+    private irisCourseMemoryStatusService = inject(IrisCourseMemoryStatusService);
+
+    /** Course the Course Memory websocket subscription is bound to, so ngOnDestroy can release it. */
+    private courseMemoryStatusCourseId?: number;
+
+    /**
+     * Reports Course Memory progress for runs this user triggered by resolving a thread or approving
+     * an Iris draft. The server only emits once it has actually dispatched a webhook — ingestion is
+     * skipped for private channels, Iris-disabled courses and bot-authored answers — so the absence
+     * of a toast is itself meaningful and must not be faked client-side.
+     */
+    private subscribeToCourseMemoryStatus(): void {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return;
+        }
+        this.courseMemoryStatusCourseId = courseId;
+        this.irisCourseMemoryStatusService
+            .subscribeToCourse(courseId)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((status: IrisCourseMemoryStatusDTO) => this.showCourseMemoryAlert(status));
+    }
+
+    private showCourseMemoryAlert(status: IrisCourseMemoryStatusDTO): void {
+        const isIngest = status.operation === CourseMemoryOperation.INGEST;
+        switch (status.stage) {
+            case CourseMemoryStage.TRIGGERED:
+                this.alertService.info(isIngest ? 'artemisApp.iris.courseMemoryAlert.ingestionStarted' : 'artemisApp.iris.courseMemoryAlert.removalStarted');
+                break;
+            case CourseMemoryStage.COMPLETED:
+                this.alertService.success(isIngest ? 'artemisApp.iris.courseMemoryAlert.ingestionSuccess' : 'artemisApp.iris.courseMemoryAlert.removalSuccess');
+                break;
+            case CourseMemoryStage.FAILED:
+                this.alertService.error(isIngest ? 'artemisApp.iris.courseMemoryAlert.ingestionError' : 'artemisApp.iris.courseMemoryAlert.removalError');
+                break;
+        }
+    }
 
     getAsChannel = getAsChannelDTO;
 
@@ -312,6 +351,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         } else {
             this.courseSidebarService.openSidebar();
         }
+
+        this.subscribeToCourseMemoryStatus();
 
         this.isLoading.set(true);
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
@@ -453,6 +494,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        if (this.courseMemoryStatusCourseId !== undefined) {
+            this.irisCourseMemoryStatusService.unsubscribeFromCourse(this.courseMemoryStatusCourseId);
+        }
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.openSidebarEventSubscription?.unsubscribe();

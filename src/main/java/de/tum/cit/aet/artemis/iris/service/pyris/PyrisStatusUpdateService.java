@@ -10,8 +10,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseMemoryStatusDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
+import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
@@ -210,14 +212,23 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a Course Memory ingestion job. The entry is stored on Pyris
-     * regardless of the callback, so Artemis only manages the job lifecycle.
+     * Handles the status update of a Course Memory ingestion or deletion job. The entry is stored on
+     * Pyris regardless of the callback, so beyond the job lifecycle Artemis only reports the outcome
+     * back to whoever triggered the run.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(CourseMemoryIngestionWebhookJob job, PyrisCourseMemoryIngestionStatusUpdateDTO statusUpdate) {
-        removeJobIfTerminatedElseUpdate(resolveRunState(statusUpdate.runState(), job), job);
+        var runState = resolveRunState(statusUpdate.runState(), job);
+        // Only terminal states surface to the user: Pyris emits several RUNNING updates per run and
+        // each would raise its own toast.
+        if (runState.isTerminal() && job.userLogin() != null) {
+            var status = runState == PyrisRunState.FINISHED ? IrisCourseMemoryStatusDTO.completed(job.operation(), job.courseId(), job.postId())
+                    : IrisCourseMemoryStatusDTO.failed(job.operation(), job.courseId(), job.postId(), statusUpdate.error() != null ? statusUpdate.error().message() : null);
+            irisWebsocketService.send(job.userLogin(), CourseMemoryIngestionService.COURSE_MEMORY_TOPIC_PREFIX + job.courseId(), status);
+        }
+        removeJobIfTerminatedElseUpdate(runState, job);
     }
 
     /**
