@@ -82,6 +82,7 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/shared-ui/tum-ui';
+@source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
 
 /*
  * Exclude test files: their prose ("should collapse the sidebar", "renders a table") would trip the same name
