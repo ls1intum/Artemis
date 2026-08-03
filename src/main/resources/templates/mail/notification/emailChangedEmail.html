@@ -14,7 +14,7 @@
     <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
 
     <p>
-        <!-- th:text (not th:utext) so that an attacker-supplied address cannot inject markup into the mail -->
+        <!-- th:text rather than th:utext: the address is user-supplied, so it must be escaped, not rendered as markup -->
         <span th:text="#{email.notification.emailChanged.text(${newEmail})}">
             The e-mail address of your Artemis account was changed.
         </span>
