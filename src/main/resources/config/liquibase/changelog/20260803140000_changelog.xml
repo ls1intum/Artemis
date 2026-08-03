@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260803140000-1" author="nayerkotry">
+        <createTable tableName="iris_ingestion_history">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_iris_ingestion_history" nullable="false"/>
+            </column>
+            <column name="job_id" type="varchar(100)"/>
+            <column name="course_id" type="bigint"/>
+            <column name="lecture_id" type="bigint"/>
+            <column name="lecture_unit_id" type="bigint"/>
+            <column name="lecture_unit_name" type="varchar(255)"/>
+            <column name="lecture_name" type="varchar(255)"/>
+            <column name="outcome" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="started_at" type="timestamp"/>
+            <column name="finished_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_millis" type="bigint"/>
+            <column name="failed_step_name" type="varchar(255)"/>
+            <column name="error_message" type="varchar(2000)"/>
+            <column name="activities" type="longtext"/>
+        </createTable>
+
+        <createIndex indexName="idx_iris_ingestion_history_finished_at" tableName="iris_ingestion_history">
+            <column name="finished_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
