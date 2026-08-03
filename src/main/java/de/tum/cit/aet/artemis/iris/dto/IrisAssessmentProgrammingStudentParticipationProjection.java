@@ -7,8 +7,9 @@ import jakarta.annotation.Nullable;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 
-public record IrisAssessmentProgrammingStudentParticipationProjection(Long id, String repositoryUri, String buildPlanId, String studentLogin, String studentFirstName,
-        String studentLastName, Long irisAssessmentId, IrisVerdict irisAssessmentVerdict, IrisVerdictReview irisAssessmentVerdictReview) implements Serializable {
+public record IrisAssessmentProgrammingStudentParticipationProjection(Long id, Long exerciseId, String repositoryUri, String buildPlanId, String studentLogin,
+        String studentFirstName, String studentLastName, Long irisAssessmentId, IrisVerdict irisAssessmentVerdict, IrisVerdictReview irisAssessmentVerdictReview)
+        implements Serializable {
 
     /**
      * Converts this projection into the DTO returned by the Iris assessment endpoints.
@@ -17,7 +18,7 @@ public record IrisAssessmentProgrammingStudentParticipationProjection(Long id, S
      * @return the DTO representation
      */
     public IrisAssessmentProgrammingStudentParticipationDTO toDto(@Nullable Integer submissionCount) {
-        return new IrisAssessmentProgrammingStudentParticipationDTO(id, submissionCount, repositoryUri, buildPlanId, null,
+        return new IrisAssessmentProgrammingStudentParticipationDTO(id, exerciseId, submissionCount, repositoryUri, buildPlanId, null,
                 new StudentIrisAssessmentDTO(studentLogin, studentName()),
                 irisAssessmentId == null ? null
                         : new IrisAssessmentProgrammingStudentParticipationDTO.IrisAssessmentForParticipationDTO(irisAssessmentId, irisAssessmentVerdict,

@@ -329,6 +329,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
                 participation.id,
+                participation.exercise.id,
                 participation.repositoryUri,
                 participation.buildPlanId,
                 student.login,
@@ -348,6 +349,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
                 participation.id,
+                participation.exercise.id,
                 participation.repositoryUri,
                 participation.buildPlanId,
                 student.login,
@@ -363,6 +365,121 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE participation.id IN :participationIds
             """)
     Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
+
+    @Query(value = """
+            SELECT participation.id
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessment assessment
+                LEFT JOIN participation.irisAssessmentInClass inClassAssessment
+            WHERE participation.exercise.course.id = :courseId
+                AND (participation.testRun IS NULL OR participation.testRun = false)
+                AND (:searchPattern IS NULL
+                    OR LOWER(student.login) LIKE :searchPattern ESCAPE '\\'
+                    OR LOWER(CONCAT(CONCAT(COALESCE(student.firstName, ''), ' '), COALESCE(student.lastName, ''))) LIKE :searchPattern ESCAPE '\\')
+                AND EXISTS (
+                    SELECT submission.id
+                    FROM ProgrammingSubmission submission
+                        JOIN submission.results latestResult
+                    WHERE submission.participation.id = participation.id
+                        AND latestResult.id = (
+                            SELECT MAX(result.id)
+                            FROM Result result
+                            WHERE result.submission.id = submission.id
+                        )
+                        AND latestResult.score > 0
+                        AND NOT EXISTS (
+                            SELECT newerSubmission.id
+                            FROM ProgrammingSubmission newerSubmission
+                                JOIN newerSubmission.results newerLatestResult
+                            WHERE newerSubmission.participation.id = participation.id
+                                AND ((submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                                    OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                                        AND newerSubmission.id > submission.id))
+                                AND newerLatestResult.id = (
+                                    SELECT MAX(newerResult.id)
+                                    FROM Result newerResult
+                                    WHERE newerResult.submission.id = newerSubmission.id
+                                )
+                                AND newerLatestResult.score > 0
+                        )
+                )
+                AND (:hasSelectedFilter = false
+                    OR (:acceptedSelected = true
+                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
+                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
+                    OR (:rejectedSelected = true
+                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
+                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
+                    OR (:unsuspiciousSelected = true
+                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:suspiciousSelected = true
+                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:missingSelected = true
+                        AND ((:inClass = false AND (assessment.id IS NULL OR assessment.verdict IS NULL))
+                            OR (:inClass = true AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
+            ORDER BY participation.exercise.title ASC, student.lastName ASC, student.firstName ASC, participation.id ASC
+            """, countQuery = """
+            SELECT COUNT(participation.id)
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN participation.student student
+                LEFT JOIN participation.irisAssessment assessment
+                LEFT JOIN participation.irisAssessmentInClass inClassAssessment
+            WHERE participation.exercise.course.id = :courseId
+                AND (participation.testRun IS NULL OR participation.testRun = false)
+                AND (:searchPattern IS NULL
+                    OR LOWER(student.login) LIKE :searchPattern ESCAPE '\\'
+                    OR LOWER(CONCAT(CONCAT(COALESCE(student.firstName, ''), ' '), COALESCE(student.lastName, ''))) LIKE :searchPattern ESCAPE '\\')
+                AND EXISTS (
+                    SELECT submission.id
+                    FROM ProgrammingSubmission submission
+                        JOIN submission.results latestResult
+                    WHERE submission.participation.id = participation.id
+                        AND latestResult.id = (
+                            SELECT MAX(result.id)
+                            FROM Result result
+                            WHERE result.submission.id = submission.id
+                        )
+                        AND latestResult.score > 0
+                        AND NOT EXISTS (
+                            SELECT newerSubmission.id
+                            FROM ProgrammingSubmission newerSubmission
+                                JOIN newerSubmission.results newerLatestResult
+                            WHERE newerSubmission.participation.id = participation.id
+                                AND ((submission.submissionDate IS NOT NULL AND newerSubmission.submissionDate IS NOT NULL AND newerSubmission.submissionDate > submission.submissionDate)
+                                    OR ((submission.submissionDate IS NULL OR newerSubmission.submissionDate IS NULL OR newerSubmission.submissionDate = submission.submissionDate)
+                                        AND newerSubmission.id > submission.id))
+                                AND newerLatestResult.id = (
+                                    SELECT MAX(newerResult.id)
+                                    FROM Result newerResult
+                                    WHERE newerResult.submission.id = newerSubmission.id
+                                )
+                                AND newerLatestResult.score > 0
+                        )
+                )
+                AND (:hasSelectedFilter = false
+                    OR (:acceptedSelected = true
+                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)
+                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.ACCEPTED)))
+                    OR (:rejectedSelected = true
+                        AND ((:inClass = false AND assessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)
+                            OR (:inClass = true AND inClassAssessment.verdictReview = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview.REJECTED)))
+                    OR (:unsuspiciousSelected = true
+                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.UNSUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:suspiciousSelected = true
+                        AND ((:inClass = false AND assessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND assessment.verdictReview IS NULL)
+                            OR (:inClass = true AND inClassAssessment.verdict = de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict.SUSPICIOUS AND inClassAssessment.verdictReview IS NULL)))
+                    OR (:missingSelected = true
+                        AND ((:inClass = false AND (assessment.id IS NULL OR assessment.verdict IS NULL))
+                            OR (:inClass = true AND (inClassAssessment.id IS NULL OR inClassAssessment.verdict IS NULL)))))
+            """)
+    Page<Long> findIrisAssessmentReviewParticipationIds(@Param("courseId") long courseId, @Param("searchPattern") String searchPattern, @Param("inClass") boolean inClass,
+            @Param("hasSelectedFilter") boolean hasSelectedFilter, @Param("acceptedSelected") boolean acceptedSelected, @Param("rejectedSelected") boolean rejectedSelected,
+            @Param("unsuspiciousSelected") boolean unsuspiciousSelected, @Param("suspiciousSelected") boolean suspiciousSelected, @Param("missingSelected") boolean missingSelected,
+            Pageable pageable);
 
     default Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(long participationId) {
         return findByIdWithAllResultsAndRelatedSubmissions(participationId, ZonedDateTime.now());

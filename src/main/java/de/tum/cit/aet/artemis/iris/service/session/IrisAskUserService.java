@@ -4,15 +4,12 @@ import static de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMIN
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +25,10 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisPipeEvent;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
-import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -94,8 +86,6 @@ public class IrisAskUserService {
     private final TaskScheduler taskScheduler;
 
     private final Map<Long, ScheduledFuture<?>> quizTimers = new ConcurrentHashMap<>();
-
-    private final Map<Long, ScheduledFuture<?>> inClassQuizTimers = new ConcurrentHashMap<>();
 
     public IrisAskUserService(IrisSettingsService irisSettingsService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             IrisChatSessionRepository irisChatSessionRepository, IrisChatSessionService irisChatSessionService, PyrisPipelineService pyrisPipelineService,
@@ -257,83 +247,6 @@ public class IrisAskUserService {
     }
 
     /**
-     * Makes the in-class quiz mode available for students for an exercise.
-     *
-     * @param exercise the exercise for which the in-class quiz should be made available
-     * @return timer information for the active in-class quiz window
-     */
-    public IrisQuizTimerDTO makeInClassQuizAvailable(ProgrammingExercise exercise) {
-        validateAskUserAvailable(exercise);
-        irisAssessmentReviewService.deleteInClassAssessmentsForExercise(exercise);
-
-        var settings = irisSettingsService.getSettingsForExercise(exercise).askUserModeSettings();
-        var timeLimit = settings.timeLimitInClass() * 60;
-        var expiresAt = ZonedDateTime.now().plusMinutes(settings.timeLimitInClass());
-
-        exercise.setIrisInClassQuizTimer(expiresAt);
-        programmingExerciseRepository.save(exercise);
-        scheduleInClassQuizTimerCleanup(exercise.getId(), expiresAt);
-        irisAssessmentQuizWebsocketService.sendInClassQuizStarted(exercise.getId());
-
-        return new IrisQuizTimerDTO(expiresAt, timeLimit);
-    }
-
-    /**
-     * Returns the currently active in-class quiz timer for an exercise.
-     *
-     * @param exercise the programming exercise
-     * @return timer information or null if no active timer exists
-     */
-    public IrisQuizTimerDTO getAvailableInClassQuiz(ProgrammingExercise exercise) {
-        var expiresAt = exercise.getIrisInClassQuizTimer();
-        if (expiresAt == null) {
-            return null;
-        }
-
-        if (!expiresAt.isAfter(ZonedDateTime.now())) {
-            clearInClassQuizTimer(exercise, expiresAt);
-            return null;
-        }
-
-        var remainingSeconds = Math.max(Duration.between(ZonedDateTime.now(), expiresAt).toSeconds(), 0);
-        return new IrisQuizTimerDTO(expiresAt, Math.toIntExact(remainingSeconds));
-    }
-
-    /**
-     * Returns the question-answer exchanges for a completed ask-user-mode assessment.
-     *
-     * @param assessment the Iris assessment
-     * @param exercise   the exercise
-     * @param user       the student
-     * @return the ordered question-answer exchanges
-     */
-    public List<IrisQAExchangeDTO> getQAExchangeDTOList(IrisAssessment assessment, Exercise exercise, User user, boolean inClass) {
-        if (!(exercise instanceof ProgrammingExercise)) {
-            throw new ConflictException("Ask-user mode is only supported for programming exercises", "Iris", "irisExerciseTypeUnsupported");
-        }
-
-        var session = irisChatSessionRepository.findLatestFinishedAskUserModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(exercise.getId(), user.getId(), inClass);
-        if (assessment == null) {
-            throw new ConflictException("Iris Assessment is missing so QAExchangeList cannot be retrieved", "Iris", "irisAssessmentMissing");
-        }
-        var reasoning = assessment.getReasoning();
-        if (reasoning == null || reasoning.isEmpty()) {
-            throw new ConflictException("Iris reasoning is missing for assessment", "Iris", "irisReasoningMissing");
-        }
-
-        // skip(1) and drop last message because quiz explanation and ask-user_finished messages are not needed
-        List<IrisMessage> irisMessages = session.getMessages().stream().filter(message -> message.getSender().equals(IrisMessageSender.LLM) && message.getInAskUserMode()).skip(1)
-                .collect(Collectors.collectingAndThen(Collectors.toList(), messages -> messages.isEmpty() ? List.of() : messages.subList(0, messages.size() - 1)));
-        List<IrisMessage> userMessages = session.getMessages().stream().filter(message -> message.getSender().equals(IrisMessageSender.USER) && message.getInAskUserMode())
-                .toList();
-
-        int maxSize = Math.max(Math.max(irisMessages.size(), userMessages.size()), reasoning.size());
-
-        return IntStream.range(0, maxSize).mapToObj(i -> new IrisQAExchangeDTO(i, i < irisMessages.size() ? irisMessages.get(i).getContent().getFirst().getContentAsString() : "",
-                i < userMessages.size() ? userMessages.get(i).getContent().getFirst().getContentAsString() : "", i < reasoning.size() ? reasoning.get(i) : "")).toList();
-    }
-
-    /**
      * Registers a tab-defocus event while in ask-user mode.
      *
      * @param exercise the programming exercise
@@ -481,6 +394,13 @@ public class IrisAskUserService {
                 .findLatestSubmissionWithEagerResultsAndFeedbacksAndBuildLogsBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(participations.getFirst().getId());
     }
 
+    /**
+     * Checks whether the user has a latest non-practice submission with points before the exercise due date.
+     *
+     * @param exercise the programming exercise
+     * @param user     the student
+     * @return true if such a submission exists
+     */
     public boolean hasLatestSubmissionWithPointsBeforeDueDateIfExists(ProgrammingExercise exercise, User user) {
         var participations = programmingExerciseStudentParticipationRepository.findAllByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin()).stream()
                 .filter(p -> !p.isPracticeMode()).toList();
@@ -525,6 +445,74 @@ public class IrisAskUserService {
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getEntityId());
         validateAskUserAvailable(exercise);
         return exercise;
+    }
+
+    private void validateInClassQuizIsAvailableOrElseThrow(ProgrammingExercise exercise) {
+        if (getAvailableInClassQuiz(exercise) == null) {
+            throw new ConflictException("The in-class quiz timer has expired or is not active", "Iris", "irisInClassQuizExpired");
+        }
+    }
+
+    /**
+     * Returns the currently active in-class quiz timer for an exercise.
+     *
+     * @param exercise the programming exercise
+     * @return timer information or null if no active timer exists
+     */
+    public IrisQuizTimerDTO getAvailableInClassQuiz(ProgrammingExercise exercise) {
+        var expiresAt = exercise.getIrisInClassQuizTimer();
+        if (expiresAt == null) {
+            return null;
+        }
+
+        if (!expiresAt.isAfter(ZonedDateTime.now())) {
+            clearInClassQuizTimer(exercise, expiresAt);
+            return null;
+        }
+
+        var remainingSeconds = Math.max(Duration.between(ZonedDateTime.now(), expiresAt).toSeconds(), 0);
+        return new IrisQuizTimerDTO(expiresAt, Math.toIntExact(remainingSeconds));
+    }
+
+    /**
+     * Makes the in-class quiz mode available for students for an exercise.
+     *
+     * @param exercise the exercise for which the in-class quiz should be made available
+     * @return timer information for the active in-class quiz window
+     */
+    public IrisQuizTimerDTO makeInClassQuizAvailable(ProgrammingExercise exercise) {
+        validateAskUserAvailable(exercise);
+        irisAssessmentReviewService.deleteInClassAssessmentsForExercise(exercise);
+
+        var settings = irisSettingsService.getSettingsForExercise(exercise).askUserModeSettings();
+        var timeLimit = settings.timeLimitInClass() * 60;
+        var expiresAt = ZonedDateTime.now().plusMinutes(settings.timeLimitInClass());
+
+        exercise.setIrisInClassQuizTimer(expiresAt);
+        programmingExerciseRepository.save(exercise);
+        scheduleInClassQuizTimerCleanup(exercise.getId(), expiresAt);
+        irisAssessmentQuizWebsocketService.sendInClassQuizStarted(exercise.getId());
+
+        return new IrisQuizTimerDTO(expiresAt, timeLimit);
+    }
+
+    private void scheduleInClassQuizTimerCleanup(long exerciseId, ZonedDateTime expiresAt) {
+        var previousTimer = quizTimers.remove(exerciseId);
+        if (previousTimer != null) {
+            previousTimer.cancel(false);
+        }
+
+        var future = taskScheduler.schedule(() -> programmingExerciseRepository.findById(exerciseId).ifPresent(exercise -> clearInClassQuizTimer(exercise, expiresAt)),
+                expiresAt.toInstant());
+        quizTimers.put(exerciseId, future);
+    }
+
+    private void clearInClassQuizTimer(ProgrammingExercise exercise, ZonedDateTime expectedExpiresAt) {
+        if (Objects.equals(exercise.getIrisInClassQuizTimer(), expectedExpiresAt)) {
+            exercise.setIrisInClassQuizTimer(null);
+            programmingExerciseRepository.save(exercise);
+        }
+        quizTimers.remove(exercise.getId());
     }
 
     private void validateAskUserAvailable(ProgrammingExercise exercise, User user) {
@@ -659,30 +647,5 @@ public class IrisAskUserService {
         if (future != null) {
             future.cancel(false);
         }
-    }
-
-    private void validateInClassQuizIsAvailableOrElseThrow(ProgrammingExercise exercise) {
-        if (getAvailableInClassQuiz(exercise) == null) {
-            throw new ConflictException("The in-class quiz timer has expired or is not active", "Iris", "irisInClassQuizExpired");
-        }
-    }
-
-    private void scheduleInClassQuizTimerCleanup(long exerciseId, ZonedDateTime expiresAt) {
-        var previousTimer = inClassQuizTimers.remove(exerciseId);
-        if (previousTimer != null) {
-            previousTimer.cancel(false);
-        }
-
-        var future = taskScheduler.schedule(() -> programmingExerciseRepository.findById(exerciseId).ifPresent(exercise -> clearInClassQuizTimer(exercise, expiresAt)),
-                expiresAt.toInstant());
-        inClassQuizTimers.put(exerciseId, future);
-    }
-
-    private void clearInClassQuizTimer(ProgrammingExercise exercise, ZonedDateTime expectedExpiresAt) {
-        if (Objects.equals(exercise.getIrisInClassQuizTimer(), expectedExpiresAt)) {
-            exercise.setIrisInClassQuizTimer(null);
-            programmingExerciseRepository.save(exercise);
-        }
-        inClassQuizTimers.remove(exercise.getId());
     }
 }

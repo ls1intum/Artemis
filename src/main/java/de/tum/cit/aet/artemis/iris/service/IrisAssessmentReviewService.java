@@ -1,19 +1,41 @@
 package de.tum.cit.aet.artemis.iris.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentReviewSearchDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -30,11 +52,32 @@ public class IrisAssessmentReviewService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final IrisChatSessionRepository irisChatSessionRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public IrisAssessmentReviewService(IrisAssessmentRepository irisAssessmentRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, IrisChatSessionRepository irisChatSessionRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.irisAssessmentRepository = irisAssessmentRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.irisChatSessionRepository = irisChatSessionRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
+
+    private static final String FILTER_ACCEPTED = "Accepted";
+
+    private static final String FILTER_REJECTED = "Rejected";
+
+    private static final String FILTER_UNSUSPICIOUS = "Unsuspicious";
+
+    private static final String FILTER_SUSPICIOUS = "Suspicious";
+
+    private static final String FILTER_MISSING = "MissingAssessment";
+
+    private static final String FILTER_ALL = "All";
+
+    private static final List<String> FILTER_KEYS = List.of(FILTER_ACCEPTED, FILTER_REJECTED, FILTER_UNSUSPICIOUS, FILTER_SUSPICIOUS, FILTER_MISSING);
 
     /**
      * Saves the Iris verdict for a user's assessment.
@@ -70,6 +113,68 @@ public class IrisAssessmentReviewService {
 
     public boolean assessmentAttentionNeededInCourse(long courseId) {
         return irisAssessmentRepository.existsByCourseIdAndVerdictAndVerdictReviewIsNull(courseId, IrisVerdict.SUSPICIOUS);
+    }
+
+    /**
+     * Finds Iris assessment review participations in a course using server-side pagination, search, and verdict filtering.
+     *
+     * @param courseId the course to search in
+     * @param search   search parameters including pagination, search term, and selected verdict filters
+     * @param inClass  whether to use the in-class Iris assessment relation
+     * @return the paged participations and filter counts for the current text search
+     */
+    public IrisAssessmentReviewSearchResult findAssessmentReviewParticipationsForCourse(long courseId, IrisAssessmentReviewSearchDTO search, boolean inClass) {
+        Pageable pageable = PageRequest.of(search.page(), search.pageSize());
+        FilterSelection selectedFilters = FilterSelection.from(search.filterProps());
+        String searchPattern = likePattern(search.searchTerm());
+
+        Page<Long> idPage = programmingExerciseStudentParticipationRepository.findIrisAssessmentReviewParticipationIds(courseId, searchPattern, inClass,
+                selectedFilters.hasSelectedFilter(), selectedFilters.accepted(), selectedFilters.rejected(), selectedFilters.unsuspicious(), selectedFilters.suspicious(),
+                selectedFilters.missing(), pageable);
+
+        Map<String, Long> participationsPerFilter = countParticipationsPerFilter(courseId, searchPattern, inClass);
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return new IrisAssessmentReviewSearchResult(new PageImpl<>(List.of(), pageable, idPage.getTotalElements()), participationsPerFilter);
+        }
+
+        Set<IrisAssessmentProgrammingStudentParticipationProjection> projections = inClass
+                ? programmingExerciseStudentParticipationRepository.findAllIrisAssessmentInClassParticipationProjectionsByIdIn(Set.copyOf(ids))
+                : programmingExerciseStudentParticipationRepository.findAllIrisAssessmentParticipationProjectionsByIdIn(Set.copyOf(ids));
+
+        Map<Long, IrisAssessmentProgrammingStudentParticipationProjection> projectionById = projections.stream()
+                .collect(Collectors.toMap(IrisAssessmentProgrammingStudentParticipationProjection::id, Function.identity()));
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
+
+        List<IrisAssessmentProgrammingStudentParticipationDTO> dtos = ids.stream().map(projectionById::get).filter(Objects::nonNull)
+                .map(projection -> projection.toDto(submissionCountMap.get(projection.id()))).toList();
+
+        return new IrisAssessmentReviewSearchResult(new PageImpl<>(dtos, pageable, idPage.getTotalElements()), participationsPerFilter);
+    }
+
+    private Map<String, Long> countParticipationsPerFilter(long courseId, String searchPattern, boolean inClass) {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        counts.put(FILTER_ALL, countParticipations(courseId, searchPattern, inClass, FilterSelection.none()));
+
+        for (String filter : FILTER_KEYS) {
+            counts.put(filter, countParticipations(courseId, searchPattern, inClass, FilterSelection.from(filter)));
+        }
+
+        return counts;
+    }
+
+    private long countParticipations(long courseId, String searchPattern, boolean inClass, FilterSelection filterSelection) {
+        return programmingExerciseStudentParticipationRepository
+                .findIrisAssessmentReviewParticipationIds(courseId, searchPattern, inClass, filterSelection.hasSelectedFilter(), filterSelection.accepted(),
+                        filterSelection.rejected(), filterSelection.unsuspicious(), filterSelection.suspicious(), filterSelection.missing(), PageRequest.of(0, 1))
+                .getTotalElements();
+    }
+
+    private static String likePattern(String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return null;
+        }
+        return "%" + searchTerm.trim().toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     /**
@@ -195,6 +300,41 @@ public class IrisAssessmentReviewService {
         irisAssessmentRepository.deleteAllByIdInBulk(assessmentIds);
     }
 
+    /**
+     * Returns the question-answer exchanges for a completed ask-user-mode assessment.
+     *
+     * @param assessment the Iris assessment
+     * @param exercise   the exercise
+     * @param user       the student
+     * @param inClass    whether the chat is part of an in-class quiz session
+     * @return the ordered question-answer exchanges
+     */
+    public List<IrisQAExchangeDTO> getQAExchangeDTOList(IrisAssessment assessment, Exercise exercise, User user, boolean inClass) {
+        if (!(exercise instanceof ProgrammingExercise)) {
+            throw new ConflictException("Ask-user mode is only supported for programming exercises", "Iris", "irisExerciseTypeUnsupported");
+        }
+
+        var session = irisChatSessionRepository.findLatestFinishedAskUserModeSessionByExerciseIdAndUserIdAndInClassQuizElseThrow(exercise.getId(), user.getId(), inClass);
+        if (assessment == null) {
+            throw new ConflictException("Iris Assessment is missing so QAExchangeList cannot be retrieved", "Iris", "irisAssessmentMissing");
+        }
+        var reasoning = assessment.getReasoning();
+        if (reasoning == null || reasoning.isEmpty()) {
+            throw new ConflictException("Iris reasoning is missing for assessment", "Iris", "irisReasoningMissing");
+        }
+
+        // skip first and drop last message because quiz explanation and quiz_finished messages are not needed
+        List<IrisMessage> irisMessages = session.getMessages().stream().filter(message -> message.getSender().equals(IrisMessageSender.LLM) && message.getInAskUserMode()).skip(1)
+                .collect(Collectors.collectingAndThen(Collectors.toList(), messages -> messages.isEmpty() ? List.of() : messages.subList(0, messages.size() - 1)));
+        List<IrisMessage> userMessages = session.getMessages().stream().filter(message -> message.getSender().equals(IrisMessageSender.USER) && message.getInAskUserMode())
+                .toList();
+
+        int maxSize = Math.max(Math.max(irisMessages.size(), userMessages.size()), reasoning.size());
+
+        return IntStream.range(0, maxSize).mapToObj(i -> new IrisQAExchangeDTO(i, i < irisMessages.size() ? irisMessages.get(i).getContent().getFirst().getContentAsString() : "",
+                i < userMessages.size() ? userMessages.get(i).getContent().getFirst().getContentAsString() : "", i < reasoning.size() ? reasoning.get(i) : "")).toList();
+    }
+
     private IrisAssessment findOrCreateAssessment(User user, Exercise exercise, boolean inClass, boolean withReasoning) {
         var participation = programmingExerciseStudentParticipationRepository
                 .findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), inClass, false).orElseThrow();
@@ -209,5 +349,29 @@ public class IrisAssessmentReviewService {
         }
 
         return assessment;
+    }
+
+    private record FilterSelection(boolean accepted, boolean rejected, boolean unsuspicious, boolean suspicious, boolean missing) {
+
+        static FilterSelection none() {
+            return new FilterSelection(false, false, false, false, false);
+        }
+
+        static FilterSelection from(String filterProps) {
+            if (filterProps == null || filterProps.isBlank()) {
+                return none();
+            }
+
+            List<String> filters = Arrays.stream(filterProps.split(",")).map(String::trim).filter(filter -> !filter.isBlank()).toList();
+            return new FilterSelection(filters.contains(FILTER_ACCEPTED), filters.contains(FILTER_REJECTED), filters.contains(FILTER_UNSUSPICIOUS),
+                    filters.contains(FILTER_SUSPICIOUS), filters.contains(FILTER_MISSING));
+        }
+
+        boolean hasSelectedFilter() {
+            return accepted || rejected || unsuspicious || suspicious || missing;
+        }
+    }
+
+    public record IrisAssessmentReviewSearchResult(Page<IrisAssessmentProgrammingStudentParticipationDTO> page, Map<String, Long> participationsPerFilter) {
     }
 }

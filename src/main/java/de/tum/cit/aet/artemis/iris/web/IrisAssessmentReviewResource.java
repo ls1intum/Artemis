@@ -5,10 +5,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -16,19 +20,26 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentReviewPageDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentReviewSearchDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
@@ -65,10 +76,12 @@ public class IrisAssessmentReviewResource {
 
     private final IrisSettingsService irisSettingsService;
 
+    private final CourseRepository courseRepository;
+
     protected IrisAssessmentReviewResource(IrisAskUserService irisAskUserService, AuthorizationCheckService authorizationCheckService,
             IrisAssessmentReviewService irisAssessmentReviewService, IrisAssessmentRepository irisAssessmentRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, IrisSettingsService irisSettingsService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, IrisSettingsService irisSettingsService, CourseRepository courseRepository) {
         this.irisAskUserService = irisAskUserService;
         this.authorizationCheckService = authorizationCheckService;
         this.irisAssessmentReviewService = irisAssessmentReviewService;
@@ -77,12 +90,14 @@ public class IrisAssessmentReviewResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.irisSettingsService = irisSettingsService;
+        this.courseRepository = courseRepository;
     }
 
     /**
      * GET assessments/{assessmentId}/chat: Retrieve the assessment chat
      *
      * @param assessmentId of the assessment
+     * @param inClass      whether the wanted chat is part of an in-class quiz session
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the QAExchangeDTO objects for the assessment or {@code 404 (Not Found)} if no
      *         assessment exists
      */
@@ -93,7 +108,7 @@ public class IrisAssessmentReviewResource {
         var user = assessment.getStudent();
         var exercise = validate(assessment.getExercise());
 
-        return ResponseEntity.ok(irisAskUserService.getQAExchangeDTOList(assessment, exercise, user, inClass));
+        return ResponseEntity.ok(irisAssessmentReviewService.getQAExchangeDTOList(assessment, exercise, user, inClass));
     }
 
     /**
@@ -159,6 +174,30 @@ public class IrisAssessmentReviewResource {
             @RequestParam(defaultValue = "false") boolean inClass) {
         log.info("REST request to get all Participations with non-zero highest score for Exercise {} for Iris assessment overview, inClass: {}", exerciseId, inClass);
         return ResponseEntity.ok(getAllNonPracticeParticipationsNonZeroLatestScoreForExerciseId(exerciseId, inClass));
+    }
+
+    /**
+     * GET courses/{courseId}/assessment-review/participations : get paginated Iris assessment review participations for all programming exercises in a course.
+     *
+     * @param courseId The courseId of the course
+     * @param search   search parameters including pagination, search term, and verdict filters
+     * @param inClass  Whether the request is for the Iris in-class assessment overview
+     * @return paged participations with pagination headers and filter counts
+     */
+    @GetMapping("courses/{courseId}/assessment-review/participations")
+    @EnforceAtLeastTutor
+    public ResponseEntity<IrisAssessmentReviewPageDTO> getAssessmentReviewParticipationsForCourse(@PathVariable Long courseId, @Valid IrisAssessmentReviewSearchDTO search,
+            @RequestParam(defaultValue = "false") boolean inClass) {
+        log.info("REST request to search Iris assessment review Participations for Course {}, inClass: {}", courseId, inClass);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+
+        var searchResult = irisAssessmentReviewService.findAssessmentReviewParticipationsForCourse(courseId, search, inClass);
+        Page<IrisAssessmentProgrammingStudentParticipationDTO> page = searchResult.page();
+
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(new IrisAssessmentReviewPageDTO(page.getContent(), searchResult.participationsPerFilter()));
     }
 
     private Set<IrisAssessmentProgrammingStudentParticipationDTO> getAllNonPracticeParticipationsNonZeroLatestScoreForExerciseId(long exerciseId, boolean inClass) {

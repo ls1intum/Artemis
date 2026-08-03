@@ -1,11 +1,9 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, signal } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Observable, finalize, forkJoin, map, of, switchMap } from 'rxjs';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { IrisVerdict, IrisVerdictReview } from 'app/iris/shared/entities/iris-verdict.model';
+import { map } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFilter, faSync } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -17,8 +15,18 @@ import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/ask-use
 import { FormsModule } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
+import {
+    IrisAssessmentReviewHttpService,
+    IrisAssessmentReviewParticipation,
+    IrisAssessmentReviewSearch,
+} from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 
 /**
  * Filter properties for a result
@@ -34,8 +42,8 @@ export enum FilterProp {
 
 export type ExerciseViewModel = BaseEntity & {
     readonly exercise: ProgrammingExercise;
-    readonly participations: ProgrammingExerciseStudentParticipation[];
-    readonly searchedAndFilteredParticipations: ProgrammingExerciseStudentParticipation[];
+    readonly participations: IrisAssessmentReviewParticipation[];
+    readonly searchedAndFilteredParticipations: IrisAssessmentReviewParticipation[];
 };
 
 interface FilterOption {
@@ -49,22 +57,37 @@ interface FilterOption {
     templateUrl: './iris-assessment-review-overview.component.html',
     styleUrl: './iris-assessment-review-overview.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [ArtemisTranslatePipe, FaIconComponent, TranslateDirective, IrisAssessmentReviewExerciseComponent, FormsModule, MultiSelectModule, HelpIconComponent],
+    imports: [
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TranslateDirective,
+        IrisAssessmentReviewExerciseComponent,
+        FormsModule,
+        MultiSelectModule,
+        HelpIconComponent,
+        SearchFilterComponent,
+        PaginatorModule,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisAssessmentReviewOverviewComponent {
+    private static readonly SEARCH_DEBOUNCE_MS = 300;
+
     readonly FilterProp = FilterProp;
 
-    private route = inject(ActivatedRoute);
-    private assessmentReviewService = inject(IrisAssessmentReviewHttpService);
-    private irisSettingsService = inject(IrisSettingsService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly assessmentReviewService = inject(IrisAssessmentReviewHttpService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faSync = faSync;
     protected readonly faFilter = faFilter;
+    protected readonly pageSizeOptions = [10, 20, 50, 100, 200];
 
     /**
      * An empty array means that no verdict filter is active, i.e. all participations are shown.
-     * Multiple selected verdicts are combined with OR.
+     * Multiple selected verdicts are combined with OR on the server.
      */
     protected readonly selectedFilters = signal<FilterProp[]>([]);
     protected readonly searchTerm = signal('');
@@ -74,55 +97,18 @@ export class IrisAssessmentReviewOverviewComponent {
         requireSync: true,
     });
     protected readonly isLoading = signal(true);
+    protected readonly totalRows = signal(0);
+    protected readonly first = signal(0);
+    protected readonly rows = signal(50);
+    protected readonly participationsPerFilter = signal<ReadonlyMap<FilterProp, number>>(new Map([[FilterProp.ALL, 0]]));
 
-    private readonly normalizedSearchTerm = computed(() => this.searchTerm().trim().toLowerCase());
+    protected readonly searchNoResults = computed(() => !this.isLoading() && this.exercises().length === 0);
+    protected readonly itemRangeBegin = computed(() => (this.totalRows() === 0 ? 0 : Math.min(this.totalRows(), this.first() + 1)));
+    protected readonly itemRangeEnd = computed(() => Math.min(this.totalRows(), this.first() + this.rows()));
 
-    private readonly searchedParticipations = computed(() => {
-        const normalizedSearchTerm = this.normalizedSearchTerm();
-
-        return this.exercises()
-            .flatMap((viewExercise) => viewExercise.participations)
-            .filter((participation) => this.filterParticipationByString(participation, normalizedSearchTerm));
-    });
-
-    protected readonly searchNoResults = computed(() => this.relevantExercises().length === 0);
-
-    protected readonly relevantExercises = computed<ExerciseViewModel[]>(() => {
-        const selectedFilters = this.selectedFilters();
-        const normalizedSearchTerm = this.normalizedSearchTerm();
-
-        return this.exercises()
-            .map((viewExercise) => ({
-                ...viewExercise,
-                searchedAndFilteredParticipations: viewExercise.participations.filter(
-                    (participation) =>
-                        this.filterParticipationBySelectedFilters(participation, selectedFilters) && this.filterParticipationByString(participation, normalizedSearchTerm),
-                ),
-            }))
-            .filter((viewExercise) => viewExercise.searchedAndFilteredParticipations.length > 0);
-    });
-
-    protected readonly allSearchedAndFilteredParticipations = computed(() => this.relevantExercises().flatMap((exercise) => exercise.searchedAndFilteredParticipations));
-
-    /** Number of participations matching the text search before applying verdict filters. */
-    protected readonly searchedParticipationCount = computed(() => this.searchedParticipations().length);
-
-    /**
-     * Counts are based on the current text search, but not on the selected verdict filters.
-     * This keeps every option's count meaningful while multiple filters are selected.
-     */
-    protected readonly participationsPerFilter = computed<ReadonlyMap<FilterProp, number>>(() => {
-        const searchedParticipations = this.searchedParticipations();
-        const counts = new Map<FilterProp, number>();
-
-        counts.set(FilterProp.ALL, searchedParticipations.length);
-
-        for (const filter of Object.values(FilterProp).filter((value) => value !== FilterProp.ALL)) {
-            counts.set(filter, searchedParticipations.filter((participation) => this.filterParticipationByProp(participation, filter)).length);
-        }
-
-        return counts;
-    });
+    private readonly programmingExercises = computed<ProgrammingExercise[]>(
+        () => this.course().exercises?.filter((exercise: Exercise): exercise is ProgrammingExercise => exercise.type === ExerciseType.PROGRAMMING && !exercise.teamMode) ?? [],
+    );
 
     protected readonly filterOptions = computed<FilterOption[]>(() =>
         Object.values(FilterProp)
@@ -134,30 +120,51 @@ export class IrisAssessmentReviewOverviewComponent {
             })),
     );
 
+    private currentLoadRequestId = 0;
+    private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+
     constructor() {
-        const course = this.course();
+        this.destroyRef.onDestroy(() => clearTimeout(this.searchDebounceTimer));
 
-        const programmingExercises = course.exercises?.filter((exercise: Exercise) => exercise.type === ExerciseType.PROGRAMMING && !exercise.teamMode) ?? [];
+        if (this.programmingExercises().length === 0) {
+            this.isLoading.set(false);
+            return;
+        }
 
-        const enabledExercises = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!).pipe(
-            map((settings) => (settings?.settings?.askUserModeEnabled ? programmingExercises : [])),
-            switchMap((exercises) => {
-                const participationRequests = exercises.map((exercise) =>
-                    this.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exercise.id!).pipe(
-                        map((response) => this.createExerciseViewModel(exercise, response.body ?? [])),
-                    ),
-                );
-
-                return participationRequests.length > 0 ? forkJoin(participationRequests) : of([]);
-            }),
-            finalize(() => this.isLoading.set(false)),
-        );
-
-        (programmingExercises.length > 0 ? enabledExercises : of([])).subscribe((exercises) => this.exercises.set(exercises));
+        this.irisSettingsService.getCourseSettingsWithRateLimit(this.course().id!).subscribe({
+            next: (settings) => {
+                if (settings?.settings?.askUserModeEnabled) {
+                    this.loadPage();
+                } else {
+                    this.isLoading.set(false);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, error);
+            },
+        });
     }
 
     updateParticipationFilters(filters: FilterProp[] | null | undefined): void {
         this.selectedFilters.set(filters ?? []);
+        this.first.set(0);
+        this.loadPage();
+    }
+
+    onSearch(searchTerm: string): void {
+        this.searchTerm.set(searchTerm);
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+            this.first.set(0);
+            this.loadPage();
+        }, IrisAssessmentReviewOverviewComponent.SEARCH_DEBOUNCE_MS);
+    }
+
+    onPageChange(event: PaginatorState): void {
+        this.first.set(event.first ?? 0);
+        this.rows.set(event.rows ?? this.rows());
+        this.loadPage();
     }
 
     /**
@@ -169,66 +176,104 @@ export class IrisAssessmentReviewOverviewComponent {
     }
 
     refresh(): void {
-        this.isLoading.set(true);
-
-        const requests = this.exercises().map((viewModel) =>
-            this.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(viewModel.exercise.id!).pipe(
-                map((response) => this.createExerciseViewModel(viewModel.exercise, response.body ?? [])),
-            ),
-        );
-
-        (requests.length > 0 ? forkJoin(requests) : of([])).pipe(finalize(() => this.isLoading.set(false))).subscribe((exercises) => this.exercises.set(exercises));
+        this.loadPage();
     }
 
-    private createExerciseViewModel(exercise: ProgrammingExercise, participations: ProgrammingExerciseStudentParticipation[]): ExerciseViewModel {
+    private loadPage(): void {
+        const courseId = this.course().id;
+        if (courseId === undefined) {
+            return;
+        }
+
+        this.isLoading.set(true);
+        const requestId = ++this.currentLoadRequestId;
+
+        this.assessmentReviewService.searchAssessmentReviewParticipations(courseId, this.buildSearch(), this.showStartInClassQuizButton()).subscribe({
+            next: (result) => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.exercises.set(this.createExerciseViewModels(result.content));
+                    this.totalRows.set(result.totalElements);
+                    this.setParticipationsPerFilter(result.participationsPerFilter);
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.isLoading.set(false);
+                    onError(this.alertService, error);
+                }
+            },
+            complete: () => {
+                if (requestId === this.currentLoadRequestId) {
+                    this.isLoading.set(false);
+                }
+            },
+        });
+    }
+
+    private buildSearch(): IrisAssessmentReviewSearch {
+        const lazyLoadEvent: TableLazyLoadEvent = {
+            first: this.first(),
+            rows: this.rows(),
+            sortField: 'id',
+            sortOrder: 1,
+            globalFilter: this.searchTerm(),
+        };
+
+        const search = buildDbQueryFromLazyEvent(lazyLoadEvent);
         return {
-            exercise,
-            id: exercise.id,
-            participations,
-            searchedAndFilteredParticipations: participations,
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+            filterProps: this.selectedFilters(),
         };
     }
 
-    private findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
-        return this.assessmentReviewService.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId, this.showStartInClassQuizButton());
-    }
-
-    private filterParticipationBySelectedFilters(participation: ProgrammingExerciseStudentParticipation, filters: readonly FilterProp[]): boolean {
-        return filters.length === 0 || filters.some((filter) => this.filterParticipationByProp(participation, filter));
-    }
-
-    private filterParticipationByProp(participation: ProgrammingExerciseStudentParticipation, filter: FilterProp): boolean {
-        const verdictReview = participation.irisAssessment?.verdictReview;
-        const verdict = participation.irisAssessment?.verdict;
-
-        const unreviewed = verdictReview === undefined;
-
-        switch (filter) {
-            case FilterProp.UNSUSPICIOUS:
-                return verdict === IrisVerdict.UNSUSPICIOUS && unreviewed;
-            case FilterProp.SUSPICIOUS:
-                return verdict === IrisVerdict.SUSPICIOUS && unreviewed;
-            case FilterProp.ACCEPTED:
-                return verdictReview === IrisVerdictReview.ACCEPTED;
-            case FilterProp.REJECTED:
-                return verdictReview === IrisVerdictReview.REJECTED;
-            case FilterProp.MISSING: {
-                return verdict === undefined;
+    private createExerciseViewModels(participations: IrisAssessmentReviewParticipation[]): ExerciseViewModel[] {
+        const exerciseById = new Map<number, ProgrammingExercise>();
+        for (const exercise of this.programmingExercises()) {
+            if (exercise.id !== undefined) {
+                exerciseById.set(exercise.id, exercise);
             }
-            case FilterProp.ALL:
-            default:
-                return true;
         }
+
+        const exerciseIdsInPageOrder: number[] = [];
+        const participationsByExerciseId = new Map<number, IrisAssessmentReviewParticipation[]>();
+
+        for (const participation of participations) {
+            const exerciseId = participation.exerciseId;
+            if (exerciseId === undefined || !exerciseById.has(exerciseId)) {
+                continue;
+            }
+
+            let exerciseParticipations = participationsByExerciseId.get(exerciseId);
+            if (!exerciseParticipations) {
+                exerciseParticipations = [];
+                participationsByExerciseId.set(exerciseId, exerciseParticipations);
+                exerciseIdsInPageOrder.push(exerciseId);
+            }
+            exerciseParticipations.push(participation);
+        }
+
+        return exerciseIdsInPageOrder.map((exerciseId) => {
+            const exercise = exerciseById.get(exerciseId)!;
+            const exerciseParticipations = participationsByExerciseId.get(exerciseId) ?? [];
+
+            return {
+                exercise,
+                id: exercise.id,
+                participations: exerciseParticipations,
+                searchedAndFilteredParticipations: exerciseParticipations,
+            };
+        });
     }
 
-    private filterParticipationByString(participation: ProgrammingExerciseStudentParticipation, searchTerm: string): boolean {
-        if (searchTerm.length === 0) {
-            return true;
+    private setParticipationsPerFilter(participationsPerFilter: ReadonlyMap<string, number>): void {
+        const typedCounts = new Map<FilterProp, number>();
+        for (const filter of Object.values(FilterProp)) {
+            typedCounts.set(filter, participationsPerFilter.get(filter) ?? 0);
         }
-
-        const name = participation.student?.name?.toLowerCase() ?? '';
-        const login = participation.student?.login?.toLowerCase() ?? '';
-
-        return name.includes(searchTerm) || login.includes(searchTerm);
+        this.participationsPerFilter.set(typedCounts);
     }
 }

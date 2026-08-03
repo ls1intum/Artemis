@@ -34,6 +34,7 @@ interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentPar
 @Component({
     selector: 'jhi-iris-assessment-review-exercise',
     templateUrl: './iris-assessment-review-exercise.component.html',
+    styleUrl: './iris-assessment-review-exercise.component.scss',
     providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
     imports: [
@@ -102,7 +103,7 @@ export class IrisAssessmentReviewExerciseComponent {
                 participation.id!.toString(),
                 'submissions',
             ],
-            repositoryUri: participation.userIndependentRepositoryUri,
+            repositoryUri: participation.userIndependentRepositoryUri ?? participation.repositoryUri,
         })),
     );
 

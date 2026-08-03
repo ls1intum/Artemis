@@ -1,13 +1,7 @@
 <div class="d-flex flex-wrap">
     <div class="d-flex flex-fill align-items-center mr-auto">
         <div class="me-2">
-            <input
-                class="form-control form-control-sm"
-                type="search"
-                [ngModel]="searchTerm()"
-                (ngModelChange)="searchTerm.set($event)"
-                [placeholder]="'artemisApp.exercise.searchForStudents' | artemisTranslate"
-            />
+            <jhi-search-filter [placeholderKey]="'artemisApp.exercise.searchForStudents'" (newSearchEvent)="onSearch($event)" />
         </div>
         <div class="me-2">
             <div class="filter-multiselect-wrapper">
@@ -51,14 +45,13 @@
             </div>
         </div>
         <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.nonZeroLatestScoreTooltip" class="ms-1" />
-    </div>
-
-    <div class="p-2">
-        <div class="button-toolbar d-flex align-items-center gap-2">
-            <button class="btn btn-primary btn-sm" (click)="refresh()">
-                <fa-icon [icon]="faSync" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
-            </button>
+        <div class="p-3">
+            <div class="button-toolbar d-flex align-items-center gap-2">
+                <button class="btn btn-primary btn-sm" (click)="refresh()">
+                    <fa-icon [icon]="faSync" />
+                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh"></span>
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -67,7 +60,7 @@
     <div class="alert alert-info mt-3" jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></div>
 }
 
-@for (viewExercise of relevantExercises(); track viewExercise.id ?? viewExercise.exercise.id ?? $index) {
+@for (viewExercise of exercises(); track viewExercise.id ?? viewExercise.exercise.id ?? $index) {
     @if (viewExercise.searchedAndFilteredParticipations.length) {
         <jhi-iris-assessment-review-exercise
             style="width: 100%; display: block"
@@ -79,4 +72,16 @@
             (refresh)="refresh()"
         />
     }
+}
+
+@if (totalRows() > 0) {
+    <p-paginator
+        [first]="first()"
+        [rows]="rows()"
+        [totalRecords]="totalRows()"
+        [rowsPerPageOptions]="pageSizeOptions"
+        [showCurrentPageReport]="true"
+        [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: totalRows() }"
+        (onPageChange)="onPageChange($event)"
+    />
 }

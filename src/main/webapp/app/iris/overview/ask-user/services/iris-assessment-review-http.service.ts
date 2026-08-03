@@ -8,6 +8,24 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { IrisInClassQuizDTO } from 'app/iris/shared/entities/iris-in-class-quiz-dto.model';
 import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
+
+export interface IrisAssessmentReviewParticipation extends ProgrammingExerciseStudentParticipation {
+    exerciseId?: number;
+}
+
+export interface IrisAssessmentReviewSearch extends SearchTermPageableSearch {
+    filterProps?: string[];
+}
+
+interface IrisAssessmentReviewPageResponse {
+    participations?: IrisAssessmentReviewParticipation[];
+    participationsPerFilter?: Record<string, number>;
+}
+
+export interface IrisAssessmentReviewPage extends PageableResult<IrisAssessmentReviewParticipation> {
+    participationsPerFilter: ReadonlyMap<string, number>;
+}
 
 @Injectable({ providedIn: 'root' })
 export class IrisAssessmentReviewHttpService {
@@ -58,6 +76,42 @@ export class IrisAssessmentReviewHttpService {
                 params,
             })
             .pipe(map((res: HttpResponse<ProgrammingExerciseStudentParticipation[]>) => this.participationService.processParticipationEntityArrayResponseType(res)));
+    }
+
+    searchAssessmentReviewParticipations(courseId: number, search: IrisAssessmentReviewSearch, inClass = false): Observable<IrisAssessmentReviewPage> {
+        let params = new HttpParams()
+            .set('page', search.page)
+            .set('pageSize', search.pageSize)
+            .set('sortingOrder', search.sortingOrder)
+            .set('sortedColumn', search.sortedColumn)
+            .set('searchTerm', search.searchTerm);
+
+        if (search.filterProps?.length) {
+            params = params.set('filterProps', search.filterProps.join(','));
+        }
+        if (inClass) {
+            params = params.set('inClass', inClass);
+        }
+
+        return this.http
+            .get<IrisAssessmentReviewPageResponse>(`api/iris/courses/${courseId}/assessment-review/participations`, {
+                observe: 'response',
+                params,
+            })
+            .pipe(
+                map((response) => {
+                    const content = response.body?.participations ?? [];
+                    content.forEach((participation) => {
+                        participation.userIndependentRepositoryUri = participation.userIndependentRepositoryUri ?? participation.repositoryUri;
+                    });
+
+                    return {
+                        content,
+                        totalElements: Number(response.headers.get('X-Total-Count') ?? 0),
+                        participationsPerFilter: new Map(Object.entries(response.body?.participationsPerFilter ?? {})),
+                    };
+                }),
+            );
     }
 
     /**

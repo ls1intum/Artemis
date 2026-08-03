@@ -4,7 +4,7 @@
     </h2>
 
     @if (!exercise().exerciseGroup) {
-        <div class="d-flex gap-2 ms-auto">
+        <div class="d-flex gap-2 ms-auto assessment-review-exercise-header-actions">
             @if (showStartInClassQuizButton()) {
                 <span class="d-inline-flex align-items-center gap-1">
                     @if (availableInClassQuiz(); as inClassQuiz) {
@@ -35,14 +35,22 @@
     }
 </div>
 <div class="table-responsive">
-    <table class="table table-striped">
+    <table class="table table-striped assessment-review-participations-table">
+        <colgroup>
+            <col class="assessment-review-name-column" />
+            <col class="assessment-review-login-column" />
+            <col class="assessment-review-submission-column" />
+            @if (exercise().isAtLeastInstructor) {
+                <col class="assessment-review-actions-column" />
+            }
+        </colgroup>
         <thead>
             <tr>
                 <th jhiTranslate="artemisApp.exercise.name"></th>
                 <th jhiTranslate="artemisApp.exercise.studentId"></th>
                 <th class="text-center" jhiTranslate="artemisApp.exercise.submissionCount"></th>
                 @if (exercise().isAtLeastInstructor) {
-                    <th></th>
+                    <th class="assessment-review-actions-header"></th>
                 }
             </tr>
         </thead>
@@ -69,40 +77,40 @@
                         }
                     </td>
                     @if (exercise().isAtLeastInstructor) {
-                        <td>
-                            <div class="button-header">
-                                <div class="mb-2">
-                                    @if (participation.repositoryUri) {
-                                        <jhi-code-button
-                                            class="me-1"
-                                            [smallButtons]="true"
-                                            [repositoryUri]="participation.repositoryUri || ''"
-                                            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, participation.id!]"
-                                        />
-                                    }
-                                    @if (participation.buildPlanId && !localCIEnabled) {
-                                        <a target="_blank" rel="noreferrer" href="{{ participation.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
-                                            <fa-icon class="me-1" [icon]="faFileCode" />
-                                            Build plan
-                                        </a>
-                                    }
-                                    <a
-                                        [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', participation.id!]"
-                                        class="btn btn-info btn-sm me-1"
-                                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                    >
-                                        <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true" />
-                                        Online editor
-                                    </a>
-                                    <jhi-iris-review-assessment-button
-                                        class="me-1"
-                                        [smallButton]="true"
-                                        [course]="course()"
-                                        [exercise]="exercise()"
-                                        [participation]="participation"
-                                        [inClass]="showStartInClassQuizButton()"
+                        <td class="assessment-review-actions-cell">
+                            <div class="assessment-review-action-buttons">
+                                @if (participation.repositoryUri) {
+                                    <jhi-code-button
+                                        class="assessment-review-action-button"
+                                        [smallButtons]="true"
+                                        [hideLabelMobile]="true"
+                                        [hideLabelBreakpoint]="'xl'"
+                                        [repositoryUri]="participation.repositoryUri || ''"
+                                        [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, participation.id!]"
                                     />
-                                </div>
+                                }
+                                @if (participation.buildPlanId && !localCIEnabled) {
+                                    <a target="_blank" rel="noreferrer" href="{{ participation.buildPlanUrl }}" class="btn btn-primary btn-sm assessment-review-action-button">
+                                        <fa-icon [icon]="faFileCode" />
+                                        <span class="d-none d-xl-inline ms-1">Build plan</span>
+                                    </a>
+                                }
+                                <a
+                                    [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', participation.id!]"
+                                    class="btn btn-info btn-sm assessment-review-action-button"
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                >
+                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                    <span class="d-none d-xl-inline ms-1">Online editor</span>
+                                </a>
+                                <jhi-iris-review-assessment-button
+                                    class="assessment-review-action-button"
+                                    [smallButton]="true"
+                                    [course]="course()"
+                                    [exercise]="exercise()"
+                                    [participation]="participation"
+                                    [inClass]="showStartInClassQuizButton()"
+                                />
                             </div>
                         </td>
                     }

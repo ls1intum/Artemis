@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Integer submissionCount, String repositoryUri, String buildPlanId, String buildPlanUrl,
+public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Long exerciseId, Integer submissionCount, String repositoryUri, String buildPlanId, String buildPlanUrl,
         StudentIrisAssessmentDTO student, IrisAssessmentForParticipationDTO irisAssessment) implements Serializable {
 
     /**
@@ -27,8 +27,8 @@ public record IrisAssessmentProgrammingStudentParticipationDTO(Long id, Integer 
     @Nullable
     public static IrisAssessmentProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation, boolean inClass, @Nullable String buildPlanUrl) {
         return Optional.ofNullable(participation)
-                .map(value -> new IrisAssessmentProgrammingStudentParticipationDTO(value.getId(), value.getSubmissionCount(), value.getRepositoryUri(), value.getBuildPlanId(),
-                        buildPlanUrl, StudentIrisAssessmentDTO.of(value.getStudent().orElse(null)),
+                .map(value -> new IrisAssessmentProgrammingStudentParticipationDTO(value.getId(), value.getExercise() == null ? null : value.getExercise().getId(),
+                        value.getSubmissionCount(), value.getRepositoryUri(), value.getBuildPlanId(), buildPlanUrl, StudentIrisAssessmentDTO.of(value.getStudent().orElse(null)),
                         IrisAssessmentForParticipationDTO.of(inClass ? value.getIrisAssessmentInClass() : value.getIrisAssessment())))
                 .orElse(null);
     }

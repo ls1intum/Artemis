@@ -1,0 +1,66 @@
+.assessment-review-exercise-header-actions {
+    flex-wrap: nowrap;
+}
+
+.assessment-review-participations-table {
+    table-layout: fixed;
+    min-width: 68rem;
+}
+
+.assessment-review-name-column {
+    width: 20%;
+}
+
+.assessment-review-login-column {
+    width: 15%;
+}
+
+.assessment-review-submission-column {
+    width: 9rem;
+}
+
+.assessment-review-actions-column {
+    width: 34rem;
+}
+
+.assessment-review-actions-header,
+.assessment-review-actions-cell {
+    white-space: nowrap;
+}
+
+.assessment-review-actions-cell {
+    vertical-align: middle;
+}
+
+.assessment-review-action-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.assessment-review-action-buttons > * {
+    flex: 0 0 auto;
+}
+
+.assessment-review-action-button {
+    margin-right: 0 !important;
+}
+
+@media (max-width: 1199.98px) {
+    .assessment-review-participations-table {
+        min-width: 54rem;
+    }
+
+    .assessment-review-name-column {
+        width: 36%;
+    }
+
+    .assessment-review-login-column {
+        width: 20%;
+    }
+
+    .assessment-review-actions-column {
+        width: 24rem;
+    }
+}
