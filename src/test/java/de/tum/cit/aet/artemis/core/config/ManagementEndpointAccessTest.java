@@ -57,6 +57,18 @@ class ManagementEndpointAccessTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithAnonymousUser
+    void healthGroupShouldRemainAccessibleBeforeLogin() throws Exception {
+        // Kubernetes/monitoring probes and the status page hit the health group without a session, so it must stay
+        // reachable anonymously. Asserting anonymously (not just for an authenticated user) guards against a regression
+        // that silently changes the rule from permitAll() to authenticated().
+        for (String path : new String[] { "/management/health", "/management/health/readiness", "/management/health/liveness" }) {
+            assertThat(status(path)).isNotEqualTo(401);
+            assertThat(status(path)).isNotEqualTo(403);
+        }
+    }
+
+    @Test
+    @WithAnonymousUser
     void generalManagementRuleShouldRequireAuthentication() throws Exception {
         // An anonymous caller should be challenged rather than let through.
         assertThat(status("/management/env")).isEqualTo(401);
