@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +89,9 @@ public class CustomAuditEventRepository implements AuditEventRepository {
             events.addAll(auditEventConverter.convertToAuditEvent(persistenceAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after)));
             events.addAll(auditEventConverter.convertToAuditEvent(securityAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after)));
             events.addAll(auditEventConverter.convertToAuditEvent(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfter(principal, after)));
+            // Concatenating three logs would otherwise order by log rather than by time, which is not what a caller
+            // asking for "everything this principal did" expects to read.
+            events.sort(Comparator.comparing(AuditEvent::getTimestamp));
             return events;
         }
 

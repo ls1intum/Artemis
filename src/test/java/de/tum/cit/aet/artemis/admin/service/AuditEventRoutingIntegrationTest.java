@@ -166,7 +166,8 @@ class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndepend
             auditEventRepository.add(new AuditEvent(Instant.now(), principal, type, Map.of("detail", "value")));
         }
 
-        assertThat(auditEventRepository.find(principal, before, null)).extracting(AuditEvent::getType).containsExactlyInAnyOrder(AuditEventConstants.AUTHENTICATION_FAILURE,
+        // Ordered by time, not by which log a row happens to live in: the three events were written in this order.
+        assertThat(auditEventRepository.find(principal, before, null)).extracting(AuditEvent::getType).containsExactly(AuditEventConstants.AUTHENTICATION_FAILURE,
                 AuditEventConstants.PASSWORD_RESET_COMPLETED, Constants.DELETE_EXERCISE);
     }
 
