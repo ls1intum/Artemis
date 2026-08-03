@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260803120000-1" author="nayerkotry">
+        <createTable tableName="searchable_entity_sync_state">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_searchable_entity_sync_state" nullable="false"/>
+            </column>
+            <column name="entity_type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_hash" type="varchar(64)"/>
+            <column name="last_synced_content_hash" type="varchar(64)"/>
+            <column name="status" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="retry_count" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_retry_at" type="timestamp"/>
+            <column name="last_error_key" type="varchar(255)"/>
+        </createTable>
+
+        <addUniqueConstraint tableName="searchable_entity_sync_state" columnNames="entity_type, entity_id"
+                             constraintName="uk_searchable_entity_sync_state_type_entity"/>
+
+        <createIndex indexName="idx_searchable_entity_sync_state_status_retry" tableName="searchable_entity_sync_state">
+            <column name="status"/>
+            <column name="next_retry_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
