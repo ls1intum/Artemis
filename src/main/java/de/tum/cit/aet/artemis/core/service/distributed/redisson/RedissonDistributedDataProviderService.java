@@ -154,9 +154,18 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         return redisClientName;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Callers use the absence of a node from this set as proof that it is gone, so a partial answer must never be handed out. In Redis Cluster mode a single
+     * {@code CLIENT LIST} only covers one node, so the resolver aggregates across the cluster and reports whether it saw everything. An incomplete lookup yields an
+     * empty set, which every caller already treats as "no information" rather than "nothing is alive".
+     */
     @Override
     public Set<String> getClusterMemberAddresses() {
-        return redisClientListResolver.getUniqueClients();
+        var snapshot = redisClientListResolver.resolveClients();
+        return snapshot.complete() ? snapshot.clientNames() : Set.of();
     }
 
     /**

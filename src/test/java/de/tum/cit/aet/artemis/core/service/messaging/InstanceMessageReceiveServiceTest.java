@@ -176,7 +176,7 @@ class InstanceMessageReceiveServiceTest {
     @Test
     void shouldScheduleAndCancelNonActivatedUserRemoval() {
         User user = new User();
-        when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(ENTITY_ID)).thenReturn(user);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(ENTITY_ID)).thenReturn(user);
 
         deliver(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS, ENTITY_ID);
         verify(userScheduleService).scheduleForRemoveNonActivatedUser(user);

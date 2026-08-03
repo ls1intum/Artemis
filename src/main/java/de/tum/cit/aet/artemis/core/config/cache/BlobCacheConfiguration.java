@@ -45,9 +45,9 @@ public class BlobCacheConfiguration {
     public static final Set<String> BLOB_CACHE_NAMES = Set.of("files", "plantUmlPng", "plantUmlSvg");
 
     /**
-     * Values above this size are not worth caching: they would evict a large share of the cache for a single entry.
+     * Nominal weight for value shapes the blob caches are not expected to hold. They only ever hold {@code byte[]} and {@link String}.
      */
-    private static final int MAXIMUM_CACHED_VALUE_BYTES = 32 * 1024 * 1024;
+    private static final int UNKNOWN_VALUE_WEIGHT_BYTES = 1024;
 
     /**
      * @param maximumSizeBytes  total byte budget for all blob caches on this node
@@ -59,25 +59,31 @@ public class BlobCacheConfiguration {
             @Value("${artemis.cache.hazelcast.time-to-live-seconds:3600}") int timeToLiveSeconds) {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.setCacheNames(BLOB_CACHE_NAMES);
-        cacheManager.setCaffeine(
-                Caffeine.newBuilder().maximumWeight(maximumSizeBytes).weigher(BlobCacheConfiguration::weigh).expireAfterWrite(timeToLiveSeconds, TimeUnit.SECONDS).recordStats());
+        // CaffeineCacheManager builds one independent cache per name from this single builder, so the configured budget is the per-cache maximum weight.
+        // Handing each cache the full budget would let the documented node total be exceeded by the number of caches.
+        long maximumWeightPerCache = Math.max(1, maximumSizeBytes / BLOB_CACHE_NAMES.size());
+        cacheManager.setCaffeine(Caffeine.newBuilder().maximumWeight(maximumWeightPerCache).weigher(BlobCacheConfiguration::weigh)
+                .expireAfterWrite(timeToLiveSeconds, TimeUnit.SECONDS).recordStats());
         return cacheManager;
     }
 
     /**
-     * Estimates the memory a cached value occupies, so the cache can be bounded in bytes.
+     * Reports the memory a cached value occupies, so the cache can be bounded in bytes.
+     * <p>
+     * The full retained size is reported rather than a capped value. Under-reporting the weight of a large value would let the cache retain far more than its
+     * budget, and Caffeine already handles the oversized case correctly on its own: an entry heavier than the maximum weight of its cache is evicted right away,
+     * which is exactly the intended "not worth caching" behaviour for a value that would otherwise displace everything else.
      *
      * @param key   the cache key
      * @param value the cached value
-     * @return the estimated weight in bytes, capped so a single oversized entry cannot dominate the cache
+     * @return the weight in bytes
      */
     private static int weigh(Object key, Object value) {
-        int weight = switch (value) {
+        long weight = switch (value) {
             case byte[] bytes -> bytes.length;
-            case String text -> text.length() * 2;
-            // Unknown value shapes get a nominal weight; the blob caches only ever hold byte[] and String.
-            case null, default -> 1024;
+            case String text -> 2L * text.length();
+            case null, default -> UNKNOWN_VALUE_WEIGHT_BYTES;
         };
-        return Math.min(weight, MAXIMUM_CACHED_VALUE_BYTES);
+        return (int) Math.min(weight, Integer.MAX_VALUE);
     }
 }

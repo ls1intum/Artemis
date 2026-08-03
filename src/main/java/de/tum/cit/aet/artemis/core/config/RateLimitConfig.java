@@ -29,7 +29,9 @@ import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
  * Rate-limit state has to be shared across nodes, otherwise each node would enforce the limit on its own and the
  * effective limit would scale with the node count. Bucket4j ships a separate storage module per backend, so exactly one
  * {@link ProxyManager} bean is contributed here depending on the configured distributed data provider. Callers depend on
- * the {@link ProxyManager} interface so they are unaffected by which one is active.
+ * the {@link ProxyManager} interface so they are unaffected by which one is active. Every provider that
+ * {@link DistributedDataProviderResolver} accepts must be covered here, otherwise a core node configured with it cannot
+ * start.
  *
  * <p>
  * Bucket state is small and short-lived, so one round trip per check is acceptable on either backend.
@@ -66,6 +68,18 @@ public class RateLimitConfig {
     public ProxyManager<String> redisRateLimitProxyManager(RedissonClient redissonClient) {
         CommandAsyncExecutor commandExecutor = ((Redisson) redissonClient).getCommandExecutor();
         return Bucket4jRedisson.casBasedBuilder(commandExecutor).build();
+    }
+
+    /**
+     * In-process bucket storage for the Local provider, which keeps all state inside a single JVM. Without this bean a core node configured with
+     * {@code artemis.distributed-data.provider: Local} could not construct {@code RateLimitService} and would fail to start.
+     *
+     * @return bucket storage for the Local provider
+     */
+    @Bean
+    @Conditional(LocalDataCondition.class)
+    public ProxyManager<String> localRateLimitProxyManager() {
+        return new LocalRateLimitProxyManager();
     }
 
     public static BucketConfiguration perMinute(int requestsPerMinute) {
