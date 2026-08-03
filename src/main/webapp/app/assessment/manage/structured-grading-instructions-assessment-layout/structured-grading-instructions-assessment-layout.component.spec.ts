@@ -127,14 +127,19 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         const criterion = { id: 1, title: 'Documentation', structuredGradingInstructions: [instruction] } as GradingCriterion;
         let host: GradingInstructionSelectionHost;
         let appliedIds: ReturnType<typeof signal<ReadonlySet<number>>>;
+        let appliedCounts: ReturnType<typeof signal<ReadonlyMap<number, number>>>;
         /** Set by the tests in which the instruction is applied to a referenced element the feedback list does not own. */
         let notRemovableIds: ReturnType<typeof signal<ReadonlySet<number>>>;
 
         beforeEach(() => {
             appliedIds = signal<ReadonlySet<number>>(new Set());
+            appliedCounts = signal<ReadonlyMap<number, number>>(new Map());
             notRemovableIds = signal<ReadonlySet<number>>(new Set());
+            // Tests mutate usageCount; reset so they cannot leak into each other.
+            delete instruction.usageCount;
             host = {
                 appliedInstructionIds: appliedIds,
+                appliedInstructionCounts: appliedCounts,
                 removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
@@ -145,6 +150,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             comp.ngOnInit();
             fixture.detectChanges();
         });
+
+        /** Marks the instruction as applied the given number of times (and therefore as present in appliedIds). */
+        function setApplicationCount(count: number): void {
+            if (count <= 0) {
+                appliedIds.set(new Set());
+                appliedCounts.set(new Map());
+            } else {
+                appliedIds.set(new Set([instruction.id!]));
+                appliedCounts.set(new Map([[instruction.id!, count]]));
+            }
+            fixture.detectChanges();
+        }
 
         /** The kit checkbox renders a real, visually hidden input that covers it, so a click always lands there. */
         function checkboxInput(): HTMLInputElement {
@@ -236,20 +253,33 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             return fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('draggable');
         }
 
-        it('should stop an applied instruction from being dragged onto a second target', () => {
+        it('should keep drag enabled after an application when the usage limit is unlimited', () => {
+            // No usageCount / usageCount 0 means unlimited — ticking must not lock drag onto further targets.
             expect(comp.isDraggable(instruction)).toBe(true);
             expect(instructionRowDraggable()).toBe('true');
 
-            appliedIds.set(new Set([instruction.id!]));
-            fixture.detectChanges();
+            setApplicationCount(1);
+
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+        });
+
+        it('should keep drag enabled until a finite usage limit is reached', () => {
+            instruction.usageCount = 2;
+            setApplicationCount(1);
+
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+
+            setApplicationCount(2);
 
             expect(comp.isDraggable(instruction)).toBe(false);
             expect(instructionRowDraggable()).toBe('false');
         });
 
-        it('should not hand over any instruction data once it is applied', () => {
-            appliedIds.set(new Set([instruction.id!]));
-            fixture.detectChanges();
+        it('should not hand over any instruction data once its usage limit is exhausted', () => {
+            instruction.usageCount = 1;
+            setApplicationCount(1);
             const dataTransfer = { setData: vi.fn() };
             const dragEvent = { dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent;
 
@@ -261,7 +291,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
         it('should show an instruction applied to a referenced element as ticked but locked', () => {
             const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
-            appliedIds.set(new Set([instruction.id!]));
+            setApplicationCount(1);
             notRemovableIds.set(new Set([instruction.id!]));
             fixture.detectChanges();
 

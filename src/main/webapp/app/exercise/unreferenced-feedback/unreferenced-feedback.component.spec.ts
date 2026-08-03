@@ -201,11 +201,19 @@ describe('UnreferencedFeedbackComponent', () => {
             comp.applyInstruction(documentationInstruction);
             comp.applyInstruction(cameraInstruction);
 
+            expect(comp.appliedInstructionCounts()).toEqual(
+                new Map([
+                    [1, 2],
+                    [2, 1],
+                ]),
+            );
+
             comp.unapplyInstruction(documentationInstruction);
 
             expect(comp.unreferencedFeedback).toHaveLength(1);
             expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(cameraInstruction);
             expect(comp.appliedInstructionIds()).toEqual(new Set([2]));
+            expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
         it('should group the feedback by criterion, with uncategorized feedback last', () => {

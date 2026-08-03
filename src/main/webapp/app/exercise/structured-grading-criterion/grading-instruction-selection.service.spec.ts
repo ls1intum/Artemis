@@ -13,6 +13,7 @@ describe('GradingInstructionSelectionService', () => {
         service = TestBed.inject(GradingInstructionSelectionService);
         host = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
+            appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 1]])),
             removableInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
@@ -24,11 +25,13 @@ describe('GradingInstructionSelectionService', () => {
         expect(service.appliedInstructionIds().size).toBe(0);
         expect(service.isApplied(instruction)).toBe(false);
         expect(service.isRemovable(instruction)).toBe(false);
+        expect(service.applicationCount(instruction)).toBe(0);
     });
 
     it('should not report an instruction that the host cannot take back as removable', () => {
         service.register({
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
+            appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 2]])),
             removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
@@ -36,6 +39,7 @@ describe('GradingInstructionSelectionService', () => {
 
         expect(service.isApplied(instruction)).toBe(true);
         expect(service.isRemovable(instruction)).toBe(false);
+        expect(service.applicationCount(instruction)).toBe(2);
     });
 
     it('should expose the registered host state', () => {
@@ -71,6 +75,7 @@ describe('GradingInstructionSelectionService', () => {
     it('should only clear the registration for the host that is currently active', () => {
         const otherHost: GradingInstructionSelectionHost = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set()),
+            appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map()),
             removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),

@@ -8,6 +8,12 @@ export interface GradingInstructionSelectionHost {
     /** Ids of the grading instructions that anywhere in the assessment have at least one feedback linked to them. */
     readonly appliedInstructionIds: Signal<ReadonlySet<number>>;
 
+    /**
+     * How often each grading instruction is currently applied anywhere in the assessment.
+     * Used to keep drag-and-drop enabled until a finite {@link GradingInstruction.usageCount} is reached.
+     */
+    readonly appliedInstructionCounts: Signal<ReadonlyMap<number, number>>;
+
     /** Ids of the applied instructions whose feedback the host owns and can therefore remove again. */
     readonly removableInstructionIds: Signal<ReadonlySet<number>>;
 
@@ -19,6 +25,7 @@ export interface GradingInstructionSelectionHost {
 }
 
 const NO_APPLIED_INSTRUCTIONS: ReadonlySet<number> = new Set<number>();
+const NO_APPLIED_COUNTS: ReadonlyMap<number, number> = new Map<number, number>();
 
 /**
  * Mediates between the structured grading instruction list and the editable feedback list of the currently open
@@ -34,6 +41,9 @@ export class GradingInstructionSelectionService {
     /** Ids of the instructions currently applied anywhere in the open assessment. */
     readonly appliedInstructionIds = computed(() => this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
+    /** How often each instruction is currently applied anywhere in the open assessment. */
+    readonly appliedInstructionCounts = computed(() => this.host()?.appliedInstructionCounts() ?? NO_APPLIED_COUNTS);
+
     /** Ids of the applied instructions the registered feedback list can remove again. */
     readonly removableInstructionIds = computed(() => this.host()?.removableInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
@@ -48,6 +58,14 @@ export class GradingInstructionSelectionService {
 
     isApplied(instruction: GradingInstruction): boolean {
         return instruction.id !== undefined && this.appliedInstructionIds().has(instruction.id);
+    }
+
+    /** How often the instruction is currently applied anywhere in the assessment. */
+    applicationCount(instruction: GradingInstruction): number {
+        if (instruction.id === undefined) {
+            return 0;
+        }
+        return this.appliedInstructionCounts().get(instruction.id) ?? 0;
     }
 
     /**

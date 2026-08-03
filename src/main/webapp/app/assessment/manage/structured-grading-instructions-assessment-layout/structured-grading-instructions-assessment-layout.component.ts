@@ -108,11 +108,18 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
-     * An already applied instruction must not be dragged onto a second target: that would add another feedback for
-     * it, which either duplicates the credits or is silently ignored once its usage limit is reached.
+     * Drag stays enabled until a finite {@link GradingInstruction.usageCount} is exhausted. Zero or an unset limit
+     * means unlimited, so the instruction can be dropped onto further targets even after it was checked.
      */
     isDraggable(instruction: GradingInstruction): boolean {
-        return this.allowDrop() && !this.isApplied(instruction);
+        if (!this.allowDrop()) {
+            return false;
+        }
+        const usageLimit = instruction.usageCount ?? 0;
+        if (usageLimit <= 0) {
+            return true;
+        }
+        return this.selectionService.applicationCount(instruction) < usageLimit;
     }
 
     /**

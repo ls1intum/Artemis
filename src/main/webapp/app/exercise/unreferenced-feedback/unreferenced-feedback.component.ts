@@ -87,16 +87,22 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     });
 
     /**
-     * Ids of the grading instructions applied anywhere in the assessment, including on referenced elements such as
-     * a line of code or a diagram element. An instruction that is already applied there must not be offered again.
+     * How often each grading instruction is applied anywhere in the assessment, including on referenced elements
+     * such as a line of code or a diagram element.
      */
-    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => instructionIdsOf(this.scoringFeedbacks()));
+    readonly appliedInstructionCounts = computed<ReadonlyMap<number, number>>(() => instructionCountsOf(this.scoringFeedbacks()));
+
+    /**
+     * Ids of the grading instructions applied anywhere in the assessment. Derived from
+     * {@link appliedInstructionCounts} so the checkbox and the usage-aware drag gate share one source of truth.
+     */
+    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => new Set(this.appliedInstructionCounts().keys()));
 
     /**
      * Ids of the applied instructions this list can take back again, i.e. those that produced feedback it owns.
      * An instruction applied only to a referenced element has to be removed on that element instead.
      */
-    readonly removableInstructionIds = computed<ReadonlySet<number>>(() => instructionIdsOf(this.feedbacks()));
+    readonly removableInstructionIds = computed<ReadonlySet<number>>(() => new Set(instructionCountsOf(this.feedbacks()).keys()));
 
     /**
      * The feedback cards split into one block per grading criterion (criteria in alphabetical order), with every
@@ -289,16 +295,16 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 }
 
-/** Ids of the grading instructions the given feedback is linked to. */
-function instructionIdsOf(feedbacks: Feedback[]): ReadonlySet<number> {
-    const ids = new Set<number>();
+/** How often each grading instruction appears among the given feedback. */
+function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number> {
+    const counts = new Map<number, number>();
     for (const feedback of feedbacks) {
         const instructionId = feedback.gradingInstruction?.id;
         if (instructionId !== undefined) {
-            ids.add(instructionId);
+            counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
         }
     }
-    return ids;
+    return counts;
 }
 
 function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {

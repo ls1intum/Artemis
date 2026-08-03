@@ -180,6 +180,7 @@ describe('AssessmentInstructionsComponent', () => {
         it('should be selectable and count applied instructions once a feedback list is registered', () => {
             const host: GradingInstructionSelectionHost = {
                 appliedInstructionIds: signal(new Set([1])),
+                appliedInstructionCounts: signal(new Map([[1, 1]])),
                 removableInstructionIds: signal(new Set([1])),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
@@ -194,6 +195,7 @@ describe('AssessmentInstructionsComponent', () => {
         it('should stay non-selectable in read-only mode even with a feedback list registered', () => {
             TestBed.inject(GradingInstructionSelectionService).register({
                 appliedInstructionIds: signal(new Set()),
+                appliedInstructionCounts: signal(new Map()),
                 removableInstructionIds: signal(new Set()),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
