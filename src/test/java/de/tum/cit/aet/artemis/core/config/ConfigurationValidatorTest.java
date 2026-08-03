@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
 
+import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
@@ -46,6 +47,112 @@ class ConfigurationValidatorTest {
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
                 openAiBaseUrl, gpuApiKey, false, "http://localhost");
+    }
+
+    /**
+     * Builds a validator whose {@link Environment} reports the given active profiles and property values,
+     * for the production shipped-default credential checks.
+     */
+    private ConfigurationValidator createCredentialValidator(boolean productionProfileActive, String jwtBase64Secret, String plainJwtSecret, String internalAdminUsername,
+            String internalAdminPassword, String buildAgentGitPassword) {
+        Environment mockEnvironment = mock(Environment.class);
+        when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+        when(mockEnvironment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)).thenReturn(productionProfileActive);
+        when(mockEnvironment.getProperty("jhipster.security.authentication.jwt.base64-secret")).thenReturn(jwtBase64Secret);
+        when(mockEnvironment.getProperty("jhipster.security.authentication.jwt.secret")).thenReturn(plainJwtSecret);
+        when(mockEnvironment.getProperty("artemis.version-control.build-agent-git-password")).thenReturn(buildAgentGitPassword);
+        return new ConfigurationValidator(mockEnvironment, false, internalAdminUsername, internalAdminPassword, false, null, VALID_HTTP_PORT, VALID_GRPC_PORT, null, null, null,
+                null, false, "http://localhost");
+    }
+
+    @Nested
+    class ShippedDefaultCredentialTest {
+
+        /** A 64-byte key, the minimum HS512 accepts, that is not one of the shipped examples. */
+        private static final String ACCEPTABLE_BASE64_SECRET = java.util.Base64.getEncoder().encodeToString("k".repeat(64).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        private static final String SHIPPED_BASE64_SECRET = "bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=";
+
+        @Test
+        void testShippedJwtSecretIsRejectedUnderProdProfile() {
+            ConfigurationValidator validator = createCredentialValidator(true, SHIPPED_BASE64_SECRET, null, null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("jhipster.security.authentication.jwt.base64-secret");
+        }
+
+        @Test
+        void testShippedJwtSecretIsToleratedWithoutProdProfile() {
+            // dev and test deployments must keep working with the packaged example values
+            ConfigurationValidator validator = createCredentialValidator(false, SHIPPED_BASE64_SECRET, null, "artemis_admin", "artemis_admin", "buildjob_password");
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @Test
+        void testShippedJwtSecretIsRejectedViaThePlainSecretProperty() {
+            // TokenProvider prefers the plain secret over base64-secret, so the decoded default must be caught there too
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET,
+                    "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded", null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("jhipster.security.authentication.jwt.secret");
+        }
+
+        @Test
+        void testMissingJwtSecretIsRejectedUnderProdProfile() {
+            ConfigurationValidator validator = createCredentialValidator(true, null, null, null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("no JWT signing key is configured");
+        }
+
+        @Test
+        void testTooShortJwtSecretIsRejectedUnderProdProfile() {
+            String shortSecret = java.util.Base64.getEncoder().encodeToString("tooshort".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            ConfigurationValidator validator = createCredentialValidator(true, shortSecret, null, null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("HS512 requires at least");
+        }
+
+        @Test
+        void testShippedInternalAdminPasswordIsRejectedUnderProdProfile() {
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "some_admin", "artemis_admin", null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("artemis.user-management.internal-admin.password");
+        }
+
+        @Test
+        void testInternalAdminPasswordEqualToUsernameIsRejectedUnderProdProfile() {
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "reused_value", "reused_value", null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("identical to the internal admin username");
+        }
+
+        @Test
+        void testShippedBuildAgentGitPasswordIsRejectedUnderProdProfile() {
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, "buildjob_password");
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("artemis.version-control.build-agent-git-password");
+        }
+
+        @Test
+        void testAcceptableProductionCredentialsPassValidation() {
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "operator_admin", "a-unique-strong-password",
+                    "a-unique-build-agent-password");
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
+
+        @Test
+        void testNoInternalAdminConfiguredIsAcceptableUnderProdProfile() {
+            // the internal admin account is optional; omitting it entirely must remain valid
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, null);
+
+            assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+        }
     }
 
     @Nested
