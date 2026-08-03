@@ -39,7 +39,8 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
     /**
      * Finds a bounded page of expired event ids, oldest first, so pruning can run in batches. Batching matters because
      * the log was never pruned before, so the first run has to clear a backlog that may span years; deleting all of it in
-     * one transaction would hold locks for a long time and bloat the undo log.
+     * one transaction would hold locks for a long time and bloat the undo log. Oldest first so that repeated runs make
+     * monotonic progress instead of revisiting the same rows.
      * <p>
      * No type filter is needed: after the audit log split this table holds only authentication events, all of which share
      * the general retention period.

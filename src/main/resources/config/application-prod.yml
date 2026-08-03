@@ -126,7 +126,7 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        # Nothing reads this key: audit events are pruned via artemis.audit-events.* and
+        # Nothing reads this key: audit events are pruned via artemis.audit-events.* above, and
         # AutomaticVcsAccessLogCleanupService reads artemis.audit-events.retention-period, a different namespace, so it
         # always falls back to its own default. Kept only so that removing it is a separate, deliberate change.
         retention-period: 365

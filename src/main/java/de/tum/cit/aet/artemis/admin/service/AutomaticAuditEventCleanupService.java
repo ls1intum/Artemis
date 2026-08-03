@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.config.AuditEventRetentionProperties;
 import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
@@ -38,6 +38,9 @@ import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
  * what happened to graded artefacts long after the fact. Long retention (five years by default).</li>
  * </ul>
  * Splitting the tables is what makes this possible: a single table would force one retention period for all three.
+ * <p>
+ * The periods are bound through {@link AuditEventRetentionProperties}, which validates them as positive, so a value that
+ * would move the cutoff into the future and delete records written minutes ago fails startup rather than being applied.
  * <p>
  * Deletion goes through the entities rather than a bulk {@code DELETE}, because each log has an {@code @ElementCollection}
  * child table; the general log's foreign key is additionally {@code ON DELETE RESTRICT}, so a bulk delete of parent rows
@@ -66,32 +69,17 @@ public class AutomaticAuditEventCleanupService {
     private final ApplicationAuditEventRepository applicationAuditEventRepository;
 
     /**
-     * Retention for the high-volume authentication events written on every login. The default of 365 days corresponds to
-     * one year; after that an individual successful login is rarely of interest, and this is the bulk of the data.
+     * The three retention periods, validated as positive at binding time, so a value that would delete records written
+     * minutes ago fails startup instead of being applied.
      */
-    @Value("${artemis.audit-events.general-retention-period:365}")
-    private int generalRetentionPeriodInDays;
-
-    /**
-     * Retention for security events: credential and identity changes. The default of 1825 days corresponds to five years,
-     * so the records are still available if an account's provenance has to be proven long after the fact.
-     */
-    @Value("${artemis.audit-events.security-retention-period:1825}")
-    private int securityRetentionPeriodInDays;
-
-    /**
-     * Retention for application events: domain actions on courses, exercises and exams. The default of 1825 days
-     * corresponds to five years, matching the security log, because these records serve the same purpose of explaining
-     * what happened to graded artefacts.
-     */
-    @Value("${artemis.audit-events.application-retention-period:1825}")
-    private int applicationRetentionPeriodInDays;
+    private final AuditEventRetentionProperties retentionProperties;
 
     public AutomaticAuditEventCleanupService(PersistenceAuditEventRepository persistenceAuditEventRepository, SecurityAuditEventRepository securityAuditEventRepository,
-            ApplicationAuditEventRepository applicationAuditEventRepository) {
+            ApplicationAuditEventRepository applicationAuditEventRepository, AuditEventRetentionProperties retentionProperties) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.securityAuditEventRepository = securityAuditEventRepository;
         this.applicationAuditEventRepository = applicationAuditEventRepository;
+        this.retentionProperties = retentionProperties;
     }
 
     /**
@@ -100,16 +88,43 @@ public class AutomaticAuditEventCleanupService {
     // execute this every night at 3:10:00 am, offset from the other nightly cleanups so they do not contend
     @Scheduled(cron = "0 10 3 * * *")
     public void cleanup() {
-        int deletedGeneral = prune("general", generalRetentionPeriodInDays, persistenceAuditEventRepository::findExpiredIds, persistenceAuditEventRepository::deleteAllById);
-        int deletedSecurity = prune("security", securityRetentionPeriodInDays, securityAuditEventRepository::findExpiredIds, securityAuditEventRepository::deleteAllById);
-        int deletedApplication = prune("application", applicationRetentionPeriodInDays, applicationAuditEventRepository::findExpiredIds,
+        int generalRetentionInDays = retentionProperties.generalRetentionPeriod();
+        int securityRetentionInDays = retentionProperties.securityRetentionPeriod();
+        int applicationRetentionInDays = retentionProperties.applicationRetentionPeriod();
+
+        int deletedGeneral = pruneIsolated("general", generalRetentionInDays, persistenceAuditEventRepository::findExpiredIds, persistenceAuditEventRepository::deleteAllById);
+        int deletedSecurity = pruneIsolated("security", securityRetentionInDays, securityAuditEventRepository::findExpiredIds, securityAuditEventRepository::deleteAllById);
+        int deletedApplication = pruneIsolated("application", applicationRetentionInDays, applicationAuditEventRepository::findExpiredIds,
                 applicationAuditEventRepository::deleteAllById);
 
         if (deletedGeneral > 0 || deletedSecurity > 0 || deletedApplication > 0) {
             log.info(
                     "Scheduled deletion of expired audit events: removed {} general (older than {} days), {} security (older than {} days) and {} application "
                             + "(older than {} days) events",
-                    deletedGeneral, generalRetentionPeriodInDays, deletedSecurity, securityRetentionPeriodInDays, deletedApplication, applicationRetentionPeriodInDays);
+                    deletedGeneral, generalRetentionInDays, deletedSecurity, securityRetentionInDays, deletedApplication, applicationRetentionInDays);
+        }
+    }
+
+    /**
+     * Runs one log's retention schedule, keeping its failures to itself.
+     * <p>
+     * The three schedules are independent and share one nightly trigger. Without this boundary, a persistent problem with
+     * one of them - a lock timeout on a particular old row, say - would also stop the others from ever running, so a fault
+     * in pruning the login record could let the other two logs grow unbounded indefinitely.
+     *
+     * @param logName         human-readable name of the log, for logging
+     * @param retentionInDays how long events in this log are kept
+     * @param expiredIdFinder supplies the next batch of expired ids for this log
+     * @param deleteByIds     deletes the given ids from this log
+     * @return how many events were deleted, or 0 if this log's schedule failed
+     */
+    private int pruneIsolated(String logName, int retentionInDays, ExpiredIdFinder expiredIdFinder, Consumer<List<Long>> deleteByIds) {
+        try {
+            return prune(logName, retentionInDays, expiredIdFinder, deleteByIds);
+        }
+        catch (Exception e) {
+            log.error("Failed to prune the {} audit log (retention {} days); the other retention schedules still run", logName, retentionInDays, e);
+            return 0;
         }
     }
 

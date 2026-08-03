@@ -11,17 +11,25 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.admin.config.AuditEventRetentionProperties;
 import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
@@ -54,10 +62,8 @@ class AutomaticAuditEventCleanupServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AutomaticAuditEventCleanupService(persistenceAuditEventRepository, securityAuditEventRepository, applicationAuditEventRepository);
-        ReflectionTestUtils.setField(service, "generalRetentionPeriodInDays", GENERAL_RETENTION_DAYS);
-        ReflectionTestUtils.setField(service, "securityRetentionPeriodInDays", SECURITY_RETENTION_DAYS);
-        ReflectionTestUtils.setField(service, "applicationRetentionPeriodInDays", APPLICATION_RETENTION_DAYS);
+        service = new AutomaticAuditEventCleanupService(persistenceAuditEventRepository, securityAuditEventRepository, applicationAuditEventRepository,
+                new AuditEventRetentionProperties(GENERAL_RETENTION_DAYS, SECURITY_RETENTION_DAYS, APPLICATION_RETENTION_DAYS));
         // Default: every log is empty, so a test only has to stub the log it cares about.
         when(persistenceAuditEventRepository.findExpiredIds(any(), any())).thenReturn(List.of());
         when(securityAuditEventRepository.findExpiredIds(any(), any())).thenReturn(List.of());
@@ -120,6 +126,48 @@ class AutomaticAuditEventCleanupServiceTest {
         service.cleanup();
 
         verify(persistenceAuditEventRepository, times(maxBatches)).deleteAllById(List.of(1L));
+    }
+
+    @Test
+    void batchesAreBoundedInSize() {
+        service.cleanup();
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(persistenceAuditEventRepository).findExpiredIds(any(), pageable.capture());
+        assertThat(pageable.getValue()).isEqualTo(PageRequest.of(0, 5_000));
+    }
+
+    @Test
+    void aFailingLogDoesNotStopTheOthers() {
+        // The three schedules share one nightly trigger, so an exception escaping the first would mean the others never
+        // run. A persistent fault - a lock timeout on one old row, say - would then let the other logs grow unbounded.
+        when(persistenceAuditEventRepository.findExpiredIds(any(), any())).thenThrow(new DataAccessResourceFailureException("lock timeout"));
+        when(securityAuditEventRepository.findExpiredIds(any(), any())).thenReturn(List.of(7L), List.of());
+        when(applicationAuditEventRepository.findExpiredIds(any(), any())).thenReturn(List.of(8L), List.of());
+
+        service.cleanup();
+
+        verify(securityAuditEventRepository).deleteAllById(List.of(7L));
+        verify(applicationAuditEventRepository).deleteAllById(List.of(8L));
+    }
+
+    /**
+     * Nothing gates this job, and its deletions are irreversible: 0 would make almost every existing event eligible, and a
+     * negative value would put the cutoff in the future and delete records written minutes ago. Validation has to reject
+     * the configuration at startup rather than let a typo run, for each of the three periods.
+     *
+     * @param invalidRetention a retention period that must not be accepted
+     */
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1, -365 })
+    void aNonPositiveRetentionPeriodIsRejectedRatherThanApplied(int invalidRetention) {
+        try (var validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            Validator validator = validatorFactory.getValidator();
+
+            assertThat(validator.validate(new AuditEventRetentionProperties(invalidRetention, SECURITY_RETENTION_DAYS, APPLICATION_RETENTION_DAYS))).isNotEmpty();
+            assertThat(validator.validate(new AuditEventRetentionProperties(GENERAL_RETENTION_DAYS, invalidRetention, APPLICATION_RETENTION_DAYS))).isNotEmpty();
+            assertThat(validator.validate(new AuditEventRetentionProperties(GENERAL_RETENTION_DAYS, SECURITY_RETENTION_DAYS, invalidRetention))).isNotEmpty();
+        }
     }
 
     private Instant captureCutoff(PersistenceAuditEventRepository repository) {
