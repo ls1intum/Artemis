@@ -220,7 +220,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             header: this.translateService.instant(
                 presentationAssessment ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel',
             ),
-            width: 'min(80rem, calc(100vw - 2rem))',
+            width: 'min(48rem, calc(100vw - 2rem))',
             breakpoints: {
                 '960px': 'calc(100vw - 2rem)',
                 '640px': '100vw',

@@ -7,7 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
-import { SelectModule } from 'primeng/select';
+import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -40,7 +40,7 @@ export interface PresentationAssessmentFormDialogResult {
         InputNumberModule,
         MessageModule,
         TextareaModule,
-        SelectModule,
+        AutoCompleteModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -54,6 +54,7 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     readonly exercises = signal<Exercise[]>([]);
+    readonly filteredExercises = signal<Exercise[]>([]);
 
     private courseId = 0;
     private presentationAssessment?: PresentationAssessment;
@@ -62,7 +63,7 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
         title: ['', [Validators.required, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
         maxPoints: [0, [Validators.required, Validators.min(0.01)]],
-        exerciseId: [undefined as number | undefined],
+        exercise: [undefined as Exercise | undefined],
     });
 
     ngOnInit(): void {
@@ -70,13 +71,19 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
         this.courseId = data.courseId;
         this.presentationAssessment = data.presentationAssessment;
         this.exercises.set(data.exercises ?? []);
+        this.filteredExercises.set(data.exercises ?? []);
 
         this.editForm.reset({
             title: this.presentationAssessment?.title ?? '',
             description: this.presentationAssessment?.description ?? '',
             maxPoints: this.presentationAssessment?.maxPoints ?? 20,
-            exerciseId: this.presentationAssessment?.exerciseId,
+            exercise: this.exercises().find((exercise) => exercise.id === this.presentationAssessment?.exerciseId),
         });
+    }
+
+    filterExercises(event: AutoCompleteCompleteEvent): void {
+        const query = event.query.trim().toLocaleLowerCase();
+        this.filteredExercises.set(query ? this.exercises().filter((exercise) => exercise.title?.toLocaleLowerCase().includes(query)) : this.exercises());
     }
 
     save(): void {
@@ -102,7 +109,7 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
             description: formValue.description ?? undefined,
             maxPoints: formValue.maxPoints ?? undefined,
             courseId: this.courseId,
-            exerciseId: formValue.exerciseId ?? undefined,
+            exerciseId: formValue.exercise?.id,
         };
     }
 }

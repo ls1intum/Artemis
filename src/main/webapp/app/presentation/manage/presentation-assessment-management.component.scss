@@ -1,9 +1,3 @@
-.presentation-header {
-    border: 1px solid var(--p-content-border-color);
-    border-radius: var(--p-border-radius-md);
-    background: var(--p-content-background);
-}
-
 .presentation-view-toggle {
     display: inline-flex;
     gap: 0.25rem;
@@ -15,7 +9,7 @@
 .presentation-master-detail {
     display: grid;
     grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr);
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .presentation-list {
@@ -78,6 +72,14 @@
     background: var(--p-surface-50);
 }
 
+.presentation-student-row-striped > td {
+    background: var(--p-surface-50);
+}
+
+.presentation-detail-row:not(.presentation-student-row-striped) > td {
+    background: var(--p-content-background);
+}
+
 .instance-detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -87,10 +89,6 @@
 @media (max-width: 48rem) {
     .presentation-master-detail {
         grid-template-columns: 1fr;
-    }
-
-    .presentation-header {
-        align-items: stretch;
     }
 
     .instance-detail-grid {

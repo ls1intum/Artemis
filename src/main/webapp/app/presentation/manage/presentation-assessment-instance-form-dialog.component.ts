@@ -14,8 +14,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -51,7 +50,6 @@ export interface PresentationAssessmentInstanceDialogData {
         InputTextModule,
         FaIconComponent,
         TranslateDirective,
-        ArtemisTranslatePipe,
         FormDateTimePickerComponent,
         CourseGroupComponent,
     ],
@@ -67,6 +65,8 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
     protected readonly faSave = faSave;
     protected readonly studentsCourseGroup = CourseGroup.STUDENTS;
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
+    protected readonly DateTimePickerType = DateTimePickerType;
+    protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
     readonly languageOptions = [
         { label: 'English', value: 'en' },
         { label: 'Deutsch', value: 'de' },
@@ -91,7 +91,8 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
 
     editForm = this.formBuilder.group(
         {
-            presentationDate: [undefined as dayjs.Dayjs | undefined],
+            presentationDate: [undefined as dayjs.Dayjs | undefined, Validators.required],
+            presentationTime: [undefined as dayjs.Dayjs | undefined],
             resultPoints: [undefined as number | undefined, [Validators.min(0)]],
             maxPoints: [0],
             language: ['en', Validators.required],
@@ -109,7 +110,8 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
         this.instance = data.instance;
         this.assignedStudents.set([...data.assignedStudents]);
         this.editForm.reset({
-            presentationDate: data.instance?.presentationDate,
+            presentationDate: data.instance?.presentationDate?.startOf('day'),
+            presentationTime: data.instance?.presentationDate,
             resultPoints: data.instance?.resultPoints,
             maxPoints: data.presentationAssessment.maxPoints ?? 0,
             language: data.instance?.language ?? 'en',
@@ -125,9 +127,16 @@ export class PresentationAssessmentInstanceFormDialogComponent implements OnInit
             return;
         }
         const value = this.editForm.getRawValue();
+        const presentationDate = dayjs(value.presentationDate);
+        const presentationTime = value.presentationTime ? dayjs(value.presentationTime) : undefined;
+        const combinedPresentationDate = presentationDate
+            .hour(presentationTime?.hour() ?? 0)
+            .minute(presentationTime?.minute() ?? 0)
+            .second(0)
+            .millisecond(0);
         this.dialogRef.close({
             id: this.instance?.id,
-            presentationDate: value.presentationDate ? dayjs(value.presentationDate) : undefined,
+            presentationDate: combinedPresentationDate,
             resultPoints: value.resultPoints ?? undefined,
             studentLogins: [
                 ...new Set(

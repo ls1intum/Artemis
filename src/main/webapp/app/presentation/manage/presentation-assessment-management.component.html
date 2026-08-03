@@ -1,37 +1,31 @@
 <div class="flex flex-col gap-4">
-    <div *titleBarActions class="flex justify-end">
+    <div *titleBarActions class="flex items-center justify-end gap-3">
+        <div class="presentation-view-toggle" role="group">
+            <p-button
+                size="small"
+                [text]="viewMode() !== 'presentations'"
+                [severity]="viewMode() === 'presentations' ? 'primary' : 'secondary'"
+                (onClick)="setViewMode('presentations')"
+                data-testid="presentation-view-button"
+            >
+                <fa-icon [icon]="faList" />
+                <span jhiTranslate="artemisApp.presentationAssessment.byPresentation"></span>
+            </p-button>
+            <p-button
+                size="small"
+                [text]="viewMode() !== 'students'"
+                [severity]="viewMode() === 'students' ? 'primary' : 'secondary'"
+                (onClick)="setViewMode('students')"
+                data-testid="student-view-button"
+            >
+                <fa-icon [icon]="faUsers" />
+                <span jhiTranslate="artemisApp.presentationAssessment.byStudent"></span>
+            </p-button>
+        </div>
         <p-button id="create-presentation-assessment" size="small" (onClick)="startCreate()">
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
         </p-button>
-    </div>
-
-    <div class="presentation-header flex flex-wrap items-center justify-between gap-3 p-3">
-        <h2 class="m-0" jhiTranslate="artemisApp.presentationAssessment.home.title"></h2>
-        <div class="flex items-center gap-3">
-            <div class="presentation-view-toggle" role="group">
-                <p-button
-                    size="small"
-                    [text]="viewMode() !== 'presentations'"
-                    [severity]="viewMode() === 'presentations' ? 'primary' : 'secondary'"
-                    (onClick)="setViewMode('presentations')"
-                    data-testid="presentation-view-button"
-                >
-                    <fa-icon [icon]="faList" />
-                    <span jhiTranslate="artemisApp.presentationAssessment.byPresentation"></span>
-                </p-button>
-                <p-button
-                    size="small"
-                    [text]="viewMode() !== 'students'"
-                    [severity]="viewMode() === 'students' ? 'primary' : 'secondary'"
-                    (onClick)="setViewMode('students')"
-                    data-testid="student-view-button"
-                >
-                    <fa-icon [icon]="faUsers" />
-                    <span jhiTranslate="artemisApp.presentationAssessment.byStudent"></span>
-                </p-button>
-            </div>
-        </div>
     </div>
 
     @if (presentationAssessments().length) {
@@ -196,7 +190,6 @@
                 </div>
                 <p-table
                     [value]="filteredStudentRows()"
-                    [stripedRows]="true"
                     [loading]="isLoadingAssignedStudents() || isSaving()"
                     sortField="studentLogin"
                     [sortOrder]="1"
@@ -224,8 +217,8 @@
                             <th></th>
                         </tr>
                     </ng-template>
-                    <ng-template #body let-row>
-                        <tr class="cursor-pointer" (click)="toggleStudentRowDetails(row)">
+                    <ng-template #body let-row let-rowIndex="rowIndex">
+                        <tr class="cursor-pointer" [class.presentation-student-row-striped]="rowIndex % 2 === 0" (click)="toggleStudentRowDetails(row)">
                             <td>{{ row.studentLogin }}</td>
                             <td>{{ row.presentationAssessment.title }}</td>
                             <td>{{ row.instance.presentationDate | artemisDate }}</td>
@@ -243,7 +236,7 @@
                             </td>
                         </tr>
                         @if (isStudentRowExpanded(row)) {
-                            <tr class="presentation-detail-row">
+                            <tr class="presentation-detail-row" [class.presentation-student-row-striped]="rowIndex % 2 === 0">
                                 <td colspan="6">
                                     <div class="instance-detail-grid">
                                         <div>

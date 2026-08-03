@@ -22,14 +22,18 @@
 
         <div class="presentation-assessment-field presentation-assessment-exercise-field">
             <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
-            <p-select
+            <p-autocomplete
                 inputId="presentation-assessment-exercise"
                 styleClass="w-full"
-                formControlName="exerciseId"
-                [options]="exercises()"
+                inputStyleClass="w-full"
+                formControlName="exercise"
+                [suggestions]="filteredExercises()"
+                (completeMethod)="filterExercises($event)"
                 optionLabel="title"
-                optionValue="id"
+                [dropdown]="true"
+                [forceSelection]="true"
                 [showClear]="true"
+                [completeOnFocus]="true"
                 appendTo="body"
                 placeholder="{{ 'artemisApp.presentationAssessment.noExercise' | artemisTranslate }}"
             />

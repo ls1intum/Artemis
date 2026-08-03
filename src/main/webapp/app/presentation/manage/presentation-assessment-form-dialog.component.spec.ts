@@ -59,7 +59,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     });
 
     it('should close with the parent presentation data on save', () => {
-        component.editForm.patchValue({ title: 'Updated presentation', exerciseId: exercise.id });
+        component.editForm.patchValue({ title: 'Updated presentation', exercise });
 
         component.save();
 

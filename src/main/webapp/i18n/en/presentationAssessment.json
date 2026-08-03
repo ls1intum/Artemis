@@ -15,6 +15,8 @@
             "resultPoints": "Result",
             "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
             "presentationDate": "Presentation date",
+            "presentationTime": "Time",
+            "picture": "Picture",
             "presentation": "Presentation",
             "presenter": "Presenter",
             "score": "Score",

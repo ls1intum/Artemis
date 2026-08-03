@@ -1,11 +1,32 @@
 <form [formGroup]="editForm" (ngSubmit)="save()" class="instance-form">
     <div class="instance-fields">
-        <jhi-date-time-picker
-            id="presentation-instance-date"
-            labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
-            formControlName="presentationDate"
-            name="presentationDate"
-        />
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-date">
+                <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
+                <span aria-hidden="true">*</span>
+            </label>
+            <jhi-date-time-picker
+                inputId="presentation-instance-date"
+                [hideLabelName]="true"
+                [requiredField]="true"
+                [pickerType]="DateTimePickerType.CALENDAR"
+                [shouldDisplayTimeZoneWarning]="false"
+                [error]="editForm.controls.presentationDate.touched && editForm.controls.presentationDate.invalid"
+                formControlName="presentationDate"
+                name="presentationDate"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-time" jhiTranslate="artemisApp.presentationAssessment.presentationTime"></label>
+            <jhi-date-time-picker
+                inputId="presentation-instance-time"
+                [hideLabelName]="true"
+                [pickerType]="DateTimePickerType.TIMER"
+                [shouldDisplayTimeZoneWarning]="false"
+                formControlName="presentationTime"
+                name="presentationTime"
+            />
+        </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
             <p-inputnumber inputId="presentation-instance-result" styleClass="w-full" [min]="0" [step]="0.5" formControlName="resultPoints" />
@@ -45,8 +66,11 @@
         [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
         [exportFileName]="'Presentation Instance Students'"
         [userSearch]="studentSearch"
+        [hiddenColumnFields]="hiddenStudentColumnFields"
+        [paginated]="false"
+        profilePictureHeaderKey="artemisApp.presentationAssessment.picture"
     >
-        <span>{{ assignedStudents().length }} <span jhiTranslate="artemisApp.course.students"></span></span>
+        <span><span jhiTranslate="artemisApp.course.students"></span> ({{ assignedStudents().length }})</span>
     </jhi-course-group>
     @if (assignedStudents().length === 0 && editForm.touched) {
         <p-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></p-message>

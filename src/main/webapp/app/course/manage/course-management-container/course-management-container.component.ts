@@ -142,6 +142,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     readonly removePadding = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.includes('test-runs') && currentUrl.includes('conduction'))), {
         initialValue: this.router.url.includes('test-runs') && this.router.url.includes('conduction'),
     });
+    readonly hasTransparentCourseBody = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.endsWith('/presentations'))), {
+        initialValue: this.router.url.endsWith('/presentations'),
+    });
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
