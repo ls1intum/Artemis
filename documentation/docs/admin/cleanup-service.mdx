@@ -4,22 +4,22 @@ title: Cleanup Service
 sidebar_label: Cleanup Service
 ---
 
-import Image, {ImageSize} from "../../src/components/Image/Image";
+import Image, { ImageSize } from '../../src/components/Image/Image';
 
-import cleanupMenu from "./assets/cleanup/cleanup-menu.png";
+import cleanupMenu from './assets/cleanup/cleanup-menu.png';
 
 # Cleanup Service
 
 Artemis provides a feature to delete data from older courses.
 
-<Image src={cleanupMenu} alt={"Cleanup view"} size={ImageSize.large} />
+<Image src={cleanupMenu} alt={'Cleanup view'} size={ImageSize.large} />
 
 As shown in the image, administrators can delete the following data types:
 
-* Plagiarism results with an undecided outcome
-* Orphaned data
-* Non-rated results from older courses
-* Rated results from older courses
+- Plagiarism results with an undecided outcome
+- Orphaned data
+- Non-rated results from older courses
+- Rated results from older courses
 
 Since orphaned data has no connections to other data by nature, it is deleted without considering specific dates.
 For other types, administrators can track the related exercises and courses.
@@ -72,13 +72,13 @@ All of these operations are **admin-only**, expose a **count/preview** before ex
 
 ### Age-based operations
 
-| Operation | What it deletes | What it keeps | Default cutoff |
-| --- | --- | --- | --- |
-| Reset student data of old courses (two phases) | All student data of the course (participations, submissions, results, feedback, posts, enrollments, student/tutor/editor group memberships) | The course itself, its exercises, lectures, exams, competencies and tutorial-group configuration, and the instructors | 5 years after end (grade-relevant), 1 year (non-grade-relevant), plus a grace period |
-| Delete feedback of non-latest results | Feedback, long feedback texts and text blocks of results that are **not** the latest per participation | The results themselves, and the feedback of the latest **rated** and latest **non-rated** result per participation | 8 weeks after course end |
-| Delete old submission versions | Submission versions (the editor keystroke/version history of a submission) | The submission itself and its latest stored content | 8 weeks after course end |
-| Warn + delete not-enrolled users (two phases) | Phase 1 emails users enrolled in no course and inactive that their account will be deleted after a grace period; phase 2 soft-deletes and anonymizes those still not-enrolled who did not log in since the warning | Enrolled users, recently active users, users who log in during the grace period, administrators, and the Iris bot | 6 months of inactivity + a grace period |
-| Delete plagiarism cases of old courses | Plagiarism cases of courses that ended long ago, together with their notification post and answer posts | Everything else; the case's plagiarism submissions are kept (only their reference to the deleted case is cleared) | 5 years after course end (the grade-relevant retention) |
+| Operation                                      | What it deletes                                                                                                                                                                                                    | What it keeps                                                                                                         | Default cutoff                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Reset student data of old courses (two phases) | All student data of the course (participations, submissions, results, feedback, posts, enrollments, student/tutor/editor group memberships)                                                                        | The course itself, its exercises, lectures, exams, competencies and tutorial-group configuration, and the instructors | 5 years after end (grade-relevant), 1 year (non-grade-relevant), plus a grace period |
+| Delete feedback of non-latest results          | Feedback, long feedback texts and text blocks of results that are **not** the latest per participation                                                                                                             | The results themselves, and the feedback of the latest **rated** and latest **non-rated** result per participation    | 8 weeks after course end                                                             |
+| Delete old submission versions                 | Submission versions (the editor keystroke/version history of a submission)                                                                                                                                         | The submission itself and its latest stored content                                                                   | 8 weeks after course end                                                             |
+| Warn + delete not-enrolled users (two phases)  | Phase 1 emails users enrolled in no course and inactive that their account will be deleted after a grace period; phase 2 soft-deletes and anonymizes those still not-enrolled who did not log in since the warning | Enrolled users, recently active users, users who log in during the grace period, administrators, and the Iris bot     | 6 months of inactivity + a grace period                                              |
+| Delete plagiarism cases of old courses         | Plagiarism cases of courses that ended long ago, together with their notification post and answer posts                                                                                                            | Everything else; the case's plagiarism submissions are kept (only their reference to the deleted case is cleared)     | 5 years after course end (the grade-relevant retention)                              |
 
 :::info
 Courses are **never deleted** by these operations. The old-course operation only **resets** the student data and keeps all course material so the course can be reused. Exam submission versions are not affected by the submission-version cleanup because exam exercises are not attached to a course.
@@ -140,15 +140,15 @@ Each age-based operation has a matching scheduled job that runs on the schedulin
 
 The default cron schedules (configurable under `artemis.scheduling`) are:
 
-| Job | Default schedule | Kill switch |
-| --- | --- | --- |
-| Warn + archive old courses | Sundays 02:00 | `old-courses-warning-schedule-enabled` |
-| Reset old courses' student data | Sundays 03:00 | `old-courses-reset-schedule-enabled` |
-| Delete feedback of non-latest results | Sundays 04:30 | `old-feedback-schedule-enabled` |
-| Delete old submission versions | Sundays 04:45 | `old-submission-versions-schedule-enabled` |
-| Warn not-enrolled users | 1st of month 05:00 | `not-enrolled-users-warning-schedule-enabled` |
-| Delete not-enrolled users | 1st of month 06:00 | `not-enrolled-users-schedule-enabled` |
-| Delete plagiarism cases of old courses | Sundays 03:30 | `plagiarism-cases-schedule-enabled` |
+| Job                                    | Default schedule   | Kill switch                                   |
+| -------------------------------------- | ------------------ | --------------------------------------------- |
+| Warn + archive old courses             | Sundays 02:00      | `old-courses-warning-schedule-enabled`        |
+| Reset old courses' student data        | Sundays 03:00      | `old-courses-reset-schedule-enabled`          |
+| Delete feedback of non-latest results  | Sundays 04:30      | `old-feedback-schedule-enabled`               |
+| Delete old submission versions         | Sundays 04:45      | `old-submission-versions-schedule-enabled`    |
+| Warn not-enrolled users                | 1st of month 05:00 | `not-enrolled-users-warning-schedule-enabled` |
+| Delete not-enrolled users              | 1st of month 06:00 | `not-enrolled-users-schedule-enabled`         |
+| Delete plagiarism cases of old courses | Sundays 03:30      | `plagiarism-cases-schedule-enabled`           |
 
 The warning job is scheduled before the reset job so that, once both are enabled, a course is warned and archived in one run and only reset in a later run after its grace period.
 
@@ -158,31 +158,31 @@ All cutoffs and kill switches live under `artemis.cleanup`, and the cron express
 
 ```yaml
 artemis:
-  scheduling:
-    old-courses-warning-time: 0 0 2 * * SUN
-    old-courses-reset-time: 0 0 3 * * SUN
-    old-feedback-cleanup-time: 0 30 4 * * SUN
-    old-submission-versions-cleanup-time: 0 45 4 * * SUN
-    not-enrolled-users-warning-time: 0 0 5 1 * *
-    not-enrolled-users-cleanup-time: 0 0 6 1 * *
-    plagiarism-cases-cleanup-time: 0 30 3 * * SUN
-  cleanup:
-    # Retention cutoffs
-    grade-relevant-retention-years: 5      # reset grade-relevant courses 5 years after they end
-    non-grade-relevant-retention-years: 1  # reset non-grade-relevant courses 1 year after they end
-    reset-warning-grace-period-days: 30    # days between warning instructors and the reset
-    old-feedback-cutoff-weeks: 8           # purge feedback of non-latest results 8 weeks after course end
-    old-submission-versions-cutoff-weeks: 8 # purge submission versions 8 weeks after course end
-    not-enrolled-users-inactivity-months: 6 # inactivity (by last login) before a course-less user is warned
-    not-enrolled-users-warning-grace-period-days: 30 # days between warning a user and deleting the account (login cancels it)
-    # Schedule kill switches (all off by default)
-    old-courses-warning-schedule-enabled: false
-    old-courses-reset-schedule-enabled: false
-    old-feedback-schedule-enabled: false
-    old-submission-versions-schedule-enabled: false
-    not-enrolled-users-warning-schedule-enabled: false
-    not-enrolled-users-schedule-enabled: false
-    plagiarism-cases-schedule-enabled: false
+    scheduling:
+        old-courses-warning-time: 0 0 2 * * SUN
+        old-courses-reset-time: 0 0 3 * * SUN
+        old-feedback-cleanup-time: 0 30 4 * * SUN
+        old-submission-versions-cleanup-time: 0 45 4 * * SUN
+        not-enrolled-users-warning-time: 0 0 5 1 * *
+        not-enrolled-users-cleanup-time: 0 0 6 1 * *
+        plagiarism-cases-cleanup-time: 0 30 3 * * SUN
+    cleanup:
+        # Retention cutoffs
+        grade-relevant-retention-years: 5 # reset grade-relevant courses 5 years after they end
+        non-grade-relevant-retention-years: 1 # reset non-grade-relevant courses 1 year after they end
+        reset-warning-grace-period-days: 30 # days between warning instructors and the reset
+        old-feedback-cutoff-weeks: 8 # purge feedback of non-latest results 8 weeks after course end
+        old-submission-versions-cutoff-weeks: 8 # purge submission versions 8 weeks after course end
+        not-enrolled-users-inactivity-months: 6 # inactivity (by last login) before a course-less user is warned
+        not-enrolled-users-warning-grace-period-days: 30 # days between warning a user and deleting the account (login cancels it)
+        # Schedule kill switches (all off by default)
+        old-courses-warning-schedule-enabled: false
+        old-courses-reset-schedule-enabled: false
+        old-feedback-schedule-enabled: false
+        old-submission-versions-schedule-enabled: false
+        not-enrolled-users-warning-schedule-enabled: false
+        not-enrolled-users-schedule-enabled: false
+        plagiarism-cases-schedule-enabled: false
 ```
 
 The plagiarism-case cleanup reuses the grade-relevant retention (`grade-relevant-retention-years`, 5 years by default): plagiarism cases are examination records and share the same retention obligation as other grade-relevant data.
@@ -201,6 +201,44 @@ The switches are off by default deliberately, because the operations delete pers
 :::caution
 Inactivity for the not-enrolled-user cleanup is measured by the user's last login (`lastLoginDate`, recorded on every successful authentication), falling back to the account creation date for accounts that never logged in. This is a real activity signal, unlike the user row's last modification date (which is bumped by, for example, group synchronization). For existing accounts at the time of the upgrade, `lastLoginDate` is backfilled to the migration time, so no existing account is immediately eligible; the inactivity clock starts at deployment. The warning phase and the "logging in cancels the deletion" rule provide an additional safeguard against deleting an account the user still wants. Always review the count/preview before enabling these jobs.
 :::
+
+## Audit event retention
+
+The audit table (`jhi_persistent_audit_event`) is pruned by its own nightly job, independently of the operations above and with no kill switch: it holds no personal data beyond the acting user's login, and letting it grow without bound is not a useful default.
+
+Two retention periods apply, because the table mixes records with opposite characteristics:
+
+| What             | Event types                                                                                                                            | Default   | Property                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------- |
+| The login record | `AUTHENTICATION_SUCCESS`, `AUTHENTICATION_FAILURE`, `AUTHENTICATION_PASSKEY_SUCCESS`, `SAML2_AUTHENTICATION_SUCCESS`, `LOGOUT_SUCCESS` | 365 days  | `artemis.audit-events.general-retention-period`     |
+| Everything else  | Deliberate actions such as `DELETE_EXERCISE` or `RESET_EXAM`, plus any unrecognised or missing type                                    | 1825 days | `artemis.audit-events.application-retention-period` |
+
+One row is written per login attempt, so the login record is the bulk of the table and tells you little a few weeks later. The remaining rows are rare and are what has to be reconstructed when a question is raised long after the fact, an exam dispute in particular. Anything not recognised as a login gets the long retention, so an event type added in a later version is over-retained rather than silently dropped.
+
+The job runs at 03:10 every night on the node with the scheduling profile active. It deletes in batches of 5 000 rows, up to 200 batches per retention period per night, so a backlog that has accumulated over years is drained over several nights rather than in one very long transaction. The log line reports how many rows each period removed, and says explicitly when the per-run cap was reached and rows remain.
+
+### Pruning a large backlog manually
+
+On an instance upgrading from a version without this job, the table may hold years of accumulated rows, and letting the nightly job drain it takes as many nights as it takes. To do it in one maintenance window instead, use `supporting_scripts/database/prune_audit_events.sql` (MySQL 8), which applies exactly the same retention scheme in batches you control:
+
+```bash
+# on a host that can reach the database
+mysql Artemis < supporting_scripts/database/prune_audit_events.sql
+```
+
+As shipped, the script only reports: the current table size, the number of rows each retention period would remove, and it creates the index the pruning needs (`idx_persistent_audit_event_date`) if it is missing. Review that output, then uncomment the two `CALL` statements at the end and run it again:
+
+```sql
+CALL artemis_prune_audit_events('LOGIN', 365, 5000, 10000, 0.2);
+CALL artemis_prune_audit_events('OTHER', 1825, 5000, 1000, 0.2);
+```
+
+The arguments are the bucket, the retention in days, the batch size, the maximum number of batches, and the pause between batches in seconds. Each batch commits on its own, so the run is safe to interrupt and safe to repeat: it reports either `done` or `batch cap reached, re-run to continue`. Rows inside the retention period are never touched.
+
+Two notes:
+
+- Creating the index is an online operation in MySQL (no exclusive lock), but it still takes time proportional to the table size. It is worth doing first regardless, because without it every batch would scan and sort the whole table. Liquibase creates the same index guarded by a `not indexExists` precondition, so creating it here simply makes that changeset a no-op on the next upgrade.
+- Deleting rows returns their space to InnoDB for reuse but not to the filesystem. If the space has to be reclaimed, rebuild the tables afterwards (`ALTER TABLE jhi_persistent_audit_event ENGINE = InnoDB;`), which is a far heavier operation and needs its own maintenance window.
 
 ### Testing and assurance
 
