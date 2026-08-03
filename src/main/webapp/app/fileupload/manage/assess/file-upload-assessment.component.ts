@@ -17,7 +17,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
+import { getCorrectionRoundOfResult, getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
@@ -276,8 +276,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.course.set(getCourseFromExercise(exercise));
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
-            this.correctionRound.set(foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0);
+            this.correctionRound.set(getCorrectionRoundOfResult(submission, this.resultId) ?? 0);
             this.result.set(getSubmissionResultById(submission, this.resultId));
         } else {
             this.result.set(getLatestSubmissionResult(submission));

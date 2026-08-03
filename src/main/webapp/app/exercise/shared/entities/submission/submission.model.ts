@@ -87,6 +87,23 @@ export function getSubmissionResultById(submission: Submission | undefined, resu
 }
 
 /**
+ * Determines which correction round a result belongs to.
+ * <p>
+ * Counts only the results that are correction rounds, so Athena results are skipped exactly as
+ * {@link getSubmissionResultByCorrectionRound} and {@link setSubmissionResultByCorrectionRound} skip them. Using the raw
+ * position in {@link Submission#results} instead would report a round that is too high as soon as an Athena result
+ * precedes, which then reads and writes the wrong round.
+ *
+ * @param submission the submission the result belongs to
+ * @param resultId   the id of the result whose correction round is wanted
+ * @returns the zero-based correction round, or undefined if the submission has no such result
+ */
+export function getCorrectionRoundOfResult(submission: Submission | undefined, resultId: number): number | undefined {
+    const correctionRoundIndex = submission?.results?.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).findIndex((result) => result.id === resultId);
+    return correctionRoundIndex === undefined || correctionRoundIndex < 0 ? undefined : correctionRoundIndex;
+}
+
+/**
  * Used to set / override the latest result in the results list, and set / override the
  * var latestResult
  *
@@ -108,13 +125,32 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
     submission.latestResult = result;
 }
 
+/**
+ * Used to set / override the result of a specific correctionRound, and to keep {@link Submission#latestResult} in sync.
+ * <p>
+ * A correction round indexes only the results that are correction rounds, so Athena results are skipped exactly as
+ * {@link getSubmissionResultByCorrectionRound} skips them when reading. Writing into the raw list at the same index
+ * would land in the wrong slot as soon as an Athena result precedes, silently replacing another round's result: saving a
+ * second-round assessment then made it reappear as the first round's result.
+ *
+ * @param submission      the submission whose result list is updated
+ * @param result          the result to store for the given round
+ * @param correctionRound the correction round the result belongs to
+ */
 export function setSubmissionResultByCorrectionRound(submission: Submission, result: Result, correctionRound: number) {
-    if (!submission || !result || !submission.results) {
+    if (!submission || !result || !submission.results || correctionRound < 0) {
         return;
     }
-    submission.results[correctionRound] = result;
+    const correctionRoundIndices = submission.results
+        .map((existingResult, index) => ({ existingResult, index }))
+        .filter(({ existingResult }) => existingResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)
+        .map(({ index }) => index);
 
-    if (submission.results.length === correctionRound + 1) {
+    // A round beyond the known ones is appended rather than written over an unrelated slot.
+    submission.results[correctionRoundIndices[correctionRound] ?? submission.results.length] = result;
+
+    const numberOfCorrectionRounds = Math.max(correctionRoundIndices.length, correctionRound + 1);
+    if (correctionRound === numberOfCorrectionRounds - 1) {
         submission.latestResult = result;
     }
 }

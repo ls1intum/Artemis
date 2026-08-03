@@ -21,7 +21,7 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getCorrectionRoundOfResult, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -235,8 +235,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.course.set(getCourseFromExercise(this.modelingExercise()));
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(submission, this.resultId()));
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(submission.results?.findIndex((result) => result.id === this.resultId())!);
+            this.correctionRound.set(getCorrectionRoundOfResult(submission, this.resultId()) ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
         }

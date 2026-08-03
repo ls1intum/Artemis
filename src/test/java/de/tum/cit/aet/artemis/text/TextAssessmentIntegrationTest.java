@@ -1308,6 +1308,92 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         return asList(textSubmission1, textSubmission2);
     }
 
+    /**
+     * Saving a draft in the second correction round must leave the round intact. The existing multi-round test only ever
+     * submits, so the save path of a second round was uncovered, which is exactly the flow reported in issue #13396:
+     * after saving, the submission behaved as if it had fallen back to the first correction round and could no longer be
+     * submitted.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void savingTheSecondCorrectionRoundKeepsItAssessableAndSubmittable() throws Exception {
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        Exam exam = examUtilService.addExam(textExercise.getCourseViaExerciseGroupOrCourseMember());
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.addExerciseGroup(exerciseGroup);
+        exam.setVisibleDate(now().minusHours(3));
+        exam.setStartDate(now().minusHours(2));
+        exam.setEndDate(now().minusHours(1));
+        exam = examTestRepository.save(exam);
+
+        exerciseGroup = examTestRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow().getExerciseGroups().getFirst();
+        TextExercise exercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        exercise.setAssessmentType(AssessmentType.MANUAL);
+        exercise = exerciseRepository.save(exercise);
+        exerciseGroup.addExercise(exercise);
+
+        var studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(exercise);
+        studentParticipation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipation = studentParticipationRepository.save(studentParticipation);
+        var submission = ParticipationFactory.generateTextSubmission("Text", Language.ENGLISH, true);
+        submission.setParticipation(studentParticipation);
+        submission = textSubmissionRepository.save(submission);
+        final long submissionId = submission.getId();
+        final long exerciseId = exercise.getId();
+        final long participationId = studentParticipation.getId();
+
+        // First correction round: lock and submit as tutor1.
+        LinkedMultiValueMap<String, String> firstRoundParams = new LinkedMultiValueMap<>();
+        firstRoundParams.add("lock", "true");
+        firstRoundParams.add("correction-round", "0");
+        var firstRound = request.get("/api/text/exercises/" + exerciseId + "/text-submission-without-assessment", HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class,
+                firstRoundParams);
+        var firstRoundAssessment = new TextAssessmentDTO(
+                ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).map(FeedbackDTO::of).toList(), null, null);
+        request.postWithResponseBody("/api/text/participations/" + participationId + "/results/" + latestResultId(firstRound) + "/submit-text-assessment", firstRoundAssessment,
+                ResultDTO.class, HttpStatus.OK);
+
+        // Second correction round: lock as tutor2 and only SAVE, leaving a draft.
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        LinkedMultiValueMap<String, String> secondRoundParams = new LinkedMultiValueMap<>();
+        secondRoundParams.add("lock", "true");
+        secondRoundParams.add("correction-round", "1");
+        var secondRound = request.get("/api/text/exercises/" + exerciseId + "/text-submission-without-assessment", HttpStatus.OK, TextSubmissionWithoutAssessmentDTO.class,
+                secondRoundParams);
+        final long secondRoundResultId = latestResultId(secondRound);
+
+        List<FeedbackDTO> secondRoundFeedbacks = new ArrayList<>(latestResult(secondRound).feedbacks());
+        Feedback additionalFeedback = new Feedback();
+        additionalFeedback.setDetailText("second round note");
+        additionalFeedback.setCredits(5.0);
+        additionalFeedback.setPositive(true);
+        secondRoundFeedbacks.add(FeedbackDTO.of(additionalFeedback));
+        var secondRoundAssessment = new TextAssessmentDTO(secondRoundFeedbacks, null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + participationId + "/results/" + secondRoundResultId + "/text-assessment", secondRoundAssessment,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        // The saved draft must still be the second correction round, not collapse back into the first one.
+        var afterSave = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(submissionId).orElseThrow();
+        assertThat(afterSave.getResults()).as("both correction rounds are still present").hasSize(2);
+        assertThat(afterSave.getResultForCorrectionRound(1)).as("the second correction round is still reachable").isNotNull();
+        assertThat(afterSave.getResultForCorrectionRound(1).getId()).isEqualTo(secondRoundResultId);
+        assertThat(afterSave.getResultForCorrectionRound(0).getId()).as("the first correction round is untouched").isNotEqualTo(secondRoundResultId);
+
+        // The tutor must still find the submission in their dashboard for the second round.
+        LinkedMultiValueMap<String, String> assessedSecondRound = new LinkedMultiValueMap<>();
+        assessedSecondRound.add("assessedByTutor", "true");
+        assessedSecondRound.add("correction-round", "1");
+        var assessedSubmissions = request.getList("/api/text/exercises/" + exerciseId + "/text-submissions", HttpStatus.OK, TextSubmissionResponseDTO.class, assessedSecondRound);
+        assertThat(assessedSubmissions).as("the saved draft stays in the tutor's dashboard").hasSize(1);
+        assertThat(assessedSubmissions.getFirst().id()).isEqualTo(submissionId);
+
+        // And submitting after saving has to work.
+        var submitted = request.postWithResponseBody("/api/text/participations/" + participationId + "/results/" + secondRoundResultId + "/submit-text-assessment",
+                secondRoundAssessment, ResultDTO.class, HttpStatus.OK);
+        assertThat(submitted.id()).isEqualTo(secondRoundResultId);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = AssessmentType.class, names = { "SEMI_AUTOMATIC", "MANUAL" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")

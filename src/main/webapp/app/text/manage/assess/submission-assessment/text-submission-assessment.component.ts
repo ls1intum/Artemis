@@ -16,6 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import {
+    getCorrectionRoundOfResult,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     getSubmissionResultById,
@@ -222,8 +223,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(this.submission, this.resultId()));
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(this.submission!.results?.findIndex((result) => result.id === this.resultId())!);
+            this.correctionRound.set(getCorrectionRoundOfResult(this.submission, this.resultId()) ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
