@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -284,5 +285,29 @@ public class AssessmentUploadResultService {
         if (!resultIds.isEmpty()) {
             deleteResultsByIds(resultIds);
         }
+    }
+
+    /**
+     * Finds the participations whose existing manual result carries a complaint and therefore must not be overwritten by an upload. Deleting such a result would silently destroy
+     * the student's complaint and any instructor response, which the supported single-assessment deletion path also forbids. The caller rejects the whole upload for these
+     * participations instead of replacing their results.
+     * <p>
+     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains only persisted ids.
+     * <p>
+     * <b>Postcondition:</b> read-only; the returned ids are the subset of {@code participationIds} that have a complaint on a manual result of the exercise.
+     *
+     * @param exerciseId       target exercise id
+     * @param participationIds participations included in the upload
+     * @return the participation ids that must not be overwritten because a complaint exists
+     * @throws IllegalArgumentException if a precondition is violated
+     */
+    public Set<Long> findParticipationsWithComplaint(final long exerciseId, final Collection<Long> participationIds) {
+        if (exerciseId <= 0) {
+            throw new IllegalArgumentException("The exercise id must identify a persisted exercise");
+        }
+        if (participationIds == null || participationIds.isEmpty()) {
+            throw new IllegalArgumentException("The participation ids must not be null or empty");
+        }
+        return assessmentUploadResultRepository.findParticipationIdsWithComplaint(exerciseId, participationIds);
     }
 }

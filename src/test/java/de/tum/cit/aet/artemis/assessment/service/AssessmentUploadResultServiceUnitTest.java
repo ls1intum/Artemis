@@ -18,16 +18,16 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 class AssessmentUploadResultServiceUnitTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private AssessmentUploadResultRepository assessmentUploadResultRepository;
@@ -48,7 +48,7 @@ class AssessmentUploadResultServiceUnitTest {
     private ResultWebsocketService resultWebsocketService;
 
     @Mock
-    private ComplaintResponseRepository complaintResponseRepository;
+    private ComplaintResponseTestRepository complaintResponseRepository;
 
     @Mock
     private RatingRepository ratingRepository;

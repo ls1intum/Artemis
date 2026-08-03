@@ -23,6 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
+import de.tum.cit.aet.artemis.assessment.domain.Complaint;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -126,6 +128,43 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReplaceExistingSemiAutomaticAssessment() {
+        // A manual assessment created in the assessment editor is stored as SEMI_AUTOMATIC. The upload must replace it instead of leaving a second manual result behind.
+        final Result semiAutomaticResult = participationUtilService.createSubmissionAndResult(participation1, 30, true);
+        semiAutomaticResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        resultRepository.saveAndFlush(semiAutomaticResult);
+        assertThat(getManualResults(participation1.getId())).hasSize(1);
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,75\n".formatted(identifier1), Map.of(identifier1 + ".txt", "uploaded feedback")));
+
+        assertThat(result.errors()).isEmpty();
+        // Exactly one manual result remains, now the uploaded MANUAL one; the SEMI_AUTOMATIC result was replaced, not duplicated.
+        final List<Result> manualResults = getManualResults(participation1.getId());
+        assertThat(manualResults).hasSize(1);
+        assertThat(manualResults.getFirst().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertManualAssessment(participation1.getId(), 75.0, "uploaded feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUploadWhenExistingAssessmentHasComplaint() {
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        final Result manualResult = getManualResults(participation1.getId()).getFirst();
+        complaintRepo.save(new Complaint().result(manualResult).complaintType(ComplaintType.COMPLAINT));
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.EXISTING_COMPLAINT);
+        // The complaint and the original assessment must be left untouched (nothing is stored).
+        assertThat(complaintRepo.findByResultId(manualResult.getId())).isPresent();
+        assertManualAssessment(participation1.getId(), 40.0, "first");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectPointsAboveMaximumIncludingBonusPoints() {
         programmingExercise.setBonusPoints(10.0);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -198,6 +237,19 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise,
                 buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of("oversized/", oversizedDirectoryContent))))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("maximum uncompressed size");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectCsvWithMoreThanTheMaximumNumberOfRows() {
+        final StringBuilder csv = new StringBuilder("Identifier,Overall points\n");
+        // One row more than the accepted maximum of 10000 data rows: parsing must stop and reject before materializing all rows.
+        for (int row = 0; row <= 10_000; row++) {
+            csv.append("row").append(row).append(",80\n");
+        }
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, buildZip(csv.toString(), Map.of()))).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("more than the maximum");
     }
 
     @Test

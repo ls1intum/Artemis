@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -92,6 +93,12 @@ public class AssessmentUploadService {
 
     /** Maximum aggregate uncompressed size of all entries in one archive. */
     private static final long MAX_ARCHIVE_UNCOMPRESSED_SIZE = 100L * 1024 * 1024;
+
+    /**
+     * Maximum number of data rows read from the CSV file. Bounds the in-memory record list and the size of the derived id sets and {@code IN} queries, so a CSV with millions of
+     * tiny rows cannot exhaust the heap or exceed database parameter limits.
+     */
+    private static final int MAX_CSV_ROW_COUNT = 10_000;
 
     private final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository;
 
@@ -360,15 +367,39 @@ public class AssessmentUploadService {
             if (pointsColumn.isEmpty()) {
                 return new CsvParseError(AssessmentUploadErrorType.MISSING_OVERALL_POINTS_COLUMN);
             }
-            final List<CSVRecord> records = parser.getRecords();
+            final List<CSVRecord> records = readBoundedRecords(parser);
             if (records.isEmpty()) {
                 return new CsvParseError(AssessmentUploadErrorType.EMPTY_CSV);
             }
             return new ParsedCsv(records, pointsColumn.get());
         }
-        catch (final IOException | IllegalArgumentException e) {
+        catch (final IOException | UncheckedIOException | IllegalArgumentException e) {
             return new CsvParseError(AssessmentUploadErrorType.MALFORMED_CSV);
         }
+    }
+
+    /**
+     * Reads the data rows of the CSV parser into memory, rejecting a file that exceeds {@link #MAX_CSV_ROW_COUNT} before materializing or querying the excess rows. Iterating the
+     * parser lazily (instead of {@link CSVParser#getRecords()}) keeps at most {@link #MAX_CSV_ROW_COUNT} records in memory.
+     * <p>
+     * <b>Precondition:</b> {@code parser} is non-{@code null} and positioned after the header record.
+     * <p>
+     * <b>Postcondition:</b> returns at most {@link #MAX_CSV_ROW_COUNT} records; a CSV with more rows is rejected via {@link BadRequestAlertException}.
+     *
+     * @param parser the CSV parser to drain
+     * @return the parsed data rows, at most {@link #MAX_CSV_ROW_COUNT}
+     * @throws BadRequestAlertException if the CSV file contains more than {@link #MAX_CSV_ROW_COUNT} rows
+     */
+    private List<CSVRecord> readBoundedRecords(final CSVParser parser) {
+        assert parser != null : "parser must not be null";
+        final List<CSVRecord> records = new ArrayList<>();
+        for (final CSVRecord csvRecord : parser) {
+            if (records.size() >= MAX_CSV_ROW_COUNT) {
+                throw archiveLimitExceeded("The CSV file contains more than the maximum of " + MAX_CSV_ROW_COUNT + " rows");
+            }
+            records.add(csvRecord);
+        }
+        return records;
     }
 
     /**
@@ -396,8 +427,8 @@ public class AssessmentUploadService {
         final List<ValidatedRow> validatedRows = new ArrayList<>();
         final Set<String> seenIdentifiers = new HashSet<>();
         final Set<String> matchedTextKeys = new HashSet<>();
-        final Set<Long> requestedParticipationIds = csv.records().stream().map(record -> record.size() > 0 && record.get(0) != null ? record.get(0).trim() : "")
-                .map(this::parseParticipationId).flatMap(Optional::stream).collect(Collectors.toSet());
+        final Set<Long> requestedParticipationIds = csv.records().stream().map(this::extractIdentifier).map(this::parseParticipationId).flatMap(Optional::stream)
+                .collect(Collectors.toSet());
         final Map<Long, AssessmentUploadParticipationDTO> participationsById = requestedParticipationIds.isEmpty() ? Map.of()
                 : assessmentUploadParticipationRepository.findAssessmentUploadParticipations(exercise.getId(), requestedParticipationIds).stream()
                         .collect(Collectors.toMap(AssessmentUploadParticipationDTO::participationId, Function.identity()));
@@ -405,9 +436,13 @@ public class AssessmentUploadService {
         unresolvedParticipationIds.removeAll(participationsById.keySet());
         final Set<Long> participationIdsOutsideExercise = unresolvedParticipationIds.isEmpty() ? Set.of()
                 : assessmentUploadParticipationRepository.findIdsOutsideExercise(exercise.getId(), unresolvedParticipationIds);
+        // A text file is "referenced" if some row's identifier matches it (exact or exported-folder suffix), even when that row fails another check (e.g. invalid points). Only
+        // text files that no row references at all are reported as UNMATCHED_TEXT_FILE.
+        final Set<String> referencedTextKeys = csv.records().stream().map(this::extractIdentifier).filter(identifier -> !identifier.isBlank())
+                .flatMap(identifier -> findMatchingTextKeys(textContentsByBaseName.keySet(), identifier).stream()).collect(Collectors.toSet());
 
         for (final CSVRecord csvRecord : csv.records()) {
-            final String identifier = csvRecord.size() > 0 && csvRecord.get(0) != null ? csvRecord.get(0).trim() : "";
+            final String identifier = extractIdentifier(csvRecord);
             if (identifier.isBlank()) {
                 errors.add(AssessmentUploadErrorDTO.of(null, AssessmentUploadErrorType.MISSING_IDENTIFIER, "row " + csvRecord.getRecordNumber()));
                 continue;
@@ -427,24 +462,25 @@ public class AssessmentUploadService {
             }
         }
 
-        addErrorsForUnmatchedTextFiles(textContentsByBaseName.keySet(), matchedTextKeys, errors);
+        addErrorsForUnmatchedTextFiles(textContentsByBaseName.keySet(), referencedTextKeys, errors);
         return validatedRows;
     }
 
     /**
-     * Adds an {@code UNMATCHED_TEXT_FILE} error for every text file that no CSV row referenced (each text file must belong to exactly one row).
+     * Adds an {@code UNMATCHED_TEXT_FILE} error for every text file whose base name no CSV row referenced. A file referenced by a row that failed another check (e.g. invalid
+     * points) is not reported here, because it is not orphaned; the row's own error already rejects the upload.
      * <p>
      * <b>Preconditions:</b> all parameters are non-{@code null} and {@code errors} is mutable.
      * <p>
-     * <b>Postcondition:</b> one error has been appended for every key in {@code textKeys} that is absent from {@code matchedTextKeys}.
+     * <b>Postcondition:</b> one error has been appended for every key in {@code textKeys} that is absent from {@code referencedTextKeys}.
      *
-     * @param textKeys        the base names of all text files in the upload
-     * @param matchedTextKeys the base names that were matched to a CSV row
-     * @param errors          out-parameter the unmatched-file errors are appended to
+     * @param textKeys           the base names of all text files in the upload
+     * @param referencedTextKeys the base names referenced by at least one CSV row (regardless of that row's validity)
+     * @param errors             out-parameter the unmatched-file errors are appended to
      */
-    private void addErrorsForUnmatchedTextFiles(final Set<String> textKeys, final Set<String> matchedTextKeys, final List<AssessmentUploadErrorDTO> errors) {
-        assert textKeys != null && matchedTextKeys != null && errors != null : "textKeys, matchedTextKeys and errors must not be null";
-        textKeys.stream().filter(key -> !matchedTextKeys.contains(key)).sorted()
+    private void addErrorsForUnmatchedTextFiles(final Set<String> textKeys, final Set<String> referencedTextKeys, final List<AssessmentUploadErrorDTO> errors) {
+        assert textKeys != null && referencedTextKeys != null && errors != null : "textKeys, referencedTextKeys and errors must not be null";
+        textKeys.stream().filter(key -> !referencedTextKeys.contains(key)).sorted()
                 .forEach(key -> errors.add(AssessmentUploadErrorDTO.of(key + TEXT_FILE_EXTENSION, AssessmentUploadErrorType.UNMATCHED_TEXT_FILE)));
     }
 
@@ -519,17 +555,27 @@ public class AssessmentUploadService {
      * <b>Preconditions:</b> {@code exercise} is persisted and belongs to a course, {@code validatedRows} is non-empty, every row passed validation (participation resolved and
      * belonging to {@code exercise}, points parsed, matching text file present), and the upload as a whole was error-free.
      * <p>
-     * <b>Postcondition:</b> a manual assessment has been created (or overwritten) for each row; the returned result lists the stored identifiers and carries no errors.
+     * <b>Postcondition:</b> if no target participation has a complaint on its current manual assessment, a manual assessment has been created (or overwritten) for each row and the
+     * returned result lists the stored identifiers and carries no errors. Otherwise nothing is stored and the returned result carries one {@code EXISTING_COMPLAINT} error per
+     * affected participation (all-or-nothing).
      *
      * @param exercise      the programming exercise the assessments belong to
      * @param validatedRows the fully validated rows to store
-     * @return a success result listing the created assessments
+     * @return a success result listing the created assessments, or a failure result if a complaint blocks the upload
      */
     private AssessmentUploadResultDTO storeValidatedRows(final ProgrammingExercise exercise, final List<ValidatedRow> validatedRows) {
         assert exercise != null && exercise.getId() != null : "exercise must be persisted";
         assert validatedRows != null && !validatedRows.isEmpty() : "validatedRows must not be null or empty";
         final List<Long> participationIds = validatedRows.stream().map(ValidatedRow::participationId).toList();
         assessmentUploadParticipationRepository.lockAllForAssessmentUpload(exercise.getId(), participationIds);
+
+        // Reject (instead of silently destroying) participations whose current manual assessment is referenced by a complaint. Checked inside the locked transaction, before any
+        // deletion, so nothing is stored (all-or-nothing).
+        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaint(exercise.getId(), participationIds);
+        if (!participationsWithComplaint.isEmpty()) {
+            return AssessmentUploadResultDTO.failure(buildComplaintErrors(validatedRows, participationsWithComplaint));
+        }
+
         final Map<Long, StudentParticipation> participationsById = assessmentUploadParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
         final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
@@ -549,6 +595,24 @@ public class AssessmentUploadService {
         final List<String> createdIdentifiers = validatedRows.stream().map(ValidatedRow::identifier).toList();
         log.info("Stored {} manual assessments for programming exercise {} from an upload", createdIdentifiers.size(), exercise.getId());
         return AssessmentUploadResultDTO.success(createdIdentifiers);
+    }
+
+    /**
+     * Builds one {@code EXISTING_COMPLAINT} error per validated row whose participation still has a complaint on its current manual assessment, sorted by identifier for a
+     * deterministic response.
+     * <p>
+     * <b>Preconditions:</b> {@code validatedRows} and {@code participationsWithComplaint} are non-{@code null}, and {@code participationsWithComplaint} is non-empty.
+     * <p>
+     * <b>Postcondition:</b> pure function (no side effects); returns a non-empty list with one error per affected row.
+     *
+     * @param validatedRows               the rows that would have been stored
+     * @param participationsWithComplaint the participation ids blocked by an existing complaint
+     * @return the collected complaint errors
+     */
+    private List<AssessmentUploadErrorDTO> buildComplaintErrors(final List<ValidatedRow> validatedRows, final Set<Long> participationsWithComplaint) {
+        assert validatedRows != null && participationsWithComplaint != null && !participationsWithComplaint.isEmpty() : "rows and blocked participations must be present";
+        return validatedRows.stream().filter(row -> participationsWithComplaint.contains(row.participationId())).map(ValidatedRow::identifier).sorted()
+                .map(identifier -> AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.EXISTING_COMPLAINT)).toList();
     }
 
     /**
@@ -597,6 +661,21 @@ public class AssessmentUploadService {
         feedback.setCredits(points);
         feedback.setPositiveViaCredits();
         return feedback;
+    }
+
+    /**
+     * Extracts the trimmed student identifier from the first column of a CSV row, or an empty string if the row has no first column or a {@code null} value there.
+     * <p>
+     * <b>Precondition:</b> {@code csvRecord} is non-{@code null}.
+     * <p>
+     * <b>Postcondition:</b> pure function (no side effects); returns a non-{@code null} string.
+     *
+     * @param csvRecord the CSV row
+     * @return the trimmed first-column value, or an empty string
+     */
+    private String extractIdentifier(final CSVRecord csvRecord) {
+        assert csvRecord != null : "csvRecord must not be null";
+        return csvRecord.size() > 0 && csvRecord.get(0) != null ? csvRecord.get(0).trim() : "";
     }
 
     /**

@@ -63,6 +63,12 @@ public enum AssessmentUploadErrorType {
     IDENTIFIER_MISMATCH,
 
     /**
+     * The participation already has a manual assessment that is referenced by a complaint. Overwriting it would delete the student's complaint and any instructor response, so the
+     * whole upload is rejected instead.
+     */
+    EXISTING_COMPLAINT,
+
+    /**
      * The value of the {@code Overall points} column is missing, not a number, or negative.
      */
     INVALID_POINTS,

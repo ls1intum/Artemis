@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -39,11 +40,13 @@ public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<R
     void deleteAllByIds(@Param("resultIds") final Collection<Long> resultIds);
 
     /**
-     * Finds only manual results belonging to the imported participations. Automatic results are intentionally excluded.
+     * Finds the manual results belonging to the imported participations. Manual results are those a human created, i.e. both {@code MANUAL} (e.g. uploaded) and
+     * {@code SEMI_AUTOMATIC} (e.g. created in the assessment editor, which combines automatic feedback with manual feedback) results, matching {@link Result#isManual()}.
+     * {@code AUTOMATIC} results are intentionally excluded so continuous-integration results are never replaced.
      * <p>
      * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
      * <p>
-     * <b>Postcondition:</b> every returned id identifies a manual result belonging to the supplied exercise and one of the supplied participations.
+     * <b>Postcondition:</b> every returned id identifies a manual (or semi-automatic) result belonging to the supplied exercise and one of the supplied participations.
      *
      * @param exerciseId       target exercise id
      * @param participationIds participations included in the upload
@@ -53,10 +56,34 @@ public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<R
             SELECT r.id
             FROM Result r
             WHERE r.exerciseId = :exerciseId
-                AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
                 AND r.submission.participation.id IN :participationIds
             """)
     List<Long> findManualResultIds(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
+
+    /**
+     * Finds the participations whose existing manual result carries a complaint. Replacing such a result would delete the student's complaint and any instructor response, so the
+     * upload must reject these participations instead of overwriting them. Only manual and semi-automatic results are considered, matching {@link #findManualResultIds} (the
+     * results
+     * an upload would delete).
+     * <p>
+     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
+     * <p>
+     * <b>Postcondition:</b> read-only; every returned id occurs in {@code participationIds} and has a complaint on a manual result of the supplied exercise.
+     *
+     * @param exerciseId       target exercise id
+     * @param participationIds participations included in the upload
+     * @return ids of participations that must not be overwritten because a complaint exists
+     */
+    @Query("""
+            SELECT r.submission.participation.id
+            FROM Complaint c
+                JOIN c.result r
+            WHERE r.exerciseId = :exerciseId
+                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+                AND r.submission.participation.id IN :participationIds
+            """)
+    Set<Long> findParticipationIdsWithComplaint(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 
     /**
      * Loads newly imported results with the relationships required by LTI and websocket notifications in one query.

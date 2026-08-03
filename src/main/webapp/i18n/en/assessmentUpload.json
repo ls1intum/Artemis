@@ -27,6 +27,7 @@
                 "PARTICIPATION_NOT_FOUND": "No participation exists for this identifier.",
                 "PARTICIPATION_WRONG_EXERCISE": "The participation belongs to a different exercise.",
                 "IDENTIFIER_MISMATCH": "The login does not match the participant of the resolved participation.",
+                "EXISTING_COMPLAINT": "This participant's current manual assessment has a complaint. Overwriting it would delete the complaint, so the upload was rejected. Resolve the complaint first.",
                 "INVALID_POINTS": "The \"Overall points\" value is missing, invalid, negative, or exceeds the maximum points including bonus points.",
                 "DUPLICATE_TEXT_FILE": "More than one .txt file has this base name.",
                 "AMBIGUOUS_TEXT_FILE": "This .txt file matches more than one CSV row, or more than one .txt file matches this row.",
