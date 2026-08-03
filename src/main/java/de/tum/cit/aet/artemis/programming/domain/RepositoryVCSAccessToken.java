@@ -11,13 +11,17 @@ import jakarta.persistence.UniqueConstraint;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
  * A repository-scoped VCS access token for course staff (tutors, editors, instructors).
  * <p>
- * In contrast to a {@link ParticipationVCSAccessToken} (which is bound to a student participation), this token is bound to exactly one base repository of a programming
- * exercise (template, tests, solution or one auxiliary repository). It only authenticates the owning user; the actual authorization (at least tutor to read, at least editor to
- * write) is still enforced on every git operation. The repository the token is valid for is identified by its canonical {@code repositoryUri}.
+ * The token is bound to exactly one repository of a programming exercise: either a base repository (template, tests, solution or one auxiliary repository), or a student
+ * assignment repository ({@link RepositoryType#USER}), in which case {@link #participation} points to the owning student participation. It only authenticates the owning staff
+ * user; the actual authorization (at least tutor to read, at least editor to write) is still enforced on every git operation. The repository the token is valid for is identified
+ * by its canonical {@code repositoryUri}.
+ * <p>
+ * In contrast, a {@link ParticipationVCSAccessToken} is the token a <em>student</em> owns for their <em>own</em> participation.
  */
 @Entity
 @Table(name = "repository_vcs_access_token", uniqueConstraints = { @UniqueConstraint(columnNames = { "user_id", "repository_uri" }) })
@@ -39,6 +43,13 @@ public class RepositoryVCSAccessToken extends DomainObject {
      */
     @ManyToOne(fetch = FetchType.LAZY)
     private AuxiliaryRepository auxiliaryRepository;
+
+    /**
+     * The student participation this token grants access to. Only set when {@link #repositoryType} is {@link RepositoryType#USER} (a student assignment repository); otherwise
+     * {@code null}. Cascades on delete at the database level, so removing the participation automatically removes the staff tokens for its repository.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Participation participation;
 
     @Column(name = "repository_uri", length = 500)
     private String repositoryUri;
@@ -76,6 +87,14 @@ public class RepositoryVCSAccessToken extends DomainObject {
 
     public void setAuxiliaryRepository(AuxiliaryRepository auxiliaryRepository) {
         this.auxiliaryRepository = auxiliaryRepository;
+    }
+
+    public Participation getParticipation() {
+        return participation;
+    }
+
+    public void setParticipation(Participation participation) {
+        this.participation = participation;
     }
 
     public String getRepositoryUri() {

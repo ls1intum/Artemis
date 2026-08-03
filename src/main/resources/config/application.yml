@@ -234,6 +234,15 @@ management:
                 all: true
         tags:
             application: ${spring.application.name}
+        web:
+            server:
+                # Artemis exposes ~1000 REST endpoint mappings, far more than Micrometer's default budget of 100
+                # distinct `uri` tag values. Once that budget is exhausted, Micrometer logs
+                # "Reached the maximum number of 'uri' tags for 'http.server.requests'" once and then silently
+                # stops creating timers for every endpoint it sees for the first time afterwards, so production
+                # loses request metrics for an arbitrary subset of the API. The tags are templated
+                # (`/api/../{id}`), not raw paths, so the value is bounded by the number of mappings.
+                max-uri-tags: 1200
     observations:
         http:
             server:
