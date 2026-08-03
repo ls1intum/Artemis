@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService.MessagePreviewData;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 @ExtendWith(MockitoExtension.class)
@@ -142,6 +146,24 @@ class AtlasAgentSessionCacheServiceTest {
 
             assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
         }
+    }
+
+    /**
+     * The preview history has to keep expiring. {@code HazelcastConfiguration} gives this map a two-hour TTL, but a map
+     * from {@code DistributedDataProvider#getMap} never expires by contract, so requesting a plain map here would keep
+     * every session's history forever on any provider that does not read the Hazelcast map configuration.
+     */
+    @Test
+    void shouldRequestTheExpiringPreviewHistoryMap() {
+        DistributedMap<String, Map<Integer, MessagePreviewData>> historyMap = new LocalDataProviderService()
+                .getMap(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        // doReturn rather than when(...).thenReturn(...), because getExpiringMap is generic and has no assignment context
+        // here for the type arguments to be inferred from.
+        doReturn(historyMap).when(mockDistributedDataProvider).getExpiringMap(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE, Duration.ofHours(2));
+
+        service.getPreviewHistory(SESSION_ID);
+
+        verify(mockDistributedDataProvider).getExpiringMap(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE, Duration.ofHours(2));
     }
 
     @Test

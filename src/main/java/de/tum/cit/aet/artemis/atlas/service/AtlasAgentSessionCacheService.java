@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,13 @@ public class AtlasAgentSessionCacheService {
      * enabling history reconstruction without embedding markers in chat memory.
      */
     public static final String ATLAS_SESSION_PREVIEW_HISTORY_CACHE = "atlas-session-preview-history";
+
+    /**
+     * Matches the two hours that {@code HazelcastConfiguration.createAtlasSessionMapConfig} sets for this map. Requested
+     * explicitly, because {@link DistributedDataProvider#getMap} returns a map whose entries never expire, so on a
+     * provider that does not read the Hazelcast map configuration the history of every session would be kept forever.
+     */
+    private static final Duration PREVIEW_HISTORY_TIME_TO_LIVE = Duration.ofHours(2);
 
     /**
      * Preview data associated with a single assistant message.
@@ -248,9 +256,10 @@ public class AtlasAgentSessionCacheService {
     }
 
     /**
-     * @return the distributed map holding per-session assistant message previews
+     * @return the distributed map holding per-session assistant message previews, expiring after
+     *         {@link #PREVIEW_HISTORY_TIME_TO_LIVE}
      */
     private DistributedMap<String, Map<Integer, MessagePreviewData>> previewHistory() {
-        return distributedDataProvider.getMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        return distributedDataProvider.getExpiringMap(ATLAS_SESSION_PREVIEW_HISTORY_CACHE, PREVIEW_HISTORY_TIME_TO_LIVE);
     }
 }
