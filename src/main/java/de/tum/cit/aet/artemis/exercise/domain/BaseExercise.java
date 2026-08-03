@@ -10,9 +10,11 @@ import jakarta.persistence.MappedSuperclass;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.util.StrictDecimalDeserializer;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 @MappedSuperclass
@@ -25,9 +27,11 @@ public abstract class BaseExercise extends DomainObject {
     private String shortName;
 
     @Column(name = "max_points", nullable = false)
+    @JsonDeserialize(using = StrictDecimalDeserializer.class)
     private Double maxPoints = 1.0;
 
     @Column(name = "bonus_points", nullable = false)
+    @JsonDeserialize(using = StrictDecimalDeserializer.class)
     private Double bonusPoints = 0.0;
 
     @Enumerated(EnumType.STRING)

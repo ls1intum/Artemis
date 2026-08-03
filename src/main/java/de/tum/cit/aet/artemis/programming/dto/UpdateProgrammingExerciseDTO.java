@@ -10,12 +10,14 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.StrictDecimalDeserializer;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
@@ -36,7 +38,8 @@ public record UpdateProgrammingExerciseDTO(
         @Nullable Long id,
 
         // Exercise base fields
-        String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty, Double maxPoints, Double bonusPoints,
+        String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
+        @JsonDeserialize(using = StrictDecimalDeserializer.class) Double maxPoints, @JsonDeserialize(using = StrictDecimalDeserializer.class) Double bonusPoints,
         IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, Boolean presentationScoreEnabled,
         Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
 
