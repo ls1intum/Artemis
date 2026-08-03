@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -233,6 +234,36 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
         exercise.setBonusPoints(1e-30);
 
         assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The bonus points must not have more than 4 decimal places");
+    }
+
+    @Test
+    void validateScoreSettings_maxPointsNaN_throwsWithoutCrashing() {
+        // BigDecimal.valueOf(NaN) throws NumberFormatException, so isFinite must be checked first
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(Double.NaN);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("The max points must be a finite number");
+    }
+
+    @Test
+    void validateScoreSettings_maxPointsInfinite_throwsWithoutCrashing() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(Double.POSITIVE_INFINITY);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("The max points must be a finite number");
+    }
+
+    @Test
+    void validateScoreSettings_bonusPointsInfinite_throwsWithoutCrashing() {
+        // NEGATIVE_INFINITY is < 0, so it would get silently corrected to 0.0 by the existing negative-bonusPoints
+        // defaulting logic before ever reaching the finite check - use POSITIVE_INFINITY to actually exercise it.
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setMaxPoints(100.0);
+        exercise.setBonusPoints(Double.POSITIVE_INFINITY);
+
+        assertThatThrownBy(exercise::validateScoreSettings).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("The bonus points must be a finite number");
     }
 
     @Test

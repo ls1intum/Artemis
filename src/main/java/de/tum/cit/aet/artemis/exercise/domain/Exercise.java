@@ -908,6 +908,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
+        if (!Double.isFinite(getMaxPoints())) {
+            throw new BadRequestAlertException("The max points must be a finite number", "Exercise", "maxScoreInvalid");
+        }
         if (!hasValidPointsPrecision(getMaxPoints())) {
             throw new BadRequestAlertException("The max points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "maxScoreInvalid");
         }
@@ -917,6 +920,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             setBonusPoints(0.0);
         }
 
+        if (!Double.isFinite(getBonusPoints())) {
+            throw new BadRequestAlertException("The bonus points must be a finite number", "Exercise", "bonusPointsInvalid");
+        }
         if (!hasValidPointsPrecision(getBonusPoints())) {
             throw new BadRequestAlertException("The bonus points must not have more than " + MAX_POINTS_DECIMAL_PLACES + " decimal places", "Exercise", "bonusPointsInvalid");
         }
