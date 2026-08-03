@@ -62,7 +62,8 @@
                 "timeZoneInput": {
                     "label": "Tutorial Group Time Zone",
                     "changeWarning": "You have changed the time zone. All individually created sessions and tutorial free days will be deleted. Only scheduled sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
-                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field."
+                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
+                    "invalidTimeZone": "Please select a valid time zone from the list of suggestions."
                 },
                 "periodInput": {
                     "label": "Tutorial Group Period",

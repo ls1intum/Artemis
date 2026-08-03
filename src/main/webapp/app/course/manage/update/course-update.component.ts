@@ -271,7 +271,7 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
-                timeZone: new FormControl(this.course.timeZone),
+                timeZone: new FormControl(this.course.timeZone, { validators: [this.validTimeZoneValidator] }),
             },
             { validators: CourseValidator },
         );
@@ -300,6 +300,12 @@ export class CourseUpdateComponent implements OnInit {
         const term = event.query;
         this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
     }
+
+    /** Rejects free-typed text that does not match one of the IANA time zones offered by the autocomplete. */
+    private readonly validTimeZoneValidator: ValidatorFn = (control: AbstractControl) => {
+        const value = control.value;
+        return !value || this.timeZones.includes(value) ? null : { invalidTimeZone: true };
+    };
 
     get timeZoneChanged() {
         return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;

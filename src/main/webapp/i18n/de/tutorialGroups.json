@@ -62,7 +62,8 @@
                 "timeZoneInput": {
                     "label": "Übungsgruppen-Zeitzone",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
-                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen."
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen.",
+                    "invalidTimeZone": "Bitte wähle eine gültige Zeitzone aus der Liste der Vorschläge aus."
                 },
                 "periodInput": {
                     "label": "Übungsgruppen-Zeitraum",

@@ -209,6 +209,11 @@
                         styleClass="w-full"
                     />
                     <div class="text-sm text-muted-color" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
+                    @if (courseForm.get('timeZone')?.hasError('invalidTimeZone') && (courseForm.get('timeZone')?.dirty || courseForm.get('timeZone')?.touched)) {
+                        <tum-ui-message severity="error" styleClass="mt-2">{{
+                            'artemisApp.forms.configurationForm.timeZoneInput.invalidTimeZone' | artemisTranslate
+                        }}</tum-ui-message>
+                    }
                     @if (timeZoneChanged) {
                         <tum-ui-message severity="error" styleClass="mt-2">{{
                             'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate
