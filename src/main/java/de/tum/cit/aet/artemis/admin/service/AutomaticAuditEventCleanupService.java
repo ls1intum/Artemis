@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.admin.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.GENERAL_EVENT_TYPES;
 
 import java.time.Instant;
@@ -42,7 +43,7 @@ import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
  */
 @Lazy
 @Service
-@Profile("scheduling & core")
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class AutomaticAuditEventCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticAuditEventCleanupService.class);
@@ -90,14 +91,36 @@ public class AutomaticAuditEventCleanupService {
         Instant generalCutoff = Instant.now().minus(generalRetentionPeriodInDays, ChronoUnit.DAYS);
         Instant applicationCutoff = Instant.now().minus(applicationRetentionPeriodInDays, ChronoUnit.DAYS);
 
-        int deletedGeneralEvents = prune("general", generalRetentionPeriodInDays,
+        int deletedGeneralEvents = pruneIsolated("general", generalRetentionPeriodInDays,
                 pageable -> persistenceAuditEventRepository.findExpiredIdsOfTypes(generalCutoff, GENERAL_EVENT_TYPES, pageable));
-        int deletedApplicationEvents = prune("application", applicationRetentionPeriodInDays,
+        int deletedApplicationEvents = pruneIsolated("application", applicationRetentionPeriodInDays,
                 pageable -> persistenceAuditEventRepository.findExpiredIdsExcludingTypes(applicationCutoff, GENERAL_EVENT_TYPES, pageable));
 
         if (deletedGeneralEvents > 0 || deletedApplicationEvents > 0) {
             log.info("Scheduled deletion of expired audit events: removed {} general/authentication events (older than {} days) and {} application events (older than {} days)",
                     deletedGeneralEvents, generalRetentionPeriodInDays, deletedApplicationEvents, applicationRetentionPeriodInDays);
+        }
+    }
+
+    /**
+     * Runs one retention schedule, keeping its failures to itself.
+     * <p>
+     * The two schedules are independent, and they share one nightly trigger. Without this boundary, a persistent problem
+     * with one of them - a lock timeout on a particular old row, say - would also stop the other from ever running, so a
+     * fault in pruning the login record could let the rest of the log grow unbounded indefinitely.
+     *
+     * @param logName         what is being pruned, for logging
+     * @param retentionInDays the retention period being applied, for logging
+     * @param expiredIdFinder supplies the next batch of expired ids
+     * @return how many events were deleted, or 0 if this schedule failed
+     */
+    private int pruneIsolated(String logName, int retentionInDays, ExpiredIdFinder expiredIdFinder) {
+        try {
+            return prune(logName, retentionInDays, expiredIdFinder);
+        }
+        catch (Exception e) {
+            log.error("Failed to prune {} audit events (retention {} days); the other retention schedule still runs", logName, retentionInDays, e);
+            return 0;
         }
     }
 

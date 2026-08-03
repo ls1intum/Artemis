@@ -18,6 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -65,7 +66,8 @@ class AutomaticAuditEventCleanupServiceTest {
         verify(persistenceAuditEventRepository).findExpiredIdsExcludingTypes(applicationCutoff.capture(), eq(AuditEventConstants.GENERAL_EVENT_TYPES), any());
         assertThat(applicationCutoff.getValue()).isBetween(before.minus(APPLICATION_RETENTION_DAYS, ChronoUnit.DAYS), after.minus(APPLICATION_RETENTION_DAYS, ChronoUnit.DAYS));
 
-        // The long retention has to be the later cutoff, otherwise the rarer records would be deleted first.
+        // The longer retention has to produce the earlier cutoff, i.e. reach further into the past. If the two were the
+        // other way round, the rare records would be deleted sooner than the bulk login record.
         assertThat(applicationCutoff.getValue()).isBefore(generalCutoff.getValue());
     }
 
@@ -113,6 +115,19 @@ class AutomaticAuditEventCleanupServiceTest {
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(persistenceAuditEventRepository).findExpiredIdsOfTypes(any(), any(), pageable.capture());
         assertThat(pageable.getValue()).isEqualTo(PageRequest.of(0, 5_000));
+    }
+
+    @Test
+    void aFailingScheduleDoesNotStopTheOtherOne() {
+        // Both schedules share one nightly trigger, so an exception escaping the first would mean the second never runs.
+        // A persistent fault - a lock timeout on one old row, say - would then let the other log grow unbounded.
+        List<Long> fullBatch = idsOfSize(5_000);
+        when(persistenceAuditEventRepository.findExpiredIdsOfTypes(any(), any(), any())).thenThrow(new DataAccessResourceFailureException("lock timeout"));
+        when(persistenceAuditEventRepository.findExpiredIdsExcludingTypes(any(), any(), any())).thenReturn(fullBatch, List.of());
+
+        service.cleanup();
+
+        verify(persistenceAuditEventRepository).deleteAllById(fullBatch);
     }
 
     @Test
