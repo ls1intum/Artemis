@@ -33,7 +33,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
@@ -42,7 +42,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartParticipation() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -130,6 +130,39 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
 
         templateRepository.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    void testStartParticipationRepairsTemplateRepositoryUriPointingToAnotherProject() throws Exception {
+        String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+
+        // The stored URI points to a repository that really exists, but in a different project. The copy always reads from the project key of this exercise, so
+        // accepting the stored URI would make the copy look for a repository that does not exist and skip the repair entirely (see issue #12840).
+        String foreignProjectKey = projectKey + "OTHER";
+        String foreignRepositorySlug = foreignProjectKey.toLowerCase() + "-exercise";
+        LocalRepository foreignRepository = localVCLocalCITestService.createAndConfigureLocalRepository(foreignProjectKey, foreignRepositorySlug);
+
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + foreignProjectKey + "/" + foreignRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+
+        // The URI must be repaired to the conventional repository of this exercise, not left pointing at the other project
+        var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
+        assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+
+        templateRepository.resetLocalRepo();
+        foreignRepository.resetLocalRepo();
     }
 
     @Test

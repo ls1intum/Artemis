@@ -140,11 +140,8 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     protected boolean repositoryExists(LocalVCRepositoryUri repositoryUri) {
-        // Validate that the resolved repository path is a direct child of its project directory within the local VC base directory before accessing the file system.
-        Path basePath = localVCBasePath.normalize();
-        Path expectedProjectPath = basePath.resolve(repositoryUri.getProjectKey()).normalize();
-        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath).normalize();
-        if (!repositoryPath.startsWith(basePath) || !expectedProjectPath.equals(repositoryPath.getParent())) {
+        Path repositoryPath = resolveContainedRepositoryPath(repositoryUri);
+        if (repositoryPath == null) {
             throw new LocalVCInternalException("Resolved repository path is outside the local VC base path.");
         }
         return Files.exists(repositoryPath);
@@ -152,12 +149,34 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public boolean isValidGitRepository(LocalVCRepositoryUri repositoryUri) {
-        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
-        if (!Files.exists(repositoryPath)) {
+        // A stored URI that resolves outside the base path is exactly the kind of broken URI this check exists to detect, so it is reported as invalid rather than
+        // throwing: callers use the result to fall back to a repaired, canonical URI.
+        Path repositoryPath = resolveContainedRepositoryPath(repositoryUri);
+        if (repositoryPath == null || !Files.exists(repositoryPath)) {
             return false;
         }
         // A directory alone is not enough: verify that it actually contains a (bare) git repository with an object database, refs and a valid HEAD
         return RepositoryCache.FileKey.isGitRepository(repositoryPath.toFile(), FS.DETECTED);
+    }
+
+    /**
+     * Resolves the local path of a repository and validates that it stays inside the configured local VC base directory.
+     * <p>
+     * {@link LocalVCRepositoryUri} parses the project key out of the URI, and a malformed stored URI can yield a traversal segment such as {@code ..}. Every caller
+     * that touches the file system or hands the path to JGit must therefore check that the resolved path is a direct child of its own project directory below the
+     * base path, and must do so on the normalized path so that traversal segments cannot slip through.
+     *
+     * @param repositoryUri the repository URI to resolve
+     * @return the normalized repository path, or null if it would leave the local VC base path
+     */
+    private Path resolveContainedRepositoryPath(LocalVCRepositoryUri repositoryUri) {
+        Path basePath = localVCBasePath.normalize();
+        Path expectedProjectPath = basePath.resolve(repositoryUri.getProjectKey()).normalize();
+        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath).normalize();
+        if (!repositoryPath.startsWith(basePath) || !expectedProjectPath.equals(repositoryPath.getParent())) {
+            return null;
+        }
+        return repositoryPath;
     }
 
     /**

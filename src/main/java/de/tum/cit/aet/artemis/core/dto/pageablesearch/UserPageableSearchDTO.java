@@ -24,7 +24,7 @@ public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
      */
     private Set<String> status = new HashSet<>();
 
-    private boolean findWithoutUserGroups = false;
+    private boolean findWithoutCourseEnrollment = false;
 
     /**
      * Set of registrationNumbers users need to match
@@ -63,11 +63,11 @@ public class UserPageableSearchDTO extends SearchTermPageableSearchDTO<String> {
         this.registrationNumbers = registrationNumbers;
     }
 
-    public boolean isFindWithoutUserGroups() {
-        return findWithoutUserGroups;
+    public boolean isFindWithoutCourseEnrollment() {
+        return findWithoutCourseEnrollment;
     }
 
-    public void setFindWithoutUserGroups(boolean findWithoutUserGroups) {
-        this.findWithoutUserGroups = findWithoutUserGroups;
+    public void setFindWithoutCourseEnrollment(boolean findWithoutCourseEnrollment) {
+        this.findWithoutCourseEnrollment = findWithoutCourseEnrollment;
     }
 }

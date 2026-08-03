@@ -263,6 +263,9 @@ public class ParticipationService {
      * returns null. Without repair, starting the exercise would fail with an internal server error that students cannot resolve themselves. This method reconstructs the
      * canonical local VC URI from the project key and the repository slug (taken from the stored URI if present, otherwise derived from the naming convention), verifies that
      * a valid git repository actually exists for it, and persists the repaired URI so that subsequent operations (e.g. exports, plagiarism checks) work again as well.
+     * <p>
+     * Candidates are always built with the project key of the exercise, never with the project encoded in the stored URI, because the copy that follows uses the exercise
+     * project key as well. A stored URI is therefore only accepted when it is already the canonical one.
      *
      * @param exercise the programming exercise with an initialized template participation
      * @return the resolved template repository URI, never null
@@ -270,19 +273,21 @@ public class ParticipationService {
      */
     private LocalVCRepositoryUri resolveTemplateRepositoryUri(ProgrammingExercise exercise) {
         VersionControlService versionControl = versionControlService.orElseThrow();
-        var templateRepositoryUri = exercise.getVcsTemplateRepositoryUri();
-        if (templateRepositoryUri != null && versionControl.isValidGitRepository(templateRepositoryUri)) {
-            return templateRepositoryUri;
-        }
         String storedUri = exercise.getTemplateRepositoryUri();
+        // Every candidate is rebuilt with the project key of this exercise before it is validated. Validating the stored URI as it is would accept a repository that
+        // lives in a different project, while copyRepository always copies from exercise.getProjectKey(). That combination would skip the repair below and then fail
+        // on a repository that does not exist (issue #12840).
         for (String repositorySlug : candidateTemplateRepositorySlugs(exercise, storedUri)) {
-            LocalVCRepositoryUri repairedUri = versionControl.getCloneRepositoryUri(exercise.getProjectKey(), repositorySlug);
-            if (versionControl.isValidGitRepository(repairedUri)) {
-                log.warn("Repaired the template repository URI of exercise {} from '{}' to '{}'", exercise.getId(), storedUri, repairedUri);
-                exercise.setTemplateRepositoryUri(repairedUri.toString());
-                templateProgrammingExerciseParticipationRepository.save(exercise.getTemplateParticipation());
-                return repairedUri;
+            LocalVCRepositoryUri candidateUri = versionControl.getCloneRepositoryUri(exercise.getProjectKey(), repositorySlug);
+            if (!versionControl.isValidGitRepository(candidateUri)) {
+                continue;
             }
+            if (!candidateUri.toString().equals(storedUri)) {
+                log.warn("Repaired the template repository URI of exercise {} from '{}' to '{}'", exercise.getId(), storedUri, candidateUri);
+                exercise.setTemplateRepositoryUri(candidateUri.toString());
+                templateProgrammingExerciseParticipationRepository.save(exercise.getTemplateParticipation());
+            }
+            return candidateUri;
         }
         log.error("Cannot repair the template repository URI '{}' of exercise {}: no matching repository exists in the local VC", storedUri, exercise.getId());
         throw new VersionControlException("The template repository of this exercise is not accessible. Please contact your instructor.");
