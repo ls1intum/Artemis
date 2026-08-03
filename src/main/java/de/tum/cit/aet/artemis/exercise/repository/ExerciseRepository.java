@@ -433,6 +433,25 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
 
     /**
+     * Returns the ids of all exercises whose course is the given course, resolved the same way indexing resolves it via
+     * {@code getCourseViaExerciseGroupOrCourseMember()}: course exercises attached directly, plus exam exercises whose
+     * course is reached through {@code exerciseGroup -> exam -> course}. This is the exact set that gets indexed into
+     * {@code SearchableEntities}, so it is the correct expected set for the census.
+     *
+     * @param courseId the course id
+     * @return the exercise ids for the course, including exam exercises
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+                LEFT JOIN e.exerciseGroup eg
+                LEFT JOIN eg.exam exam
+            WHERE e.course.id = :courseId
+                OR exam.course.id = :courseId
+            """)
+    Set<Long> findAllExerciseIdsByCourseIdIncludingExam(@Param("courseId") long courseId);
+
+    /**
      * @param courseId - course id of the exercises we want to fetch
      * @return all exercise-ids which belong to the course and have manual assessment enabled, i.e. text, modeling, file upload and programming exercises with manual or
      *         semi-automatic assessment

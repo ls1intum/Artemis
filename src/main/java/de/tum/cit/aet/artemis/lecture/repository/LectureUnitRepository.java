@@ -25,6 +25,56 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 @Repository
 public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit, Long> {
 
+    /**
+     * Returns the ids of the lecture units in a course that are indexed into the {@code SearchableEntities} collection:
+     * the indexable subtypes (text, online, attachment/video), excluding exercise units. This mirrors
+     * {@code LectureUnitSearchableEntityDTO.isIndexable}, which is the exact condition under which a unit triggers an
+     * upsert to Weaviate.
+     *
+     * @param courseId the course id
+     * @return the indexable lecture unit ids for the course
+     */
+    @Query("""
+            SELECT lu.id
+            FROM LectureUnit lu
+            WHERE lu.lecture.course.id = :courseId
+                AND TYPE(lu) IN (TextUnit, OnlineUnit, AttachmentVideoUnit)
+            """)
+    Set<Long> findIndexableUnitIdsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Returns the ids of the attachment/video units in a course that have a PDF attachment. These are the units whose
+     * slides should be ingested into the Iris {@code Lectures} content collection, so this is the expected set for the
+     * slides completeness metric.
+     *
+     * @param courseId the course id
+     * @return the ids of units that have a PDF attachment
+     */
+    @Query("""
+            SELECT avu.id
+            FROM AttachmentVideoUnit avu
+            WHERE avu.lecture.course.id = :courseId
+                AND avu.attachment IS NOT NULL
+            """)
+    Set<Long> findUnitIdsWithAttachmentByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Returns the ids of the attachment/video units in a course that have a video source. These are the units whose
+     * transcript should be ingested into the Iris {@code LectureTranscriptions} content collection, so this is the
+     * expected set for the transcript completeness metric.
+     *
+     * @param courseId the course id
+     * @return the ids of units that have a video source
+     */
+    @Query("""
+            SELECT avu.id
+            FROM AttachmentVideoUnit avu
+            WHERE avu.lecture.course.id = :courseId
+                AND avu.videoSource IS NOT NULL
+                AND avu.videoSource <> ''
+            """)
+    Set<Long> findUnitIdsWithVideoByCourseId(@Param("courseId") long courseId);
+
     @Query("""
             SELECT lu
             FROM LectureUnit lu

@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +130,104 @@ public class SearchableEntityWeaviateService {
             log.error("Failed to search SearchableEntities (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
             throw new WeaviateException("Failed to search SearchableEntities in Weaviate: " + e.getMessage(), e);
         }
+    }
+
+    // ----- Census read path -----
+
+    /**
+     * Enumerates every indexed {@code (type, entity_id)} key for a course from the shared {@code SearchableEntities}
+     * collection, paging with a cursor so a large course is read in bounded batches rather than in a single request.
+     * Read-only; used by the dry-run reconcile census to detect missing and orphaned rows.
+     *
+     * @param courseId the course id
+     * @return the entity keys currently indexed for the course
+     */
+    public List<IndexedKey> listIndexedKeysForCourse(long courseId) {
+        final int pageSize = 500;
+        List<IndexedKey> keys = new ArrayList<>();
+        try {
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            Filter courseFilter = Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId);
+            String after = null;
+            while (true) {
+                final String cursor = after;
+                var result = collection.query.fetchObjects(builder -> {
+                    builder.limit(pageSize).filters(courseFilter);
+                    if (cursor != null) {
+                        builder.after(cursor);
+                    }
+                    return builder;
+                });
+                List<WeaviateObject<Map<String, Object>>> objects = result.objects();
+                for (WeaviateObject<Map<String, Object>> object : objects) {
+                    Map<String, Object> properties = object.properties();
+                    Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
+                    Object entityId = properties.get(SearchableEntitySchema.Properties.ENTITY_ID);
+                    if (type != null && entityId instanceof Number entityIdNumber) {
+                        keys.add(new IndexedKey(type.toString(), entityIdNumber.longValue()));
+                    }
+                }
+                if (objects.size() < pageSize) {
+                    break;
+                }
+                after = objects.getLast().uuid();
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to enumerate indexed keys for course {}: {}", courseId, e.getMessage(), e);
+            throw new WeaviateException("Failed to enumerate SearchableEntities for course " + courseId + ": " + e.getMessage(), e);
+        }
+        return keys;
+    }
+
+    /** Property carrying the owning lecture unit id in the Iris content collections. */
+    private static final String IRIS_LECTURE_UNIT_ID_PROPERTY = "lecture_unit_id";
+
+    /**
+     * Enumerates the distinct lecture unit ids that have content indexed in a Pyris/Iris-owned content collection for a
+     * course. These collections ({@code Lectures} = slide chunks, {@code LectureTranscriptions} = transcript segments)
+     * are created by Iris without the Artemis prefix and carry {@code course_id} and {@code lecture_unit_id}
+     * properties, so they are read by exact name, filtered on the course, and their unit ids deduplicated. A unit
+     * appears here iff at least one of its content objects was ingested, which is exactly the "content present for this
+     * unit" signal the completeness metric needs. Returns an empty set when the collection cannot be read (for example
+     * it does not exist because nothing has been ingested yet). Read-only.
+     *
+     * @param exactCollectionName the exact (unprefixed) Iris collection name
+     * @param courseId            the course id
+     * @return the distinct lecture unit ids with content in that collection for the course
+     */
+    public Set<Long> listExternalUnitIdsForCourse(String exactCollectionName, long courseId) {
+        final int pageSize = 500;
+        Set<Long> unitIds = new HashSet<>();
+        try {
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getExternalCollection(exactCollectionName);
+            Filter courseFilter = Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId);
+            String after = null;
+            while (true) {
+                final String cursor = after;
+                var result = collection.query.fetchObjects(builder -> {
+                    builder.limit(pageSize).filters(courseFilter);
+                    if (cursor != null) {
+                        builder.after(cursor);
+                    }
+                    return builder;
+                });
+                List<WeaviateObject<Map<String, Object>>> objects = result.objects();
+                for (WeaviateObject<Map<String, Object>> object : objects) {
+                    if (object.properties().get(IRIS_LECTURE_UNIT_ID_PROPERTY) instanceof Number unitId) {
+                        unitIds.add(unitId.longValue());
+                    }
+                }
+                if (objects.size() < pageSize) {
+                    break;
+                }
+                after = objects.getLast().uuid();
+            }
+        }
+        catch (Exception e) {
+            log.debug("Could not enumerate unit ids in external collection '{}' for course {}: {}", exactCollectionName, courseId, e.getMessage());
+        }
+        return unitIds;
     }
 
     // ----- Exercise sync -----
@@ -581,5 +682,14 @@ public class SearchableEntityWeaviateService {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         collection.data.deleteMany(
                 Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)));
+    }
+
+    /**
+     * A single indexed entity key: the type discriminator and entity id of one {@code SearchableEntities} row.
+     *
+     * @param type     the entity type discriminator
+     * @param entityId the entity id
+     */
+    public record IndexedKey(String type, long entityId) {
     }
 }
