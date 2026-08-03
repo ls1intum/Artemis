@@ -36,7 +36,9 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        // the users are created with prefixed groups, so the course must enroll exactly those users, otherwise the
+        // editor and instructor have no access to the exercise and every request is rejected with 403 before validation
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
