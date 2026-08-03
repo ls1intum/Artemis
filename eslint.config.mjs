@@ -38,31 +38,6 @@ const noNgZoneImport = {
         'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
 };
 
-// Existing `ngOnChanges` migration backlog. Keep the new rule baseline-clean by excluding unchanged
-// files that still need a focused computed()/effect() migration. Remove entries as the hooks are migrated.
-const remainingNgOnChangesMigrationBacklog = [
-    'src/main/webapp/app/atlas/manage/forms/common-course-competency-form.component.ts',
-    'src/main/webapp/app/atlas/manage/forms/competency/competency-form.component.ts',
-    'src/main/webapp/app/atlas/manage/forms/prerequisite/prerequisite-form.component.ts',
-    'src/main/webapp/app/atlas/overview/competency-accordion/competency-accordion.component.ts',
-    'src/main/webapp/app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component.ts',
-    'src/main/webapp/app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component.ts',
-    'src/main/webapp/app/exercise/feedback/feedback.component.ts',
-    'src/main/webapp/app/exercise/rating/rating.component.ts',
-    'src/main/webapp/app/exercise/statistics/doughnut-chart/doughnut-chart.component.ts',
-    'src/main/webapp/app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component.ts',
-    'src/main/webapp/app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component.ts',
-    'src/main/webapp/app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component.ts',
-    'src/main/webapp/app/plagiarism/manage/plagiarism-run-details/plagiarism-run-details.component.ts',
-    'src/main/webapp/app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component.ts',
-    'src/main/webapp/app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component.ts',
-    'src/main/webapp/app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component.ts',
-    'src/main/webapp/app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component.ts',
-    'src/main/webapp/app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component.ts',
-    'src/main/webapp/app/quiz/manage/re-evaluate/quiz-re-evaluate.component.ts',
-    'src/main/webapp/app/quiz/manage/update/quiz-exercise-update.component.ts',
-];
-
 export default tseslint.config(
     {
         // Only src/main/webapp/ and src/test/javascript/ contain lintable client code.
@@ -331,17 +306,18 @@ export default tseslint.config(
             '@typescript-eslint/no-base-to-string': 'error',
         },
     },
-    // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
-    // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
-    // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above
-    // until converted; genuinely unavoidable new cases should use a justified line-level disable.
-    // Full rationale + decision table:
-    // documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
+    // Ban `ngOnChanges` across client code. Prefer computed() for derived state and effect() for genuine side
+    // effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs), so this is a consistency
+    // ban rather than a correctness rule — but the client is now completely free of the hook (PR #12951), and an
+    // `error` is what keeps it that way: `pnpm run lint` runs without `--max-warnings`, so a warning would let a
+    // reintroduced hook through CI unnoticed. Spec files and the test infrastructure are covered too, so a stub or
+    // mock cannot reintroduce it either. The rare genuinely unavoidable case (SimpleChanges.previousValue /
+    // isFirstChange / before-child-init timing) still uses a justified line-level disable. Full rationale + decision
+    // table: documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
     {
-        files: ['src/main/webapp/app/**/*.ts'],
-        ignores: ['**/*.spec.ts', ...remainingNgOnChangesMigrationBacklog],
+        files: ['src/main/webapp/app/**/*.ts', 'src/test/javascript/**/*.ts'],
         rules: {
-            'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
+            'localRules/prefer-signal-reactivity-over-ngonchanges': 'error',
         },
     },
     // Zoneless correctness: a mutable component/directive field that the template reads must be a signal,
