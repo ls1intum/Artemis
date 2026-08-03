@@ -167,6 +167,11 @@ public class ParticipationResource {
             if (e instanceof VersionControlException && e.getCause() instanceof LargeObjectException) {
                 throw new InternalServerErrorException("Failed to start exercise because repository contains files that are too large. Please contact your instructor.");
             }
+            else if (e instanceof VersionControlException) {
+                log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
+                throw new InternalServerErrorException(
+                        "Failed to start exercise participation because the exercise repositories are not accessible. Please try again later or contact your instructor.");
+            }
             else {
                 log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
                 throw new InternalServerErrorException("Failed to start exercise participation.");
