@@ -120,7 +120,9 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 365 # Number of days before VCS access logs are deleted.
+        # Kept for backwards compatibility only: nothing reads this key. AutomaticVcsAccessLogCleanupService reads
+        # artemis.audit-events.retention-period (a different namespace) and so always falls back to its own default.
+        retention-period: 365
         # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
         # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
         general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).

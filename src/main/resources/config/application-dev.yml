@@ -95,7 +95,11 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 365 # Number of days before audit events are deleted.
+        # Kept for backwards compatibility only: nothing reads this key (see application-prod.yml).
+        retention-period: 365
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
 
 # Properties to be exposed on the /info management endpoint
 info:

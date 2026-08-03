@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
  * Prunes the three audit logs, each on its own retention period.
  * <p>
  * Until this service existed, nothing pruned the audit log at all. The {@code jhipster.audit-events.retention-period}
- * property reads as though it covered audit events, but its only consumer is {@code AutomaticVcsAccessLogCleanupService},
- * which applies it to {@code vcs_access_log}. So audit events accumulated indefinitely.
+ * property reads as though it covered audit events, but no bean ever read it: the only similarly named property is
+ * {@code artemis.audit-events.retention-period} in {@code AutomaticVcsAccessLogCleanupService}, which applies to
+ * {@code vcs_access_log} and lives in a different namespace. So audit events accumulated indefinitely.
  * <p>
  * <b>Why three retention periods.</b> The logs differ by orders of magnitude in both volume and how long an individual
  * record stays interesting:

@@ -21,8 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.admin.domain.ApplicationAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.SecurityAuditEvent;
+import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -43,6 +49,12 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
 
     @Autowired
+    private SecurityAuditEventRepository securityAuditEventRepository;
+
+    @Autowired
+    private ApplicationAuditEventRepository applicationAuditEventRepository;
+
+    @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
@@ -55,6 +67,10 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ParticipationUtilService participationUtilService;
 
     private PersistentAuditEvent persAuditEvent;
+
+    private SecurityAuditEvent securityAuditEvent;
+
+    private ApplicationAuditEvent applicationAuditEvent;
 
     @BeforeEach
     void initTestCase() {
@@ -75,6 +91,22 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         persAuditEvent2.setAuditEventType("tt");
         persAuditEvent2.setData(data);
         persistenceAuditEventRepository.save(persAuditEvent2);
+
+        securityAuditEventRepository.deleteAll();
+        securityAuditEvent = new SecurityAuditEvent();
+        securityAuditEvent.setPrincipal(TEST_PREFIX + "securityprincipal");
+        securityAuditEvent.setAuditEventDate(Instant.now());
+        securityAuditEvent.setAuditEventType(AuditEventConstants.PASSWORD_RESET_COMPLETED);
+        securityAuditEvent.setData(data);
+        securityAuditEvent = securityAuditEventRepository.save(securityAuditEvent);
+
+        applicationAuditEventRepository.deleteAll();
+        applicationAuditEvent = new ApplicationAuditEvent();
+        applicationAuditEvent.setPrincipal(TEST_PREFIX + "applicationprincipal");
+        applicationAuditEvent.setAuditEventDate(Instant.now());
+        applicationAuditEvent.setAuditEventType(Constants.DELETE_EXERCISE);
+        applicationAuditEvent.setData(data);
+        applicationAuditEvent = applicationAuditEventRepository.save(applicationAuditEvent);
     }
 
     @AfterEach
@@ -142,6 +174,36 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         var auditEventsInDb = persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
         assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().orElseThrow().getPrincipal());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAllAuditEventsScopedToEachLogType() throws Exception {
+        // each tab in the admin UI queries one log; a query must never return another log's rows
+        var generalEvents = request.getList("/api/core/admin/audits?logType=GENERAL", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(generalEvents).extracting(PersistentAuditEvent::getPrincipal).containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+
+        var securityEvents = request.getList("/api/core/admin/audits?logType=SECURITY", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(securityEvents).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "securityprincipal");
+
+        var applicationEvents = request.getList("/api/core/admin/audits?logType=APPLICATION", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(applicationEvents).extracting(PersistentAuditEvent::getPrincipal).containsExactly(TEST_PREFIX + "applicationprincipal");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAuditEventByIdIsScopedToTheRequestedLogType() throws Exception {
+        var securityEvent = request.get("/api/core/admin/audits/" + securityAuditEvent.getId() + "?logType=SECURITY", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(securityEvent.getPrincipal()).isEqualTo(TEST_PREFIX + "securityprincipal");
+
+        var applicationEvent = request.get("/api/core/admin/audits/" + applicationAuditEvent.getId() + "?logType=APPLICATION", HttpStatus.OK, PersistentAuditEvent.class);
+        assertThat(applicationEvent.getPrincipal()).isEqualTo(TEST_PREFIX + "applicationprincipal");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getAllAuditEventsWithUnknownLogTypeIsRejected() throws Exception {
+        request.getList("/api/core/admin/audits?logType=DOES_NOT_EXIST", HttpStatus.BAD_REQUEST, PersistentAuditEvent.class);
     }
 
     @Test
