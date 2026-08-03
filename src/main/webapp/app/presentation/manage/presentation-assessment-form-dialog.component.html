@@ -1,48 +1,43 @@
-<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="presentation-assessment-dialog-form">
-    <div class="presentation-assessment-form-grid">
-        <div class="presentation-assessment-field presentation-assessment-title-field">
+<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="flex flex-col gap-6">
+    <div class="grid grid-cols-1 items-start gap-4 min-[40rem]:grid-cols-2 min-[72rem]:grid-cols-[minmax(14rem,1.4fr)_minmax(8rem,0.8fr)_minmax(8rem,0.8fr)_minmax(14rem,1fr)]">
+        <div class="col-span-full flex min-w-0 flex-col gap-2 min-[72rem]:col-span-1">
             <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
-            <input id="presentation-assessment-title" pInputText class="w-full" type="text" formControlName="title" />
+            <input id="presentation-assessment-title" tumUiInput class="w-full" type="text" formControlName="title" />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
-                <p-message severity="error" data-testid="presentation-title-error">
+                <tum-ui-message severity="error" data-testid="presentation-title-error">
                     <span jhiTranslate="entity.validation.required"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
 
-        <div class="presentation-assessment-field">
+        <div class="flex min-w-0 flex-col gap-2">
             <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <p-inputnumber inputId="presentation-assessment-max-points" styleClass="presentation-assessment-number-input" [min]="0.01" [step]="0.5" formControlName="maxPoints" />
+            <input id="presentation-assessment-max-points" tumUiInput class="w-full" type="number" min="0.01" step="0.5" formControlName="maxPoints" />
             @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
-                <p-message severity="error" data-testid="presentation-max-points-error">
+                <tum-ui-message severity="error" data-testid="presentation-max-points-error">
                     <span jhiTranslate="entity.validation.min"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
 
-        <div class="presentation-assessment-field">
+        <div class="flex min-w-0 flex-col gap-2">
             <label for="presentation-assessment-result-points" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
-            <p-inputnumber
-                inputId="presentation-assessment-result-points"
-                styleClass="presentation-assessment-number-input"
-                [min]="0"
-                [step]="0.5"
-                formControlName="resultPoints"
-            />
+            <input id="presentation-assessment-result-points" tumUiInput class="w-full" type="number" min="0" step="0.5" formControlName="resultPoints" />
             @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
-                <p-message severity="error" data-testid="presentation-result-points-error">
+                <tum-ui-message severity="error" data-testid="presentation-result-points-error">
                     <span jhiTranslate="entity.validation.min"></span>
-                </p-message>
+                </tum-ui-message>
             }
             @if (editForm.hasError('resultPointsExceedMaxPoints') && (editForm.controls.resultPoints.touched || editForm.controls.maxPoints.touched)) {
-                <p-message severity="error" data-testid="presentation-result-points-max-error">
+                <tum-ui-message severity="error" data-testid="presentation-result-points-max-error">
                     <span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span>
-                </p-message>
+                </tum-ui-message>
             }
         </div>
 
-        <div class="presentation-assessment-field presentation-assessment-date-field">
+        <div class="flex min-w-0 flex-col gap-2">
             <jhi-date-time-picker
+                class="[&_[data-testid='date-picker-wrapper']]:mt-2"
                 id="presentation-assessment-date"
                 labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
                 formControlName="presentationDate"
@@ -50,14 +45,14 @@
             />
         </div>
 
-        <div class="presentation-assessment-field presentation-assessment-description-field">
+        <div class="col-span-full flex min-w-0 flex-col gap-2">
             <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
-            <textarea id="presentation-assessment-description" pTextarea rows="4" formControlName="description"></textarea>
+            <textarea id="presentation-assessment-description" tumUiTextarea class="min-h-28 w-full resize-y" rows="4" formControlName="description"></textarea>
         </div>
     </div>
 
     @if (presentationStudentCourse()) {
-        <div class="presentation-assessment-students">
+        <div class="min-w-0 overflow-x-auto">
             <jhi-course-group
                 [(allGroupUsers)]="assignedStudents"
                 [courseGroup]="studentsCourseGroup"
@@ -82,14 +77,14 @@
         </div>
     }
 
-    <div class="presentation-assessment-actions">
-        <p-button severity="secondary" type="button" (onClick)="cancel()">
+    <div class="flex flex-col-reverse gap-2 min-[40rem]:flex-row min-[40rem]:justify-end">
+        <tum-ui-button severity="secondary" type="button" styleClass="w-full justify-center min-[40rem]:w-auto" (clicked)="cancel()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>
-        </p-button>
-        <p-button type="submit">
+        </tum-ui-button>
+        <tum-ui-button type="submit" styleClass="w-full justify-center min-[40rem]:w-auto">
             <fa-icon [icon]="faSave" />
             <span jhiTranslate="entity.action.save"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
 </form>

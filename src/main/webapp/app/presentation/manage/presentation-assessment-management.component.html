@@ -1,77 +1,94 @@
 <div>
     <div *titleBarActions class="flex justify-end">
-        <p-button id="create-presentation-assessment" size="small" (onClick)="startCreate()">
-            <fa-icon [icon]="faPlus" />
+        <tum-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" (clicked)="startCreate()">
             <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
 
     @if (presentationAssessments().length) {
-        <p-table
-            [value]="presentationAssessments()"
-            [tableStyle]="{ 'min-width': '100%' }"
-            [stripedRows]="true"
-            [loading]="isLoadingAssignedStudents() || isSaving()"
-            sortField="presentationDate"
-            [sortOrder]="1"
+        <table
+            tumUiTable
+            size="small"
+            [striped]="true"
+            [sortField]="sortField()"
+            [sortOrder]="sortOrder()"
+            (sortChange)="onSort($event)"
             data-testid="presentation-assessments-table"
         >
-            <ng-template #header>
+            <thead>
                 <tr>
-                    <th pSortableColumn="title">
+                    <th tumUiSortableColumn="title">
                         <span jhiTranslate="artemisApp.presentationAssessment.title"></span>
-                        <p-sortIcon field="title" />
                     </th>
-                    <th pSortableColumn="maxPoints">
+                    <th tumUiSortableColumn="maxPoints">
                         <span jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>
-                        <p-sortIcon field="maxPoints" />
                     </th>
-                    <th pSortableColumn="resultPoints">
+                    <th tumUiSortableColumn="resultPoints">
                         <span jhiTranslate="artemisApp.presentationAssessment.resultPoints"></span>
-                        <p-sortIcon field="resultPoints" />
                     </th>
-                    <th pSortableColumn="presentationDate">
+                    <th tumUiSortableColumn="presentationDate">
                         <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
-                        <p-sortIcon field="presentationDate" />
                     </th>
                     <th>
                         <span jhiTranslate="artemisApp.presentationAssessment.description"></span>
                     </th>
                     <th></th>
                 </tr>
-            </ng-template>
-            <ng-template #body let-presentationAssessment>
-                <tr id="presentation-assessment-{{ presentationAssessment.id }}">
-                    <td>{{ presentationAssessment.title }}</td>
-                    <td>{{ presentationAssessment.maxPoints }}</td>
-                    <td>{{ presentationAssessment.resultPoints ?? '-' }}</td>
-                    <td>{{ presentationAssessment.presentationDate | artemisDate }}</td>
-                    <td>{{ presentationAssessment.description }}</td>
-                    <td>
-                        <div class="flex justify-end gap-2">
-                            <p-button size="small" (onClick)="startEdit(presentationAssessment)">
-                                <fa-icon [icon]="faPencilAlt" />
-                                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
-                            </p-button>
-                            <button
-                                jhiDeleteButton
-                                id="delete-presentation-assessment-{{ presentationAssessment.id }}"
-                                [entityTitle]="presentationAssessment.title || ''"
-                                deleteQuestion="artemisApp.presentationAssessment.delete.question"
-                                deleteConfirmationText="artemisApp.presentationAssessment.delete.typeNameToConfirm"
-                                (delete)="deletePresentationAssessment(presentationAssessment)"
-                                [dialogError]="dialogError$"
-                            >
-                                <fa-icon [icon]="faTrash" />
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+            </thead>
+            <tbody>
+                @for (presentationAssessment of sortedPresentationAssessments(); track presentationAssessment.id) {
+                    <tr id="presentation-assessment-{{ presentationAssessment.id }}">
+                        <td>{{ presentationAssessment.title }}</td>
+                        <td>{{ presentationAssessment.maxPoints }}</td>
+                        <td>{{ presentationAssessment.resultPoints ?? '-' }}</td>
+                        <td>{{ presentationAssessment.presentationDate | artemisDate }}</td>
+                        <td>{{ presentationAssessment.description }}</td>
+                        <td>
+                            <div class="flex justify-end gap-2">
+                                <tum-ui-button size="small" [icon]="faPencilAlt" (clicked)="startEdit(presentationAssessment)">
+                                    <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                </tum-ui-button>
+                                <button
+                                    jhiDeleteButton
+                                    id="delete-presentation-assessment-{{ presentationAssessment.id }}"
+                                    [entityTitle]="presentationAssessment.title || ''"
+                                    deleteQuestion="artemisApp.presentationAssessment.delete.question"
+                                    deleteConfirmationText="artemisApp.presentationAssessment.delete.typeNameToConfirm"
+                                    (delete)="deletePresentationAssessment(presentationAssessment)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     } @else {
-        <p-message severity="secondary" data-testid="presentation-assessments-empty-message">
+        <tum-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
             <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>
-        </p-message>
+        </tum-ui-message>
     }
+
+    <tum-ui-dialog
+        [(visible)]="dialogVisible"
+        [modal]="true"
+        [draggable]="false"
+        [style]="{ width: 'min(80rem, calc(100vw - 2rem))', maxHeight: 'calc(100vh - 2rem)' }"
+        [contentStyle]="{ overflow: 'auto' }"
+        [header]="(dialogPresentationAssessment() ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel') | artemisTranslate"
+        [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
+    >
+        @if (dialogVisible()) {
+            <jhi-presentation-assessment-form-dialog
+                [courseId]="courseId()"
+                [course]="course()"
+                [presentationAssessment]="dialogPresentationAssessment()"
+                [initialAssignedStudents]="dialogAssignedStudents()"
+                (saved)="handleDialogSave($event)"
+                (cancelled)="handleDialogCancel()"
+            />
+        }
+    </tum-ui-dialog>
 </div>

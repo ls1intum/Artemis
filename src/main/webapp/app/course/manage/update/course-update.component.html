@@ -404,19 +404,14 @@
                         </div>
                     </div>
                 </jhi-feature-overlay>
-                <div class="presentation-assessments-setting">
-                    <p-checkbox
-                        inputId="field_presentationAssessmentsEnabled"
-                        name="presentationAssessmentsEnabled"
-                        formControlName="presentationAssessmentsEnabled"
-                        [binary]="true"
-                    />
+                <div class="mb-4 flex items-center gap-2">
+                    <tum-ui-checkbox inputId="field_presentationAssessmentsEnabled" name="presentationAssessmentsEnabled" formControlName="presentationAssessmentsEnabled" />
                     <label jhiTranslate="artemisApp.course.presentationAssessments.label" for="field_presentationAssessmentsEnabled"></label>
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-muted-color"
-                        [pTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
-                        tooltipPosition="right"
+                        [tumUiTooltip]="'artemisApp.course.presentationAssessments.tooltip' | artemisTranslate"
+                        tumUiTooltipPlacement="right"
                     />
                 </div>
                 @if (isAdmin() && isAthenaEnabled()) {

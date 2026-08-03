@@ -9,12 +9,10 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { User } from 'app/account/user/user.model';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentFormDialogComponent>;
     let component: PresentationAssessmentFormDialogComponent;
-    let dialogRef: { close: ReturnType<typeof vi.fn> };
 
     const courseId = 1;
     const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
@@ -31,25 +29,9 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     const student = { id: 1, login: 'student1' } as User;
 
     beforeEach(async () => {
-        dialogRef = { close: vi.fn() };
-
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentFormDialogComponent],
-            providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                {
-                    provide: DynamicDialogConfig,
-                    useValue: {
-                        data: {
-                            courseId,
-                            course,
-                            presentationAssessment,
-                            assignedStudents: [student],
-                        },
-                    },
-                },
-                { provide: CourseManagementService, useValue: { searchStudents: vi.fn().mockReturnValue(of(new HttpResponse({ body: [student] }))) } },
-            ],
+            providers: [{ provide: CourseManagementService, useValue: { searchStudents: vi.fn().mockReturnValue(of(new HttpResponse({ body: [student] }))) } }],
         })
             .overrideComponent(PresentationAssessmentFormDialogComponent, {
                 set: { template: '' },
@@ -57,6 +39,10 @@ describe('PresentationAssessmentFormDialogComponent', () => {
             .compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentFormDialogComponent);
+        fixture.componentRef.setInput('courseId', courseId);
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('presentationAssessment', presentationAssessment);
+        fixture.componentRef.setInput('initialAssignedStudents', [student]);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
@@ -68,12 +54,14 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     });
 
     it('should reject result points above max points', () => {
+        const savedSpy = vi.fn();
+        component.saved.subscribe(savedSpy);
         component.editForm.patchValue({ maxPoints: 20, resultPoints: 21 });
 
         component.save();
 
         expect(component.editForm.hasError('resultPointsExceedMaxPoints')).toBe(true);
-        expect(dialogRef.close).not.toHaveBeenCalled();
+        expect(savedSpy).not.toHaveBeenCalled();
     });
 
     it('should update the student section title when the title changes', () => {
@@ -83,13 +71,15 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     });
 
     it('should close with form value and staged assigned students on save', () => {
+        const savedSpy = vi.fn();
         const stagedStudent = { id: 2, login: 'student2' } as User;
+        component.saved.subscribe(savedSpy);
         component.assignedStudents.set([stagedStudent]);
         component.editForm.patchValue({ title: 'Updated presentation', resultPoints: 19 });
 
         component.save();
 
-        expect(dialogRef.close).toHaveBeenCalledWith(
+        expect(savedSpy).toHaveBeenCalledWith(
             expect.objectContaining({
                 presentationAssessment: expect.objectContaining({
                     id: presentationAssessment.id,
@@ -103,8 +93,11 @@ describe('PresentationAssessmentFormDialogComponent', () => {
     });
 
     it('should close without result on cancel', () => {
+        const cancelledSpy = vi.fn();
+        component.cancelled.subscribe(cancelledSpy);
+
         component.cancel();
 
-        expect(dialogRef.close).toHaveBeenCalledWith();
+        expect(cancelledSpy).toHaveBeenCalledOnce();
     });
 });

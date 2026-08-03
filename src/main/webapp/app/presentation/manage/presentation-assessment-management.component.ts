@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -6,10 +6,6 @@ import { finalize } from 'rxjs/operators';
 
 import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { MessageModule } from 'primeng/message';
 
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -22,19 +18,35 @@ import { PresentationAssessmentService } from 'app/presentation/manage/presentat
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
-import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
 
 @Component({
     selector: 'jhi-presentation-assessment-management',
     templateUrl: './presentation-assessment-management.component.html',
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe, CourseTitleBarActionsDirective, ButtonModule, TableModule, MessageModule],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        CourseTitleBarActionsDirective,
+        PresentationAssessmentFormDialogComponent,
+        TumUiButtonComponent,
+        TumUiDialogComponent,
+        TumUiMessageComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+    ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly presentationAssessmentService = inject(PresentationAssessmentService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faPlus = faPlus;
@@ -45,6 +57,17 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly presentationAssessments = signal<PresentationAssessment[]>([]);
     readonly isSaving = signal(false);
     readonly isLoadingAssignedStudents = signal(false);
+    readonly dialogVisible = signal(false);
+    readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
+    readonly dialogAssignedStudents = signal<User[]>([]);
+    readonly sortField = signal('presentationDate');
+    readonly sortOrder = signal(1);
+
+    readonly sortedPresentationAssessments = computed(() => {
+        const field = this.sortField();
+        const order = this.sortOrder();
+        return [...this.presentationAssessments()].sort((first, second) => this.compareAssessments(first, second, field) * order);
+    });
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -97,33 +120,23 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     private openPresentationDialog(presentationAssessment: PresentationAssessment | undefined, assignedStudents: User[]): void {
-        const dialogRef = this.dialogService.open(PresentationAssessmentFormDialogComponent, {
-            header: this.translateService.instant(
-                presentationAssessment ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel',
-            ),
-            width: 'min(80rem, calc(100vw - 2rem))',
-            breakpoints: {
-                '960px': 'calc(100vw - 2rem)',
-                '640px': '100vw',
-            },
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: false,
-            draggable: false,
-            data: {
-                courseId: this.courseId(),
-                course: this.course(),
-                presentationAssessment,
-                assignedStudents,
-            },
-        });
+        this.dialogPresentationAssessment.set(presentationAssessment);
+        this.dialogAssignedStudents.set(assignedStudents);
+        this.dialogVisible.set(true);
+    }
 
-        dialogRef?.onClose.subscribe((result: PresentationAssessmentFormDialogResult | undefined) => {
-            if (result) {
-                this.save(result);
-            }
-        });
+    handleDialogSave(result: PresentationAssessmentFormDialogResult): void {
+        this.dialogVisible.set(false);
+        this.save(result);
+    }
+
+    handleDialogCancel(): void {
+        this.dialogVisible.set(false);
+    }
+
+    onSort(event: TumUiTableSortEvent): void {
+        this.sortField.set(event.field);
+        this.sortOrder.set(event.order);
     }
 
     private save(result: PresentationAssessmentFormDialogResult): void {
@@ -144,5 +157,35 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    private compareAssessments(first: PresentationAssessment, second: PresentationAssessment, field: string): number {
+        const firstValue = this.sortValue(first, field);
+        const secondValue = this.sortValue(second, field);
+        if (firstValue === secondValue) {
+            return 0;
+        }
+        if (firstValue === undefined || firstValue === null) {
+            return 1;
+        }
+        if (secondValue === undefined || secondValue === null) {
+            return -1;
+        }
+        return firstValue < secondValue ? -1 : 1;
+    }
+
+    private sortValue(presentationAssessment: PresentationAssessment, field: string): string | number | undefined {
+        switch (field) {
+            case 'presentationDate':
+                return presentationAssessment.presentationDate?.valueOf();
+            case 'title':
+                return presentationAssessment.title?.toLowerCase();
+            case 'maxPoints':
+                return presentationAssessment.maxPoints;
+            case 'resultPoints':
+                return presentationAssessment.resultPoints;
+            default:
+                return presentationAssessment.description?.toLowerCase();
+        }
     }
 }

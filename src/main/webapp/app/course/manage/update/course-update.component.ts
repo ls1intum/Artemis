@@ -47,8 +47,8 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
-import { CheckboxModule } from 'primeng/checkbox';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -75,8 +75,8 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         ArtemisTranslatePipe,
         RemoveKeysPipe,
         FeatureOverlayComponent,
-        CheckboxModule,
-        TooltipModule,
+        TumUiCheckboxComponent,
+        TumUiTooltipDirective,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         RouterLink,

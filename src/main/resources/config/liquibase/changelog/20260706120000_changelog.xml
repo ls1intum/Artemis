@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260706120000-1" author="artemis">
+    <changeSet id="20260706120000-1-create-presentation-assessment" author="suckart">
         <createTable tableName="presentation_assessment">
-            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+            <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" primaryKeyName="pk_presentation_assessment" nullable="false"/>
             </column>
             <column name="title" type="varchar(255)">
@@ -15,47 +14,21 @@
             <column name="max_points" type="double">
                 <constraints nullable="false"/>
             </column>
-            <column name="presentation_date" type="timestamp"/>
+            <column name="result_points" type="double"/>
+            <column name="presentation_date" type="datetime(3)"/>
             <column name="course_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
 
-        <addForeignKeyConstraint baseColumnNames="course_id"
-                                 baseTableName="presentation_assessment"
-                                 constraintName="fk_presentation_assessment_course_id"
-                                 referencedColumnNames="id"
-                                 referencedTableName="course"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="presentation_assessment" constraintName="fk_presentation_assessment_course_id"
+                                 referencedColumnNames="id" referencedTableName="course" onDelete="CASCADE" onUpdate="RESTRICT" deferrable="false"
+                                 initiallyDeferred="false" validate="true"/>
 
         <createIndex indexName="idx_presentation_assessment_course_id" tableName="presentation_assessment">
             <column name="course_id"/>
         </createIndex>
-    </changeSet>
 
-    <changeSet id="20260706120000-2" author="artemis">
-        <addAutoIncrement tableName="presentation_assessment"
-                          columnName="id"
-                          columnDataType="bigint"/>
-    </changeSet>
-
-    <changeSet id="20260706120000-3" author="artemis">
-        <addColumn tableName="presentation_assessment">
-            <column name="result_points" type="double"/>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="20260706120000-4" author="artemis">
-        <dropForeignKeyConstraint baseTableName="presentation_assessment"
-                                  constraintName="fk_presentation_assessment_course_id"/>
-        <addForeignKeyConstraint baseColumnNames="course_id"
-                                 baseTableName="presentation_assessment"
-                                 constraintName="fk_presentation_assessment_course_id"
-                                 referencedColumnNames="id"
-                                 referencedTableName="course"
-                                 onDelete="CASCADE"/>
-    </changeSet>
-
-    <changeSet id="20260706120000-5" author="artemis">
         <createTable tableName="presentation_assessment_student">
             <column name="presentation_assessment_id" type="bigint">
                 <constraints nullable="false"/>
@@ -65,42 +38,26 @@
             </column>
         </createTable>
 
-        <addPrimaryKey tableName="presentation_assessment_student"
-                       columnNames="presentation_assessment_id, student_id"
+        <addPrimaryKey tableName="presentation_assessment_student" columnNames="presentation_assessment_id, student_id"
                        constraintName="pk_presentation_assessment_student"/>
 
-        <addForeignKeyConstraint baseColumnNames="presentation_assessment_id"
-                                 baseTableName="presentation_assessment_student"
-                                 constraintName="fk_presentation_assessment_student_assessment_id"
-                                 referencedColumnNames="id"
-                                 referencedTableName="presentation_assessment"
-                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseColumnNames="presentation_assessment_id" baseTableName="presentation_assessment_student"
+                                 constraintName="fk_presentation_assessment_student_assessment_id" referencedColumnNames="id"
+                                 referencedTableName="presentation_assessment" onDelete="CASCADE" onUpdate="RESTRICT" deferrable="false" initiallyDeferred="false"
+                                 validate="true"/>
 
-        <addForeignKeyConstraint baseColumnNames="student_id"
-                                 baseTableName="presentation_assessment_student"
-                                 constraintName="fk_presentation_assessment_student_student_id"
-                                 referencedColumnNames="id"
-                                 referencedTableName="jhi_user"
-                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="presentation_assessment_student"
+                                 constraintName="fk_presentation_assessment_student_student_id" referencedColumnNames="id" referencedTableName="jhi_user"
+                                 onDelete="CASCADE" onUpdate="RESTRICT" deferrable="false" initiallyDeferred="false" validate="true"/>
 
         <createIndex indexName="idx_presentation_assessment_student_student_id" tableName="presentation_assessment_student">
             <column name="student_id"/>
         </createIndex>
-    </changeSet>
 
-    <changeSet id="20260706120000-6" author="artemis">
-        <validCheckSum>9:7d9f9ae29ee04dcbf5738e5060312bb5</validCheckSum>
         <addColumn tableName="course">
             <column name="presentation_assessments_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
-    </changeSet>
-
-    <changeSet id="20260706120000-7" author="artemis">
-        <validCheckSum>9:7a83df6aa76caa2f1d90acc039c76d3c</validCheckSum>
-        <update tableName="course">
-            <column name="presentation_assessments_enabled" valueBoolean="false"/>
-        </update>
     </changeSet>
 </databaseChangeLog>

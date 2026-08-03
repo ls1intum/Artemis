@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.course.service.CourseServiceUtil.removeUser
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -120,6 +121,20 @@ public class CourseAccessService {
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has successfully enrolled in course {}", user.getLogin(), course.getTitle());
+    }
+
+    /**
+     * Finds non-deleted users with the given logins in the student group of the course.
+     *
+     * @param course the course in whose student group users should be searched
+     * @param logins the logins to search for
+     * @return the matching course students
+     */
+    public Set<User> findCourseStudentsByLogins(Course course, Set<String> logins) {
+        if (logins == null || logins.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), logins));
     }
 
     /**

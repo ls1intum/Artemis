@@ -1,16 +1,9 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { MessageModule } from 'primeng/message';
-import { TextareaModule } from 'primeng/textarea';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -22,6 +15,10 @@ import { CourseGroupComponent } from 'app/course/shared/course-group/course-grou
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
     const maxPoints = control.get('maxPoints')?.value;
@@ -34,13 +31,6 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
     return Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
 };
 
-export interface PresentationAssessmentFormDialogData {
-    courseId: number;
-    course?: Course;
-    presentationAssessment?: PresentationAssessment;
-    assignedStudents: User[];
-}
-
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
     assignedStudents: User[];
@@ -50,28 +40,31 @@ export interface PresentationAssessmentFormDialogResult {
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',
     templateUrl: './presentation-assessment-form-dialog.component.html',
-    styleUrl: './presentation-assessment-form-dialog.component.scss',
     imports: [
         FormsModule,
         ReactiveFormsModule,
-        ButtonModule,
-        InputTextModule,
-        InputNumberModule,
-        MessageModule,
-        TextareaModule,
         TranslateDirective,
         ArtemisTranslatePipe,
         FormDateTimePickerComponent,
         CourseGroupComponent,
         FaIconComponent,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiMessageComponent,
     ],
 })
-export class PresentationAssessmentFormDialogComponent implements OnInit {
+export class PresentationAssessmentFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly destroyRef = inject(DestroyRef);
+
+    readonly courseId = input.required<number>();
+    readonly course = input<Course>();
+    readonly presentationAssessment = input<PresentationAssessment>();
+    readonly initialAssignedStudents = input<User[]>([]);
+
+    readonly saved = output<PresentationAssessmentFormDialogResult>();
+    readonly cancelled = output<void>();
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
@@ -80,22 +73,20 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     readonly assignedStudents = signal<User[]>([]);
     readonly filteredAssignedStudentsSize = signal(0);
 
-    private courseId = 0;
-    private presentationAssessment?: PresentationAssessment;
-    private course?: Course;
     private originalAssignedStudents: User[] = [];
 
     readonly presentationStudentCourse = computed<Course | undefined>(() => {
-        if (!this.course) {
+        const course = this.course();
+        if (!course) {
             return undefined;
         }
-        const presentationCourse: Course = Object.assign({}, this.course);
+        const presentationCourse: Course = deepClone(course);
         presentationCourse.isAtLeastInstructor = false;
         return presentationCourse;
     });
 
     readonly studentExportFilename = computed(() => {
-        const title = this.presentationAssessment?.title?.trim();
+        const title = this.presentationAssessment()?.title?.trim();
         return title ? `${title} Students` : 'Presentation Students';
     });
 
@@ -111,25 +102,25 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     );
 
     readonly currentTitle = signal('');
-    readonly studentSectionTitle = computed(() => this.currentTitle().trim() || this.presentationAssessment?.title?.trim() || 'New presentation');
+    readonly studentSectionTitle = computed(() => this.currentTitle().trim() || this.presentationAssessment()?.title?.trim() || 'New presentation');
 
-    ngOnInit(): void {
-        const data = this.dialogConfig.data as PresentationAssessmentFormDialogData;
-        this.courseId = data.courseId;
-        this.course = data.course;
-        this.presentationAssessment = data.presentationAssessment;
-        this.originalAssignedStudents = [...data.assignedStudents];
-        this.assignedStudents.set([...data.assignedStudents]);
-
-        this.editForm.reset({
-            title: this.presentationAssessment?.title ?? '',
-            description: this.presentationAssessment?.description ?? '',
-            maxPoints: this.presentationAssessment?.maxPoints ?? 20,
-            resultPoints: this.presentationAssessment?.resultPoints,
-            presentationDate: this.presentationAssessment?.presentationDate,
-        });
-        this.currentTitle.set(this.editForm.controls.title.value ?? '');
+    constructor() {
         this.editForm.controls.title.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((title) => this.currentTitle.set(title ?? ''));
+
+        effect(() => {
+            const presentationAssessment = this.presentationAssessment();
+            const initialAssignedStudents = this.initialAssignedStudents();
+            this.originalAssignedStudents = [...initialAssignedStudents];
+            this.assignedStudents.set([...initialAssignedStudents]);
+            this.editForm.reset({
+                title: presentationAssessment?.title ?? '',
+                description: presentationAssessment?.description ?? '',
+                maxPoints: presentationAssessment?.maxPoints ?? 20,
+                resultPoints: presentationAssessment?.resultPoints,
+                presentationDate: presentationAssessment?.presentationDate,
+            });
+            this.currentTitle.set(this.editForm.controls.title.value ?? '');
+        });
     }
 
     save(): void {
@@ -138,7 +129,7 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
             return;
         }
 
-        this.dialogRef.close({
+        this.saved.emit({
             presentationAssessment: this.createFromForm(),
             assignedStudents: this.assignedStudents(),
             originalAssignedStudents: this.originalAssignedStudents,
@@ -146,10 +137,10 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     }
 
     cancel(): void {
-        this.dialogRef.close();
+        this.cancelled.emit();
     }
 
-    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId, loginOrName);
+    studentSearch = (loginOrName: string): Observable<HttpResponse<User[]>> => this.courseManagementService.searchStudents(this.courseId(), loginOrName);
 
     addStudentToPresentation = (): Observable<HttpResponse<void>> => of(new HttpResponse<void>());
 
@@ -160,13 +151,13 @@ export class PresentationAssessmentFormDialogComponent implements OnInit {
     private createFromForm(): PresentationAssessment {
         const formValue = this.editForm.getRawValue();
         return {
-            id: this.presentationAssessment?.id,
+            id: this.presentationAssessment()?.id,
             title: formValue.title?.trim(),
             description: formValue.description ?? undefined,
             maxPoints: formValue.maxPoints ?? undefined,
             resultPoints: formValue.resultPoints ?? undefined,
             presentationDate: formValue.presentationDate ? dayjs(formValue.presentationDate) : undefined,
-            courseId: this.courseId,
+            courseId: this.courseId(),
         };
     }
 }

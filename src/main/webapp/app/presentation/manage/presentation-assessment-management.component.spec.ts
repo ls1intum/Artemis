@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,9 +11,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { User } from 'app/account/user/user.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TranslateService } from '@ngx-translate/core';
-import { PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 
 describe('PresentationAssessmentManagementComponent', () => {
     let fixture: ComponentFixture<PresentationAssessmentManagementComponent>;
@@ -26,8 +23,6 @@ describe('PresentationAssessmentManagementComponent', () => {
         findStudents: ReturnType<typeof vi.fn>;
     };
     let alertService: { success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
-    let dialogCloseSubject: Subject<PresentationAssessmentFormDialogResult | undefined>;
-    let dialogService: { open: ReturnType<typeof vi.fn> };
 
     const courseId = 1;
     const course = { id: courseId, title: 'Test Course', isAtLeastInstructor: true } as Course;
@@ -45,7 +40,6 @@ describe('PresentationAssessmentManagementComponent', () => {
     const secondStudent = { id: 2, login: 'student2' } as User;
 
     beforeEach(async () => {
-        dialogCloseSubject = new Subject<PresentationAssessmentFormDialogResult | undefined>();
         presentationAssessmentService = {
             findAllByCourseId: vi.fn().mockReturnValue(of(new HttpResponse({ body: [presentationAssessment] }))),
             create: vi.fn(),
@@ -54,15 +48,12 @@ describe('PresentationAssessmentManagementComponent', () => {
             findStudents: vi.fn().mockReturnValue(of(new HttpResponse({ body: [student] }))),
         };
         alertService = { success: vi.fn(), addAlert: vi.fn() };
-        dialogService = { open: vi.fn().mockReturnValue({ onClose: dialogCloseSubject.asObservable() }) };
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentManagementComponent],
             providers: [
                 { provide: PresentationAssessmentService, useValue: presentationAssessmentService },
                 { provide: AlertService, useValue: alertService },
-                { provide: DialogService, useValue: dialogService },
-                { provide: TranslateService, useValue: { instant: (key: string) => key } },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -94,9 +85,11 @@ describe('PresentationAssessmentManagementComponent', () => {
 
     it('should open the create dialog without persisting on cancel', () => {
         component.startCreate();
-        dialogCloseSubject.next(undefined);
+        expect(component.dialogVisible()).toBeTruthy();
 
-        expect(dialogService.open).toHaveBeenCalledOnce();
+        component.handleDialogCancel();
+
+        expect(component.dialogVisible()).toBeFalsy();
         expect(presentationAssessmentService.create).not.toHaveBeenCalled();
     });
 
@@ -104,17 +97,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         component.startEdit(presentationAssessment);
 
         expect(presentationAssessmentService.findStudents).toHaveBeenCalledWith(courseId, presentationAssessment.id);
-        expect(dialogService.open).toHaveBeenCalledWith(
-            expect.anything(),
-            expect.objectContaining({
-                data: expect.objectContaining({
-                    courseId,
-                    course,
-                    presentationAssessment,
-                    assignedStudents: [student],
-                }),
-            }),
-        );
+        expect(component.dialogVisible()).toBeTruthy();
+        expect(component.dialogPresentationAssessment()).toBe(presentationAssessment);
+        expect(component.dialogAssignedStudents()).toEqual([student]);
     });
 
     it('should create presentation with selected students after dialog save', () => {
@@ -122,7 +107,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         presentationAssessmentService.create.mockReturnValue(of(new HttpResponse({ body: savedAssessment })));
         component.startCreate();
 
-        dialogCloseSubject.next({
+        component.handleDialogSave({
             presentationAssessment: { title: 'New presentation', description: 'Description', maxPoints: 25, resultPoints: 22, presentationDate, courseId },
             assignedStudents: [student, student],
             originalAssignedStudents: [],
@@ -142,13 +127,14 @@ describe('PresentationAssessmentManagementComponent', () => {
         );
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.created');
         expect(presentationAssessmentService.findAllByCourseId).toHaveBeenCalledTimes(2);
+        expect(component.dialogVisible()).toBeFalsy();
     });
 
     it('should update presentation with the selected students after dialog save', () => {
         presentationAssessmentService.update.mockReturnValue(of(new HttpResponse({ body: presentationAssessment })));
         component.startEdit(presentationAssessment);
 
-        dialogCloseSubject.next({
+        component.handleDialogSave({
             presentationAssessment: { ...presentationAssessment, title: 'Updated presentation' },
             assignedStudents: [secondStudent],
             originalAssignedStudents: [student],
@@ -163,13 +149,14 @@ describe('PresentationAssessmentManagementComponent', () => {
             }),
         );
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.updated');
+        expect(component.dialogVisible()).toBeFalsy();
     });
 
     it('should not reload presentations when create fails', () => {
         presentationAssessmentService.create.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         component.startCreate();
 
-        dialogCloseSubject.next({
+        component.handleDialogSave({
             presentationAssessment: { title: 'New presentation', maxPoints: 25, courseId },
             assignedStudents: [student],
             originalAssignedStudents: [],
