@@ -122,7 +122,7 @@ class ConfigurationValidatorTest {
          * @param publishedPassword an internal-admin password published in the repository
          */
         @ParameterizedTest
-        @ValueSource(strings = { "artemis_admin", "artemis-admin" })
+        @ValueSource(strings = { "artemis_admin", "artemis-admin", "SecureP@ss123" })
         void testShippedInternalAdminPasswordIsRejectedUnderProdProfile(String publishedPassword) {
             ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "some_admin", publishedPassword, null);
 

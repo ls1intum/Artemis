@@ -86,11 +86,14 @@ public class ConfigurationValidator {
 
     /**
      * Internal-admin passwords that Artemis has shipped as examples: {@code artemis_admin} from
-     * {@code config/application-artemis.yml}, {@code artemis-admin} from the production-setup security documentation.
+     * {@code config/application-artemis.yml}, {@code artemis-admin} from the production-setup security documentation, and
+     * {@code SecureP@ss123}, which released versions of {@code InvalidAdminConfigurationFailureAnalyzer} printed as the
+     * example password to an operator whose admin configuration was rejected.
      * <p>
-     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}.
+     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}: this analyzer no longer
+     * prints a concrete password, but an operator who copied it from an earlier release needs it to keep failing.
      */
-    private static final Set<String> KNOWN_DEFAULT_ADMIN_PASSWORDS = Set.of("artemis_admin", "artemis-admin");
+    private static final Set<String> KNOWN_DEFAULT_ADMIN_PASSWORDS = Set.of("artemis_admin", "artemis-admin", "SecureP@ss123");
 
     /**
      * Build-agent git passwords that Artemis has shipped as examples: {@code buildjob_password} from
