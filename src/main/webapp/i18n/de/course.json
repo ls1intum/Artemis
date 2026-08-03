@@ -224,6 +224,14 @@
                 "description": "Aktiviere diese Checkbox für Kurse die für Testzwecke sind.",
                 "plural": "Testkurse"
             },
+            "gradeRelevant": {
+                "title": "Notenrelevanter Kurs",
+                "description": "Bei notenrelevanten Kursen (deren Ergebnisse z. B. in offizielle Noten oder Prüfungsunterlagen einfließen) werden die Studierendendaten für die gesetzlich vorgeschriebene Aufbewahrungsfrist (standardmäßig 5 Jahre) gespeichert. Deaktiviere dies für nicht notenrelevante Kurse, damit deren Studierendendaten gemäß Datenschutzrecht früher (standardmäßig nach 1 Jahr) gelöscht werden."
+            },
+            "dataRetentionHold": {
+                "title": "Aufbewahrungssperre",
+                "description": "Aktiviere dies, solange ein Widerspruch oder ein Rechtsstreit zu diesem Kurs anhängig ist. Ein laufendes Verfahren verlängert die Aufbewahrungsfrist gesetzlich. Ein gesperrter Kurs wird deshalb weder für die automatische Löschung alter Studierendendaten vorgemerkt noch gelöscht. Deaktiviere die Sperre, sobald das Verfahren abgeschlossen ist."
+            },
             "accessGroups": "Zugriffsrechte",
             "learningPaths": {
                 "label": "Lernpfade aktiviert",

@@ -19,42 +19,6 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
-# any lockfile entry published within the last day as a supply-chain safeguard.
-# When a freshly-published (<24h) version is pinned deliberately, list it here so the
-# frozen install passes, then remove the entry once the version has aged past the cutoff
-# (by then the gate passes on its own). Entries for versions that have already aged out
-# have been removed — keep this list minimal.
-minimumReleaseAgeExclude:
-  # Angular 22.1.0 (framework) was published 2026-07-29T20:40 and the 22.1.1 CLI/build
-  # train on 2026-07-30T09:45, both <24h before this bump. brace-expansion 5.0.9 and
-  # postcss 8.5.25 are transitive pins published in the same window. Remove each entry
-  # once its version has aged past the 24h cutoff (the gate then passes on its own).
-  - '@angular-devkit/architect@0.2201.1'
-  - '@angular-devkit/build-angular@22.1.1'
-  - '@angular-devkit/build-webpack@0.2201.1'
-  - '@angular-devkit/core@22.1.1'
-  - '@angular-devkit/schematics@22.1.1'
-  - '@angular/build@22.1.1'
-  - '@angular/cdk@22.1.0'
-  - '@angular/cli@22.1.1'
-  - '@angular/common@22.1.0'
-  - '@angular/compiler-cli@22.1.0'
-  - '@angular/compiler@22.1.0'
-  - '@angular/core@22.1.0'
-  - '@angular/forms@22.1.0'
-  - '@angular/language-service@22.1.0'
-  - '@angular/localize@22.1.0'
-  - '@angular/platform-browser-dynamic@22.1.0'
-  - '@angular/platform-browser@22.1.0'
-  - '@angular/router@22.1.0'
-  - '@angular/service-worker@22.1.0'
-  - '@angular/youtube-player@22.1.0'
-  - '@ngtools/webpack@22.1.1'
-  - '@schematics/angular@22.1.1'
-  - brace-expansion@5.0.9
-  - postcss@8.5.25
-
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
 # We already pin every relevant @angular/* dep under ng-mocks
