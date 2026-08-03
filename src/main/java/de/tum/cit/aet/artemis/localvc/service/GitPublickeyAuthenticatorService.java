@@ -103,6 +103,12 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             if (user.isEmpty()) {
                 return false;
             }
+            // An SSH key is a credential of its own: nothing else on this path consults account state, so without this a
+            // deactivated or soft-deleted user could still read and write their repositories with a key issued earlier.
+            if (!user.get().getActivated() || user.get().isDeleted()) {
+                log.warn("SSH authentication attempt for user {} whose account is deactivated or deleted", user.get().getLogin());
+                return false;
+            }
             // Retrieve and parse the stored public key string
             AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(storedKey.getPublicKey());
             PublicKey storedPublicKey = keyEntry.resolvePublicKey(null, null, null);
