@@ -280,11 +280,12 @@ describe('FileUploadAssessmentComponent', () => {
             routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 'new' });
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
             const alertSpy = vi.spyOn(alertService, 'info');
-            vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
             component.exercise.set(createExercise());
             component.ngOnInit();
 
+            expect(navigateSpy).toHaveBeenCalledWith('/course-management/123/assessment-dashboard/20');
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.noSubmissions');
         });
 
@@ -667,12 +668,15 @@ describe('FileUploadAssessmentComponent', () => {
             expect(component.isLoading()).toBe(false);
         });
 
-        it('should clear submission when no next submission is available', () => {
+        it('should navigate back and show an info alert when no next submission is available', () => {
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+            const alertInfoSpy = vi.spyOn(alertService, 'info');
 
             component.assessNext();
 
-            expect(component.submission()).toBeUndefined();
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith('/course-management/123/assessment-dashboard/20');
+            expect(alertInfoSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exerciseAssessmentDashboard.noSubmissions');
         });
 
         it('should show error alert on fetch failure', () => {
@@ -687,6 +691,7 @@ describe('FileUploadAssessmentComponent', () => {
         it('should reset unreferencedFeedback when loading next assessment', () => {
             component.unreferencedFeedback.set([createFeedback()]);
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
             component.assessNext();
 
