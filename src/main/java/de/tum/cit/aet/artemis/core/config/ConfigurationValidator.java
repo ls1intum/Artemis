@@ -84,11 +84,23 @@ public class ConfigurationValidator {
     private static final Set<String> KNOWN_DEFAULT_JWT_SECRETS = Set.of("bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=",
             "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n", "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded");
 
-    /** Internal-admin passwords that Artemis has shipped as examples. */
-    private static final Set<String> KNOWN_DEFAULT_ADMIN_PASSWORDS = Set.of("artemis_admin");
+    /**
+     * Internal-admin passwords that Artemis has shipped as examples: {@code artemis_admin} from
+     * {@code config/application-artemis.yml}, {@code artemis-admin} from the production-setup security documentation.
+     * <p>
+     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}.
+     */
+    private static final Set<String> KNOWN_DEFAULT_ADMIN_PASSWORDS = Set.of("artemis_admin", "artemis-admin");
 
-    /** Build-agent git passwords that Artemis has shipped as examples. */
-    private static final Set<String> KNOWN_DEFAULT_BUILD_AGENT_GIT_PASSWORDS = Set.of("buildjob_password");
+    /**
+     * Build-agent git passwords that Artemis has shipped as examples: {@code buildjob_password} from
+     * {@code config/application-localvc.yml} and {@code config/application-buildagent.yml},
+     * {@code buildagent_password} from the production-setup security documentation, and {@code artemis_admin} from the
+     * Jenkins LocalVC setup, which reuses the internal-admin password here.
+     * <p>
+     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}.
+     */
+    private static final Set<String> KNOWN_DEFAULT_BUILD_AGENT_GIT_PASSWORDS = Set.of("buildjob_password", "buildagent_password", "artemis_admin");
 
     private final Environment environment;
 
@@ -280,7 +292,11 @@ public class ConfigurationValidator {
      * @param remediation     concrete instructions for choosing an acceptable value
      */
     private static void rejectIfKnownDefault(String configuredValue, Set<String> knownDefaults, String propertyPath, String reason, String remediation) {
-        boolean matchesDefault = knownDefaults.stream().anyMatch(knownDefault -> constantTimeEquals(configuredValue, knownDefault));
+        // Non-short-circuiting on purpose, so that every candidate is compared regardless of where the match sits.
+        boolean matchesDefault = false;
+        for (String knownDefault : knownDefaults) {
+            matchesDefault |= constantTimeEquals(configuredValue, knownDefault);
+        }
         if (matchesDefault) {
             throw new InsecureDefaultCredentialException(propertyPath, reason, remediation);
         }

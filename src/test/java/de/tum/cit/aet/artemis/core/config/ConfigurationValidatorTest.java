@@ -114,9 +114,17 @@ class ConfigurationValidatorTest {
             assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class).hasMessageContaining("HS512 requires at least");
         }
 
-        @Test
-        void testShippedInternalAdminPasswordIsRejectedUnderProdProfile() {
-            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "some_admin", "artemis_admin", null);
+        /**
+         * Every internal-admin password the repository publishes has to be rejected, not just the one in
+         * {@code config/application-artemis.yml}: an operator following the production-setup security documentation
+         * copies {@code artemis-admin}, which is just as public.
+         *
+         * @param publishedPassword an internal-admin password published in the repository
+         */
+        @ParameterizedTest
+        @ValueSource(strings = { "artemis_admin", "artemis-admin" })
+        void testShippedInternalAdminPasswordIsRejectedUnderProdProfile(String publishedPassword) {
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, "some_admin", publishedPassword, null);
 
             assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
                     .hasMessageContaining("artemis.user-management.internal-admin.password");
@@ -130,9 +138,18 @@ class ConfigurationValidatorTest {
                     .hasMessageContaining("identical to the internal admin username");
         }
 
-        @Test
-        void testShippedBuildAgentGitPasswordIsRejectedUnderProdProfile() {
-            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, "buildjob_password");
+        /**
+         * A matching build-agent git password grants read access to every repository, so each value the repository
+         * publishes for it has to be rejected: the packaged {@code buildjob_password}, the {@code buildagent_password}
+         * of the production-setup security documentation, and the {@code artemis_admin} that the Jenkins LocalVC setup
+         * reuses here.
+         *
+         * @param publishedPassword a build-agent git password published in the repository
+         */
+        @ParameterizedTest
+        @ValueSource(strings = { "buildjob_password", "buildagent_password", "artemis_admin" })
+        void testShippedBuildAgentGitPasswordIsRejectedUnderProdProfile(String publishedPassword) {
+            ConfigurationValidator validator = createCredentialValidator(true, ACCEPTABLE_BASE64_SECRET, null, null, null, publishedPassword);
 
             assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
                     .hasMessageContaining("artemis.version-control.build-agent-git-password");
