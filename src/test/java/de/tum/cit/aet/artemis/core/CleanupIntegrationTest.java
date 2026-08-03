@@ -23,7 +23,11 @@ import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.NotEnrolledUsersCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldCoursesCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OldFeedbackCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.PlagiarismCasesCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.repository.CleanupJobExecutionRepository;
@@ -575,6 +579,133 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    void testDeleteOldFeedbackKeepsLatestRatedAndNonRatedResultFeedback() throws Exception {
+        // One participation on the (old) course with a mixed rated/non-rated result history in creation (id) order:
+        // r1 non-rated, r2 rated, r3 non-rated (latest non-rated), r4 rated (latest rated AND overall newest id).
+        // This is the case that motivated the FeedbackCleanupRepository r2.rated=FALSE fix: because r4 (rated) is the
+        // overall newest result, a MAX(id)-over-all-results "keep" would wrongly delete the latest NON-rated result's
+        // feedback (r3). The age-based cleanup must keep the latest rated (r4) AND the latest non-rated (r3) feedback.
+        // The old-feedback count aggregates across all old courses, so capture the baseline and assert the delta this
+        // test introduces, keeping it robust against data left over from other tests.
+        int initialFeedbackCount = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+
+        var nonLatestNonRated = participationUtilService.generateResult(submission, instructor);
+        nonLatestNonRated.setRated(false);
+        var feedbackNonLatestNonRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackNonLatestNonRated);
+        participationUtilService.addFeedbackToResult(feedbackNonLatestNonRated, nonLatestNonRated);
+
+        var nonLatestRated = participationUtilService.generateResult(submission, instructor); // rated by default
+        var feedbackNonLatestRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackNonLatestRated);
+        participationUtilService.addFeedbackToResult(feedbackNonLatestRated, nonLatestRated);
+
+        var latestNonRated = participationUtilService.generateResult(submission, instructor);
+        latestNonRated.setRated(false);
+        var feedbackLatestNonRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackLatestNonRated);
+        participationUtilService.addFeedbackToResult(feedbackLatestNonRated, latestNonRated);
+
+        var latestRated = participationUtilService.generateResult(submission, instructor); // rated, overall newest id
+        var feedbackLatestRated = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackLatestRated);
+        participationUtilService.addFeedbackToResult(feedbackLatestRated, latestRated);
+
+        // Only the two non-latest results' feedback (fb of nonLatestNonRated + nonLatestRated) should be added to the count.
+        var counts = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class);
+        assertThat(counts).isNotNull();
+        assertThat(counts.feedback()).isEqualTo(initialFeedbackCount + 2);
+
+        var responseBody = request.delete("/api/core/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo("deleteFeedback");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        // Non-latest results' feedback deleted
+        assertThat(feedbackRepository.findByResult(nonLatestNonRated)).isEmpty();
+        assertThat(feedbackRepository.findByResult(nonLatestRated)).isEmpty();
+        // Latest non-rated (r3) AND latest rated (r4) feedback kept; r3 being kept proves the r2.rated=FALSE fix.
+        assertThat(feedbackRepository.findByResult(latestNonRated)).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(latestRated)).isNotEmpty();
+        // Results themselves are never deleted by this operation.
+        assertThat(resultRepository.existsById(nonLatestNonRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(nonLatestRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(latestNonRated.getId())).isTrue();
+        assertThat(resultRepository.existsById(latestRated.getId())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteOldCourseSubmissionVersionsByCourseEndDate() throws Exception {
+        // The automated cleanup deletes submission versions by the OWNING COURSE's end date (submission -> participation
+        // -> exercise -> course), which is a different query than the createdDate-range endpoint covered by
+        // testDeleteOldSubmissionVersions. A version whose course (oldCourse) ended well before the cutoff must be
+        // deleted; a version whose course (newCourse) has not ended must be kept.
+        // The count aggregates across all old courses, so capture the baseline before seeding and assert the delta this
+        // test introduces (exactly the one old-course version), keeping it robust against versions left by other tests.
+        int baseline = request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class).submissionVersions();
+
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var oldParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var oldSubmission = participationUtilService.addSubmission(oldParticipation, ParticipationFactory.generateTextSubmission("old", Language.ENGLISH, true));
+        var oldVersion = submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("old-content", oldSubmission, student));
+
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var newParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var newSubmission = participationUtilService.addSubmission(newParticipation, ParticipationFactory.generateTextSubmission("new", Language.ENGLISH, true));
+        var newVersion = submissionVersionRepository.save(ParticipationFactory.generateSubmissionVersion("new-content", newSubmission, student));
+
+        // Only the old-course version is counted; the not-yet-ended course's version must not be.
+        int afterSeeding = request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class).submissionVersions();
+        assertThat(afterSeeding).isEqualTo(baseline + 1);
+
+        var responseBody = request.delete("/api/core/admin/cleanup/old-course-submission-versions", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class,
+                HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo(CleanupJobType.OLD_COURSE_SUBMISSION_VERSIONS.label());
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        // Only the version of the course that already ended is deleted; the ongoing course's version survives.
+        assertThat(submissionVersionRepository.findById(oldVersion.getId())).isEmpty();
+        assertThat(submissionVersionRepository.findById(newVersion.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteOldFeedbackKeepsRecentCourseFeedback() throws Exception {
+        // Cutoff-boundary guard: the age-based feedback cleanup must only touch courses that ended before the cutoff.
+        // Feedback of a non-latest result of a course that has NOT yet ended (newCourse) must neither be counted nor
+        // deleted, so ongoing/recent courses can never lose feedback by accident.
+        int baseline = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateProgrammingSubmission(true));
+        // Two rated results: the first is non-latest (a deletion candidate for an OLD course), the second is latest.
+        var nonLatestRated = participationUtilService.generateResult(submission, instructor);
+        var feedbackNonLatest = createFeedbackWithLinkedLongFeedback();
+        createTextBlockForFeedback(feedbackNonLatest);
+        participationUtilService.addFeedbackToResult(feedbackNonLatest, nonLatestRated);
+        var latestRated = participationUtilService.generateResult(submission, instructor);
+        var feedbackLatest = createFeedbackWithLinkedLongFeedback();
+        participationUtilService.addFeedbackToResult(feedbackLatest, latestRated);
+
+        // The not-yet-ended course contributes nothing to the count, even though it has a non-latest result.
+        int afterSeeding = request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class).feedback();
+        assertThat(afterSeeding).isEqualTo(baseline);
+
+        var responseBody = request.delete("/api/core/admin/cleanup/old-feedback", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        assertThat(responseBody.jobType()).isEqualTo(CleanupJobType.FEEDBACK.label());
+
+        // The recent course's feedback (both non-latest and latest) survives the cleanup.
+        assertThat(feedbackRepository.findByResult(nonLatestRated)).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(latestRated)).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
         var now = ZonedDateTime.now();
@@ -611,7 +742,36 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         request.delete("/api/core/admin/cleanup/old-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
         request.get("/api/core/admin/cleanup/old-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
 
+        // new data-privacy cleanup endpoints
+        request.postWithoutResponseBody("/api/core/admin/cleanup/old-courses/warn", null, HttpStatus.FORBIDDEN);
+        request.get("/api/core/admin/cleanup/old-courses/warn/count", HttpStatus.FORBIDDEN, OldCoursesCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-courses/reset", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-courses/reset/count", HttpStatus.FORBIDDEN, OldCoursesCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-feedback", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.FORBIDDEN, OldFeedbackCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/old-course-submission-versions", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.FORBIDDEN, SubmissionVersionsCleanupCountDTO.class);
+        request.postWithoutResponseBody("/api/core/admin/cleanup/not-enrolled-users/warn", null, HttpStatus.FORBIDDEN);
+        request.get("/api/core/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/not-enrolled-users", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.FORBIDDEN, NotEnrolledUsersCleanupCountDTO.class);
+        request.delete("/api/core/admin/cleanup/plagiarism-cases", HttpStatus.FORBIDDEN, CleanupServiceExecutionRecordDTO.class);
+        request.get("/api/core/admin/cleanup/plagiarism-cases/count", HttpStatus.FORBIDDEN, PlagiarismCasesCleanupCountDTO.class);
+
         request.get("/api/core/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testCountNewDataPrivacyOperationsAsAdmin() throws Exception {
+        // the count (preview) endpoints are read-only and must be wired, authorized for admins, and serialize correctly
+        assertThat(request.get("/api/core/admin/cleanup/old-courses/warn/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/old-courses/reset/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/old-feedback/count", HttpStatus.OK, OldFeedbackCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/old-course-submission-versions/count", HttpStatus.OK, SubmissionVersionsCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/warn/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/not-enrolled-users/count", HttpStatus.OK, NotEnrolledUsersCleanupCountDTO.class)).isNotNull();
+        assertThat(request.get("/api/core/admin/cleanup/plagiarism-cases/count", HttpStatus.OK, PlagiarismCasesCleanupCountDTO.class)).isNotNull();
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {
