@@ -229,11 +229,18 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
+        // Captured before the flag is overwritten: the admin edit form reaches the same two transitions as
+        // deactivateUser and a password reset do, and a session established earlier has to stop being extended for both.
+        boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
         user.setLangKey(updatedUserDTO.getLangKey());
-        if (user.isInternal() && updatedUserDTO.getPassword() != null) {
+        boolean isPasswordBeingChanged = user.isInternal() && updatedUserDTO.getPassword() != null;
+        if (isPasswordBeingChanged) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+        }
+        if (isBeingDeactivated || isPasswordBeingChanged) {
+            user.setCredentialsChangedDate(ZonedDateTime.now());
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);

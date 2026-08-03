@@ -52,7 +52,11 @@ public class JWTCookieService {
      * @return the login ResponseCookie containing the JWT
      */
     public ResponseCookie buildLoginCookie(boolean rememberMe, @Nullable ToolTokenType tool) {
-        return buildLoginCookie(tokenProvider.getTokenValidity(rememberMe), tool);
+        // The flag is passed on rather than only converted into a duration: it is what marks the session extendable, and
+        // dropping it here would leave every production login without the claim, so no session would ever be extended.
+        long duration = tokenProvider.getTokenValidity(rememberMe);
+        String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool, rememberMe);
+        return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
     }
 
     /**

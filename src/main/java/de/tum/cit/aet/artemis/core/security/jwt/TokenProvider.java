@@ -139,8 +139,30 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
+        return createToken(authentication, duration, tool, false);
+    }
+
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
+     * @param authentication Authentication Object
+     * @param duration       the Token lifetime in milliseconds
+     * @param tool           tool this token is used for. If null, it's a general access token
+     * @param rememberMe     whether the session was established with "remember me", which is what makes it extendable
+     * @return JWT Token
+     */
+    @NonNull
+    public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool, boolean rememberMe) {
         long validity = System.currentTimeMillis() + duration;
-        return createToken(authentication, null, new Date(validity), tool, null);
+        boolean isPasskeyApproved = false;
+        String passkeyCredentialId = null;
+        if (authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+            if (details.get(PASSKEY_CREDENTIAL_ID) instanceof String credentialId) {
+                passkeyCredentialId = credentialId;
+            }
+        }
+        return createToken(authentication, null, new Date(validity), tool, null, passkeyCredentialId, isPasskeyApproved, rememberMe, 0);
     }
 
     /**
