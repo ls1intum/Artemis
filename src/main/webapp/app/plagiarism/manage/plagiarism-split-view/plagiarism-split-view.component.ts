@@ -68,6 +68,18 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
         return exercise?.type === ExerciseType.PROGRAMMING || exercise?.type === ExerciseType.TEXT;
     });
 
+    /** Course of the exercise under review, undefined until the exercise input is bound. Derived so the comparison fetch can track it. */
+    readonly courseId = computed(() => {
+        const exercise = this.exercise();
+        if (!exercise) {
+            return undefined;
+        }
+        if ('courseId' in exercise && exercise.courseId !== undefined) {
+            return exercise.courseId;
+        }
+        return getCourseId(exercise as Exercise);
+    });
+
     readonly matchesA = signal<Map<string, FromToElement[]> | undefined>(undefined);
     readonly matchesB = signal<Map<string, FromToElement[]> | undefined>(undefined);
     readonly isLockFilesEnabled = signal(false);
@@ -77,27 +89,27 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
     protected readonly faUnlock: IconDefinition = faUnlock;
 
     constructor() {
+        // Both inputs are tracked, because the parent may bind them in either order. Reading the course id inside untracked() would mean that an exercise arriving
+        // after the comparison never retriggers the fetch, which is what the replaced ngOnChanges did handle.
         effect(() => {
             const comparison = this.comparison();
-            if (comparison) {
-                untracked(() => {
-                    const courseId = this.getCourseIdForExercise();
-                    if (courseId === undefined) {
-                        return;
-                    }
-                    this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((resp: HttpResponse<PlagiarismComparison>) => {
-                        const plagiarismComparison = resp.body!;
-                        const sortByStudentLogin = this.sortByStudentLogin();
-                        if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
-                            this.swapSubmissions(plagiarismComparison);
-                        }
-                        this.plagiarismComparison.set(plagiarismComparison);
-                        if (this.isProgrammingOrTextExercise()) {
-                            this.parseTextMatches(plagiarismComparison);
-                        }
-                    });
-                });
+            const courseId = this.courseId();
+            if (!comparison || courseId === undefined) {
+                return;
             }
+            untracked(() => {
+                this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((resp: HttpResponse<PlagiarismComparison>) => {
+                    const plagiarismComparison = resp.body!;
+                    const sortByStudentLogin = this.sortByStudentLogin();
+                    if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
+                        this.swapSubmissions(plagiarismComparison);
+                    }
+                    this.plagiarismComparison.set(plagiarismComparison);
+                    if (this.isProgrammingOrTextExercise()) {
+                        this.parseTextMatches(plagiarismComparison);
+                    }
+                });
+            });
         });
 
         afterNextRender(() => this.observeGutterPosition());
@@ -128,17 +140,6 @@ export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.splitControlSubject()?.subscribe((pane: string) => this.handleSplitControl(pane));
-    }
-
-    private getCourseIdForExercise(): number | undefined {
-        const exercise = this.exercise();
-        if (!exercise) {
-            return undefined;
-        }
-        if ('courseId' in exercise && exercise.courseId !== undefined) {
-            return exercise.courseId;
-        }
-        return getCourseId(exercise as Exercise);
     }
 
     ngOnDestroy() {

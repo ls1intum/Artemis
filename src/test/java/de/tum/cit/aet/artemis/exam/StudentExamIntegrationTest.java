@@ -149,6 +149,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     private static final String TEST_PREFIX = "studexam";
 
+    private static final String OTHER_STUDENT = TEST_PREFIX + "other" + "student42";
+
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
@@ -253,7 +255,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
         exam1 = examRepository.save(exam1);
 
@@ -282,7 +284,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamForTestExam2.setSubmissionDate(ZonedDateTime.now().minusMinutes(65));
         studentExamRepository.save(studentExamForTestExam2);
 
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_STUDENT);
         studentRepos.clear();
         programmingInitialCommitHashes.clear();
         programmingUpdatedCommitHashes.clear();
@@ -615,7 +617,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
         exam2.setTestExam(isTestExam);
@@ -652,7 +654,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         // --> 2 min = 120s working time
 
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
@@ -666,7 +668,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -682,7 +684,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notExamExercise() throws Exception {
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course2, false);
         request.getList("/api/exercise/exercises/" + exercise.getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
     }
@@ -691,7 +693,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_notInstructor() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -705,7 +707,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllTestRunSubmissionsForExercise_noTestRunSubmissions() throws Exception {
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
@@ -724,7 +726,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -755,7 +757,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
         var examEndDate = ZonedDateTime.now().plusMinutes(20);
 
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
@@ -1677,7 +1679,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 dndMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
                 dndMapping.setDropLocationIndex(dndLocationIndex);
                 dndMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndLocationIndex));
-                submittedAnswer.getMappings().add(dndMapping);
+                submittedAnswer.addMappings(dndMapping);
                 submittedAnswer.setQuizQuestion(dragAndDropQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
@@ -1686,8 +1688,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
                 shortAnswerSubmittedText.setText(shortAnswerText);
                 shortAnswerSubmittedText.setSpot(shortAnswerQuestion.getSpots().get(saSpotIndex));
-                submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
                 submittedAnswer.setQuizQuestion(shortAnswerQuestion);
+                submittedAnswer.addSubmittedTexts(shortAnswerSubmittedText);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
             else if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
@@ -2863,9 +2865,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     // StudentExamResource - getStudentExamsForCoursePerUser
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamsForCoursePerUser_NoCourseAccess() throws Exception {
-        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.getList("/api/exam/courses/" + course1.getId() + "/test-exams-per-user", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
@@ -2881,7 +2883,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamsForCoursePerUser_success_noStudentExams() throws Exception {
-        course2 = courseUtilService.addEmptyCourse();
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         List<StudentExam> studentExamListReceived = request.getList("/api/exam/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamListReceived).isEmpty();
     }
@@ -2895,18 +2897,18 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoCourseAccess() throws Exception {
-        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam1, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForTestExamForSummary_NoExamAccess() throws Exception {
         Exam exam99 = examUtilService.addTestExam(course1);
-        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(TEST_PREFIX + "student42"));
+        StudentExam studentExam99 = examUtilService.addStudentExamForTestExam(exam99, userUtilService.getUserByLogin(OTHER_STUDENT));
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam99.getId() + "/summary", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
@@ -2947,7 +2949,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     // StudentExamRessource - GetStudentExamForConduction
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_STUDENT, roles = "USER")
     void testGetStudentExamForConduction_notRegisteredInCourse() throws Exception {
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.FORBIDDEN,
                 StudentExam.class);
@@ -3077,7 +3079,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
         // + update Student Exam + find Student Participations By Student Exam With Submissions Result
-        // TODO: Hibernate 7 increased base query count from 5 to 6 — investigate remaining extra query in a follow-up
+        // TODO: Hibernate 7 increased base query count from 5 to 6 - investigate remaining extra query in a follow-up
         private final int BASE_QUERY_COUNT = 6;
 
         private TextExercise textExercise;
@@ -3180,8 +3182,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // load Quiz Submissions Submitted Answers (for comparison)
-            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion — needs FetchType.LAZY
-            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more — Hibernate now issues per-child-collection
+            // TODO: Hibernate 7 increased quiz query count from 3 to 8 due to EAGER @ManyToOne on SubmittedAnswer.quizQuestion - needs FetchType.LAZY
+            // The bidirectional @OrderColumn refactor (#12584 fix) added 2 more - Hibernate now issues per-child-collection
             // SELECTs to refresh the order indices on the question's EAGER child Lists when the question is touched.
             // Tracked in #12808 to evaluate switching those collections to FetchType.LAZY and reclaiming the +2.
             final int quizQueryCount = 10;
@@ -3364,8 +3366,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
 
             DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
-            changedAnswer.getMappings().add(changedMapping);
             changedAnswer.setQuizQuestion(dragAndDropQuestion);
+            changedAnswer.addMappings(changedMapping);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedMapping;
@@ -3377,8 +3379,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
 
             ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
-            changedAnswer.getSubmittedTexts().add(changedText);
             changedAnswer.setQuizQuestion(shortAnswerQuestion);
+            changedAnswer.addSubmittedTexts(changedText);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedText;

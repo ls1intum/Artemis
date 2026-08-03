@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -17,13 +17,15 @@ import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/progr
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
+import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
@@ -34,6 +36,7 @@ describe('FeedbackComponent', () => {
     let resultService: ResultService;
     let profileService: ProfileService;
     let feedbackItemService: ProgrammingFeedbackItemService;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
     let buildlogsStub: ReturnType<typeof vi.spyOn>;
     let getFeedbackDetailsForResultStub: ReturnType<typeof vi.spyOn>;
@@ -187,6 +190,7 @@ describe('FeedbackComponent', () => {
         fixture = TestBed.createComponent(FeedbackComponent);
         comp = fixture.componentInstance;
         exercise = {
+            id: 42,
             maxPoints: 100,
             bonusPoints: 0,
             type: ExerciseType.PROGRAMMING,
@@ -215,12 +219,14 @@ describe('FeedbackComponent', () => {
                     repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
                 },
                 buildFailed: true,
+                commitHash: 'assessed-commit-hash',
             },
         } as Result);
         buildLogService = TestBed.inject(BuildLogService);
         resultService = TestBed.inject(ResultService);
         profileService = TestBed.inject(ProfileService);
         feedbackItemService = TestBed.inject(ProgrammingFeedbackItemService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         buildlogsStub = vi.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
         getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
         // Set profile info
@@ -299,6 +305,119 @@ describe('FeedbackComponent', () => {
         expect(comp.feedbackItemNodes()?.length).toBeGreaterThan(0);
         expect(comp.scoreChartData()).toBeDefined();
         expect(comp.scoreChartOptions()).toBeDefined();
+    });
+
+    it('should load historical source code from the assessed commit without blocking feedback', () => {
+        const repositoryFiles = new Subject<Map<string, string>>();
+        const getFilesSpy = vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(repositoryFiles);
+        comp.result().feedbacks = [
+            makeFeedback({
+                text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
+                detailText: 'The returned value is wrong.',
+                reference: 'file:src/main/java/Example.java_line:3',
+            }),
+        ];
+
+        comp.ngOnInit();
+
+        expect(getFilesSpy).toHaveBeenCalledOnce();
+        expect(getFilesSpy).toHaveBeenCalledWith(42, 55, 'assessed-commit-hash', ['src/main/java/Example.java']);
+        expect(comp.feedbackItemNodes()).toBeDefined();
+        expect(comp.isLoading()).toBe(false);
+
+        repositoryFiles.next(new Map([['src/main/java/Example.java', ['1', '2', 'historical answer', '4', '5'].join('\n')]]));
+
+        const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
+        expect(feedbackItem.codeReference).toEqual({
+            filePath: 'src/main/java/Example.java',
+            line: 3,
+            lines: [
+                { line: 1, code: '1', referenced: false },
+                { line: 2, code: '2', referenced: false },
+                { line: 3, code: 'historical answer', referenced: true },
+                { line: 4, code: '4', referenced: false },
+                { line: 5, code: '5', referenced: false },
+            ],
+        });
+    });
+
+    it('should request each referenced file only once', () => {
+        const getFilesSpy = vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(of(new Map()));
+        comp.result().feedbacks = [
+            makeFeedback({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}First issue`, reference: 'file:src/main/java/Example.java_line:2' }),
+            makeFeedback({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Second issue`, reference: 'file:src/main/java/Example.java_line:4' }),
+            makeFeedback({ text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Third issue`, reference: 'file:src/main/java/Other.java_line:1' }),
+        ];
+
+        comp.ngOnInit();
+
+        expect(getFilesSpy).toHaveBeenCalledOnce();
+        expect(getFilesSpy).toHaveBeenCalledWith(42, 55, 'assessed-commit-hash', ['src/main/java/Example.java', 'src/main/java/Other.java']);
+    });
+
+    it('should load surrounding source code for ranged programming AI feedback', () => {
+        vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(
+            of(new Map([['src/main/java/Example.java', ['1', '2', '3', '4', '5', '6', '7'].join('\n')]])),
+        );
+        comp.result().feedbacks = [
+            makeFeedback({
+                text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
+                detailText: 'The returned value is wrong.',
+                reference: 'file:src/main/java/Example.java_line:3-5',
+            }),
+        ];
+
+        comp.ngOnInit();
+
+        const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
+        expect(feedbackItem.codeReference?.lines).toEqual([
+            { line: 1, code: '1', referenced: false },
+            { line: 2, code: '2', referenced: false },
+            { line: 3, code: '3', referenced: true },
+            { line: 4, code: '4', referenced: true },
+            { line: 5, code: '5', referenced: true },
+            { line: 6, code: '6', referenced: false },
+            { line: 7, code: '7', referenced: false },
+        ]);
+    });
+
+    it('should truncate oversized programming AI feedback line ranges', () => {
+        const fileContent = Array.from({ length: 100 }, (_, index) => String(index + 1)).join('\n');
+        vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(
+            of(new Map([['src/main/java/Example.java', fileContent]])),
+        );
+        comp.result().feedbacks = [
+            makeFeedback({
+                text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
+                detailText: 'The returned value is wrong.',
+                reference: 'file:src/main/java/Example.java_line:3-1000000',
+            }),
+        ];
+
+        comp.ngOnInit();
+
+        const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
+        expect(feedbackItem.codeReference?.lines).toHaveLength(50);
+        expect(feedbackItem.codeReference?.lines?.at(0)?.line).toBe(1);
+        expect(feedbackItem.codeReference?.lines?.at(-1)?.line).toBe(50);
+    });
+
+    it('should still show feedback when loading the assessed repository fails', () => {
+        vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(throwError(() => new Error('repository unavailable')));
+        comp.result().feedbacks = [
+            makeFeedback({
+                text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Check this implementation`,
+                detailText: 'The returned value is wrong.',
+                reference: 'file:src/main/java/Example.java_line:2',
+            }),
+        ];
+
+        comp.ngOnInit();
+
+        const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
+        expect(feedbackItem.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 2 });
+        expect(comp.isLoading()).toBe(false);
+        expect(comp.loadingFailed()).toBe(false);
     });
 
     it('should hide the score chart when there is no chart data', () => {

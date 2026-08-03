@@ -78,7 +78,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     void setup() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam1 = examUtilService.addExam(course1);
     }
 
@@ -122,7 +122,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsTooFewSeats() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
@@ -161,7 +161,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsEnoughSeats() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
@@ -175,7 +175,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsAllowAlternativeLayouts() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
@@ -190,7 +190,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsAllowAlternativeLayoutsButStillTooFewSeats() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 

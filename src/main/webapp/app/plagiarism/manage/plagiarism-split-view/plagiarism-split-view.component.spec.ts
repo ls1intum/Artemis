@@ -90,11 +90,27 @@ describe('Plagiarism Split View Component', () => {
             .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
             .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
 
-        // With a comparison set but no exercise, getCourseIdForExercise() is undefined, so the effect must not fetch.
+        // With a comparison set but no exercise, courseId() is undefined, so the effect must not fetch.
         fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
         fixture.detectChanges();
 
         expect(getComparisonSpy).not.toHaveBeenCalled();
+    });
+
+    it('should fetch the comparison when the exercise is bound after the comparison', () => {
+        const getComparisonSpy = vi
+            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
+            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+
+        // The parent may bind the inputs in either order. The effect tracks the derived course id as well, so the late exercise still triggers the fetch.
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
+        expect(getComparisonSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('exercise', textExercise as Exercise);
+        fixture.detectChanges();
+
+        expect(getComparisonSpy).toHaveBeenCalledExactlyOnceWith(textExercise.course!.id, 1);
     });
 
     it('should subscribe to the split control subject', () => {

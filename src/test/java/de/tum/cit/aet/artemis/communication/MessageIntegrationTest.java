@@ -111,7 +111,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(courseUtilService.createCourse(), TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(courseUtilService.createEnrolledCourse(TEST_PREFIX), TEST_PREFIX);
 
         existingCourseWideMessages = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
                 .toList();
@@ -217,7 +217,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversationPostInCourseWideChannel_onlyFewDatabaseCalls() throws Exception {
-        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Course course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         userUtilService.addStudents(TEST_PREFIX + "createMessageDbTest", 1, 5);
 
         // given
@@ -1146,7 +1146,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * still query unread-message counts without re-resolving the conversation entity.
      */
     private long getUnreadMessagesCount(Long conversationId, User user) {
-        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(conversationId).orElseThrow().getConversationParticipants().stream()
+        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(conversationId).orElseThrow().getConversationParticipants().stream()
                 .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findFirst().orElseThrow().getUnreadMessagesCount();
     }
 
@@ -1171,7 +1171,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(chat.getId()).orElseThrow();
         Post post = new Post();
         post.setAuthor(student1);
         post.setDisplayPriority(DisplayPriority.NONE);
@@ -1310,8 +1310,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-create");
 
         CreatePostDTO postDTOToSave = new CreatePostDTO("cross-course injection", "", false, new CreatePostConversationDTO(channelInOtherCourse.getId()));
@@ -1333,8 +1332,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-update");
         Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 
@@ -1347,8 +1345,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteMessage_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-delete");
         Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 
@@ -1359,8 +1356,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testChangeDisplayPriority_conversationInDifferentCourse_isBadRequest() throws Exception {
-        Course otherCourse = courseUtilService.createCourse();
-        courseUtilService.enableMessagingForCourse(otherCourse);
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channelInOtherCourse = conversationUtilService.createCourseWideChannel(otherCourse, "f003-pin");
         Post post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channelInOtherCourse);
 
