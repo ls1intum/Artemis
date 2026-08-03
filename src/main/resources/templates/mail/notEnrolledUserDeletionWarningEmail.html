@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.notEnrolledUserDeletionWarning.title}">Your Artemis account will be deleted</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+        <span th:text="#{email.notEnrolledUserDeletionWarning.text(${gracePeriodDays})}">
+            Your Artemis account is enrolled in no course and has been inactive for a long time. For data-privacy reasons
+            it will be permanently deleted after the grace period.
+        </span>
+    </p>
+    <p>
+        <span th:text="#{email.notEnrolledUserDeletionWarning.keepHint}">If you want to keep your account, simply log in before then</span>:
+        <a th:with="url=(@{|${baseUrl}/|})" th:href="${url}" th:text="${url}">Link</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}" />
+
+</body>
+</html>

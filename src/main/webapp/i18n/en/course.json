@@ -224,6 +224,14 @@
                 "description": "Activate this checkbox for courses used for testing.",
                 "plural": "Test Courses"
             },
+            "gradeRelevant": {
+                "title": "Grade-relevant course",
+                "description": "Grade-relevant courses (e.g. their results count towards official grades or exam records) keep student data for the legally required retention period (by default 5 years). Deactivate this for courses that are not grade-relevant, so their student data is deleted earlier (by default after 1 year), following data-privacy law."
+            },
+            "dataRetentionHold": {
+                "title": "Data-retention hold",
+                "description": "Activate this while an objection or legal proceeding concerning this course is pending. A pending proceeding legally extends the retention period, so a course on hold is never warned about, nor included in, the automatic deletion of old student data. Deactivate it once the proceeding is resolved."
+            },
             "accessGroups": "Access Groups",
             "learningPaths": {
                 "label": "Learning Paths Enabled",

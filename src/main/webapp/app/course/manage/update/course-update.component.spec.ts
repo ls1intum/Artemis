@@ -167,6 +167,50 @@ describe('Course Management Update Component', () => {
     });
 
     describe('ngOnInit', () => {
+        it('should load a grade-relevance opt-out (gradeRelevant=false) as an unchecked control', () => {
+            // A course that opted out of grade relevance must load unchecked, otherwise a later save would silently flip
+            // it back to grade-relevant and extend its data-retention period.
+            course.courseConfiguration = { gradeRelevant: false };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(false);
+        });
+
+        it('should default the grade-relevance control to checked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('gradeRelevant')?.value).toBe(true);
+        });
+
+        it('should load an active data-retention hold as a checked control', () => {
+            // A course held because of a pending objection must load checked, otherwise saving the form would silently
+            // lift the hold and expose the course to the automatic student-data reset again.
+            course.courseConfiguration = { dataRetentionHold: true };
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(true);
+        });
+
+        it('should default the data-retention hold control to unchecked when the course has no configuration', () => {
+            course.courseConfiguration = undefined;
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [], activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+            comp.ngOnInit();
+
+            expect(comp.courseForm.get('dataRetentionHold')?.value).toBe(false);
+        });
+
         it('should get course, profile and fill the form', async () => {
             const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
             const getProfileStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -237,6 +281,8 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -273,6 +319,8 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -302,6 +350,29 @@ describe('Course Management Update Component', () => {
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should map the grade-relevance form control into the course configuration on save', async () => {
+            // GIVEN
+            const entity = new Course();
+            entity.id = 123;
+            comp.course = entity;
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            comp.courseForm = new FormGroup({
+                id: new FormControl(entity.id),
+                // instructor opted out of grade relevance
+                gradeRelevant: new FormControl(false),
+            });
+
+            // WHEN
+            comp.save();
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            // THEN
+            expect(updateStub).toHaveBeenCalledOnce();
+            const savedCourse = updateStub.mock.calls[0][1];
+            expect(savedCourse.courseConfiguration?.gradeRelevant).toBe(false);
         });
 
         it('should broadcast course modification on delete', async () => {
