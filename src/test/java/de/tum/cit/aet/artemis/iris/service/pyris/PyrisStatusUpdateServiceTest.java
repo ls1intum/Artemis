@@ -59,6 +59,8 @@ class PyrisStatusUpdateServiceTest {
 
     private IrisWebsocketService irisWebsocketService;
 
+    private IngestionProgressService ingestionProgressService;
+
     private PyrisStatusUpdateService service;
 
     @BeforeEach
@@ -70,8 +72,9 @@ class PyrisStatusUpdateServiceTest {
         autonomousTutorService = mock(AutonomousTutorService.class);
         processingStateCallbackApi = mock(ProcessingStateCallbackApi.class);
         irisWebsocketService = mock(IrisWebsocketService.class);
+        ingestionProgressService = mock(IngestionProgressService.class);
         service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, competencyGenerationService, irisTutorSuggestionSessionService, autonomousTutorService,
-                Optional.of(processingStateCallbackApi), irisWebsocketService);
+                Optional.of(processingStateCallbackApi), irisWebsocketService, ingestionProgressService);
     }
 
     @ParameterizedTest

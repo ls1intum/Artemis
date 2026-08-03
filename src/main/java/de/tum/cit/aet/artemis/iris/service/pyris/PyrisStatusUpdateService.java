@@ -58,9 +58,11 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
+    private final IngestionProgressService ingestionProgressService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService, IngestionProgressService ingestionProgressService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
@@ -68,6 +70,7 @@ public class PyrisStatusUpdateService {
         this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisWebsocketService = irisWebsocketService;
+        this.ingestionProgressService = ingestionProgressService;
     }
 
     /**
@@ -179,6 +182,10 @@ public class PyrisStatusUpdateService {
         }
 
         var isDone = runState.isTerminal();
+
+        // Keep the live active-ingestions registry (admin dashboard) in sync: store the current per-step activity
+        // snapshot on every non-terminal callback and drop the run once it is terminal.
+        ingestionProgressService.record(job, statusUpdate, isDone);
 
         if (isDone) {
             boolean success = runState == PyrisRunState.FINISHED;

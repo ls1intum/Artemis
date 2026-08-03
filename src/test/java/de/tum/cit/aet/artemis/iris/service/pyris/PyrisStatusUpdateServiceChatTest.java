@@ -33,7 +33,7 @@ class PyrisStatusUpdateServiceChatTest {
         pyrisJobService = mock(PyrisJobService.class);
         irisChatSessionService = mock(IrisChatSessionService.class);
         service = new PyrisStatusUpdateService(pyrisJobService, irisChatSessionService, mock(IrisCompetencyGenerationService.class), mock(IrisTutorSuggestionSessionService.class),
-                mock(AutonomousTutorService.class), Optional.empty(), mock(IrisWebsocketService.class));
+                mock(AutonomousTutorService.class), Optional.empty(), mock(IrisWebsocketService.class), mock(IngestionProgressService.class));
     }
 
     @Test

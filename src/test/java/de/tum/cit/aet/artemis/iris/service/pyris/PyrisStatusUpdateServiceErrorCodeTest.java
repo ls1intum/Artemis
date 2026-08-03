@@ -37,7 +37,8 @@ class PyrisStatusUpdateServiceErrorCodeTest {
         callbackApi = mock(ProcessingStateCallbackApi.class);
 
         service = new PyrisStatusUpdateService(mock(PyrisJobService.class), mock(IrisChatSessionService.class), mock(IrisCompetencyGenerationService.class),
-                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.of(callbackApi), mock(IrisWebsocketService.class));
+                mock(IrisTutorSuggestionSessionService.class), mock(AutonomousTutorService.class), Optional.of(callbackApi), mock(IrisWebsocketService.class),
+                mock(IngestionProgressService.class));
     }
 
     @Test
