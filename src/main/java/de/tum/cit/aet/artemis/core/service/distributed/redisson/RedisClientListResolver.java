@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -112,7 +113,9 @@ public class RedisClientListResolver {
         for (RedisClientInfo clientInfo : clients) {
             String clientName = clientInfo.getName();
             // TODO: also make this configurable via application properties?
-            if (clientName != null && clientName.toLowerCase().startsWith(ARTEMIS_CLIENT_NAME_PREFIX)) {
+            // Locale.ROOT, not the default locale: under tr_TR "I".toLowerCase() is the dotless "ı", so a client named
+            // "ARTEMIS-core-1" would not match the prefix and the node would look like a foreign client to every caller.
+            if (clientName != null && clientName.toLowerCase(Locale.ROOT).startsWith(ARTEMIS_CLIENT_NAME_PREFIX)) {
                 clientNames.add(clientName);
             }
         }
