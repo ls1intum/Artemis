@@ -158,8 +158,8 @@ function captureBodyWithoutReplaying(request: Request): void {
  * /api fetches — Playwright routing never sees service-worker-handled requests, which is what
  * defeated an earlier page-scoped version of this capture.
  *
- * Scope guards: only `/api/` URLs are routed at all (see the glob below — this matters for the
- * browser HTTP cache, not just for tidiness), GETs are continued untouched (SSE — GET
+ * Scope guards: only `/api/` URLs are routed at all (see the glob below — it must stay a string so
+ * Playwright does not widen interception to every request), GETs are continued untouched (SSE — GET
  * text/event-stream, e.g. Iris — must not be fetched from Node, and GET evictions are recoverable
  * read-side by replay), and multipart bodies
  * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive **and** only when
