@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
@@ -32,6 +33,42 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
 
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
+
+    /**
+     * Finds a bounded page of expired audit event ids, so that pruning can run in batches. Batching matters here: the
+     * table has never been pruned, so the first run has to remove a backlog that can span years, and deleting all of it
+     * in one transaction would hold locks for a long time and bloat the undo log.
+     *
+     * @param before        only events strictly older than this are returned
+     * @param excludedTypes event types to keep (they are pruned on their own, longer schedule)
+     * @param pageable      bounds the batch size
+     * @return ids of expired events, oldest first
+     */
+    @Query("""
+            SELECT event.id
+            FROM PersistentAuditEvent event
+            WHERE event.auditEventDate < :before
+                AND event.auditEventType NOT IN :excludedTypes
+            ORDER BY event.auditEventDate ASC
+            """)
+    List<Long> findExpiredIdsExcludingTypes(@Param("before") Instant before, @Param("excludedTypes") Set<String> excludedTypes, Pageable pageable);
+
+    /**
+     * Finds a bounded page of expired audit event ids restricted to the given types.
+     *
+     * @param before   only events strictly older than this are returned
+     * @param types    event types to prune
+     * @param pageable bounds the batch size
+     * @return ids of expired events, oldest first
+     */
+    @Query("""
+            SELECT event.id
+            FROM PersistentAuditEvent event
+            WHERE event.auditEventDate < :before
+                AND event.auditEventType IN :types
+            ORDER BY event.auditEventDate ASC
+            """)
+    List<Long> findExpiredIdsOfTypes(@Param("before") Instant before, @Param("types") Set<String> types, Pageable pageable);
 
     @Query("""
             SELECT p.id

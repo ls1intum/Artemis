@@ -120,7 +120,11 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 365 # Number of days before audit events and VCS access logs are deleted.
+        retention-period: 365 # Number of days before VCS access logs are deleted.
+        # Audit events are pruned on two schedules, because the table mixes high-volume login records with rare
+        # account-security records (password reset, e-mail change, registration) that an investigation needs much later.
+        authentication-retention-period: 90 # Number of days before login/authentication audit events are deleted.
+        account-security-retention-period: 730 # Number of days before account-security audit events are deleted.
 
 # Properties to be exposed on the /info management endpoint
 info:
