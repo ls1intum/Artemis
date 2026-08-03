@@ -106,7 +106,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate = false;
     readonly examMode = signal(false);
-    readonly isGeneratingFeedback = signal(false);
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate = false;
@@ -207,7 +206,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                     lastResult?.successful !== undefined;
                 if (isNewAthenaResult) {
-                    this.isGeneratingFeedback.set(false);
                     if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
