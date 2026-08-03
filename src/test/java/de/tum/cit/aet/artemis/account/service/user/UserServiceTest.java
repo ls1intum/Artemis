@@ -158,18 +158,23 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Test
     void testCreateUser_withManagedUserVM_respectsIsInternalFlag() {
+        String login = TEST_PREFIX + "external_user";
         ManagedUserVM externalUserDTO = new ManagedUserVM();
-        externalUserDTO.setLogin(TEST_PREFIX + "external_user");
+        externalUserDTO.setLogin(login);
         externalUserDTO.setFirstName("External");
         externalUserDTO.setLastName("User");
         externalUserDTO.setEmail("external_test@example.com");
         externalUserDTO.setInternal(false);
 
-        User createdUser = userCreationService.createUser(externalUserDTO);
+        userCreationService.createUser(externalUserDTO);
 
-        assertThat(createdUser.isInternal()).as("created user should be external").isFalse();
+        // Reload the user from the repository to verify database persistence
+        Optional<User> reloadedUser = userRepository.findOneByLogin(login);
+        assertThat(reloadedUser).isPresent();
+        assertThat(reloadedUser.get().isInternal()).as("persisted user should be external").isFalse();
 
-        userRepository.delete(createdUser);
+        // Cleanup via reloaded entity
+        reloadedUser.ifPresent(userRepository::delete);
     }
 
     @Test

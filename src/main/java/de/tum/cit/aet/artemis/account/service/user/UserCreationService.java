@@ -136,9 +136,10 @@ public class UserCreationService {
 
         setUserAuthorities(userDTO, user);
 
-        String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
-        String passwordHash = passwordService.hashPassword(password);
-        user.setPassword(passwordHash);
+        if (userDTO.isInternal()) {
+            String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
+            user.setPassword(passwordService.hashPassword(password));
+        }
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
         try {
