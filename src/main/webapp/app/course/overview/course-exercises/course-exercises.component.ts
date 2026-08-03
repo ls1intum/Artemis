@@ -20,6 +20,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
     return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
@@ -252,7 +253,7 @@ export class CourseExercisesComponent {
             const updatedParticipations = currentParticipation
                 ? participations.map((participation) => (this.isSameParticipationSlot(participation, sidebarParticipation) ? sidebarParticipation : participation))
                 : participations.concat(sidebarParticipation);
-            return { ...exercise, studentParticipations: updatedParticipations };
+            return cloneWith(exercise, { studentParticipations: updatedParticipations });
         });
         return didUpdate ? updatedExercises : exercises;
     }
@@ -303,7 +304,7 @@ export class CourseExercisesComponent {
         if (!course || !updatedCourseExercises || updatedCourseExercises === course.exercises) {
             return;
         }
-        this._course.set({ ...course, exercises: updatedCourseExercises });
+        this._course.set(cloneWith(course, { exercises: updatedCourseExercises }));
     }
 
     private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {
@@ -324,7 +325,7 @@ export class CourseExercisesComponent {
             const updatedParticipations = hasParticipation
                 ? participations.map((participation) => (this.isSameParticipationSlot(participation, changedParticipation) ? changedParticipation : participation))
                 : participations.concat(changedParticipation);
-            return { ...exercise, studentParticipations: updatedParticipations };
+            return cloneWith(exercise, { studentParticipations: updatedParticipations });
         });
         return didUpdate ? updatedExercises : exercises;
     }
