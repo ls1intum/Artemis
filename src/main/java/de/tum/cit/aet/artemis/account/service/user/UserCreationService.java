@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -45,12 +46,15 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.organizationRepository = organizationRepository;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
     }
 
     /**
@@ -262,6 +266,9 @@ public class UserCreationService {
     public void deactivateUser(User user) {
         user.setActivated(false);
         saveUser(user);
+        // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
+        // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
+        accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
         log.info("Deactivated user: {}", user);
     }
 

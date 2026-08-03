@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -66,8 +67,6 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
-import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
@@ -114,13 +113,11 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
-
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
 
-    private final UserSshPublicKeyService userSshPublicKeyService;
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
 
@@ -131,10 +128,9 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
-            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService,
-            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            AccountCredentialRevocationService accountCredentialRevocationService, CourseNotificationSettingService courseNotificationSettingService,
+            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
@@ -146,10 +142,9 @@ public class UserService {
         this.fileService = fileService;
         this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
-        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
-        this.userSshPublicKeyService = userSshPublicKeyService;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.globalNotificationSettingService = globalNotificationSettingService;
@@ -257,6 +252,9 @@ public class UserService {
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
+            // A reset is the recovery flow: either the owner is remediating a compromise, and an intruder's passkey or
+            // token must not survive it, or an intruder has just taken the account over and already controls it.
+            accountCredentialRevocationService.revokeAllCredentials(user, "password reset completed");
             return user;
         });
     }
@@ -464,10 +462,10 @@ public class UserService {
      */
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
-            participationVCSAccessTokenService.deleteAllByUserId(user.getId());
-            repositoryVcsAccessTokenService.deleteAllByUserId(user.getId());
+            // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
+            // and additionally the passkeys and the personal VCS access token, which it did not.
+            accountCredentialRevocationService.revokeAllCredentials(user, "user soft deleted");
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
-            userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
@@ -545,6 +543,10 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
+            // The user proved control by entering the current password, so their passkeys and SSH keys are left alone.
+            // The personal VCS access token is not: it is a long-lived alternative password, and keeping it would defeat
+            // the rotation.
+            accountCredentialRevocationService.revokeVcsAccessToken(user, "password changed");
 
             log.debug("Changed password for User: {}", user);
         });
