@@ -612,7 +612,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportOversizedTitle", "importoversized",
-                programmingExercise, courseUtilService.addEmptyCourse());
+                programmingExercise, courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
         // The import request omits the build plan configuration, so it is inherited from the oversized source exercise and must be
         // rejected by the size validation after inheritance, not silently persisted again.
         exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(null);
