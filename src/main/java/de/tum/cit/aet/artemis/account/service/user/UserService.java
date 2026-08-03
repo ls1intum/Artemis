@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -534,7 +535,7 @@ public class UserService {
      * @param currentClearTextPassword cleartext password
      * @param newPassword              new password string
      */
-    public void changePassword(String currentClearTextPassword, String newPassword) {
+    public void changePassword(String currentClearTextPassword, String newPassword, CredentialRevocationChoiceDTO revocationChoice) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
             String currentPasswordHash = user.getPassword();
             if (!passwordService.checkPasswordMatch(currentClearTextPassword, currentPasswordHash)) {
@@ -543,10 +544,9 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
-            // The user proved control by entering the current password, so their passkeys and SSH keys are left alone.
-            // The personal VCS access token is not: it is a long-lived alternative password, and keeping it would defeat
-            // the rotation.
-            accountCredentialRevocationService.revokeVcsAccessToken(user, "password changed");
+            // What else is revoked is the user's decision: only they know whether the old password may have been seen by
+            // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
+            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
 
             log.debug("Changed password for User: {}", user);
         });

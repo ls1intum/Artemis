@@ -78,7 +78,31 @@ describe('Password Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(service.changePassword).toHaveBeenCalledWith(passwordValues.newPassword, passwordValues.currentPassword);
+            // Nothing is revoked unless the user says the old password may have been compromised, so a routine rotation
+            // never costs them their authenticators, keys or tokens.
+            expect(service.changePassword).toHaveBeenCalledWith(passwordValues.newPassword, passwordValues.currentPassword, undefined);
+        });
+
+        it('should revoke the selected credentials when the old password may be compromised', () => {
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
+            comp.passwordForm.patchValue({ currentPassword: 'oldPassword', newPassword: 'myPassword', confirmPassword: 'myPassword' });
+
+            comp.onPasswordMayBeCompromisedChange(true);
+            comp.revokeSshKeys.set(false);
+            comp.changePassword();
+
+            expect(service.changePassword).toHaveBeenCalledWith('myPassword', 'oldPassword', { passkeys: true, sshKeys: false, vcsAccessTokens: true });
+        });
+
+        it('should revoke nothing again when the user unticks the compromise question', () => {
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
+            comp.passwordForm.patchValue({ currentPassword: 'oldPassword', newPassword: 'myPassword', confirmPassword: 'myPassword' });
+
+            comp.onPasswordMayBeCompromisedChange(true);
+            comp.onPasswordMayBeCompromisedChange(false);
+            comp.changePassword();
+
+            expect(service.changePassword).toHaveBeenCalledWith('myPassword', 'oldPassword', undefined);
         });
 
         it('should set success to true upon success', () => {

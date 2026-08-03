@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -132,14 +133,36 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void changingThePasswordClearsTheTokenButKeepsTheSshKeys() {
-        // Proportionality: the user proved control by entering the current password, so credentials they manage and can
-        // see are left alone. The personal VCS access token is not one of those - it is a long-lived alternative password.
+    void aPasswordChangeRevokesOnlyWhatTheUserSelected() {
+        // The user decides, because only they know whether the old password may have been seen by someone else. Selecting
+        // the tokens must not take away the SSH keys they use from their machines.
         giveUserCredentials();
 
-        accountCredentialRevocationService.revokeVcsAccessToken(user, "test");
+        accountCredentialRevocationService.revokeSelectedCredentials(user, new CredentialRevocationChoiceDTO(false, false, true), "test");
 
         assertThat(reloadUser().getVcsAccessToken()).isNull();
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
+    }
+
+    @Test
+    void aPasswordChangeCanRevokeOnlyTheSshKeys() {
+        giveUserCredentials();
+
+        accountCredentialRevocationService.revokeSelectedCredentials(user, new CredentialRevocationChoiceDTO(false, true, false), "test");
+
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertThat(reloadUser().getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
+    }
+
+    @Test
+    void aRoutinePasswordChangeRevokesNothing() {
+        // The default when the request expresses no choice: a routine rotation should not cost the user their
+        // authenticators, keys and tokens.
+        giveUserCredentials();
+
+        accountCredentialRevocationService.revokeSelectedCredentials(user, CredentialRevocationChoiceDTO.none(), "test");
+
+        assertThat(reloadUser().getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).hasSize(1);
     }
 

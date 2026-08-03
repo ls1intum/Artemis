@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
@@ -80,29 +81,43 @@ public class AccountCredentialRevocationService {
      * @param reason short description of the triggering transition, for the log
      */
     public void revokeAllCredentials(User user, String reason) {
-        int passkeysDeleted = revokePasskeys(user);
-        revokeVcsAccessToken(user, reason);
-        userSshPublicKeyService.deleteAllByUserId(user.getId());
-        participationVcsAccessTokenService.deleteAllByUserId(user.getId());
-        repositoryVcsAccessTokenService.deleteAllByUserId(user.getId());
-
-        log.info("Revoked all credentials of user {} ({}): {} passkeys, the personal VCS access token, SSH keys, and participation and repository VCS access tokens",
-                user.getLogin(), reason, passkeysDeleted);
+        revokeSelectedCredentials(user, new CredentialRevocationChoiceDTO(true, true, true), reason);
     }
 
     /**
-     * Clears the personal VCS access token, which is a password-equivalent credential: it is long-lived, and it is
-     * enough on its own to read and write the user's repositories.
+     * Revokes the selected credential types and leaves the others in place.
      * <p>
-     * Used on its own where the user is demonstrably in control of the account and is rotating their password
-     * deliberately. Deleting their passkeys and SSH keys there would be disproportionate - those are credentials the
-     * user manages and can see, and losing them on every routine password change would be a poor trade - but leaving a
-     * long-lived alternative password in place while the password is rotated defeats the point of rotating it.
+     * Used where the user decides, which is the change-password flow: only they know whether the old password may have
+     * been seen by someone else, and that is what decides whether losing their authenticators and keys is warranted.
      *
-     * @param user   the account whose token is cleared
+     * @param user   the account whose credentials are revoked
+     * @param choice which credential types to revoke; revoking nothing is a valid choice
      * @param reason short description of the triggering transition, for the log
      */
-    public void revokeVcsAccessToken(User user, String reason) {
+    public void revokeSelectedCredentials(User user, CredentialRevocationChoiceDTO choice, String reason) {
+        if (!choice.revokesAnything()) {
+            return;
+        }
+
+        int passkeysDeleted = choice.passkeys() ? revokePasskeys(user) : 0;
+        if (choice.sshKeys()) {
+            userSshPublicKeyService.deleteAllByUserId(user.getId());
+        }
+        if (choice.vcsAccessTokens()) {
+            clearPersonalVcsAccessToken(user);
+            participationVcsAccessTokenService.deleteAllByUserId(user.getId());
+            repositoryVcsAccessTokenService.deleteAllByUserId(user.getId());
+        }
+
+        log.info("Revoked credentials of user {} ({}): passkeys={} ({} deleted), sshKeys={}, vcsAccessTokens={}", user.getLogin(), reason, choice.passkeys(), passkeysDeleted,
+                choice.sshKeys(), choice.vcsAccessTokens());
+    }
+
+    /**
+     * Clears the personal VCS access token, a password-equivalent credential: it is long-lived and enough on its own to
+     * read and write the user's repositories.
+     */
+    private void clearPersonalVcsAccessToken(User user) {
         if (user.getVcsAccessToken() == null && user.getVcsAccessTokenExpiryDate() == null) {
             return;
         }
@@ -111,7 +126,6 @@ public class AccountCredentialRevocationService {
         // Saved here rather than left to the caller: every caller happens to save the user afterwards today, but a
         // revocation that silently depends on that would be easy to defeat by a later refactor.
         userRepository.save(user);
-        log.info("Cleared the personal VCS access token of user {} ({})", user.getLogin(), reason);
     }
 
     /**
