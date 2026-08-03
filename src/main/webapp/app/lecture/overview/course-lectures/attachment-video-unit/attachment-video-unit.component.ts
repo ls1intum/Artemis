@@ -310,13 +310,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // pipeline waits or raised by a marker click in the chat history.
         this.chatService.pointOut$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pointOut) => this.handlePointOut(pointOut));
 
-        // Apply a pending point-out target once the combined view is open and the viewer it needs has
-        // rendered. Reading the viewChild signals here re-runs this effect as they become available.
+        // Apply a pending point-out target once the combined view is open and the viewer it needs has rendered, or
+        // drop it once that viewer turns out not to be coming. Reading the viewChild signals here re-runs this effect
+        // as they become available.
         effect(() => {
             const pointOut = this.pendingPointOut();
             // A marker click opens the combined view first, so isFullscreen() is still false on the initial
             // run here and the target simply stays pending until the view (and its viewer) is up.
             if (!pointOut || !this.isFullscreen()) {
+                return;
+            }
+            // Give up as soon as the viewer this target needs is known not to be coming. Without this the wait below
+            // never ends, so nobody would answer and a waiting pipeline would sit out its full ack timeout. Evaluating
+            // it here rather than in handlePointOut is what makes it safe: the effect re-runs as the viewers settle,
+            // so a target is only dropped once "not there yet" has turned into "not coming".
+            if (this.isPointOutUnreachable(pointOut)) {
+                untracked(() => {
+                    this.acknowledgeAsDropped(pointOut);
+                    this.pendingPointOut.set(undefined);
+                });
                 return;
             }
             // A rendered viewer whose document is still loading reports 0 pages and would reject every target, so wait
@@ -358,7 +370,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * server-side timeout, handles them). If the combined view is closed, a marker click (forceOpen) opens it
      * first, while a server-pushed point-out is acknowledged straight away as not applied. The actual page jump
      * / video seek is deferred to the pendingPointOut effect, which waits until the relevant viewer is ready and then
-     * acknowledges the outcome that viewer reported.
+     * acknowledges the outcome that viewer reported — or drops the target once that viewer turns out not to be coming.
      * @param pointOut the requested navigation target
      */
     private handlePointOut(pointOut: IrisPointOut): void {
@@ -376,6 +388,29 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
         this.acknowledgeAsDropped(this.pendingPointOut());
         this.pendingPointOut.set(pointOut);
+    }
+
+    /**
+     * Whether the viewer a point-out needs can no longer appear in this combined view, which makes its target
+     * unreachable for good. Only settled facts count here — "still loading" is not an answer, since the effect that
+     * asks re-runs once it becomes one, and giving up early would report a perfectly good point-out as not applied.
+     *
+     * Slides: the unit either has no PDF at all, or its PDF failed to load, in which case the viewer is replaced by an
+     * error message for as long as the view stays open. That the URL has not arrived yet is not decisive.
+     *
+     * Video: only a resolved playlist or a working YouTube video yields a player that can be seeked; anything else
+     * falls back to a bare iframe, which cannot. The playlist is resolved before the loading flag clears, so once it
+     * has, its absence is final. A resolved playlist still awaiting its transcript is left pending rather than
+     * dropped — that wait is short and ends in a real player.
+     * @param pointOut the pending navigation target
+     * @return whether it can be given up on
+     */
+    private isPointOutUnreachable(pointOut: IrisPointOut): boolean {
+        if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
+            return true;
+        }
+        const hasSeekableVideo = !!this.playlistUrl() || (!!this.youtubeVideoId() && !this.youtubePlayerFailed());
+        return pointOut.timestamp != undefined && !this.isLoading() && !hasSeekableVideo;
     }
 
     /**

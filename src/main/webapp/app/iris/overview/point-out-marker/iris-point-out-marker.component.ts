@@ -84,13 +84,17 @@ export class IrisPointOutMarkerComponent {
     /**
      * Builds the factual label shown on a marker, e.g.
      * "Navigated to page 3 and timestamp 02:30 in lecture unit Sorting Algorithms".
+     *
+     * The page is labelled with the number printed on the slide, so the chip agrees with both the number Iris names
+     * in its answer text and the one the student reads off the slide itself. Slides without a printed number fall
+     * back to their position in the deck — Iris names no page for those either, so nothing can disagree.
      * @param data the point-out target
      * @return the translated label
      */
     private buildLabel(data: IrisPointOut): string {
         const targets: string[] = [];
         if (data.page != undefined) {
-            targets.push(this.translateService.instant('artemisApp.iris.pointOut.page', { page: data.page }));
+            targets.push(this.translateService.instant('artemisApp.iris.pointOut.page', { page: data.displayPage ?? data.page }));
         }
         if (data.timestamp != undefined) {
             targets.push(this.translateService.instant('artemisApp.iris.pointOut.timestamp', { time: formatTimestamp(data.timestamp) }));

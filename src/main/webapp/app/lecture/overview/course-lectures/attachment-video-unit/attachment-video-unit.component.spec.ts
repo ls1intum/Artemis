@@ -1237,5 +1237,56 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(ackSpy).not.toHaveBeenCalled();
         });
+
+        it('gives up on a page target once the PDF has failed to load', () => {
+            // The viewer is replaced by an error message for as long as the view stays open, so waiting for it would
+            // never end and the waiting pipeline would sit out its full ack timeout without ever being answered.
+            component['fullscreenState'].set(true);
+            component.pdfLoadError.set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c10', page: 3 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c10', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('gives up on a page target when the unit has no PDF at all', () => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: undefined });
+            component['fullscreenState'].set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c11', page: 3 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c11', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('gives up on a timestamp target when no seekable player can appear', () => {
+            // Without a resolved playlist or a working YouTube video the unit falls back to a bare iframe, which
+            // cannot be seeked — so no player will ever show up for this target to be applied to.
+            component['fullscreenState'].set(true);
+            component.isLoading.set(false);
+            component.playlistUrl.set(undefined);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c12', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c12', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('keeps a timestamp target pending while the video source is still being resolved', () => {
+            // The playlist is only known once loading has finished; dropping the target before then would report a
+            // perfectly good point-out as not applied.
+            component['fullscreenState'].set(true);
+            component.isLoading.set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c13', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeDefined();
+        });
     });
 });

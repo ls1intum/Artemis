@@ -9,8 +9,14 @@
  */
 export interface IrisPointOut {
     lectureUnitId: number;
-    /** Slide page to display, counted from the start of the deck. */
+    /** Slide page to display, counted from the start of the deck. The value navigation runs off. */
     page?: number;
+    /**
+     * The number printed on that slide, which is what the student reads off it and what Iris names in its answer
+     * text. Labels only — never navigate by it. Absent when the slide carries no number, in which case there is no
+     * competing number in the answer text either and {@link page} labels the marker instead.
+     */
+    displayPage?: number;
     /** Video position in seconds to seek to. */
     timestamp?: number;
     /** Set when a pipeline is waiting on this point-out; the ack must carry the same id. */
@@ -39,7 +45,11 @@ export function parsePointOut(parameters: Record<string, unknown> | undefined): 
     }
     // Only markers carry the unit name; a server-pushed command simply leaves it undefined.
     const lectureUnitName = typeof parameters['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
-    return { lectureUnitId: parameters['lectureUnitId'], page, timestamp, lectureUnitName };
+    // Purely a label, so a value that could not be printed as a page number is dropped rather than
+    // rejecting the whole point-out: the navigation it describes is still perfectly good.
+    const displayPageValue = parameters['displayPage'];
+    const displayPage = typeof displayPageValue === 'number' && Number.isInteger(displayPageValue) && displayPageValue > 0 ? displayPageValue : undefined;
+    return { lectureUnitId: parameters['lectureUnitId'], page, displayPage, timestamp, lectureUnitName };
 }
 
 /**
