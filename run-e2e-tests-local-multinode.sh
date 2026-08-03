@@ -117,7 +117,8 @@ fi
 export HOST_HOSTNAME="nginx"
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
-export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
+# Matches docker/artemis/config/prod-multinode.env: the prod profile rejects the published `artemis_admin` password.
+export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-local-e2e-admin-not-a-deployment-credential}"
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-360}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-4}"

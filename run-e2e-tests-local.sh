@@ -99,7 +99,9 @@ echo ""
 
 # Environment variables
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
-export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
+# The E2E stacks run under the prod profile, which refuses to start on the published `artemis_admin` password or on
+# a password equal to the username, so the default here is a value of its own.
+export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-local-e2e-admin-not-a-deployment-credential}"
 export SPRING_LIQUIBASE_CONTEXTS="${SPRING_LIQUIBASE_CONTEXTS:-prod,e2e}"
 # Timeouts matching CI values for reliable local execution
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-150}"             # CI: 300

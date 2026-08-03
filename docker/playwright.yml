@@ -10,7 +10,9 @@ services:
             CI: 'true'
             BASE_URL: 'https://artemis-nginx'
             ADMIN_USERNAME: '${ARTEMIS_ADMIN_USERNAME}'
-            ADMIN_PASSWORD: '${ARTEMIS_ADMIN_PASSWORD}'
+            # Mirrors docker/artemis/config/playwright.env, which cannot use the published `artemis_admin` password
+            # under the prod profile.
+            ADMIN_PASSWORD: 'local-e2e-admin-not-a-deployment-credential'
             ALLOW_GROUP_CUSTOMIZATION: 'true'
             STUDENT_GROUP_NAME: 'artemis-e2etest-students'
             TUTOR_GROUP_NAME: 'artemis-e2etest-tutors'
