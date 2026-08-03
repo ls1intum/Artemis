@@ -1,8 +1,14 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_GRADING_POINTS;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PRESENTATION_COUNT;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PRESENTATION_SCORE;
+
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -10,11 +16,13 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 
 /**
  * DTO for updating a grading scale.
@@ -34,8 +42,11 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
-        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,
-        @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
+        @Nullable @Size(max = 100) String noParticipationGrade,
+        @Nullable @Min(1) @Max(MAX_PRESENTATION_COUNT) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationsNumber, @Nullable Double presentationsWeight,
+        @Nullable Set<GradeStepDTO> gradeSteps, @Nullable @Min(1) @Max(MAX_GRADING_POINTS) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer courseMaxPoints,
+        @Nullable @Min(0) @Max(MAX_PRESENTATION_SCORE) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer coursePresentationScore,
+        @Nullable @Min(1) @Max(MAX_GRADING_POINTS) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints) {
 
     /**
      * Returns the grade steps, defaulting to an empty set if null.

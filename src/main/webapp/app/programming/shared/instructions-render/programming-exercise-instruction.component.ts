@@ -20,7 +20,7 @@ import {
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
-import type { PluginSimple } from 'markdown-it';
+import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 import { catchError, debounceTime, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription, merge, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -111,7 +111,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     protected readonly renderedMarkdown = signal<SafeHtml | undefined>(undefined);
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    markdownExtensions?: PluginSimple[];
+    markdownExtensions?: MarkdownItPlugin[];
     private injectableContentFoundSubscription?: Subscription;
     private generateHtmlSubscription?: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];

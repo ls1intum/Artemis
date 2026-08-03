@@ -168,6 +168,8 @@
                     [smallButtons]="true"
                     [hideLabelMobile]="true"
                     [hideLabelBreakpoint]="'xl'"
+                    [exerciseId]="exercise()?.id"
+                    [participationId]="dto.participationId"
                     [repositoryUri]="dto.repositoryUri"
                     [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
                 />

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.account.service.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -54,7 +56,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         userService.applicationReady();
 
         // Verify: Check that the user was created with SUPER_ADMIN authority
-        Optional<User> createdAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(testAdminUsername);
+        Optional<User> createdAdmin = userRepository.findOneWithAuthoritiesByLogin(testAdminUsername);
         assertThat(createdAdmin).isPresent();
 
         User admin = createdAdmin.get();
@@ -113,7 +115,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         userService.applicationReady();
 
         // Verify: Check that the user was updated with SUPER_ADMIN authority
-        Optional<User> updatedAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(testAdminUsername);
+        Optional<User> updatedAdmin = userRepository.findOneWithAuthoritiesByLogin(testAdminUsername);
         assertThat(updatedAdmin).isPresent();
 
         User admin = updatedAdmin.get();
@@ -129,6 +131,25 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         // Cleanup
         userRepository.delete(admin);
+    }
+
+    @Test
+    void testImportUsersSetsTestUserFlagWhenProvided() {
+        String login = TEST_PREFIX + "student1";
+        assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("existing user is not a test user by default").isFalse();
+
+        // isTestUser = true -> the found user is flagged, and it is not reported as not-found
+        List<StudentDTO> notFound = userService.importUsers(List.of(new StudentDTO(login, null, null, null, null, true)));
+        assertThat(notFound).isEmpty();
+        assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("flag is set to true on import").isTrue();
+
+        // isTestUser omitted (null) -> the flag is left unchanged
+        userService.importUsers(List.of(new StudentDTO(login, null, null, null, null)));
+        assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("flag is unchanged when the column is absent").isTrue();
+
+        // isTestUser = false -> the flag is cleared
+        userService.importUsers(List.of(new StudentDTO(login, null, null, null, null, false)));
+        assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("flag is cleared when explicitly false").isFalse();
     }
 
     @Test

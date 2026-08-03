@@ -22,8 +22,7 @@ public interface OneToOneChatTestRepository extends OneToOneChatRepository {
             FROM OneToOneChat oneToOneChat
                 LEFT JOIN FETCH oneToOneChat.conversationParticipants p
                 LEFT JOIN FETCH p.user u
-                LEFT JOIN FETCH u.groups
             WHERE oneToOneChat.id = :oneToOneChatId
             """)
-    Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
+    Optional<OneToOneChat> findByIdWithConversationParticipantsAndUsers(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 }

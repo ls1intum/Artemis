@@ -70,7 +70,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @Override
     Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
         final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
@@ -86,7 +86,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     boolean canAccessRepository(Long auxiliaryRepositoryId) {
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId).getExercise(),
-                    userRepository.getUserWithGroupsAndAuthorities(), "auxiliary");
+                    userRepository.getUserWithAuthorities(), "auxiliary");
         }
         catch (AccessForbiddenException e) {
             return false;
@@ -194,7 +194,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
         Repository repository;
         try {
-            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithAuthorities(principal.getName()), "test");
             repository = gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), true, true);
         }
         catch (AccessForbiddenException e) {
