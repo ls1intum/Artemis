@@ -221,26 +221,84 @@ The job runs at 03:10 every night on the node with the scheduling profile active
 
 ### Pruning a large backlog manually
 
-On an instance upgrading from a version without this job, the table may hold years of accumulated rows, and letting the nightly job drain it takes as many nights as it takes. To do it in one maintenance window instead, use `supporting_scripts/database/prune_audit_events.sql` (MySQL 8), which applies exactly the same retention scheme in batches you control:
+On an instance upgrading from a version without this job, the table may hold years of accumulated rows, and letting the nightly job drain it takes as many nights as it takes. The same work can be done in one maintenance window with plain SQL (MySQL 8). The event type list below is the login record; everything else falls into the long-retention bucket.
 
-```bash
-# on a host that can reach the database
-mysql Artemis < supporting_scripts/database/prune_audit_events.sql
-```
-
-As shipped, the script only reports: the current table size, the number of rows each retention period would remove, and it creates the index the pruning needs (`idx_persistent_audit_event_date`) if it is missing. Review that output, then uncomment the two `CALL` statements at the end and run it again:
+**1. Create the index the deletes need.** Without it each statement scans the whole table. Liquibase creates the same index guarded by a `not indexExists` precondition, so creating it here simply makes that changeset a no-op on the next upgrade. This is an online operation in MySQL (no exclusive lock) but takes time proportional to table size.
 
 ```sql
-CALL artemis_prune_audit_events('LOGIN', 365, 5000, 10000, 0.2);
-CALL artemis_prune_audit_events('OTHER', 1825, 5000, 1000, 0.2);
+ALTER TABLE jhi_persistent_audit_event ADD INDEX idx_persistent_audit_event_date (event_date);
 ```
 
-The arguments are the bucket, the retention in days, the batch size, the maximum number of batches, and the pause between batches in seconds. Each batch commits on its own, so the run is safe to interrupt and safe to repeat: it reports either `done` or `batch cap reached, re-run to continue`. Rows inside the retention period are never touched.
+**2. See how much is affected**, before deleting anything.
 
-Two notes:
+```sql
+SELECT COUNT(*) AS expired_login_records
+FROM jhi_persistent_audit_event
+WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+  AND event_date < NOW() - INTERVAL 365 DAY;
 
-- Creating the index is an online operation in MySQL (no exclusive lock), but it still takes time proportional to the table size. It is worth doing first regardless, because without it every batch would scan and sort the whole table. Liquibase creates the same index guarded by a `not indexExists` precondition, so creating it here simply makes that changeset a no-op on the next upgrade.
-- Deleting rows returns their space to InnoDB for reuse but not to the filesystem. If the space has to be reclaimed, rebuild the tables afterwards (`ALTER TABLE jhi_persistent_audit_event ENGINE = InnoDB;`), which is a far heavier operation and needs its own maintenance window.
+SELECT COUNT(*) AS expired_other_events
+FROM jhi_persistent_audit_event
+WHERE (event_type IS NULL
+    OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+  AND event_date < NOW() - INTERVAL 1825 DAY;
+```
+
+**3. Delete the login record older than one year.** The data rows go first, because `jhi_persistent_audit_evt_data`'s foreign key is `ON DELETE RESTRICT` and the database rejects deleting a parent whose data rows still exist.
+
+```sql
+DELETE d
+FROM jhi_persistent_audit_evt_data d
+    JOIN jhi_persistent_audit_event e ON d.event_id = e.event_id
+WHERE e.event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+  AND e.event_date < NOW() - INTERVAL 365 DAY;
+
+DELETE FROM jhi_persistent_audit_event
+WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+  AND event_date < NOW() - INTERVAL 365 DAY;
+```
+
+**4. Delete everything else older than five years.** Note the `IS NULL`: `event_type` is nullable and `NULL NOT IN (...)` is unknown rather than true, so without it those rows would never be removed.
+
+```sql
+DELETE d
+FROM jhi_persistent_audit_evt_data d
+    JOIN jhi_persistent_audit_event e ON d.event_id = e.event_id
+WHERE (e.event_type IS NULL
+    OR e.event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+  AND e.event_date < NOW() - INTERVAL 1825 DAY;
+
+DELETE FROM jhi_persistent_audit_event
+WHERE (event_type IS NULL
+    OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+  AND event_date < NOW() - INTERVAL 1825 DAY;
+```
+
+**If the counts from step 2 are large**, delete in batches instead, so no single statement holds locks and undo log for millions of rows or hands a replica one enormous transaction. Repeat this pair until it reports 0 rows affected:
+
+```sql
+DELETE FROM jhi_persistent_audit_evt_data
+WHERE event_id IN (
+    SELECT event_id FROM (
+        SELECT event_id
+        FROM jhi_persistent_audit_event
+        WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+          AND event_date < NOW() - INTERVAL 365 DAY
+        ORDER BY event_id
+        LIMIT 5000) AS batch);
+
+DELETE FROM jhi_persistent_audit_event
+WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+  AND event_date < NOW() - INTERVAL 365 DAY
+ORDER BY event_id
+LIMIT 5000;
+```
+
+Both statements order by `event_id`, which is unique, so they select exactly the same rows and the foreign key is never violated; ordering by `event_date` would not guarantee that when rows share a timestamp. The inner query is wrapped in a derived table because MySQL does not allow `LIMIT` directly inside `IN (SELECT ...)`. The same pair with the `IS NULL`/`NOT IN` predicate and 1825 days batches the other bucket.
+
+:::note
+Deleting rows returns their space to InnoDB for reuse but not to the filesystem. If the space has to be reclaimed, rebuild the tables afterwards with `ALTER TABLE jhi_persistent_audit_event ENGINE = InnoDB;`, which is a far heavier operation and needs its own maintenance window.
+:::
 
 ### Testing and assurance
 
