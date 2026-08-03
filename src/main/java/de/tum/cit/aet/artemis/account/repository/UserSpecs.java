@@ -8,12 +8,17 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Authority_;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
 
 /**
  * This class contains possible specifications to query for specified users.
@@ -195,6 +200,40 @@ public class UserSpecs {
             Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.DELETED), false);
 
             return criteriaBuilder.and(notDeletedPredicate);
+        };
+    }
+
+    /**
+     * Matches users that have the given role in the given course.
+     *
+     * @param courseId the ID of the course
+     * @param role     the course role to filter by
+     * @return specification matching users with the given role in the given course
+     */
+    @NonNull
+    public static Specification<User> inCourseWithRole(long courseId, CourseRole role) {
+        return (root, query, cb) -> {
+            Join<User, UserCourseRole> ucr = root.join(User_.COURSE_ROLES, JoinType.INNER);
+            return cb.and(cb.equal(ucr.get(UserCourseRole_.COURSE).get(DomainObject_.ID), courseId), cb.equal(ucr.get(UserCourseRole_.ROLE), role));
+        };
+    }
+
+    /**
+     * Case-insensitive search across {@code login} and the concatenated full name ({@code firstName + ' ' + lastName}).
+     * Returns a no-op predicate when the search term is blank.
+     *
+     * @param searchTerm the text to search for; may be {@code null} or blank
+     * @return specification matching users whose login or full name contains the search term
+     */
+    @NonNull
+    public static Specification<User> searchByLoginOrFullName(@Nullable String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return (root, query, cb) -> cb.conjunction();
+        }
+        String pattern = "%" + searchTerm.toLowerCase() + "%";
+        return (root, query, cb) -> {
+            var fullName = cb.lower(cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), "")));
+            return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern), cb.like(fullName, pattern));
         };
     }
 }

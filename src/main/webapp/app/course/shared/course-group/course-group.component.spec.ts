@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
-import { UserService } from 'app/account/user/shared/user.service';
 import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -14,24 +14,35 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
-import { ExportUserInformationRow } from 'app/shared-ui/user-import/util/write-users-to-csv';
 import * as csvUtils from 'app/shared-ui/user-import/util/write-users-to-csv';
-import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { MockProvider } from 'ng-mocks';
+import { TableLazyLoadEvent } from 'primeng/table';
 
 describe('CourseGroupComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
-    let userService: UserService;
+    let courseManagementService: CourseManagementService;
+
     const courseGroup = CourseRoleSlug.STUDENTS;
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const course = {
+        id: 123,
+        title: 'Course Title',
+        isAtLeastInstructor: true,
+        endDate: dayjs().subtract(5, 'minutes'),
+        courseArchivePath: 'some-path',
+    };
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute, params: of({ courseGroup }) } as any as ActivatedRoute;
-    const courseGroupUser = new User(1, 'user');
-    const courseGroupUser2 = new User(2, 'user2');
+
+    const user1 = new User(1, 'user1');
+    const user2 = new User(2, 'user2');
+
+    const mockLazyEvent: TableLazyLoadEvent = { first: 0, rows: 50 };
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -40,20 +51,19 @@ describe('CourseGroupComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                MockProvider(CourseManagementService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        });
+        }).overrideTemplate(CourseGroupComponent, '');
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseGroupComponent);
         comp = fixture.componentInstance;
-        userService = TestBed.inject(UserService);
-        // Set required inputs using ComponentRef
+        courseManagementService = TestBed.inject(CourseManagementService);
+
+        // Set required signal inputs
         fixture.componentRef.setInput('course', course);
         fixture.componentRef.setInput('courseRoleSlug', courseGroup);
-        fixture.componentRef.setInput('exportFileName', 'test-export');
-        fixture.componentRef.setInput('userSearch', (searchTerm: string) => userService.search(searchTerm));
     });
 
     afterEach(() => {
@@ -65,462 +75,205 @@ describe('CourseGroupComponent', () => {
         expect(comp).not.toBeNull();
     });
 
-    describe('onUserSearchComplete', () => {
-        let searchStub: ReturnType<typeof vi.spyOn>;
-
-        const makeEvent = (query: string): AutoCompleteCompleteEvent => ({ query, originalEvent: new Event('input') });
-
-        beforeEach(() => {
-            searchStub = vi.spyOn(userService, 'search');
+    describe('exportFileName', () => {
+        it('should derive the export filename from the role slug and course title', () => {
+            fixture.detectChanges();
+            expect(comp.exportFileName()).toBe('Students Course Title');
         });
 
-        it('should search users for given query and populate suggestions', () => {
-            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            comp.onUserSearchComplete(makeEvent('testLoginOrName'));
-
-            expect(searchStub).toHaveBeenCalledWith('testLoginOrName');
-            expect(searchStub).toHaveBeenCalledOnce();
-            expect(comp.userSuggestions()).toEqual([courseGroupUser]);
-            expect(comp.isSearching()).toBe(false);
-        });
-
-        it('should return empty suggestions when the server returns no users', () => {
-            searchStub.mockReturnValue(of(new HttpResponse({ body: [] })));
-
-            comp.onUserSearchComplete(makeEvent('testLoginOrName'));
-
-            expect(comp.userSuggestions()).toEqual([]);
-        });
-
-        it('should return empty suggestions when query is shorter than three characters', () => {
-            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            comp.onUserSearchComplete(makeEvent('ab'));
-
-            expect(searchStub).not.toHaveBeenCalled();
-            expect(comp.userSuggestions()).toEqual([]);
-        });
-
-        it('should update filterQuery with the search query', () => {
-            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            comp.onUserSearchComplete(makeEvent('testUser'));
-
-            expect(comp['filterQuery']()).toBe('testUser');
-        });
-
-        it('should update filterQuery even for short queries below minLength', () => {
-            comp.onUserSearchComplete(makeEvent('ab'));
-
-            expect(comp['filterQuery']()).toBe('ab');
-        });
-
-        it('should set searchFailed and return empty suggestions when the search throws', () => {
-            searchStub.mockReturnValue(throwError(() => new Error('')));
-
-            comp.onUserSearchComplete(makeEvent('testLoginOrName'));
-
-            expect(comp.userSuggestions()).toEqual([]);
-            expect(comp.searchFailed()).toBe(true);
-            expect(searchStub).toHaveBeenCalledWith('testLoginOrName');
-        });
-
-        it('should reset searchFailed before each new search', () => {
-            comp.searchFailed.set(true);
-            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            comp.onUserSearchComplete(makeEvent('testUser'));
-
-            expect(comp.searchFailed()).toBe(false);
-        });
-
-        it('should set isSearching to false after the search completes', () => {
-            searchStub.mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-
-            comp.onUserSearchComplete(makeEvent('testUser'));
-
-            expect(comp.isSearching()).toBe(false);
+        it('should return empty string when course has no title', () => {
+            fixture.componentRef.setInput('course', { ...course, title: undefined });
+            fixture.detectChanges();
+            expect(comp.exportFileName()).toBe('');
         });
     });
 
-    describe('onUserSelect', () => {
-        beforeEach(() => {
-            comp.allGroupUsers.set([]);
-            fixture.componentRef.setInput('addUserToGroup', () => of(new HttpResponse<void>()));
-        });
-
-        it('should add the selected user to the course group', () => {
-            comp.onUserSelect(courseGroupUser);
-
-            expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
-        });
-
-        it('should not add a user who is already in the group', () => {
-            comp.allGroupUsers.set([courseGroupUser]);
-
-            comp.onUserSelect(courseGroupUser);
-
-            expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
-        });
-
-        it('should not add a user who has no login', () => {
-            const userWithoutLogin = { ...courseGroupUser };
-            delete userWithoutLogin.login;
-
-            comp.onUserSelect(userWithoutLogin);
-
-            expect(comp.allGroupUsers()).toEqual([]);
-        });
-
-        it('should reset isTransitioning to false on error', () => {
-            fixture.componentRef.setInput('addUserToGroup', () => throwError(() => new Error('Add failed')));
-
-            comp.onUserSelect(courseGroupUser);
-
-            expect(comp.isTransitioning()).toBe(false);
-            expect(comp.allGroupUsers()).toEqual([]);
-        });
-
-        it('should set filterQuery to the selected user login so the new member stays visible', () => {
-            comp.onUserSelect(courseGroupUser);
-
-            expect(comp['filterQuery']()).toBe(courseGroupUser.login);
-        });
-
-        it('should clear userSuggestions after selection', () => {
-            comp.userSuggestions.set([courseGroupUser, courseGroupUser2]);
-
-            comp.onUserSelect(courseGroupUser);
-
-            expect(comp.userSuggestions()).toEqual([]);
-        });
-
-        it('should set filterQuery to empty string when selected user has no login', () => {
-            const userWithoutLogin = { ...courseGroupUser };
-            delete userWithoutLogin.login;
-
-            comp.onUserSelect(userWithoutLogin);
-
-            expect(comp['filterQuery']()).toBe('');
+    describe('columns', () => {
+        it('should define columns for login, registration number, name, email, and profile picture', () => {
+            fixture.detectChanges();
+            const cols = comp.columns();
+            expect(cols).toHaveLength(5);
+            // Profile picture column (no field, no sort)
+            expect(cols[0].field).toBeUndefined();
+            // Login column
+            expect(cols[1].field).toBe('login');
+            expect(cols[1].sort).toBe(true);
+            // Registration number column
+            expect(cols[2].field).toBe('visibleRegistrationNumber');
+            expect(cols[2].sort).toBe(true);
+            // Name column
+            expect(cols[3].field).toBe('name');
+            expect(cols[3].sort).toBe(true);
+            // Email column
+            expect(cols[4].field).toBe('email');
+            expect(cols[4].sort).toBe(true);
         });
     });
 
-    describe('isAlreadyMember', () => {
-        it('should return true when the user is in the group', () => {
-            comp.allGroupUsers.set([courseGroupUser]);
-
-            expect(comp.isAlreadyMember(courseGroupUser)).toBe(true);
-        });
-
-        it('should return false when the user is not in the group', () => {
-            comp.allGroupUsers.set([courseGroupUser]);
-
-            expect(comp.isAlreadyMember(courseGroupUser2)).toBe(false);
+    describe('tableOptions', () => {
+        it('should configure table as scrollable with flex height', () => {
+            expect(comp.tableOptions.scrollable).toBe(true);
+            expect(comp.tableOptions.scrollHeight).toBe('flex');
         });
     });
 
-    describe('filteredGroupUsers', () => {
-        const alice = { ...courseGroupUser, id: 1, login: 'alice', name: 'Alice Smith', email: 'alice@example.com', visibleRegistrationNumber: '12345' };
-        const bob = { ...courseGroupUser2, id: 2, login: 'bob', name: 'Bob Jones', email: 'bob@example.com', visibleRegistrationNumber: '67890' };
+    describe('onLazyLoad', () => {
+        it('should call getPagedUsersInCourseRole and update rows and totalRows', () => {
+            const mockResult = { content: [user1, user2], totalElements: 2 };
+            vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
 
-        beforeEach(() => {
-            comp.allGroupUsers.set([alice, bob]);
+            comp.onLazyLoad(mockLazyEvent);
+
+            expect(courseManagementService.getPagedUsersInCourseRole).toHaveBeenCalledWith(123, courseGroup, expect.any(Object));
+            expect(comp.rows()).toEqual([user1, user2]);
+            expect(comp.totalRows()).toBe(2);
+            expect(comp.isLoading()).toBe(false);
         });
 
-        it('should return all users when filterQuery is empty', () => {
-            expect(comp.filteredGroupUsers()).toHaveLength(2);
+        it('should set isLoading to false on error', () => {
+            vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(throwError(() => new Error('Network error')));
+
+            comp.onLazyLoad(mockLazyEvent);
+
+            expect(comp.isLoading()).toBe(false);
         });
 
-        it('should filter by login', () => {
-            comp['filterQuery'].set('alice');
+        it('should not call API when course id is missing', () => {
+            fixture.componentRef.setInput('course', { ...course, id: undefined });
+            const getSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
 
-            expect(comp.filteredGroupUsers()).toHaveLength(1);
-            expect(comp.filteredGroupUsers()[0].login).toBe('alice');
+            comp.onLazyLoad(mockLazyEvent);
+
+            expect(getSpy).not.toHaveBeenCalled();
         });
 
-        it('should filter by name', () => {
-            comp['filterQuery'].set('jones');
+        it('should update totalMembers only when no search term is active', () => {
+            const mockResult = { content: [user1], totalElements: 42 };
+            vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
 
-            expect(comp.filteredGroupUsers()).toHaveLength(1);
-            expect(comp.filteredGroupUsers()[0].login).toBe('bob');
+            comp.onLazyLoad(mockLazyEvent);
+
+            expect(comp.totalMembers()).toBe(42);
         });
 
-        it('should filter by email', () => {
-            comp['filterQuery'].set('alice@example');
+        it('should not update totalMembers when a search term is active', () => {
+            const mockResult = { content: [user1], totalElements: 1 };
+            vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
+            const eventWithSearch: TableLazyLoadEvent = { ...mockLazyEvent, globalFilter: 'alice' };
 
-            expect(comp.filteredGroupUsers()).toHaveLength(1);
-            expect(comp.filteredGroupUsers()[0].login).toBe('alice');
-        });
+            comp.onLazyLoad(eventWithSearch);
 
-        it('should filter by visibleRegistrationNumber', () => {
-            comp['filterQuery'].set('67890');
-
-            expect(comp.filteredGroupUsers()).toHaveLength(1);
-            expect(comp.filteredGroupUsers()[0].login).toBe('bob');
-        });
-
-        it('should be case insensitive', () => {
-            comp['filterQuery'].set('ALICE');
-
-            expect(comp.filteredGroupUsers()).toHaveLength(1);
-            expect(comp.filteredGroupUsers()[0].login).toBe('alice');
-        });
-
-        it('should return empty array when no user matches', () => {
-            comp['filterQuery'].set('zzz');
-
-            expect(comp.filteredGroupUsers()).toHaveLength(0);
-        });
-    });
-
-    describe('onSearchKeyUp', () => {
-        it('should update filterQuery from the event target value', () => {
-            const input = document.createElement('input');
-            input.value = 'ali';
-            const event = new KeyboardEvent('keyup');
-            Object.defineProperty(event, 'target', { value: input });
-
-            comp.onSearchKeyUp(event);
-
-            expect(comp['filterQuery']()).toBe('ali');
-        });
-
-        it('should set filterQuery to empty string when input is cleared via backspace', () => {
-            comp['filterQuery'].set('alice');
-            const input = document.createElement('input');
-            input.value = '';
-            const event = new KeyboardEvent('keyup');
-            Object.defineProperty(event, 'target', { value: input });
-
-            comp.onSearchKeyUp(event);
-
-            expect(comp['filterQuery']()).toBe('');
-        });
-    });
-
-    describe('onSearchClear', () => {
-        it('should reset filterQuery to empty string', () => {
-            comp['filterQuery'].set('some-query');
-
-            comp.onSearchClear();
-
-            expect(comp['filterQuery']()).toBe('');
-        });
-
-        it('should clear userSuggestions', () => {
-            comp.userSuggestions.set([courseGroupUser]);
-
-            comp.onSearchClear();
-
-            expect(comp.userSuggestions()).toEqual([]);
+            expect(comp.totalMembers()).toBe(0); // unchanged from initial
         });
     });
 
     describe('removeFromGroup', () => {
-        beforeEach(() => {
-            comp.allGroupUsers.set([courseGroupUser, courseGroupUser2]);
-            fixture.componentRef.setInput('removeUserFromGroup', () => of(new HttpResponse<void>()));
-        });
-
-        it('should remove given user from group', () => {
-            comp.removeFromGroup(courseGroupUser);
-            expect(comp.allGroupUsers()).toEqual([courseGroupUser2]);
-        });
-
-        it('should not do anything if users has no login', () => {
-            const user = { ...courseGroupUser };
-            delete user.login;
-            const originalUsers = [...comp.allGroupUsers()];
-            comp.removeFromGroup(user);
-            expect(comp.allGroupUsers()).toEqual(originalUsers);
-        });
-
-        it('should handle error when removing user from group', () => {
-            fixture.componentRef.setInput('removeUserFromGroup', () => throwError(() => new Error('Remove failed')));
-            const originalUsers = [...comp.allGroupUsers()];
-            comp.removeFromGroup(courseGroupUser);
-            // Users should not be removed on error
-            expect(comp.allGroupUsers()).toEqual(originalUsers);
-        });
-    });
-
-    it('should generate csv correctly', () => {
-        comp.allGroupUsers.set([courseGroupUser, courseGroupUser2]);
-        const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
-
-        comp.exportUserInformation();
-
-        expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-        const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
-
-        const expectedRow1 = {} as ExportUserInformationRow;
-        expectedRow1[NAME_KEY] = '';
-        expectedRow1[USERNAME_KEY] = courseGroupUser.login ?? '';
-        expectedRow1[EMAIL_KEY] = '';
-        expectedRow1[REGISTRATION_NUMBER_KEY] = '';
-
-        const expectedRow2 = {} as ExportUserInformationRow;
-        expectedRow2[NAME_KEY] = '';
-        expectedRow2[USERNAME_KEY] = courseGroupUser2.login ?? '';
-        expectedRow2[EMAIL_KEY] = '';
-        expectedRow2[REGISTRATION_NUMBER_KEY] = '';
-
-        const expectedRows = [expectedRow1, expectedRow2];
-
-        expect(generatedRows).toEqual(expectedRows);
-    });
-
-    it('should not export csv when there are no users', () => {
-        comp.allGroupUsers.set([]);
-        const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
-
-        comp.exportUserInformation();
-
-        expect(exportUserInformationAsCsvMock).not.toHaveBeenCalled();
-    });
-
-    describe('header member count callback', () => {
-        it('should report the filtered member count so the "X out of Y" header tracks the search', () => {
-            const sizeSpy = vi.fn();
-            fixture.componentRef.setInput('handleUsersSizeChange', sizeSpy);
-            comp.allGroupUsers.set([
-                { ...courseGroupUser, id: 1, login: 'alice', name: 'Alice Smith', email: 'alice@example.com' },
-                { ...courseGroupUser2, id: 2, login: 'bob', name: 'Bob Jones', email: 'bob@example.com' },
-            ]);
+        it('should call removeUserFromGroup and reset table on success', () => {
+            const removeFn = vi.fn().mockReturnValue(of(new HttpResponse<void>()));
+            fixture.componentRef.setInput('removeUserFromGroup', removeFn);
             fixture.detectChanges();
-            // No active search → full count, so the parent hides the counter rather than showing a stale value.
-            expect(sizeSpy).toHaveBeenLastCalledWith(2);
 
-            comp['filterQuery'].set('alice');
-            fixture.detectChanges();
-            expect(sizeSpy).toHaveBeenLastCalledWith(1);
+            comp.removeFromGroup(user1);
+
+            expect(removeFn).toHaveBeenCalledWith(user1.login);
+        });
+
+        it('should not call removeUserFromGroup when user has no login', () => {
+            const removeFn = vi.fn();
+            fixture.componentRef.setInput('removeUserFromGroup', removeFn);
+
+            const userWithoutLogin = { ...user1 };
+            delete userWithoutLogin.login;
+            comp.removeFromGroup(userWithoutLogin);
+
+            expect(removeFn).not.toHaveBeenCalled();
+        });
+
+        it('should emit dialog error message on error', () => {
+            const errorMessage = 'Remove failed';
+            const removeFn = vi.fn().mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 500 })));
+            fixture.componentRef.setInput('removeUserFromGroup', removeFn);
+
+            const dialogErrors: string[] = [];
+            comp.dialogError$.subscribe((err) => dialogErrors.push(err));
+
+            comp.removeFromGroup(user1);
+
+            expect(dialogErrors).toHaveLength(1);
         });
     });
 
-    describe('dataTableRowClass', () => {
-        it('should return empty string by default', () => {
-            expect(comp.dataTableRowClass()).toBe('');
-        });
-
-        it('should return the current row class', () => {
-            comp['rowClass'].set('test-class');
-            expect(comp.dataTableRowClass()).toBe('test-class');
-        });
-    });
-
-    describe('flashRowClass', () => {
-        beforeEach(() => {
-            vi.useFakeTimers();
-        });
-
-        afterEach(() => {
-            vi.useRealTimers();
-        });
-
-        it('should set and then clear the row class', () => {
-            comp.flashRowClass('flash-class');
-            expect(comp['rowClass']()).toBe('flash-class');
-
-            vi.runAllTimers();
-            expect(comp['rowClass']()).toBe('');
-        });
-    });
-
-    describe('exportUserInformationAsCsv', () => {
-        it('should call csv export utility with rows, keys, and filename', () => {
-            const rows: ExportUserInformationRow[] = [{ [NAME_KEY]: 'Test', [USERNAME_KEY]: 'user', [EMAIL_KEY]: 'test@test.com', [REGISTRATION_NUMBER_KEY]: '123' }];
-            const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
-            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
-
-            comp.allGroupUsers.set([{ ...courseGroupUser, name: 'Test', email: 'test@test.com', visibleRegistrationNumber: '123' }]);
-            comp.exportUserInformation();
-
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledWith(rows, keys, 'test-export');
-        });
-    });
-
-    describe('exportUserInformation with various user properties', () => {
-        it('should handle users with all properties defined', () => {
-            const userWithAllProps = {
-                ...courseGroupUser,
-                name: '  Test Name  ',
-                email: '  test@example.com  ',
-                visibleRegistrationNumber: '  12345  ',
+    describe('exportUserInformation', () => {
+        it('should call getAllUsersInCourseRole and export CSV with results', () => {
+            const userWithDetails = {
+                ...user1,
+                name: 'User One',
+                email: 'user1@example.com',
+                visibleRegistrationNumber: '123456',
             };
-            comp.allGroupUsers.set([userWithAllProps]);
-            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
+            vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [userWithDetails] })));
+            const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
-
-            // Should trim all values
-            expect(generatedRows[0][NAME_KEY]).toBe('Test Name');
-            expect(generatedRows[0][EMAIL_KEY]).toBe('test@example.com');
-            expect(generatedRows[0][REGISTRATION_NUMBER_KEY]).toBe('12345');
+            expect(courseManagementService.getAllUsersInCourseRole).toHaveBeenCalledWith(123, courseGroup);
+            expect(exportSpy).toHaveBeenCalledOnce();
+            const [rows, keys, filename] = exportSpy.mock.calls[0];
+            expect(rows[0][NAME_KEY]).toBe('User One');
+            expect(rows[0][USERNAME_KEY]).toBe('user1');
+            expect(rows[0][EMAIL_KEY]).toBe('user1@example.com');
+            expect(rows[0][REGISTRATION_NUMBER_KEY]).toBe('123456');
+            expect(keys).toEqual([NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY]);
+            expect(filename).toBe('Students Course Title');
         });
 
-        it('should handle users with undefined name', () => {
-            const userWithUndefinedName = { ...courseGroupUser };
-            delete (userWithUndefinedName as any).name;
-            comp.allGroupUsers.set([userWithUndefinedName]);
-            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
+        it('should not export CSV when no users returned', () => {
+            vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
-
-            // Should default to empty string
-            expect(generatedRows[0][NAME_KEY]).toBe('');
+            expect(exportSpy).not.toHaveBeenCalled();
         });
 
-        it('should handle users with undefined email', () => {
-            const userWithUndefinedEmail = { ...courseGroupUser, name: 'Test' };
-            delete (userWithUndefinedEmail as any).email;
-            comp.allGroupUsers.set([userWithUndefinedEmail]);
-            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
+        it('should not call API when course id is missing', () => {
+            fixture.componentRef.setInput('course', { ...course, id: undefined });
+            const getSpy = vi.spyOn(courseManagementService, 'getAllUsersInCourseRole');
 
             comp.exportUserInformation();
 
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
-
-            // Should default to empty string
-            expect(generatedRows[0][EMAIL_KEY]).toBe('');
+            expect(getSpy).not.toHaveBeenCalled();
         });
 
-        it('should handle users with undefined visibleRegistrationNumber', () => {
-            const userWithUndefinedRegNum = { ...courseGroupUser, name: 'Test' };
-            delete (userWithUndefinedRegNum as any).visibleRegistrationNumber;
-            comp.allGroupUsers.set([userWithUndefinedRegNum]);
-            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
+        it('should trim whitespace from exported values', () => {
+            const userWithSpaces = {
+                ...user1,
+                name: '  John Doe  ',
+                email: '  john@example.com  ',
+                visibleRegistrationNumber: '  REG001  ',
+            };
+            vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [userWithSpaces] })));
+            const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
-
-            // Should default to empty string
-            expect(generatedRows[0][REGISTRATION_NUMBER_KEY]).toBe('');
+            const [rows] = exportSpy.mock.calls[0];
+            expect(rows[0][NAME_KEY]).toBe('John Doe');
+            expect(rows[0][EMAIL_KEY]).toBe('john@example.com');
+            expect(rows[0][REGISTRATION_NUMBER_KEY]).toBe('REG001');
         });
 
-        it('should handle users with undefined login', () => {
-            const userWithUndefinedLogin = { ...courseGroupUser, name: 'Test' };
-            delete (userWithUndefinedLogin as any).login;
-            comp.allGroupUsers.set([userWithUndefinedLogin]);
-            const exportUserInformationAsCsvMock = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
+        it('should default to empty string for undefined user properties', () => {
+            const userWithUndefinedProps = new User(3, 'user3');
+            vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [userWithUndefinedProps] })));
+            const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
-            expect(exportUserInformationAsCsvMock).toHaveBeenCalledOnce();
-            const generatedRows = exportUserInformationAsCsvMock.mock.calls[0][0];
-
-            // Should default to empty string
-            expect(generatedRows[0][USERNAME_KEY]).toBe('');
+            const [rows] = exportSpy.mock.calls[0];
+            expect(rows[0][NAME_KEY]).toBe('');
+            expect(rows[0][EMAIL_KEY]).toBe('');
+            expect(rows[0][REGISTRATION_NUMBER_KEY]).toBe('');
         });
     });
 });

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -501,6 +502,24 @@ public class CourseAccessResource {
         }
         courseAccessService.removeUserFromCourse(userToRemoveFromGroup.get(), course, role);
         return ResponseEntity.ok().body(null);
+    }
+
+    /**
+     * GET /courses/{courseId}/{courseRoleSlug}/paged : Paginated, searchable, sortable list of course members for a given role.
+     *
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param search         pagination, search term, and sort info
+     * @return page of users with status 200 (OK) and pagination headers
+     */
+    @GetMapping("courses/{courseId}/{courseRoleSlug}/paged")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<User>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
+        CourseRole role = CourseRole.fromRole(Role.fromString(courseRoleSlug));
+        Page<User> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**

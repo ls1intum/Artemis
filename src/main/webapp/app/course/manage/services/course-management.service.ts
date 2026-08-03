@@ -5,6 +5,7 @@ import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
+import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
@@ -452,6 +453,25 @@ export class CourseManagementService implements OnDestroy {
      */
     getAllUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug): Observable<HttpResponse<User[]>> {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, { observe: 'response' });
+    }
+
+    /**
+     * Returns a page of course members for the given role, filtered and sorted by the search parameters.
+     * @param courseId       the id of the course
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @param search         pagination, search term, and sort info
+     */
+    getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<User>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        return this.http
+            .get<User[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params, observe: 'response' })
+            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
     }
 
     /**

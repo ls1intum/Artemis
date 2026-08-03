@@ -1,101 +1,61 @@
-<div>
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
-        <h2 class="mb-1">
-            <!-- Additional Header NG-Content-->
-            <ng-content />
-        </h2>
-        <div class="d-flex mt-1 mb-1 gap-1">
-            @if (course().isAtLeastInstructor) {
-                <jhi-user-import-button [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" (importDone)="importFinish.emit()" [tutorialGroup]="tutorialGroup()" />
-            }
-            @if (course().isAtLeastInstructor && allGroupUsers().length > 0) {
-                <button class="btn btn-primary btn-sm" (click)="exportUserInformation()">
+<jhi-table-view
+    [cols]="columns()"
+    [vals]="rows()"
+    [totalRows]="totalRows()"
+    [loading]="isLoading()"
+    [tableActions]="tableActionsTemplate"
+    [rowActions]="rowActionsTemplate"
+    [options]="tableOptions"
+    (onLazyLoad)="onLazyLoad($event)"
+/>
+
+<!-- Import / export buttons rendered in the table caption bar -->
+<ng-template #tableActionsTemplate>
+    @if (course().isAtLeastInstructor) {
+        <div class="d-flex gap-1 align-items-center">
+            <jhi-user-import-button [courseId]="course().id!" [courseRoleSlug]="courseRoleSlug()" (importDone)="onImportDone()" [tutorialGroup]="tutorialGroup()" />
+            @if (totalMembers() > 0) {
+                <button class="btn btn-primary" (click)="exportUserInformation()">
                     <fa-icon [icon]="faDownload" [fixedWidth]="true" />
                     <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
                 </button>
             }
         </div>
-    </div>
+    }
+</ng-template>
 
-    <jhi-table-view
-        [cols]="columns()"
-        [vals]="filteredGroupUsers()"
-        [loading]="isLoadingAllGroupUsers()"
-        [rowActions]="rowActionsRef"
-        [tableActions]="tableActionsRef"
-        [options]="tableOptions"
-        [rowClass]="dataTableRowClass"
+<!-- Profile-picture cell template -->
+<ng-template #profilePictureTemplate let-cell>
+    <jhi-profile-picture
+        imageSizeInRem="2"
+        fontSizeInRem="0.8"
+        imageId="user-profile-picture"
+        defaultPictureId="user-default-profile-picture"
+        [authorId]="cell.data.id"
+        [authorName]="cell.data.name"
+        [imageUrl]="addPublicFilePrefix(cell.data.imageUrl)"
     />
+</ng-template>
 
-    <!-- Combined search/add autocomplete: filters the loaded member list and adds new members -->
-    <ng-template #tableActionsRef>
-        <p-autocomplete
-            size="small"
-            [suggestions]="userSuggestions()"
-            [placeholder]="'artemisApp.course.courseGroup.searchForUsers' | artemisTranslate"
-            [minQueryLength]="1"
-            [showClear]="true"
-            optionLabel="login"
-            (completeMethod)="onUserSearchComplete($event)"
-            (onSelect)="onUserSelect($event.value)"
-            (onClear)="onSearchClear()"
-            (onKeyUp)="onSearchKeyUp($event)"
-        >
-            <ng-template #item let-user>
-                <div class="d-flex justify-content-between" [class.already-member]="isAlreadyMember(user)">
-                    <span>{{ user.name }} ({{ user.login }})</span>
-                    @if (isAlreadyMember(user)) {
-                        <fa-icon [icon]="faUsers" class="ms-3" />
-                    } @else {
-                        <fa-icon [icon]="faUserPlus" class="ms-3" />
-                    }
-                </div>
-            </ng-template>
-            <ng-template #empty>
-                @if (searchQueryTooShort()) {
-                    <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: 3 }"></span>
-                } @else if (searchFailed()) {
-                    <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"></span>
-                } @else {
-                    <span jhiTranslate="artemisApp.course.courseGroup.searchNoResults"></span>
-                }
-            </ng-template>
-        </p-autocomplete>
-    </ng-template>
+<!-- Login cell — admin link when admin -->
+<ng-template #loginTemplate let-cell>
+    @if (isAdmin()) {
+        <a routerLink="/admin/user-management/{{ cell.value }}">{{ cell.value }}</a>
+    } @else {
+        <span>{{ cell.value }}</span>
+    }
+</ng-template>
 
-    <!-- Row action: remove user from group -->
-    <ng-template #rowActionsRef let-row>
-        <button
-            jhiDeleteButton
-            [actionType]="ActionType.Remove"
-            [entityTitle]="row.login"
-            deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
-            (delete)="removeFromGroup(row)"
-            [dialogError]="dialogError$"
-        >
-            <fa-icon [icon]="faUserSlash" class="me-1" />
-        </button>
-    </ng-template>
-
-    <!-- Cell template: id column (link for admins, plain text otherwise) -->
-    <ng-template #idCellTemplate let-cell>
-        @if (isAdmin()) {
-            <a routerLink="/admin/user-management/{{ cell.data.login }}">{{ cell.data.id }}</a>
-        } @else {
-            {{ cell.data.id }}
-        }
-    </ng-template>
-
-    <!-- Cell template: profile picture column -->
-    <ng-template #profilePictureCellTemplate let-cell>
-        <jhi-profile-picture
-            imageSizeInRem="1.5"
-            fontSizeInRem="0.6"
-            imageId="user-profile-picture"
-            defaultPictureId="user-default-profile-picture"
-            [authorId]="cell.data.id"
-            [authorName]="cell.data.name"
-            [imageUrl]="addPublicFilePrefix(cell.data.imageUrl)"
-        />
-    </ng-template>
-</div>
+<!-- Row actions -->
+<ng-template #rowActionsTemplate let-user>
+    <button
+        jhiDeleteButton
+        [actionType]="ActionType.Remove"
+        [entityTitle]="user.login"
+        deleteQuestion="artemisApp.course.courseGroup.removeFromGroup.modalQuestion"
+        (delete)="removeFromGroup(user)"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faUserSlash" class="me-1" />
+    </button>
+</ng-template>
