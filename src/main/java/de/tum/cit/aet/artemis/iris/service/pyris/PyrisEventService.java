@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,14 +39,20 @@ public class PyrisEventService {
     /**
      * Validates and republishes the given {@link PyrisEvent} as a Spring application event so that
      * registered {@code @EventListener}s can react to it.
+     * <p>
+     * Runs asynchronously. Production callers use this fire-and-forget and ignore the returned future; it exists so
+     * that callers which must observe the effect of the dispatch (notably tests) can wait for the publication to have
+     * finished instead of polling for its side effects with an arbitrary deadline. Failures are logged here, so an
+     * ignored future never hides an error.
      *
      * @param event The event object received to trigger the matching action
+     * @return a future that completes once the event has been published (exceptionally if the event is not supported)
      * @throws UnsupportedPyrisEventException if the event is not supported
      *
      * @see PyrisEvent
      */
     @Async
-    public void trigger(PyrisEvent<?> event) {
+    public CompletableFuture<Void> trigger(PyrisEvent<?> event) {
         log.debug("Starting to process event of type: {}", event.getClass().getSimpleName());
         try {
             switch (event) {
@@ -60,5 +68,6 @@ public class PyrisEventService {
             log.error("Failed to process event: {}", event, e);
             throw e;
         }
+        return CompletableFuture.completedFuture(null);
     }
 }

@@ -38,6 +38,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { isExamSummaryPublished } from 'app/exam/overview/exam.utils';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import {
@@ -59,6 +61,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { Message } from 'primeng/message';
+import { ButtonDirective } from 'primeng/button';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -85,8 +89,11 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         AsyncPipe,
         ArtemisTranslatePipe,
+        ArtemisDatePipe,
         ExamExerciseOverviewPageComponent,
         CourseSidebarToggleButtonComponent,
+        Message,
+        ButtonDirective,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -155,6 +162,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly examSummaryButtonSecondsLeft = signal(10);
     examSummaryButtonTimer?: ReturnType<typeof setInterval>;
     readonly showExamSummary = signal(false);
+    // True while the last summary request failed. The summary is then withheld entirely instead of falling back to the
+    // conduction-era exam cached on this device, which carries no results and would read as a complete summary (#13317).
+    readonly summaryLoadFailed = signal(false);
+    // Repeats whichever summary request failed; set alongside summaryLoadFailed
+    private retrySummaryLoad?: () => void;
 
     readonly exerciseIndex = signal(0);
 
@@ -162,7 +174,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
-    studentExamSubscription?: Subscription;
+    /**
+     * The exam load belonging to the current route (test run, test exam summary, or own student exam). It is cancelled
+     * whenever the route changes, see {@link cancelPendingExamLoad}.
+     */
+    examLoadSubscription?: Subscription;
 
     readonly sidebarData = signal<SidebarData>(undefined!);
     readonly sidebarExercises = signal<SidebarCardElement[]>([]);
@@ -218,17 +234,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.courseId.set(parseInt(courseId, 10));
         });
         this.route.params.subscribe((params) => {
+            // This component is reused when only the :examId parameter changes, so nothing derived from the previous exam
+            // may survive into the next one: neither an in-flight request, nor a summary failure, nor a summary that is
+            // still on screen (not every branch below goes through a summary request that would reset those), nor the
+            // route parameters themselves.
+            this.resetForNewRoute();
             this.examId.set(parseInt(params['examId'], 10));
             this.testRunId.set(parseInt(params['testRunId'], 10));
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
-            if (studentExamId) {
-                this.testExam.set(true);
-                this.studentExamId.set(parseInt(studentExamId, 10));
-            }
+            this.testExam.set(!!studentExamId);
+            this.studentExamId.set(studentExamId ? parseInt(studentExamId, 10) : undefined!);
             this.loadingExam.set(true);
             if (this.testRunId()) {
-                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
+                this.examLoadSubscription = this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                     next: (studentExam) => {
                         this.studentExam.set(studentExam);
                         studentExam.exam!.course = new Course();
@@ -242,16 +261,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                 });
             } else if (this.testExam() && this.studentExamId()) {
-                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
+                this.loadTestExamStudentExamForSummary();
             } else {
-                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
+                this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
@@ -283,21 +295,130 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
-            next: (studentExamWithExercises: StudentExam | undefined) => {
-                if (studentExamWithExercises) {
-                    this.studentExam.set(studentExamWithExercises);
-                }
+        this.resetForNewLoad();
+        this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
+            next: (studentExamWithExercises: StudentExam) => {
+                this.studentExam.set(studentExamWithExercises);
                 this.showExamSummary.set(true);
                 this.loadingExam.set(false);
             },
             error: () => {
-                this.loadingExam.set(false);
+                this.handleFailedSummaryLoad(() => this.loadAndDisplaySummary());
             },
         });
         if (!this.testExam()) {
             this.examParticipationService.resetExamLayout();
         }
+    }
+
+    /**
+     * Loads the student exam of a test exam via the summary endpoint. Unlike {@link loadAndDisplaySummary} this is the
+     * initial load, so it also has to set up the exam itself; the summary is then displayed by {@link handleStudentExam}.
+     */
+    private loadTestExamStudentExamForSummary(): void {
+        this.resetForNewLoad();
+        this.examLoadSubscription = this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
+            next: (studentExam) => {
+                this.handleStudentExam(studentExam, true);
+            },
+            error: () => {
+                this.handleFailedSummaryLoad(() => this.loadTestExamStudentExamForSummary());
+            },
+        });
+    }
+
+    /**
+     * Drops everything the previously displayed exam left behind before a new load starts: the request still in flight,
+     * the retryable summary-failure state, and the summary view itself. Every entry point that begins a load goes
+     * through here, so a new call site cannot silently keep one of them alive — the component is reused when only the
+     * :examId parameter changes, and each of these surviving into the next exam is a bug of its own (#13317).
+     */
+    private resetForNewLoad(): void {
+        this.cancelPendingExamLoad();
+        this.clearFailedSummaryLoad();
+        this.showExamSummary.set(false);
+    }
+
+    /**
+     * Drops everything the previous exam left on screen, on top of {@link resetForNewLoad}. Only the route subscription
+     * may call this: a summary load stays within one exam and has to keep the exam it is loading the summary for.
+     * <p>
+     * The conduction view is gated on {@link exam} and {@link studentExam} alone, so leaving them set would keep the
+     * previous exam rendered while the next one loads, and keep it rendered underneath the message if that load fails.
+     * The remaining signals decide how that view is rendered, and each of them describes the previous exam: an exam the
+     * student confirmed the start of would make the next one skip its start cover, and a handed-in or ended one would
+     * make the next one look like it was already over (#13317).
+     */
+    private resetForNewRoute(): void {
+        this.resetForNewLoad();
+        this.stopConductionOfPreviousExam();
+        this.exam.set(undefined!);
+        this.studentExam.set(undefined!);
+        this.examStartConfirmed.set(false);
+        this.handInEarly.set(false);
+        this.activeExamPage.set(new ExamPage());
+        this.individualStudentEndDate.set(undefined!);
+        this.individualStudentEndDateWithGracePeriod.set(undefined!);
+    }
+
+    /**
+     * Stops the work {@link examStarted} set up for the exam that was being conducted, so none of it keeps running
+     * against the next exam. Resetting the signals alone is not enough: the autosave timer would keep firing
+     * {@link triggerSave} on a cleared student exam, and a live event of the previous exam would be applied to the next
+     * one, in the case of a working-time update even reconstructing a student exam that was just dropped (#13317).
+     */
+    private stopConductionOfPreviousExam(): void {
+        this.stopAutoSaveTimer();
+        this.workingTimeUpdateEventsSubscription?.unsubscribe();
+        this.workingTimeUpdateEventsSubscription = undefined;
+        this.problemStatementUpdateEventsSubscription?.unsubscribe();
+        this.problemStatementUpdateEventsSubscription = undefined;
+        this.programmingSubmissionSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        // Replacing the array rather than clearing it: ngOnDestroy iterates this list, and it must not keep the
+        // subscriptions of an exam that is no longer displayed.
+        this.programmingSubmissionSubscriptions = [];
+    }
+
+    /**
+     * Drops the exam load that is still in flight, if any. Without this, a response arriving after the route changed
+     * would apply to the exam that is no longer displayed: a late failure would restore the error state that was just
+     * cleared, together with a retry callback reading the route parameters of the exam now being loaded (#13317).
+     */
+    private cancelPendingExamLoad(): void {
+        this.examLoadSubscription?.unsubscribe();
+        this.examLoadSubscription = undefined;
+    }
+
+    /**
+     * Keeps the summary withheld and surfaces a retryable error state. Showing the previously loaded student exam instead
+     * would present an exam without results as a complete summary long after the error toast expired (#13317).
+     *
+     * @param retry repeats the request that just failed, see {@link retryLoadSummary}
+     */
+    private handleFailedSummaryLoad(retry: () => void): void {
+        this.retrySummaryLoad = retry;
+        this.showExamSummary.set(false);
+        this.summaryLoadFailed.set(true);
+        this.loadingExam.set(false);
+    }
+
+    /**
+     * Drops the retryable error state so that a message cannot outlive the request that produced it.
+     */
+    private clearFailedSummaryLoad(): void {
+        this.summaryLoadFailed.set(false);
+        this.retrySummaryLoad = undefined;
+    }
+
+    /**
+     * Retries loading the summary after a failed request.
+     */
+    retryLoadSummary(): void {
+        if (!this.retrySummaryLoad) {
+            return;
+        }
+        this.loadingExam.set(true);
+        this.retrySummaryLoad();
     }
 
     canDeactivate() {
@@ -430,6 +551,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * start AutoSaveTimer
      */
     public startAutoSaveTimer(): void {
+        // Stop first: assigning over a running interval would drop the only handle to it, leaving it ticking for the
+        // rest of the page's life, past even ngOnDestroy. Also restarts the tick counter, so a new exam does not
+        // inherit the elapsed ticks of the previous one and save immediately.
+        this.stopAutoSaveTimer();
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer.update((v) => v + 1);
@@ -440,15 +565,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * Stops the autosave timer and drops its handle, so a later start cannot leave this interval running unreachably.
+     */
+    private stopAutoSaveTimer(): void {
+        window.clearInterval(this.autoSaveInterval);
+        this.autoSaveInterval = undefined;
+        this.autoSaveTimer.set(0);
+    }
+
+    /**
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
         this.handInPossible.set(false);
         this.submitInProgress.set(true);
-        if (this.autoSaveInterval) {
-            window.clearInterval(this.autoSaveInterval);
-        }
+        this.stopAutoSaveTimer();
 
         // Submit the exam with a timeout of 20s = 20000ms
         // If we don't receive a response within that time throw an error the subscription can then handle
@@ -474,6 +606,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+
+                    // Leave the hand-in-early cover: the exam is submitted, so its Finish button is disabled from here on and the
+                    // student has to reach the submission confirmation instead. Without this they stay on the confirmation screen
+                    // with a dead Finish button until the exam ends, which reads as if the submission had not gone through. This
+                    // signal write also re-renders the panel, which reads the (mutated) submitted flag above.
+                    this.handInEarly.set(false);
 
                     if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
@@ -539,9 +677,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * called when exam ended because the working time is over
      */
     examEnded() {
-        if (this.autoSaveInterval) {
-            window.clearInterval(this.autoSaveInterval);
-        }
+        this.stopAutoSaveTimer();
         // update local studentExam for later sync with server
         this.updateLocalStudentExam();
         // The end view is gated by the time-based isOver() getter. The exam timer fires this handler
@@ -625,6 +761,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
+     * Whether the student may currently see the summary (submission overview incl. exam questions, own answers and PDF export) of their submitted exam.
+     * Controlled by the optional exam.examSummaryPublicationDate; unset means the summary is available immediately after submission (default behavior).
+     */
+    isExamSummaryVisible(): boolean {
+        this.wallClockVersion();
+        return isExamSummaryPublished(!!this.testRunId(), this.exam(), this.serverDateService);
+    }
+
+    /**
      * check if the grace period has already passed
      */
     isGracePeriodOver() {
@@ -677,13 +822,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
-        this.studentExamSubscription?.unsubscribe();
+        this.examLoadSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
-        window.clearInterval(this.autoSaveInterval);
+        this.stopAutoSaveTimer();
     }
 
-    handleStudentExam(studentExam: StudentExam | undefined) {
+    /**
+     * Takes over a loaded student exam and decides what to show for it: the conduction view, the submission
+     * confirmation, or the summary.
+     *
+     * @param studentExam      the loaded student exam
+     * @param loadedForSummary whether it was already loaded through the summary endpoint and therefore carries the
+     *                         exercises the summary needs. The summary is then displayed directly instead of being
+     *                         requested again: the repeat is the very same GET, and a transient failure of it would
+     *                         replace a summary that had already loaded successfully with the error state (#13317).
+     */
+    handleStudentExam(studentExam: StudentExam | undefined, loadedForSummary = false) {
         if (!studentExam) {
+            // Leave the loading state; otherwise the view would keep showing the spinner with nothing to render
+            this.loadingExam.set(false);
             return;
         }
         this.studentExam.set(studentExam);
@@ -693,9 +850,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
-        // only show the summary if the student was able to submit on time.
+        // only show the summary if the student was able to submit on time and the summary is already visible (see examSummaryPublicationDate).
         if (this.isOver() && this.studentExam().submitted) {
-            this.loadAndDisplaySummary();
+            if (!this.isExamSummaryVisible()) {
+                // the instructor delayed the submission overview; withhold it and only show the submission confirmation with the release date
+                this.loadingExam.set(false);
+            } else if (loadedForSummary) {
+                // already loaded through the summary endpoint, so it can be shown right away
+                this.showExamSummary.set(true);
+                this.loadingExam.set(false);
+            } else {
+                this.loadAndDisplaySummary();
+            }
         } else {
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
@@ -1113,6 +1279,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         submissionCopy.submitted = true;
                         delete submissionCopy.participation;
                         exerciseForSubmission.studentParticipations[0].submissions[0] = submissionCopy;
+                        // `submitted` was flipped on a plain object from a websocket callback, which schedules no
+                        // change detection. Without this the navigation sidebar and exercise overview keep the old
+                        // icon and saved counter — defeating this block's stated purpose of syncing the navigation
+                        // bar when the student submits from an IDE rather than the code editor.
+                        this.examParticipationService.notifySubmissionSyncStateChanged();
                     }
                 }
             });

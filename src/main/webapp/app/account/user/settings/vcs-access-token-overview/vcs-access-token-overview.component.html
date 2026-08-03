@@ -1,0 +1,62 @@
+<div class="flex flex-col">
+    <h3 jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.title"></h3>
+    <p class="text-muted-color" jhiTranslate="artemisApp.userSettings.vcsAccessTokensOverview.description"></p>
+    <tum-ui-table
+        [columns]="columns()"
+        [rows]="rows()"
+        [totalRecords]="totalCount()"
+        [trackBy]="trackByToken"
+        (dataRequest)="onDataRequest($event)"
+        [rowActions]="tokenActions"
+        [loading]="isLoading()"
+        [striped]="true"
+        [scrollable]="true"
+        emptyMessage="artemisApp.userSettings.vcsAccessTokensOverview.table.empty"
+    />
+</div>
+
+<ng-template #courseColumn let-params>
+    @let token = params.data;
+    @if (courseLink(token); as link) {
+        <a [routerLink]="link" target="_blank" rel="noopener noreferrer">{{ token.courseTitle }}</a>
+    } @else {
+        <span>{{ token.courseTitle }}</span>
+    }
+</ng-template>
+
+<ng-template #exerciseColumn let-params>
+    @let token = params.data;
+    @if (exerciseLink(token); as link) {
+        <a [routerLink]="link" target="_blank" rel="noopener noreferrer">{{ token.exerciseTitle }}</a>
+    } @else {
+        <span>{{ token.exerciseTitle }}</span>
+    }
+</ng-template>
+
+<ng-template #typeColumn let-params>
+    @let token = params.data;
+    <span>{{ tokenTypeLabelKey(token) | artemisTranslate }}</span>
+    @if (token.studentLogin) {
+        <span class="text-muted-color"> · {{ token.studentLogin }}</span>
+    }
+</ng-template>
+
+<ng-template #repositoryColumn let-params>
+    @let token = params.data;
+    @if (token.repositoryUri) {
+        <span class="block break-all font-mono text-xs text-muted-color" [title]="token.repositoryUri">{{ token.repositoryUri }}</span>
+    }
+</ng-template>
+
+<ng-template #tokenActions let-token>
+    <div class="flex items-center justify-end">
+        <tum-ui-button
+            severity="danger"
+            size="small"
+            [icon]="faTrash"
+            [ariaLabel]="'artemisApp.userSettings.vcsAccessTokensOverview.revoke.label' | artemisTranslate"
+            (clicked)="$event.stopPropagation(); openRevokeDialog(token)"
+            data-testid="revoke-token-btn"
+        />
+    </div>
+</ng-template>

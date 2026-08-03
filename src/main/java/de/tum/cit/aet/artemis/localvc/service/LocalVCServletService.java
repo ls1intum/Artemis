@@ -250,7 +250,7 @@ public class LocalVCServletService {
 
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException("No authorization header provided");
+            throw new LocalVCAuthException("No authorization header provided", true);
         }
 
         // If it is a fetch request, we check if it is the build agent that is fetching the repository.
@@ -464,13 +464,14 @@ public class LocalVCServletService {
         catch (AccessForbiddenException | AuthenticationException e) {
             // Git clients routinely send a request with an empty password (e.g. before a credential helper supplies one or when only the username is baked into the remote URL).
             // That is expected probing noise rather than a genuine failed login attempt, so log it at debug to keep the production logs focused on real credential issues.
-            if (passwordOrToken.isEmpty()) {
+            boolean missingPassword = passwordOrToken.isEmpty();
+            if (missingPassword) {
                 log.debug("Login attempt for user {} without a password; no credentials provided", username);
             }
             else {
                 log.warn("Failed login attempt for user {} due to issue: {}", username, e.getMessage());
             }
-            throw new LocalVCAuthException(e.getMessage());
+            throw new LocalVCAuthException(e.getMessage(), missingPassword);
         }
 
         // check user VCS access token
@@ -681,7 +682,7 @@ public class LocalVCServletService {
      */
     private UsernameAndPassword extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
-            throw new LocalVCAuthException("No authorization header provided");
+            throw new LocalVCAuthException("No authorization header provided", true);
         }
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 

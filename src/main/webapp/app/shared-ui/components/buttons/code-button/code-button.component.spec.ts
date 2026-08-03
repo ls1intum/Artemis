@@ -191,7 +191,7 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
 
             expect(component.isBaseRepository()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(42, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
             expect(createRepoTokenSpy).not.toHaveBeenCalled();
         });
@@ -204,7 +204,7 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined);
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(42, 'SOLUTION', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
         });
 
@@ -227,7 +227,7 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
         });
 
@@ -239,7 +239,7 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3, undefined);
         });
 
         it('should reload a fresh token when the component is reused for a different base repository', async () => {
@@ -253,7 +253,7 @@ describe('CodeButtonComponent', () => {
 
             component.onClick();
             fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(repoToken);
 
             // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
@@ -267,7 +267,7 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
 
             // A fresh token request is made for the new repository and the stale template token is replaced.
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
             expect(component.repositoryAccessToken()).toEqual(solutionToken);
             // The embedded clone URL must use the new repository's token, never the stale template one.
             const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
@@ -288,7 +288,7 @@ describe('CodeButtonComponent', () => {
 
             component.onClick();
             fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
 
             fixture.componentRef.setInput('repositoryType', 'SOLUTION');
             fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
@@ -296,7 +296,7 @@ describe('CodeButtonComponent', () => {
 
             component.onClick();
             fixture.detectChanges();
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
 
             templateTokenSubject.next(new HttpResponse({ body: repoToken }));
             templateTokenSubject.complete();
@@ -350,7 +350,7 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
 
             expect(component.isBaseRepository()).toBe(true);
-            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined, undefined);
             expect(fixture.debugElement.query(By.css('.alert-warning'))).toBeNull();
         });
 
@@ -409,7 +409,7 @@ describe('CodeButtonComponent', () => {
             component.onClick();
             fixture.detectChanges();
 
-            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined, undefined);
             expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
             expect(component.repositoryAccessToken()).toBeUndefined();
         });
@@ -434,6 +434,84 @@ describe('CodeButtonComponent', () => {
             const cloneUrl = component.getHttpOrSshRepositoryUri(false);
             expect(cloneUrl).toContain('test-tests.git');
             expect(cloneUrl).toContain(`:${repoToken}@`);
+        });
+
+        it('should mint a repository-scoped token for a student repository browsed by staff and never leave the clone button disabled', async () => {
+            // Course staff opening another student's assignment repository in course management. Even without a personal VCS
+            // token, a repository-scoped USER token is provisioned on demand (keyed by the participation), so the copy button
+            // becomes enabled and the clone URL embeds that scoped token.
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
+            localStorageState = RepositoryAuthenticationMethod.Token;
+
+            const othersParticipation = {
+                id: 45,
+                student: { login: 'some_student' },
+                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-some_student.git',
+            } as ProgrammingExerciseStudentParticipation;
+
+            await component.ngOnInit();
+            component.isInCourseManagement.set(true);
+            fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participations', [othersParticipation]);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(component.usesStudentRepositoryStaffToken()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 45);
+            expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(component.copyEnabled()).toBe(true);
+            const url = component.getHttpOrSshRepositoryUri(false);
+            expect(url).toContain(`:${repoToken}@`);
+            expect(url).not.toContain('undefined');
+        });
+
+        it('should mint the student token from a participationId input when no participation object is passed (staff tables)', async () => {
+            // The scores / participations / feedback tables render the code button with only repositoryUri + exerciseId +
+            // participationId (no participations array). The scoped USER token must still be minted so the button is never disabled.
+            vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined } as User));
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('exerciseId', 55);
+            fixture.componentRef.setInput('participationId', 66);
+            fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/COURSE/some-student.git');
+            await component.ngOnInit();
+            component.isInCourseManagement.set(true);
+            fixture.detectChanges();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(component.usesStudentRepositoryStaffToken()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(55, 'USER', undefined, 66);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(component.copyEnabled()).toBe(true);
+            const url = component.getHttpOrSshRepositoryUri(false);
+            expect(url).toContain(`:${repoToken}@`);
+            expect(url).not.toContain('undefined');
+        });
+
+        it('should create the repository-scoped student token on demand when none exists yet (404)', async () => {
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            localStorageState = RepositoryAuthenticationMethod.Token;
+
+            const othersParticipation = {
+                id: 46,
+                student: { login: 'some_student' },
+                repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-some_student.git',
+            } as ProgrammingExerciseStudentParticipation;
+
+            await component.ngOnInit();
+            component.isInCourseManagement.set(true);
+            fixture.componentRef.setInput('exercise', { id: 99 } as ProgrammingExercise);
+            fixture.componentRef.setInput('participations', [othersParticipation]);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(99, 'USER', undefined, 46);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
         });
     });
 
@@ -543,9 +621,11 @@ describe('CodeButtonComponent', () => {
         expect(url).not.toContain('undefined');
     });
 
-    it('should keep using the personal staff token for another users test run participation in course management', async () => {
-        // When course staff open another instructor's test run summary, the participation is not owned by them, so the
-        // personal staff token must still be used (fetching the participation token would be forbidden server-side).
+    it('should mint a repository-scoped staff token for another users test run participation in course management', async () => {
+        // When course staff open another instructor's test run summary, the participation is not owned by them. Instead of the
+        // (deprecated) personal staff token, a repository-scoped USER token is minted on demand for that student repository.
+        const repoToken = 'vcpat-StaffScopedTestRunTokenStaffScopedTestRun12';
+        const getRepoTokenSpy = vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: repoToken })));
         localStorageState = RepositoryAuthenticationMethod.Token;
 
         const othersTestRunParticipation = {
@@ -557,15 +637,20 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
         component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('exercise', { id: 77 } as ProgrammingExercise);
         fixture.componentRef.setInput('participations', [othersTestRunParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();
         component.onClick();
         fixture.detectChanges();
 
+        // The participation token endpoint must not be used for a repository the staff member does not own.
         expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        // A repository-scoped staff token is requested for the student (USER) repository, keyed by the participation.
+        expect(getRepoTokenSpy).toHaveBeenCalledWith(77, 'USER', undefined, 43);
         const url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://edx_userLogin:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
+        expect(url).toBe(`https://edx_userLogin:${repoToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git`);
+        expect(url).not.toContain('undefined');
     });
 
     it('should omit the token and report to Sentry when a participation token is unexpectedly missing', async () => {
@@ -661,11 +746,13 @@ describe('CodeButtonComponent', () => {
         freshFixture.destroy();
     });
 
-    it('should not report to Sentry when only the personal staff token is missing (known, UI-handled case)', async () => {
+    it('should not report to Sentry while a repository-scoped staff token for a student repository is still loading', async () => {
         const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
-        // Course staff browsing another participant's repository without having created a personal VCS token: the URL
-        // must still not contain "undefined", but this is an expected, already UI-surfaced state and must not be reported.
+        // Course staff browsing another participant's repository: a repository-scoped token is minted on demand. While it is
+        // still loading, the URL must omit the token (never contain "undefined"), and this transient state must not be reported.
+        const tokenSubject = new Subject<HttpResponse<string>>();
+        vi.spyOn(programmingExerciseService, 'getRepositoryVcsAccessToken').mockReturnValue(tokenSubject.asObservable());
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'edx_userLogin', internal: true, vcsAccessToken: undefined }));
         localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -677,6 +764,7 @@ describe('CodeButtonComponent', () => {
 
         await component.ngOnInit();
         component.isInCourseManagement.set(true);
+        fixture.componentRef.setInput('exercise', { id: 88 } as ProgrammingExercise);
         fixture.componentRef.setInput('participations', [othersParticipation]);
         fixture.detectChanges();
         await fixture.whenStable();

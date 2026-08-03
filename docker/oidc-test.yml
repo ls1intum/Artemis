@@ -1,0 +1,41 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# OpenID Connect (OIDC) Testing service (Keycloak)
+# ----------------------------------------------------------------------------------------------------------------------
+# Keycloak provides a full-featured OpenID Connect Identity Provider for local testing with Artemis.
+#
+# Admin console: http://localhost:9080 (admin/admin)
+# OIDC Endpoint: http://localhost:9080/realms/artemis-oidc/.well-known/openid-configuration
+# Test users:    artemis_admin / artemis_admin, artemis_test_user_1 / artemis_test_user_1 (up to artemis_test_user_20)
+#
+# This file can be run standalone for non-containerized Artemis (e.g. IntelliJ / Gradle):
+#   docker compose -f docker/oidc-test.yml up -d
+#
+# For non-containerized Artemis, enable the OIDC feature flag and add the configuration to application-local.yml.
+#
+# For containerized Artemis, combine with an Artemis setup, and mount the config:
+#   docker compose -f docker/artemis-dev-mysql.yml -f docker/oidc-test.yml up
+# ----------------------------------------------------------------------------------------------------------------------
+name: artemis
+services:
+    keycloak-oidc:
+        container_name: artemis-keycloak-oidc
+        image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.6}
+        pull_policy: missing
+        command: start-dev --import-realm
+        environment:
+            KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+            KC_HTTP_PORT: 9080
+        ports:
+            - "9080:9080"
+        expose:
+            - "9080"
+        volumes:
+            - ./oidc-test/artemis-oidc-realm.json:/opt/keycloak/data/import/artemis-oidc-realm.json
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
