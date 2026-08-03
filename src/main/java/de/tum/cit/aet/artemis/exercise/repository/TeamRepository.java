@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,6 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedException;
+import de.tum.cit.aet.artemis.exercise.util.TeamStudentUniquenessViolation;
 
 /**
  * Spring Data repository for the Team entity.
@@ -32,12 +32,6 @@ import de.tum.cit.aet.artemis.exercise.exception.StudentsAlreadyAssignedExceptio
 @Lazy
 @Repository
 public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
-
-    /**
-     * Name of the unique constraint on team_student that enforces "a student belongs to at most one team per exercise",
-     * lower-cased for a case-insensitive comparison against what the database reports.
-     */
-    String TEAM_STUDENT_UNIQUE_CONSTRAINT = "uk_team_student_exercise_student";
 
     @EntityGraph(type = LOAD, attributePaths = "students")
     List<Team> findAllByExerciseId(Long exerciseId);
@@ -172,22 +166,13 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
      *         original exception, which must not be masked
      */
     private RuntimeException translateStudentTeamConflict(Exercise exercise, Team team, DataIntegrityViolationException exception) {
-        if (!isTeamStudentUniquenessViolation(exception)) {
+        // The discriminator lives in TeamStudentUniquenessViolation because reaching this branch requires losing a race,
+        // which no test can force deterministically; there it is covered by unit tests over synthetic exception chains.
+        if (!TeamStudentUniquenessViolation.matches(exception)) {
             return exception;
         }
         List<Pair<User, Team>> conflicts = findStudentTeamConflicts(exercise, team);
         return conflicts.isEmpty() ? exception : new StudentsAlreadyAssignedException(conflicts);
-    }
-
-    private boolean isTeamStudentUniquenessViolation(DataIntegrityViolationException exception) {
-        // The constraint name is the only reliable discriminator; databases report it in their own casing.
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof ConstraintViolationException constraintViolation && constraintViolation.getConstraintName() != null
-                    && constraintViolation.getConstraintName().toLowerCase().contains(TEAM_STUDENT_UNIQUE_CONSTRAINT)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

@@ -197,6 +197,12 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
      * Which of the two paths a loser takes depends on the interleaving, so the test asserts what has to hold for both:
      * exactly one team is created and no {@link DataIntegrityViolationException} escapes. It is repeated because only
      * some interleavings reach the constraint.
+     * <p>
+     * Because of that, this test alone cannot prove the constraint-violation translation still works: an interleaving in
+     * which both losers take the sequential pre-check path passes even if the translation is removed. The translation
+     * decision itself is therefore covered deterministically by
+     * {@code TeamStudentUniquenessViolationTest}, and this test remains the end-to-end guarantee that a concurrent loser
+     * never surfaces a raw integrity violation.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
