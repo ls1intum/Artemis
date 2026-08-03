@@ -112,6 +112,22 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false; // default value
 
+    /**
+     * When the user last logged in. Set on every successful authentication and used as the activity signal for the
+     * data-privacy not-enrolled-user cleanup (a real login signal, unlike the auditing {@code lastModifiedDate}, which is
+     * bumped by any write to the user row such as group synchronization).
+     */
+    @Column(name = "last_login_date")
+    private Instant lastLoginDate;
+
+    /**
+     * When the data-privacy cleanup warned the user that their (not-enrolled, inactive) account will be deleted after a
+     * grace period. Stays {@code null} until the user has been warned; cleared if the user becomes active or enrolled
+     * again. Anchors the grace period to the real warning so an account is never deleted without prior notice.
+     */
+    @Column(name = "deletion_warning_sent_date")
+    private Instant deletionWarningSentDate;
+
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
     private String langKey;
@@ -556,6 +572,24 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    @JsonIgnore
+    public Instant getLastLoginDate() {
+        return lastLoginDate;
+    }
+
+    public void setLastLoginDate(Instant lastLoginDate) {
+        this.lastLoginDate = lastLoginDate;
+    }
+
+    @JsonIgnore
+    public Instant getDeletionWarningSentDate() {
+        return deletionWarningSentDate;
+    }
+
+    public void setDeletionWarningSentDate(Instant deletionWarningSentDate) {
+        this.deletionWarningSentDate = deletionWarningSentDate;
     }
 
     @Nullable

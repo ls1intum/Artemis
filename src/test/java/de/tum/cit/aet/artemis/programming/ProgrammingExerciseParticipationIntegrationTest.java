@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1092,7 +1093,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             programmingExerciseRepository.save(programmingExercise);
 
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-            Map<String, String> studentFiles = Map.of("student/Example.java", "class StudentExample {}\n");
+            Map<String, String> studentFiles = Map.of("student/Example.java", "class StudentExample {}\n", "student/file with spaces.txt", "content with spaces",
+                    "student/pages/[id].tsx", "export const Page = () => null;", "student/check.sh", "#!/bin/sh\necho checked\n", "README.md", "Not requested");
             var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             studentCommitHash = commitToParticipationRepository(studentParticipation, studentFiles, "Student detail commit").getName();
 
@@ -1115,6 +1117,68 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         void shouldReturnForParticipation() throws Exception {
             var files = request.getMap(basePath + studentCommitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
             assertThat(files).containsEntry("student/Example.java", "class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnOnlySelectedFilesForParticipation() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/Example.java"), Map.class, HttpStatus.OK);
+
+            assertThat(files).hasSize(1);
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnSelectedFilesWithLegalGitPathCharacters() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/file with spaces.txt", "student/pages/[id].tsx"), Map.class, HttpStatus.OK);
+
+            assertThat(files.get("student/file with spaces.txt")).isEqualTo("content with spaces");
+            assertThat(files.get("student/pages/[id].tsx")).isEqualTo("export const Page = () => null;");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldFilterBinarySelectedFilesByContentInsteadOfExtension() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/Example.java", "student/check.sh"), Map.class, HttpStatus.OK);
+
+            assertThat(files).hasSize(2);
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+            assertThat(files.get("student/check.sh")).isEqualTo("#!/bin/sh\necho checked\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldSkipInvalidGitPathWithoutRejectingValidPaths() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/../README.md", "student/Example.java"), Map.class, HttpStatus.OK);
+
+            assertThat(files).hasSize(1);
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldRejectTooManySelectedFiles() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+            Set<String> filePaths = new HashSet<>();
+            for (int i = 0; i <= 100; i++) {
+                filePaths.add("student/File" + i + ".java");
+            }
+
+            request.postWithResponseBody(path, filePaths, Map.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
