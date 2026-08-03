@@ -2,6 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { IrisChatWebsocketDTO } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisCommand, IrisCommandAckDTO } from 'app/iris/shared/entities/iris-command.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 import { Observable, Subject, Subscription } from 'rxjs';
 
 type SubscribedChannel<T> = { wsSubscription: Subscription; subject: Subject<T> };
@@ -18,6 +19,14 @@ const COMMAND_TOPIC_SUFFIX = '/commands';
 @Injectable({ providedIn: 'root' })
 export class IrisWebsocketService implements OnDestroy {
     protected websocketService = inject(WebsocketService);
+
+    /**
+     * Identifies this browser tab for the lifetime of the page. Sent along with each user message so that a command
+     * the server pushes while answering can name the tab that is meant, and compared against incoming commands so the
+     * other tabs of the same user ignore them. A reload produces a new id, which is the correct outcome: the tab that
+     * would have carried out a command in flight no longer exists.
+     */
+    readonly clientId = generateUuid();
 
     private subscribedChannels: Map<number, SubscribedChannel<IrisChatWebsocketDTO>> = new Map();
 

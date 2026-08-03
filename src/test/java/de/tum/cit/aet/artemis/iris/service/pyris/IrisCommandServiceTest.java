@@ -188,9 +188,41 @@ class IrisCommandServiceTest {
     void commandRequest_carriesCorrelationIdTypeAndParametersToTheClient() throws Exception {
         var parameters = Map.<String, JsonNode>of("lectureUnitId", JsonNodeFactory.instance.numberNode(LECTURE_UNIT_ID));
 
-        var serialized = new ObjectMapper().writeValueAsString(new IrisCommandRequestWebsocketDTO("corr-1", "pointOut", parameters));
+        var serialized = new ObjectMapper().writeValueAsString(new IrisCommandRequestWebsocketDTO("corr-1", "pointOut", parameters, null));
 
         assertThat(serialized).isEqualTo("{\"correlationId\":\"corr-1\",\"type\":\"pointOut\",\"parameters\":{\"lectureUnitId\":42}}");
+    }
+
+    @Test
+    void commandRequest_isAddressedToTheTabTheChatRunWasStartedFrom() {
+        // Delivery is per user, so every tab receives the request; naming the originating tab is what keeps the other
+        // tabs from answering for it.
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
+        var jobStartedFromTab = new ChatJob("job-2", COURSE_ID, SESSION_ID, null, null, null, null, "tab-7");
+        var payload = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(jobStartedFromTab, pointOutCommand(LECTURE_UNIT_ID, 3, null));
+
+        verify(irisWebsocketService).send(eq("student1"), anyString(), payload.capture());
+        assertThat(((IrisCommandRequestWebsocketDTO) payload.getValue()).targetClientId()).isEqualTo("tab-7");
+    }
+
+    @Test
+    void commandRequest_namesNoTabForARunStartedWithoutOne() {
+        // Event-triggered runs have no originating tab; the request then names none and any tab may carry it out.
+        stubSessionAndUser();
+        stubLectureUnitInCourse(COURSE_ID);
+        when(coordinationService.register(anyString(), eq("student1"))).thenReturn(CompletableFuture.completedFuture(new IrisCommandAckDTO("corr", true)));
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.COMMAND))).thenAnswer(invocation -> invocation.getArgument(0));
+        var payload = ArgumentCaptor.forClass(Object.class);
+
+        commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, null));
+
+        verify(irisWebsocketService).send(eq("student1"), anyString(), payload.capture());
+        assertThat(((IrisCommandRequestWebsocketDTO) payload.getValue()).targetClientId()).isNull();
     }
 
     @Test

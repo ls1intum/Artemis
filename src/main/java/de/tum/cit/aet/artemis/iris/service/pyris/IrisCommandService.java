@@ -60,7 +60,13 @@ public class IrisCommandService {
      */
     private static final String POINT_OUT_TYPE = "pointOut";
 
-    private static final long ACK_TIMEOUT_SECONDS = 5;
+    /**
+     * How long to wait for the addressed tab to report back before treating a command as not carried out. The tab answers either way as soon as it has tried, so this is a backstop
+     * for a tab that went away (closed, reloaded, connection lost) rather than a budget the normal case spends. It still has to cover the full path — node to broker to browser,
+     * the navigation itself, and back — on a weak connection with a busy renderer. Pyris' own timeout on the command call must stay above it, so a slow client surfaces as "not
+     * applied" rather than as a transport error.
+     */
+    private static final long ACK_TIMEOUT_SECONDS = 2;
 
     private final IrisCommandCoordinationService coordinationService;
 
@@ -128,7 +134,7 @@ public class IrisCommandService {
             return PyrisCommandResultDTO.notApplied();
         }
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
-        if (!dispatchToClient(session, command)) {
+        if (!dispatchToClient(session, command, job.clientId())) {
             return PyrisCommandResultDTO.notApplied();
         }
 
@@ -145,12 +151,17 @@ public class IrisCommandService {
 
     /**
      * Pushes a command to the session's user and blocks until the browser reports back whether it carried it out. Type-agnostic, so every command type shares one transport.
+     * <p>
+     * The send goes to the user, so every tab with the session open receives it and carries it out. What the request restricts is not who acts but who <em>answers</em>: it names
+     * the tab the chat run was started from, and only that one acknowledges. Exactly one reply therefore comes back, which is what makes the first ack authoritative — a bystanding
+     * tab can neither claim success nor deny it on behalf of the tab the student is actually looking at.
      *
-     * @param session the chat session whose user should execute the command
-     * @param command the command to push
+     * @param session        the chat session whose user should execute the command
+     * @param command        the command to push
+     * @param targetClientId the browser tab expected to answer, or null to let any tab of the user answer (runs started without a client, e.g. event-triggered ones)
      * @return whether the client applied it; {@code false} on rejection as well as on timeout
      */
-    private boolean dispatchToClient(IrisSession session, PyrisCommandDTO command) {
+    private boolean dispatchToClient(IrisSession session, PyrisCommandDTO command, @Nullable String targetClientId) {
         var userLogin = userRepository.findByIdElseThrow(session.getUserId()).getLogin();
         var correlationId = UUID.randomUUID().toString();
         // Registered before the send so an ack cannot arrive before there is a future to complete. The registration is
@@ -158,9 +169,10 @@ public class IrisCommandService {
         // reports delivery failures through its own future rather than throwing, so it cannot skip past them.
         var ackFuture = coordinationService.register(correlationId, userLogin);
 
-        var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters());
+        var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters(), targetClientId);
         irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);
-        log.debug("Iris command {} of type {} sent to user {} (session {}), awaiting client ack", correlationId, command.type(), userLogin, session.getId());
+        log.debug("Iris command {} of type {} sent to user {} (session {}, client {}), awaiting client ack", correlationId, command.type(), userLogin, session.getId(),
+                targetClientId);
 
         // orTimeout completes the pending future exceptionally, which also unregisters it in the coordination service.
         boolean applied;

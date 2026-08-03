@@ -644,7 +644,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 }
             });
 
-            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of());
+            irisSessionService.requestMessageFromIris(session, uncommittedFiles, List.of(), null);
 
             assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.USER)).isTrue();
         }

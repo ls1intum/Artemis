@@ -327,7 +327,16 @@ export class IrisChatService implements OnDestroy {
         const pendingContext = this.contextService.pending();
         const pendingContextDTO = pendingContext ? { mode: pendingContext.mode, entityId: pendingContext.entityId } : undefined;
         const requestSessionId = this.sessionId;
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO, context);
+        const requestDTO: IrisMessageRequestDTO = {
+            content: [IrisMessageContentDTO.text(message)],
+            messageDifferentiator: randomInt(),
+            uncommittedFiles,
+            pendingContext: pendingContextDTO,
+            context,
+            // Travels with the message so a command Iris issues while answering comes back addressed to this tab
+            // rather than to every tab the user has the session open in.
+            clientId: this.irisWebsocketService.clientId,
+        };
 
         const generation = this.stateGeneration;
         this.openPendingRunGeneration();
@@ -1110,22 +1119,32 @@ export class IrisChatService implements OnDestroy {
      * Carries out a command pushed by the server, dispatching on its type. Supporting a further type means adding a
      * case here. Anything else — including a command whose parameters do not hold up — is acknowledged as not applied
      * right away, so the waiting pipeline learns the outcome instead of running into its ack timeout.
+     *
+     * A command addressed to a different tab is still carried out here, but never acknowledged: answering for it would
+     * let a bystanding tab report failure while the addressed one is still navigating.
      * @param command the command pushed by the server
      */
     private handleCommand(command: IrisCommand): void {
+        // Delivery is per user, so this arrives in every tab with the session open. All of them carry the command out —
+        // the student should find the same position in whichever tab they look at next — but only the tab the run was
+        // started from answers for it. The others drop the correlation id and are then handled exactly like a marker
+        // click: navigate, say nothing.
+        const answersForCommand = !command.targetClientId || command.targetClientId === this.irisWebsocketService.clientId;
         switch (command.type) {
             case 'pointOut': {
                 const pointOut = parsePointOut(command.parameters);
                 if (pointOut) {
-                    // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
-                    pointOut.correlationId = command.correlationId;
+                    if (answersForCommand) {
+                        // The pipeline is waiting on this one; the combined view acknowledges once it has actually moved.
+                        pointOut.correlationId = command.correlationId;
+                    }
                     this.pointOutSubject.next(pointOut);
                     return;
                 }
                 break;
             }
         }
-        if (typeof command.correlationId === 'string') {
+        if (answersForCommand && typeof command.correlationId === 'string') {
             this.sendCommandAck(command.correlationId, false);
         }
     }
