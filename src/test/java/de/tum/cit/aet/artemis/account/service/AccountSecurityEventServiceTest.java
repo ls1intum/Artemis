@@ -1,0 +1,159 @@
+package de.tum.cit.aet.artemis.account.service;
+
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_REGISTERED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_SECURITY_EVENT_TYPES;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.AUTHENTICATION_SUCCESS;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_COMPLETED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUESTED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+
+/**
+ * Tests for {@link AccountSecurityEventService}: that each account-security event is audited, that the
+ * notifications go to the address that can still reach the real owner, and that a failure in either does not
+ * propagate into the account operation that triggered it.
+ */
+class AccountSecurityEventServiceTest {
+
+    private AuditEventRepository auditEventRepository;
+
+    private MailSendingService mailSendingService;
+
+    private AccountSecurityEventService service;
+
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        auditEventRepository = mock(AuditEventRepository.class);
+        mailSendingService = mock(MailSendingService.class);
+        service = new AccountSecurityEventService(auditEventRepository, mailSendingService);
+
+        user = new User();
+        user.setId(42L);
+        user.setLogin("ab12cde");
+        user.setEmail("new@tum.de");
+        user.setFirstName("Ada");
+        user.setLastName("Lovelace");
+        user.setLangKey("en");
+    }
+
+    private AuditEvent capturedAuditEvent() {
+        ArgumentCaptor<AuditEvent> captor = ArgumentCaptor.forClass(AuditEvent.class);
+        verify(auditEventRepository).add(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    void testPasswordResetRequestedIsAuditedWithoutAnExtraMail() {
+        service.recordPasswordResetRequested(user);
+
+        AuditEvent event = capturedAuditEvent();
+        assertThat(event.getType()).isEqualTo(PASSWORD_RESET_REQUESTED);
+        assertThat(event.getPrincipal()).isEqualTo("ab12cde");
+        assertThat(event.getData()).containsEntry("category", "ACCOUNT_SECURITY");
+        // The reset mail itself is the notification; a second message would only add noise.
+        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void testRejectedPasswordResetRequestIsAuditedWithoutStoringTheSubmittedIdentifier() {
+        service.recordPasswordResetRequestRejected("unknown-identifier");
+
+        AuditEvent event = capturedAuditEvent();
+        assertThat(event.getType()).isEqualTo(PASSWORD_RESET_REQUEST_REJECTED);
+        assertThat(event.getPrincipal()).isEqualTo("anonymous");
+        assertThat(event.getData()).containsEntry("reason", "unknown-identifier");
+        // Unauthenticated free-form input must not reach the audit table.
+        assertThat(event.getData().values()).doesNotContain("victim@tum.de");
+    }
+
+    @Test
+    void testCompletedPasswordResetIsAuditedAndNotifiesTheAccountAddress() {
+        service.recordPasswordResetCompleted(user);
+
+        assertThat(capturedAuditEvent().getType()).isEqualTo(PASSWORD_RESET_COMPLETED);
+
+        ArgumentCaptor<MailRecipientDTO> recipient = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        verify(mailSendingService).buildAndSendAsync(recipient.capture(), eq("email.notification.passwordResetCompleted.title"),
+                eq("mail/notification/passwordResetCompletedEmail"), anyMap());
+        assertThat(recipient.getValue().email()).isEqualTo("new@tum.de");
+    }
+
+    @Test
+    void testEmailChangeNotifiesThePreviousAddressAndNotTheNewOne() {
+        service.recordEmailChanged(user, "old@tum.de", "de");
+
+        assertThat(capturedAuditEvent().getType()).isEqualTo(ACCOUNT_EMAIL_CHANGED);
+
+        ArgumentCaptor<MailRecipientDTO> recipient = ArgumentCaptor.forClass(MailRecipientDTO.class);
+        ArgumentCaptor<Map<String, Object>> context = ArgumentCaptor.captor();
+        verify(mailSendingService).buildAndSendAsync(recipient.capture(), eq("email.notification.emailChanged.title"), eq("mail/notification/emailChangedEmail"),
+                context.capture());
+
+        // The whole point: the notice must reach the address the owner still controls, in that address's language.
+        assertThat(recipient.getValue().email()).isEqualTo("old@tum.de");
+        assertThat(recipient.getValue().langKey()).isEqualTo("de");
+        assertThat(recipient.getValue().login()).isEqualTo("ab12cde");
+        assertThat(context.getValue()).containsEntry("newEmail", "new@tum.de");
+    }
+
+    @Test
+    void testRegistrationIsAuditedWithoutAnExtraMail() {
+        service.recordAccountRegistered(user);
+
+        assertThat(capturedAuditEvent().getType()).isEqualTo(ACCOUNT_REGISTERED);
+        // The activation mail already goes to the registered address.
+        verify(mailSendingService, never()).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void testAuditFailureDoesNotBreakTheAccountOperation() {
+        doThrow(new RuntimeException("audit backend down")).when(auditEventRepository).add(any());
+
+        // A logging outage must not become an outage of password reset.
+        assertThatCode(() -> service.recordPasswordResetCompleted(user)).doesNotThrowAnyException();
+        // ... and the notification must still be attempted.
+        verify(mailSendingService).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void testMailFailureDoesNotBreakTheAccountOperation() {
+        doThrow(new RuntimeException("smtp down")).when(mailSendingService).buildAndSendAsync(any(), anyString(), anyString(), anyMap());
+
+        assertThatCode(() -> service.recordEmailChanged(user, "old@tum.de", "en")).doesNotThrowAnyException();
+        // The audit record is still written, so the change remains reconstructible even if the notice was not delivered.
+        assertThat(capturedAuditEvent().getType()).isEqualTo(ACCOUNT_EMAIL_CHANGED);
+    }
+
+    @Test
+    void testAccountSecurityEventTypesCoverEveryEventThisServiceEmitsAndExcludeLoginNoise() {
+        // The retention split keys off this set, so an event type that is emitted but not listed would be pruned on the
+        // short login schedule and silently disappear from investigations.
+        assertThat(ACCOUNT_SECURITY_EVENT_TYPES).containsExactlyInAnyOrder(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED,
+                ACCOUNT_EMAIL_CHANGED, ACCOUNT_REGISTERED);
+        assertThat(ACCOUNT_SECURITY_EVENT_TYPES).doesNotContain(AUTHENTICATION_SUCCESS);
+    }
+}
