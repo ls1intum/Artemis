@@ -18,20 +18,38 @@ export interface IndexOverview {
 }
 
 /**
- * Index drift for a single entity type within a course: how many rows are indexed in Weaviate
- * ({@link present}) versus how many should be ({@link expected}). {@link expected} is null when it is
- * not computed for that type yet.
+ * Index census for a single entity type within a course: how many keys the database expects, how many are indexed
+ * in Weaviate, and the missing / orphaned counts from their set difference. {@link expected}, {@link missing} and
+ * {@link orphaned} are null for types without a database source yet (present-only).
  */
-export interface TypeDrift {
+export interface TypeIndexCensus {
     type: string;
-    present: number;
     expected: number | null;
+    present: number;
+    missing: number | null;
+    orphaned: number | null;
 }
 
 /**
- * Per-type indexed-vs-expected drift for one course, computed live.
+ * File-level lecture-content completeness for a course: of the units that have this file kind (pdf or video), how many
+ * have content ingested into the corresponding Iris collection.
  */
-export interface CourseIndexDrift {
+export interface ContentCensus {
+    key: string;
+    expected: number;
+    present: number;
+    missing: number;
+}
+
+/**
+ * Per-type index census for one course, plus the Iris lecture-content completeness (empty when Iris is not enabled).
+ */
+export interface CourseIndexCensus {
     courseId: number;
-    types: TypeDrift[];
+    courseTitle: string | null;
+    semester: string | null;
+    startDate: string | null;
+    active: boolean;
+    types: TypeIndexCensus[];
+    content: ContentCensus[];
 }

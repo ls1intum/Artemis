@@ -9,7 +9,7 @@
             variant="outlined"
             size="small"
             [icon]="faSync"
-            [loading]="loading()"
+            [loading]="loading() || censusLoading()"
             (clicked)="refresh()"
             [ariaLabel]="'artemisApp.courseIngestionDashboard.refresh' | artemisTranslate"
             [title]="'artemisApp.courseIngestionDashboard.refresh' | artemisTranslate"
@@ -17,10 +17,6 @@
     </div>
 
     <p class="text-muted-color mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.subtitle"></p>
-
-    @if (loading()) {
-        <div class="text-center py-8" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
-    }
 
     @if (error()) {
         <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.courseIngestionDashboard.error' | artemisTranslate }}</tum-ui-message>
@@ -74,72 +70,168 @@
 
     <div class="mt-4">
         <div class="flex items-center gap-2 mb-2">
-            <fa-icon [icon]="faMagnifyingGlass" />
-            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.drift.title"></h4>
+            <fa-icon [icon]="faLayerGroup" />
+            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.title"></h4>
         </div>
-        <p class="text-muted-color mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.drift.subtitle"></p>
+        <p class="text-muted-color mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.subtitle"></p>
 
-        <div class="flex items-end gap-2 mb-3">
-            <div class="flex flex-col">
-                <label class="text-muted-color mb-1" for="drift-course-id" jhiTranslate="artemisApp.courseIngestionDashboard.drift.courseId"></label>
-                <tum-ui-input-number
-                    inputId="drift-course-id"
-                    [min]="1"
-                    [useGrouping]="false"
-                    [ngModel]="courseId()"
-                    (ngModelChange)="courseId.set($event)"
-                    [ariaLabel]="'artemisApp.courseIngestionDashboard.drift.courseId' | artemisTranslate"
-                />
-            </div>
-            <tum-ui-button severity="primary" size="small" [icon]="faMagnifyingGlass" [loading]="driftLoading()" [disabled]="courseId() === undefined" (clicked)="loadDrift()">
-                {{ 'artemisApp.courseIngestionDashboard.drift.load' | artemisTranslate }}
-            </tum-ui-button>
-        </div>
-
-        @if (driftError()) {
-            <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.courseIngestionDashboard.drift.error' | artemisTranslate }}</tum-ui-message>
+        @if (censusLoading()) {
+            <div class="text-center py-8" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
         }
 
-        @if (drift(); as d) {
-            <tum-ui-panel [header]="('artemisApp.courseIngestionDashboard.drift.resultTitle' | artemisTranslate) + ' ' + d.courseId">
-                <table tumUiTable size="small">
-                    <thead>
-                        <tr>
-                            <th jhiTranslate="artemisApp.courseIngestionDashboard.drift.type"></th>
-                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.drift.present"></th>
-                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.drift.expected"></th>
-                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.drift.status"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (type of d.types; track type.type) {
+        @if (censusError()) {
+            <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.courseIngestionDashboard.matrix.error' | artemisTranslate }}</tum-ui-message>
+        }
+
+        @if (census()) {
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate">
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                    <input
+                        tumUiInput
+                        [tumUiInputSize]="'small'"
+                        type="text"
+                        style="min-width: 14rem"
+                        [ngModel]="search()"
+                        (ngModelChange)="onSearchChange($event)"
+                        [placeholder]="'artemisApp.courseIngestionDashboard.matrix.searchPlaceholder' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.searchPlaceholder' | artemisTranslate"
+                    />
+                    <tum-ui-select
+                        [options]="scopeOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        size="small"
+                        [ngModel]="scope()"
+                        (ngModelChange)="onScopeChange($event)"
+                        [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.scope_all' | artemisTranslate"
+                    />
+                    <tum-ui-select
+                        [options]="statusOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        size="small"
+                        [ngModel]="statusFilter()"
+                        (ngModelChange)="onStatusFilterChange($event)"
+                        [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.status_all' | artemisTranslate"
+                    />
+                    @if (hasActiveFilters()) {
+                        <tum-ui-button
+                            severity="secondary"
+                            variant="text"
+                            size="small"
+                            [icon]="faXmark"
+                            (clicked)="resetFilters()"
+                            [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.reset' | artemisTranslate"
+                        >
+                            {{ 'artemisApp.courseIngestionDashboard.matrix.reset' | artemisTranslate }}
+                        </tum-ui-button>
+                    }
+                </div>
+                <div class="overflow-x-auto">
+                    <table tumUiTable size="small">
+                        <thead>
                             <tr>
-                                <td class="font-mono">{{ type.type }}</td>
-                                <td class="text-end">{{ type.present | number }}</td>
-                                <td class="text-end">
-                                    @if (type.expected !== null) {
-                                        {{ type.expected | number }}
-                                    } @else {
-                                        <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.drift.notComputed"></span>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    @switch (driftStatus(type)) {
-                                        @case ('complete') {
-                                            <span class="font-semibold" [style.color]="'var(--success)'" jhiTranslate="artemisApp.courseIngestionDashboard.drift.complete"></span>
-                                        }
-                                        @case ('incomplete') {
-                                            <span class="font-semibold" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.drift.incomplete"></span>
-                                        }
-                                        @default {
-                                            <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.drift.unknown"></span>
-                                        }
-                                    }
-                                </td>
+                                <th colspan="2"></th>
+                                <th
+                                    class="text-center border-l border-surface-300 dark:border-surface-600"
+                                    [attr.colspan]="types.length"
+                                    jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group_metadata"
+                                ></th>
+                                @if (showContent()) {
+                                    <th
+                                        class="text-center border-l border-surface-300 dark:border-surface-600"
+                                        [attr.colspan]="contentTypes.length"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group_content"
+                                    ></th>
+                                }
+                                <th></th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                            <tr>
+                                <th class="cursor-pointer select-none" (click)="toggleSort('course')">
+                                    <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.course"></span> <span class="text-primary">{{ sortIndicator('course') }}</span>
+                                </th>
+                                <th class="cursor-pointer select-none" (click)="toggleSort('release')">
+                                    <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.releaseDate"></span>
+                                    <span class="text-primary">{{ sortIndicator('release') }}</span>
+                                </th>
+                                @for (type of types; track type; let first = $first) {
+                                    <th [class]="divider(first, 'text-center')" [jhiTranslate]="typeLabelKey(type)"></th>
+                                }
+                                @if (showContent()) {
+                                    @for (contentType of contentTypes; track contentType; let first = $first) {
+                                        <th [class]="divider(first, 'text-center')" [jhiTranslate]="contentLabelKey(contentType)"></th>
+                                    }
+                                }
+                                <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.status"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (course of pagedCourses(); track course.courseId) {
+                                <tr>
+                                    <td>
+                                        <div class="font-medium">
+                                            @if (course.courseTitle) {
+                                                {{ course.courseTitle }}
+                                            } @else {
+                                                {{ 'artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate }} {{ course.courseId }}
+                                            }
+                                        </div>
+                                        @if (course.semester) {
+                                            <div class="text-muted-color" style="font-size: 0.72rem">{{ course.semester }}</div>
+                                        }
+                                    </td>
+                                    <td class="text-muted-color" style="font-size: 0.8rem">
+                                        @if (course.startDate) {
+                                            {{ course.startDate | date: 'mediumDate' }}
+                                        } @else {
+                                            <span class="text-muted-color">–</span>
+                                        }
+                                    </td>
+                                    @for (type of types; track type; let first = $first) {
+                                        <td [class]="divider(first, 'text-center font-mono')">
+                                            <span [style.color]="cellColor(cellStatus(typeCensus(course, type)))">{{ cellText(typeCensus(course, type)) }}</span>
+                                        </td>
+                                    }
+                                    @if (showContent()) {
+                                        @for (contentType of contentTypes; track contentType; let first = $first) {
+                                            <td [class]="divider(first, 'text-center font-mono')">
+                                                @if (contentCensus(course, contentType); as entry) {
+                                                    @if (entry.expected > 0) {
+                                                        <span [style.color]="cellColor(contentCellStatus(entry))">{{ entry.present }}/{{ entry.expected }}</span>
+                                                    } @else {
+                                                        <span class="text-muted-color">–</span>
+                                                    }
+                                                } @else {
+                                                    <span class="text-muted-color">–</span>
+                                                }
+                                            </td>
+                                        }
+                                    }
+                                    <td class="text-end">
+                                        <span class="inline-flex items-center justify-end gap-2">
+                                            <span
+                                                class="inline-block rounded-full"
+                                                style="width: 0.5rem; height: 0.5rem"
+                                                [style.background]="cellColor(courseWorst(course)) ?? 'var(--border-strong, #ccc)'"
+                                            ></span>
+                                            <span class="text-sm" [style.color]="cellColor(courseWorst(course))" [jhiTranslate]="statusLabelKey(courseWorst(course))"></span>
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <tum-ui-paginator
+                    class="mt-3 block"
+                    [totalRecords]="displayedCourses().length"
+                    [page]="clampedPage()"
+                    [pageSize]="pageSize()"
+                    [pageSizeOptions]="pageSizeOptions"
+                    (pageChange)="onPageChange($event)"
+                    (pageSizeChange)="onPageSizeChange($event)"
+                />
+                <p class="text-muted-color mt-2 mb-0" style="font-size: 0.72rem" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.legend"></p>
             </tum-ui-panel>
         }
     </div>
