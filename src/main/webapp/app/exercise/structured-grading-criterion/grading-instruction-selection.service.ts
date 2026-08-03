@@ -5,8 +5,11 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
  * Contract fulfilled by the feedback list of an assessment editor.
  */
 export interface GradingInstructionSelectionHost {
-    /** Ids of the grading instructions that currently have at least one feedback linked to them. */
+    /** Ids of the grading instructions that anywhere in the assessment have at least one feedback linked to them. */
     readonly appliedInstructionIds: Signal<ReadonlySet<number>>;
+
+    /** Ids of the applied instructions whose feedback the host owns and can therefore remove again. */
+    readonly removableInstructionIds: Signal<ReadonlySet<number>>;
 
     /** Adds one feedback linked to the given instruction. */
     applyInstruction(instruction: GradingInstruction): void;
@@ -28,8 +31,11 @@ export class GradingInstructionSelectionService {
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
 
-    /** Ids of the instructions currently applied in the registered feedback list. */
+    /** Ids of the instructions currently applied anywhere in the open assessment. */
     readonly appliedInstructionIds = computed(() => this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
+
+    /** Ids of the applied instructions the registered feedback list can remove again. */
+    readonly removableInstructionIds = computed(() => this.host()?.removableInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
     register(host: GradingInstructionSelectionHost): void {
         this.host.set(host);
@@ -42,6 +48,14 @@ export class GradingInstructionSelectionService {
 
     isApplied(instruction: GradingInstruction): boolean {
         return instruction.id !== undefined && this.appliedInstructionIds().has(instruction.id);
+    }
+
+    /**
+     * Whether the registered feedback list can take the instruction back. False while it is applied only to a
+     * referenced element, which owns its feedback itself.
+     */
+    isRemovable(instruction: GradingInstruction): boolean {
+        return instruction.id !== undefined && this.removableInstructionIds().has(instruction.id);
     }
 
     /**

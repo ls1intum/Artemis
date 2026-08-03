@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
@@ -127,11 +127,15 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         const criterion = { id: 1, title: 'Documentation', structuredGradingInstructions: [instruction] } as GradingCriterion;
         let host: GradingInstructionSelectionHost;
         let appliedIds: ReturnType<typeof signal<ReadonlySet<number>>>;
+        /** Set by the tests in which the instruction is applied to a referenced element the feedback list does not own. */
+        let notRemovableIds: ReturnType<typeof signal<ReadonlySet<number>>>;
 
         beforeEach(() => {
             appliedIds = signal<ReadonlySet<number>>(new Set());
+            notRemovableIds = signal<ReadonlySet<number>>(new Set());
             host = {
                 appliedInstructionIds: appliedIds,
+                removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
@@ -225,6 +229,24 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
             expect(checkboxInput().checked).toBe(false);
             expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
+        });
+
+        it('should show an instruction applied to a referenced element as ticked but locked', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            appliedIds.set(new Set([instruction.id!]));
+            notRemovableIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            expect(comp.isLockedByReferencedFeedback(instruction)).toBe(true);
+            expect(checkboxInput().checked).toBe(true);
+            expect(checkboxInput().disabled).toBe(true);
+
+            // Even a click that reaches the host element must not offer to delete feedback this list does not own.
+            comp.toggleApplied(new Event('click'), instruction);
+
+            expect(openDeleteDialogSpy).not.toHaveBeenCalled();
+            expect(host.unapplyInstruction).not.toHaveBeenCalled();
+            expect(host.applyInstruction).not.toHaveBeenCalled();
         });
     });
 

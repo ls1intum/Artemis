@@ -13,6 +13,7 @@ describe('GradingInstructionSelectionService', () => {
         service = TestBed.inject(GradingInstructionSelectionService);
         host = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
+            removableInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
@@ -22,6 +23,19 @@ describe('GradingInstructionSelectionService', () => {
         expect(service.isSelectable()).toBe(false);
         expect(service.appliedInstructionIds().size).toBe(0);
         expect(service.isApplied(instruction)).toBe(false);
+        expect(service.isRemovable(instruction)).toBe(false);
+    });
+
+    it('should not report an instruction that the host cannot take back as removable', () => {
+        service.register({
+            appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
+            removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        });
+
+        expect(service.isApplied(instruction)).toBe(true);
+        expect(service.isRemovable(instruction)).toBe(false);
     });
 
     it('should expose the registered host state', () => {
@@ -57,6 +71,7 @@ describe('GradingInstructionSelectionService', () => {
     it('should only clear the registration for the host that is currently active', () => {
         const otherHost: GradingInstructionSelectionHost = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set()),
+            removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };

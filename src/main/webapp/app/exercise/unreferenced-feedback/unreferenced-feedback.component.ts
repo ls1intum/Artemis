@@ -10,7 +10,6 @@ import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
 export interface FeedbackGroup {
@@ -54,6 +53,11 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * and final totals follow the structured-grading usageCount rules and include every score-contributing item.
      */
     readonly allFeedbacks = input<Feedback[]>([]);
+    /**
+     * Whether the automatic test points are capped before the manual points are added, as programming exercises
+     * grade them. Passed on to {@link StructuredGradingCriterionService.computeAssessmentScore}.
+     */
+    readonly capAutomaticTestSubtotal = input(false);
 
     /**
      * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback
@@ -72,21 +76,27 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     });
 
     /**
-     * Per-feedback credit that counts toward the score (respects structured-grading usageCount).
+     * The score of the whole assessment, computed exactly as saving it would. Also carries how many points each
+     * single feedback contributes, which is what the per-criterion tags show.
      */
-    private readonly contributingCredits = computed(() => computeContributingCredits(this.scoringFeedbacks(), this.structuredGradingCriterionService));
-
-    /** Ids of the grading instructions that are currently applied. */
-    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => {
-        const ids = new Set<number>();
-        for (const feedback of this.feedbacks()) {
-            const instructionId = feedback.gradingInstruction?.id;
-            if (instructionId !== undefined) {
-                ids.add(instructionId);
-            }
-        }
-        return ids;
+    private readonly assessmentScore = computed(() => {
+        const maxPoints = this.maxPoints();
+        // The exercise may not be loaded yet; capping against 0 points would wrongly show a score of 0 until it is.
+        const cap = maxPoints !== undefined && maxPoints > 0 ? maxPoints : Number.POSITIVE_INFINITY;
+        return this.structuredGradingCriterionService.computeAssessmentScore(this.scoringFeedbacks(), cap, this.capAutomaticTestSubtotal());
     });
+
+    /**
+     * Ids of the grading instructions applied anywhere in the assessment, including on referenced elements such as
+     * a line of code or a diagram element. An instruction that is already applied there must not be offered again.
+     */
+    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => instructionIdsOf(this.scoringFeedbacks()));
+
+    /**
+     * Ids of the applied instructions this list can take back again, i.e. those that produced feedback it owns.
+     * An instruction applied only to a referenced element has to be removed on that element instead.
+     */
+    readonly removableInstructionIds = computed<ReadonlySet<number>>(() => instructionIdsOf(this.feedbacks()));
 
     /**
      * The feedback cards split into one block per grading criterion (criteria in alphabetical order), with every
@@ -94,7 +104,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      */
     readonly feedbackGroups = computed<FeedbackGroup[]>(() => {
         const feedbacks = this.feedbacks();
-        const contributingCredits = this.contributingCredits();
+        const contributingCredits = this.assessmentScore().contributions;
         const groups: FeedbackGroup[] = [];
         const alreadyGrouped = new Set<Feedback>();
 
@@ -130,18 +140,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * positive/max-point capping as the assessment save path.
      */
     readonly pointsSummary = computed(() => {
-        let awarded = 0;
-        let deducted = 0;
-        for (const credit of this.contributingCredits().values()) {
-            if (credit > 0) {
-                awarded += credit;
-            } else if (credit < 0) {
-                deducted += credit;
-            }
-        }
-        const rawTotal = awarded + deducted;
-        const maxPoints = this.maxPoints();
-        const total = maxPoints !== undefined ? getPositiveAndCappedTotalScore(rawTotal, maxPoints) : rawTotal;
+        const { awarded, deducted, total } = this.assessmentScore();
         return { awarded, deducted, total };
     });
 
@@ -290,24 +289,16 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     }
 }
 
-/**
- * Credit each feedback contributes under structured-grading usageCount rules (mirrors the assessment save path).
- * Feedback beyond an instruction's usage limit contributes 0.
- */
-function computeContributingCredits(feedbacks: Feedback[], structuredGradingCriterionService: StructuredGradingCriterionService): Map<Feedback, number> {
-    const contributingCredits = new Map<Feedback, number>();
-    const encounteredInstructions = new Map<number, number>();
-    let score = 0;
+/** Ids of the grading instructions the given feedback is linked to. */
+function instructionIdsOf(feedbacks: Feedback[]): ReadonlySet<number> {
+    const ids = new Set<number>();
     for (const feedback of feedbacks) {
-        const previousScore = score;
-        if (feedback.gradingInstruction) {
-            score = structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, score, encounteredInstructions);
-        } else {
-            score += feedback.credits ?? 0;
+        const instructionId = feedback.gradingInstruction?.id;
+        if (instructionId !== undefined) {
+            ids.add(instructionId);
         }
-        contributingCredits.set(feedback, score - previousScore);
     }
-    return contributingCredits;
+    return ids;
 }
 
 function toGroup(title: string, translateTitle: boolean, feedbacks: Feedback[], contributingCredits: Map<Feedback, number>): FeedbackGroup {

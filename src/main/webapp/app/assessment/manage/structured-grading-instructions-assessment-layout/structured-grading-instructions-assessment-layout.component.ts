@@ -100,11 +100,22 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
+     * Whether the instruction is applied to a referenced element (a line of code, a diagram element, a text block)
+     * only. Its feedback belongs to that element, so it can be removed there but not from the feedback list.
+     */
+    isLockedByReferencedFeedback(instruction: GradingInstruction): boolean {
+        return this.isApplied(instruction) && !this.selectionService.isRemovable(instruction);
+    }
+
+    /**
      * Applying an instruction via its checkbox is equivalent to dropping it onto the feedback list. Un-applying it
      * deletes every feedback card that instruction produced.
      */
     toggleApplied(event: Event, instruction: GradingInstruction): void {
         event.preventDefault();
+        if (this.isLockedByReferencedFeedback(instruction)) {
+            return;
+        }
         if (!this.isApplied(instruction)) {
             this.selectionService.setApplied(instruction, true);
             return;
