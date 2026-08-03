@@ -62,6 +62,15 @@ public class TokenProvider {
 
     private static final String TOOLS_KEY = "tools";
 
+    /**
+     * How many times a session has already been silently extended. Bounds how long an active session can be kept alive
+     * without re-authenticating, and is tamper-proof because it is part of the signed token.
+     */
+    public static final String EXTENSION_COUNT = "ext";
+
+    /** Whether the session was established with "remember me", which is what makes it eligible for extension at all. */
+    public static final String REMEMBER_ME = "remember-me";
+
     private SecretKey key;
 
     private long tokenValidityInMilliseconds;
@@ -116,7 +125,8 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, boolean rememberMe) {
-        return createToken(authentication, getTokenValidity(rememberMe), null);
+        Date now = new Date();
+        return createToken(authentication, now, new Date(now.getTime() + getTokenValidity(rememberMe)), null, null, null, false, rememberMe, 0);
     }
 
     /**
@@ -174,6 +184,25 @@ public class TokenProvider {
      */
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
             @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved) {
+        return createToken(authentication, issuedAt, expiration, tool, authenticatedWithPasskey, passkeyCredentialId, isPasskeySuperAdminApproved, false, 0);
+    }
+
+    /**
+     * Creates a token that also records whether the session is a "remember me" session and how often it has been extended.
+     *
+     * @param authentication              the authentication to create the token for
+     * @param issuedAt                    when the session was originally established, preserved across rotations
+     * @param expiration                  when this token expires
+     * @param tool                        the tool the token is scoped to, if any
+     * @param authenticatedWithPasskey    whether the session was established with a passkey
+     * @param passkeyCredentialId         the passkey the session belongs to, or {@code null}
+     * @param isPasskeySuperAdminApproved whether the passkey is approved for super-admin access
+     * @param rememberMe                  whether the session was established with "remember me"
+     * @param extensionCount              how many times the session has already been extended
+     * @return the signed token
+     */
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
+            @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved, boolean rememberMe, int extensionCount) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
@@ -194,6 +223,14 @@ public class TokenProvider {
 
         if (passkeyCredentialId != null) {
             jwtBuilder.claim(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
+
+        if (rememberMe) {
+            jwtBuilder.claim(REMEMBER_ME, true);
+        }
+
+        if (extensionCount > 0) {
+            jwtBuilder.claim(EXTENSION_COUNT, extensionCount);
         }
 
         if (tool != null) {
@@ -279,6 +316,23 @@ public class TokenProvider {
      * @return the passkey this token was issued for, or {@code null} for tokens that are not passkey tokens and for
      *         passkey tokens issued before the claim was introduced
      */
+    /**
+     * @param authToken the token to read
+     * @return whether the session was established with "remember me"
+     */
+    public boolean isRememberMeSession(String authToken) {
+        return Boolean.TRUE.equals(parseClaims(authToken).get(REMEMBER_ME, Boolean.class));
+    }
+
+    /**
+     * @param authToken the token to read
+     * @return how many times the session has already been silently extended
+     */
+    public int getExtensionCount(String authToken) {
+        Integer count = parseClaims(authToken).get(EXTENSION_COUNT, Integer.class);
+        return count != null ? count : 0;
+    }
+
     @Nullable
     public String getPasskeyCredentialId(String authToken) {
         return parseClaims(authToken).get(PASSKEY_CREDENTIAL_ID, String.class);

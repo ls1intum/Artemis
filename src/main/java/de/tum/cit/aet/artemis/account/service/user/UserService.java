@@ -16,6 +16,7 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -256,6 +257,8 @@ public class UserService {
             user.setPassword(passwordService.hashPassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
+            // Stops sessions established before the reset from being extended any further.
+            user.setCredentialsChangedDate(ZonedDateTime.now());
             saveUser(user);
             return user;
         });
@@ -544,6 +547,7 @@ public class UserService {
             }
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
+            user.setCredentialsChangedDate(ZonedDateTime.now());
             saveUser(user);
 
             log.debug("Changed password for User: {}", user);

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -261,6 +262,8 @@ public class UserCreationService {
      */
     public void deactivateUser(User user) {
         user.setActivated(false);
+        // Stops sessions established before the deactivation from being extended any further.
+        user.setCredentialsChangedDate(ZonedDateTime.now());
         saveUser(user);
         log.info("Deactivated user: {}", user);
     }

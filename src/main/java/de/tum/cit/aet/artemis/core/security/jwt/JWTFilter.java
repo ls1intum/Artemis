@@ -47,12 +47,17 @@ public class JWTFilter extends GenericFilterBean {
 
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
+    /** How often a "remember me" password session may be silently extended before the user has to sign in again. */
+    private final int maxSessionExtensions;
+
     private final long tokenValidityInSecondsForPasskey;
 
-    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService) {
+    public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
+            int maxSessionExtensions) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
+        this.maxSessionExtensions = maxSessionExtensions;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
 
@@ -85,9 +90,18 @@ public class JWTFilter extends GenericFilterBean {
      * @throws NotAuthorizedException If the token cannot be renewed due to validation or other issues.
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
-        // Only rotate tokens that were issued using the PASSKEY authentication method
-        boolean canRefreshToken = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtToken), AuthenticationMethod.PASSKEY);
-        if (!canRefreshToken) {
+        // A passkey session is extended up to the passkey lifetime; a "remember me" password session is extended a bounded
+        // number of times. A plain session is never extended - it is meant to be short.
+        boolean isPasskeySession = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtToken), AuthenticationMethod.PASSKEY);
+        boolean isRememberMeSession = this.tokenProvider.isRememberMeSession(jwtToken);
+        if (!isPasskeySession && !isRememberMeSession) {
+            return;
+        }
+
+        // Bounds how long an active password session can be kept alive without re-authenticating. A passkey session is
+        // already bounded by the passkey lifetime measured from the original login, so it is not counted here.
+        int extensionCount = this.tokenProvider.getExtensionCount(jwtToken);
+        if (!isPasskeySession && extensionCount >= this.maxSessionExtensions) {
             return;
         }
 
@@ -103,24 +117,31 @@ public class JWTFilter extends GenericFilterBean {
         // Trigger rotation if token has less than half of its validity period remaining
         boolean isRemainingLifetimeBelowHalf = remainingLifetime < tokenValidityInMs / 2;
         if (isRemainingLifetimeBelowHalf) {
-            // A rotation is the one moment in a passkey session's life where a database lookup is affordable - it happens
-            // once per rotation interval, not per request - so it is where the credential is re-checked. Without this the
-            // session outlives the passkey that created it, and deleting the passkey does not end it.
+            // A rotation is the one moment in a session's life where a database lookup is affordable - it happens once per
+            // rotation interval, not per request - so it is where everything that cannot reach an issued token is
+            // re-checked: the passkey still exists, the account is still active, and its credentials have not changed since
+            // the session started.
             String passkeyCredentialId = this.tokenProvider.getPasskeyCredentialId(jwtToken);
             if (!passkeyTokenRenewalService.mayExtendSession(passkeyCredentialId)) {
                 return;
             }
+            if (!passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), issuedAt.toInstant())) {
+                return;
+            }
 
-            // Compute the new expiration time, respecting the original token's max lifetime
-            long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
+            // A passkey session may never outlive the passkey lifetime measured from the original login. A password session
+            // is bounded by the extension count instead, so it only gets the next window.
+            long newTokenExpirationTimeInMs = isPasskeySession
+                    ? Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000))
+                    : nowInMs + tokenValidityInMs;
             // Determine the lifetime of the rotated token
             long rotatedTokenDurationInMs = newTokenExpirationTimeInMs - nowInMs;
             // Create the rotated token with updated expiration and same issued time/tools
             // The passkey claims are read from the expiring token and passed on explicitly: the authentication was rebuilt
             // from that token and carries no details, so deriving them from it would drop the credential id (defeating the
             // check above from the second rotation onwards) and reset the super-admin approval flag.
-            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken), true,
-                    passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(jwtToken));
+            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken),
+                    isPasskeySession, passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(jwtToken), isRememberMeSession, extensionCount + 1);
 
             // Build and set the new token as a response cookie
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);

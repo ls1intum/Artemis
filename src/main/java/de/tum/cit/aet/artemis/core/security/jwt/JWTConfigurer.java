@@ -20,6 +20,8 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
 
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
+    private final int maxSessionExtensions;
+
     /**
      * Constructs a JWTConfigurer with a specified token provider.
      *
@@ -28,11 +30,12 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      * @param tokenValidityInSecondsForPasskey the passkey token validity in seconds.
      */
     public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey,
-            PasskeyTokenRenewalService passkeyTokenRenewalService) {
+            PasskeyTokenRenewalService passkeyTokenRenewalService, int maxSessionExtensions) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
+        this.maxSessionExtensions = maxSessionExtensions;
     }
 
     /**
@@ -44,7 +47,7 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      */
     @Override
     public void configure(HttpSecurity http) {
-        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService);
+        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionExtensions);
         // Adds the JWTFilter to the security chain before the UsernamePasswordAuthenticationFilter.
         // This ensures that the JWTFilter processes the request first to extract and validate JWTs.
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);

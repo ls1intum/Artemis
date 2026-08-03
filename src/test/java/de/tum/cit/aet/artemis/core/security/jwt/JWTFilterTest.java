@@ -41,6 +41,8 @@ class JWTFilterTest {
 
     private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 60000; // 60 seconds
 
+    private static final int MAX_SESSION_EXTENSIONS = 4;
+
     private TokenProvider tokenProvider;
 
     private JWTFilter jwtFilter;
@@ -72,8 +74,9 @@ class JWTFilterTest {
         passkeyTokenRenewalService = mock(PasskeyTokenRenewalService.class);
         // Default to "the passkey still exists", so the existing rotation tests keep exercising rotation itself.
         when(passkeyTokenRenewalService.mayExtendSession(any())).thenReturn(true);
+        when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService);
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_EXTENSIONS);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -227,6 +230,63 @@ class JWTFilterTest {
 
         assertThat(tokenProvider.isPasskeySuperAdminApproved(rotated)).isTrue();
         assertThat(tokenProvider.getPasskeyCredentialId(rotated)).isEqualTo("credential-1");
+    }
+
+    /**
+     * Builds a "remember me" password session token that a rotation is due for, already extended the given number of times.
+     */
+    private String createRotationDueRememberMeToken(int extensionCount) {
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Date issuedAt = new Date(System.currentTimeMillis() - TOKEN_VALIDITY_IN_MILLISECONDS);
+        Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
+        return tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, extensionCount);
+    }
+
+    @Test
+    void anActiveRememberMeSessionIsExtended() throws Exception {
+        // Password sessions were never extended before, which is what makes shortening their validity acceptable: an active
+        // user does not notice, and each extension is a checkpoint where the account is re-examined.
+        MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken(0));
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNotNull();
+    }
+
+    @Test
+    void aRememberMeSessionIsNotExtendedBeyondTheCap() throws Exception {
+        // Bounds how long an active session can be kept alive without ever re-authenticating.
+        MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken(MAX_SESSION_EXTENSIONS));
+
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void anExtensionIncrementsTheCountSoTheCapIsReached() throws Exception {
+        ArgumentCaptor<String> rotated = ArgumentCaptor.forClass(String.class);
+
+        filterWithToken(createRotationDueRememberMeToken(1));
+
+        verify(jwtCookieServiceMock).buildRotatedCookie(rotated.capture(), anyLong());
+        assertThat(tokenProvider.getExtensionCount(rotated.getValue())).isEqualTo(2);
+        assertThat(tokenProvider.isRememberMeSession(rotated.getValue())).isTrue();
+    }
+
+    @Test
+    void aPlainSessionIsNeverExtended() throws Exception {
+        // Without "remember me" the session is meant to be short; extending it would quietly change that.
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Date issuedAt = new Date(System.currentTimeMillis() - TOKEN_VALIDITY_IN_MILLISECONDS);
+        String jwt = tokenProvider.createToken(authentication, issuedAt, new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10), null, false);
+
+        assertThat(filterWithToken(jwt).getHeader(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void aSessionIsNotExtendedWhenTheAccountNoLongerAllowsIt() throws Exception {
+        // Covers deactivation, soft deletion and a credentials change since the session started - all of which cannot reach
+        // an already-issued token and so are enforced at the rotation checkpoint.
+        when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(false);
+
+        assertThat(filterWithToken(createRotationDueRememberMeToken(0)).getHeader(HttpHeaders.SET_COOKIE)).isNull();
     }
 
     @Test

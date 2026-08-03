@@ -76,6 +76,13 @@ public class SecurityConfiguration {
 
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
+    /**
+     * How often a "remember me" session may be silently extended. With the seven-day token validity this bounds an active
+     * password session to five windows, i.e. 35 days, and forces a fresh sign-in after that.
+     */
+    @Value("${artemis.user-management.max-session-extensions:4}")
+    private int maxSessionExtensions;
+
     private final PasswordService passwordService;
 
     private final TokenProvider tokenProvider;
@@ -371,7 +378,7 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionExtensions);
     }
 
 }

@@ -177,6 +177,14 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
+    /**
+     * When the account's credentials last changed - a completed password reset, a password change, or a deactivation.
+     * A session issued before this point is not extended any further, so those events end long-lived sessions within one
+     * rotation interval instead of leaving them to run to their full lifetime.
+     */
+    @Column(name = "credentials_changed_date")
+    private ZonedDateTime credentialsChangedDate = null;
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnore
     private Set<UserCourseRole> courseRoles = new HashSet<>();
@@ -582,6 +590,15 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public String getVcsAccessToken() {
         return vcsAccessToken;
+    }
+
+    @Nullable
+    public ZonedDateTime getCredentialsChangedDate() {
+        return credentialsChangedDate;
+    }
+
+    public void setCredentialsChangedDate(@Nullable ZonedDateTime credentialsChangedDate) {
+        this.credentialsChangedDate = credentialsChangedDate;
     }
 
     public void setVcsAccessToken(@Nullable String vcsAccessToken) {

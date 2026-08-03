@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 
 /**
  * Decides whether a passkey session may still be extended.
@@ -38,8 +40,42 @@ public class PasskeyTokenRenewalService {
      */
     private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
 
-    public PasskeyTokenRenewalService(Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository) {
+    private final UserRepository userRepository;
+
+    public PasskeyTokenRenewalService(Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, UserRepository userRepository) {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Whether the account behind a session still allows it to be extended.
+     * <p>
+     * Checks the two things that should end a session but cannot reach an already-issued token: the account has since been
+     * deactivated or soft-deleted, and its credentials have changed since the session started. Both are evaluated only when
+     * a rotation is due, so the cost is one lookup per rotation interval per session rather than one per request. The
+     * consequence is that these events end a session within at most one rotation interval rather than immediately.
+     *
+     * @param login    the account the session belongs to
+     * @param issuedAt when the session was originally established
+     * @return {@code true} if the session may be extended
+     */
+    public boolean mayExtendSessionForAccount(String login, Instant issuedAt) {
+        var user = userRepository.findOneByLogin(login);
+        if (user.isEmpty()) {
+            log.info("Not extending a session: its account no longer exists");
+            return false;
+        }
+        if (!user.get().getActivated() || user.get().isDeleted()) {
+            log.info("Not extending a session of user {}: the account is deactivated or deleted", login);
+            return false;
+        }
+
+        var credentialsChangedDate = user.get().getCredentialsChangedDate();
+        if (credentialsChangedDate != null && issuedAt.isBefore(credentialsChangedDate.toInstant())) {
+            log.info("Not extending a session of user {}: it was established before the credentials last changed", login);
+            return false;
+        }
+        return true;
     }
 
     /**
