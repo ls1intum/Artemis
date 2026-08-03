@@ -76,7 +76,7 @@ public class IrisSessionService {
      */
     public void checkHasAccessToIrisSession(IrisSession session, @Nullable User user) {
         if (user == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
         var wrapper = getIrisSessionSubService(session);
         if (session.shouldSelectLLMUsage()) {

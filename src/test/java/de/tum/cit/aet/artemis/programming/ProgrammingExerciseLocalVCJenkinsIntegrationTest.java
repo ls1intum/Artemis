@@ -227,7 +227,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importExerciseFromFileAsTutor_forbidden() throws Exception {
         programmingExerciseTestService.importFromFile_tutor_forbidden();
     }
