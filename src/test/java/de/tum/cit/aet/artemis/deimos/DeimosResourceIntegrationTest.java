@@ -34,7 +34,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
     private static final String TEST_PREFIX = "deimosres";
 
-    /** Instructor outside the course's prefix-restricted group; exercises the wrong-course branch of the security annotations. */
+    /** Instructor who is never enrolled in the course; exercises the wrong-course branch of the security annotations. */
     private static final String OTHER_PREFIX = "deimosresother";
 
     private static final String COURSE_ENDPOINT = "/api/deimos/courses/{courseId}/analysis-runs";
@@ -53,16 +53,11 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
     @BeforeEach
     void setup() {
-        // OTHER_PREFIX must be added first: addUsers wipes the groups of every existing user, so whichever batch is
-        // added last keeps its groups. The TEST_PREFIX instructor needs to retain its group membership.
-        userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setStudentGroupName(TEST_PREFIX + "tumuser");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
-        courseRepository.save(course);
+        userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
+        // Enrolment has to happen after every addUsers call, because addUsers clears all course-role rows. The
+        // OTHER_PREFIX instructor is deliberately never enrolled, which is what exercises the wrong-course branch.
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         featureToggleService.enableFeature(Feature.Deimos);
     }
