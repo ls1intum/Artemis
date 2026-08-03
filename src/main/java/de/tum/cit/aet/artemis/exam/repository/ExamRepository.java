@@ -93,7 +93,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Query("""
             SELECT exam
             FROM Exam exam
-            WHERE exam.course.testCourse = FALSE
+                JOIN FETCH exam.course course
+            WHERE course.testCourse = FALSE
                 AND exam.endDate >= :date
             ORDER BY exam.startDate ASC
             """)
