@@ -11,6 +11,7 @@ import static de.tum.cit.aet.artemis.account.repository.UserSpecs.notSoftDeleted
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -944,6 +945,99 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             ORDER BY user.login
             """)
     List<String> findAllNotEnrolledUsers();
+
+    /**
+     * Records a user's last login. Set on every successful authentication (see {@code CustomAuditEventRepository}) and
+     * used as the activity signal for the data-privacy not-enrolled-user cleanup.
+     *
+     * @param login         the login of the user who just authenticated
+     * @param lastLoginDate the login timestamp to store
+     * @return the number of updated rows (0 if no user with that login exists)
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.lastLoginDate = :lastLoginDate
+            WHERE user.login = :login
+            """)
+    int updateLastLoginDate(@Param("login") String login, @Param("lastLoginDate") Instant lastLoginDate);
+
+    /**
+     * Finds all not-enrolled, inactive users who have NOT yet been warned about an upcoming deletion. This is phase 1 of
+     * the two-phase not-enrolled-user cleanup: these users are emailed a warning and then stamped with a
+     * {@code deletionWarningSentDate}. Administrators are excluded.
+     *
+     * @param inactiveBefore only users whose last activity (last login, or creation date if never logged in) is strictly
+     *                           before this are returned
+     * @return the users to warn (with their scalar fields needed to send the email)
+     */
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
+                AND user.deletionWarningSentDate IS NULL
+                AND COALESCE(user.lastLoginDate, user.createdDate) < :inactiveBefore
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            ORDER BY user.login
+            """)
+    List<User> findNotEnrolledUsersToWarn(@Param("inactiveBefore") Instant inactiveBefore);
+
+    /**
+     * Records that a not-enrolled user has been warned about an upcoming deletion.
+     *
+     * @param login the login of the warned user
+     * @param date  the warning timestamp
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.deletionWarningSentDate = :date
+            WHERE user.login = :login
+            """)
+    int updateDeletionWarningSentDate(@Param("login") String login, @Param("date") Instant date);
+
+    /**
+     * Finds the logins of not-enrolled users who are due for deletion: they were warned, their grace period has elapsed,
+     * they are still enrolled in no course, and they have NOT logged in since the warning (so they did not "come back").
+     * This is phase 2 of the two-phase not-enrolled-user cleanup. Administrators are excluded.
+     *
+     * @param warnedBefore only users whose warning was sent strictly before this (i.e. the grace period has elapsed) are
+     *                         returned
+     * @return the logins of the users to soft-delete, sorted
+     */
+    @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
+                AND user.deletionWarningSentDate IS NOT NULL
+                AND user.deletionWarningSentDate < :warnedBefore
+                AND (user.lastLoginDate IS NULL OR user.lastLoginDate < user.deletionWarningSentDate)
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            ORDER BY user.login
+            """)
+    List<String> findNotEnrolledUserLoginsToDelete(@Param("warnedBefore") Instant warnedBefore);
+
+    /**
+     * Clears the deletion warning of users who "came back" after being warned: they either got enrolled in a course
+     * again or logged in after the warning was sent. This prevents deleting an account the user evidently still wants,
+     * and lets them be warned afresh only if they become inactive again.
+     *
+     * @return the number of users whose warning was cleared
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.deletionWarningSentDate = NULL
+            WHERE user.deletionWarningSentDate IS NOT NULL
+                AND (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) OR (user.lastLoginDate IS NOT NULL AND user.lastLoginDate >= user.deletionWarningSentDate))
+            """)
+    int clearDeletionWarningForReturnedUsers();
 
     /**
      * Get all managed users
