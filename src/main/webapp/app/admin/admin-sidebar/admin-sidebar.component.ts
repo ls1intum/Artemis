@@ -6,6 +6,7 @@ import {
     faBroom,
     faClipboardList,
     faCubes,
+    faDatabase,
     faDownload,
     faEye,
     faFlag,
@@ -222,6 +223,13 @@ export class AdminSidebarComponent {
                 title: 'Websocket',
                 translation: 'global.menu.admin.sidebar.websocket',
                 testId: 'admin-websocket',
+            },
+            {
+                routerLink: '/admin/course-ingestion-dashboard',
+                icon: faDatabase,
+                title: 'Ingestion Dashboard',
+                translation: 'global.menu.admin.sidebar.courseIngestionDashboard',
+                testId: 'admin-course-ingestion-dashboard',
             },
         ];
 

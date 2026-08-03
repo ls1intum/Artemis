@@ -1,0 +1,24 @@
+{
+    "artemisApp": {
+        "courseIngestionDashboard": {
+            "title": "Ingestion Dashboard",
+            "subtitle": "Course data indexed into Weaviate for global search and the Iris tutor.",
+            "refresh": "Refresh",
+            "loading": "Loading...",
+            "error": "Failed to load the index overview. Please try again.",
+            "system": {
+                "title": "Weaviate",
+                "weaviate": "Vector database",
+                "reachable": "Reachable",
+                "unreachable": "Unreachable",
+                "address": "Address"
+            },
+            "collections": {
+                "title": "Indexed collections",
+                "collection": "Collection",
+                "objects": "Objects",
+                "unavailable": "unavailable"
+            }
+        }
+    }
+}

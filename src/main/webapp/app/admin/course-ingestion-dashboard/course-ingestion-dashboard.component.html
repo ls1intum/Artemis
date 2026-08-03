@@ -1,0 +1,74 @@
+<div class="course-ingestion-dashboard">
+    <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="faDatabase" />
+            <h3 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.title"></h3>
+        </div>
+        <tum-ui-button
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            [icon]="faSync"
+            [loading]="loading()"
+            (clicked)="refresh()"
+            [ariaLabel]="'artemisApp.courseIngestionDashboard.refresh' | artemisTranslate"
+            [title]="'artemisApp.courseIngestionDashboard.refresh' | artemisTranslate"
+        />
+    </div>
+
+    <p class="text-muted-color mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.subtitle"></p>
+
+    @if (loading()) {
+        <div class="text-center py-8" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
+    }
+
+    @if (error()) {
+        <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.courseIngestionDashboard.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    @if (overview(); as o) {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.system.title' | artemisTranslate">
+                <div class="flex items-center justify-between py-1">
+                    <span jhiTranslate="artemisApp.courseIngestionDashboard.system.weaviate"></span>
+                    @if (o.weaviateUp) {
+                        <span class="font-semibold" [style.color]="'var(--success)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.reachable"></span>
+                    } @else {
+                        <span class="font-semibold" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.unreachable"></span>
+                    }
+                </div>
+                @if (o.weaviateAddress) {
+                    <div class="flex items-center justify-between py-1">
+                        <span jhiTranslate="artemisApp.courseIngestionDashboard.system.address"></span>
+                        <span class="text-muted-color font-mono">{{ o.weaviateAddress }}</span>
+                    </div>
+                }
+            </tum-ui-panel>
+
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.collections.title' | artemisTranslate">
+                <table tumUiTable size="small">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.courseIngestionDashboard.collections.collection"></th>
+                            <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.collections.objects"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (collection of o.collections; track collection.collection) {
+                            <tr>
+                                <td class="font-mono">{{ collection.collection }}</td>
+                                <td class="text-end">
+                                    @if (collection.available) {
+                                        {{ collection.objectCount | number }}
+                                    } @else {
+                                        <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.collections.unavailable"></span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </tum-ui-panel>
+        </div>
+    }
+</div>

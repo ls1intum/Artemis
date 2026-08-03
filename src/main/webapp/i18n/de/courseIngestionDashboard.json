@@ -1,0 +1,24 @@
+{
+    "artemisApp": {
+        "courseIngestionDashboard": {
+            "title": "Ingestion-Dashboard",
+            "subtitle": "In Weaviate indexierte Kursdaten für die globale Suche und den Iris-Tutor.",
+            "refresh": "Aktualisieren",
+            "loading": "Wird geladen...",
+            "error": "Die Index-Übersicht konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+            "system": {
+                "title": "Weaviate",
+                "weaviate": "Vektordatenbank",
+                "reachable": "Erreichbar",
+                "unreachable": "Nicht erreichbar",
+                "address": "Adresse"
+            },
+            "collections": {
+                "title": "Indexierte Collections",
+                "collection": "Collection",
+                "objects": "Objekte",
+                "unavailable": "nicht verfügbar"
+            }
+        }
+    }
+}
