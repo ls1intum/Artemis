@@ -4,12 +4,12 @@ import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import { useEffect } from 'react';
 
 const DEFAULT_STORY = 'introduction--docs';
-const STORY_ANCHOR = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function storyFromHash(hash: string, storyAnchors: readonly string[]) {
     try {
         const anchor = decodeURIComponent(hash.replace(/^#/, ''));
-        return STORY_ANCHOR.test(anchor) && storyAnchors.includes(anchor) ? `${anchor}--docs` : DEFAULT_STORY;
+        const storyAnchor = storyAnchors.find((candidate) => candidate === anchor);
+        return storyAnchor ? `${storyAnchor}--docs` : DEFAULT_STORY;
     } catch {
         return DEFAULT_STORY;
     }

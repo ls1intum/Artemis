@@ -9,8 +9,8 @@
 #   - supporting_scripts/** : internal developer/CI tooling (coverage reporting, course setup,
 #     transcription, benchmarks). Not part of the deployed application and not exposed to
 #     untrusted end-user input, so its subprocess/XML/tmp findings are advisory noise;
-#   - Storybook stories: static examples that trigger the html-in-template-string rule
-#     through Storybook's Angular rendering API.
+#   - Storybook stories and Angular wrapper decorators: static examples that trigger the
+#     html-in-template-string rule through Storybook's rendering API.
 # The quality linters below (CodeNarc, ShellCheck, PyLint) also exclude the programming-exercise
 # templates for the same reason: the Jenkins pipeline / build-script / helper scaffolding shipped
 # for exercises is starter code, not application code Artemis maintains for quality. They still
@@ -23,6 +23,7 @@ engines:
       - "src/test/**/*"
       - "**/*.spec.ts"
       - "**/*.stories.ts"
+      - "packages/tum-ui/.storybook/story-decorators.ts"
       - "src/main/resources/templates/**"
       - "src/main/resources/templates/**/*"
       - "supporting_scripts/**"
