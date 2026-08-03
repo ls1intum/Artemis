@@ -30,7 +30,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
             [visible]="visible()"
             (visibleChange)="visible.set($event)"
             [closable]="true"
-            [style]="{ width: '500px' }"
+            size="small"
         >
             <div class="mb-3">
                 <jhi-type-ahead-user-search-field [(loginOrName)]="selectedUserLogin" />

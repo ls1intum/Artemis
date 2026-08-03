@@ -8,7 +8,7 @@
         "email": "krusche@tum.de",
         "url": "https://aet.cit.tum.de/krusche"
     },
-    "packageManager": "pnpm@11.18.0",
+    "packageManager": "pnpm@11.19.0",
     "dependencies": {
         "@angular/cdk": "catalog:",
         "@angular/common": "catalog:",
@@ -54,7 +54,7 @@
         "html-diff-ts": "1.4.2",
         "katex": "0.18.1",
         "lodash-es": "catalog:",
-        "markdown-it": "14.3.0",
+        "markdown-it": "15.0.0",
         "monaco-editor": "0.56.0",
         "papaparse": "5.5.4",
         "primeicons": "7.0.0",
@@ -69,7 +69,7 @@
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "catalog:",
         "@analogjs/vitest-angular": "catalog:",
-        "@angular-devkit/build-angular": "22.1.1",
+        "@angular-devkit/build-angular": "22.1.2",
         "@angular-eslint/builder": "22.1.0",
         "@angular-eslint/eslint-plugin": "22.1.0",
         "@angular-eslint/schematics": "22.1.0",
@@ -85,7 +85,6 @@
         "@tailwindcss/postcss": "catalog:",
         "@types/d3-shape": "3.1.8",
         "@types/lodash-es": "4.17.12",
-        "@types/markdown-it": "14.1.2",
         "@types/node": "catalog:",
         "@types/papaparse": "5.5.2",
         "@types/turndown": "5.0.6",
@@ -104,11 +103,11 @@
         "husky": "9.1.7",
         "jsdom": "catalog:",
         "lighthouse": "13.4.1",
-        "lint-staged": "17.2.0",
+        "lint-staged": "17.3.0",
         "ng-mocks": "14.15.3",
         "ng-packagr": "catalog:",
         "postcss": "catalog:",
-        "postcss-html": "1.8.1",
+        "postcss-html": "2.0.0",
         "postcss-scss": "4.0.9",
         "prettier": "3.9.6",
         "publint": "catalog:",
@@ -116,7 +115,7 @@
         "sass": "catalog:",
         "semver": "catalog:",
         "stylelint": "catalog:",
-        "stylelint-config-html": "1.1.0",
+        "stylelint-config-html": "2.0.0",
         "stylelint-config-standard-scss": "17.0.0",
         "stylelint-scss": "7.2.0",
         "tailwindcss": "catalog:",
@@ -124,7 +123,6 @@
         "ts-morph": "28.0.0",
         "typescript": "catalog:",
         "typescript-eslint": "8.65.0",
-        "vite": "catalog:",
         "vite-tsconfig-paths": "6.1.1",
         "vitest": "catalog:",
         "vitest-canvas-mock": "1.1.4",
@@ -133,7 +131,7 @@
     },
     "engines": {
         "node": ">=24.18.0",
-        "pnpm": ">=11.1.0"
+        "pnpm": ">=11.19.0"
     },
     "scripts": {
         "build": "pnpm run webapp:prod --",

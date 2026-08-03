@@ -5,7 +5,7 @@ import postcss from 'postcss';
 import { compile } from 'sass';
 import semver from 'semver';
 import ts from 'typescript';
-import { parseTemplate, TmplAstRecursiveVisitor, tmplAstVisitAll } from '@angular/compiler';
+import { BindingType, parseTemplate, TmplAstRecursiveVisitor, tmplAstVisitAll } from '@angular/compiler';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
@@ -237,12 +237,55 @@ function removedOutputBindingViolations(templates) {
     return violations;
 }
 
+class DialogStyleVisitor extends TmplAstRecursiveVisitor {
+    constructor(file, lineOffset, violations) {
+        super();
+        this.file = file;
+        this.lineOffset = lineOffset;
+        this.violations = violations;
+    }
+
+    visitElement(element) {
+        if (element.name === 'tum-ui-dialog') {
+            for (const attribute of [
+                ...element.attributes.filter(({ name }) => name === 'style' || name === 'styleClass'),
+                ...element.inputs.filter(({ name, type }) => name === 'style' || name === 'styleClass' || type === BindingType.Style),
+            ]) {
+                this.violations.push(`${this.file}:${this.lineOffset + attribute.sourceSpan.start.line + 1}: ${attribute.name}`);
+            }
+        }
+        return super.visitElement(element);
+    }
+}
+
+function dialogStyleViolations(templates) {
+    const violations = [];
+    for (const { file, lineOffset, source } of templates) {
+        const parsed = parseTemplate(source, file);
+        if (parsed.errors?.length) {
+            throw new Error(parsed.errors.map((error) => `${file}: ${error}`).join('\n'));
+        }
+        tmplAstVisitAll(new DialogStyleVisitor(file, lineOffset, violations), parsed.nodes);
+    }
+    return violations;
+}
+
 describe('@tumaet/ui-angular integration contract', () => {
     it('rejects removed package output bindings in Artemis templates', () => {
         expect(removedOutputBindingViolations(artemisTemplates)).toEqual([]);
         expect(removedOutputBindingViolations([{ file: 'fixture.html', lineOffset: 0, source: '<tum-ui-checkbox (onChange)="save()" />' }])).toEqual([
             'fixture.html:1: tum-ui-checkbox (onChange)',
         ]);
+    });
+
+    it('uses semantic dialog sizes instead of host styling', () => {
+        expect(dialogStyleViolations(artemisTemplates)).toEqual([]);
+        expect(
+            dialogStyleViolations([
+                { file: 'fixture.html', lineOffset: 0, source: '<tum-ui-dialog [style]="{ width: \'40rem\' }" />' },
+                { file: 'fixture.html', lineOffset: 1, source: '<tum-ui-dialog [style.width]="\'40rem\'" />' },
+            ]),
+        ).toEqual(['fixture.html:1: style', 'fixture.html:2: width']);
     });
 
     it('uses the catalog as the single dependency version source', () => {

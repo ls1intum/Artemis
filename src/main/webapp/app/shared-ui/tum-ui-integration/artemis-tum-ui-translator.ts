@@ -27,6 +27,7 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.dialog.close': 'entity.action.close',
     'tumUi.panel.collapse': 'global.generic.collapse',
     'tumUi.panel.expand': 'global.generic.expand',
+    'tumUi.paginator.ariaLabel': 'global.paginator.ariaLabel',
     'tumUi.paginator.currentPageReport': 'global.item-count',
     'tumUi.paginator.first': 'global.paginator.first',
     'tumUi.paginator.last': 'global.paginator.last',
@@ -36,8 +37,8 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.select.clear': 'entity.action.clear',
     'tumUi.select.empty': 'global.generic.emptyList',
     'tumUi.table.actions': 'entity.actions',
-    'tumUi.table.noResults': 'artemisApp.dataTable.search.noResults',
-    'tumUi.table.searchPlaceholder': 'artemisApp.course.exercise.search.searchPlaceholder',
+    'tumUi.table.noResults': 'global.search.noResultsFound',
+    'tumUi.table.searchPlaceholder': 'global.search.searchPlaceholder',
 } as const satisfies Readonly<Record<TumUiTranslationKey, string>>;
 
 class ArtemisTumUiTranslator implements TumUiTranslator {

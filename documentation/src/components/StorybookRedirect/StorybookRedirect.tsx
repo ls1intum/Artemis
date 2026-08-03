@@ -1,32 +1,31 @@
 import { useLocation } from '@docusaurus/router';
 import { useColorMode } from '@docusaurus/theme-common';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import { useEffect, useRef } from 'react';
-import { STORYBOOK_REFERENCES } from './storybook-references';
+import { useEffect } from 'react';
 
 const DEFAULT_STORY = 'introduction--docs';
+const STORY_ANCHOR = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-function storyFromHash(hash: string) {
+function storyFromHash(hash: string, storyAnchors: readonly string[]) {
     try {
         const anchor = decodeURIComponent(hash.replace(/^#/, ''));
-        return STORYBOOK_REFERENCES[anchor] ?? DEFAULT_STORY;
+        return STORY_ANCHOR.test(anchor) && storyAnchors.includes(anchor) ? `${anchor}--docs` : DEFAULT_STORY;
     } catch {
         return DEFAULT_STORY;
     }
 }
 
-export default function StorybookRedirect() {
+export default function StorybookRedirect({ storyAnchors }: { storyAnchors: readonly string[] }) {
     const { siteConfig } = useDocusaurusContext();
     const { colorMode } = useColorMode();
     const { hash } = useLocation();
     const storybookIncluded = siteConfig.customFields?.tumUiStorybookIncluded === true;
-    const story = storyFromHash(hash);
+    const story = storyFromHash(hash, storyAnchors);
     const storybookUrl = `/developer/tum-ui/?path=/docs/${story}&globals=theme:${colorMode}`;
-    const redirectLink = useRef<HTMLAnchorElement>(null);
 
     useEffect(() => {
         if (storybookIncluded) {
-            redirectLink.current?.click();
+            window.location.replace(storybookUrl);
         }
     }, [storybookIncluded, storybookUrl]);
 
@@ -36,10 +35,7 @@ export default function StorybookRedirect() {
 
     return (
         <p>
-            Opening the TUM UI component reference…{' '}
-            <a ref={redirectLink} href={storybookUrl}>
-                Continue to the reference
-            </a>
+            Opening the TUM UI component reference… <a href={storybookUrl}>Continue to the reference</a>
         </p>
     );
 }

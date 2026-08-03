@@ -287,7 +287,7 @@ jobs:
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         uses: actions/setup-node@v6
         with:
-          node-version: '24.18.0'
+          node-version: '24'
       - name: Generate coverage table
         id: coverage
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'

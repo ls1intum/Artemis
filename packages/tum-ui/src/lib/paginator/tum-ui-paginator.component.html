@@ -1,5 +1,5 @@
 <nav
-    [attr.aria-label]="ariaLabel()"
+    [attr.aria-label]="ariaLabel() ?? ('tumUi.paginator.ariaLabel' | tumUiTranslate)"
     class="tum:flex tum:flex-wrap tum:items-center tum:justify-center tum:gap-1 tum:border-t tum:border-border tum:pt-2 tum:text-sm tum:text-muted"
 >
     @if (showCurrentPageReport()) {

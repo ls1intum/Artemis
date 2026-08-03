@@ -164,6 +164,19 @@ describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
         expect(input().value).toBe('5.000');
     });
 
+    it('parses the digits, grouping separator, and minus sign of the configured locale', () => {
+        const locale = 'fa-IR-u-nu-arabext';
+        const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(-1234);
+        host.locale.set(locale);
+        host.min.set(-5000);
+        fixture.detectChanges();
+
+        type(formatted);
+
+        expect(host.value).toBe(-1234);
+        expect(input().value).toBe(formatted);
+    });
+
     it('omits grouping when useGrouping is false', async () => {
         host.grouping.set(false);
         host.value = 5000;
@@ -216,6 +229,22 @@ describe('TumUiInputNumberComponent (ngModel + formatting)', () => {
         fixture.detectChanges();
         expect(host.value).toBe(12534);
         expect(input().value).toBe('12,534');
+        expect(input().selectionStart).toBe(4);
+    });
+
+    it('preserves the caret position when formatting localized digits', () => {
+        host.locale.set('ar-EG-u-nu-arab');
+        fixture.detectChanges();
+        type('١٢٣٤');
+        expect(input().value).toBe('١٬٢٣٤');
+
+        input().value = '١٬٢٥٣٤';
+        input().setSelectionRange(4, 4);
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(host.value).toBe(12534);
+        expect(input().value).toBe('١٢٬٥٣٤');
         expect(input().selectionStart).toBe(4);
     });
 });

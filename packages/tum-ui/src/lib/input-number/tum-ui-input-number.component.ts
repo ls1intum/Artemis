@@ -6,6 +6,13 @@ import { TumUiInputDirective } from '../input/tum-ui-input.directive';
 
 let nextInputNumberId = 0;
 
+interface LocaleNumberSyntax {
+    digitBySymbol: ReadonlyMap<string, string>;
+    digitSymbols: readonly string[];
+    groupSeparators: readonly string[];
+    minusSigns: readonly string[];
+}
+
 /** Integer input with locale grouping, optional affixes and step controls. */
 @Component({
     selector: 'tum-ui-input-number',
@@ -61,6 +68,8 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
 
+    private readonly numberFormatter = computed(() => new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: 0 }));
+    private readonly localeNumberSyntax = computed(() => this.createLocaleNumberSyntax());
     private readonly formattedValue = computed(() => this.format(this.cvaValue()));
     protected readonly displayText = linkedSignal(() => this.formattedValue());
     protected readonly ariaValueNow = computed(() => this.cvaValue());
@@ -73,8 +82,42 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (value === undefined || value === null || Number.isNaN(value)) {
             return '';
         }
-        const formatted = new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: 0 }).format(value);
+        const formatted = this.numberFormatter().format(value);
         return `${this.prefix() ?? ''}${formatted}${this.suffix() ?? ''}`;
+    }
+
+    private createLocaleNumberSyntax(): LocaleNumberSyntax {
+        const formatter = new Intl.NumberFormat(this.locale(), { useGrouping: true, maximumFractionDigits: 0 });
+        const digitBySymbol = new Map<string, string>();
+        for (let digit = 0; digit <= 9; digit++) {
+            const localizedDigit = formatter
+                .formatToParts(digit)
+                .filter((part) => part.type === 'integer')
+                .map((part) => part.value)
+                .join('');
+            const asciiDigit = String(digit);
+            digitBySymbol.set(asciiDigit, asciiDigit);
+            digitBySymbol.set(localizedDigit, asciiDigit);
+        }
+        const digitSymbols = [...digitBySymbol.keys()].sort((left, right) => right.length - left.length);
+        const groupSeparators = [
+            ...new Set(
+                formatter
+                    .formatToParts(123456789)
+                    .filter((part) => part.type === 'group')
+                    .map((part) => part.value),
+            ),
+        ].sort((left, right) => right.length - left.length);
+        const minusSigns = [
+            ...new Set([
+                '-',
+                ...formatter
+                    .formatToParts(-1)
+                    .filter((part) => part.type === 'minusSign')
+                    .map((part) => part.value),
+            ]),
+        ].sort((left, right) => right.length - left.length);
+        return { digitBySymbol, digitSymbols, groupSeparators, minusSigns };
     }
 
     private parse(text: string): number | undefined {
@@ -87,8 +130,26 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (suffix && body.endsWith(suffix)) {
             body = body.slice(0, body.length - suffix.length);
         }
-        const digits = body.replace(/[^\d-]/g, '');
-        const normalized = digits.startsWith('-') ? '-' + digits.slice(1).replace(/-/g, '') : digits.replace(/-/g, '');
+        const syntax = this.localeNumberSyntax();
+        let digits = '';
+        let negative = false;
+        for (let index = 0; index < body.length;) {
+            const digit = this.matchAt(body, index, syntax.digitSymbols);
+            if (digit) {
+                digits += syntax.digitBySymbol.get(digit)!;
+                index += digit.length;
+                continue;
+            }
+            const minusSign = this.matchAt(body, index, syntax.minusSigns);
+            if (minusSign) {
+                negative ||= digits.length === 0;
+                index += minusSign.length;
+                continue;
+            }
+            const groupSeparator = this.matchAt(body, index, syntax.groupSeparators);
+            index += groupSeparator?.length ?? (body.codePointAt(index)! > 0xffff ? 2 : 1);
+        }
+        const normalized = `${negative ? '-' : ''}${digits}`;
         if (normalized === '' || normalized === '-') {
             return undefined;
         }
@@ -109,30 +170,56 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         return clamped;
     }
 
-    private caretAfterDigits(text: string, digitCount: number): number {
-        if (digitCount <= 0) {
-            return (this.prefix() ?? '').length;
+    private matchAt(text: string, index: number, candidates: readonly string[]): string | undefined {
+        return candidates.find((candidate) => candidate.length > 0 && text.startsWith(candidate, index));
+    }
+
+    private digitCount(text: string): number {
+        const digitSymbols = this.localeNumberSyntax().digitSymbols;
+        let count = 0;
+        for (let index = 0; index < text.length;) {
+            const digit = this.matchAt(text, index, digitSymbols);
+            if (digit) {
+                count++;
+                index += digit.length;
+                continue;
+            }
+            index += text.codePointAt(index)! > 0xffff ? 2 : 1;
         }
+        return count;
+    }
+
+    private caretAfterDigits(text: string, digitCount: number): number {
+        const start = (this.prefix() ?? '').length;
+        if (digitCount <= 0) {
+            return start;
+        }
+        const end = text.length - (this.suffix() ?? '').length;
+        const digitSymbols = this.localeNumberSyntax().digitSymbols;
         let seen = 0;
-        for (let i = 0; i < text.length; i++) {
-            if (text[i] >= '0' && text[i] <= '9') {
+        for (let index = start; index < end;) {
+            const digit = this.matchAt(text, index, digitSymbols);
+            if (digit) {
                 seen++;
                 if (seen === digitCount) {
-                    return i + 1;
+                    return index + digit.length;
                 }
             }
+            index += digit?.length ?? (text.codePointAt(index)! > 0xffff ? 2 : 1);
         }
-        return text.length - (this.suffix() ?? '').length;
+        return end;
     }
 
     protected onInput(event: Event): void {
         const el = event.target as HTMLInputElement;
         const caret = el.selectionStart ?? el.value.length;
-        const digitsBeforeCaret = (el.value.slice(0, caret).match(/\d/g) ?? []).length;
+        const prefixLength = (this.prefix() ?? '').length;
+        const digitsBeforeCaret = this.digitCount(el.value.slice(prefixLength, caret));
         const parsed = this.parse(el.value);
         this.cvaValue.set(parsed);
         this.onModelChange(parsed);
-        if (parsed === undefined && el.value.includes('-') && !/\d/.test(el.value)) {
+        const syntax = this.localeNumberSyntax();
+        if (parsed === undefined && syntax.minusSigns.some((minusSign) => el.value.includes(minusSign)) && this.digitCount(el.value) === 0) {
             this.displayText.set(el.value);
             return;
         }

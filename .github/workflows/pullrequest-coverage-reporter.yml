@@ -32,7 +32,7 @@ concurrency:
 
 env:
   CI: true
-  node: '24.18.0'
+  node: 24
 
 permissions:
   contents: read

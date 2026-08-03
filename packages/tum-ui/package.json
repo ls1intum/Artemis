@@ -68,7 +68,6 @@
     "devDependencies": {
         "@angular-devkit/architect": "catalog:",
         "@angular-devkit/core": "catalog:",
-        "@angular/animations": "catalog:",
         "@angular/build": "catalog:",
         "@angular/cdk": "catalog:",
         "@angular/cli": "catalog:",

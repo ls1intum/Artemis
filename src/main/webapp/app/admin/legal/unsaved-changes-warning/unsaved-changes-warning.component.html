@@ -1,11 +1,4 @@
-<tum-ui-dialog
-    [(visible)]="visible"
-    [closable]="true"
-    [closeOnEscape]="false"
-    [dismissableMask]="false"
-    [style]="{ width: '50dvw' }"
-    [header]="'entity.action.unsavedChanges' | artemisTranslate"
->
+<tum-ui-dialog [(visible)]="visible" [closable]="true" [closeOnEscape]="false" [dismissableMask]="false" size="medium" [header]="'entity.action.unsavedChanges' | artemisTranslate">
     <h5 jhiTranslate="{{ textMessage() }}"></h5>
     <div class="flex items-center justify-end gap-2 mt-3">
         <button tumUiButton id="continue-editing-btn" data-testid="continue-button" severity="secondary" size="small" (click)="continueEditing()" type="button">

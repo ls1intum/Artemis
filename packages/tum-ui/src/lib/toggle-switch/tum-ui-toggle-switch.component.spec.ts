@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TumUiToggleSwitchComponent } from './tum-ui-toggle-switch.component';
 
@@ -130,5 +130,32 @@ describe('TumUiToggleSwitchComponent (reactive forms)', () => {
         fixture.componentInstance.control.disable();
         fixture.detectChanges();
         expect(switchInput.disabled).toBe(true);
+    });
+});
+
+describe('TumUiToggleSwitchComponent accessible name', () => {
+    @Component({
+        imports: [TumUiToggleSwitchComponent],
+        template: `
+            <tum-ui-toggle-switch aria-label="Static name" />
+            <tum-ui-toggle-switch [ariaLabel]="dynamicName()" />
+        `,
+    })
+    class NamingHostComponent {
+        readonly dynamicName = signal('Initial name');
+    }
+
+    it('names the inner switch from a static host attribute and from the ariaLabel input', () => {
+        TestBed.configureTestingModule({ imports: [NamingHostComponent] });
+        const fixture = TestBed.createComponent(NamingHostComponent);
+        fixture.detectChanges();
+
+        const switches = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('input[role="switch"]');
+        expect(switches[0].getAttribute('aria-label')).toBe('Static name');
+        expect(switches[1].getAttribute('aria-label')).toBe('Initial name');
+
+        fixture.componentInstance.dynamicName.set('Translated name');
+        fixture.detectChanges();
+        expect(switches[1].getAttribute('aria-label')).toBe('Translated name');
     });
 });

@@ -54,3 +54,9 @@ test('finds a component reference through documentation search', async ({ page }
     await search.getByRole('option', { name: /Forms: Radio Button/ }).click();
     await expectReferenceTheme(page, 'light', 'forms-radio-button--docs');
 });
+
+test('falls back to the introduction for a non-component heading', async ({ page }) => {
+    await page.goto('./developer/tum-ui-reference#available-components');
+
+    await expectReferenceTheme(page, 'light');
+});

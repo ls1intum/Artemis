@@ -40,6 +40,7 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",
             "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
             "searching": "Searching...",
@@ -330,6 +331,7 @@
         },
         "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",
             "next": "Next page",

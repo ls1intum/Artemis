@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { TumUiButtonDirective, TumUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
@@ -14,6 +14,10 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
+/**
+ * Admin component for updating legal documents (privacy statement and imprint).
+ * Supports multiple languages and markdown editing.
+ */
 @Component({
     selector: 'jhi-privacy-statement-update-component',
     templateUrl: './legal-document-update.component.html',
@@ -22,6 +26,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         TranslateDirective,
         MarkdownEditorMonacoComponent,
         FaIconComponent,
+        TumUiTooltipDirective,
         TumUiButtonDirective,
         FormsModule,
         TumUiSelectButtonComponent,
@@ -48,27 +53,39 @@ export class LegalDocumentUpdateComponent implements OnInit {
     protected readonly MAX_HEIGHT = MarkdownEditorHeight.EXTRA_LARGE;
     protected readonly MIN_HEIGHT = MarkdownEditorHeight.MEDIUM;
 
+    /** The legal document being edited */
     readonly legalDocument = signal<LegalDocument | undefined>(undefined);
 
+    /** The type of legal document (privacy statement or imprint) */
     legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
 
+    /** Whether there are unsaved changes */
     readonly unsavedChanges = signal(false);
 
+    /** Whether the document is currently being saved */
     readonly isSaving = signal(false);
 
+    /** Current trimmed content from the editor */
     readonly currentContentTrimmed = signal('');
 
+    /** Currently selected language */
     readonly currentLanguage = signal(this.DEFAULT_LANGUAGE);
 
+    /** Whether the unsaved changes warning dialog is visible */
     readonly showUnsavedChangesWarning = signal(false);
 
+    /** The language that was selected when the warning was triggered */
     private pendingLanguageChange: LegalDocumentLanguage | undefined;
 
+    /** The warning text message for unsaved changes */
     readonly warningTextMessage = signal('');
 
+    /** Translation key for the page title */
     readonly titleKey = signal<string>(undefined!);
 
     ngOnInit() {
+        // Tap the URL to determine, if it's the imprint or the privacy statement
+        // we need the parent URL, because the imprint and privacy statement are children of the admin component and their path is specified there because they are lazy loaded
         this.route.url
             .pipe(
                 tap((segments) => {

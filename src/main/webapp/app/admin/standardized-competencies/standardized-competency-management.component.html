@@ -162,14 +162,7 @@
     }
 </ng-template>
 
-<tum-ui-dialog
-    [(visible)]="confirmDialogVisible"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="true"
-    [style]="{ width: '35dvw' }"
-    [header]="confirmDialogTitle() | artemisTranslate"
->
+<tum-ui-dialog [(visible)]="confirmDialogVisible" [closable]="true" [closeOnEscape]="true" [dismissableMask]="true" size="small" [header]="confirmDialogTitle() | artemisTranslate">
     <div [jhiTranslate]="confirmDialogTextKey()" [translateValues]="confirmDialogTextParams()"></div>
     <ng-template #footer>
         <tum-ui-button severity="secondary" size="small" (clicked)="onConfirmDialogCancel()" data-testid="confirm-cancel">{{

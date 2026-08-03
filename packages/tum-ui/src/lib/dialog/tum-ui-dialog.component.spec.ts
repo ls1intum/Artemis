@@ -2,7 +2,7 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
-import { TumUiDialogComponent } from './tum-ui-dialog.component';
+import { TumUiDialogComponent, TumUiDialogSize } from './tum-ui-dialog.component';
 
 @Component({
     selector: 'tum-ui-dialog-string-host',
@@ -54,6 +54,14 @@ class InitiallyVisibleHostComponent {}
     template: `<tum-ui-dialog [visible]="true">Body</tum-ui-dialog>`,
 })
 class UnnamedHostComponent {}
+
+@Component({
+    imports: [TumUiDialogComponent],
+    template: `<tum-ui-dialog [visible]="true" header="Sized" [size]="size()">Body</tum-ui-dialog>`,
+})
+class SizedHostComponent {
+    readonly size = signal<TumUiDialogSize | undefined>(undefined);
+}
 
 function panel(): HTMLElement | null {
     return document.querySelector('.tum-ui-dialog');
@@ -263,6 +271,39 @@ describe('TumUiDialogComponent accessible name contract', () => {
         const fixture = TestBed.createComponent(UnnamedHostComponent);
 
         expect(() => fixture.detectChanges()).toThrow(/requires a visible header, a header template, or ariaLabel/);
+        fixture.destroy();
+    });
+});
+
+describe('TumUiDialogComponent size contract', () => {
+    afterEach(() => {
+        document.querySelectorAll('.cdk-overlay-container').forEach((element) => element.remove());
+    });
+
+    function renderWithSize(size: TumUiDialogSize | undefined): ComponentFixture<SizedHostComponent> {
+        TestBed.configureTestingModule({ imports: [SizedHostComponent] });
+        const fixture = TestBed.createComponent(SizedHostComponent);
+        fixture.componentInstance.size.set(size);
+        fixture.detectChanges();
+        return fixture;
+    }
+
+    it.each([
+        ['small', 'tum:w-[min(32rem,90dvw)]'],
+        ['medium', 'tum:w-[min(48rem,90dvw)]'],
+        ['large', 'tum:w-[min(72rem,90dvw)]'],
+        ['full', 'tum:w-[90dvw]'],
+    ] as const)('applies the %s width class to the overlay panel', (size, expected) => {
+        const fixture = renderWithSize(size);
+
+        expect(panel()?.className).toContain(expected);
+        fixture.destroy();
+    });
+
+    it('leaves the panel content-sized when no size is given', () => {
+        const fixture = renderWithSize(undefined);
+
+        expect(panel()?.className).not.toMatch(/tum:w-\[/);
         fixture.destroy();
     });
 });

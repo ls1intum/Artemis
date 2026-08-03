@@ -21,7 +21,7 @@ export class TumUiPaginatorComponent {
     private readonly direction = signal(this.directionality.value);
     private readonly destroyRef = inject(DestroyRef);
 
-    readonly ariaLabel = input('Pagination');
+    readonly ariaLabel = input<string>();
     /** Total records in the consumer-owned result set. */
     readonly totalRecords = input(0, { transform: numberAttribute });
     /** Zero-based active page index. */

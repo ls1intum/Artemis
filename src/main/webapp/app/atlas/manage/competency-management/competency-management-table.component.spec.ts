@@ -25,13 +25,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { Component, signal } from '@angular/core';
+import { Component as NgComponent, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 
-@Component({
+@NgComponent({
     template: `
         <jhi-competency-management-table
             [courseId]="1"

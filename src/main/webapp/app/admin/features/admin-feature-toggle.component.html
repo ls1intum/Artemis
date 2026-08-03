@@ -141,7 +141,7 @@
                                 [inputId]="'toggle-' + featureInfo.feature"
                                 (changed)="onFeatureToggle(featureInfo)"
                                 data-testid="feature-toggle-switch"
-                                [attr.aria-label]="getFeatureNameKey(featureInfo.feature) | artemisTranslate"
+                                [ariaLabel]="getFeatureNameKey(featureInfo.feature) | artemisTranslate"
                             />
                         </div>
                     </div>
