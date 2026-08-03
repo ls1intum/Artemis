@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
@@ -23,8 +22,10 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -59,7 +60,7 @@ public class CourseMemoryIngestionService {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final UserRepository userRepository;
+    private final AuthorizationCheckService authCheckService;
 
     private final ConversationMessageRepository conversationMessageRepository;
 
@@ -67,11 +68,11 @@ public class CourseMemoryIngestionService {
     private String artemisBaseUrl;
 
     public CourseMemoryIngestionService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            UserRepository userRepository, ConversationMessageRepository conversationMessageRepository) {
+            AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
-        this.userRepository = userRepository;
+        this.authCheckService = authCheckService;
         this.conversationMessageRepository = conversationMessageRepository;
     }
 
@@ -129,10 +130,10 @@ public class CourseMemoryIngestionService {
 
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, messageId);
         String variant = irisSettingsService.getSettingsForCourse(course).variant().jsonValue();
-        var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.CLOUD_AI, artemisBaseUrl, variant);
+        var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.CLOUD_AI, artemisBaseUrl, variant, IrisSupportLevel.MODERATE.jsonValue());
 
-        var executionDTO = new PyrisWebhookCourseMemoryIngestionExecutionDTO(settings, List.of(), course.getId(), conversationId, messageId, source, true, thread, verifiedBy,
-                verifiedAt, existingAnswer);
+        var executionDTO = new PyrisWebhookCourseMemoryIngestionExecutionDTO(settings, course.getId(), conversationId, messageId, source, true, thread, verifiedBy, verifiedAt,
+                existingAnswer);
 
         log.debug("Ingesting course memory for message {} (source={}) in course {}", messageId, source, course.getId());
         pyrisConnectorService.executeCourseMemoryIngestionWebhook(executionDTO);
@@ -175,23 +176,19 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Resolves which thread authors are at least teaching assistants in the course, loading the
-     * authors with their groups in a single query and checking course group membership directly
-     * (avoids touching lazily-loaded authorities outside a session).
+     * Resolves which thread authors are at least teaching assistants in the course. The check runs by
+     * login so it stays a plain database lookup and never touches lazily-loaded course roles on the
+     * (possibly detached) author entities. A thread has only a handful of distinct authors, so the
+     * per-author query is cheap and each author is resolved at most once.
      */
     private Map<Long, Boolean> resolveTutorRoles(List<Posting> postings, Course course) {
-        List<Long> authorIds = postings.stream().map(Posting::getAuthor).filter(author -> author != null && !author.isBot()).map(User::getId).distinct().toList();
         Map<Long, Boolean> isTutorByUserId = new HashMap<>();
-        if (authorIds.isEmpty()) {
-            return isTutorByUserId;
-        }
-        String taGroup = course.getTeachingAssistantGroupName();
-        String editorGroup = course.getEditorGroupName();
-        String instructorGroup = course.getInstructorGroupName();
-        for (User author : userRepository.findUsersWithGroupsByIdIn(authorIds)) {
-            var groups = author.getGroups();
-            boolean isAtLeastTutor = groups.contains(taGroup) || groups.contains(editorGroup) || groups.contains(instructorGroup);
-            isTutorByUserId.put(author.getId(), isAtLeastTutor);
+        for (Posting posting : postings) {
+            User author = posting.getAuthor();
+            if (author == null || author.isBot() || isTutorByUserId.containsKey(author.getId())) {
+                continue;
+            }
+            isTutorByUserId.put(author.getId(), authCheckService.isAtLeastTeachingAssistantInCourse(author.getLogin(), course.getId()));
         }
         return isTutorByUserId;
     }

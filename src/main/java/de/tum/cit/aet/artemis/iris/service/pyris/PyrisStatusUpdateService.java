@@ -217,7 +217,7 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(CourseMemoryIngestionWebhookJob job, PyrisCourseMemoryIngestionStatusUpdateDTO statusUpdate) {
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+        removeJobIfTerminatedElseUpdate(resolveRunState(statusUpdate.runState(), job), job);
     }
 
     /**

@@ -58,12 +58,12 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         channel = conversationUtilService.createCourseWideChannel(course, "general");
         irisBotUserService.ensureIrisBotUserExists();
         botUser = irisBotUserService.getIrisBotUser();
-        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
-        tutor = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         enableIrisFor(course);
     }
 
