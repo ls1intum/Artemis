@@ -19,14 +19,14 @@ import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 /**
  * Verifies end to end, against a real database, that an audit event is written to the table its type belongs to and that
  * it can be read back through {@link AuditEventService} under the matching {@link AuditLogType}. This is the behaviour the
  * three admin tabs and the three retention periods both depend on.
  */
-class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AuditEventRoutingIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "auditrouting";
 
