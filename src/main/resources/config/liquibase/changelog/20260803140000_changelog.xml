@@ -151,6 +151,84 @@
     </changeSet>
 
     <!-- ===================================================================== -->
+    <!-- Drop what is already expired before migrating anything                -->
+    <!-- ===================================================================== -->
+    <!--
+    Deleting first means the migration below copies only rows that are still within retention, which on an instance that
+    has never pruned the table is the large majority of the work avoided.
+
+    The cutoffs are the defaults of artemis.audit-events.general-retention-period (365) and
+    artemis.audit-events.application-retention-period (1825). They are literals because a changelog cannot read Spring
+    configuration; an instance that has narrowed either period has already had the nightly job apply it, and one that has
+    widened it keeps the extra rows here and prunes them on its own schedule afterwards.
+
+    This is a safety net, not the primary mechanism. AutomaticAuditEventCleanupService prunes in capped batches every
+    night, so on an instance that has been running it this step deletes little or nothing. On an instance upgrading from
+    a version without that job, it is a single large delete: worth checking the table size before the upgrade, and
+    letting the nightly job drain the backlog first if it is very large.
+
+    Children are deleted before parents, because jhi_persistent_audit_evt_data's foreign key is ON DELETE RESTRICT.
+    -->
+
+    <changeSet id="20260803140000-09b-prune-expired-general-events" author="krusche" dbms="mysql">
+        <sql>
+            DELETE FROM jhi_persistent_audit_evt_data
+            WHERE event_id IN (
+                SELECT event_id FROM jhi_persistent_audit_event
+                WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+                  AND event_date &lt; DATE_SUB(NOW(), INTERVAL 365 DAY)
+            );
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_event
+            WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+              AND event_date &lt; DATE_SUB(NOW(), INTERVAL 365 DAY);
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_evt_data
+            WHERE event_id IN (
+                SELECT event_id FROM jhi_persistent_audit_event
+                WHERE (event_type IS NULL OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+                  AND event_date &lt; DATE_SUB(NOW(), INTERVAL 1825 DAY)
+            );
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_event
+            WHERE (event_type IS NULL OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+              AND event_date &lt; DATE_SUB(NOW(), INTERVAL 1825 DAY);
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260803140000-09c-prune-expired-general-events" author="krusche" dbms="postgresql,h2">
+        <sql>
+            DELETE FROM jhi_persistent_audit_evt_data
+            WHERE event_id IN (
+                SELECT event_id FROM jhi_persistent_audit_event
+                WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+                  AND event_date &lt; NOW() - INTERVAL '365 days'
+            );
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_event
+            WHERE event_type IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS')
+              AND event_date &lt; NOW() - INTERVAL '365 days';
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_evt_data
+            WHERE event_id IN (
+                SELECT event_id FROM jhi_persistent_audit_event
+                WHERE (event_type IS NULL OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+                  AND event_date &lt; NOW() - INTERVAL '1825 days'
+            );
+        </sql>
+        <sql>
+            DELETE FROM jhi_persistent_audit_event
+            WHERE (event_type IS NULL OR event_type NOT IN ('AUTHENTICATION_SUCCESS', 'AUTHENTICATION_PASSKEY_SUCCESS', 'SAML2_AUTHENTICATION_SUCCESS', 'AUTHENTICATION_FAILURE', 'LOGOUT_SUCCESS'))
+              AND event_date &lt; NOW() - INTERVAL '1825 days';
+        </sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
     <!-- Migrate existing rows out of the general log                          -->
     <!-- ===================================================================== -->
     <!--

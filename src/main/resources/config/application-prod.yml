@@ -21,6 +21,12 @@ artemis:
         enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
         destination: https://telemetry.artemis.cit.tum.de
+    audit-events:
+        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
+        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
     continuous-integration:
         build-job:
             retention-period: 365 # Number of days before build job entries are deleted.
@@ -120,14 +126,10 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        # Kept for backwards compatibility only: nothing reads this key. AutomaticVcsAccessLogCleanupService reads
-        # artemis.audit-events.retention-period (a different namespace) and so always falls back to its own default.
+        # Nothing reads this key: audit events are pruned via artemis.audit-events.* and
+        # AutomaticVcsAccessLogCleanupService reads artemis.audit-events.retention-period, a different namespace, so it
+        # always falls back to its own default. Kept only so that removing it is a separate, deliberate change.
         retention-period: 365
-        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
-        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
-        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
-        security-retention-period: 1825 # Days before security audit events are deleted (five years).
-        application-retention-period: 1825 # Days before application audit events are deleted (five years).
 
 # Properties to be exposed on the /info management endpoint
 info:

@@ -69,14 +69,14 @@ public class AutomaticAuditEventCleanupService {
      * Retention for the high-volume authentication events written on every login. The default of 365 days corresponds to
      * one year; after that an individual successful login is rarely of interest, and this is the bulk of the data.
      */
-    @Value("${jhipster.audit-events.general-retention-period:365}")
+    @Value("${artemis.audit-events.general-retention-period:365}")
     private int generalRetentionPeriodInDays;
 
     /**
      * Retention for security events: credential and identity changes. The default of 1825 days corresponds to five years,
      * so the records are still available if an account's provenance has to be proven long after the fact.
      */
-    @Value("${jhipster.audit-events.security-retention-period:1825}")
+    @Value("${artemis.audit-events.security-retention-period:1825}")
     private int securityRetentionPeriodInDays;
 
     /**
@@ -84,7 +84,7 @@ public class AutomaticAuditEventCleanupService {
      * corresponds to five years, matching the security log, because these records serve the same purpose of explaining
      * what happened to graded artefacts.
      */
-    @Value("${jhipster.audit-events.application-retention-period:1825}")
+    @Value("${artemis.audit-events.application-retention-period:1825}")
     private int applicationRetentionPeriodInDays;
 
     public AutomaticAuditEventCleanupService(PersistenceAuditEventRepository persistenceAuditEventRepository, SecurityAuditEventRepository securityAuditEventRepository,

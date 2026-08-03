@@ -95,11 +95,8 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        # Kept for backwards compatibility only: nothing reads this key (see application-prod.yml).
+        # Nothing reads this key (see application-prod.yml); the audit logs are pruned via artemis.audit-events.*.
         retention-period: 365
-        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
-        security-retention-period: 1825 # Days before security audit events are deleted (five years).
-        application-retention-period: 1825 # Days before application audit events are deleted (five years).
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -133,6 +130,12 @@ theia:
             C: "c-latest"
 
 artemis:
+    audit-events:
+        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
+        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
     push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     # Telemetry service: disabled for development
     telemetry:
