@@ -25,6 +25,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -189,19 +190,28 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    /**
-     * Loads a course for the update flow. {@code autoOrchestrationConfiguration} is part of the graph so
-     * {@code CourseUpdateDTO#applyTo} mutates the existing configuration row in place instead of orphaning it, and so the
-     * admin-only change detection compares against the persisted values. Fetching it here (rather than through the
-     * Atlas-conditional {@code CourseAutoOrchestrationApi}) keeps the update path correct even when the Atlas module is
-     * disabled — the association is a single-valued join and adds no row multiplication.
-     *
-     * @param courseId The id of the course to find
-     * @return the populated course or an empty optional if no course was found
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration",
-            "autoOrchestrationConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
+
+    /**
+     * Loads the managed Atlas auto-orchestration configuration of a course, so the update flow can attach it to the
+     * course before {@code CourseUpdateDTO#applyTo} runs and mutate the existing row in place rather than orphaning it
+     * (and so the admin-only change detection compares against the persisted values).
+     * <p>
+     * This deliberately lives here rather than on the graph of {@link #findForUpdateById} or behind the Atlas
+     * {@code CourseAutoOrchestrationApi}. The graph is already at the over-fetch budget, and the API bean is conditional
+     * on the Atlas module while the configuration row must be preserved across course updates either way. Same pattern
+     * as {@code CourseConfigurationRepository#findByCourseId} for the data-privacy configuration.
+     *
+     * @param courseId the course to resolve the configuration for
+     * @return the managed configuration, or empty when the course has no configuration row
+     */
+    @Query("""
+            SELECT config
+            FROM CourseAutoOrchestrationConfiguration config
+            WHERE config.course.id = :courseId
+            """)
+    Optional<CourseAutoOrchestrationConfiguration> findAutoOrchestrationConfigurationByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT course

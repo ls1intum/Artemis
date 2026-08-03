@@ -123,13 +123,16 @@ public class CourseUpdateResource {
         User user = userRepository.getUserWithAuthorities();
 
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
-        // from loading (and potentially modifying) a different course than the URL indicates.
-        // findForUpdateById eagerly loads the auto-orchestration configuration, so applyTo mutates the existing row in
-        // place instead of orphaning it and the admin-only change detection below compares against the persisted values.
-        // This deliberately does not go through the Atlas-conditional CourseAutoOrchestrationApi: with the Atlas module
-        // disabled that bean is absent, and an unloaded association would make a stored configuration look like the
-        // default — rejecting unrelated instructor edits and letting an admin update replace the persisted row.
+        // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+
+        // Attach the managed auto-orchestration configuration so applyTo mutates the existing row in place instead of
+        // orphaning it, and so the admin-only change detection below compares against the persisted values. Loaded via a
+        // dedicated query rather than the findForUpdateById graph (which is already at the over-fetch budget) and
+        // deliberately not through the Atlas-conditional CourseAutoOrchestrationApi: with the Atlas module disabled that
+        // bean is absent, and an unloaded association would make a stored configuration look like the default —
+        // rejecting unrelated instructor edits and letting an admin update replace the persisted row.
+        existingCourse.setAutoOrchestrationConfiguration(courseRepository.findAutoOrchestrationConfigurationByCourseId(courseId).orElse(null));
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");

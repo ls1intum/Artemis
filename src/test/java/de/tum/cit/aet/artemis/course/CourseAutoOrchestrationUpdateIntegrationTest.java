@@ -26,11 +26,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * Verifies that the per-course Atlas auto-orchestration configuration survives the course create and update flows.
  * <p>
  * The configuration row lives in its own table and is reached through the {@code Course} association, so the update
- * path only behaves correctly if that association is loaded before {@code CourseUpdateDTO.applyTo} runs: otherwise
+ * path only behaves correctly if that association is attached before {@code CourseUpdateDTO.applyTo} runs: otherwise
  * {@code orphanRemoval} replaces the persisted row, and the admin-only change detection compares the submitted values
- * against defaults and rejects unrelated instructor edits. Loading happens through the shared
- * {@code CourseRepository#findForUpdateById} graph rather than the Atlas-conditional {@code CourseAutoOrchestrationApi}
- * precisely so this holds with the Atlas module disabled as well.
+ * against defaults and rejects unrelated instructor edits. It is loaded through
+ * {@code CourseRepository#findAutoOrchestrationConfigurationByCourseId} — a dedicated query on the always-active course
+ * repository — rather than the Atlas-conditional {@code CourseAutoOrchestrationApi}, precisely so this holds with the
+ * Atlas module disabled as well, and without adding a sixth eager path to the shared update graph.
  */
 class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -73,7 +74,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         configuration.setCourse(managed);
         managed.setAutoOrchestrationConfiguration(configuration);
         courseRepository.save(managed);
-        return autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
+        return courseRepository.findAutoOrchestrationConfigurationByCourseId(course.getId()).orElseThrow().getId();
     }
 
     @Test
@@ -109,7 +110,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
 
         // The load path must mutate the existing row in place; a broken path would create a new row and orphan the old
         // one (which the insertion-only test above would not catch).
-        var persisted = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        var persisted = courseRepository.findAutoOrchestrationConfigurationByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.getId()).isEqualTo(originalConfigId);
         assertThat(persisted.isEnabled()).isTrue();
         assertThat(persisted.getDebounceWindowSecondsOverride()).isEqualTo(300);
@@ -150,7 +151,7 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         Course updated = updateCourse(loaded);
         assertThat(updated.getDescription()).isEqualTo("Unrelated description change");
 
-        var persisted = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        var persisted = courseRepository.findAutoOrchestrationConfigurationByCourseId(course.getId()).orElseThrow();
         assertThat(persisted.getId()).isEqualTo(originalConfigId);
         assertThat(persisted.isEnabled()).isTrue();
         assertThat(persisted.getDebounceWindowSecondsOverride()).isEqualTo(120);
@@ -161,13 +162,17 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
     void updateCourse_loadsConfigurationWithoutTheAtlasApi() {
         long originalConfigId = persistConfiguration(120);
 
-        // The update flow reads the configuration off this graph. Asserting it here pins the module-independent load:
-        // routing it through the Atlas-conditional CourseAutoOrchestrationApi would silently yield null when Atlas is
-        // disabled, and applyTo would then replace the persisted row.
-        var loaded = courseRepository.findByIdForUpdateElseThrow(course.getId()).getAutoOrchestrationConfiguration();
-        assertThat(loaded).isNotNull();
-        assertThat(loaded.getId()).isEqualTo(originalConfigId);
-        assertThat(loaded.isEnabled()).isTrue();
+        // The update flow reads the configuration through this query on the always-active CourseRepository. Asserting it
+        // here pins the module-independent load: routing it through the Atlas-conditional CourseAutoOrchestrationApi
+        // would silently yield empty when Atlas is disabled, and applyTo would then replace the persisted row.
+        var loaded = courseRepository.findAutoOrchestrationConfigurationByCourseId(course.getId());
+        assertThat(loaded).isPresent();
+        assertThat(loaded.get().getId()).isEqualTo(originalConfigId);
+        assertThat(loaded.get().isEnabled()).isTrue();
+
+        // The shared update graph must stay clear of the association: it is already at the query-quality over-fetch
+        // budget, so adding a sixth eager path there would fail the Query Quality gate.
+        assertThat(courseRepository.findByIdForUpdateElseThrow(course.getId()).getAutoOrchestrationConfiguration()).isNull();
     }
 
     @Test

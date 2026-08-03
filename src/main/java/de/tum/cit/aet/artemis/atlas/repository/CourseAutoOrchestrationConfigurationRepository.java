@@ -39,15 +39,4 @@ public interface CourseAutoOrchestrationConfigurationRepository extends ArtemisJ
             WHERE config.course.id = :courseId
             """)
     Optional<CourseAutoOrchestrationConfigDTO> findConfigByCourseId(@Param("courseId") long courseId);
-
-    /**
-     * Loads the full configuration entity of a course. The course update flow does not use this: it reaches the
-     * configuration through the {@code Course} association (eagerly loaded by
-     * {@code CourseRepository#findForUpdateById}) so the path stays correct when the Atlas module — and with it this
-     * repository — is not active. Kept for callers that need the entity rather than the hot-path projection.
-     *
-     * @param courseId the course to resolve the configuration for
-     * @return the managed configuration entity, or empty when the course has no configuration row
-     */
-    Optional<CourseAutoOrchestrationConfiguration> findByCourseId(long courseId);
 }

@@ -209,6 +209,13 @@ public class Course extends DomainObject {
      * surfaced for the client through the read-only {@code autoOrchestratorEnabled} /
      * {@code debounceWindowSecondsOverride} / {@code maxDailyOrchestrationOverride} JSON properties
      * exposed by the getters below.
+     * <p>
+     * Lazy on purpose, and deliberately kept off {@code findForUpdateById}: that graph is already at the query-quality
+     * over-fetch budget, so a sixth eager path there fails the Query Quality gate. Every flow that needs the value must
+     * fetch it deliberately — the instructor course-settings read path
+     * ({@code findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById}) and the course update path,
+     * which attaches it via {@code CourseRepository#findAutoOrchestrationConfigurationByCourseId} so {@code applyTo}
+     * updates it in place. Do NOT add it to any other course query or entity graph.
      */
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "auto_orchestration_configuration_id")
