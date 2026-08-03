@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import java.util.Objects;
+import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -56,6 +59,8 @@ public class AutonomousTutorForwardingService {
      * <li>The author is not the Iris bot itself (prevents reply loops).</li>
      * <li>The author has not chosen {@link AiSelectionDecision#NO_AI}.</li>
      * </ul>
+     * The model used for the run is resolved by {@link #resolveThreadAiSelection(Post)}, not taken from the
+     * author alone.
      *
      * @param post         the newly created message
      * @param conversation the conversation the message was posted in
@@ -92,10 +97,11 @@ public class AutonomousTutorForwardingService {
         var settings = irisSettingsService.getSettingsForCourse(course);
         String variant = settings.variant().jsonValue();
         String supportLevel = settings.supportLevel().jsonValue();
-        log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
+        AiSelectionDecision aiSelection = resolveThreadAiSelection(post);
+        log.debug("Forwarding post {} to autonomous tutor pipeline (variant={}, selection={})", post.getId(), variant, aiSelection);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null,
-                null, (runId, runState, error) -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, aiSelection, new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null, null,
+                (runId, runState, error) -> {
                 });
     }
 
@@ -111,6 +117,9 @@ public class AutonomousTutorForwardingService {
      * </ul>
      * When forwarded, replies from No-AI students in the same thread are included as redacted placeholders
      * so Iris is aware those messages exist without seeing their content.
+     * <p>
+     * The model used for the run is resolved across the whole thread by {@link #resolveThreadAiSelection(Post)}:
+     * one {@link AiSelectionDecision#LOCAL_AI} participant downgrades the run to local for everyone in it.
      *
      * @param answerPost   the newly created reply
      * @param parentPost   the parent post that was replied to (must include all answers, including the new reply)
@@ -154,11 +163,35 @@ public class AutonomousTutorForwardingService {
         var settings = irisSettingsService.getSettingsForCourse(course);
         String variant = settings.variant().jsonValue();
         String supportLevel = settings.supportLevel().jsonValue();
-        log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
+        AiSelectionDecision aiSelection = resolveThreadAiSelection(parentPost);
+        log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={}, selection={})", answerPost.getId(), parentPost.getId(), variant, aiSelection);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null,
-                null, null, (runId, runState, error) -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, aiSelection, new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null, null, null,
+                (runId, runState, error) -> {
                 });
+    }
+
+    /**
+     * Resolves the AI selection for a whole thread as the most restrictive choice among the authors
+     * whose content is actually sent to Pyris.
+     * <p>
+     * A thread can mix authors with different {@link AiSelectionDecision}s, but one pipeline run sees the
+     * combined thread content and resolves a single model for it. A single {@link AiSelectionDecision#LOCAL_AI}
+     * author anywhere in the thread therefore downgrades the entire run to local inference — running in the
+     * cloud would otherwise send that student's message to an external provider against their choice.
+     * <p>
+     * {@link AiSelectionDecision#NO_AI} authors are ignored here: their replies are redacted before leaving
+     * Artemis (see {@link PyrisPostDTO}), so no content of theirs reaches any model and they have no
+     * local-vs-cloud preference to honour. Bot authors are ignored because Iris's own drafts carry no
+     * student's preference.
+     *
+     * @param parentPost the thread root, with all answers loaded
+     * @return {@link AiSelectionDecision#LOCAL_AI} if any contributing author chose it, {@link AiSelectionDecision#CLOUD_AI} otherwise
+     */
+    private AiSelectionDecision resolveThreadAiSelection(Post parentPost) {
+        boolean anyLocal = Stream.concat(Stream.of(parentPost.getAuthor()), parentPost.getAnswers().stream().map(AnswerPost::getAuthor)).filter(Objects::nonNull)
+                .filter(author -> !author.isBot()).map(User::getSelectedLLMUsage).anyMatch(AiSelectionDecision.LOCAL_AI::equals);
+        return anyLocal ? AiSelectionDecision.LOCAL_AI : AiSelectionDecision.CLOUD_AI;
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {

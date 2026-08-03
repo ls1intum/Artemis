@@ -314,6 +314,94 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         assertThat(visibleAnswer.get().content()).isEqualTo("Can you clarify the bounds?");
     }
 
+    // --- Thread-wide AI selection resolution ---
+
+    private AiSelectionDecision captureSelectionForThread(Post post, AnswerPost triggeringReply) {
+        channel.setCourse(course);
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewAnswerMessage(triggeringReply, post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+        return capturedDto.get().settings().selection();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_downgradesToLocalWhenReplyAuthorChoseLocal() {
+        student.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        student2.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userTestRepository.saveAll(Set.of(student, student2));
+
+        Post post = createPostInChannel(student, "How does the scheduler pick a thread?");
+        AnswerPost triggeringReply = createAnswerPost(post, student2, "Does it use priorities?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.LOCAL_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_downgradesToLocalWhenRootAuthorChoseLocal() {
+        // The trigger comes from a cloud student, but the thread root belongs to a local-only student:
+        // the root's content is part of the prompt, so the run must stay local.
+        student.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        student2.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        userTestRepository.saveAll(Set.of(student, student2));
+
+        Post post = createPostInChannel(student, "Why does my merge sort stack overflow?");
+        AnswerPost triggeringReply = createAnswerPost(post, student2, "How deep is your recursion?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.LOCAL_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_staysCloudWhenNoParticipantChoseLocal() {
+        student.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        student2.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        userTestRepository.saveAll(Set.of(student, student2));
+
+        Post post = createPostInChannel(student, "What is a race condition?");
+        AnswerPost triggeringReply = createAnswerPost(post, student2, "Two threads writing at once?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.CLOUD_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_ignoresNoAiParticipantsWhenResolvingSelection() {
+        // A No-AI student's reply is redacted before it leaves Artemis, so it carries no
+        // local-vs-cloud preference and must not downgrade the run.
+        student.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userTestRepository.saveAll(Set.of(student, student2));
+
+        Post post = createPostInChannel(student, "How do generics erase?");
+        createAnswerPost(post, student2, "This should be redacted.");
+        AnswerPost triggeringReply = createAnswerPost(post, student, "Can you clarify the bounds?");
+
+        assertThat(captureSelectionForThread(post, triggeringReply)).isEqualTo(AiSelectionDecision.CLOUD_AI);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewMessage_usesLocalForLocalOnlyAuthor() {
+        student.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userTestRepository.save(student);
+
+        Post post = createPostInChannel(student, "What is tail recursion?");
+        channel.setCourse(course);
+
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewMessage(post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+        assertThat(capturedDto.get().settings().selection()).isEqualTo(AiSelectionDecision.LOCAL_AI);
+    }
+
     // --- Integration test: ConversationMessagingService wires the forwarding service ---
 
     @Test
