@@ -288,10 +288,14 @@ public class SecurityConfiguration {
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
                     .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
                     .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/webjars/katex/**").permitAll()
-                    // Information and health endpoints do not need authentication
+                    // Information and health endpoints do not need authentication. `info` is fetched by the client before
+                    // login (profile info, feature flags, version), and the health group is used by probes and the client
+                    // status page. These must stay ahead of the `/management/**` admin rule below so they keep matching first.
                     .requestMatchers("/management/info", "/management/health", "/management/health/readiness", "/management/health/liveness").permitAll()
-                    // Admin area requires specific authority.
-                    .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                    // Admin area requires specific authority. Both the canonical `/api/admin/**` prefix and the per-module
+                    // `/api/*/admin/**` shape are listed: a single `*` matches exactly one path segment, so `/api/*/admin/**`
+                    // alone does not cover `/api/admin/**` (used by the admin module's own controllers).
+                    .requestMatchers("/api/admin/**", "/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
                     .requestMatchers("/api/*/public/**").permitAll()
                     .requestMatchers("/api/*/internal/**").permitAll()
@@ -302,6 +306,10 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((_, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                    // All other actuator endpoints (env, configprops, loggers, threaddump, logfile, artemismetrics, ...)
+                    // are administrative and must not be reachable by ordinary authenticated users. The exceptions above
+                    // (info, health, prometheus) are matched earlier, so this rule covers everything else under /management.
+                    .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
