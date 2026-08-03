@@ -57,9 +57,20 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
+    private MavenCentralMirrorService mavenCentralMirrorService;
+
     @BeforeEach
     void setUp() {
-        programmingExerciseRepositoryService = new ProgrammingExerciseRepositoryService(gitService, userRepository, resourceLoaderService, Optional.empty());
+        mavenCentralMirrorService = new MavenCentralMirrorService();
+        programmingExerciseRepositoryService = new ProgrammingExerciseRepositoryService(gitService, userRepository, resourceLoaderService, Optional.empty(),
+                mavenCentralMirrorService);
+    }
+
+    /**
+     * Configures the mirror the same way the property injection does.
+     */
+    private void configureMirror() {
+        ReflectionTestUtils.setField(mavenCentralMirrorService, "mirrorUrl", MIRROR_URL);
     }
 
     @Test
@@ -151,7 +162,7 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     @Test
     void setupBuildToolProjectFile_keepsTheMirrorDeclarationsWhenAMirrorIsConfigured() throws Exception {
-        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        configureMirror();
         Path repoPath = gradleTestRepository();
 
         programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.PLAIN_GRADLE, mirrorSections(true));
@@ -197,7 +208,7 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     @Test
     void replacePlaceholders_insertsTheConfiguredMirrorUrl() throws Exception {
-        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        configureMirror();
         Path repoPath = gradleTestRepository();
         Repository repository = mockRepository(repoPath);
 
@@ -209,7 +220,7 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     @Test
     void setupBuildToolProjectFile_blackbox_pointsTheSettingsMirrorAtTheConfiguredMirror() throws Exception {
-        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        configureMirror();
         Path repoPath = blackboxTestRepository();
 
         programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(true));
@@ -239,7 +250,7 @@ class ProgrammingExerciseRepositoryServiceTest {
 
     @Test
     void replacePlaceholders_blackbox_insertsTheConfiguredMirrorUrlIntoTheSettingsFile() throws Exception {
-        ReflectionTestUtils.setField(programmingExerciseRepositoryService, "mavenCentralMirrorUrl", MIRROR_URL);
+        configureMirror();
         Path repoPath = blackboxTestRepository();
         programmingExerciseRepositoryService.setupBuildToolProjectFile(repoPath, ProjectType.MAVEN_BLACKBOX, mirrorSections(true));
 

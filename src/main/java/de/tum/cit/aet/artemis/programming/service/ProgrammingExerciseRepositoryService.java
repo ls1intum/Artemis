@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -62,8 +61,6 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String MAVEN_LOCAL_SETTINGS = "local-settings.xml";
 
-    private static final String MAVEN_CENTRAL_MIRROR_URL_PLACEHOLDER = "${mavenCentralMirrorUrl}";
-
     private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
 
     private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
@@ -82,16 +79,11 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    /**
-     * Optional Maven Central mirror all Java and Kotlin test repositories are pointed at. Maven Central rate-limits
-     * requests (HTTP 429), which breaks exercise builds; an instance can configure a mirror that proxies it. Empty by
-     * default, in which case the templates keep resolving from Maven Central directly.
-     */
-    @Value("${artemis.programming.maven-central-mirror-url:}")
-    private String mavenCentralMirrorUrl;
+    private final MavenCentralMirrorService mavenCentralMirrorService;
 
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService) {
+            Optional<VersionControlService> versionControlService, MavenCentralMirrorService mavenCentralMirrorService) {
+        this.mavenCentralMirrorService = mavenCentralMirrorService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
@@ -500,10 +492,7 @@ public class ProgrammingExerciseRepositoryService {
         // Keep or delete static code analysis configuration in the build configuration file
         sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
         // Keep or delete the Maven Central mirror declarations, depending on whether this instance configured one
-        sectionsMap.put("maven-central-mirror", isMavenCentralMirrorConfigured());
-        // Complement of the above: the black-box settings file has to keep a mirror URL either way, so it falls back to
-        // Maven Central when no mirror is configured instead of dropping the declaration.
-        sectionsMap.put("maven-central-fallback", !isMavenCentralMirrorConfigured());
+        mavenCentralMirrorService.addTemplateSections(sectionsMap);
 
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
@@ -628,16 +617,6 @@ public class ProgrammingExerciseRepositoryService {
         if (Files.exists(mavenLocalSettingsPath)) {
             FileUtil.replacePlaceholderSections(mavenLocalSettingsPath, activeFeatures);
         }
-    }
-
-    /**
-     * Whether this Artemis instance configured a Maven Central mirror for the Java and Kotlin test repositories it
-     * creates.
-     *
-     * @return true if a mirror URL is configured
-     */
-    private boolean isMavenCentralMirrorConfigured() {
-        return StringUtils.isNotBlank(mavenCentralMirrorUrl);
     }
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
@@ -795,9 +774,7 @@ public class ProgrammingExerciseRepositoryService {
             case JAVA, KOTLIN -> {
                 FileUtil.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository), PACKAGE_NAME_FOLDER_PLACEHOLDER, programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
-                if (isMavenCentralMirrorConfigured()) {
-                    replacements.put(MAVEN_CENTRAL_MIRROR_URL_PLACEHOLDER, mavenCentralMirrorUrl.strip());
-                }
+                mavenCentralMirrorService.addUrlReplacement(replacements);
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
             case GO, DART -> replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
