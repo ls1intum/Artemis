@@ -170,7 +170,7 @@
                     "disableWarning": "Iris will not retain conversation history between sessions, resulting in less personalized AI assistance."
                 },
                 "LectureContentProcessing": {
-                    "name": "Lecture Video Processing",
+                    "name": "Lecture content ingestion",
                     "description": "Enables automated lecture content processing: transcription, slide extraction, and Pyris ingestion.",
                     "disableWarning": "Disabling lecture content processing stops all ongoing transcription and ingestion jobs for new lectures."
                 },

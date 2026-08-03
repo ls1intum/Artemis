@@ -170,7 +170,7 @@
                     "disableWarning": "Iris speichert keinen Gesprächsverlauf zwischen Sitzungen, was zu weniger personalisierter KI-Unterstützung führt."
                 },
                 "LectureContentProcessing": {
-                    "name": "Videotranskription",
+                    "name": "Vorlesungsinhalt-Ingestion",
                     "description": "Aktiviert die automatische Verarbeitung von Vorlesungsinhalten: Transkription, Folien-Extraktion und Pyris-Ingestion.",
                     "disableWarning": "Das Deaktivieren der Vorlesungsinhalt-Verarbeitung stoppt alle laufenden Transkriptions- und Ingestion-Aufträge für neue Vorlesungen."
                 },
