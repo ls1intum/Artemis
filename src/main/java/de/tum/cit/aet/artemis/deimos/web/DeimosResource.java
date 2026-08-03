@@ -42,7 +42,7 @@ public class DeimosResource implements DeimosBatchApi {
     @PostMapping("courses/{courseId}/analysis-runs")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerCourseBatch(@PathVariable long courseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
         return ResponseEntity.accepted().body(deimosBatchService.triggerCourseBatch(courseId, request, user));
     }
 
@@ -50,7 +50,7 @@ public class DeimosResource implements DeimosBatchApi {
     @PostMapping("programming-exercises/{exerciseId}/analysis-runs")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<DeimosBatchTriggerResponseDTO> triggerExerciseBatch(@PathVariable long exerciseId, @Valid @RequestBody DeimosBatchRequestDTO request) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
         return ResponseEntity.accepted().body(deimosBatchService.triggerExerciseBatch(exerciseId, request, user));
     }
 }
