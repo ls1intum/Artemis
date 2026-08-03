@@ -83,6 +83,9 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/shared-ui/tum-ui';
 @source './app/exercise/unreferenced-feedback';
+@source './app/assessment/manage/unreferenced-feedback-detail';
+@source './app/assessment/manage/structured-grading-instructions-assessment-layout';
+@source './app/assessment/manage/assessment-instructions';
 
 /*
  * Exclude test files: their prose ("should collapse the sidebar", "renders a table") would trip the same name

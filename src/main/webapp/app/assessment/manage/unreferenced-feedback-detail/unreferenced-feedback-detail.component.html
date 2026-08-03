@@ -1,105 +1,135 @@
-<div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="unreferenced-feedback-detail card mb-3" [class.is-suggestion]="isSuggestion()">
-    <div class="card-header">
+<tum-ui-card
+    (drop)="updateFeedbackOnDrop($event)"
+    (dragover)="$event.preventDefault()"
+    styleClass="unreferenced-feedback-detail"
+    [class.is-suggestion]="isSuggestion()"
+    [attr.data-tone]="tone()"
+>
+    <div class="feedback-card">
         @if (isSuggestion() || Feedback.isFeedbackSuggestion(feedback())) {
-            <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
-        }
-        @if (feedback().gradingInstruction) {
-            <jhi-grading-instruction-link-icon [feedback]="feedback()" />
-        }
-        @if (!readOnly()) {
-            <button
-                jhiDeleteButton
-                [buttonSize]="ButtonSize.SMALL"
-                [translateValues]="{ text: this.feedback() | feedbackContent | quoted: ' ' }"
-                deleteQuestion="artemisApp.feedback.delete.question"
-                (delete)="delete()"
-                [dialogError]="dialogError$"
-                [renderButtonStyle]="false"
-                [renderButtonText]="false"
-                class="btn float-end"
-            >
-                <fa-icon [icon]="faTrashAlt" />
-            </button>
-        }
-        <!-- Accept/Discard for feedback suggestions -->
-        @if (isSuggestion()) {
-            <div class="row float-end suggestion-action-buttons">
-                <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback())">
-                    <fa-icon [icon]="faCheck" />
-                    <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
-                </button>
-                <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback())">
-                    <fa-icon [icon]="faTrash" />
-                    <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
-                </button>
+            <div class="feedback-card__badges">
+                <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
             </div>
         }
-    </div>
-    <div class="card-body">
-        <div class="form-group row">
-            <label for="feedback-points" class="col-4 feedback-label" jhiTranslate="artemisApp.exercise.score"></label>
-            <input
-                id="feedback-points"
-                class="col form-control"
-                type="number"
-                step="0.5"
-                [(ngModel)]="feedback().credits"
+
+        <div class="feedback-card__top">
+            <!-- Read-only points (linked instruction / read-only card) render as a colored pill; editable points as a stepper. -->
+            @if (pointsDisabled()) {
+                <tum-ui-tag class="feedback-card__points-pill" [severity]="pointsSeverity()" [value]="pointsLabel()" />
+            } @else {
+                <tum-ui-input-group class="feedback-card__stepper">
+                    <tum-ui-input-group-addon>
+                        <button
+                            type="button"
+                            class="feedback-card__step"
+                            [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                            (click)="stepCredits(-CREDITS_STEP)"
+                        >
+                            <fa-icon [icon]="faMinus" />
+                        </button>
+                    </tum-ui-input-group-addon>
+                    <input
+                        id="feedback-points"
+                        tumUiInput
+                        class="feedback-card__points-input"
+                        type="number"
+                        [step]="CREDITS_STEP"
+                        [(ngModel)]="feedback().credits"
+                        (ngModelChange)="emitChanges()"
+                        [required]="!feedback().gradingInstruction"
+                        [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
+                    />
+                    <tum-ui-input-group-addon>
+                        <button
+                            type="button"
+                            class="feedback-card__step"
+                            [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                            (click)="stepCredits(CREDITS_STEP)"
+                        >
+                            <fa-icon [icon]="faPlus" />
+                        </button>
+                    </tum-ui-input-group-addon>
+                </tum-ui-input-group>
+            }
+
+            <div class="feedback-card__actions">
+                <!-- Accept/Discard for feedback suggestions -->
+                @if (isSuggestion()) {
+                    <tum-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
+                        <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
+                    </tum-ui-button>
+                    <tum-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">
+                        <span jhiTranslate="artemisApp.assessment.detail.discard"></span>
+                    </tum-ui-button>
+                }
+                @if (!readOnly()) {
+                    <button
+                        jhiDeleteButton
+                        tumUiButton
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [buttonSize]="ButtonSize.SMALL"
+                        [translateValues]="{ text: this.feedback() | feedbackContent | quoted: ' ' }"
+                        deleteQuestion="artemisApp.feedback.delete.question"
+                        (delete)="delete()"
+                        [dialogError]="dialogError$"
+                        [renderButtonStyle]="false"
+                        [renderButtonText]="false"
+                    >
+                        <fa-icon class="text-state-danger" [icon]="faTrashAlt" />
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
+        @if (feedback().gradingInstruction?.instructionDescription; as instructionDescription) {
+            <div class="feedback-card__section">
+                <span class="feedback-card__label" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
+                <p class="feedback-card__scale">{{ instructionDescription }}</p>
+            </div>
+            <hr class="feedback-card__divider" />
+        }
+
+        <div class="feedback-card__section">
+            <span class="feedback-card__label" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+            @if (feedback().gradingInstruction?.feedback; as instructionFeedback) {
+                <p class="feedback-card__instruction-feedback">{{ instructionFeedback }}</p>
+            }
+            <textarea
+                id="feedback-textarea"
+                tumUiTextarea
+                class="feedback-card__textarea"
+                rows="2"
+                [(ngModel)]="feedback().detailText"
                 (ngModelChange)="emitChanges()"
-                [disabled]="!!feedback().gradingInstruction || readOnly()"
-                [readOnly]="!!feedback().gradingInstruction || readOnly()"
-                [required]="!feedback().gradingInstruction"
-            />
+                [readOnly]="readOnly()"
+                [disabled]="readOnly()"
+                [placeholder]="
+                    feedback().gradingInstruction?.feedback
+                        ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
+                        : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
+                "
+                [required]="!feedback().gradingInstruction?.feedback"
+            ></textarea>
         </div>
-        <div class="form-group row">
-            <div class="col-4 assessment-label">
-                <label class="pe-0" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
-                @if (feedback().gradingInstruction) {
-                    <div>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary ps-1" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" />
-                    </div>
-                }
-            </div>
-            <div class="col p-0">
-                @if (feedback().gradingInstruction) {
-                    <div>
-                        <span>{{ feedback().gradingInstruction!.feedback }}</span>
-                    </div>
-                }
-                <textarea
-                    id="feedback-textarea"
-                    class="form-control"
-                    rows="2"
-                    [(ngModel)]="feedback().detailText"
-                    (ngModelChange)="emitChanges()"
-                    [readOnly]="readOnly()"
-                    [disabled]="readOnly()"
-                    [placeholder]="
-                        feedback().gradingInstruction?.feedback
-                            ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
-                            : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
-                    "
-                    [required]="!feedback().gradingInstruction?.feedback"
-                ></textarea>
-            </div>
-        </div>
+
         <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
         @if (feedback().correctionStatus !== undefined) {
-            <div>
+            <p class="feedback-card__correction-status">
                 @if (feedback().correctionStatus === 'CORRECT') {
-                    <span class="text-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }} </span>
-                }
-                @if (feedback().correctionStatus !== 'CORRECT') {
-                    <span class="text-danger">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }} </span>
-                }
-                <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
-                @if (feedback().correctionStatus !== 'CORRECT') {
+                    <span class="text-state-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }}</span>
+                } @else {
+                    <span class="text-state-danger">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }}</span>
+                    <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
                     <fa-layers>
-                        <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
-                        <fa-icon class="text-dark exclamation-icon" [icon]="faExclamation" size="2x" transform="shrink-10" />
+                        <fa-icon class="text-state-warning" [icon]="faExclamationTriangle" />
+                        <fa-icon class="exclamation-icon" [icon]="faExclamation" size="2x" transform="shrink-10" />
                     </fa-layers>
                 }
-            </div>
+            </p>
         }
         <jhi-assessment-correction-round-badge [feedback]="feedback()" [highlightDifferences]="highlightDifferences()" />
     </div>
-</div>
+</tum-ui-card>

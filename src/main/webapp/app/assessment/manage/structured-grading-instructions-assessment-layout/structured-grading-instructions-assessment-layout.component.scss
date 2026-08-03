@@ -1,13 +1,81 @@
-.layout-table {
-    margin: 1px;
+/* Info hint above the criteria list. `sgi-hint` is forwarded onto the tum-ui-message host via its styleClass. */
+:host ::ng-deep .sgi-hint {
+    display: block;
+    margin-bottom: 0.75rem;
+}
 
-    .td-score,
-    .td-usage-count {
-        width: 4%;
+/* "Expand all · Collapse all" — plain muted text actions, not buttons visually. */
+.sgi-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+
+    &__separator {
+        color: var(--secondary);
+    }
+}
+
+.sgi-criterion {
+    margin-bottom: 1rem;
+}
+
+.sgi-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* One instruction rendered as a bordered card: a top row (point pill leading, apply control trailing), then the
+   guidance/feedback text stacked below spanning the full card width. */
+.sgi-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.625rem;
+
+    &__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
     }
 
-    .td-usage-count {
+    &__points {
+        flex: 0 0 auto;
+    }
+
+    /* Tutor-facing guidance on when to select this criterion (instructionDescription): muted, secondary line. */
+    &__scale {
+        color: var(--secondary);
+        font-size: 0.875rem;
+    }
+
+    /* The feedback shown to the student: the primary, full-contrast line. */
+    &__description {
+        color: var(--body-color);
+    }
+
+    /* jhiMarkdown wraps its output in a <p>; drop the trailing margin so single lines stay compact. */
+    &__scale ::ng-deep p:last-child,
+    &__description ::ng-deep p:last-child {
+        margin-bottom: 0;
+    }
+
+    &__control {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
         position: relative;
         white-space: nowrap;
+    }
+
+    &__usage {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
     }
 }

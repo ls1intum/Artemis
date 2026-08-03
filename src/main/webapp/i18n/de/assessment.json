@@ -74,7 +74,10 @@
                 "deductions": "Abzüge",
                 "finalScore": "Gesamt",
                 "pointsShort": "{{points}} Pkt.",
-                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt."
+                "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
+                "criteria": "Kriterien",
+                "decreasePoints": "Punkte verringern",
+                "increasePoints": "Punkte erhöhen"
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {

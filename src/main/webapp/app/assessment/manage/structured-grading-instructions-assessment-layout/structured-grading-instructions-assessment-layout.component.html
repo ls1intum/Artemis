@@ -1,21 +1,24 @@
-@if (criteria()) {
-    <div class="mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
-            <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
-        </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
-            <fa-icon [icon]="faCompress" /> <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
-        </button>
-    </div>
-}
 @if (allowDrop()) {
-    <div class="alert alert-info">
-        <fa-icon [icon]="faInfoCircle" />
-        <span [jhiTranslate]="selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction'"></span>
+    <tum-ui-message
+        severity="info"
+        styleClass="sgi-hint"
+        [icon]="faInfoCircle"
+        [text]="(selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction') | artemisTranslate"
+    />
+}
+@if (sortedCriteria().length) {
+    <div class="sgi-toolbar">
+        <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="expandAll()">
+            <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
+        </tum-ui-button>
+        <span class="sgi-toolbar__separator" aria-hidden="true">·</span>
+        <tum-ui-button variant="text" severity="secondary" size="small" (clicked)="collapseAll()">
+            <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
+        </tum-ui-button>
     </div>
 }
 @for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
-    <div>
+    <div class="sgi-criterion">
         <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
             <ng-container expandableSectionHeaderActions>
                 @if (selectable()) {
@@ -29,43 +32,43 @@
                     />
                 }
             </ng-container>
-            @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
-                <div
-                    class="rounded"
-                    draggable="{{ allowDrop() }}"
-                    (dragstart)="disableDrag()"
-                    (dragstart)="drag($event, instruction)"
-                    id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
-                    [style.background-color]="setInstrColour(instruction)"
-                >
-                    <table class="table layout-table">
-                        <tbody>
-                            <tr>
-                                <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
-                                <td [jhiMarkdown]="instruction!.gradingScale!"></td>
-                                <td [jhiMarkdown]="instruction!.instructionDescription!" [ngbTooltip]="setTooltip(instruction)"></td>
-                                <td class="td-usage-count">
-                                    @if (selectable()) {
-                                        <tum-ui-checkbox
-                                            [checked]="isApplied(instruction)"
-                                            [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
-                                            (click)="toggleApplied($event, instruction)"
-                                        />
-                                    } @else {
+            <div class="sgi-items">
+                @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
+                    <div
+                        class="sgi-item"
+                        draggable="{{ allowDrop() }}"
+                        (dragstart)="disableDrag()"
+                        (dragstart)="drag($event, instruction)"
+                        id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
+                    >
+                        <div class="sgi-item__top">
+                            <tum-ui-tag class="sgi-item__points" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
+                            <div class="sgi-item__control">
+                                @if (selectable()) {
+                                    <tum-ui-checkbox
+                                        [checked]="isApplied(instruction)"
+                                        [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
+                                        (click)="toggleApplied($event, instruction)"
+                                    />
+                                } @else {
+                                    <span class="sgi-item__usage">
                                         @if (instruction!.usageCount && instruction!.usageCount !== 0) {
-                                            <span>{{ instruction.usageCount }}</span>
+                                            {{ instruction.usageCount }}
                                         } @else {
                                             &#8734;
                                         }
                                         <jhi-help-icon text="artemisApp.exercise.usageCountHint" />
-                                    }
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            }
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        <!-- Tutor-facing guidance on when this criterion applies (muted), followed by the exact
+                             wording the student will see once it is applied (prominent). -->
+                        <div class="sgi-item__scale markdown-preview" [jhiMarkdown]="instruction!.instructionDescription!"></div>
+                        <div class="sgi-item__description markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
+                    </div>
+                }
+            </div>
         </jhi-expandable-section>
-        <br />
     </div>
 }

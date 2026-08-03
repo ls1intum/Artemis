@@ -12,10 +12,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -29,9 +28,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
                 MockDirective(NgbCollapse),
-                FaIconComponent,
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
@@ -57,18 +54,13 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.disableDrag()).toBe(false);
     });
 
-    it('should set display elements', () => {
-        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 1 } as GradingInstruction;
+    it('should derive the point pill from an instruction', () => {
+        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 4 } as GradingInstruction;
 
-        expect(comp.setScore(gradingInstruction.credits)).toBe('1P');
-        expect(comp.setTooltip(gradingInstruction)).toBe('Feedback: feedback');
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
-        gradingInstruction.credits = 0;
-        fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
-        gradingInstruction.credits = -1;
-        fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
+        expect(comp.pointsLabel(gradingInstruction.credits)).toBe('+4');
+        expect(comp.pointsSeverity(gradingInstruction.credits)).toBe('success');
+        expect(comp.pointsSeverity(0)).toBe('secondary');
+        expect(comp.pointsSeverity(-1)).toBe('danger');
     });
 
     it('should expand and collapse all criteria', () => {

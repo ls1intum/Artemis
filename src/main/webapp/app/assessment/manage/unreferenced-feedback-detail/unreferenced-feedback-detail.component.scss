@@ -1,42 +1,187 @@
-.card-body {
-    padding-top: 5px;
-    padding-bottom: 5px;
+/* The card root is a tum-ui-card, which brings the surface, radius and shadow; everything below lays out its
+   slots and applies the tone accent (awarded / deducted / neutral) as a left stripe. */
+.unreferenced-feedback-detail {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+
+    /* Rounder than the kit's default card radius, matching the design. overflow: hidden (above) clips the tone
+       stripe and the card body to this same curve, so both corners stay in sync automatically. */
+    border-radius: 1.25rem;
+
+    /* Tone stripe on the leading edge: green for awarded, red for deducted, neutral grey otherwise. */
+    &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 4px;
+        background-color: var(--secondary);
+    }
+
+    &[data-tone='positive']::before {
+        background-color: var(--success);
+    }
+
+    &[data-tone='negative']::before {
+        background-color: var(--danger);
+    }
 }
 
-.assessment-label > label {
-    float: left;
+.feedback-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    gap: 0.75rem;
+    overflow-wrap: anywhere;
 }
 
-fa-icon.exclamation-icon {
-    width: 16px;
-    margin-top: -6px;
+.feedback-card__badges {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-wrap: wrap;
 }
 
-.is-suggestion .card-header,
-.is-suggestion .card-body {
+/* Points pill / stepper on the leading edge, delete (and suggestion accept/discard) actions trailing. */
+.feedback-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    gap: 0.5rem;
+}
+
+.feedback-card__points-pill {
+    font-size: 1rem;
+}
+
+.feedback-card__actions {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+}
+
+/* Half-point stepper: two flush addon buttons around the native number field. */
+.feedback-card__stepper {
+    width: auto;
+}
+
+.feedback-card__points-input {
+    width: 4.5rem;
+    text-align: center;
+    font-weight: 600;
+    border-radius: 0;
+
+    /* The +/- buttons replace the browser spinner, which would otherwise crowd the centered value. */
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+
+    appearance: textfield;
+}
+
+.feedback-card__step {
+    /* Fill the addon so the whole segment is the hit target; matches the addon's own padding exactly (see
+       tum-ui-input-group-addon.component.scss) so the button reaches the addon's edges without overflowing it. */
+    margin: calc(-1 * var(--spacing) * 2);
+    padding: calc(var(--spacing) * 2);
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.feedback-card__section {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.25rem;
+}
+
+/* No user-resize handle: a dragged-open textarea would keep that height indefinitely. */
+.feedback-card__textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    resize: none;
+}
+
+.feedback-card__divider {
+    margin: 0;
+    border: none;
+    border-top: 1px solid var(--border-color);
+}
+
+.feedback-card__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--secondary);
+}
+
+/* The instructor-authored grading scale of the linked instruction: muted guidance text. */
+.feedback-card__scale {
+    margin: 0;
+    min-width: 0;
+    font-size: 0.875rem;
+    color: var(--secondary);
+    white-space: pre-wrap;
+}
+
+/* The read-only feedback text of the linked grading instruction, shown above the tutor's own comment. */
+.feedback-card__instruction-feedback {
+    margin: 0;
+    min-width: 0;
+    color: var(--body-color);
+    white-space: pre-wrap;
+}
+
+.feedback-card__correction-status {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    font-size: 0.875rem;
+
+    fa-icon.exclamation-icon {
+        width: 16px;
+        margin-top: -6px;
+        color: var(--body-color);
+    }
+}
+
+/* Suggestions are not part of the assessment yet: tint them and grey the content down until hovered. */
+.is-suggestion {
     background-color: var(--feedback-suggestions-background);
-}
 
-.is-suggestion input,
-.is-suggestion textarea {
-    background-color: var(--feedback-suggestions-input-background);
-}
+    &::before {
+        display: none;
+    }
 
-/* Slight opacity for suggestions until they are hovered */
-.is-suggestion .card-body > * {
-    opacity: 0.6; /* grey out the suggestion content to indicate that it is not saved yet */
-    transition: opacity 0.2s ease-in-out;
-}
+    input,
+    textarea {
+        background-color: var(--feedback-suggestions-input-background);
+    }
 
-.is-suggestion:hover .card-body > * {
-    opacity: 1; /* make the suggestion more readable on hover */
-}
+    .feedback-card > * {
+        opacity: 0.6;
+        transition: opacity 0.2s ease-in-out;
+    }
 
-.suggestion-action-buttons button {
-    width: fit-content;
-}
-
-.assessment-label {
-    padding-left: 5px;
-    padding-right: 5px;
+    &:hover .feedback-card > * {
+        opacity: 1;
+    }
 }

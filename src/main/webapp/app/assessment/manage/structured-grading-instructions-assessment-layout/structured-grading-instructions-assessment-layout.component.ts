@@ -1,17 +1,18 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
-import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -27,14 +28,14 @@ export interface SortedGradingCriterion {
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
     imports: [
-        FaIconComponent,
         TranslateDirective,
         ExpandableSectionComponent,
-        NgbTooltip,
         HelpIconComponent,
         MarkdownDirective,
         TumUiCheckboxComponent,
         TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiMessageComponent,
         ArtemisTranslatePipe,
     ],
 })
@@ -47,8 +48,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly allowDrop = signal<boolean>(undefined!);
     // Icons
     faInfoCircle = faInfoCircle;
-    faExpand = faExpand;
-    faCompress = faCompress;
 
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
@@ -119,31 +118,14 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         });
     }
 
-    /**
-     * Set the tooltip of the draggable grading instruction to be equal to the feedback detail text
-     * @param {GradingInstruction} instr - the instruction object from which the feedback detail text is retrieved
-     */
-    setTooltip(instr: GradingInstruction) {
-        return 'Feedback: ' + instr.feedback;
+    /** Tag severity of an instruction's point pill (green awarded / red deducted / neutral zero). */
+    pointsSeverity(credits: number): TumUiTagSeverity {
+        return pointsSeverity(credits);
     }
 
-    /**
-     * Set the color of the draggable grading instruction based on the credits of the instruction
-     *  @param {GradingInstruction} instr - the instruction object we set its color based on its credits
-     */
-    setInstrColour(instr: GradingInstruction) {
-        let colour;
-        if (instr.credits === 0) {
-            colour = 'var(--sgi-assessment-layout-zero-background)';
-        } else if (instr.credits < 0) {
-            colour = 'var(--sgi-assessment-layout-negative-background)';
-        } else {
-            colour = 'var(--sgi-assessment-layout-positive-background)';
-        }
-        return colour;
-    }
-    setScore(nr: number) {
-        return nr + 'P';
+    /** Signed, compact label of an instruction's point pill, e.g. `+10`, `-5`. */
+    pointsLabel(credits: number): string {
+        return pointsLabel(credits);
     }
     /**
      * Connects the SGI with the Feedback of a Submission Element in assessment detail
