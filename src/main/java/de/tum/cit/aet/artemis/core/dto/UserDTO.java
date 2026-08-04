@@ -67,7 +67,7 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 2, max = 6)
     private String langKey;
 
-    private boolean internal;
+    private boolean internal = true;
 
     /**
      * Marks accounts used only for testing/load-testing (e.g. QA or synthetic users). These are excluded from usage statistics.

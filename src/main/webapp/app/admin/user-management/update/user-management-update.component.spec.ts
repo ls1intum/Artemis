@@ -72,6 +72,7 @@ describe('UserManagementUpdateComponent', () => {
     let mockRouterState: RouterState;
 
     beforeEach(async () => {
+        parentRoute.data = of({ user: testUser });
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
             providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
@@ -156,6 +157,15 @@ describe('UserManagementUpdateComponent', () => {
             expect(getPageTitleSpy).toHaveLastReturnedWith('child.page.test');
             expect(setTitleSpy).toHaveBeenCalledOnce();
             expect(setTitleSpy).toHaveBeenCalledWith('child.page.test');
+        });
+
+        it('should set internal field to true by default for new users', () => {
+            (component['route'].parent as any).data = of({ user: undefined });
+
+            component.ngOnInit();
+
+            expect(component.user().internal).toBe(true);
+            expect(component.editForm.get('internal')?.value).toBe(true);
         });
 
         it('should set page title to default when no page title in route', () => {
