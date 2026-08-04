@@ -394,7 +394,10 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // The markdown patterns used to backtrack quadratically on a long single line: 100 KB took between eight and
         // twenty-eight seconds depending on how many dollar signs it held, and an unclosed $$ raised a StackOverflowError.
         // The request size limit is 100 KB, so these are the worst inputs the endpoint accepts.
-        String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000) };
+        // Each of these hit a different pattern: the first four the inline-formula check, the fifth the display-math body,
+        // and the last two the task syntax, whose list previously recursed once per comma and once per parenthesis pair.
+        String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000),
+                "[task][n](" + "a,".repeat(20_000), "[task][n](" + "a(),".repeat(20_000) };
 
         for (String markdown : pathological) {
             var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);

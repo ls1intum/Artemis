@@ -117,14 +117,25 @@ public class ProblemStatementRenderingService {
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
 
     /**
-     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)} where test identifiers
+     * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}.
+     * <p>
+     * The test list is written as an unrolled loop - a run of non-parenthesis characters, then any number of parenthesised
+     * groups each followed by another such run. The earlier shape repeated a group once per comma
+     * ({@code (?:,[^(),]+...)*}), and Java's matcher recurses per repetition, so an unclosed task with twenty thousand
+     * commas raised a {@link StackOverflowError}. Commas are now absorbed by the character class, which does not recurse,
+     * and the parenthesised groups that remain are bounded to a hundred, because Java recurses per repetition however the
+     * loop is written: twenty thousand {@code ()} pairs overflowed the stack even in the unrolled form. A task list with
+     * more than a hundred parenthesised entries is not real content, and beyond the bound the task simply does not match
+     * and is rendered as written.
+     * <p>
+     * It accepts a slightly wider list than before, for instance one with empty entries; the caller already discards
+     * entries that are not test identifiers. Original note: test identifiers
      * are typically {@code <testid>123</testid>} values. Each identifier may carry one level of
      * parenthesized suffix (e.g. {@code testClass(Vehicle)}).
      * <p>
      * Named groups: {@code name} (task display name), {@code tests} (comma-separated test identifiers).
      */
-    private static final Pattern TASK_PATTERN = Pattern
-            .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
+    private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>[^()]*(?:\\([^()]*\\)[^()]*){0,100})\\)");
 
     private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
