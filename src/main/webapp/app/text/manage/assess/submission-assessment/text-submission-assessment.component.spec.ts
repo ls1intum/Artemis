@@ -29,7 +29,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
