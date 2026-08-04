@@ -421,7 +421,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(sections).toBeDefined();
     });
 
-    it.each([['jenkins', true]])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
+    it.each([
+        ['jenkins', true],
+        ['localci', true],
+        ['gitlabci', false],
+    ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
         profileInfo.activeProfiles = [profile as string];
         const profileInfoStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 

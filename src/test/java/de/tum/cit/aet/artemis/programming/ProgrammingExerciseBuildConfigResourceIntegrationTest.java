@@ -121,7 +121,8 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsDuplicatePhaseNames() throws Exception {
-        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("compile")), 0), HttpStatus.BAD_REQUEST);
+        // different casing must still be rejected, so this also guards the case-insensitive comparison
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("Compile")), 0), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -265,5 +266,41 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         // without a phase that runs after the due date, the exercise must not keep a stale rebuild date
         var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testSettingBuildAndTestDateClearsFeedbackRequests() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAllowFeedbackRequests(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), afterDueDatePhase("test")), 240), HttpStatus.OK);
+
+        // a build and test date and manual feedback requests are mutually exclusive, so setting the date clears the flag
+        var updated = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(updated.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+        assertThat(updated.getAllowFeedbackRequests()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateBuildConfigForExamExercise() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+        var examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        userUtilService.enrollPrefixedUsersInCourse(examExercise.getCourseViaExerciseGroupOrCourseMember(), TEST_PREFIX);
+
+        // the exam route uses the same endpoint and the after-due-date computation takes a different branch there, so
+        // verify the build plan configuration is persisted for an exam exercise as well
+        var dto = configurationWith(List.of(phase("compile"), phase("test")), 120);
+        var response = request.putWithResponseBody("/api/programming/programming-exercises/" + examExercise.getId() + "/build-config", dto,
+                UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
+
+        assertThat(response.timeoutSeconds()).isEqualTo(120);
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(examExercise.getId()).orElseThrow();
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).phases()).extracting(BuildPhaseDTO::name).containsExactly("compile",
+                "test");
     }
 }
