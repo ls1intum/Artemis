@@ -43,6 +43,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
+import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -57,6 +60,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
         TranslateDirective,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
+        AssessmentNotPossibleYetComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
     ],
@@ -98,6 +102,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     readonly correctionRound = signal<number>(0);
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
+    // Set when the server refused to open the assessment because the exam is not over yet: the submission exists, so the
+    // page explains the wait instead of claiming that it was not found.
+    readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     readonly highlightDifferences = signal(false);
 
     /*
@@ -160,6 +167,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.noNewSubmissions.set(false);
         this.hasAutomaticFeedback.set(false);
         this.highlightDifferences.set(false);
+        this.assessmentNotPossibleYet.set(undefined);
     }
 
     /**
@@ -183,8 +191,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             }
             this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
         });
-        this.activatedRoute.data.subscribe(({ studentParticipation }) => {
-            this.setPropertiesFromServerResponse(studentParticipation);
+        this.activatedRoute.data.subscribe(({ textAssessmentData }) => {
+            this.setPropertiesFromServerResponse(textAssessmentData);
             this.validateFeedback();
         });
     }
@@ -193,10 +201,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.feedbackSuggestionsObservable?.unsubscribe();
     }
 
-    private setPropertiesFromServerResponse(studentParticipation?: StudentParticipation) {
+    private setPropertiesFromServerResponse(routeData?: TextAssessmentRouteData) {
         this.resetComponent();
         this.loadingInitialSubmission.set(false);
+        const studentParticipation = routeData?.participation;
         if (!studentParticipation) {
+            // The resolver swallows load errors, so a missing participation can also mean that the exam is still running.
+            // Saying so keeps the page from claiming that a submission which does exist was not found.
+            this.assessmentNotPossibleYet.set(routeData?.assessmentNotPossibleYet);
             // Show "No New Submission" banner on .../submissions/new/assessment route
             this.noNewSubmissions.set(this.isNewAssessmentRoute);
             return;

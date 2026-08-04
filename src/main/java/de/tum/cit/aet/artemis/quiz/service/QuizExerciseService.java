@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -100,11 +101,9 @@ import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerMappingReE
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSolutionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.ShortAnswerSpotReEvaluateDTO;
-import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -151,11 +150,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
-            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
-            ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
+            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            Optional<ExamDateApi> examDateApi) {
+        super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -299,6 +298,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         recalculationNecessary = applyDropLocationsFromDTO(dndDTO.dropLocations(), originalQuestion.getDropLocations()) || recalculationNecessary;
         recalculationNecessary = applyDragItemsFromDTO(dndDTO.dragItems(), originalQuestion.getDragItems()) || recalculationNecessary;
         recalculationNecessary = applyDragAndDropMappingsFromDTO(dndDTO, originalQuestion) || recalculationNecessary;
+        // Drop correct mappings orphaned by a drop-location / drag-item removal above (they resolve to null and are filtered on read, so the mapping apply above never sees them).
+        originalQuestion.removeOrphanCorrectMappings();
         return recalculationNecessary;
     }
 
@@ -352,11 +353,33 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * @return a map from DTO tempID to the newly created ShortAnswerSolution entities (for mapping resolution)
      */
-    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
+    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, ShortAnswerQuestion question) {
+        List<ShortAnswerSolution> originalSolution = question.getSolutions();
         boolean recalculationNecessary = false;
         Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
-        // Only map existing solutions (id != null); new solutions have id=null and are handled separately below
+        // Validate every incoming solution up front, before the toMap below: each must carry exactly one of {id, tempID}, and neither ids nor tempIDs may repeat. A duplicate id
+        // would otherwise blow up the toMap with an uncontrolled IllegalStateException; a duplicate tempID would silently overwrite the tempID -> solution mapping and leave an
+        // orphan solution.
+        Set<Long> seenSolutionIds = new HashSet<>();
+        Set<Long> seenSolutionTempIds = new HashSet<>();
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
+            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
+                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
+            }
+            if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
+                throw new BadRequestException("An existing short answer solution cannot have a tempID");
+            }
+            if (solutionDTO.id() != null && !seenSolutionIds.add(solutionDTO.id())) {
+                throw new BadRequestException("Duplicate short answer solution id " + solutionDTO.id());
+            }
+            if (solutionDTO.tempID() != null && !seenSolutionTempIds.add(solutionDTO.tempID())) {
+                throw new BadRequestException("Duplicate short answer solution tempID " + solutionDTO.tempID());
+            }
+        }
+        // ids of the solutions that already exist on the question; a DTO carrying an id not in this set is a newly added solution (client-minted, question-scoped id)
+        Set<Long> originalSolutionIds = originalSolution.stream().map(ShortAnswerSolution::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // Only map existing solutions (id != null); new solutions (id=null with tempID, or an id not in originalSolutionIds) are handled separately below
         Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream().filter(dto -> dto.id() != null)
                 .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
         for (ShortAnswerSolution originalSolutionItem : originalSolution) {
@@ -373,18 +396,25 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         originalSolution.removeAll(solutionsToRemove);
+        // First add the new solutions that already carry a client-minted, question-scoped id (their correct mappings resolve them by that id). Adding these before minting the
+        // tempID solutions below guarantees the server-minted ids (max+1) cannot collide with a client-provided one; ids were already validated unique above.
         for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
-            if (solutionDTO.id() == null && solutionDTO.tempID() == null) {
-                throw new BadRequestException("A new short answer solution must have a tempID to identify it");
+            if (solutionDTO.id() != null && !originalSolutionIds.contains(solutionDTO.id())) {
+                ShortAnswerSolution newSolution = new ShortAnswerSolution();
+                newSolution.setId(solutionDTO.id());
+                newSolution.setText(solutionDTO.text());
+                newSolution.setInvalid(solutionDTO.invalid());
+                originalSolution.add(newSolution);
+                recalculationNecessary = true;
             }
-            else if (solutionDTO.id() != null && solutionDTO.tempID() != null) {
-                throw new BadRequestException("An existing short answer solution cannot have a tempID");
-            }
+        }
+        // Then mint the tempID solutions server-side; addSolution's max+1 now accounts for any client-provided ids added above, so the ids never collide.
+        for (ShortAnswerSolutionReEvaluateDTO solutionDTO : solutionDTOs) {
             if (solutionDTO.tempID() != null) {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
                 newSolution.setText(solutionDTO.text());
                 newSolution.setInvalid(solutionDTO.invalid());
-                originalSolution.add(newSolution);
+                question.addSolution(newSolution);
                 tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
                 recalculationNecessary = true;
             }
@@ -504,9 +534,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         recalculationNecessary = applyShortAnswerSpotsFromDTOs(shortAnswerQuestionDTO.spots(), originalQuestion.getSpots()) || recalculationNecessary;
-        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions());
+        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion);
         recalculationNecessary = solutionResult.recalculationNecessary() || recalculationNecessary;
         recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion, solutionResult.tempIdToNewSolution()) || recalculationNecessary;
+        // Drop correct mappings orphaned by a spot / solution removal above (they resolve to null and are filtered on read, so the mapping apply above never sees them).
+        originalQuestion.removeOrphanCorrectMappings();
 
         return recalculationNecessary;
     }
@@ -760,10 +792,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     if (newPath == null) {
                         throw new IOException("Failed to copy existing drag item file to new location for path: " + oldPath);
                     }
-                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
+                    dragItem.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, dragItem.getId()).toString());
                 }
                 else {
-                    saveDndDragItemPicture(dragItem, fileMap, null);
+                    saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                 }
             }
         }
@@ -798,6 +830,56 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
                 .toList();
         FileUtil.deleteFiles(allFilesToRemoveMerged);
+    }
+
+    /**
+     * Deletes all drag-and-drop image files (question background images and drag-item pictures) of the given quiz exercise from the file system.
+     * <p>
+     * These files used to be removed by the {@code @PostRemove} lifecycle callbacks on {@code DragAndDropQuestion}/{@code DragItem}. Now that drag-and-drop content lives inside
+     * the
+     * question's JSON {@code content} column and is no longer made up of JPA entities, the cleanup must be triggered explicitly from every quiz deletion entry point. It is invoked
+     * from the shared {@link de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService#delete} path so that course, exam, and exercise-group deletions clean up the images
+     * too,
+     * not only the direct REST deletion.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose drag-and-drop images should be deleted
+     */
+    public void deleteDragAndDropImages(long quizExerciseId) {
+        FileUtil.deleteFiles(collectDragAndDropImagePaths(quizExerciseId));
+    }
+
+    /**
+     * Collects the file-system paths of all drag-and-drop image files (question background images and drag-item pictures) of the given quiz exercise, without deleting anything.
+     * <p>
+     * The paths live inside the question's JSON {@code content}, so they are no longer readable once the exercise row is gone. Callers that delete the exercise must therefore
+     * collect the paths first and delete the files only after the database deletion succeeded — otherwise a failure in between leaves a quiz whose images are already gone.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose drag-and-drop image paths should be collected
+     * @return the resolvable file-system paths of the exercise's drag-and-drop images
+     */
+    public List<Path> collectDragAndDropImagePaths(long quizExerciseId) {
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+        Map<FilePathType, Set<String>> imagePaths = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
+        return imagePaths.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(path -> resolveFileSystemPathForDeletion(path, entry.getKey())))
+                .filter(Objects::nonNull).toList();
+    }
+
+    /**
+     * Resolves a stored external file URI to its file-system path for deletion, returning {@code null} (and logging) instead of throwing when the path cannot be parsed, so a
+     * single malformed path does not abort the deletion of the remaining files.
+     *
+     * @param pathString   the stored external file URI
+     * @param filePathType the type of file the path refers to
+     * @return the resolved file-system path, or {@code null} if it could not be resolved
+     */
+    private Path resolveFileSystemPathForDeletion(String pathString, FilePathType filePathType) {
+        try {
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+        }
+        catch (FilePathParsingException e) {
+            log.warn("Could not resolve file {} for deletion", pathString);
+            return null;
+        }
     }
 
     private Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
@@ -840,7 +922,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             Set<String> dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
             if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
-                saveDndDragItemPicture(dragItem, fileMap, null);
+                saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
             }
             else if (newDragItemPath != null) {
                 filesToRemove.get(FilePathType.DRAG_ITEM).remove(newDragItemPath);
@@ -929,12 +1011,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Saves the picture of a drag item without saving the drag item itself
+     * Saves the picture of a drag item without saving the drag item itself. The drag item's (question-scoped) id is used in the stored public path; the drag-and-drop question id
+     * is
+     * added to the serving URL by the client / {@code FileResource}, since the drag item id is only unique within its question.
      *
      * @param dragItem the drag item
      * @param files    all provided files
-     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id
-     *                     for drag item images
+     * @param entityId the drag item id used in the stored file path
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
@@ -1070,7 +1153,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         updatedQuiz.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // Check if quiz has already started or ended, and reuse the fetched batches
         Set<QuizBatch> batches = checkQuizEditable(originalQuiz);

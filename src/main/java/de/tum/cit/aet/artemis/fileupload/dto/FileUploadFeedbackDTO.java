@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,8 +26,8 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
  * @param gradingInstruction  the structured grading instruction linked to this feedback
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadFeedbackDTO(Long id, String text, String detailText, Boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
-        Visibility visibility, GradingInstructionDTO gradingInstruction) {
+public record FileUploadFeedbackDTO(Long id, @Nullable String text, @Nullable String detailText, @Nullable Boolean hasLongFeedbackText, @Nullable String reference,
+        @Nullable Double credits, @Nullable Boolean positive, @Nullable FeedbackType type, @Nullable Visibility visibility, @Nullable GradingInstructionDTO gradingInstruction) {
 
     /**
      * Factory method to create a {@link FileUploadFeedbackDTO} from a {@link Feedback} entity.
@@ -34,7 +35,7 @@ public record FileUploadFeedbackDTO(Long id, String text, String detailText, Boo
      * @param feedback the feedback entity to map, can be null
      * @return the mapped DTO, or null if the input was null
      */
-    public static FileUploadFeedbackDTO of(Feedback feedback) {
+    public static @Nullable FileUploadFeedbackDTO of(@Nullable Feedback feedback) {
         if (feedback == null) {
             return null;
         }

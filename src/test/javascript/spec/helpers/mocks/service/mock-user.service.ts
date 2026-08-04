@@ -16,7 +16,6 @@ export class MockUserService {
                     false,
                     'en',
                     [Authority.STUDENT, Authority.ADMIN],
-                    ['tumuser', 'eist2019students'],
                     'anonymousUser',
                     new Date('2020-03-03T09:01:43Z'),
                     'ga59pel',

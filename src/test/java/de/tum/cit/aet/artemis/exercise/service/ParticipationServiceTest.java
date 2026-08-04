@@ -94,7 +94,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         this.programmingExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         // TODO: is this actually needed?
@@ -117,7 +117,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
+        Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
@@ -134,7 +134,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
-        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         StudentParticipation participation = setupParticipation(programmingExercise, student, SubmissionType.EXTERNAL);
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(participation.getId());
@@ -161,8 +161,8 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     @Disabled("Temporary: Programming participation creation with LocalVC needs initial repo setup")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobsForResultsOfExamParticipation() throws Exception {
-        User student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
-        ProgrammingExercise examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        User student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(examExercise);
         StudentParticipation participation = setupParticipation(examExercise, student, SubmissionType.INSTRUCTOR);
 
@@ -204,11 +204,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     void testStartExercise_newParticipation(ExerciseType exerciseType) {
         Course course;
         if (exerciseType == ExerciseType.PROGRAMMING) {
-            course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
             setUpProgrammingExerciseMocks();
         }
         else {
-            course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+            course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         }
         Exercise exercise = course.getExercises().iterator().next();
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");

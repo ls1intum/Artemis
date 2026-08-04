@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,7 +103,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
@@ -260,6 +261,36 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(participationUtilService.getResultsForParticipation(requestedParticipation)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationWithLatestResult_showsResultsDuringTestRun() throws Exception {
+        var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
+        var url = participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks";
+
+        // The state in the reported reproduction: the test run is opened before any build result exists
+        var participationWithoutResult = request.get(url, HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(participationWithoutResult)).isEmpty();
+
+        addResultToTestRunParticipation(TEST_PREFIX + "instructor1");
+        var participationWithResult = request.get(url, HttpStatus.OK, ProgrammingExerciseStudentParticipation.class);
+        assertThat(participationUtilService.getResultsForParticipation(participationWithResult)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLatestResultWithFeedbacks_showsResultsDuringTestRun() throws Exception {
+        var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
+        var url = participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks";
+
+        // The state in the reported reproduction: the test run is opened before any build result exists
+        assertThat(request.get(url, HttpStatus.OK, Result.class)).isNull();
+
+        var result = addResultToTestRunParticipation(TEST_PREFIX + "instructor1");
+        var requestedResult = request.get(url, HttpStatus.OK, Result.class);
+        assertThat(requestedResult).isNotNull();
+        assertThat(requestedResult.getId()).isEqualTo(result.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -829,8 +860,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExerciseStudentParticipationByRepoNameExam() throws Exception {
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
-                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000);
+        var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().plusHours(1),
+                ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), ZonedDateTime.now().plusHours(4), TEST_PREFIX + "student1", 1000, TEST_PREFIX);
         programmingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -906,7 +937,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_badRequest() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(programmingExercise.getExam().getId());
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1);
@@ -938,7 +969,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @BeforeEach
         void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExerciseWithAuxRepo = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExerciseWithAuxRepo = programmingExerciseRepository
                     .findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
@@ -1054,7 +1085,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @BeforeEach
         void setup() throws Exception {
             userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
-            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
             programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
@@ -1062,7 +1093,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             programmingExerciseRepository.save(programmingExercise);
 
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-            Map<String, String> studentFiles = Map.of("student/Example.java", "class StudentExample {}\n");
+            Map<String, String> studentFiles = Map.of("student/Example.java", "class StudentExample {}\n", "student/file with spaces.txt", "content with spaces",
+                    "student/pages/[id].tsx", "export const Page = () => null;", "student/check.sh", "#!/bin/sh\necho checked\n", "README.md", "Not requested");
             var studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
             studentCommitHash = commitToParticipationRepository(studentParticipation, studentFiles, "Student detail commit").getName();
 
@@ -1085,6 +1117,68 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         void shouldReturnForParticipation() throws Exception {
             var files = request.getMap(basePath + studentCommitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
             assertThat(files).containsEntry("student/Example.java", "class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnOnlySelectedFilesForParticipation() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/Example.java"), Map.class, HttpStatus.OK);
+
+            assertThat(files).hasSize(1);
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnSelectedFilesWithLegalGitPathCharacters() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/file with spaces.txt", "student/pages/[id].tsx"), Map.class, HttpStatus.OK);
+
+            assertThat(files.get("student/file with spaces.txt")).isEqualTo("content with spaces");
+            assertThat(files.get("student/pages/[id].tsx")).isEqualTo("export const Page = () => null;");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldFilterBinarySelectedFilesByContentInsteadOfExtension() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/Example.java", "student/check.sh"), Map.class, HttpStatus.OK);
+
+            assertThat(files).hasSize(2);
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+            assertThat(files.get("student/check.sh")).isEqualTo("#!/bin/sh\necho checked\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldSkipInvalidGitPathWithoutRejectingValidPaths() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/../README.md", "student/Example.java"), Map.class, HttpStatus.OK);
+
+            assertThat(files).hasSize(1);
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldRejectTooManySelectedFiles() throws Exception {
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+            Set<String> filePaths = new HashSet<>();
+            for (int i = 0; i <= 100; i++) {
+                filePaths.add("student/File" + i + ".java");
+            }
+
+            request.postWithResponseBody(path, filePaths, Map.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -1241,10 +1335,48 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var visibilityDate = startDate.minusHours(1);
         var publishResultsDate = startDate.plusHours(10);
         var workingTime = 120 * 60;
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate, publishResultsDate,
-                userLogin, workingTime);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(visibilityDate, startDate, endDate,
+                publishResultsDate, userLogin, workingTime, TEST_PREFIX);
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, startDate.plusMinutes(2));
+    }
+
+    /**
+     * Sets up an exam exercise conducted as an instructor test run, together with a test-run participation that has no
+     * result yet. The exam started an hour ago and its results are not published yet, i.e. the state in which a test run
+     * is conducted. A test run only has a student exam with {@code testRun = true} and deliberately no regular student exam.
+     *
+     * @param instructorLogin The login of the instructor conducting the test run
+     * @return The test-run participation of the instructor
+     */
+    private ProgrammingExerciseStudentParticipation setupExamTestRunWithParticipation(String instructorLogin) {
+        var startDate = ZonedDateTime.now().minusHours(1);
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, startDate.minusHours(1), startDate, startDate.plusHours(1));
+        exam.setPublishResultsDate(startDate.plusHours(10));
+        examRepository.save(exam);
+
+        var instructor = userUtilService.getUserByLogin(instructorLogin);
+        studentExamRepository.save(examUtilService.generateTestRunForInstructor(exam, instructor, List.of(programmingExercise)));
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, instructorLogin);
+        assertThat(participation.isTestRun()).isTrue();
+        programmingExerciseParticipation = participation;
+        return participation;
+    }
+
+    /**
+     * Adds a submission with an automatic result to the test-run participation set up by {@link #setupExamTestRunWithParticipation}.
+     *
+     * @param instructorLogin The login of the instructor conducting the test run
+     * @return The result attached to the test-run participation
+     */
+    private Result addResultToTestRunParticipation(String instructorLogin) {
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, ParticipationFactory.generateProgrammingSubmission(true),
+                instructorLogin);
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(58));
+        return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }
 
 }
