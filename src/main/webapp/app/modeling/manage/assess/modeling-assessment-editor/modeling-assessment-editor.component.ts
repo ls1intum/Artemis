@@ -559,7 +559,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!).subscribe(() => {
+            this.modelingAssessmentService.cancelAssessment(this.submission()!.id!, this.result()?.id).subscribe(() => {
                 this.navigateBack();
             });
         }
