@@ -16,10 +16,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -52,17 +52,17 @@ class AutonomousCompetencyExerciseEventListenerTest {
     private FeatureToggleService featureToggleService;
 
     @Mock
-    private CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     private AutonomousCompetencyExerciseEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new AutonomousCompetencyExerciseEventListener(accumulator, featureToggleService, autoOrchestrationConfigurationRepository);
+        listener = new AutonomousCompetencyExerciseEventListener(accumulator, featureToggleService, courseConfigurationRepository);
     }
 
     private void stubCourseEnabled(boolean enabled) {
-        when(autoOrchestrationConfigurationRepository.findConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(enabled, null, null)));
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(enabled, null, null)));
     }
 
     @Test

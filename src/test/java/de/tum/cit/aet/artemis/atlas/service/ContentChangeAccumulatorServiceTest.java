@@ -16,8 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalDataProviderService;
 
 /**
@@ -34,7 +34,7 @@ class ContentChangeAccumulatorServiceTest {
 
     private ContentChangeAccumulatorService service;
 
-    private CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     private static final int DEBOUNCE_WINDOW_SECONDS = 60;
 
@@ -44,15 +44,15 @@ class ContentChangeAccumulatorServiceTest {
     void setUp() {
         clock = new MutableClock(Instant.parse("2026-04-24T12:00:00Z"));
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L, 10);
-        autoOrchestrationConfigurationRepository = mock(CourseAutoOrchestrationConfigurationRepository.class);
+        courseConfigurationRepository = mock(CourseConfigurationRepository.class);
         // Default: every course resolves to the global defaults (no per-course override).
-        lenient().when(autoOrchestrationConfigurationRepository.findConfigByCourseId(anyLong())).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
-        service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties, autoOrchestrationConfigurationRepository);
+        lenient().when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(anyLong())).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
+        service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties, courseConfigurationRepository);
         service.clearForTesting();
     }
 
     private void stubCourseConfig(long courseId, Integer windowOverride, Integer capOverride) {
-        when(autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId))
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(courseId))
                 .thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, windowOverride, capOverride)));
     }
 

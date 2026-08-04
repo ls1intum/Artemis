@@ -126,13 +126,10 @@ public class CourseUpdateResource {
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
-        // Attach the managed auto-orchestration configuration so applyTo mutates the existing row in place instead of
-        // orphaning it, and so the admin-only change detection below compares against the persisted values. Loaded via a
-        // dedicated query rather than the findForUpdateById graph (which is already at the over-fetch budget) and
-        // deliberately not through the Atlas-conditional CourseAutoOrchestrationApi: with the Atlas module disabled that
-        // bean is absent, and an unloaded association would make a stored configuration look like the default —
-        // rejecting unrelated instructor edits and letting an admin update replace the persisted row.
-        existingCourse.setAutoOrchestrationConfiguration(courseRepository.findAutoOrchestrationConfigurationByCourseId(courseId).orElse(null));
+        // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
+        // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
+        // via its own repository to keep the course update entity graph small.
+        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -176,10 +173,6 @@ public class CourseUpdateResource {
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
         boolean oldAutoOrchestratorEnabled = existingCourse.getAutoOrchestratorEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
-
-        // Attach the (lazily-stored) course configuration so applyTo updates the grade-relevance flag in place instead of
-        // creating a duplicate. Fetched via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);

@@ -252,10 +252,14 @@ export class CourseUpdateComponent implements OnInit {
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
-                autoOrchestratorEnabled: new FormControl(this.course.autoOrchestratorEnabled ?? false),
+                autoOrchestratorEnabled: new FormControl(this.course.courseConfiguration?.autoOrchestratorEnabled ?? false),
                 // Seconds / daily run counts: reject fractional values in addition to the lower bound.
-                debounceWindowSecondsOverride: new FormControl(this.course.debounceWindowSecondsOverride, { validators: [Validators.min(1), Validators.pattern(/^\d+$/)] }),
-                maxDailyOrchestrationOverride: new FormControl(this.course.maxDailyOrchestrationOverride, { validators: [Validators.min(1), Validators.pattern(/^\d+$/)] }),
+                debounceWindowSecondsOverride: new FormControl(this.course.courseConfiguration?.debounceWindowSecondsOverride, {
+                    validators: [Validators.min(1), Validators.pattern(/^\d+$/)],
+                }),
+                maxDailyOrchestrationOverride: new FormControl(this.course.courseConfiguration?.maxDailyOrchestrationOverride, {
+                    validators: [Validators.min(1), Validators.pattern(/^\d+$/)],
+                }),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
@@ -364,11 +368,15 @@ export class CourseUpdateComponent implements OnInit {
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
 
-        // Map the flat data-privacy form controls into the nested course configuration expected by the update DTO mapper.
+        // Map the flat data-privacy and auto-orchestration form controls into the nested course configuration expected by
+        // the update DTO mapper.
         course.courseConfiguration = {
             id: this.course.courseConfiguration?.id,
             gradeRelevant: rawValue.gradeRelevant ?? true,
             dataRetentionHold: rawValue.dataRetentionHold ?? false,
+            autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
+            debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,
+            maxDailyOrchestrationOverride: rawValue.maxDailyOrchestrationOverride ?? undefined,
         };
 
         if (this.communicationEnabled && this.messagingEnabled) {

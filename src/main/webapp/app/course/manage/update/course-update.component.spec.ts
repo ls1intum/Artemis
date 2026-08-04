@@ -290,8 +290,9 @@ describe('Course Management Update Component', () => {
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
-            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
-            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
+            // save() maps the data-privacy and auto-orchestration form controls into the course configuration
+            // (defaults: grade-relevant, no hold, pipeline disabled)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false, autoOrchestratorEnabled: false };
             const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -328,8 +329,9 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            // save() maps the data-privacy form controls into the course configuration (defaults: grade-relevant, no hold)
-            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false };
+            // save() maps the data-privacy and auto-orchestration form controls into the course configuration
+            // (defaults: grade-relevant, no hold, pipeline disabled)
+            entity.courseConfiguration = { gradeRelevant: true, dataRetentionHold: false, autoOrchestratorEnabled: false };
             const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
@@ -1556,9 +1558,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         course.maxComplaintTextLimit = 2000;
         course.maxComplaintResponseTextLimit = 2000;
         course.learningPathsEnabled = false;
-        course.autoOrchestratorEnabled = autoOrchestratorEnabled;
-        course.debounceWindowSecondsOverride = debounceWindowSecondsOverride;
-        course.maxDailyOrchestrationOverride = maxDailyOrchestrationOverride;
+        course.courseConfiguration = { autoOrchestratorEnabled, debounceWindowSecondsOverride, maxDailyOrchestrationOverride };
         return course;
     }
 
@@ -1645,9 +1645,25 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         expect(comp.courseForm.valid).toBe(true);
     });
 
+    /**
+     * Mirrors what {@link CourseUpdateComponent#save} hands to the DTO mappers: the raw form value with the flat
+     * auto-orchestration controls folded into the nested course configuration the mappers read. The folding itself is
+     * covered by the save tests above; these cases pin the mapper end of the contract.
+     */
+    function formValueAsSubmittedCourse(): Course {
+        const rawValue = comp.courseForm.getRawValue();
+        const course = rawValue as Course;
+        course.courseConfiguration = {
+            autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
+            debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,
+            maxDailyOrchestrationOverride: rawValue.maxDailyOrchestrationOverride ?? undefined,
+        };
+        return course;
+    }
+
     it('should map the auto-orchestration fields into the update DTO', async () => {
         await setupWithCourse(buildCourse(true, 900, 3));
-        const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);
+        const dto = toCourseUpdateDTO(formValueAsSubmittedCourse());
 
         expect(dto.autoOrchestratorEnabled).toBe(true);
         expect(dto.debounceWindowSecondsOverride).toBe(900);
@@ -1658,7 +1674,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         // The create route posts through toCourseCreateDTO, so the settings must survive the very first save rather
         // than only taking effect after a subsequent edit.
         await setupWithCourse(buildCourse(true, 900, 3));
-        const dto = toCourseCreateDTO(comp.courseForm.getRawValue() as Course);
+        const dto = toCourseCreateDTO(formValueAsSubmittedCourse());
 
         expect(dto.autoOrchestratorEnabled).toBe(true);
         expect(dto.debounceWindowSecondsOverride).toBe(900);
@@ -1667,7 +1683,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
 
     it('should map empty overrides to undefined in the update DTO', async () => {
         await setupWithCourse(buildCourse(true));
-        const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);
+        const dto = toCourseUpdateDTO(formValueAsSubmittedCourse());
 
         expect(dto.autoOrchestratorEnabled).toBe(true);
         expect(dto.debounceWindowSecondsOverride).toBeUndefined();

@@ -13,10 +13,9 @@ import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService;
  * when auto-orchestration is disabled.
  * <p>
  * Reading and writing the configuration itself deliberately does <em>not</em> go through this facade. This
- * bean is conditional on the Atlas module, whereas the configuration row exists (and must be preserved
- * across course updates) regardless of whether Atlas is active. The update path therefore loads the
- * association through the {@code Course} entity graph in {@code CourseRepository#findForUpdateById} and
- * writes it back through the cascade.
+ * bean is conditional on the Atlas module, whereas the settings must be preserved across course updates
+ * regardless of whether Atlas is active. They therefore live on the (unconditional) {@code CourseConfiguration}
+ * and are read and written by the course update flow directly.
  */
 @Controller
 @Conditional(AtlasEnabled.class)

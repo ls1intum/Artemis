@@ -32,11 +32,9 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -200,27 +198,6 @@ public class Course extends DomainObject {
 
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
-
-    /**
-     * Per-course Atlas auto-orchestration configuration (kill switch plus debounce / daily-cap
-     * overrides), held in its own table so the Atlas-owned configuration does not widen this entity
-     * and is only loaded when explicitly fetched. {@code null} when the course has never customized
-     * it, in which case the pipeline is disabled and the global defaults apply. The flat values are
-     * surfaced for the client through the read-only {@code autoOrchestratorEnabled} /
-     * {@code debounceWindowSecondsOverride} / {@code maxDailyOrchestrationOverride} JSON properties
-     * exposed by the getters below.
-     * <p>
-     * Lazy on purpose, and deliberately kept off {@code findForUpdateById}: that graph is already at the query-quality
-     * over-fetch budget, so a sixth eager path there fails the Query Quality gate. Every flow that needs the value must
-     * fetch it deliberately — the instructor course-settings read path
-     * ({@code findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById}) and the course update path,
-     * which attaches it via {@code CourseRepository#findAutoOrchestrationConfigurationByCourseId} so {@code applyTo}
-     * updates it in place. Do NOT add it to any other course query or entity graph.
-     */
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "auto_orchestration_configuration_id")
-    @JsonIgnore
-    private CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
@@ -753,48 +730,35 @@ public class Course extends DomainObject {
         this.learningPathsEnabled = learningPathsEnabled;
     }
 
-    @JsonIgnore
-    public CourseAutoOrchestrationConfiguration getAutoOrchestrationConfiguration() {
-        // Guard against touching an uninitialized lazy proxy outside a session (mirrors onlineCourseConfiguration).
-        return Hibernate.isInitialized(autoOrchestrationConfiguration) ? autoOrchestrationConfiguration : null;
-    }
-
-    public void setAutoOrchestrationConfiguration(CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration) {
-        this.autoOrchestrationConfiguration = autoOrchestrationConfiguration;
-    }
-
     /**
-     * Read-only flat projection of the auto-orchestration kill switch for the client course-settings
-     * form (the configuration is written back through {@code CourseUpdateDTO}). Returns {@code false}
-     * when the course has no configuration row or it is not loaded.
+     * Flat accessor for the auto-orchestration kill switch stored on the {@link CourseConfiguration}, mirroring
+     * {@link #isGradeRelevant()}. Used by the course update flow to detect admin-only changes. This is null-safe with
+     * respect to the lazy association: it only reflects the flag when the configuration has been initialized.
      *
-     * @return whether auto-orchestration is enabled for this course
+     * @return whether auto-orchestration is enabled for this course, {@code false} when the configuration is absent or not loaded
      */
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public boolean getAutoOrchestratorEnabled() {
-        CourseAutoOrchestrationConfiguration configuration = getAutoOrchestrationConfiguration();
-        return configuration != null && configuration.isEnabled();
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isAutoOrchestratorEnabled();
     }
 
     /**
-     * Read-only flat projection of the per-course debounce-window override for the client form.
+     * Flat accessor for the per-course debounce-window override stored on the {@link CourseConfiguration}.
      *
      * @return the override in seconds, or {@code null} when unset / not loaded (global default applies)
      */
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Integer getDebounceWindowSecondsOverride() {
-        CourseAutoOrchestrationConfiguration configuration = getAutoOrchestrationConfiguration();
+        CourseConfiguration configuration = getCourseConfiguration();
         return configuration == null ? null : configuration.getDebounceWindowSecondsOverride();
     }
 
     /**
-     * Read-only flat projection of the per-course daily-cap override for the client form.
+     * Flat accessor for the per-course daily-cap override stored on the {@link CourseConfiguration}.
      *
      * @return the override, or {@code null} when unset / not loaded (global default applies)
      */
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Integer getMaxDailyOrchestrationOverride() {
-        CourseAutoOrchestrationConfiguration configuration = getAutoOrchestrationConfiguration();
+        CourseConfiguration configuration = getCourseConfiguration();
         return configuration == null ? null : configuration.getMaxDailyOrchestrationOverride();
     }
 

@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -52,13 +52,13 @@ public class AutonomousCompetencyExerciseEventListener {
 
     private final FeatureToggleService featureToggleService;
 
-    private final CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+    private final CourseConfigurationRepository courseConfigurationRepository;
 
     public AutonomousCompetencyExerciseEventListener(ContentChangeAccumulatorService accumulator, FeatureToggleService featureToggleService,
-            CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository) {
         this.accumulator = accumulator;
         this.featureToggleService = featureToggleService;
-        this.autoOrchestrationConfigurationRepository = autoOrchestrationConfigurationRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -96,8 +96,8 @@ public class AutonomousCompetencyExerciseEventListener {
             return;
         }
         long courseId = course.getId();
-        boolean autoOrchestratorEnabled = autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).map(CourseAutoOrchestrationConfigDTO::autoOrchestratorEnabled)
-                .orElse(false);
+        boolean autoOrchestratorEnabled = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(courseId)
+                .map(CourseAutoOrchestrationConfigDTO::autoOrchestratorEnabled).orElse(false);
         if (!autoOrchestratorEnabled) {
             // Per-course kill switch is off: drop anything buffered while it was on so a later
             // re-enable or scheduler tick cannot resurrect stale changes for a disabled course.

@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -124,23 +123,16 @@ public record CourseCreateDTO(
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        // Data-privacy / retention: attach the grade-relevance configuration (drives the student-data retention period).
+        // Attach the course configuration holding the grade-relevance flag (drives the student-data retention period)
+        // and the Atlas auto-orchestration settings.
         // Fail safe to grade-relevant (longer retention) when the client omits the flag.
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
+        configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+        configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
-
-        // Atlas auto-orchestration: mirror the lazy-row invariant of CourseUpdateDTO#applyTo — only courses that
-        // actually customize the pipeline get a configuration row, so the default course keeps a null association.
-        if (autoOrchestratorEnabled || debounceWindowSecondsOverride != null || maxDailyOrchestrationOverride != null) {
-            CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration = new CourseAutoOrchestrationConfiguration();
-            autoOrchestrationConfiguration.setEnabled(autoOrchestratorEnabled);
-            autoOrchestrationConfiguration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
-            autoOrchestrationConfiguration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
-            autoOrchestrationConfiguration.setCourse(course);
-            course.setAutoOrchestrationConfiguration(autoOrchestrationConfiguration);
-        }
 
         return course;
     }

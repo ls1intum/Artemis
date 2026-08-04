@@ -113,9 +113,9 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
 
         // Atlas auto-orchestration configuration (per-course)
-        autoOrchestratorEnabled: course.autoOrchestratorEnabled ?? false,
-        debounceWindowSecondsOverride: course.debounceWindowSecondsOverride ?? undefined,
-        maxDailyOrchestrationOverride: course.maxDailyOrchestrationOverride ?? undefined,
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }
 
@@ -247,8 +247,8 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
 
         // Atlas auto-orchestration configuration (per-course)
-        autoOrchestratorEnabled: course.autoOrchestratorEnabled ?? false,
-        debounceWindowSecondsOverride: course.debounceWindowSecondsOverride ?? undefined,
-        maxDailyOrchestrationOverride: course.maxDailyOrchestrationOverride ?? undefined,
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }

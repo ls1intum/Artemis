@@ -27,11 +27,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 
 /**
  * Behaviour of {@link ContentChangeScheduler} — the per-tick adapter that drives the batched
@@ -61,21 +61,21 @@ class ContentChangeSchedulerTest {
     private FeatureToggleService featureToggleService;
 
     @Mock
-    private CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     private ContentChangeScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2026-04-24T12:00:00Z"), ZoneOffset.UTC);
-        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, autoOrchestrationConfigurationRepository,
+        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository,
                 fixedClock);
     }
 
     /** Stub the course as auto-orchestration enabled so {@code processCourse} proceeds to claim. */
     private void stubCourseEnabled(boolean enabled) {
         CourseAutoOrchestrationConfigDTO config = new CourseAutoOrchestrationConfigDTO(enabled, null, null);
-        when(autoOrchestrationConfigurationRepository.findConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(config));
+        when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(config));
         // The scheduler resolves the window/cap from the config once per tick and threads them into the
         // claim; stub the (real) resolution helpers on the mocked accumulator so the claim is invoked
         // with concrete resolved values.

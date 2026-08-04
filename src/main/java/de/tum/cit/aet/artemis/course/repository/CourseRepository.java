@@ -25,7 +25,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -193,26 +192,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
-    /**
-     * Loads the managed Atlas auto-orchestration configuration of a course, so the update flow can attach it to the
-     * course before {@code CourseUpdateDTO#applyTo} runs and mutate the existing row in place rather than orphaning it
-     * (and so the admin-only change detection compares against the persisted values).
-     * <p>
-     * This deliberately lives here rather than on the graph of {@link #findForUpdateById} or behind the Atlas
-     * {@code CourseAutoOrchestrationApi}. The graph is already at the over-fetch budget, and the API bean is conditional
-     * on the Atlas module while the configuration row must be preserved across course updates either way. Same pattern
-     * as {@code CourseConfigurationRepository#findByCourseId} for the data-privacy configuration.
-     *
-     * @param courseId the course to resolve the configuration for
-     * @return the managed configuration, or empty when the course has no configuration row
-     */
-    @Query("""
-            SELECT config
-            FROM CourseAutoOrchestrationConfiguration config
-            WHERE config.course.id = :courseId
-            """)
-    Optional<CourseAutoOrchestrationConfiguration> findAutoOrchestrationConfigurationByCourseId(@Param("courseId") long courseId);
-
     @Query("""
             SELECT course
             FROM Course course
@@ -249,16 +228,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance for editing.
-    // autoOrchestrationConfiguration is fetched for the same reason: the course settings form reads the per-course Atlas
-    // auto-orchestration projections off the serialized Course.
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration", "autoOrchestrationConfiguration" })
+    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
+    // per-course Atlas auto-orchestration settings for editing.
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration", "autoOrchestrationConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
     /**

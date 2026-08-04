@@ -20,12 +20,12 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 
 /**
  * Tick loop for the automatic competency pipeline. On every scheduled invocation the scheduler
@@ -56,18 +56,18 @@ public class ContentChangeScheduler {
 
     private final FeatureToggleService featureToggleService;
 
-    private final CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+    private final CourseConfigurationRepository courseConfigurationRepository;
 
     private final Clock clock;
 
     public ContentChangeScheduler(ContentChangeAccumulatorService accumulator, CompetencyOrchestrationService orchestrationService,
-            WebsocketMessagingService websocketMessagingService, FeatureToggleService featureToggleService,
-            CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository, Clock clock) {
+            WebsocketMessagingService websocketMessagingService, FeatureToggleService featureToggleService, CourseConfigurationRepository courseConfigurationRepository,
+            Clock clock) {
         this.accumulator = accumulator;
         this.orchestrationService = orchestrationService;
         this.websocketMessagingService = websocketMessagingService;
         this.featureToggleService = featureToggleService;
-        this.autoOrchestrationConfigurationRepository = autoOrchestrationConfigurationRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
         this.clock = clock;
     }
 
@@ -105,7 +105,7 @@ public class ContentChangeScheduler {
         // Resolve the per-course config exactly once per tick and thread the result through the
         // kill-switch decision and the claim path, so a due course costs a single config query instead
         // of one per kill-switch / window / cap lookup.
-        CourseAutoOrchestrationConfigDTO config = autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).orElse(null);
+        CourseAutoOrchestrationConfigDTO config = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(courseId).orElse(null);
         // Per-course kill switch: a course that disabled auto-orchestration after buffering changes
         // must never fire. Flush its bucket so the buffered ids are dropped rather than draining the
         // next time it is (possibly) re-enabled, and skip the run.

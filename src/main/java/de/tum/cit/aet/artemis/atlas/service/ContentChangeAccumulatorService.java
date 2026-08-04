@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 
@@ -59,15 +59,15 @@ public class ContentChangeAccumulatorService {
     /** Global default daily cap; used whenever a course has no per-course override. */
     private final int defaultDailyCap;
 
-    private final CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+    private final CourseConfigurationRepository courseConfigurationRepository;
 
     public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties,
-            CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository) {
+            CourseConfigurationRepository courseConfigurationRepository) {
         this.distributedDataProvider = distributedDataProvider;
         this.clock = clock;
         this.defaultDebounceWindowSeconds = properties.debounceWindowSeconds();
         this.defaultDailyCap = properties.maxDailyOrchestrations();
-        this.autoOrchestrationConfigurationRepository = autoOrchestrationConfigurationRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -80,7 +80,7 @@ public class ContentChangeAccumulatorService {
      * @return the effective debounce window in seconds
      */
     private int resolveDebounceWindowSeconds(long courseId) {
-        return resolveDebounceWindowSeconds(autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).orElse(null));
+        return resolveDebounceWindowSeconds(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(courseId).orElse(null));
     }
 
     /**
@@ -194,7 +194,7 @@ public class ContentChangeAccumulatorService {
      * @return the drained batch, or {@link Optional#empty()} when no batch is eligible right now
      */
     public Optional<BatchClaim> claimDueBatch(long courseId) {
-        CourseAutoOrchestrationConfigDTO config = autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).orElse(null);
+        CourseAutoOrchestrationConfigDTO config = courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(courseId).orElse(null);
         return claim(courseId, resolveDebounceWindowSeconds(config), resolveDailyCap(config), true, false);
     }
 
