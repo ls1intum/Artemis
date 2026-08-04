@@ -36,13 +36,12 @@ public interface ExerciseGroupRepository extends ArtemisJpaRepository<ExerciseGr
      * course that is immediately discarded (the list DTO sets the exam to null).
      *
      * @param examId the exam whose exercise groups are returned
-     * @return the exercise groups of the exam, ordered as stored; a single null element for an exam without any groups,
-     *         because the groups are left-joined off the exam
+     * @return the exercise groups of the exam, ordered as stored, or an empty list if it has none
      */
     @Query("""
             SELECT eg
             FROM Exam exam
-                LEFT JOIN exam.exerciseGroups eg
+                JOIN exam.exerciseGroups eg
                 LEFT JOIN FETCH eg.exercises
                 LEFT JOIN FETCH eg.exam eagerExam
                 LEFT JOIN FETCH eagerExam.course
