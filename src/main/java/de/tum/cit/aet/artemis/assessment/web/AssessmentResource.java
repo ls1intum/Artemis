@@ -228,10 +228,15 @@ public abstract class AssessmentResource {
             }
         }
         else {
-            // Without a result the newest correction round is released, which is what every caller got before the
-            // parameter existed. Not the result with the highest id: an automatic or Athena result can be newer than the
-            // assessment the tutor is working on, and it carries no assessor, so resolving by id made the authorization
-            // check below dereference null and the lock was never released.
+            // Without a result id the newest correction round is released, which is what every caller got before the
+            // parameter existed.
+            //
+            // Deliberately the newest *manual* result rather than the highest id. In a normal lifecycle those are the
+            // same, because an Athena result is only created by a student's preliminary feedback request and never by
+            // the tutor-facing feedback suggestions, so it cannot follow a manual assessment. It can differ in an
+            // exercise that allows preliminary feedback requests with no due date, where a student may request AI
+            // feedback after a tutor has already assessed. Resolving by highest id would then pick a result with no
+            // assessor and the authorization check below would dereference null.
             resultToCancel = submission.getLatestManualResult();
         }
         // The permission decision falls back to the latest result: a submission whose only result is automatic has nothing
