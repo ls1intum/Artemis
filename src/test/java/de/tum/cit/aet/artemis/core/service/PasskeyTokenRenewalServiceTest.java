@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 
 /**
  * Unit tests for the decision that ends a silently rotating session.
@@ -36,7 +36,7 @@ class PasskeyTokenRenewalServiceTest {
     private PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     /**
      * @param passkeysEnabled whether passkey support is on; when it is off the repository bean does not exist, because it
