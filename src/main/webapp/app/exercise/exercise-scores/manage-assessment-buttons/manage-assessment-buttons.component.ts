@@ -100,10 +100,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     }
 
     /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
-     */
-    /**
-     * Cancels the assessment the clicked button belongs to. The result is passed on explicitly: a submission holds one
+     * Cancels the assessment the clicked button belongs to and reloads the submissions to reflect the change. The result is passed on explicitly: a submission holds one
      * result per correction round, and without it the server released the newest round, so cancelling correction round 1
      * released round 2 and round 1 stayed locked (#13396).
      */
