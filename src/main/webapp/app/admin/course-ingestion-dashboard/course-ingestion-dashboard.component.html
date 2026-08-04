@@ -376,10 +376,26 @@
         <tum-ui-dialog
             [visible]="true"
             (visibleChange)="onDrawerVisibleChange($event)"
-            [header]="runTitle(run)"
+            [showHeader]="false"
+            [ariaLabel]="runTitle(run)"
             [dismissableMask]="true"
             [style]="{ width: '30rem', 'max-width': '92vw' }"
         >
+            <div class="flex items-start justify-between gap-2 mb-4">
+                <h2 class="text-xl font-semibold m-0 min-w-0">{{ runTitle(run) }}</h2>
+                <tum-ui-button
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    [icon]="faUpRightFromSquare"
+                    (clicked)="navigateToUnit(run.courseId, run.lectureId)"
+                    [title]="'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate"
+                    [ariaLabel]="'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate"
+                >
+                    {{ 'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+
             <div class="flex items-start justify-between gap-3 text-sm mb-4">
                 <div class="min-w-0">
                     <div class="text-muted-color truncate">{{ courseTitleFor(run.courseId) }}</div>
@@ -470,8 +486,8 @@
             }
 
             <div class="flex justify-end mt-2">
-                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faUpRightFromSquare" (clicked)="navigateToUnit(run.courseId, run.lectureId)">
-                    {{ 'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate }}
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faXmark" (clicked)="onDrawerVisibleChange(false)">
+                    {{ 'artemisApp.courseIngestionDashboard.close' | artemisTranslate }}
                 </tum-ui-button>
             </div>
         </tum-ui-dialog>
@@ -481,10 +497,26 @@
         <tum-ui-dialog
             [visible]="true"
             (visibleChange)="onDrawerVisibleChange($event)"
-            [header]="recentTitle(recent)"
+            [showHeader]="false"
+            [ariaLabel]="recentTitle(recent)"
             [dismissableMask]="true"
             [style]="{ width: '30rem', 'max-width': '92vw' }"
         >
+            <div class="flex items-start justify-between gap-2 mb-4">
+                <h2 class="text-xl font-semibold m-0 min-w-0">{{ recentTitle(recent) }}</h2>
+                <tum-ui-button
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    [icon]="faUpRightFromSquare"
+                    (clicked)="navigateToUnit(recent.courseId, recent.lectureId)"
+                    [title]="'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate"
+                    [ariaLabel]="'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate"
+                >
+                    {{ 'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+
             <div class="flex items-start justify-between gap-3 text-sm mb-4">
                 <div class="min-w-0">
                     <div class="text-muted-color truncate">{{ runContext(recent) }}</div>
@@ -569,8 +601,8 @@
             </div>
 
             <div class="flex justify-end mt-2">
-                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faUpRightFromSquare" (clicked)="navigateToUnit(recent.courseId, recent.lectureId)">
-                    {{ 'artemisApp.courseIngestionDashboard.active.openUnit' | artemisTranslate }}
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faXmark" (clicked)="onDrawerVisibleChange(false)">
+                    {{ 'artemisApp.courseIngestionDashboard.close' | artemisTranslate }}
                 </tum-ui-button>
             </div>
         </tum-ui-dialog>
@@ -580,10 +612,28 @@
         <tum-ui-dialog
             [visible]="true"
             (visibleChange)="onCourseBrowserVisibleChange($event)"
-            [header]="course.courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course.courseId"
+            [showHeader]="false"
+            [ariaLabel]="course.courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course.courseId"
             [dismissableMask]="true"
             [style]="{ width: '62rem', 'max-width': '95vw' }"
         >
+            <div class="flex items-start justify-between gap-2 mb-3">
+                <h2 class="text-xl font-semibold m-0 min-w-0">
+                    {{ course.courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course.courseId }}
+                </h2>
+                <tum-ui-button
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    [icon]="faUpRightFromSquare"
+                    (clicked)="openSelection()"
+                    [title]="openSelectionLabelKey() | artemisTranslate"
+                    [ariaLabel]="openSelectionLabelKey() | artemisTranslate"
+                >
+                    {{ openSelectionLabelKey() | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+
             <div class="flex items-center gap-3 mb-3 flex-wrap">
                 <p class="text-muted-color text-sm m-0 flex-1 min-w-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.subtitle"></p>
                 @if (incompleteTypeCount(course); as incomplete) {
@@ -1089,8 +1139,8 @@
             }
 
             <div class="flex justify-end mt-3">
-                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faUpRightFromSquare" (clicked)="openSelection()">
-                    {{ openSelectionLabelKey() | artemisTranslate }}
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faXmark" (clicked)="onCourseBrowserVisibleChange(false)">
+                    {{ 'artemisApp.courseIngestionDashboard.close' | artemisTranslate }}
                 </tum-ui-button>
             </div>
         </tum-ui-dialog>

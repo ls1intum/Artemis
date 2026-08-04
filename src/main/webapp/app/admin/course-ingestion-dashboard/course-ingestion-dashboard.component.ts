@@ -66,6 +66,15 @@ const STALL_THRESHOLD_MS = 90000;
 /** How often the active-ingestions section polls the backend for live progress. */
 const ACTIVE_POLL_INTERVAL_MS = 3000;
 
+/**
+ * The ordered milestones of each Iris ingestion pipeline, mirroring the activity names the pipelines emit
+ * (lecture_ingestion_pipeline / transcription_ingestion_pipeline). Used to render the remaining, not-yet-reached steps
+ * of a run as pending, so a roadmap shows where a run failed or stalled and what it would have done next. These are the
+ * real pipeline steps, not a speculative list; if a run reports steps that match neither, only its reported steps show.
+ */
+const SLIDES_PIPELINE = ['Detect course language', 'Analyze slides with vision', 'Embed and index'];
+const TRANSCRIPTION_PIPELINE = ['Chunk transcript', 'Summarize with LLM', 'Embed and index'];
+
 type CellStatus = 'incomplete' | 'unknown' | 'ok' | 'na';
 type ScopeFilter = 'all' | 'active' | 'archived';
 type StatusFilter = 'all' | 'incomplete' | 'complete' | 'unknown';
@@ -585,8 +594,8 @@ export class CourseIngestionDashboardComponent implements OnInit {
      * The ordered step list for a run, built directly from the activities Iris actually reports (no hardcoded step
      * names), so the milestone view matches the real pipeline for any content type and never shows phantom steps.
      */
-    protected runSteps(run: { activities?: IngestionActivity[] }, failed = false): DisplayStep[] {
-        return (run.activities ?? []).map((activity) => ({
+    protected runSteps(run: { activities?: IngestionActivity[]; phase?: string }, failed = false): DisplayStep[] {
+        const reported: DisplayStep[] = (run.activities ?? []).map((activity) => ({
             name: activity.name,
             label: activity.name,
             // A failed run ends without flipping the step it died on off RUNNING; show that step as failed (red X), not
@@ -595,6 +604,44 @@ export class CourseIngestionDashboardComponent implements OnInit {
             durationMillis: activity.durationMillis,
             detail: activity.detail,
         }));
+
+        const template = this.pipelineTemplate(reported, run.phase);
+        if (!template) {
+            return reported;
+        }
+        // Merge the reported steps onto the full pipeline template so the not-yet-reached steps show as pending: for
+        // each template step, use its reported state/duration if it ran, otherwise mark it pending. Any reported step
+        // not in the template (defensive - the pipeline changed) is appended so nothing is hidden.
+        const byName = new Map(reported.map((step) => [step.name, step]));
+        const merged: DisplayStep[] = template.map((name) => byName.get(name) ?? { name, label: name, state: 'PENDING' });
+        for (const step of reported) {
+            if (!template.includes(step.name)) {
+                merged.push(step);
+            }
+        }
+        return merged;
+    }
+
+    /**
+     * The pipeline template a run belongs to, chosen from its reported step names (the discriminating first steps, since
+     * both pipelines share the final "Embed and index"), falling back to the processing phase when no step has been
+     * reported yet. Null when the run matches neither, so only its reported steps are shown.
+     */
+    private pipelineTemplate(steps: DisplayStep[], phase?: string): string[] | null {
+        const names = new Set(steps.map((step) => step.name));
+        if (names.has('Chunk transcript') || names.has('Summarize with LLM')) {
+            return TRANSCRIPTION_PIPELINE;
+        }
+        if (names.has('Detect course language') || names.has('Analyze slides with vision')) {
+            return SLIDES_PIPELINE;
+        }
+        if (phase === 'TRANSCRIBING') {
+            return TRANSCRIPTION_PIPELINE;
+        }
+        if (phase === 'INGESTING') {
+            return SLIDES_PIPELINE;
+        }
+        return null;
     }
 
     /** The icon for one pipeline step, by its state: check when done, a spinner while running, a dot when pending. */
@@ -619,6 +666,7 @@ export class CourseIngestionDashboardComponent implements OnInit {
     protected roadmap(
         run: {
             activities?: IngestionActivity[];
+            phase?: string;
         },
         failed = false,
     ): { label: string; state: DisplayStep['state']; durationMillis?: number; detail?: string; leftColor: string; rightColor: string }[] {
