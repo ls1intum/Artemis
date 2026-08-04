@@ -29,11 +29,13 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import { AuraArtemis } from './primeng-artemis-theme';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
+        provideArtemisTumUiTranslator(),
         DialogService,
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably

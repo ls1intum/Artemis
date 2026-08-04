@@ -14,7 +14,7 @@ import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/program
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',

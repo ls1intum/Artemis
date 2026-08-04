@@ -24,7 +24,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-course-exercise-group-detail',

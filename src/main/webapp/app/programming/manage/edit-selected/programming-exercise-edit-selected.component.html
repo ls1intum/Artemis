@@ -1,12 +1,4 @@
-<tum-ui-dialog
-    [(visible)]="visible"
-    [header]="'entity.action.editSelected' | artemisTranslate"
-    [modal]="true"
-    [closable]="true"
-    [closeOnEscape]="true"
-    [dismissableMask]="false"
-    [style]="{ width: '1140px' }"
->
+<tum-ui-dialog [(visible)]="visible" [header]="'entity.action.editSelected' | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="large">
     @if (failureOccurred()) {
         <div class="row justify-content-center">
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred"></span>

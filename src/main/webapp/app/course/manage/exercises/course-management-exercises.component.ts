@@ -7,12 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
-import { TumUiSelectButtonComponent } from 'app/shared-ui/tum-ui/select-button/tum-ui-select-button.component';
-import { TumUiPanelComponent } from 'app/shared-ui/tum-ui/panel/tum-ui-panel.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {

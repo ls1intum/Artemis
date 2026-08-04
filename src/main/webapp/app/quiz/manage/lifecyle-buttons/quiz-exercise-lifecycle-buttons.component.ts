@@ -10,11 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiPopoverComponent } from 'app/shared-ui/tum-ui/popover/tum-ui-popover.component';
-import { TumUiPopoverTriggerDirective } from 'app/shared-ui/tum-ui/popover/tum-ui-popover-trigger.directive';
+import { TumUiButtonDirective, TumUiPopoverComponent, TumUiPopoverTriggerDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 
 @Component({

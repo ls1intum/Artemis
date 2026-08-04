@@ -7,7 +7,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';

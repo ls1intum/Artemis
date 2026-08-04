@@ -45,14 +45,8 @@ h4 {
     font-weight: 500 !important;
 }
 
-/* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme.
-   `.tum-ui-btn` is excluded alongside `.btn`: anchor-form tum-ui buttons (`<a tumUiButton>`) are buttons, not links, so the
-   link-blue hover color must not override their own token text color (it made solid buttons render blue-on-blue). */
-a,
-a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
+a:not(.btn, .tum-ui-btn, .dropdown-item, .page-link, .nav-link, .tab-link) {
     color: $link-color;
-
-    /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
 
@@ -174,10 +168,6 @@ textarea {
     clip-path: inset(50%);
 }
 
-th {
-    border-bottom-color: inherit !important;
-}
-
 /* ==========================================================================
 Browser Upgrade Prompt
 ========================================================================== */
@@ -267,12 +257,47 @@ p-datepicker.ng-invalid {
     border-left-width: 0;
 }
 
-// jhi-date-time-picker: keep the field width identical whether or not the clear (×) icon is shown by
-// always reserving room for BOTH the calendar and clear icons. PrimeNG only pads for the clear icon
-// when a value is present, so otherwise a filled field is ~1 icon wider than an empty one, which
-// misaligns pickers that sit side by side (e.g. the exercise "Grading" dates) — PR #13009 review.
 jhi-date-time-picker .p-datepicker-input {
     padding-inline-end: calc((var(--p-form-field-padding-x) * 3) + (var(--p-icon-size) * 2)) !important;
+    border-start-start-radius: var(--tum-ui-input-group-start-radius, var(--p-form-field-border-radius));
+    border-end-start-radius: var(--tum-ui-input-group-start-radius, var(--p-form-field-border-radius));
+    border-start-end-radius: var(--tum-ui-input-group-end-radius, var(--p-form-field-border-radius));
+    border-end-end-radius: var(--tum-ui-input-group-end-radius, var(--p-form-field-border-radius));
+}
+
+jhi-date-time-picker .date-time-picker-warning-border {
+    border-color: var(--color-state-warning) !important;
+}
+
+/*
+ * Host-side compensation for the TUM UI package while Artemis still loads Bootstrap. Both rules exist only
+ * because of Bootstrap and belong here rather than in the package, which must stay framework-agnostic — see
+ * the ownership boundary in documentation/docs/developer/guidelines/tum-ui-kit.mdx. Delete them once
+ * Bootstrap is gone; the package's own utilities already express the same intent.
+ */
+
+// Cell separators for `<table tumUiTable>`. The directive asks for them with `tum:[&_thead_th]:border-b` /
+// `tum:[&_tbody_td]:border-b`, but Bootstrap's Reboot ships an UNLAYERED
+//   thead, tbody, tfoot, tr, td, th { border-color: inherit; border-style: solid; border-width: 0 }
+// while the package imports Tailwind's utilities into `@layer utilities`. Unlayered CSS always beats layered
+// CSS regardless of specificity, so Reboot's `border-width: 0` erases every separator. Only WIDTH and STYLE are
+// restored here: Reboot's `border-color: inherit` resolves up to the <table>, which the package's
+// `tum:border-border` utility already paints, so the colour needs no help and keeps following the theme.
+.tum-ui-table {
+    thead th,
+    tbody td {
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+    }
+}
+
+// Disabled fade for ANCHOR buttons. The kit's base class list fades a disabled button with
+// `tum:disabled:opacity-60`, but that variant compiles to the `:disabled` pseudo-class, which only matches real
+// form controls — an `<a>` can never be `:disabled`, so a disabled `<a tumUiButton>` kept full opacity and
+// stopped looking disabled. Consumers mark such an anchor with `.disabled` (anchors have no `disabled`
+// attribute). The cursor and pointer-events already come from the global `a.disabled` rule above.
+a[tumUiButton].disabled {
+    opacity: 0.6;
 }
 
 .pad {
@@ -750,26 +775,8 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// Positions Angular CDK overlays (e.g. the mat-select panel below) above the ng-bootstrap modal,
-// accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
-    z-index: 1060;
-    margin: 10px;
-    width: calc(100% - 20px);
-    height: calc(100% - 20px);
-}
-
-// tum-aet-ui kit: structural styles for CDK overlay backdrops (popover, and later menu/select).
-// Artemis intentionally does not import the CDK overlay-prebuilt stylesheet, and the minimal
-// .cdk-overlay-container override above provides none of the backdrop rules. Without a full-viewport,
-// pointer-capturing backdrop the transparent click-catcher collapses to zero size, so clicks pass
-// through to the page and OverlayRef.backdropClick() never fires (the popover stays open). `fixed` +
-// `inset: 0` covers the viewport regardless of the (statically positioned) container; the overlay pane
-// is a later sibling and therefore stacks above this backdrop, so in-panel clicks keep working.
-.tum-ui-overlay-backdrop {
-    position: fixed;
-    inset: 0;
-    pointer-events: auto;
+    z-index: $zindex-modal + 5;
 }
 
 .not-allowed {

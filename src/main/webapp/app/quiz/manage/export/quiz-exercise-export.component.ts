@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',

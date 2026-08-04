@@ -1,0 +1,73 @@
+:host {
+    display: block;
+}
+
+.tum-ui-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(var(--tumaet-ui-spacing) * 4.5);
+}
+
+.tum-ui-panel-header-toggleable {
+    padding: calc(var(--tumaet-ui-spacing) * 1.5) calc(var(--tumaet-ui-spacing) * 4.5);
+}
+
+.tum-ui-panel-title {
+    line-height: 1;
+    font-weight: 600;
+
+    // Claim the row so projected `[tumUiPanelHeader]` markup can lay itself out across the full width; the
+    // toggler stays right-aligned either way (the header is space-between). min-width:0 lets it shrink.
+    flex: 1;
+    min-width: 0;
+}
+
+.tum-ui-panel-toggler {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--tumaet-ui-spacing) * 8);
+    height: calc(var(--tumaet-ui-spacing) * 8);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+
+    &:hover {
+        background-color: color-mix(in srgb, currentcolor 8%, transparent);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 1px;
+    }
+}
+
+.tum-ui-panel-content-container {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.2s ease-in-out;
+}
+
+:host([data-collapsed='true']) .tum-ui-panel-content-container {
+    grid-template-rows: 0fr;
+}
+
+.tum-ui-panel-content-wrapper {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tum-ui-panel-content {
+    padding: 0 calc(var(--tumaet-ui-spacing) * 4.5) calc(var(--tumaet-ui-spacing) * 4.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-panel-content-container {
+        transition: none;
+    }
+}
