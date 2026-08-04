@@ -363,7 +363,9 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.examId,
                     this.exerciseGroupId,
                 );
-                void this.router.navigate(url);
+                // Carry the correction round and keep the other parameters: the component reads the round from the URL,
+                // so dropping it sent the next submission into the first correction round.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
