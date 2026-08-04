@@ -14,7 +14,7 @@
                 <tr>
                     <td>{{ entry.key }}</td>
                     <td>
-                        <tum-ui-progress-bar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" color="var(--success)">
+                        <tum-ui-progress-bar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" severity="success">
                             {{ entry.value.count }}
                         </tum-ui-progress-bar>
                     </td>
