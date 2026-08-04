@@ -71,6 +71,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -737,6 +738,20 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.togglingSecondCorrectionButton()).toBe(false);
         expect(comp.secondCorrectionEnabled()).toBe(secondCorrectionEnabled);
         expect(comp.numberOfCorrectionRoundsEnabled()).toBe(2);
+    });
+
+    it('should place the second correction toggle in the second correction round', () => {
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+
+        const firstCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-0"]');
+        const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+
+        expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
     });
 
     it('should check if complaint locked', () => {
