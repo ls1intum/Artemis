@@ -19,15 +19,27 @@ import java.util.regex.Pattern;
  */
 public final class MathFormulaExtractor {
 
-    /** Matches a line where {@code $$...$$} appears with other text before or after (inline formula convention). */
-    private static final Pattern INLINE_FORMULA_LINE = Pattern.compile(".+\\$\\$[^$]+\\$\\$|\\$\\$[^$]+\\$\\$.+");
+    /**
+     * Matches a {@code $$...$$} formula. Whether the line uses the inline convention is decided from the match position
+     * rather than by a pattern.
+     * <p>
+     * The previous pattern anchored a leading or trailing {@code .+} against the literal delimiters, which backtracks
+     * quadratically: a single 100 KB line took eight seconds without any {@code $} in it and twenty-eight seconds when
+     * filled with them. Matching only the formula and comparing bounds is linear.
+     */
+    private static final Pattern DOUBLE_DOLLAR_FORMULA = Pattern.compile("\\$\\$[^$]+\\$\\$");
 
     /**
-     * Display math: {@code $$...$$} on its own line. The body is a sequence of non-{@code $} characters
-     * or a single {@code $} not followed by another {@code $}. This explicit shape avoids the lazy
-     * quantifier backtracking that a naive {@code [\s\S]+?} would cause.
+     * Display math: {@code $$...$$} on its own line.
+     * <p>
+     * The body is written as an unrolled loop - a run of non-{@code $} characters, then any number of "single {@code $}
+     * followed by more non-{@code $}" groups - rather than as {@code (?:[^$]|\$(?!\$))+}. That earlier shape put an
+     * alternation inside a quantifier, which recurses once per character: an unclosed {@code $$} followed by 100 KB of text
+     * raised a {@link StackOverflowError}. The unrolled form consumes at least one character per iteration, so it does not.
+     * <p>
+     * It permits an empty body, which the previous pattern did not; {@link #extract} skips those explicitly.
      */
-    private static final Pattern DISPLAY_MATH_PATTERN = Pattern.compile("^\\$\\$((?:[^$]|\\$(?!\\$))+)\\$\\$$", Pattern.MULTILINE);
+    private static final Pattern DISPLAY_MATH_PATTERN = Pattern.compile("^\\$\\$([^$]*(?:\\$(?!\\$)[^$]*)*)\\$\\$$", Pattern.MULTILINE);
 
     /**
      * Inline math: {@code $...$}, with the surrounding characters restricted so the body cannot contain
@@ -61,7 +73,9 @@ public final class MathFormulaExtractor {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i];
-            if (INLINE_FORMULA_LINE.matcher(line).find()) {
+            Matcher formula = DOUBLE_DOLLAR_FORMULA.matcher(line);
+            // The inline convention means the formula shares its line with other text, i.e. the match does not span it.
+            if (formula.find() && (formula.start() > 0 || formula.end() < line.length())) {
                 line = line.replace("$$", "$");
             }
             if (line.contains("\\\\begin") || line.contains("\\\\end")) {
@@ -86,8 +100,13 @@ public final class MathFormulaExtractor {
      */
     public static String extract(String markdown, List<Formula> formulas) {
         String result = DISPLAY_MATH_PATTERN.matcher(markdown).replaceAll(match -> {
+            String latex = match.group(1).trim();
+            if (latex.isEmpty()) {
+                // The pattern allows an empty body so that it stays linear; an empty formula is left as written.
+                return Matcher.quoteReplacement(match.group());
+            }
             int index = formulas.size();
-            formulas.add(new Formula(match.group(1).trim(), true));
+            formulas.add(new Formula(latex, true));
             return Matcher.quoteReplacement(PLACEHOLDER_PREFIX + index + PLACEHOLDER_SUFFIX);
         });
         result = INLINE_MATH_PATTERN.matcher(result).replaceAll(match -> {

@@ -652,7 +652,10 @@ public class ProblemStatementRenderingService {
             i18n.put(key, messageSource.getMessage(prefix + key, null, key, locale));
         }
         try {
-            return "var __i18n = " + objectMapper.writeValueAsString(i18n) + ";\n" + INTERACTIVE_JS;
+            // Escape the slash in any "</" sequence: the JSON is emitted inside a <script> element, and an unescaped
+            // "</script>" in a translation would terminate it. "<\\/" is an equivalent JSON escape.
+            String json = objectMapper.writeValueAsString(i18n).replace("</", "<\\/");
+            return "var __i18n = " + json + ";\n" + INTERACTIVE_JS;
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize i18n JSON for interactive script", e);

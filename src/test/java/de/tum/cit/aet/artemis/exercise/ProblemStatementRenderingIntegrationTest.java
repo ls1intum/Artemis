@@ -390,6 +390,24 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderPathologicalMarkdownQuickly() throws Exception {
+        // The markdown patterns used to backtrack quadratically on a long single line: 100 KB took between eight and
+        // twenty-eight seconds depending on how many dollar signs it held, and an unclosed $$ raised a StackOverflowError.
+        // The request size limit is 100 KB, so these are the worst inputs the endpoint accepts.
+        String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000) };
+
+        for (String markdown : pathological) {
+            var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);
+            long startedAt = System.nanoTime();
+            request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+            long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
+
+            assertThat(elapsedMillis).as("rendering pathological markdown must not cost seconds of CPU").isLessThan(10_000);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotShipKatexWhenTheCallerAsksForNoJavaScript() throws Exception {
         // KaTeX is JavaScript, so includeJs=false has to exclude it too. Before, the scripts were emitted whenever the
         // statement contained math, whatever the caller asked for.
