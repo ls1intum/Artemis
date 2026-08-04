@@ -31,7 +31,12 @@
                 "unit": "Vorlesungseinheit",
                 "starting": "Wird gestartet...",
                 "openLecture": "Vorlesung öffnen",
+                "openUnit": "Einheit öffnen",
                 "stalled": "Blockiert - keine Iris-Aktivität",
+                "stalledShort": "Blockiert",
+                "running": "Läuft",
+                "stalledHint": "Iris meldet keinen Fortschritt; der Lauf wird als fehlgeschlagen markiert, wenn er still bleibt.",
+                "noSteps": "Noch keine Schritte gemeldet - Iris hat für diesen Lauf keinen Fortschritt gesendet.",
                 "phase_transcribing": "Transkribiert",
                 "phase_ingesting": "Indexiert",
                 "retried": "{{count}}x wiederholt"
@@ -40,14 +45,15 @@
                 "title": "Letzte Ingestions",
                 "contentTitle": "Vorlesungsinhalte",
                 "none": "Keine letzten Ingestions von Vorlesungsinhalten.",
-                "failedAt": "Fehlgeschlagen bei"
+                "failedAt": "Fehlgeschlagen bei",
+                "failed": "Fehlgeschlagen",
+                "completed": "Abgeschlossen"
             },
             "browser": {
                 "subtitle": "Alles für diesen Kurs Ingestierte durchsuchen: von der Vorlesung zur Einheit zur Collection, oder einen Metadaten-Typ wählen, um Fehlendes zu sehen.",
                 "typesIncomplete": "Typen unvollständig",
                 "processing": "In Bearbeitung",
                 "browseLectures": "Vorlesungen durchsuchen",
-                "openInArtemis": "In Artemis öffnen",
                 "contentMissing": "Fehlende Inhalte: ",
                 "content_slides": "Folien",
                 "content_transcript": "Transkript",
@@ -71,7 +77,9 @@
                 "ingestedAt": "Ingestiert",
                 "empty": "Für diesen Kurs ist noch nichts in Weaviate indexiert.",
                 "error": "Die gespeicherten Objekte konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
-                "openCourse": "Kurs öffnen"
+                "openCourse": "Kurs öffnen",
+                "openLecture": "Vorlesung öffnen",
+                "openUnit": "Einheit öffnen"
             },
             "matrix": {
                 "title": "Vollständigkeit nach Kurs",

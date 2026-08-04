@@ -31,7 +31,12 @@
                 "unit": "Lecture unit",
                 "starting": "Starting...",
                 "openLecture": "Open lecture",
+                "openUnit": "Open unit",
                 "stalled": "Stalled - no Iris activity",
+                "stalledShort": "Stalled",
+                "running": "Running",
+                "stalledHint": "Iris is not reporting progress; it will be marked failed if it stays silent.",
+                "noSteps": "No steps reported yet - Iris has not sent any progress for this run.",
                 "phase_transcribing": "Transcribing",
                 "phase_ingesting": "Indexing",
                 "retried": "{{count}}x retried"
@@ -40,14 +45,15 @@
                 "title": "Recent ingestions",
                 "contentTitle": "Lecture content",
                 "none": "No recent lecture content ingestions.",
-                "failedAt": "Failed at"
+                "failedAt": "Failed at",
+                "failed": "Failed",
+                "completed": "Completed"
             },
             "browser": {
                 "subtitle": "Browse everything ingested for this course: drill from lecture to unit to collection, or pick a metadata type to see what is missing.",
                 "typesIncomplete": "types incomplete",
                 "processing": "Processing",
                 "browseLectures": "Browse lectures",
-                "openInArtemis": "Open in Artemis",
                 "contentMissing": "Missing content: ",
                 "content_slides": "Slides",
                 "content_transcript": "Transcript",
@@ -71,7 +77,9 @@
                 "ingestedAt": "Ingested",
                 "empty": "Nothing is indexed in Weaviate for this course yet.",
                 "error": "Failed to load the stored objects. Please try again.",
-                "openCourse": "Open course"
+                "openCourse": "Open course",
+                "openLecture": "Open lecture",
+                "openUnit": "Open unit"
             },
             "matrix": {
                 "title": "Completeness by course",

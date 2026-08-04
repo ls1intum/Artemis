@@ -585,11 +585,13 @@ export class CourseIngestionDashboardComponent implements OnInit {
      * The ordered step list for a run, built directly from the activities Iris actually reports (no hardcoded step
      * names), so the milestone view matches the real pipeline for any content type and never shows phantom steps.
      */
-    protected runSteps(run: { activities?: IngestionActivity[] }): DisplayStep[] {
+    protected runSteps(run: { activities?: IngestionActivity[] }, failed = false): DisplayStep[] {
         return (run.activities ?? []).map((activity) => ({
             name: activity.name,
             label: activity.name,
-            state: activity.state,
+            // A failed run ends without flipping the step it died on off RUNNING; show that step as failed (red X), not
+            // as an amber spinner, so the timeline reads as failed rather than perpetually in progress.
+            state: failed && activity.state === 'RUNNING' ? 'FAILED' : activity.state,
             durationMillis: activity.durationMillis,
             detail: activity.detail,
         }));
@@ -614,14 +616,20 @@ export class CourseIngestionDashboardComponent implements OnInit {
      * segment is green when the step before it is finished, amber when it leads into the currently running step (so the
      * in-progress line and node share one color and never clash with the green "done" line), and grey otherwise.
      */
-    protected roadmap(run: {
-        activities?: IngestionActivity[];
-    }): { label: string; state: DisplayStep['state']; durationMillis?: number; detail?: string; leftColor: string; rightColor: string }[] {
-        const steps = this.runSteps(run);
+    protected roadmap(
+        run: {
+            activities?: IngestionActivity[];
+        },
+        failed = false,
+    ): { label: string; state: DisplayStep['state']; durationMillis?: number; detail?: string; leftColor: string; rightColor: string }[] {
+        const steps = this.runSteps(run, failed);
         const segmentColor = (index: number): string => {
             const next = steps[index + 1];
             if (next && next.state === 'RUNNING') {
                 return 'var(--warning)';
+            }
+            if (next && next.state === 'FAILED') {
+                return 'var(--danger)';
             }
             if (steps[index].state === 'FINISHED') {
                 return 'var(--success)';
@@ -1061,6 +1069,68 @@ export class CourseIngestionDashboardComponent implements OnInit {
 
     protected navigateToLecture(courseId: number, lectureId: number): void {
         void this.router.navigate(['/course-management', courseId, 'lectures', lectureId]);
+    }
+
+    /**
+     * Opens the lecture unit in Artemis. Lecture units live on their lecture's unit-management page, which is the
+     * closest unit-level destination that works for every unit type, so this lands the admin on the unit's page.
+     */
+    protected navigateToUnit(courseId: number, lectureId: number): void {
+        void this.router.navigate(['/course-management', courseId, 'lectures', lectureId, 'unit-management']);
+    }
+
+    /**
+     * Opens the Artemis page for whatever the browser modal currently has selected: the lecture for a lecture, the
+     * unit-management page for a unit or one of its collections, and the course otherwise. This makes the modal's open
+     * action follow the selection instead of always opening the course.
+     */
+    protected openSelection(): void {
+        const course = this.browsedCourse();
+        if (!course) {
+            return;
+        }
+        const courseId = course.courseId;
+        switch (this.selectionKind()) {
+            case 'lecture': {
+                const lecture = this.selectedLectureEntity();
+                if (lecture) {
+                    this.navigateToLecture(courseId, lecture.entityId);
+                    return;
+                }
+                break;
+            }
+            case 'unit': {
+                const lectureId = this.selectedUnitEntity() ? this.unitLectureId(this.selectedUnitEntity()!) : undefined;
+                if (lectureId) {
+                    this.navigateToUnit(courseId, lectureId);
+                    return;
+                }
+                break;
+            }
+            case 'coll': {
+                const unit = this.entityById('lecture_unit', Number(this.selectedKey().split(':')[1]));
+                const lectureId = unit ? this.unitLectureId(unit) : undefined;
+                if (lectureId) {
+                    this.navigateToUnit(courseId, lectureId);
+                    return;
+                }
+                break;
+            }
+        }
+        this.navigateToCourse(courseId);
+    }
+
+    /** The translation key for the browser modal's contextual open button, matching the current selection. */
+    protected openSelectionLabelKey(): string {
+        switch (this.selectionKind()) {
+            case 'lecture':
+                return 'artemisApp.courseIngestionDashboard.browser.openLecture';
+            case 'unit':
+            case 'coll':
+                return 'artemisApp.courseIngestionDashboard.browser.openUnit';
+            default:
+                return 'artemisApp.courseIngestionDashboard.browser.openCourse';
+        }
     }
 
     /** Opens the milestone detail drawer for a run. */
