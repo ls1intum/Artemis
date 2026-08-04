@@ -47,7 +47,10 @@
                 "none": "Keine letzten Ingestions von Vorlesungsinhalten.",
                 "failedAt": "Fehlgeschlagen bei",
                 "failed": "Fehlgeschlagen",
-                "completed": "Abgeschlossen"
+                "completed": "Abgeschlossen",
+                "milestones": "Meilensteine",
+                "failedAfter": "Fehlgeschlagen nach",
+                "total": "Gesamt"
             },
             "browser": {
                 "subtitle": "Alles für diesen Kurs Ingestierte durchsuchen: von der Vorlesung zur Einheit zur Collection, oder einen Metadaten-Typ wählen, um Fehlendes zu sehen.",

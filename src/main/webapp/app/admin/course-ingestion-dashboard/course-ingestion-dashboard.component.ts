@@ -756,6 +756,41 @@ export class CourseIngestionDashboardComponent implements OnInit {
 
     protected select(key: string): void {
         this.selectedKey.set(key);
+        this.expandAncestorsOf(key);
+    }
+
+    /**
+     * Expands the tree nodes on the path to the given selection, so selecting a unit or one of its collections (e.g. by
+     * clicking a content tile in the detail) reveals it in the left tree instead of leaving the drawer collapsed.
+     */
+    private expandAncestorsOf(key: string): void {
+        const toOpen: string[] = [];
+        if (key.startsWith('coll:')) {
+            const unitId = Number(key.split(':')[1]);
+            toOpen.push(`unit:${unitId}`);
+            const lectureId = this.lectureIdOfUnit(unitId);
+            if (lectureId !== undefined) {
+                toOpen.push(`lecture:${lectureId}`);
+            }
+        } else if (key.startsWith('unit:')) {
+            const lectureId = this.lectureIdOfUnit(Number(key.slice('unit:'.length)));
+            if (lectureId !== undefined) {
+                toOpen.push(`lecture:${lectureId}`);
+            }
+        }
+        if (toOpen.length === 0) {
+            return;
+        }
+        const next = new Set(this.treeOpen());
+        toOpen.forEach((nodeKey) => next.add(nodeKey));
+        this.treeOpen.set(next);
+    }
+
+    /** The parent lecture id of a unit id, from the indexed metadata, or undefined when the unit is not loaded. */
+    private lectureIdOfUnit(unitId: number): number | undefined {
+        const unit = this.entityById('lecture_unit', unitId);
+        const lectureId = unit ? Number(unit.properties?.['lecture_id']) : NaN;
+        return Number.isFinite(lectureId) && lectureId > 0 ? lectureId : undefined;
     }
 
     protected isSelected(key: string): boolean {
@@ -925,13 +960,50 @@ export class CourseIngestionDashboardComponent implements OnInit {
         return this.objectsOfCollection(Number(unitId), collectionKey);
     }
 
-    protected selectedCollectionCrumb(): string[] {
+    /**
+     * The breadcrumb for a selected collection: the parent lecture and unit (each with the tree key to navigate to on
+     * click) followed by the collection label (the current, non-navigable leaf).
+     */
+    protected selectedCollectionCrumb(): { label: string; key?: string }[] {
         if (this.selectionKind() !== 'coll') {
             return [];
         }
         const [, unitId, collectionKey] = this.selectedKey().split(':');
         const unit = this.entityById('lecture_unit', Number(unitId));
-        return [unit?.title ?? `#${unitId}`, this.translateService.instant(this.contentLabelKeyFor(collectionKey))];
+        const crumb: { label: string; key?: string }[] = [];
+        const lectureId = this.lectureIdOfUnit(Number(unitId));
+        if (lectureId !== undefined) {
+            const lecture = this.entityById('lecture', lectureId);
+            crumb.push({ label: lecture?.title ?? `#${lectureId}`, key: `lecture:${lectureId}` });
+        }
+        crumb.push({ label: unit?.title ?? `#${unitId}`, key: `unit:${unitId}` });
+        crumb.push({ label: this.translateService.instant(this.contentLabelKeyFor(collectionKey)) });
+        return crumb;
+    }
+
+    /** The parent-lecture breadcrumb for the selected unit, so the unit detail can navigate back to its lecture. */
+    protected selectedUnitCrumb(): { label: string; key: string }[] {
+        const unit = this.selectedUnitEntity();
+        if (!unit) {
+            return [];
+        }
+        const lectureId = this.lectureIdOfUnit(unit.entityId);
+        if (lectureId === undefined) {
+            return [];
+        }
+        const lecture = this.entityById('lecture', lectureId);
+        return [{ label: lecture?.title ?? `#${lectureId}`, key: `lecture:${lectureId}` }];
+    }
+
+    /**
+     * How long a recent run spent in its failed step: the total run time minus the finished steps' durations. Iris does
+     * not stamp a duration on the step it died in, so this reconstructs it, giving the failed step a time in the
+     * roadmap instead of a blank.
+     */
+    protected failedStepDuration(recent: RecentIngestion): string {
+        const finished = (recent.activities ?? []).filter((activity) => activity.state === 'FINISHED').reduce((sum, activity) => sum + (activity.durationMillis ?? 0), 0);
+        const total = recent.totalMillis ?? 0;
+        return this.formatDuration(Math.max(0, total - finished));
     }
 
     /** Number of items of a type that are missing (expected but not indexed), from the census. */

@@ -187,7 +187,12 @@
                                         </div>
                                     }
                                 </div>
-                                <span class="text-xs text-muted-color font-mono shrink-0">{{ formatDuration(recent.totalMillis) }}</span>
+                                <div class="flex flex-col items-end shrink-0">
+                                    <span class="text-xs text-muted-color font-mono">{{ formatDuration(recent.totalMillis) }}</span>
+                                    @if (recent.startedAt || recent.finishedAt) {
+                                        <span class="text-xs text-muted-color">{{ recent.startedAt || recent.finishedAt | date: 'short' }}</span>
+                                    }
+                                </div>
                                 <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" />
                             </div>
                         }
@@ -521,6 +526,7 @@
                 </tum-ui-message>
             }
 
+            <div class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.milestones"></div>
             <div class="flex flex-col">
                 @for (node of roadmap(recent, recent.outcome === 'FAILED'); track node.label; let last = $last) {
                     <div class="flex gap-3">
@@ -547,10 +553,19 @@
                             </div>
                             @if (node.durationMillis !== undefined && node.durationMillis !== null) {
                                 <div class="text-xs text-muted-color font-mono">{{ formatDuration(node.durationMillis) }}</div>
+                            } @else if (node.state === 'FAILED') {
+                                <div class="text-xs font-mono" [style.color]="'var(--danger)'">
+                                    {{ 'artemisApp.courseIngestionDashboard.recent.failedAfter' | artemisTranslate }} {{ failedStepDuration(recent) }}
+                                </div>
                             }
                         </div>
                     </div>
                 }
+            </div>
+
+            <div class="flex items-center justify-between border-t border-surface-200 dark:border-surface-700 pt-2 mt-1 text-sm">
+                <span class="text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.recent.total"></span>
+                <span class="font-mono font-semibold">{{ formatDuration(recent.totalMillis) }}</span>
             </div>
 
             <div class="flex justify-end mt-2">
@@ -900,6 +915,22 @@
                             }
                             @case ('unit') {
                                 @if (selectedUnitEntity(); as unit) {
+                                    @if (selectedUnitCrumb().length > 0) {
+                                        <div class="flex items-center gap-1.5 text-xs mb-1 flex-wrap">
+                                            @for (crumb of selectedUnitCrumb(); track $index) {
+                                                <span
+                                                    class="text-primary cursor-pointer hover:underline"
+                                                    role="button"
+                                                    tabindex="0"
+                                                    (click)="select(crumb.key)"
+                                                    (keyup.enter)="select(crumb.key)"
+                                                >
+                                                    {{ crumb.label }}
+                                                </span>
+                                                <span class="text-muted-color">›</span>
+                                            }
+                                        </div>
+                                    }
                                     <div class="flex items-center gap-2 mb-0.5 flex-wrap">
                                         <h3 class="text-base font-semibold m-0">{{ unit.title || '#' + unit.entityId }}</h3>
                                         @if (processingUnit(unit.entityId)) {
@@ -988,7 +1019,19 @@
                             @case ('coll') {
                                 <div class="flex items-center gap-1.5 text-xs mb-2 flex-wrap">
                                     @for (crumb of selectedCollectionCrumb(); track $index; let last = $last) {
-                                        <span [class.text-muted-color]="!last" [class.font-semibold]="last">{{ crumb }}</span>
+                                        @if (crumb.key && !last) {
+                                            <span
+                                                class="text-primary cursor-pointer hover:underline"
+                                                role="button"
+                                                tabindex="0"
+                                                (click)="select(crumb.key)"
+                                                (keyup.enter)="select(crumb.key)"
+                                            >
+                                                {{ crumb.label }}
+                                            </span>
+                                        } @else {
+                                            <span [class.text-muted-color]="!last" [class.font-semibold]="last">{{ crumb.label }}</span>
+                                        }
                                         @if (!last) {
                                             <span class="text-muted-color">›</span>
                                         }

@@ -47,7 +47,10 @@
                 "none": "No recent lecture content ingestions.",
                 "failedAt": "Failed at",
                 "failed": "Failed",
-                "completed": "Completed"
+                "completed": "Completed",
+                "milestones": "Milestones",
+                "failedAfter": "Failed after",
+                "total": "Total"
             },
             "browser": {
                 "subtitle": "Browse everything ingested for this course: drill from lecture to unit to collection, or pick a metadata type to see what is missing.",
