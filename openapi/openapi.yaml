@@ -1855,6 +1855,28 @@ components:
           type: array
           items: {$ref: '#/components/schemas/TutorialGroupSession'}
       required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
+    DragAndDropQuizQuestionWithoutSolution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        hint: {type: string}
+        points: {type: number, format: double}
+        scoringType:
+          type: string
+          enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
+        randomizeOrder: {type: boolean}
+        invalid: {type: boolean}
+        type: {type: string}
+        explanation: {type: string}
+        backgroundFilePath: {type: string}
+        dropLocations:
+          type: array
+          items: {$ref: '#/components/schemas/DropLocation'}
+        dragItems:
+          type: array
+          items: {$ref: '#/components/schemas/DragItem'}
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -1999,7 +2021,10 @@ components:
         mapping: {multiple-choice: '#/components/schemas/MultipleChoiceQuizQuestionWithoutSolution',
           drag-and-drop: '#/components/schemas/DragAndDropQuizQuestionWithoutSolution',
           short-answer: '#/components/schemas/ShortAnswerQuizQuestionWithoutSolution'}
-      oneOf: []
+      oneOf:
+      - {$ref: '#/components/schemas/MultipleChoiceQuizQuestionWithoutSolution'}
+      - {$ref: '#/components/schemas/DragAndDropQuizQuestionWithoutSolution'}
+      - {$ref: '#/components/schemas/ShortAnswerQuizQuestionWithoutSolution'}
       properties:
         id: {type: integer, format: int64}
         title: {type: string}
@@ -2278,10 +2303,52 @@ components:
           type: string
           default: after-quiz-end
           enum: [after-quiz-end]
+    MultipleChoiceQuizQuestionWithoutSolution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        hint: {type: string}
+        points: {type: number, format: double}
+        scoringType:
+          type: string
+          enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
+        randomizeOrder: {type: boolean}
+        invalid: {type: boolean}
+        type: {type: string}
+        explanation: {type: string}
+        answerOptions:
+          type: array
+          items: {$ref: '#/components/schemas/AnswerOptionWithoutSolution'}
+        singleChoice: {type: boolean}
     DomainObject:
       type: object
       properties:
         id: {type: integer, format: int64}
+    ShortAnswerQuizQuestionWithoutSolution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        hint: {type: string}
+        points: {type: number, format: double}
+        scoringType:
+          type: string
+          enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
+        randomizeOrder: {type: boolean}
+        invalid: {type: boolean}
+        type: {type: string}
+        explanation: {type: string}
+        spots:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerSpot'}
+        solutions:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerSolution'}
+        similarityValue: {type: integer, format: int32}
+        matchLetterCase: {type: boolean}
     TutorialGroupStudentImportData:
       type: object
       properties:
@@ -2572,7 +2639,7 @@ components:
     ShortAnswerSubmittedTextFromStudent:
       type: object
       properties:
-        text: {type: string, minLength: 1}
+        text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
     CalendarEvent:
