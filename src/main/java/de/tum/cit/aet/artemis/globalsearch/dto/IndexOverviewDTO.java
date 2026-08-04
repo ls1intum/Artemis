@@ -17,5 +17,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Snapshot of Weaviate health and per-collection object counts")
 public record IndexOverviewDTO(@Schema(description = "Whether Weaviate is currently reachable") boolean weaviateUp,
         @Schema(description = "The configured Weaviate address") String weaviateAddress,
-        @Schema(description = "Object count per Weaviate collection") List<IndexCollectionCountDTO> collections) {
+        @Schema(description = "Object count per Weaviate collection") List<IndexCollectionCountDTO> collections,
+        @Schema(description = "Whether the Iris integration is configured, so the dashboard can hide Iris-only sections when it is not") boolean irisEnabled) {
 }

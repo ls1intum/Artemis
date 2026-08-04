@@ -135,6 +135,9 @@ export class CourseIngestionDashboardComponent implements OnInit {
     readonly recentIngestions = signal<RecentIngestion[]>([]);
     // Iris reachability, polled with the active ingestions; undefined until the first probe returns.
     readonly pyrisReachable = signal<boolean | undefined>(undefined);
+    // Whether the Iris integration is configured; the Iris-only sections (active/recent ingestions, Iris health) are
+    // hidden entirely on deployments without Iris.
+    readonly irisEnabled = computed(() => this.overview()?.irisEnabled ?? false);
     private readonly nowMillis = signal(Date.now());
 
     // The run whose milestone detail drawer is open. Keyed by job id so the drawer content follows live poll updates.
@@ -318,13 +321,18 @@ export class CourseIngestionDashboardComponent implements OnInit {
     private pollActiveIngestions(): void {
         timer(0, ACTIVE_POLL_INTERVAL_MS)
             .pipe(
-                switchMap(() =>
-                    forkJoin({
+                switchMap(() => {
+                    // On deployments without Iris there are no ingestion or Iris-health endpoints, so skip the polling
+                    // entirely rather than hitting endpoints that do not exist.
+                    if (!this.irisEnabled()) {
+                        return of<{ active: ActiveIngestion[]; recent: RecentIngestion[]; health: PyrisReachability }>({ active: [], recent: [], health: { reachable: false } });
+                    }
+                    return forkJoin({
                         active: this.dashboardService.getActiveIngestions().pipe(catchError(() => of([] as ActiveIngestion[]))),
                         recent: this.dashboardService.getRecentIngestions().pipe(catchError(() => of([] as RecentIngestion[]))),
                         health: this.dashboardService.getPyrisHealth().pipe(catchError(() => of<PyrisReachability>({ reachable: false }))),
-                    }),
-                ),
+                    });
+                }),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe(({ active, recent, health }) => {

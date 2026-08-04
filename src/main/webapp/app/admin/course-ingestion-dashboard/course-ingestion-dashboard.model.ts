@@ -77,6 +77,8 @@ export interface IndexOverview {
     weaviateUp: boolean;
     weaviateAddress?: string;
     collections: IndexCollectionCount[];
+    /** Whether the Iris integration is configured; the Iris-only dashboard sections are hidden when false. */
+    irisEnabled?: boolean;
 }
 
 /**

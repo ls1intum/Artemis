@@ -33,21 +33,23 @@
                         <span class="font-semibold" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.unreachable"></span>
                     }
                 </div>
-                <div class="flex items-center justify-between py-1">
-                    <span jhiTranslate="artemisApp.courseIngestionDashboard.system.iris"></span>
-                    @if (pyrisReachable() === undefined) {
-                        <span class="text-muted-color">…</span>
-                    } @else if (pyrisReachable()) {
-                        <span class="font-semibold" [style.color]="'var(--success)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.reachable"></span>
-                    } @else {
-                        <span class="inline-flex items-center gap-1.5 font-semibold" [style.color]="'var(--danger)'">
-                            <fa-icon [icon]="faTriangleExclamation" size="xs" />
-                            <span jhiTranslate="artemisApp.courseIngestionDashboard.system.unreachable"></span>
-                        </span>
+                @if (irisEnabled()) {
+                    <div class="flex items-center justify-between py-1">
+                        <span jhiTranslate="artemisApp.courseIngestionDashboard.system.iris"></span>
+                        @if (pyrisReachable() === undefined) {
+                            <span class="text-muted-color">…</span>
+                        } @else if (pyrisReachable()) {
+                            <span class="font-semibold" [style.color]="'var(--success)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.reachable"></span>
+                        } @else {
+                            <span class="inline-flex items-center gap-1.5 font-semibold" [style.color]="'var(--danger)'">
+                                <fa-icon [icon]="faTriangleExclamation" size="xs" />
+                                <span jhiTranslate="artemisApp.courseIngestionDashboard.system.unreachable"></span>
+                            </span>
+                        }
+                    </div>
+                    @if (pyrisReachable() === false) {
+                        <div class="text-xs mt-1" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.irisDownHint"></div>
                     }
-                </div>
-                @if (pyrisReachable() === false) {
-                    <div class="text-xs mt-1" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.irisDownHint"></div>
                 }
                 @if (o.weaviateAddress) {
                     <div class="flex items-center justify-between py-1">
@@ -84,114 +86,116 @@
         </div>
     }
 
-    <div class="mt-4">
-        <div class="flex items-center gap-2 mb-2">
-            <fa-icon [icon]="faSync" [class.animate-spin]="hasActiveIngestions()" />
-            <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.active.title"></h4>
-            @if (hasActiveIngestions()) {
-                <span class="text-sm text-muted-color">({{ activeIngestions().length }})</span>
-            }
+    @if (irisEnabled()) {
+        <div class="mt-4">
+            <div class="flex items-center gap-2 mb-2">
+                <fa-icon [icon]="faSync" [class.animate-spin]="hasActiveIngestions()" />
+                <h4 class="mb-0" jhiTranslate="artemisApp.courseIngestionDashboard.active.title"></h4>
+                @if (hasActiveIngestions()) {
+                    <span class="text-sm text-muted-color">({{ activeIngestions().length }})</span>
+                }
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.active.contentTitle' | artemisTranslate">
+                    @if (activeIngestions().length === 0) {
+                        <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.active.noneContent"></div>
+                    } @else {
+                        <div class="flex flex-col" style="max-height: 22rem; overflow-y: auto">
+                            @for (run of activeIngestions(); track run.jobId) {
+                                <div
+                                    class="flex items-center gap-3 py-2 px-2 border-t border-surface-200 dark:border-surface-700 first:border-t-0 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
+                                    role="button"
+                                    tabindex="0"
+                                    (click)="openRun(run)"
+                                    (keyup.enter)="openRun(run)"
+                                >
+                                    @if (isStalled(run)) {
+                                        <fa-icon [icon]="faTriangleExclamation" class="shrink-0" [style.color]="'var(--danger)'" />
+                                    } @else {
+                                        <fa-icon [icon]="faSpinner" class="animate-spin shrink-0" [style.color]="'var(--warning)'" />
+                                    }
+                                    <div class="min-w-0 flex-1">
+                                        <div class="truncate">
+                                            <span class="font-medium">
+                                                {{ run.lectureUnitName || ('artemisApp.courseIngestionDashboard.active.unit' | artemisTranslate) + ' ' + run.lectureUnitId }}
+                                            </span>
+                                            <span class="text-xs text-muted-color ms-2">{{ runContext(run) }}</span>
+                                        </div>
+                                        @if (isStalled(run)) {
+                                            <div class="flex items-center gap-1.5 mt-0.5 truncate">
+                                                <span class="text-xs font-medium truncate" [style.color]="'var(--danger)'">
+                                                    {{ 'artemisApp.courseIngestionDashboard.active.stalled' | artemisTranslate }} ·
+                                                    {{ run.activities && run.activities.length ? currentStepName(run) : phaseLabel(run) }}
+                                                </span>
+                                                @if (run.retryCount > 0) {
+                                                    <span class="text-xs shrink-0" [style.color]="'var(--danger)'">
+                                                        · {{ 'artemisApp.courseIngestionDashboard.active.retried' | artemisTranslate: { count: run.retryCount } }}
+                                                    </span>
+                                                }
+                                                <span class="text-xs text-muted-color font-mono shrink-0">{{ sinceUpdate(run) }}</span>
+                                            </div>
+                                        } @else {
+                                            <div class="flex items-center gap-1.5 mt-0.5 truncate">
+                                                <span class="inline-block rounded-full shrink-0" style="width: 0.4rem; height: 0.4rem" [style.background]="'var(--warning)'"></span>
+                                                <span class="text-xs font-medium truncate" [style.color]="'var(--warning)'">{{ currentStepName(run) }}</span>
+                                                @if (currentStepDetail(run)) {
+                                                    <span class="text-xs text-muted-color font-mono shrink-0">{{ currentStepDetail(run) }}</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                    <span class="text-xs text-muted-color font-mono shrink-0">{{ elapsed(run.startedAt) }}</span>
+                                    <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </tum-ui-panel>
+                <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.active.metadataTitle' | artemisTranslate">
+                    <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.active.noneMetadata"></div>
+                </tum-ui-panel>
+            </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.active.contentTitle' | artemisTranslate">
-                @if (activeIngestions().length === 0) {
-                    <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.active.noneContent"></div>
+
+        <div class="mt-4">
+            <h4 class="mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.title"></h4>
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.recent.contentTitle' | artemisTranslate">
+                @if (recentIngestions().length === 0) {
+                    <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.none"></div>
                 } @else {
                     <div class="flex flex-col" style="max-height: 22rem; overflow-y: auto">
-                        @for (run of activeIngestions(); track run.jobId) {
+                        @for (recent of recentIngestions(); track recent.jobId) {
                             <div
                                 class="flex items-center gap-3 py-2 px-2 border-t border-surface-200 dark:border-surface-700 first:border-t-0 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
                                 role="button"
                                 tabindex="0"
-                                (click)="openRun(run)"
-                                (keyup.enter)="openRun(run)"
+                                (click)="openRecent(recent)"
+                                (keyup.enter)="openRecent(recent)"
                             >
-                                @if (isStalled(run)) {
-                                    <fa-icon [icon]="faTriangleExclamation" class="shrink-0" [style.color]="'var(--danger)'" />
-                                } @else {
-                                    <fa-icon [icon]="faSpinner" class="animate-spin shrink-0" [style.color]="'var(--warning)'" />
-                                }
+                                <fa-icon [icon]="recentIcon(recent)" class="shrink-0" [style.color]="recentColor(recent)" />
                                 <div class="min-w-0 flex-1">
                                     <div class="truncate">
-                                        <span class="font-medium">
-                                            {{ run.lectureUnitName || ('artemisApp.courseIngestionDashboard.active.unit' | artemisTranslate) + ' ' + run.lectureUnitId }}
-                                        </span>
-                                        <span class="text-xs text-muted-color ms-2">{{ runContext(run) }}</span>
+                                        <span class="font-medium">{{ recentTitle(recent) }}</span>
+                                        <span class="text-xs text-muted-color ms-2">{{ runContext(recent) }}</span>
                                     </div>
-                                    @if (isStalled(run)) {
-                                        <div class="flex items-center gap-1.5 mt-0.5 truncate">
-                                            <span class="text-xs font-medium truncate" [style.color]="'var(--danger)'">
-                                                {{ 'artemisApp.courseIngestionDashboard.active.stalled' | artemisTranslate }} ·
-                                                {{ run.activities && run.activities.length ? currentStepName(run) : phaseLabel(run) }}
-                                            </span>
-                                            @if (run.retryCount > 0) {
-                                                <span class="text-xs shrink-0" [style.color]="'var(--danger)'">
-                                                    · {{ 'artemisApp.courseIngestionDashboard.active.retried' | artemisTranslate: { count: run.retryCount } }}
-                                                </span>
-                                            }
-                                            <span class="text-xs text-muted-color font-mono shrink-0">{{ sinceUpdate(run) }}</span>
-                                        </div>
-                                    } @else {
-                                        <div class="flex items-center gap-1.5 mt-0.5 truncate">
-                                            <span class="inline-block rounded-full shrink-0" style="width: 0.4rem; height: 0.4rem" [style.background]="'var(--warning)'"></span>
-                                            <span class="text-xs font-medium truncate" [style.color]="'var(--warning)'">{{ currentStepName(run) }}</span>
-                                            @if (currentStepDetail(run)) {
-                                                <span class="text-xs text-muted-color font-mono shrink-0">{{ currentStepDetail(run) }}</span>
+                                    @if (recent.outcome === 'FAILED') {
+                                        <div class="text-xs truncate" [style.color]="'var(--danger)'">
+                                            {{ 'artemisApp.courseIngestionDashboard.recent.failedAt' | artemisTranslate }} {{ recent.failedStepName }}
+                                            @if (recent.errorMessage) {
+                                                <span class="text-muted-color"> · {{ recent.errorMessage }}</span>
                                             }
                                         </div>
                                     }
                                 </div>
-                                <span class="text-xs text-muted-color font-mono shrink-0">{{ elapsed(run.startedAt) }}</span>
+                                <span class="text-xs text-muted-color font-mono shrink-0">{{ formatDuration(recent.totalMillis) }}</span>
                                 <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" />
                             </div>
                         }
                     </div>
                 }
             </tum-ui-panel>
-            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.active.metadataTitle' | artemisTranslate">
-                <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.active.noneMetadata"></div>
-            </tum-ui-panel>
         </div>
-    </div>
-
-    <div class="mt-4">
-        <h4 class="mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.title"></h4>
-        <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.recent.contentTitle' | artemisTranslate">
-            @if (recentIngestions().length === 0) {
-                <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.none"></div>
-            } @else {
-                <div class="flex flex-col" style="max-height: 22rem; overflow-y: auto">
-                    @for (recent of recentIngestions(); track recent.jobId) {
-                        <div
-                            class="flex items-center gap-3 py-2 px-2 border-t border-surface-200 dark:border-surface-700 first:border-t-0 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
-                            role="button"
-                            tabindex="0"
-                            (click)="openRecent(recent)"
-                            (keyup.enter)="openRecent(recent)"
-                        >
-                            <fa-icon [icon]="recentIcon(recent)" class="shrink-0" [style.color]="recentColor(recent)" />
-                            <div class="min-w-0 flex-1">
-                                <div class="truncate">
-                                    <span class="font-medium">{{ recentTitle(recent) }}</span>
-                                    <span class="text-xs text-muted-color ms-2">{{ runContext(recent) }}</span>
-                                </div>
-                                @if (recent.outcome === 'FAILED') {
-                                    <div class="text-xs truncate" [style.color]="'var(--danger)'">
-                                        {{ 'artemisApp.courseIngestionDashboard.recent.failedAt' | artemisTranslate }} {{ recent.failedStepName }}
-                                        @if (recent.errorMessage) {
-                                            <span class="text-muted-color"> · {{ recent.errorMessage }}</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                            <span class="text-xs text-muted-color font-mono shrink-0">{{ formatDuration(recent.totalMillis) }}</span>
-                            <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" />
-                        </div>
-                    }
-                </div>
-            }
-        </tum-ui-panel>
-    </div>
+    }
 
     <div class="mt-4">
         <div class="flex items-center gap-2 mb-2">

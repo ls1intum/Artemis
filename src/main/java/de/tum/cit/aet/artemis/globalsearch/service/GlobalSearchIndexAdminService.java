@@ -10,8 +10,10 @@ import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateHealthIndicator;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -44,9 +46,14 @@ public class GlobalSearchIndexAdminService {
 
     private final Optional<WeaviateHealthIndicator> weaviateHealthIndicator;
 
-    public GlobalSearchIndexAdminService(WeaviateService weaviateService, Optional<WeaviateHealthIndicator> weaviateHealthIndicator) {
+    // Whether the Iris integration is configured, so the dashboard can hide the Iris-only sections on deployments
+    // without Iris (active/recent ingestions and Iris health).
+    private final boolean irisEnabled;
+
+    public GlobalSearchIndexAdminService(WeaviateService weaviateService, Optional<WeaviateHealthIndicator> weaviateHealthIndicator, Environment environment) {
         this.weaviateService = weaviateService;
         this.weaviateHealthIndicator = weaviateHealthIndicator;
+        this.irisEnabled = new ArtemisConfigHelper().isIrisEnabled(environment);
     }
 
     /**
@@ -69,7 +76,7 @@ public class GlobalSearchIndexAdminService {
         for (String collection : PYRIS_COLLECTIONS) {
             counts.add(countExternalCollection(collection));
         }
-        return new IndexOverviewDTO(up, address, counts);
+        return new IndexOverviewDTO(up, address, counts, irisEnabled);
     }
 
     private IndexCollectionCountDTO countArtemisCollection(String collection) {
