@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.MissingContentDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService.IndexedKey;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -120,6 +124,42 @@ public class CourseIndexCensusService {
         return results;
     }
 
+    /**
+     * Enumerates, by name, the lecture units that are expected to have ingested content but are missing it: a unit that
+     * has a PDF but no slide chunks ({@code slides}), or a video but no transcript segments ({@code transcript}). This
+     * is the per-unit breakdown behind the course-level PDF/video content counts, so an admin can see exactly which
+     * units still need ingestion instead of only a count. Returns an empty list when Iris is not enabled. Read-only.
+     *
+     * @param courseId the course id
+     * @return the per-unit content gaps, sorted by kind then unit id
+     */
+    public List<MissingContentDTO> contentGapsForCourse(long courseId) {
+        if (!irisEnabled) {
+            return List.of();
+        }
+        Set<Long> unitsWithPdf = lectureUnitRepository.findUnitIdsWithAttachmentByCourseId(courseId);
+        Set<Long> unitsWithSlides = searchableEntityWeaviateService.listExternalUnitIdsForCourse(SLIDES_COLLECTION, courseId);
+        Set<Long> unitsWithVideo = lectureUnitRepository.findUnitIdsWithVideoByCourseId(courseId);
+        Set<Long> unitsWithTranscript = searchableEntityWeaviateService.listExternalUnitIdsForCourse(TRANSCRIPTS_COLLECTION, courseId);
+
+        Set<Long> missingSlides = unitsWithPdf.stream().filter(id -> !unitsWithSlides.contains(id)).collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<Long> missingTranscript = unitsWithVideo.stream().filter(id -> !unitsWithTranscript.contains(id)).collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Set<Long> allMissing = new LinkedHashSet<>(missingSlides);
+        allMissing.addAll(missingTranscript);
+        Map<Long, String> titles = resolveTitles(SearchableEntitySchema.TypeValues.LECTURE_UNIT, courseId, allMissing);
+
+        List<MissingContentDTO> gaps = new ArrayList<>();
+        for (Long id : missingSlides) {
+            gaps.add(new MissingContentDTO(id, titles.get(id), "slides"));
+        }
+        for (Long id : missingTranscript) {
+            gaps.add(new MissingContentDTO(id, titles.get(id), "transcript"));
+        }
+        gaps.sort(Comparator.comparing(MissingContentDTO::kind).thenComparingLong(MissingContentDTO::lectureUnitId));
+        return gaps;
+    }
+
     /** A course counts as active when it has no end date or its end date is still in the future. */
     private static boolean isActive(Course course) {
         return course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now());
@@ -133,6 +173,41 @@ public class CourseIndexCensusService {
      */
     public CourseCensus censusCourse(long courseId) {
         return censusCourse(courseId, null, null, null, true);
+    }
+
+    /**
+     * Enumerates, by name, the entities the database expects to be indexed for a course but that are absent from the
+     * {@code SearchableEntities} Weaviate collection: the missing side of the census, resolved to titles. It is computed
+     * as the per-type set difference {@code expected - present} (the same rule the census counts use), and only the
+     * missing ids are resolved to titles, so no full course load happens for a course that is already complete. Types
+     * without a database source (posts, answer posts) are reported present-only by the census and so never appear here.
+     * Read-only.
+     *
+     * @param courseId the course id
+     * @return the missing entities, sorted by type then id
+     */
+    public List<MissingEntityDTO> missingEntitiesForCourse(long courseId) {
+        Map<String, Set<Long>> presentByType = new HashMap<>();
+        for (IndexedKey key : searchableEntityWeaviateService.listIndexedKeysForCourse(courseId)) {
+            presentByType.computeIfAbsent(key.type(), type -> new HashSet<>()).add(key.entityId());
+        }
+        Map<String, Set<Long>> expectedByType = expectedKeysByType(courseId);
+
+        List<MissingEntityDTO> missing = new ArrayList<>();
+        for (Map.Entry<String, Set<Long>> entry : expectedByType.entrySet()) {
+            String type = entry.getKey();
+            Set<Long> present = presentByType.getOrDefault(type, Set.of());
+            Set<Long> missingIds = entry.getValue().stream().filter(id -> !present.contains(id)).collect(Collectors.toCollection(LinkedHashSet::new));
+            if (missingIds.isEmpty()) {
+                continue;
+            }
+            Map<Long, String> titles = resolveTitles(type, courseId, missingIds);
+            for (Long id : missingIds) {
+                missing.add(new MissingEntityDTO(type, id, titles.get(id)));
+            }
+        }
+        missing.sort(Comparator.comparing(MissingEntityDTO::type).thenComparingLong(MissingEntityDTO::entityId));
+        return missing;
     }
 
     private CourseCensus censusCourse(long courseId, String courseTitle, String semester, String startDate, boolean active) {
@@ -198,6 +273,33 @@ public class CourseIndexCensusService {
         expected.put(SearchableEntitySchema.TypeValues.LECTURE_UNIT, lectureUnitRepository.findIndexableUnitIdsByCourseId(courseId));
         expected.put(SearchableEntitySchema.TypeValues.CHANNEL, indexableChannelIds(courseId));
         return expected;
+    }
+
+    /**
+     * Resolves the display titles for a set of missing entity ids of one type, using the same title source the indexing
+     * DTO for that type uses, so a missing item reads with the name it would have once indexed. Only the missing ids are
+     * loaded. Types without a database source return no titles.
+     *
+     * @param type     the entity type discriminator
+     * @param courseId the course id (used for the single course row)
+     * @param ids      the ids to resolve
+     * @return a map from entity id to title (ids that could not be resolved are simply absent)
+     */
+    private Map<Long, String> resolveTitles(String type, long courseId, Set<Long> ids) {
+        Map<Long, String> titles = new HashMap<>();
+        switch (type) {
+            case SearchableEntitySchema.TypeValues.LECTURE -> lectureRepository.findAllById(ids).forEach(lecture -> titles.put(lecture.getId(), lecture.getTitle()));
+            case SearchableEntitySchema.TypeValues.EXAM -> examRepository.findAllById(ids).forEach(exam -> titles.put(exam.getId(), exam.getTitle()));
+            case SearchableEntitySchema.TypeValues.FAQ -> faqRepository.findAllById(ids).forEach(faq -> titles.put(faq.getId(), faq.getQuestionTitle()));
+            case SearchableEntitySchema.TypeValues.COURSE -> courseRepository.findById(courseId).ifPresent(course -> titles.put(course.getId(), course.getTitle()));
+            case SearchableEntitySchema.TypeValues.EXERCISE -> exerciseRepository.findAllById(ids).forEach(exercise -> titles.put(exercise.getId(), exercise.getTitle()));
+            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> lectureUnitRepository.findAllById(ids).forEach(unit -> titles.put(unit.getId(), unit.getName()));
+            case SearchableEntitySchema.TypeValues.CHANNEL -> channelRepository.findAllById(ids).forEach(channel -> titles.put(channel.getId(), channel.getName()));
+            default -> {
+                // Types without a database source (posts, answer posts) are never enumerated in expectedKeysByType.
+            }
+        }
+        return titles;
     }
 
     /**

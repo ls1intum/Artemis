@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +21,9 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentDTO.IndexedContentObjectDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
@@ -35,6 +39,7 @@ import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.Metadata;
 
 /**
  * Unified service for synchronizing and searching every indexable entity type (exercise, lecture,
@@ -228,6 +233,97 @@ public class SearchableEntityWeaviateService {
             log.debug("Could not enumerate unit ids in external collection '{}' for course {}: {}", exactCollectionName, courseId, e.getMessage());
         }
         return unitIds;
+    }
+
+    /**
+     * Enumerates the objects actually stored in the {@code SearchableEntities} collection for a course, with each
+     * object's type, entity id, title, and ingestion time (the Weaviate creation time), for the admin course-content
+     * browser. Paged with a cursor. Read-only.
+     *
+     * @param courseId the course id
+     * @return the indexed objects for the course
+     */
+    public List<IndexedEntityDTO> listIndexedEntitiesForCourse(long courseId) {
+        final int pageSize = 500;
+        List<IndexedEntityDTO> entities = new ArrayList<>();
+        try {
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            Filter courseFilter = Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId);
+            String after = null;
+            while (true) {
+                final String cursor = after;
+                var result = collection.query.fetchObjects(builder -> {
+                    builder.limit(pageSize).filters(courseFilter).returnMetadata(Metadata.CREATION_TIME_UNIX);
+                    if (cursor != null) {
+                        builder.after(cursor);
+                    }
+                    return builder;
+                });
+                List<WeaviateObject<Map<String, Object>>> objects = result.objects();
+                for (WeaviateObject<Map<String, Object>> object : objects) {
+                    Map<String, Object> properties = object.properties();
+                    Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
+                    Object entityId = properties.get(SearchableEntitySchema.Properties.ENTITY_ID);
+                    if (type != null && entityId instanceof Number entityIdNumber) {
+                        Object title = properties.get(SearchableEntitySchema.Properties.TITLE);
+                        String ingestedAt = object.createdAt() != null ? Instant.ofEpochMilli(object.createdAt()).toString() : null;
+                        entities.add(new IndexedEntityDTO(type.toString(), entityIdNumber.longValue(), title != null ? title.toString() : null, ingestedAt, properties));
+                    }
+                }
+                if (objects.size() < pageSize) {
+                    break;
+                }
+                after = objects.getLast().uuid();
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to enumerate indexed entities for course {}: {}", courseId, e.getMessage(), e);
+            throw new WeaviateException("Failed to enumerate SearchableEntities for course " + courseId + ": " + e.getMessage(), e);
+        }
+        return entities;
+    }
+
+    /** The Iris lecture-content collections (unprefixed, exact names), keyed by the stable content key for the frontend. */
+    private static final List<ContentCollection> CONTENT_COLLECTIONS = List.of(new ContentCollection("slides", "Lectures"),
+            new ContentCollection("transcript", "LectureTranscriptions"), new ContentCollection("unit_summary", "LectureUnits"),
+            new ContentCollection("segments", "LectureUnitSegments"));
+
+    /**
+     * Reads the objects stored in the Iris lecture-content collections (slide chunks, transcript segments, unit
+     * summaries, aligned segments) for a course, for the admin course-content browser. Each collection is read by its
+     * exact (unprefixed) name and filtered on {@code course_id}; a collection that does not exist yet is skipped. Capped
+     * per collection to keep the response bounded. Read-only.
+     *
+     * @param courseId the course id
+     * @return one group per non-empty content collection, each with its stored objects (properties + ingestion time)
+     */
+    public List<IndexedContentDTO> listIndexedContentForCourse(long courseId) {
+        List<IndexedContentDTO> groups = new ArrayList<>();
+        for (ContentCollection contentCollection : CONTENT_COLLECTIONS) {
+            List<IndexedContentObjectDTO> objects = readContentObjects(contentCollection.collectionName(), courseId);
+            if (!objects.isEmpty()) {
+                groups.add(new IndexedContentDTO(contentCollection.key(), objects.size(), objects));
+            }
+        }
+        return groups;
+    }
+
+    private List<IndexedContentObjectDTO> readContentObjects(String exactCollectionName, long courseId) {
+        final int limit = 500;
+        List<IndexedContentObjectDTO> objects = new ArrayList<>();
+        try {
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getExternalCollection(exactCollectionName);
+            Filter courseFilter = Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId);
+            var result = collection.query.fetchObjects(builder -> builder.limit(limit).filters(courseFilter).returnMetadata(Metadata.CREATION_TIME_UNIX));
+            for (WeaviateObject<Map<String, Object>> object : result.objects()) {
+                String ingestedAt = object.createdAt() != null ? Instant.ofEpochMilli(object.createdAt()).toString() : null;
+                objects.add(new IndexedContentObjectDTO(ingestedAt, object.properties()));
+            }
+        }
+        catch (Exception e) {
+            log.debug("Could not read content collection '{}' for course {}: {}", exactCollectionName, courseId, e.getMessage());
+        }
+        return objects;
     }
 
     // ----- Exercise sync -----
@@ -691,5 +787,14 @@ public class SearchableEntityWeaviateService {
      * @param entityId the entity id
      */
     public record IndexedKey(String type, long entityId) {
+    }
+
+    /**
+     * Maps a stable content key (used by the frontend) to its exact (unprefixed) Iris Weaviate collection name.
+     *
+     * @param key            the stable content key
+     * @param collectionName the exact Iris collection name
+     */
+    private record ContentCollection(String key, String collectionName) {
     }
 }

@@ -92,6 +92,42 @@ export interface ContentCensus {
     missing: number;
 }
 
+/** One object stored in Weaviate for a course: its type, id, title, when it was ingested, and its full stored fields. */
+export interface IndexedEntity {
+    type: string;
+    entityId: number;
+    title?: string;
+    ingestedAt?: string;
+    properties: Record<string, unknown>;
+}
+
+/** One object stored in an Iris lecture-content collection: its ingestion time and full stored fields. */
+export interface IndexedContentObject {
+    ingestedAt?: string;
+    properties: Record<string, unknown>;
+}
+
+/** The objects stored in one Iris lecture-content collection (slides, transcript, unit summaries, segments). */
+export interface IndexedContent {
+    key: string;
+    count: number;
+    objects: IndexedContentObject[];
+}
+
+/** One entity the database expects to be indexed but that is absent from Weaviate, resolved to its title. */
+export interface MissingEntity {
+    type: string;
+    entityId: number;
+    title?: string;
+}
+
+/** One lecture unit expected to have ingested content (slides or transcript) that is absent from the Iris collections. */
+export interface MissingContent {
+    lectureUnitId: number;
+    title?: string;
+    kind: 'slides' | 'transcript';
+}
+
 /**
  * Per-type index census for one course, plus the Iris lecture-content completeness (empty when Iris is not enabled).
  */

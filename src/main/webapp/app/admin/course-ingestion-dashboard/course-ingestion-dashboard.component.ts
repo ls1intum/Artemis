@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of, switchMap, timer } from 'rxjs';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
@@ -16,7 +16,32 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
-import { faCheck, faChevronRight, faCircle, faCircleCheck, faDatabase, faLayerGroup, faSpinner, faSync, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAlignLeft,
+    faBook,
+    faBookOpen,
+    faCheck,
+    faChevronRight,
+    faCircle,
+    faCircleCheck,
+    faCircleQuestion,
+    faCommentDots,
+    faComments,
+    faDatabase,
+    faFileLines,
+    faGraduationCap,
+    faHashtag,
+    faImage,
+    faLayerGroup,
+    faListCheck,
+    faSpinner,
+    faSync,
+    faTriangleExclamation,
+    faUpRightFromSquare,
+    faWaveSquare,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { CourseIngestionDashboardService } from './course-ingestion-dashboard.service';
 import {
     ActiveIngestion,
@@ -24,7 +49,12 @@ import {
     CourseIndexCensus,
     DisplayStep,
     IndexOverview,
+    IndexedContent,
+    IndexedContentObject,
+    IndexedEntity,
     IngestionActivity,
+    MissingContent,
+    MissingEntity,
     RecentIngestion,
     TypeIndexCensus,
 } from './course-ingestion-dashboard.model';
@@ -61,6 +91,7 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
     imports: [
         DecimalPipe,
         DatePipe,
+        NgTemplateOutlet,
         FormsModule,
         TumUiTableDirective,
         TumUiPanelComponent,
@@ -92,6 +123,9 @@ export class CourseIngestionDashboardComponent implements OnInit {
     protected readonly faChevronRight = faChevronRight;
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faBookOpen = faBookOpen;
+    protected readonly faFileLines = faFileLines;
+    protected readonly faUpRightFromSquare = faUpRightFromSquare;
     protected readonly types = MATRIX_TYPES;
 
     // Live active ingestions, polled every few seconds so the milestone view auto-updates. A ticking clock signal
@@ -130,6 +164,20 @@ export class CourseIngestionDashboardComponent implements OnInit {
     // Pagination over the filtered/sorted courses (0-based page, matching tum-ui-paginator).
     readonly pageSize = signal(25);
     readonly currentPage = signal(0);
+
+    // Course-content browser modal: the course whose stored Weaviate objects are shown, and the loaded objects.
+    readonly browsedCourse = signal<CourseIndexCensus | undefined>(undefined);
+    readonly indexedEntities = signal<IndexedEntity[]>([]);
+    readonly indexedContent = signal<IndexedContent[]>([]);
+    readonly indexedMissing = signal<MissingEntity[]>([]);
+    readonly contentGaps = signal<MissingContent[]>([]);
+    readonly entitiesLoading = signal(false);
+    readonly entitiesError = signal(false);
+    // Keys of objects whose full stored fields are expanded in the browser modal (entity or content object).
+    readonly expandedEntities = signal<Set<string>>(new Set());
+    // The tree node currently selected in the browser modal (drives the right detail pane), and the expanded tree nodes.
+    readonly selectedKey = signal<string>('');
+    readonly treeOpen = signal<Set<string>>(new Set());
 
     /** Translated options for the scope select, rebuilt on demand so they follow the active language. */
     protected scopeOptions(): SelectOption<ScopeFilter>[] {
@@ -376,9 +424,16 @@ export class CourseIngestionDashboardComponent implements OnInit {
         return `artemisApp.courseIngestionDashboard.matrix.status_${suffix}`;
     }
 
-    /** Adds a left divider border to the given base classes for the first column of a group, to visually split groups. */
-    protected divider(first: boolean, base: string): string {
-        return first ? `${base} border-l border-surface-300 dark:border-surface-600` : base;
+    /**
+     * The inline left-border style that visually splits the metadata / content column groups. It is applied inline (not
+     * via a border utility) because the tum-ui table directive styles descendant cells with a higher-specificity
+     * arbitrary-variant border-color rule that would otherwise override a plain `border-l` utility and render nothing.
+     */
+    protected readonly groupDividerStyle = '1px solid var(--p-surface-300)';
+
+    /** The left divider style for the first column of a group (metadata / content), or null for the rest. */
+    protected divider(first: boolean): string | null {
+        return first ? this.groupDividerStyle : null;
     }
 
     protected typeLabelKey(type: string): string {
@@ -600,6 +655,382 @@ export class CourseIngestionDashboardComponent implements OnInit {
 
     protected navigateToCourse(courseId: number): void {
         void this.router.navigate(['/course-management', courseId]);
+    }
+
+    /** Opens the course-content browser modal and loads what is stored in Weaviate for the course. */
+    protected openCourseBrowser(course: CourseIndexCensus): void {
+        this.browsedCourse.set(course);
+        this.indexedEntities.set([]);
+        this.indexedContent.set([]);
+        this.indexedMissing.set([]);
+        this.contentGaps.set([]);
+        this.expandedEntities.set(new Set());
+        this.treeOpen.set(new Set());
+        this.selectedKey.set('');
+        this.entitiesLoading.set(true);
+        this.entitiesError.set(false);
+        this.dashboardService
+            .getIndexedEntities(course.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (entities) => {
+                    this.indexedEntities.set(entities);
+                    this.entitiesLoading.set(false);
+                },
+                error: () => {
+                    this.entitiesLoading.set(false);
+                    this.entitiesError.set(true);
+                },
+            });
+        this.dashboardService
+            .getIndexedContent(course.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (content) => this.indexedContent.set(content),
+                error: () => this.indexedContent.set([]),
+            });
+        this.dashboardService
+            .getMissingEntities(course.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (missing) => this.indexedMissing.set(missing),
+                error: () => this.indexedMissing.set([]),
+            });
+        this.dashboardService
+            .getContentGaps(course.courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (gaps) => this.contentGaps.set(gaps),
+                error: () => this.contentGaps.set([]),
+            });
+    }
+
+    protected onCourseBrowserVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.browsedCourse.set(undefined);
+            this.indexedEntities.set([]);
+            this.indexedContent.set([]);
+            this.indexedMissing.set([]);
+            this.contentGaps.set([]);
+            this.expandedEntities.set(new Set());
+            this.treeOpen.set(new Set());
+            this.selectedKey.set('');
+        }
+    }
+
+    // ----- Browser tree: selection + expand state -----
+
+    protected select(key: string): void {
+        this.selectedKey.set(key);
+    }
+
+    protected isSelected(key: string): boolean {
+        return this.selectedKey() === key;
+    }
+
+    protected toggleOpen(key: string): void {
+        const next = new Set(this.treeOpen());
+        if (next.has(key)) {
+            next.delete(key);
+        } else {
+            next.add(key);
+        }
+        this.treeOpen.set(next);
+    }
+
+    protected isOpen(key: string): boolean {
+        return this.treeOpen().has(key);
+    }
+
+    // ----- Browser tree: assembled structure -----
+
+    /**
+     * The metadata types shown as the top-level completeness scoreboard (every measured type, including lectures and
+     * lecture units, so an incomplete type surfaces its red dot here and its missing items are reachable). The Lectures
+     * section below is a separate browse-the-content drill-down over the indexed lectures.
+     */
+    protected readonly flatTypes = MATRIX_TYPES;
+
+    /** The lectures for the browsed course, with their units and each unit's content collections, assembled from the data. */
+    protected lectureNodes(): { lecture: IndexedEntity; key: string; units: { unit: IndexedEntity; key: string; collections: { key: string; count: number }[] }[] }[] {
+        const entities = this.indexedEntities();
+        const lectures = entities.filter((entity) => entity.type === 'lecture');
+        const units = entities.filter((entity) => entity.type === 'lecture_unit');
+        return lectures
+            .map((lecture) => ({
+                lecture,
+                key: `lecture:${lecture.entityId}`,
+                units: units
+                    .filter((unit) => Number(unit.properties?.['lecture_id']) === lecture.entityId)
+                    .map((unit) => ({ unit, key: `unit:${unit.entityId}`, collections: this.unitCollections(unit.entityId) })),
+            }))
+            .sort((first, second) => (first.lecture.title ?? '').localeCompare(second.lecture.title ?? ''));
+    }
+
+    /** The content collections that hold objects for a given unit, with their counts. */
+    protected unitCollections(unitId: number): { key: string; count: number }[] {
+        return this.indexedContent()
+            .map((group) => ({ key: group.key, count: group.objects.filter((object) => Number(object.properties?.['lecture_unit_id']) === unitId).length }))
+            .filter((entry) => entry.count > 0);
+    }
+
+    /** The indexed objects of a metadata type, for the type detail view. */
+    protected objectsOfType(type: string): IndexedEntity[] {
+        return this.indexedEntities().filter((entity) => entity.type === type);
+    }
+
+    /** The entities of a metadata type that are expected but not indexed, for the type detail's "not ingested" list. */
+    protected missingForType(type: string): MissingEntity[] {
+        return this.indexedMissing().filter((entity) => entity.type === type);
+    }
+
+    /** The stored content objects for one unit and collection, for the collection detail view. */
+    protected objectsOfCollection(unitId: number, collectionKey: string): IndexedContentObject[] {
+        const group = this.indexedContent().find((entry) => entry.key === collectionKey);
+        return group ? group.objects.filter((object) => Number(object.properties?.['lecture_unit_id']) === unitId) : [];
+    }
+
+    protected entityById(type: string, id: number): IndexedEntity | undefined {
+        return this.indexedEntities().find((entity) => entity.type === type && entity.entityId === id);
+    }
+
+    // ----- Browser detail: what the right pane shows for the current selection -----
+
+    protected selectionKind(): 'type' | 'lecture' | 'unit' | 'coll' | 'none' {
+        const key = this.selectedKey();
+        if (key.startsWith('type:')) {
+            return 'type';
+        }
+        if (key.startsWith('lecture:')) {
+            return 'lecture';
+        }
+        if (key.startsWith('unit:')) {
+            return 'unit';
+        }
+        if (key.startsWith('coll:')) {
+            return 'coll';
+        }
+        return 'none';
+    }
+
+    protected selectedType(): string {
+        return this.selectedKey().startsWith('type:') ? this.selectedKey().slice('type:'.length) : '';
+    }
+
+    protected selectedLectureEntity(): IndexedEntity | undefined {
+        return this.selectionKind() === 'lecture' ? this.entityById('lecture', Number(this.selectedKey().slice('lecture:'.length))) : undefined;
+    }
+
+    protected selectedUnitEntity(): IndexedEntity | undefined {
+        return this.selectionKind() === 'unit' ? this.entityById('lecture_unit', Number(this.selectedKey().slice('unit:'.length))) : undefined;
+    }
+
+    /** The parent lecture id of a unit (from its stored metadata), used to open the unit's lecture in Artemis. */
+    protected unitLectureId(unit: IndexedEntity): number | undefined {
+        const lectureId = Number(unit.properties?.['lecture_id']);
+        return Number.isFinite(lectureId) && lectureId > 0 ? lectureId : undefined;
+    }
+
+    /** For a selected lecture, its units (as tree nodes) shown as links in the detail. */
+    protected selectedLectureUnits(): { unit: IndexedEntity; key: string }[] {
+        const lecture = this.selectedLectureEntity();
+        if (!lecture) {
+            return [];
+        }
+        return this.indexedEntities()
+            .filter((entity) => entity.type === 'lecture_unit' && Number(entity.properties?.['lecture_id']) === lecture.entityId)
+            .map((unit) => ({ unit, key: `unit:${unit.entityId}` }));
+    }
+
+    /** For a selected unit, its content collections shown as tiles in the detail. */
+    protected selectedUnitCollections(): { key: string; count: number; navKey: string }[] {
+        const unit = this.selectedUnitEntity();
+        if (!unit) {
+            return [];
+        }
+        return this.unitCollections(unit.entityId).map((entry) => ({ ...entry, navKey: `coll:${unit.entityId}:${entry.key}` }));
+    }
+
+    /** The content objects for the currently selected collection. */
+    protected selectedCollectionObjects(): IndexedContentObject[] {
+        if (this.selectionKind() !== 'coll') {
+            return [];
+        }
+        const [, unitId, collectionKey] = this.selectedKey().split(':');
+        return this.objectsOfCollection(Number(unitId), collectionKey);
+    }
+
+    protected selectedCollectionCrumb(): string[] {
+        if (this.selectionKind() !== 'coll') {
+            return [];
+        }
+        const [, unitId, collectionKey] = this.selectedKey().split(':');
+        const unit = this.entityById('lecture_unit', Number(unitId));
+        return [unit?.title ?? `#${unitId}`, this.translateService.instant(this.contentLabelKeyFor(collectionKey))];
+    }
+
+    /** Number of items of a type that are missing (expected but not indexed), from the census. */
+    protected typeMissing(type: string): number {
+        const course = this.browsedCourse();
+        if (!course) {
+            return 0;
+        }
+        return this.typeCensus(course, type)?.missing ?? 0;
+    }
+
+    protected contentLabelKeyFor(key: string): string {
+        return `artemisApp.courseIngestionDashboard.browser.content_${key}`;
+    }
+
+    /** The icon for a metadata type folder, so each searchable-entity type reads at a glance. */
+    protected typeIcon(type: string): IconDefinition {
+        switch (type) {
+            case 'exercise':
+                return faListCheck;
+            case 'lecture':
+                return faBookOpen;
+            case 'lecture_unit':
+                return faFileLines;
+            case 'exam':
+                return faGraduationCap;
+            case 'faq':
+                return faCircleQuestion;
+            case 'channel':
+                return faHashtag;
+            case 'course':
+                return faBook;
+            case 'post':
+                return faComments;
+            case 'answer_post':
+                return faCommentDots;
+            default:
+                return faFileLines;
+        }
+    }
+
+    /** The icon for a content collection node, so slides / transcript / summary / segments read at a glance. */
+    protected contentIcon(key: string): IconDefinition {
+        switch (key) {
+            case 'slides':
+                return faImage;
+            case 'transcript':
+                return faWaveSquare;
+            case 'unit_summary':
+                return faAlignLeft;
+            default:
+                return faLayerGroup;
+        }
+    }
+
+    /** The most recent failed ingestion for a specific unit, so its detail can show a failure banner. */
+    protected failureForUnit(unitId: number): RecentIngestion | undefined {
+        return this.recentIngestions().find((recent) => recent.lectureUnitId === unitId && recent.outcome === 'FAILED');
+    }
+
+    /** Whether a unit is currently being ingested, so the tree can flag it as still processing. */
+    protected processingUnit(unitId: number): boolean {
+        return this.activeIngestions().some((run) => run.lectureUnitId === unitId);
+    }
+
+    /** The content gaps (missing slides / transcript) for a unit, so its detail and dot can show what content is absent. */
+    protected gapsForUnit(unitId: number): MissingContent[] {
+        return this.contentGaps().filter((gap) => gap.lectureUnitId === unitId);
+    }
+
+    /**
+     * The completeness status of a unit for the tree dot and detail: failed run wins, then any missing content
+     * (expected slides/transcript absent) is incomplete, otherwise complete. Processing is handled separately.
+     */
+    protected unitStatus(unitId: number): 'failed' | 'incomplete' | 'ok' {
+        if (this.failureForUnit(unitId)) {
+            return 'failed';
+        }
+        return this.gapsForUnit(unitId).length > 0 ? 'incomplete' : 'ok';
+    }
+
+    /** The dot color for a unit status, reusing the shared cell palette. */
+    protected unitDotColor(unitId: number): string {
+        switch (this.unitStatus(unitId)) {
+            case 'failed':
+            case 'incomplete':
+                return 'var(--danger)';
+            default:
+                return 'var(--success)';
+        }
+    }
+
+    /** Whether a lecture has any unit with a failure or a content gap, so a collapsed lecture still flags the problem. */
+    protected lectureIncomplete(lectureId: number): boolean {
+        return this.indexedEntities().some(
+            (entity) => entity.type === 'lecture_unit' && Number(entity.properties?.['lecture_id']) === lectureId && this.unitStatus(entity.entityId) !== 'ok',
+        );
+    }
+
+    // ----- Browser detail: stored fields (only the populated ones) -----
+
+    protected fieldExpandKey(prefix: string, id: string | number): string {
+        return `${prefix}:${id}`;
+    }
+
+    protected isFieldsExpanded(key: string): boolean {
+        return this.expandedEntities().has(key);
+    }
+
+    protected toggleFields(key: string): void {
+        const next = new Set(this.expandedEntities());
+        if (next.has(key)) {
+            next.delete(key);
+        } else {
+            next.add(key);
+        }
+        this.expandedEntities.set(next);
+    }
+
+    /** The stored fields with a value, sorted by key. Empty superset fields are dropped so only real data shows. */
+    protected populatedFields(properties: Record<string, unknown> | undefined): { key: string; value: string }[] {
+        return Object.entries(properties ?? {})
+            .map(([key, value]) => ({ key, value: this.formatValue(value) }))
+            .filter((entry) => entry.value.trim() !== '')
+            .sort((first, second) => first.key.localeCompare(second.key));
+    }
+
+    /** A compact label for one content object, derived from whatever identifying fields it stores. */
+    protected contentObjectLabel(object: IndexedContentObject, index: number): string {
+        const props = object.properties ?? {};
+        const page = props['page_number'] ?? props['display_page_number'];
+        const start = props['segment_start_time'];
+        if (typeof page === 'number' || typeof page === 'string') {
+            return `Page ${page}`;
+        }
+        if (typeof start === 'number' || typeof start === 'string') {
+            return `Segment @ ${start}s`;
+        }
+        return `#${index + 1}`;
+    }
+
+    /** Recent failed ingestions for a course, newest first, for the browser modal's failures section. */
+    protected failedForCourse(courseId: number): RecentIngestion[] {
+        return this.recentIngestions().filter((recent) => recent.courseId === courseId && recent.outcome === 'FAILED');
+    }
+
+    /** How many measurable types (metadata + content) are incomplete for a course, for the browser header summary. */
+    protected incompleteTypeCount(course: CourseIndexCensus): number {
+        const meta = this.types.filter((type) => this.cellStatus(this.typeCensus(course, type)) === 'incomplete').length;
+        const content = this.contentTypes.filter((contentType) => this.contentCellStatus(this.contentCensus(course, contentType)) === 'incomplete').length;
+        return meta + content;
+    }
+
+    private formatValue(value: unknown): string {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+            return String(value);
+        }
+        return JSON.stringify(value);
     }
 
     protected navigateToLecture(courseId: number, lectureId: number): void {

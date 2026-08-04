@@ -1,7 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ActiveIngestion, CourseIndexCensus, IndexOverview, RecentIngestion } from './course-ingestion-dashboard.model';
+import {
+    ActiveIngestion,
+    CourseIndexCensus,
+    IndexOverview,
+    IndexedContent,
+    IndexedEntity,
+    MissingContent,
+    MissingEntity,
+    RecentIngestion,
+} from './course-ingestion-dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseIngestionDashboardService {
@@ -21,6 +30,34 @@ export class CourseIngestionDashboardService {
      */
     getIndexCensus(): Observable<CourseIndexCensus[]> {
         return this.http.get<CourseIndexCensus[]>(`${this.baseUrl}/index-census`);
+    }
+
+    /**
+     * The objects actually stored in Weaviate for a course, with their titles and ingestion times.
+     */
+    getIndexedEntities(courseId: number): Observable<IndexedEntity[]> {
+        return this.http.get<IndexedEntity[]>(`${this.baseUrl}/courses/${courseId}/indexed-entities`);
+    }
+
+    /**
+     * The objects stored in the Iris lecture-content collections (slides, transcript, unit summaries, segments).
+     */
+    getIndexedContent(courseId: number): Observable<IndexedContent[]> {
+        return this.http.get<IndexedContent[]>(`${this.baseUrl}/courses/${courseId}/indexed-content`);
+    }
+
+    /**
+     * The entities the database expects to be indexed for a course but that are absent from Weaviate, by name.
+     */
+    getMissingEntities(courseId: number): Observable<MissingEntity[]> {
+        return this.http.get<MissingEntity[]>(`${this.baseUrl}/courses/${courseId}/missing-entities`);
+    }
+
+    /**
+     * The lecture units expected to have ingested content (slides or transcript) that is absent from the Iris collections.
+     */
+    getContentGaps(courseId: number): Observable<MissingContent[]> {
+        return this.http.get<MissingContent[]>(`${this.baseUrl}/courses/${courseId}/content-gaps`);
     }
 
     /**

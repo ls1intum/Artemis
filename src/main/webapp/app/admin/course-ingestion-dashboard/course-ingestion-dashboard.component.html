@@ -231,18 +231,20 @@
                     }
                 </div>
                 <div class="overflow-x-auto">
-                    <table tumUiTable size="small">
+                    <table tumUiTable size="small" [rowHover]="true">
                         <thead>
                             <tr>
                                 <th colspan="2"></th>
                                 <th
-                                    class="text-center border-l border-surface-300 dark:border-surface-600"
+                                    class="text-center"
+                                    [style.borderLeft]="groupDividerStyle"
                                     [attr.colspan]="types.length"
                                     jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group_metadata"
                                 ></th>
                                 @if (showContent()) {
                                     <th
-                                        class="text-center border-l border-surface-300 dark:border-surface-600"
+                                        class="text-center"
+                                        [style.borderLeft]="groupDividerStyle"
                                         [attr.colspan]="contentTypes.length"
                                         jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group_content"
                                     ></th>
@@ -258,11 +260,11 @@
                                     <span class="text-primary">{{ sortIndicator('release') }}</span>
                                 </th>
                                 @for (type of types; track type; let first = $first) {
-                                    <th [class]="divider(first, 'text-center')" [jhiTranslate]="typeLabelKey(type)"></th>
+                                    <th class="text-center" [style.borderLeft]="divider(first)" [jhiTranslate]="typeLabelKey(type)"></th>
                                 }
                                 @if (showContent()) {
                                     @for (contentType of contentTypes; track contentType; let first = $first) {
-                                        <th [class]="divider(first, 'text-center')" [jhiTranslate]="contentLabelKey(contentType)"></th>
+                                        <th class="text-center" [style.borderLeft]="divider(first)" [jhiTranslate]="contentLabelKey(contentType)"></th>
                                     }
                                 }
                                 <th class="text-end" jhiTranslate="artemisApp.courseIngestionDashboard.matrix.status"></th>
@@ -270,7 +272,7 @@
                         </thead>
                         <tbody>
                             @for (course of pagedCourses(); track course.courseId) {
-                                <tr class="cursor-pointer" (click)="navigateToCourse(course.courseId)">
+                                <tr class="cursor-pointer" (click)="openCourseBrowser(course)">
                                     <td>
                                         <div class="font-medium">
                                             @if (course.courseTitle) {
@@ -291,13 +293,13 @@
                                         }
                                     </td>
                                     @for (type of types; track type; let first = $first) {
-                                        <td [class]="divider(first, 'text-center font-mono')">
+                                        <td class="text-center font-mono" [style.borderLeft]="divider(first)">
                                             <span [style.color]="cellColor(cellStatus(typeCensus(course, type)))">{{ cellText(typeCensus(course, type)) }}</span>
                                         </td>
                                     }
                                     @if (showContent()) {
                                         @for (contentType of contentTypes; track contentType; let first = $first) {
-                                            <td [class]="divider(first, 'text-center font-mono')">
+                                            <td class="text-center font-mono" [style.borderLeft]="divider(first)">
                                                 @if (contentCensus(course, contentType); as entry) {
                                                     @if (entry.expected > 0) {
                                                         <span [style.color]="cellColor(contentCellStatus(entry))">{{ entry.present }}/{{ entry.expected }}</span>
@@ -451,4 +453,488 @@
             </div>
         </tum-ui-dialog>
     }
+
+    @if (browsedCourse(); as course) {
+        <tum-ui-dialog
+            [visible]="true"
+            (visibleChange)="onCourseBrowserVisibleChange($event)"
+            [header]="course.courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course.courseId"
+            [dismissableMask]="true"
+            [style]="{ width: '62rem', 'max-width': '95vw' }"
+        >
+            <div class="flex items-center gap-3 mb-3 flex-wrap">
+                <p class="text-muted-color text-sm m-0 flex-1 min-w-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.subtitle"></p>
+                @if (incompleteTypeCount(course); as incomplete) {
+                    <span
+                        class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full shrink-0"
+                        [style.background]="'var(--danger-100, rgba(204,59,59,.13))'"
+                        [style.color]="'var(--danger)'"
+                    >
+                        <span class="w-1.5 h-1.5 rounded-full" [style.background]="'var(--danger)'"></span>
+                        {{ incomplete }} <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.typesIncomplete"></span>
+                    </span>
+                }
+            </div>
+
+            @if (entitiesLoading()) {
+                <div class="text-center py-10" jhiTranslate="artemisApp.courseIngestionDashboard.loading"></div>
+            } @else if (entitiesError()) {
+                <tum-ui-message severity="error" styleClass="w-full">{{ 'artemisApp.courseIngestionDashboard.browser.error' | artemisTranslate }}</tum-ui-message>
+            } @else if (indexedEntities().length === 0) {
+                <div class="text-muted-color text-sm py-10 text-center" jhiTranslate="artemisApp.courseIngestionDashboard.browser.empty"></div>
+            } @else {
+                <div class="grid rounded-lg border border-surface-200 dark:border-surface-700 overflow-hidden" style="grid-template-columns: 17rem 1fr; height: 62vh">
+                    <!-- LEFT: navigation tree -->
+                    <div class="border-r border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 overflow-y-auto p-2 min-w-0">
+                        <!-- Entity metadata: one folder per searchable-entity type -->
+                        <div
+                            class="text-xs font-bold uppercase tracking-wider text-muted-color px-2 pt-1 pb-1"
+                            jhiTranslate="artemisApp.courseIngestionDashboard.matrix.group_metadata"
+                        ></div>
+                        @for (type of flatTypes; track type) {
+                            @if (typeCensus(course, type); as entry) {
+                                <div
+                                    class="flex items-center gap-1.5 rounded px-2 py-1.5 cursor-pointer text-sm select-none"
+                                    [class]="
+                                        isSelected('type:' + type)
+                                            ? 'bg-surface-200 dark:bg-surface-700 text-primary font-semibold'
+                                            : 'hover:bg-surface-100 dark:hover:bg-surface-800'
+                                    "
+                                    role="button"
+                                    tabindex="0"
+                                    (click)="select('type:' + type)"
+                                    (keyup.enter)="select('type:' + type)"
+                                >
+                                    <span class="w-3.5 shrink-0"></span>
+                                    <fa-icon [icon]="typeIcon(type)" class="shrink-0" [class.text-muted-color]="!isSelected('type:' + type)" size="xs" />
+                                    <span class="flex-1 min-w-0 truncate" [jhiTranslate]="typeLabelKey(type)"></span>
+                                    <span class="text-xs font-mono text-muted-color">{{ cellText(entry) }}</span>
+                                    <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="cellColor(cellStatus(entry)) || '#9ca3af'"></span>
+                                </div>
+                            }
+                        }
+
+                        <!-- Browse lectures: Course -> Lecture -> Unit -> collection hierarchy over the indexed content -->
+                        <div
+                            class="text-xs font-bold uppercase tracking-wider text-muted-color px-2 pt-3 pb-1"
+                            jhiTranslate="artemisApp.courseIngestionDashboard.browser.browseLectures"
+                        ></div>
+                        @for (ln of lectureNodes(); track ln.key) {
+                            <div
+                                class="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm select-none"
+                                [class]="isSelected(ln.key) ? 'bg-surface-200 dark:bg-surface-700 text-primary font-semibold' : 'hover:bg-surface-100 dark:hover:bg-surface-800'"
+                            >
+                                <span
+                                    class="w-3.5 shrink-0 grid place-items-center cursor-pointer"
+                                    role="button"
+                                    tabindex="0"
+                                    (click)="toggleOpen(ln.key); $event.stopPropagation()"
+                                    (keyup.enter)="toggleOpen(ln.key)"
+                                >
+                                    <fa-icon [icon]="faChevronRight" class="text-muted-color transition-transform" [class.rotate-90]="isOpen(ln.key)" size="xs" />
+                                </span>
+                                <span
+                                    class="flex flex-1 min-w-0 items-center gap-1.5 cursor-pointer"
+                                    role="button"
+                                    tabindex="0"
+                                    (click)="select(ln.key)"
+                                    (keyup.enter)="select(ln.key)"
+                                >
+                                    <fa-icon [icon]="faBookOpen" class="shrink-0" [class.text-muted-color]="!isSelected(ln.key)" size="xs" />
+                                    <span class="flex-1 min-w-0 truncate">{{ ln.lecture.title || '#' + ln.lecture.entityId }}</span>
+                                    @if (lectureIncomplete(ln.lecture.entityId)) {
+                                        <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="'var(--danger)'"></span>
+                                    }
+                                    <span class="text-xs font-mono text-muted-color">{{ ln.units.length }}</span>
+                                </span>
+                            </div>
+                            @if (isOpen(ln.key)) {
+                                <div class="ml-3 border-l border-surface-200 dark:border-surface-700 pl-1">
+                                    @for (un of ln.units; track un.key) {
+                                        <div
+                                            class="flex items-center gap-1.5 rounded px-2 py-1.5 text-sm select-none"
+                                            [class]="
+                                                isSelected(un.key)
+                                                    ? 'bg-surface-200 dark:bg-surface-700 text-primary font-semibold'
+                                                    : 'hover:bg-surface-100 dark:hover:bg-surface-800'
+                                            "
+                                        >
+                                            <span
+                                                class="w-3.5 shrink-0 grid place-items-center cursor-pointer"
+                                                [class.invisible]="un.collections.length === 0"
+                                                role="button"
+                                                tabindex="0"
+                                                (click)="toggleOpen(un.key); $event.stopPropagation()"
+                                                (keyup.enter)="toggleOpen(un.key)"
+                                            >
+                                                <fa-icon [icon]="faChevronRight" class="text-muted-color transition-transform" [class.rotate-90]="isOpen(un.key)" size="xs" />
+                                            </span>
+                                            <span
+                                                class="flex flex-1 min-w-0 items-center gap-1.5 cursor-pointer"
+                                                role="button"
+                                                tabindex="0"
+                                                (click)="select(un.key)"
+                                                (keyup.enter)="select(un.key)"
+                                            >
+                                                <fa-icon [icon]="faFileLines" class="shrink-0" [class.text-muted-color]="!isSelected(un.key)" size="xs" />
+                                                <span class="flex-1 min-w-0 truncate">{{ un.unit.title || '#' + un.unit.entityId }}</span>
+                                                @if (processingUnit(un.unit.entityId)) {
+                                                    <fa-icon [icon]="faSpinner" class="animate-spin shrink-0" [style.color]="'var(--warning)'" size="xs" />
+                                                } @else {
+                                                    <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="unitDotColor(un.unit.entityId)"></span>
+                                                }
+                                            </span>
+                                        </div>
+                                        @if (isOpen(un.key)) {
+                                            <div class="ml-3 border-l border-surface-200 dark:border-surface-700 pl-1">
+                                                @for (col of un.collections; track col.key) {
+                                                    <div
+                                                        class="flex items-center gap-1.5 rounded px-2 py-1.5 cursor-pointer text-sm select-none"
+                                                        [class]="
+                                                            isSelected('coll:' + un.unit.entityId + ':' + col.key)
+                                                                ? 'bg-surface-200 dark:bg-surface-700 text-primary font-semibold'
+                                                                : 'hover:bg-surface-100 dark:hover:bg-surface-800'
+                                                        "
+                                                        role="button"
+                                                        tabindex="0"
+                                                        (click)="select('coll:' + un.unit.entityId + ':' + col.key)"
+                                                        (keyup.enter)="select('coll:' + un.unit.entityId + ':' + col.key)"
+                                                    >
+                                                        <span class="w-3.5 shrink-0"></span>
+                                                        <fa-icon
+                                                            [icon]="contentIcon(col.key)"
+                                                            class="shrink-0"
+                                                            [class.text-muted-color]="!isSelected('coll:' + un.unit.entityId + ':' + col.key)"
+                                                            size="xs"
+                                                        />
+                                                        <span class="flex-1 min-w-0 truncate" [jhiTranslate]="contentLabelKeyFor(col.key)"></span>
+                                                        <span class="text-xs font-mono text-muted-color">{{ col.count }}</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- RIGHT: detail pane for the current selection -->
+                    <div class="overflow-y-auto p-4 min-w-0">
+                        @switch (selectionKind()) {
+                            @case ('type') {
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <h3 class="text-base font-semibold m-0" [jhiTranslate]="typeLabelKey(selectedType())"></h3>
+                                </div>
+                                <div class="text-xs text-muted-color mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaEntity"></div>
+                                @if (typeCensus(course, selectedType()); as entry) {
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[6rem]">
+                                            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statIndexed"></div>
+                                            <div class="text-xl font-semibold font-mono">{{ entry.present }}</div>
+                                        </div>
+                                        @if (entry.expected !== null) {
+                                            <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[6rem]">
+                                                <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statExpected"></div>
+                                                <div class="text-xl font-semibold font-mono">{{ entry.expected }}</div>
+                                            </div>
+                                            <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[6rem]">
+                                                <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statMissing"></div>
+                                                <div class="text-xl font-semibold font-mono" [style.color]="(entry.missing ?? 0) > 0 ? 'var(--danger)' : undefined">
+                                                    {{ entry.missing ?? 0 }}
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    @if ((entry.missing ?? 0) > 0) {
+                                        <div class="text-sm mb-2" [style.color]="'var(--danger)'">
+                                            <fa-icon [icon]="faTriangleExclamation" size="xs" class="me-1" />
+                                            {{ entry.missing }} <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIngested"></span>
+                                        </div>
+                                        @if (missingForType(selectedType()).length > 0) {
+                                            <div class="flex flex-col mb-4 rounded-lg border border-surface-200 dark:border-surface-700 overflow-hidden">
+                                                @for (item of missingForType(selectedType()); track item.entityId) {
+                                                    <div class="flex items-center gap-2 px-3 py-2 text-sm border-t border-surface-200 dark:border-surface-700 first:border-t-0">
+                                                        <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="'var(--danger)'"></span>
+                                                        <span class="flex-1 min-w-0 truncate">{{ item.title || '#' + item.entityId }}</span>
+                                                        <span class="text-xs text-muted-color font-mono shrink-0">#{{ item.entityId }}</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                }
+                                <div
+                                    class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2"
+                                    jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedObjects"
+                                ></div>
+                                @if (objectsOfType(selectedType()).length === 0) {
+                                    <div class="text-muted-color text-sm py-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></div>
+                                } @else {
+                                    <div class="flex flex-col">
+                                        @for (entity of objectsOfType(selectedType()); track entity.entityId) {
+                                            <div class="border-t border-surface-200 dark:border-surface-700 first:border-t-0">
+                                                <div
+                                                    class="flex items-center gap-2 py-1.5 px-1 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
+                                                    role="button"
+                                                    tabindex="0"
+                                                    (click)="toggleFields(fieldExpandKey(entity.type, entity.entityId))"
+                                                    (keyup.enter)="toggleFields(fieldExpandKey(entity.type, entity.entityId))"
+                                                >
+                                                    <fa-icon
+                                                        [icon]="faChevronRight"
+                                                        class="text-muted-color shrink-0 transition-transform"
+                                                        [class.rotate-90]="isFieldsExpanded(fieldExpandKey(entity.type, entity.entityId))"
+                                                        size="xs"
+                                                    />
+                                                    <span class="flex-1 min-w-0 truncate text-sm">{{ entity.title || '#' + entity.entityId }}</span>
+                                                    <span class="text-xs text-muted-color font-mono shrink-0">
+                                                        @if (entity.ingestedAt) {
+                                                            {{ entity.ingestedAt | date: 'medium' }}
+                                                        }
+                                                    </span>
+                                                </div>
+                                                @if (isFieldsExpanded(fieldExpandKey(entity.type, entity.entityId))) {
+                                                    <div class="ps-6 pb-2">
+                                                        <ng-container *ngTemplateOutlet="fieldsTable; context: { $implicit: populatedFields(entity.properties) }" />
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            @case ('lecture') {
+                                @if (selectedLectureEntity(); as lecture) {
+                                    <div class="flex items-start gap-3 mb-0.5">
+                                        <h3 class="text-base font-semibold m-0 flex-1 min-w-0">{{ lecture.title || '#' + lecture.entityId }}</h3>
+                                        <tum-ui-button
+                                            severity="secondary"
+                                            variant="outlined"
+                                            size="small"
+                                            [icon]="faUpRightFromSquare"
+                                            (clicked)="navigateToLecture(course.courseId, lecture.entityId)"
+                                        >
+                                            {{ 'artemisApp.courseIngestionDashboard.browser.openInArtemis' | artemisTranslate }}
+                                        </tum-ui-button>
+                                    </div>
+                                    <div class="text-xs text-muted-color mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaLecture"></div>
+                                    <div
+                                        class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedRecord"
+                                    ></div>
+                                    <ng-container *ngTemplateOutlet="fieldsTable; context: { $implicit: populatedFields(lecture.properties) }" />
+                                    @if (selectedLectureUnits().length > 0) {
+                                        <div
+                                            class="text-xs font-bold uppercase tracking-wider text-muted-color mt-4 mb-2"
+                                            jhiTranslate="artemisApp.courseIngestionDashboard.browser.unitsSection"
+                                        ></div>
+                                        <div class="flex flex-col">
+                                            @for (un of selectedLectureUnits(); track un.key) {
+                                                <div
+                                                    class="flex items-center gap-2 py-2 px-1 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800 border-t border-surface-200 dark:border-surface-700 first:border-t-0"
+                                                    role="button"
+                                                    tabindex="0"
+                                                    (click)="select(un.key)"
+                                                    (keyup.enter)="select(un.key)"
+                                                >
+                                                    <fa-icon [icon]="faFileLines" class="text-muted-color shrink-0" size="xs" />
+                                                    <span class="flex-1 min-w-0 truncate text-sm">{{ un.unit.title || '#' + un.unit.entityId }}</span>
+                                                    @if (processingUnit(un.unit.entityId)) {
+                                                        <fa-icon [icon]="faSpinner" class="animate-spin shrink-0" [style.color]="'var(--warning)'" size="xs" />
+                                                    } @else {
+                                                        <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="unitDotColor(un.unit.entityId)"></span>
+                                                    }
+                                                    <fa-icon [icon]="faChevronRight" class="text-muted-color shrink-0" size="xs" />
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            }
+                            @case ('unit') {
+                                @if (selectedUnitEntity(); as unit) {
+                                    <div class="flex items-start gap-3 mb-0.5">
+                                        <div class="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                            <h3 class="text-base font-semibold m-0">{{ unit.title || '#' + unit.entityId }}</h3>
+                                            @if (processingUnit(unit.entityId)) {
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full"
+                                                    [style.background]="'var(--warning-100, rgba(181,118,15,.15))'"
+                                                    [style.color]="'var(--warning)'"
+                                                >
+                                                    <fa-icon [icon]="faSpinner" class="animate-spin" size="xs" />
+                                                    <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.processing"></span>
+                                                </span>
+                                            }
+                                        </div>
+                                        @if (unitLectureId(unit); as lectureId) {
+                                            <tum-ui-button
+                                                severity="secondary"
+                                                variant="outlined"
+                                                size="small"
+                                                [icon]="faUpRightFromSquare"
+                                                (clicked)="navigateToLecture(course.courseId, lectureId)"
+                                            >
+                                                {{ 'artemisApp.courseIngestionDashboard.browser.openInArtemis' | artemisTranslate }}
+                                            </tum-ui-button>
+                                        }
+                                    </div>
+                                    <div class="text-xs text-muted-color mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaUnit"></div>
+                                    @if (gapsForUnit(unit.entityId).length > 0) {
+                                        <div
+                                            class="flex items-start gap-2 rounded-lg px-3 py-2 mb-4 text-sm"
+                                            [style.background]="'var(--danger-100, rgba(204,59,59,.13))'"
+                                            [style.color]="'var(--danger)'"
+                                        >
+                                            <fa-icon [icon]="faTriangleExclamation" class="shrink-0 mt-0.5" size="sm" />
+                                            <span class="min-w-0">
+                                                <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.contentMissing"></span>
+                                                @for (gap of gapsForUnit(unit.entityId); track gap.kind; let last = $last) {
+                                                    <b [jhiTranslate]="contentLabelKeyFor(gap.kind)"></b>
+                                                    @if (!last) {
+                                                        <span>, </span>
+                                                    }
+                                                }
+                                            </span>
+                                        </div>
+                                    }
+                                    @if (failureForUnit(unit.entityId); as failure) {
+                                        <div
+                                            class="flex items-start gap-2 rounded-lg px-3 py-2 mb-4 text-sm"
+                                            [style.background]="'var(--danger-100, rgba(204,59,59,.13))'"
+                                            [style.color]="'var(--danger)'"
+                                        >
+                                            <fa-icon [icon]="faTriangleExclamation" class="shrink-0 mt-0.5" size="sm" />
+                                            <span class="min-w-0">
+                                                <span jhiTranslate="artemisApp.courseIngestionDashboard.recent.failedAt"></span>
+                                                <b>{{ failure.failedStepName }}</b>
+                                                @if (failure.errorMessage) {
+                                                    <span class="block opacity-90 mt-0.5">{{ failure.errorMessage }}</span>
+                                                }
+                                            </span>
+                                        </div>
+                                    }
+                                    <div
+                                        class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedRecord"
+                                    ></div>
+                                    <ng-container *ngTemplateOutlet="fieldsTable; context: { $implicit: populatedFields(unit.properties) }" />
+                                    <div
+                                        class="text-xs font-bold uppercase tracking-wider text-muted-color mt-4 mb-2"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.contentSection"
+                                    ></div>
+                                    @if (selectedUnitCollections().length === 0) {
+                                        <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noContentUnit"></div>
+                                    } @else {
+                                        <div class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr))">
+                                            @for (tile of selectedUnitCollections(); track tile.key) {
+                                                <div
+                                                    class="group rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 px-3 py-2 cursor-pointer hover:border-primary transition-colors"
+                                                    role="button"
+                                                    tabindex="0"
+                                                    (click)="select(tile.navKey)"
+                                                    (keyup.enter)="select(tile.navKey)"
+                                                >
+                                                    <div class="text-xs text-muted-color flex items-center gap-1.5">
+                                                        <fa-icon [icon]="contentIcon(tile.key)" size="xs" />
+                                                        <span class="flex-1 min-w-0 truncate" [jhiTranslate]="contentLabelKeyFor(tile.key)"></span>
+                                                        <fa-icon
+                                                            [icon]="faChevronRight"
+                                                            class="text-muted-color opacity-60 group-hover:opacity-100 group-hover:text-primary"
+                                                            size="xs"
+                                                        />
+                                                    </div>
+                                                    <div class="text-lg font-semibold font-mono mt-0.5">{{ tile.count }}</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            }
+                            @case ('coll') {
+                                <div class="flex items-center gap-1.5 text-xs mb-2 flex-wrap">
+                                    @for (crumb of selectedCollectionCrumb(); track $index; let last = $last) {
+                                        <span [class.text-muted-color]="!last" [class.font-semibold]="last">{{ crumb }}</span>
+                                        @if (!last) {
+                                            <span class="text-muted-color">›</span>
+                                        }
+                                    }
+                                </div>
+                                @if (selectedCollectionObjects().length === 0) {
+                                    <div class="text-muted-color text-sm py-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></div>
+                                } @else {
+                                    <div
+                                        class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedObjects"
+                                    ></div>
+                                    <div class="flex flex-col">
+                                        @for (object of selectedCollectionObjects(); track $index) {
+                                            <div class="border-t border-surface-200 dark:border-surface-700 first:border-t-0">
+                                                <div
+                                                    class="flex items-center gap-2 py-1.5 px-1 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
+                                                    role="button"
+                                                    tabindex="0"
+                                                    (click)="toggleFields(fieldExpandKey(selectedKey(), $index))"
+                                                    (keyup.enter)="toggleFields(fieldExpandKey(selectedKey(), $index))"
+                                                >
+                                                    <fa-icon
+                                                        [icon]="faChevronRight"
+                                                        class="text-muted-color shrink-0 transition-transform"
+                                                        [class.rotate-90]="isFieldsExpanded(fieldExpandKey(selectedKey(), $index))"
+                                                        size="xs"
+                                                    />
+                                                    <span class="flex-1 min-w-0 truncate text-sm">{{ contentObjectLabel(object, $index) }}</span>
+                                                    <span class="text-xs text-muted-color font-mono shrink-0">
+                                                        @if (object.ingestedAt) {
+                                                            {{ object.ingestedAt | date: 'medium' }}
+                                                        }
+                                                    </span>
+                                                </div>
+                                                @if (isFieldsExpanded(fieldExpandKey(selectedKey(), $index))) {
+                                                    <div class="ps-6 pb-2">
+                                                        <ng-container *ngTemplateOutlet="fieldsTable; context: { $implicit: populatedFields(object.properties) }" />
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                            @default {
+                                <div class="flex items-center justify-center gap-2 text-muted-color text-sm h-full py-16">
+                                    <fa-icon [icon]="faLayerGroup" size="sm" />
+                                    <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.selectPrompt"></span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="flex justify-end mt-3">
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faChevronRight" (clicked)="navigateToCourse(course.courseId)">
+                    {{ 'artemisApp.courseIngestionDashboard.browser.openCourse' | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+        </tum-ui-dialog>
+    }
 </div>
+
+<!-- Shared table for an object's populated stored fields (empty superset fields are dropped upstream). -->
+<ng-template #fieldsTable let-fields>
+    @if (fields.length === 0) {
+        <div class="text-muted-color text-sm py-1" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noFields"></div>
+    } @else {
+        <table tumUiTable size="small" class="w-full">
+            <tbody>
+                @for (field of fields; track field.key) {
+                    <tr>
+                        <td class="font-mono text-muted-color align-top" style="width: 12rem; font-size: 0.72rem">{{ field.key }}</td>
+                        <td class="align-top" style="font-size: 0.78rem; white-space: pre-wrap; word-break: break-word">{{ field.value }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</ng-template>
