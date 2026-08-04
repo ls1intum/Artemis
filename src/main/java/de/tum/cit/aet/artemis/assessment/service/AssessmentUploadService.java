@@ -589,13 +589,6 @@ public class AssessmentUploadService {
         final List<Long> participationIds = validatedRows.stream().map(ValidatedRow::participationId).toList();
         assessmentUploadParticipationRepository.lockAllForAssessmentUpload(exercise.getId(), participationIds);
 
-        // Reject (instead of silently destroying) participations whose current manual assessment is referenced by a complaint. Checked inside the locked transaction, before any
-        // deletion, so nothing is stored (all-or-nothing).
-        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaint(exercise.getId(), participationIds);
-        if (!participationsWithComplaint.isEmpty()) {
-            return AssessmentUploadResultDTO.failure(buildComplaintErrors(validatedRows, participationsWithComplaint));
-        }
-
         final Map<Long, StudentParticipation> participationsById = assessmentUploadParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
         // Enforce the shared assessment-availability gate (e.g. an exam that is not over for all students yet) for every target participation before touching any result.
@@ -603,21 +596,38 @@ public class AssessmentUploadService {
 
         final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
-        final List<Result> manualResults = new ArrayList<>();
+        // First pass: resolve the (latest) submission to assess per row and collect the ids of the manual results that will be replaced, without mutating the managed collections
+        // yet. Only the latest submission is assessed; a manual result on an older, superseded submission is intentionally left untouched — it never contributes to the score (the
+        // grade is always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor behaves.
+        final List<Submission> targetSubmissions = new ArrayList<>(validatedRows.size());
         final List<Long> replacedResultIds = new ArrayList<>();
         for (final ValidatedRow row : validatedRows) {
             final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
                     .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
             final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
                     .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
-            // Only the participation's latest submission is assessed. A manual result on an older, superseded submission is intentionally left untouched: it never contributes to
-            // the score (the grade is always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor behaves.
-            // Remove the existing manual result(s) from the submission's ordered results collection so Hibernate deletes them via orphan removal and keeps results_order unique and
-            // contiguous, then attach the replacement to the same collection.
+            targetSubmissions.add(submission);
+            submission.getResults().stream().filter(result -> result != null && result.isManual()).map(Result::getId).filter(Objects::nonNull).forEach(replacedResultIds::add);
+        }
+
+        // Reject (instead of silently destroying) participations whose current manual assessment is referenced by a complaint. The results that will be replaced are write-locked
+        // first, so a complaint being created concurrently — which updates its result row and inserts the complaint — serializes behind this upload: one committed before the lock
+        // is seen by the check below and rejects the whole upload (all-or-nothing), and one attempted after the lock blocks until this transaction commits and its result is gone.
+        // Locking here, before Submission.results is mutated, also keeps the pending orphan removal from being auto-flushed ahead of the reference cleanup.
+        assessmentUploadResultService.lockResultsForReplacement(replacedResultIds);
+        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaint(exercise.getId(), participationIds);
+        if (!participationsWithComplaint.isEmpty()) {
+            return AssessmentUploadResultDTO.failure(buildComplaintErrors(validatedRows, participationsWithComplaint));
+        }
+
+        // Second pass: replace the manual result on each target submission through its ordered results collection so Hibernate deletes the old result via orphan removal and keeps
+        // results_order unique and contiguous, then attach the replacement to the same collection.
+        final List<Result> manualResults = new ArrayList<>(validatedRows.size());
+        for (int rowIndex = 0; rowIndex < validatedRows.size(); rowIndex++) {
+            final Submission submission = targetSubmissions.get(rowIndex);
             final List<Result> existingManualResults = submission.getResults().stream().filter(result -> result != null && result.isManual()).toList();
-            existingManualResults.stream().map(Result::getId).filter(Objects::nonNull).forEach(replacedResultIds::add);
             submission.getResults().removeAll(existingManualResults);
-            final Result manualResult = buildManualResult(exercise, submission, row);
+            final Result manualResult = buildManualResult(exercise, submission, validatedRows.get(rowIndex));
             submission.addResult(manualResult);
             manualResults.add(manualResult);
         }

@@ -62,6 +62,27 @@ public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<R
     List<Long> findManualResultIds(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 
     /**
+     * Write-locks the given result rows for the remainder of the caller's transaction. Used by the upload to lock the manual results it is about to replace before checking for
+     * complaints, so that creating a complaint concurrently — which updates its result row and inserts the complaint — serializes behind the upload instead of slipping in between
+     * the complaint check and the reference cleanup (which would silently delete it). The ids are locked in ascending order to give concurrent uploads a consistent lock order.
+     * <p>
+     * <b>Preconditions:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and the caller has an active transaction.
+     * <p>
+     * <b>Postcondition:</b> the matching result rows remain write-locked until the caller's transaction completes.
+     *
+     * @param resultIds ids of the results to lock
+     * @return the ids of the locked results in ascending order
+     */
+    @Query(value = """
+            SELECT r.id
+            FROM result r
+            WHERE r.id IN (:resultIds)
+            ORDER BY r.id
+            FOR UPDATE
+            """, nativeQuery = true)
+    List<Long> lockResultsForReplacement(@Param("resultIds") final Collection<Long> resultIds);
+
+    /**
      * Finds the participations whose existing manual result carries a complaint. Replacing such a result would delete the student's complaint and any instructor response, so the
      * upload must reject these participations instead of overwriting them. Only manual and semi-automatic results are considered, matching {@link #findManualResultIds} (the
      * results

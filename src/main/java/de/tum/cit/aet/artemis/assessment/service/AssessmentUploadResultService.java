@@ -295,6 +295,30 @@ public class AssessmentUploadResultService {
     }
 
     /**
+     * Write-locks the manual results an upload is about to replace, so that a complaint being created concurrently for one of them serializes behind the upload rather than being
+     * silently deleted by the subsequent reference cleanup. Creating a complaint updates its result row (setting {@code hasComplaint}) and inserts the complaint, both of which
+     * then
+     * block on the {@code FOR UPDATE} lock until the upload's transaction commits. The caller must acquire this lock before checking for complaints and before mutating the ordered
+     * {@code Submission.results} collection.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null} (an empty collection is a no-op) and contains only persisted result ids; the caller has an active transaction.
+     * <p>
+     * <b>Postcondition:</b> the identified result rows are write-locked until the caller's transaction completes.
+     *
+     * @param resultIds ids of the manual results about to be replaced
+     * @throws IllegalArgumentException if a result id is not a persisted id
+     */
+    public void lockResultsForReplacement(final Collection<Long> resultIds) {
+        if (resultIds == null || resultIds.isEmpty()) {
+            return;
+        }
+        if (resultIds.stream().anyMatch(resultId -> resultId == null || resultId <= 0)) {
+            throw new IllegalArgumentException("The result ids must identify persisted results");
+        }
+        assessmentUploadResultRepository.lockResultsForReplacement(resultIds);
+    }
+
+    /**
      * Deletes all manual results for the requested participations of one exercise using a fixed number of bulk statements. Automatic results are not selected.
      * <p>
      * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains only persisted ids.
