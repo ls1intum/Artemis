@@ -136,7 +136,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         // Create course with a released programming exercise
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         releasedExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         releasedExercise.setTitle(SEARCH_PREFIX + " Released Exercise");
         releasedExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
@@ -989,13 +989,13 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
             // 1. Course with enabled communication
-            Course courseWithComm = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            Course courseWithComm = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
             courseWithComm.setShortName("commOn");
             courseWithComm.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
             courseRepository.save(courseWithComm);
 
             // 2. Course with disabled communication
-            Course courseWithoutComm = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+            Course courseWithoutComm = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
             courseWithoutComm.setShortName("commOff");
             courseWithoutComm.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
             courseRepository.save(courseWithoutComm);

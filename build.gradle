@@ -80,7 +80,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "9.8"
+version = "9.9"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -156,16 +156,25 @@ gitProperties {
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
 ext["tomcat.version"] = "11.0.22"
 
-// Pin the entire Jackson 2.x family to a release outside every known jackson-databind vulnerable range.
-// Spring Boot / Spring AI manage an older jackson-bom as a dependency-management constraint, which beats
-// transitive requests, so a plain dependency bump is not enough. Re-importing jackson-bom here overrides that
-// managed version while applying the BOM's authoritative per-module versions, so no version is invented.
+// Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
+// range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
+// transitive requests, so a plain dependency bump is not enough. Re-importing each jackson-bom here overrides
+// the managed version while applying the BOM's authoritative per-module versions, so no version is invented.
 // This is done via the dependencyManagement DSL rather than ext["jackson-bom.version"], because overriding an
 // imported-BOM version property breaks io.spring.dependency-management on Spring Boot (it nulls the versions of
-// other managed sub-BOMs such as micrometer / spring-security). The Jackson 3 line (group tools.jackson.*, pinned
-// below) is intentionally untouched. Bump to the latest patched release when new advisories land.
+// other managed sub-BOMs such as micrometer / spring-security). Importing the Jackson 3 BOM — rather than
+// pinning tools.jackson.core:jackson-databind on its own — is what keeps the sibling modules (notably
+// jackson-dataformat-cbor) on the same patch: a sibling left behind on an older patch re-declares that older
+// jackson-databind in its POM, and the GitHub dependency graph then reports it as a vulnerable version even
+// though no configuration resolves it. Keep Jackson 3 on the minor that webauthn4j / spring-ai expect, and
+// bump both families to the latest patched release when new advisories land.
+// Import order matters and is load-bearing: the Jackson 3 BOM also manages
+// com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
+// version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
+// earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
+        mavenBom "tools.jackson:jackson-bom:3.1.5"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
     }
 }
@@ -303,11 +312,10 @@ dependencies {
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
     // the former spring-ai-starter-model-azure-openai module was removed upstream.
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
-    // Override transitively-requested Jackson 3 with a patched release (webauthn4j/spring-ai request an
-    // older one). Kept on the 3.1.x line to stay within the range those consumers expect (avoid jumping a
-    // minor); bump to the latest patch within it when new advisories land.
-    implementation "tools.jackson.core:jackson-core:3.1.5"
-    implementation "tools.jackson.core:jackson-databind:3.1.5"
+    // Jackson 3 core modules — versions supplied by the tools.jackson jackson-bom import above. Declared
+    // explicitly because webauthn4j / spring-ai only request them transitively, at an older patch.
+    implementation "tools.jackson.core:jackson-core"
+    implementation "tools.jackson.core:jackson-databind"
     // Note: the former io.modelcontextprotocol.sdk:mcp-core constraint (GHSA-hv2w-8mjj-jw22) was
     // dropped — spring-ai no longer pulls the MCP SDK onto any configuration (since 2.0.0-M6).
 
@@ -542,7 +550,6 @@ dependencies {
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.29.0"
-    implementation "org.webjars.npm:katex:0.16.47"
     implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
     implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
 
@@ -668,6 +675,16 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
             details.because("Patched OpenTelemetry release; pre-${opentelemetry_version} contains GHSA-rcgg-9c38-7xpx.")
         }
     }
+}
+
+// Refuse version ranges on the classpaths CI builds from.
+//
+// A range ("[8.3.0,9.0.0-0)") cannot be resolved from the dependency cache: Gradle has to ask the repository which
+// versions exist, on every resolution. A single range therefore makes the whole build depend on Maven Central being
+// reachable, even when every artifact it needs is already cached - which is how one transitive webjar dependency took
+// the server tests down on develop. Failing here points at the offending dependency instead.
+configurations.matching { it.name in ["compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath"] }.configureEach {
+    resolutionStrategy.failOnDynamicVersions()
 }
 
 // Testcontainers 2.0 renamed modules with a "testcontainers-" prefix.

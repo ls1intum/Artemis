@@ -57,7 +57,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @return created answer post that was persisted
      */
     public AnswerPost createAnswerPost(Long courseId, PlagiarismAnswerPostCreateRequestDTO request) {
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User user = this.userRepository.getUserWithAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
         Post post = postRepository.findPostByIdElseThrow(request.post().id());
@@ -96,7 +96,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @return updated answer post that was persisted
      */
     public AnswerPost updateAnswerPost(Long courseId, Long answerPostId, PlagiarismAnswerPostUpdateRequestDTO request) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -158,7 +158,7 @@ public class PlagiarismAnswerPostService extends PostingService {
      * @param answerPostId id of the answer post to delete
      */
     public void deleteAnswerPostById(Long courseId, Long answerPostId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         // checks
         final Course course = courseRepository.findByIdElseThrow(courseId);

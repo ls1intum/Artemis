@@ -90,6 +90,14 @@ export const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
+                path: 'access-tokens',
+                loadComponent: () =>
+                    import('app/account/user/settings/vcs-access-token-overview/vcs-access-token-overview.component').then((m) => m.VcsAccessTokenOverviewComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.vcsAccessTokensOverview.title',
+                },
+            },
+            {
                 path: 'passkeys',
                 loadComponent: () => import('app/account/user/settings/passkey-settings/passkey-settings.component').then((m) => m.PasskeySettingsComponent),
                 data: {

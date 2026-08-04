@@ -659,7 +659,7 @@ public class ExamService {
     private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds) {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
-            User targetUser = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(studentId);
+            User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
@@ -1399,8 +1399,7 @@ public class ExamService {
         final long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                exerciseIds);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithAuthorities().getId(), exerciseIds);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
@@ -1477,10 +1476,10 @@ public class ExamService {
         }
         else {
             if (withExercises) {
-                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
             else {
-                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
@@ -1513,7 +1512,7 @@ public class ExamService {
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
         var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getId(), pageable, fromDate, now, toDate);
     }
 
     /**
@@ -1555,18 +1554,7 @@ public class ExamService {
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
             originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
-            int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
-            // NOTE: take the original working time extensions into account
-            if (originalTimeExtension == 0) {
-                studentExam.setWorkingTime(originalStudentWorkingTime + workingTimeChange);
-            }
-            else {
-                double relativeTimeExtension = (double) originalTimeExtension / (double) originalExamDuration;
-                int newNormalWorkingTime = originalExamDuration + workingTimeChange;
-                int timeAdjustment = Math.toIntExact(Math.round(newNormalWorkingTime * relativeTimeExtension));
-                int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
-                studentExam.setWorkingTime(adjustedWorkingTime);
-            }
+            studentExam.setWorkingTime(ExamDateService.projectWorkingTimeAfterDurationChange(originalStudentWorkingTime, originalExamDuration, workingTimeChange));
         }
         // Important: persist all student exams BEFORE sending WebSocket notifications.
         // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.

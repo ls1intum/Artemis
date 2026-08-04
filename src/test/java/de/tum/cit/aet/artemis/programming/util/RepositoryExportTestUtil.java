@@ -26,6 +26,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,9 +154,7 @@ public final class RepositoryExportTestUtil {
         if (contentInitializer != null) {
             contentInitializer.accept(target.workingCopyGitRepo);
             // push initialized content so the bare repo has a default branch/history
-            target.workingCopyGitRepo.push().setRemote("origin").call();
-            // Wait for the bare repository to be fully ready
-            waitForBareRepositoryReady(target);
+            pushToOrigin(target.workingCopyGitRepo);
         }
 
         return trackRepository(target);
@@ -378,7 +377,7 @@ public final class RepositoryExportTestUtil {
     /**
      * Writes a set of files into the repo working copy, commits them with the provided message, and pushes to origin.
      * Returns the created commit for callers that need the hash.
-     * After pushing, waits for the bare repository to be fully ready to prevent race conditions on slow CI systems.
+     * The local file push is synchronous; once JGit reports a successful remote ref update, the bare repository can be read by follow-up code.
      */
     public static RevCommit writeFilesAndPush(LocalRepository repo, Map<String, String> files, String message) throws Exception {
         for (Map.Entry<String, String> e : files.entrySet()) {
@@ -388,12 +387,23 @@ public final class RepositoryExportTestUtil {
         }
         repo.workingCopyGitRepo.add().addFilepattern(".").call();
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
-        repo.workingCopyGitRepo.push().setRemote("origin").call();
-
-        // Wait for the bare repository to be fully ready for cloning operations
-        waitForBareRepositoryReady(repo);
+        pushToOrigin(repo.workingCopyGitRepo);
 
         return commit;
+    }
+
+    private static void pushToOrigin(Git git) throws GitAPIException {
+        var pushResults = git.push().setRemote("origin").call();
+        List<String> failedUpdates = new ArrayList<>();
+        for (var pushResult : pushResults) {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                var status = update.getStatus();
+                if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    failedUpdates.add(update.getRemoteName() + " -> " + status + (update.getMessage() == null ? "" : ": " + update.getMessage()));
+                }
+            }
+        }
+        assertThat(failedUpdates).as("push to origin should update all refs").isEmpty();
     }
 
     /**

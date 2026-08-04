@@ -151,7 +151,7 @@ public class QuizExerciseFactory {
 
         var mapping2 = new ShortAnswerMapping().spot(sa.getSpots().get(1)).solution(sa.getSolutions().get(1));
         sa.addCorrectMapping(mapping1);
-        assertThat(sa).isEqualTo(mapping1.getQuestion());
+        assertThat(mapping1.getId()).isNotNull();
         sa.removeCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping1);
         sa.addCorrectMapping(mapping2);
@@ -190,7 +190,7 @@ public class QuizExerciseFactory {
         var dragItem3 = new DragItem().text("D3");
         var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
+        assertThat(dragItem1.getId()).isNotNull();
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
@@ -316,28 +316,14 @@ public class QuizExerciseFactory {
             submittedAnswer.setQuizQuestion(question);
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
-            dragItem1.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
-            dragItem2.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
-            dragItem3.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem4 = ((DragAndDropQuestion) question).getDragItems().get(3);
-            dragItem4.setQuestion((DragAndDropQuestion) question);
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
-            dropLocation1.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
-            dropLocation2.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
-            dropLocation3.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation4 = ((DragAndDropQuestion) question).getDropLocations().get(3);
-            dropLocation4.setQuestion((DragAndDropQuestion) question);
 
             if (correct) {
                 submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
@@ -476,7 +462,7 @@ public class QuizExerciseFactory {
         var dragItem5 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
-        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
+        assertThat(dragItem1.getId()).isNotNull();
         // also invoke remove once
         dnd.removeDragItem(dragItem1);
         dnd.addDragItem(dragItem1);
@@ -581,22 +567,12 @@ public class QuizExerciseFactory {
             submittedAnswer.setQuizQuestion(question);
 
             DragItem dragItem1 = ((DragAndDropQuestion) question).getDragItems().getFirst();
-            dragItem1.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem2 = ((DragAndDropQuestion) question).getDragItems().get(1);
-            dragItem2.setQuestion((DragAndDropQuestion) question);
-
             DragItem dragItem3 = ((DragAndDropQuestion) question).getDragItems().get(2);
-            dragItem3.setQuestion((DragAndDropQuestion) question);
 
             DropLocation dropLocation1 = ((DragAndDropQuestion) question).getDropLocations().getFirst();
-            dropLocation1.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation2 = ((DragAndDropQuestion) question).getDropLocations().get(1);
-            dropLocation2.setQuestion((DragAndDropQuestion) question);
-
             DropLocation dropLocation3 = ((DragAndDropQuestion) question).getDropLocations().get(2);
-            dropLocation3.setQuestion((DragAndDropQuestion) question);
 
             submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1));
             submittedAnswer.addMappings(new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation3));
