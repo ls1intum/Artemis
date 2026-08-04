@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
@@ -13,6 +13,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { BuildPlanConfigurationService } from 'app/programming/manage/services/build-plan-configuration.service';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
@@ -40,6 +41,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private buildPlanConfigurationService = inject(BuildPlanConfigurationService);
     private legacyBuildPlanConverterService = inject(LegacyBuildPlanConverterService);
+    private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
 
@@ -52,6 +54,25 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     readonly phases = signal<BuildPhase[]>([]);
     readonly dockerImage = signal<string>('');
     readonly timeout = signal<number>(0);
+
+    // set while the editor waits for the build phases template so the fetched language default is only applied when the
+    // exercise itself configured no image, and never overwrites an image the instructor typed in the meantime
+    private readonly awaitingTemplateDockerImage = signal(false);
+
+    constructor() {
+        // Seed the language default image once the template service resolves it, so an exercise stored without an image
+        // (the windfile migration did this for every exercise that relied on the language default) opens with a usable
+        // image instead of an empty field and a dead submit button.
+        effect(() => {
+            const templateDockerImage = this.buildPhasesTemplateService.buildPlan()?.dockerImage;
+            untracked(() => {
+                if (this.awaitingTemplateDockerImage() && templateDockerImage && this.dockerImage().trim().length === 0) {
+                    this.dockerImage.set(templateDockerImage);
+                    this.awaitingTemplateDockerImage.set(false);
+                }
+            });
+        });
+    }
 
     readonly isExamMode = computed(() => !!this.programmingExercise()?.exerciseGroup);
 
@@ -66,8 +87,6 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
         return namesAreUnique && namesArePatternValid && namesAreNotReserved;
     });
 
-    readonly isDockerImageValid = computed(() => this.dockerImage().trim().length > 0);
-
     readonly isTimeoutValid = computed(() => {
         const buildConfigurationComponent = this.buildConfigurationComponent();
         // before the build configuration component has initialized its bounds from the profile info, do not block saving
@@ -77,14 +96,30 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
         return (min === undefined || timeout >= min) && (max === undefined || timeout <= max);
     });
 
-    readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.isDockerImageValid() && this.isTimeoutValid());
+    // an empty image is allowed: submit() sends no image and the server falls back to the exercise's language default
+    readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.isTimeoutValid());
 
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ exercise }) => {
             this.initEditingState(exercise);
+            this.seedDefaultDockerImageIfMissing(exercise);
             this.programmingExercise.set(exercise);
             this.loadParticipationsWithResults(exercise);
         });
+    }
+
+    /**
+     * Requests the language default Docker image from the build phases template service when the exercise configured
+     * none. The resolved image is applied by the constructor effect. Does nothing when the image is already set or the
+     * exercise has no programming language.
+     */
+    private seedDefaultDockerImageIfMissing(exercise: ProgrammingExercise): void {
+        const programmingLanguage = exercise.programmingLanguage;
+        if (!programmingLanguage || this.dockerImage().trim().length > 0) {
+            return;
+        }
+        this.awaitingTemplateDockerImage.set(true);
+        this.buildPhasesTemplateService.fetchTemplate(!!exercise.exerciseGroup, programmingLanguage, exercise.projectType);
     }
 
     /**

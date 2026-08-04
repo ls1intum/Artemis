@@ -5,7 +5,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { EMPTY, Subject } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class BuildPhasesTemplateService {
     private http = inject(HttpClient);
 

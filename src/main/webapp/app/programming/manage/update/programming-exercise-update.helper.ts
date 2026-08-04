@@ -21,7 +21,6 @@ export enum ProgrammingExerciseInputField {
     PACKAGE_NAME = 'packageName',
     ENABLE_STATIC_CODE_ANALYSIS = 'enableStaticCodeAnalysis',
     SEQUENTIAL_TEST_RUNS = 'sequentialTestRuns',
-    CUSTOMIZE_BUILD_SCRIPT = 'customizeBuildScript',
 
     // Version Control section
     ALLOW_BRANCHING = 'allowBranching',
@@ -72,7 +71,6 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     packageName: true,
     enableStaticCodeAnalysis: false,
     sequentialTestRuns: false,
-    customizeBuildScript: false,
     // Version Control section
     allowBranching: false,
     // Problem section

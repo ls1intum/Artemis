@@ -9,8 +9,6 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     auxiliaryRepositoryDuplicateDirectories: false,
     auxiliaryRepositoryDuplicateNames: false,
     checkoutSolutionRepositoryAllowed: false,
-    buildPlanLoaded: false,
-    customBuildPlansSupported: '',
     exerciseCategories: [],
     existingCategories: [],
     hasUnsavedChanges: false,

@@ -227,7 +227,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     readonly isSaving = signal<boolean>(undefined!);
     goBackAfterSaving = false;
     problemStatementLoaded = false;
-    buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
     readonly courseId = signal<number>(undefined!);
@@ -260,7 +259,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public sequentialTestRunsAllowed = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
-    public customBuildPlansSupported = '';
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
     private _hyperionEnabled = false;
@@ -411,7 +409,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.projectType = this.projectTypes?.[0];
             this.selectedProjectTypeValue = this.projectTypes?.[0];
             this.withDependenciesValue = false;
-            this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
                 this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
             } else {
@@ -629,7 +626,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.inProductionEnvironment = this.profileService.isProduction();
         if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.isLocalCIEnabled = true;
-            this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
 
         this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
@@ -1635,7 +1631,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.auxiliaryRepositoryDuplicateDirectories = this.auxiliaryRepositoryDuplicateDirectories;
         config.auxiliaryRepositoryDuplicateNames = this.auxiliaryRepositoryDuplicateNames;
         config.checkoutSolutionRepositoryAllowed = this.checkoutSolutionRepositoryAllowed;
-        config.customBuildPlansSupported = this.customBuildPlansSupported;
         config.invalidDirectoryNamePattern = this.invalidDirectoryNamePattern;
         config.invalidRepositoryNamePattern = this.invalidRepositoryNamePattern;
         config.titleNamePattern = EXERCISE_TITLE_NAME_PATTERN;
@@ -1677,7 +1672,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.onRecreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
         config.updateTemplate = this.importOptions.updateTemplate;
         config.recreateBuildPlanOrUpdateTemplateChange = this.onRecreateBuildPlanOrUpdateTemplateChange;
-        config.buildPlanLoaded = this.buildPlanLoaded;
         return config as ProgrammingExerciseCreationConfig;
     }
 
