@@ -437,7 +437,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         this.cancelBusy.set(true);
         if (confirmCancel && this.exercise && this.submission) {
-            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission.id!).subscribe(() => this.navigateBack());
+            this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission.id!, this.result()?.id).subscribe(() => this.navigateBack());
         }
     }
 
