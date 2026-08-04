@@ -445,7 +445,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         if (confirmCancel) {
             this.isLoading.set(true);
             this.fileUploadAssessmentService
-                .cancelAssessment(submissionId)
+                .cancelAssessment(submissionId, this.result()?.id)
                 .pipe(finalize(() => this.isLoading.set(false)))
                 .subscribe(() => {
                     this.navigateBack();
