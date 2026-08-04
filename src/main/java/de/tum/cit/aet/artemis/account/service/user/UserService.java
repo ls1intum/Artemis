@@ -530,10 +530,12 @@ public class UserService {
     }
 
     /**
-     * Change password of current user
+     * Change password of current user, revoking the credential types the user selected along with it.
      *
      * @param currentClearTextPassword cleartext password
      * @param newPassword              new password string
+     * @param revocationChoice         which of the user's other credentials to revoke; only the user knows whether the old
+     *                                     password may have been seen by someone else, which is what decides this
      */
     public void changePassword(String currentClearTextPassword, String newPassword, CredentialRevocationChoiceDTO revocationChoice) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
