@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -70,15 +71,24 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         var response = request.putWithResponseBody(buildConfigEndpoint(), dto, UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
 
         assertThat(response.timeoutSeconds()).isEqualTo(240);
-        assertThat(response.buildPlanConfiguration()).contains("compile").contains("test").contains(DOCKER_IMAGE);
         assertThat(response.dockerFlags()).isEqualTo(DOCKER_FLAGS);
+        // the structured phases configuration supersedes any legacy build script; assert on the response because the entity
+        // column was dropped and the field is transient, so reading it back from the database always yields null
+        assertThat(response.buildScript()).isNull();
+        // compare the deserialized configuration by phase name and script (which are unique to the submitted plan) instead
+        // of substring-matching, which would also match the default plan the exercise factory creates
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(response.buildPlanConfiguration())).satisfies(config -> {
+            assertThat(config.dockerImage()).isEqualTo(DOCKER_IMAGE);
+            assertThat(config.phases()).extracting(BuildPhaseDTO::name, BuildPhaseDTO::script).containsExactly(tuple("compile", "echo compile"), tuple("test", "echo test"));
+        });
 
         var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         assertThat(persisted.getTimeoutSeconds()).isEqualTo(240);
-        assertThat(persisted.getBuildPlanConfiguration()).contains("compile").contains("test").contains(DOCKER_IMAGE);
         assertThat(persisted.getDockerFlags()).isEqualTo(DOCKER_FLAGS);
-        // the structured phases configuration supersedes any legacy build script
-        assertThat(persisted.getBuildScript()).isNull();
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration())).satisfies(config -> {
+            assertThat(config.dockerImage()).isEqualTo(DOCKER_IMAGE);
+            assertThat(config.phases()).extracting(BuildPhaseDTO::name, BuildPhaseDTO::script).containsExactly(tuple("compile", "echo compile"), tuple("test", "echo test"));
+        });
 
         // analogous to the build plan editor for external CI systems, the template and solution build is triggered
         verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());
