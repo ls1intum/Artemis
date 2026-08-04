@@ -102,7 +102,7 @@ services:
 docker compose -f docker/artemis-prod-postgres.yml -f docker/local-secrets.yml up
 ```
 
-The `docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](../admin/production-setup/security.mdx) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
+The `docker/test-server-*.yml` setups take a full replacement for `prod.env` through `ARTEMIS_ENV_FILE`, so there you point that variable at your own copy of `prod.env` rather than at a file that only holds the credentials. See [Security](/admin/production-setup/security) for the properties that are validated. If you just want a running Artemis without configuring anything, use one of the dev setups.
 
 ### Base Services
 
