@@ -200,6 +200,33 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotBlockUploadWhenOnlyASupersededSubmissionHasAComplaint() {
+        // An older, superseded submission carries a complained manual result, while the latest submission carries a different manual result. The upload replaces only the latest
+        // submission's result, so the complaint on the superseded result must neither block the upload nor be deleted.
+        final Result supersededManualResult = participationUtilService.createSubmissionAndResult(participation1, 30, true);
+        supersededManualResult.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.saveAndFlush(supersededManualResult);
+        complaintRepo.save(new Complaint().result(supersededManualResult).complaintType(ComplaintType.COMPLAINT));
+        // A newer submission (higher id) becomes the latest; its manual result is the one the upload will actually replace.
+        final Result latestManualResult = participationUtilService.createSubmissionAndResult(participation1, 50, true);
+        latestManualResult.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.saveAndFlush(latestManualResult);
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "latest feedback")));
+
+        assertThat(result.errors()).isEmpty();
+        // The superseded result and its complaint are left untouched.
+        assertThat(resultRepository.findById(supersededManualResult.getId())).isPresent();
+        assertThat(complaintRepo.findByResultId(supersededManualResult.getId())).isPresent();
+        // The latest submission's manual result was replaced with the uploaded score; the previous latest result is gone.
+        assertThat(resultRepository.findById(latestManualResult.getId())).isEmpty();
+        assertThat(getLatestSubmissionResults(participation1.getId()).stream().filter(Result::isManual).toList()).singleElement()
+                .satisfies(manualResult -> assertThat(manualResult.getScore()).isCloseTo(80.0, within(0.01)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectPointsAboveMaximumIncludingBonusPoints() {
         programmingExercise.setBonusPoints(10.0);
         programmingExerciseRepository.saveAndFlush(programmingExercise);

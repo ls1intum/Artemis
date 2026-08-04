@@ -83,28 +83,25 @@ public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<R
     List<Long> lockResultsForReplacement(@Param("resultIds") final Collection<Long> resultIds);
 
     /**
-     * Finds the participations whose existing manual result carries a complaint. Replacing such a result would delete the student's complaint and any instructor response, so the
-     * upload must reject these participations instead of overwriting them. Only manual and semi-automatic results are considered, matching {@link #findManualResultIds} (the
-     * results
-     * an upload would delete).
+     * Finds the participations that own one of the given results and whose result carries a complaint. Replacing such a result would delete the student's complaint and any
+     * instructor response, so the upload must reject these participations instead of overwriting them. The query is scoped to the exact results an upload would delete (the manual
+     * results on each participation's latest submission, see {@code replacedResultIds}); a complaint on a superseded submission's result — which the upload leaves untouched — is
+     * therefore intentionally not reported.
      * <p>
-     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
      * <p>
-     * <b>Postcondition:</b> read-only; every returned id occurs in {@code participationIds} and has a complaint on a manual result of the supplied exercise.
+     * <b>Postcondition:</b> read-only; every returned id is the participation of a supplied result that has a complaint.
      *
-     * @param exerciseId       target exercise id
-     * @param participationIds participations included in the upload
-     * @return ids of participations that must not be overwritten because a complaint exists
+     * @param resultIds ids of the results that would be replaced
+     * @return ids of participations that must not be overwritten because a complaint exists on a result being replaced
      */
     @Query("""
             SELECT r.submission.participation.id
             FROM Complaint c
                 JOIN c.result r
-            WHERE r.exerciseId = :exerciseId
-                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
-                AND r.submission.participation.id IN :participationIds
+            WHERE r.id IN :resultIds
             """)
-    Set<Long> findParticipationIdsWithComplaint(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
+    Set<Long> findParticipationIdsWithComplaintOnResults(@Param("resultIds") final Collection<Long> resultIds);
 
     /**
      * Loads newly imported results with the relationships required by LTI and websocket notifications in one query.

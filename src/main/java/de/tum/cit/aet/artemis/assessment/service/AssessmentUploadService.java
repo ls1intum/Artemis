@@ -610,12 +610,14 @@ public class AssessmentUploadService {
             submission.getResults().stream().filter(result -> result != null && result.isManual()).map(Result::getId).filter(Objects::nonNull).forEach(replacedResultIds::add);
         }
 
-        // Reject (instead of silently destroying) participations whose current manual assessment is referenced by a complaint. The results that will be replaced are write-locked
-        // first, so a complaint being created concurrently — which updates its result row and inserts the complaint — serializes behind this upload: one committed before the lock
-        // is seen by the check below and rejects the whole upload (all-or-nothing), and one attempted after the lock blocks until this transaction commits and its result is gone.
-        // Locking here, before Submission.results is mutated, also keeps the pending orphan removal from being auto-flushed ahead of the reference cleanup.
+        // Reject (instead of silently destroying) participations whose manual result being replaced is referenced by a complaint. The check is scoped to replacedResultIds — the
+        // manual results on the latest submission that will actually be deleted — so a complaint on a superseded submission's result, which the upload leaves untouched, does not
+        // block the upload. Those results are write-locked first, so a complaint being created concurrently — which updates its result row and inserts the complaint — serializes
+        // behind this upload: one committed before the lock is seen by the check below and rejects the whole upload (all-or-nothing), and one attempted after the lock blocks until
+        // this transaction commits and its result is gone. Locking before Submission.results is mutated also keeps the pending orphan removal from being auto-flushed ahead of the
+        // reference cleanup.
         assessmentUploadResultService.lockResultsForReplacement(replacedResultIds);
-        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaint(exercise.getId(), participationIds);
+        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaintOnResults(replacedResultIds);
         if (!participationsWithComplaint.isEmpty()) {
             return AssessmentUploadResultDTO.failure(buildComplaintErrors(validatedRows, participationsWithComplaint));
         }

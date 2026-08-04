@@ -346,26 +346,26 @@ public class AssessmentUploadResultService {
     }
 
     /**
-     * Finds the participations whose existing manual result carries a complaint and therefore must not be overwritten by an upload. Deleting such a result would silently destroy
-     * the student's complaint and any instructor response, which the supported single-assessment deletion path also forbids. The caller rejects the whole upload for these
-     * participations instead of replacing their results.
+     * Finds, among the results an upload is about to replace, the participations whose result carries a complaint and therefore must not be overwritten. Deleting such a result
+     * would silently destroy the student's complaint and any instructor response, which the supported single-assessment deletion path also forbids. The caller rejects the whole
+     * upload for these participations instead of replacing their results. The lookup is scoped to the exact results being replaced (the manual results on each participation's
+     * latest submission), so a complaint on a superseded submission's result — which the upload leaves untouched — does not block the upload.
      * <p>
-     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains only persisted ids.
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null} (an empty collection yields an empty result) and contains only persisted result ids.
      * <p>
-     * <b>Postcondition:</b> read-only; the returned ids are the subset of {@code participationIds} that have a complaint on a manual result of the exercise.
+     * <b>Postcondition:</b> read-only; the returned ids are the participations of the supplied results that have a complaint.
      *
-     * @param exerciseId       target exercise id
-     * @param participationIds participations included in the upload
-     * @return the participation ids that must not be overwritten because a complaint exists
-     * @throws IllegalArgumentException if a precondition is violated
+     * @param resultIds ids of the manual results that would be replaced
+     * @return the participation ids that must not be overwritten because a complaint exists on a result being replaced
+     * @throws IllegalArgumentException if a result id is not a persisted id
      */
-    public Set<Long> findParticipationsWithComplaint(final long exerciseId, final Collection<Long> participationIds) {
-        if (exerciseId <= 0) {
-            throw new IllegalArgumentException("The exercise id must identify a persisted exercise");
+    public Set<Long> findParticipationsWithComplaintOnResults(final Collection<Long> resultIds) {
+        if (resultIds == null || resultIds.isEmpty()) {
+            return Set.of();
         }
-        if (participationIds == null || participationIds.isEmpty()) {
-            throw new IllegalArgumentException("The participation ids must not be null or empty");
+        if (resultIds.stream().anyMatch(resultId -> resultId == null || resultId <= 0)) {
+            throw new IllegalArgumentException("The result ids must identify persisted results");
         }
-        return assessmentUploadResultRepository.findParticipationIdsWithComplaint(exerciseId, participationIds);
+        return assessmentUploadResultRepository.findParticipationIdsWithComplaintOnResults(resultIds);
     }
 }
