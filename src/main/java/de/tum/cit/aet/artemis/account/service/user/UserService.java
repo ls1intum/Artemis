@@ -206,6 +206,11 @@ public class UserService {
         userDto.setLogin(login);
         userDto.setPassword(password);
         userDto.setActivated(true);
+        // UserDTO defaults this to false, which would store the admin as an externally managed account and make the password
+        // configured right here unusable: ArtemisInternalAuthenticationProvider only ever looks for internal users. The
+        // update branch of ensureInternalAdminExists leaves the flag alone, so this only ever went wrong where the account
+        // had to be created - a new instance, or a test stack whose admin is not part of the seed data.
+        userDto.setInternal(true);
         userDto.setFirstName("Administrator");
         userDto.setLastName("Administrator");
         userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));

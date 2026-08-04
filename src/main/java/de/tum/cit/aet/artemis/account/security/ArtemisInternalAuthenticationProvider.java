@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -66,7 +67,10 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
             throw new UserNotActivatedException("User " + user.getLogin() + " was not activated");
         }
         if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.getPassword())) {
-            throw new AuthenticationServiceException("Invalid password for user " + user.getLogin());
+            // BadCredentialsException rather than AuthenticationServiceException: the request is rejected, nothing failed.
+            // The distinction decides the status code the caller sees, and it keeps the login out of the message.
+            log.warn("Wrong password for user {}", user.getLogin());
+            throw new BadCredentialsException("Invalid credentials");
         }
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
     }

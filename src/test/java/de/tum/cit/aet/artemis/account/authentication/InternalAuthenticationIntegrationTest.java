@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -50,6 +52,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private TokenProvider tokenProvider;
@@ -99,6 +104,70 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         // enroll endpoint returns Void; verify enrollment via UCR
         request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
         assertThat(userTestRepository.countByCourseIdAndRole(course1.getId(), CourseRole.STUDENT)).as("User is registered for course as STUDENT").isGreaterThan(0);
+    }
+
+    private static LoginVM loginVM(String username, String password) {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(username);
+        loginVM.setPassword(password);
+        loginVM.setRememberMe(false);
+        return loginVM;
+    }
+
+    private static HttpHeaders browserHeaders() {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+        return httpHeaders;
+    }
+
+    /**
+     * A refused login has to be answered with 401. Each of the cases below used to end in a 500, because the endpoint only
+     * caught {@code BadCredentialsException} while the internal provider signals the others differently: an unknown login
+     * ends in a {@code ProviderNotFoundException} (a provider that does not know the user returns null so that the next one
+     * can try, and no provider produced a result), a wrong password used to raise an
+     * {@code AuthenticationServiceException}, and a deactivated account raises a {@code UserNotActivatedException}.
+     */
+    @Test
+    @WithAnonymousUser
+    void testUnknownUserIsRefusedRatherThanCausingAServerError() throws Exception {
+        request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(TEST_PREFIX + "nosuchuser", "any-password"), HttpStatus.UNAUTHORIZED, browserHeaders());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testWrongPasswordIsRefusedRatherThanCausingAServerError() throws Exception {
+        request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "definitely-the-wrong-password"), HttpStatus.UNAUTHORIZED, browserHeaders());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testDeactivatedUserIsRefusedRatherThanCausingAServerError() throws Exception {
+        User user = userTestRepository.getUserByLoginElseThrow(USERNAME);
+        user.setActivated(false);
+        userTestRepository.save(user);
+
+        try {
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, USER_PASSWORD), HttpStatus.UNAUTHORIZED, browserHeaders());
+        }
+        finally {
+            user.setActivated(true);
+            userTestRepository.save(user);
+        }
+    }
+
+    /**
+     * The account the server creates for itself at startup has to be able to log in with the password it was configured
+     * with. It could not: the account was stored as external, and the internal provider only authenticates internal users,
+     * so the first login on an instance whose admin did not exist yet was refused - with a 500, at that.
+     */
+    @Test
+    @WithAnonymousUser
+    void testAFreshlyCreatedInternalAdminCanAuthenticate() throws Exception {
+        String adminLogin = TEST_PREFIX + "freshadmin";
+        String adminPassword = "a-password-for-the-fresh-admin";
+        userService.ensureInternalAdminExists(adminLogin, adminPassword);
+
+        request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(adminLogin, adminPassword), HttpStatus.OK, browserHeaders());
     }
 
     @Test
@@ -236,7 +305,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void testAuthenticateWithWrongPassword() {
         var authentication = new UsernamePasswordAuthenticationToken(USERNAME, "wrongPassword");
 
-        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("Invalid password");
+        // The type is what matters: BadCredentialsException is the one the login endpoint answers with 401, where an
+        // AuthenticationServiceException reads as "the service broke" and reached the caller as a 500. The message
+        // deliberately no longer names the account.
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).isInstanceOf(BadCredentialsException.class);
     }
 
     @Test

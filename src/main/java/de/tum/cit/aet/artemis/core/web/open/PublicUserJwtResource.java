@@ -24,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,7 +83,8 @@ public class PublicUserJwtResource {
      * @param tool      optional Tool Token Type to define the scope of the token
      * @param request   HTTP request object, used to get the client environment information
      * @param response  HTTP response object, used to set the JWT cookie
-     * @return if successful a map with the access_token information and status 200 (ok), if not successful an empty body with status 401 (unauthorized)
+     * @return if successful a map with the access_token information and status 200 (ok), and otherwise an empty body with
+     *         status 401 (unauthorized) - for every reason a login can be refused, so that the response does not say which
      */
     @PostMapping("authenticate")
     @EnforceNothing
@@ -110,6 +112,18 @@ public class PublicUserJwtResource {
         }
         catch (BadCredentialsException ex) {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        catch (AuthenticationException ex) {
+            // Every other way the authentication manager can refuse a login: an account that is not activated, a bot
+            // account, or no provider producing a result at all (ProviderNotFoundException, which is what an unknown login
+            // ends in, because a provider that does not know the user returns null so the next one can try).
+            //
+            // Without this, all of those reached the generic exception handler and the caller got a 500. A rejected login is
+            // not a server fault, and answering it with a server error tells an operator to go looking for an outage while
+            // telling the client nothing it can act on. The reason is logged; the response says no more than "unauthorized",
+            // so it stays a single answer for "these credentials do not work" and reveals nothing about which part failed.
+            log.warn("Login for user {} was refused: {}", loginVM.getUsername(), ex.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
