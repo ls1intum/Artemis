@@ -266,9 +266,12 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroupsForExam_asEditor() throws Exception {
+        // Six is the count the endpoint actually performs: the editor access check resolves user, course and exam, and
+        // the group fetch adds one more. The budget guards that fixed cost - it cannot detect a per-row N+1, because the
+        // fixture holds a single group with a single exercise.
         List<ExerciseGroupDTO> result = assertThatDb(
                 () -> request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.OK, ExerciseGroupDTO.class))
-                .hasBeenCalledAtMostTimes(5);
+                .hasBeenCalledAtMostTimes(6);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
         assertThat(result).hasSize(1);
         // The list response embeds the exercise summaries. The previously serialized exam of each group is deliberately
