@@ -90,7 +90,7 @@
                     />
                     @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
                         @if ((shortName.errors! | keyvalue | removekeys: ['required']).length > 0) {
-                            <tum-ui-message severity="error" styleClass="mt-2">
+                            <tum-ui-message severity="error" class="mt-2">
                                 @for (e of shortName.errors! | keyvalue | removekeys: ['required']; track e) {
                                     <div>{{ 'artemisApp.course.form.shortname.' + e.key | artemisTranslate }}</div>
                                 }
@@ -111,7 +111,7 @@
                                     id="removeOrganizationButton-{{ organization.id }}"
                                     [label]="organization.name"
                                     [removable]="true"
-                                    (onRemove)="removeOrganizationFromCourse(organization)"
+                                    (removed)="removeOrganizationFromCourse(organization)"
                                 />
                             }
                         </div>
@@ -126,9 +126,8 @@
                         ></button>
                         <tum-ui-dialog
                             [(visible)]="orgSelectorVisible"
-                            [modal]="true"
                             [dismissableMask]="true"
-                            [style]="{ width: '80vw' }"
+                            size="large"
                             [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate"
                         >
                             @if (orgSelectorVisible()) {
@@ -150,7 +149,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <tum-ui-message severity="error" styleClass="mt-1">{{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</tum-ui-message>
+                            <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
                     <div class="form-group col-md">
@@ -161,7 +160,7 @@
                             [error]="!isValidDate"
                         />
                         @if (!isValidDate) {
-                            <tum-ui-message severity="error" styleClass="mt-1">{{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</tum-ui-message>
+                            <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
                 </div>
@@ -171,7 +170,7 @@
                         name="testCourse"
                         formControlName="testCourse"
                         [checked]="!!course.testCourse"
-                        (onChange)="changeTestCourseEnabled()"
+                        (changed)="changeTestCourseEnabled()"
                     />
                     <label jhiTranslate="artemisApp.course.testCourse.title" for="field_testCourse"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.testCourse.description' | artemisTranslate" />
@@ -201,23 +200,19 @@
                         inputId="timeZone"
                         formControlName="timeZone"
                         [suggestions]="filteredTimeZones()"
-                        (completeMethod)="onTimeZoneSearch($event)"
+                        (searchRequested)="onTimeZoneSearch($event)"
                         [minLength]="3"
-                        [delay]="200"
+                        [debounceMs]="200"
                         [completeOnFocus]="true"
                         placeholder="Europe/Berlin"
-                        styleClass="w-full"
+                        class="w-full"
                     />
                     <div class="text-sm text-muted-color" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
                     @if (courseForm.get('timeZone')?.hasError('invalidTimeZone') && (courseForm.get('timeZone')?.dirty || courseForm.get('timeZone')?.touched)) {
-                        <tum-ui-message severity="error" styleClass="mt-2">{{
-                            'artemisApp.forms.configurationForm.timeZoneInput.invalidTimeZone' | artemisTranslate
-                        }}</tum-ui-message>
+                        <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.forms.configurationForm.timeZoneInput.invalidTimeZone' | artemisTranslate }}</tum-ui-message>
                     }
                     @if (timeZoneChanged) {
-                        <tum-ui-message severity="error" styleClass="mt-2">{{
-                            'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate
-                        }}</tum-ui-message>
+                        <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}</tum-ui-message>
                     }
                 </div>
                 <!-- Section: Exercises & Grading -->
@@ -229,15 +224,13 @@
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxPoints.info' | artemisTranslate" />
                         <input type="number" tumUiInput name="maxPoints" id="field_maxPoints" min="1" step="1" [attr.max]="MAX_GRADING_POINTS" formControlName="maxPoints" />
                         @if (courseForm.get('maxPoints')?.hasError('min')) {
-                            <tum-ui-message severity="error" styleClass="mt-2">{{ 'artemisApp.course.maxPoints.min' | artemisTranslate }}</tum-ui-message>
+                            <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.min' | artemisTranslate }}</tum-ui-message>
                         }
                         @if (courseForm.get('maxPoints')?.hasError('max')) {
-                            <tum-ui-message severity="error" styleClass="mt-2">{{
-                                'artemisApp.course.maxPoints.max' | artemisTranslate: { max: MAX_GRADING_POINTS }
-                            }}</tum-ui-message>
+                            <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.max' | artemisTranslate: { max: MAX_GRADING_POINTS } }}</tum-ui-message>
                         }
                         @if (courseForm.get('maxPoints')?.hasError('notInteger')) {
-                            <tum-ui-message severity="error" styleClass="mt-2">{{ 'artemisApp.course.maxPoints.wholeNumber' | artemisTranslate }}</tum-ui-message>
+                            <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.wholeNumber' | artemisTranslate }}</tum-ui-message>
                         }
                     </div>
                     <div class="form-group col-xl">
@@ -261,7 +254,7 @@
                         name="complaintsEnabled"
                         formControlName="complaintsEnabled"
                         [checked]="complaintsEnabled()"
-                        (onChange)="changeComplaintsEnabled()"
+                        (changed)="changeComplaintsEnabled()"
                     />
                     <label jhiTranslate="artemisApp.course.complaintsEnabled.title" for="field_maxComplaintSettingEnabled"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.complaintsEnabled.description' | artemisTranslate" />
@@ -324,7 +317,7 @@
                         name="requestMoreFeedbackEnabled"
                         formControlName="requestMoreFeedbackEnabled"
                         [checked]="requestMoreFeedbackEnabled()"
-                        (onChange)="changeRequestMoreFeedbackEnabled()"
+                        (changed)="changeRequestMoreFeedbackEnabled()"
                     />
                     <label jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title" for="field_maxRequestMoreFeedbackSettingEnabled"></label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.requestMoreFeedbackEnabled.description' | artemisTranslate" />
@@ -366,7 +359,7 @@
                             inputId="field_athenaFeedbackEnabled"
                             name="athenaFeedbackEnabled"
                             [checked]="athenaFeedbackEnabled()"
-                            (onChange)="changeAthenaFeedbackEnabled()"
+                            (changed)="changeAthenaFeedbackEnabled()"
                         />
                         <label jhiTranslate="artemisApp.course.athenaConfig.aiFeedbackEnabled.label" for="field_athenaFeedbackEnabled"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip' | artemisTranslate" />
@@ -377,7 +370,7 @@
                                 inputId="field_athenaFormativeFeedbackEnabled"
                                 name="athenaFormativeFeedbackEnabled"
                                 [checked]="!!course.athenaFormativeFeedbackEnabled"
-                                (onChange)="changeAthenaFormativeFeedback()"
+                                (changed)="changeAthenaFormativeFeedback()"
                             />
                             <label jhiTranslate="artemisApp.course.athenaConfig.formativeFeedbackEnabled.label" for="field_athenaFormativeFeedbackEnabled"></label>
                             <fa-icon
@@ -391,7 +384,7 @@
                                 inputId="field_athenaGradingFeedbackEnabled"
                                 name="athenaGradingFeedbackEnabled"
                                 [checked]="!!course.athenaGradingFeedbackEnabled"
-                                (onChange)="changeAthenaGradingFeedback()"
+                                (changed)="changeAthenaGradingFeedback()"
                             />
                             <label jhiTranslate="artemisApp.course.athenaConfig.gradingFeedbackEnabled.label" for="field_athenaGradingFeedbackEnabled"></label>
                             <fa-icon
@@ -408,7 +401,7 @@
                         inputId="field_communicationEnabled"
                         [(ngModel)]="communicationEnabled"
                         [ngModelOptions]="{ standalone: true }"
-                        (onChange)="changeCommunicationEnabled()"
+                        (changed)="changeCommunicationEnabled()"
                     />
                     <label for="field_communicationEnabled" jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></label>
                     <fa-icon
@@ -450,7 +443,7 @@
                             name="onlineCourse"
                             formControlName="onlineCourse"
                             [checked]="!!course.onlineCourse"
-                            (onChange)="changeOnlineCourse()"
+                            (changed)="changeOnlineCourse()"
                         />
                         <label jhiTranslate="artemisApp.course.onlineCourse.title" for="field_onlineCourse"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.onlineCourse.description' | artemisTranslate" />
@@ -459,7 +452,7 @@
                 <!-- enrollment -->
                 @if (!course.onlineCourse) {
                     <div class="nested-form-group-head flex items-center gap-2">
-                        <tum-ui-checkbox inputId="field_enrollmentEnabled" name="enrollmentEnabled" [checked]="!!course.enrollmentEnabled" (onChange)="changeEnrollmentEnabled()" />
+                        <tum-ui-checkbox inputId="field_enrollmentEnabled" name="enrollmentEnabled" [checked]="!!course.enrollmentEnabled" (changed)="changeEnrollmentEnabled()" />
                         <label jhiTranslate="artemisApp.course.enrollmentEnabled.title" for="field_enrollmentEnabled"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.enrollmentEnabled.description' | artemisTranslate" />
                     </div>
@@ -475,9 +468,7 @@
                                     [error]="!isValidEnrollmentPeriod"
                                 />
                                 @if (!isValidEnrollmentPeriod) {
-                                    <tum-ui-message severity="error" styleClass="mt-1">{{
-                                        'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate
-                                    }}</tum-ui-message>
+                                    <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate }}</tum-ui-message>
                                 }
                             </div>
                             <div class="col-md">
@@ -488,7 +479,7 @@
                                     [error]="!isValidEnrollmentPeriod"
                                 />
                                 @if (!isValidEnrollmentPeriod) {
-                                    <tum-ui-message severity="error" styleClass="mt-1">{{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</tum-ui-message>
+                                    <tum-ui-message severity="error" class="mt-1">{{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</tum-ui-message>
                                 }
                             </div>
                         </div>
@@ -507,7 +498,7 @@
                                         inputId="field_unenrollmentEnabled"
                                         name="unenrollmentEnabled"
                                         [checked]="!!course.unenrollmentEnabled"
-                                        (onChange)="changeUnenrollmentEnabled()"
+                                        (changed)="changeUnenrollmentEnabled()"
                                     />
                                     <label jhiTranslate="artemisApp.course.unenrollmentEnabled.title" for="field_unenrollmentEnabled"></label>
                                     <fa-icon
@@ -525,7 +516,7 @@
                                             [error]="!isValidUnenrollmentEndDate"
                                         />
                                         @if (!isValidUnenrollmentEndDate) {
-                                            <tum-ui-message severity="error" styleClass="mt-1">{{
+                                            <tum-ui-message severity="error" class="mt-1">{{
                                                 'artemisApp.course.form.unenrollmentEndDate.invalid' | artemisTranslate
                                             }}</tum-ui-message>
                                         }

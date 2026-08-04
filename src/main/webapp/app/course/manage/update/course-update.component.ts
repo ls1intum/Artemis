@@ -20,14 +20,17 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
-import { TumUiAutoCompleteCompleteEvent, TumUiAutoCompleteComponent } from 'app/shared-ui/tum-ui/autocomplete/tum-ui-autocomplete.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiChipComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { faBan, faPen, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -296,7 +299,7 @@ export class CourseUpdateComponent implements OnInit {
         this.isAdmin.set(this.accountService.isAdmin());
         this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(this.course));
     }
-    onTimeZoneSearch(event: TumUiAutoCompleteCompleteEvent): void {
+    onTimeZoneSearch(event: TumUiAutoCompleteSearchEvent): void {
         const term = event.query;
         this.filteredTimeZones.set(term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().includes(term.toLowerCase())));
     }
