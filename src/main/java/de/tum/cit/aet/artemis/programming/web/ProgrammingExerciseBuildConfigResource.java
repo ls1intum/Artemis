@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +24,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
@@ -54,9 +59,12 @@ public class ProgrammingExerciseBuildConfigResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfigResource.class);
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private static final String ENTITY_NAME = "programmingExercise";
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService;
 
@@ -66,16 +74,24 @@ public class ProgrammingExerciseBuildConfigResource {
 
     private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
 
+    private final UserRepository userRepository;
+
+    private final ExerciseService exerciseService;
+
+    private final ExerciseVersionService exerciseVersionService;
+
     public ProgrammingExerciseBuildConfigResource(ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
-            ProgrammingTriggerService programmingTriggerService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
-            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService) {
+            ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingTriggerService programmingTriggerService,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
+            UserRepository userRepository, ExerciseService exerciseService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingTriggerService = programmingTriggerService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
+        this.userRepository = userRepository;
+        this.exerciseService = exerciseService;
+        this.exerciseVersionService = exerciseVersionService;
     }
 
     /**
@@ -96,8 +112,8 @@ public class ProgrammingExerciseBuildConfigResource {
     public ResponseEntity<UpdateProgrammingExerciseBuildConfigDTO> updateBuildConfig(@PathVariable long exerciseId, @Valid @RequestBody UpdateBuildPlanConfigurationDTO dto)
             throws JsonProcessingException {
         log.debug("REST request to update the build plan configuration of programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(exerciseId);
+        final var user = userRepository.getUserWithAuthorities();
 
         // the offset has to be read before the build plan changes, so that a build and test date an instructor moved
         // manually keeps its distance to the due date instead of being reset to the default offset
@@ -107,7 +123,13 @@ public class ProgrammingExerciseBuildConfigResource {
         updateBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
 
         programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
-        return ResponseEntity.ok(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
+
+        // record the change like the full update path does, so it appears in the exercise version history and the audit log,
+        // and warn a colleague who has the exercise form open via the entity-update alert header
+        exerciseService.logUpdate(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(programmingExercise, user);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle()))
+                .body(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
     }
 
     /**
@@ -124,13 +146,19 @@ public class ProgrammingExerciseBuildConfigResource {
         }
 
         final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+        final boolean buildAndTestDateChanged = !Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
         // a build and test date and manual feedback requests are mutually exclusive, see the full programming exercise update
+        boolean feedbackRequestsChanged = false;
         if (computedBuildAndTestDate != null && programmingExercise.getAllowFeedbackRequests()) {
             programmingExercise.setAllowFeedbackRequests(false);
+            feedbackRequestsChanged = true;
         }
 
-        programmingExerciseRepository.save(programmingExercise);
-        programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
+        // only persist the exercise and reschedule when the date or the feedback flag actually moved, exactly like the create/update path
+        if (buildAndTestDateChanged || feedbackRequestsChanged) {
+            programmingExerciseRepository.save(programmingExercise);
+            programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
+        }
     }
 }
