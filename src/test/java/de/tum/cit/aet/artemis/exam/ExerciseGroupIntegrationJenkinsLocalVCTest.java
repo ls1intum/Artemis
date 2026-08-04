@@ -203,8 +203,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroupsForExam_withoutGroups_returnsEmptyList() throws Exception {
-        // The repository query left-joins the groups off the exam, so an exam without groups yields a single null row;
-        // the endpoint must filter it and return the documented empty list instead of failing to map.
+        // The repository query inner-joins the groups off the exam, so an exam without groups yields no rows at all and
+        // the endpoint returns the documented empty list.
         Exam emptyExam = examUtilService.addExam(course1);
         List<ExerciseGroupDTO> result = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + emptyExam.getId() + "/exercise-groups", HttpStatus.OK,
                 ExerciseGroupDTO.class);
