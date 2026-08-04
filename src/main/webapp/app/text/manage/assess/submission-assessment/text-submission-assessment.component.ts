@@ -177,7 +177,13 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
+            // Only override when the parameter is really there and sane. The emptiness check has to come first:
+            // Number(null) is 0, which is a valid looking round and would silently mean the first correction round.
+            const rawCorrectionRound = queryParams.get('correction-round');
+            const parsedCorrectionRound = Number(rawCorrectionRound);
+            if (rawCorrectionRound !== null && rawCorrectionRound !== '' && Number.isSafeInteger(parsedCorrectionRound) && parsedCorrectionRound >= 0) {
+                this.correctionRound.set(parsedCorrectionRound);
+            }
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {

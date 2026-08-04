@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -232,6 +232,25 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should use jhi-assessment-layout', () => {
         const sharedLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(sharedLayout).not.toBeNull();
+    });
+
+    it.each([
+        { param: undefined, description: 'absent' },
+        { param: '', description: 'empty' },
+        { param: 'abc', description: 'not a number' },
+        { param: '1.5', description: 'fractional' },
+    ])('should not treat a $description correction-round parameter as the first round', async ({ param }) => {
+        // Number(null) is 0, so parsing before checking for emptiness silently means the first correction round, which
+        // is exactly how a second-round assessment collapsed into the first one (issue #13396).
+        component.correctionRound.set(1);
+
+        const queryParams = convertToParamMap(param === undefined ? {} : { 'correction-round': param });
+        // queryParamMap is declared readonly on ActivatedRoute, so the mock is reached through a writable view.
+        (component['route'] as unknown as { queryParamMap: Observable<ParamMap> }).queryParamMap = of(queryParams);
+        // ngOnInit is async and subscribes after its first await, so the assertion has to wait for it.
+        await component.ngOnInit();
+
+        expect(component.correctionRound()).toBe(1);
     });
 
     describe('when assessment is not possible yet', () => {

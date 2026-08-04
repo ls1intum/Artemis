@@ -133,9 +133,12 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            const correctionRoundParam = queryParams.get('correction-round');
-            if (correctionRoundParam) {
-                this.correctionRound.set(parseInt(correctionRoundParam, 10));
+            // Only override when the parameter is really there and sane. The emptiness check has to come first:
+            // Number(null) is 0, which is a valid looking round and would silently mean the first correction round.
+            const rawCorrectionRound = queryParams.get('correction-round');
+            const parsedCorrectionRound = Number(rawCorrectionRound);
+            if (rawCorrectionRound !== null && rawCorrectionRound !== '' && Number.isSafeInteger(parsedCorrectionRound) && parsedCorrectionRound >= 0) {
+                this.correctionRound.set(parsedCorrectionRound);
             }
         });
 
