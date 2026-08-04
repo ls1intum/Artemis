@@ -375,9 +375,14 @@
             [dismissableMask]="true"
             [style]="{ width: '30rem', 'max-width': '92vw' }"
         >
-            <div class="flex items-center justify-between text-sm mb-4">
-                <span class="text-muted-color">{{ courseTitleFor(run.courseId) }}</span>
-                <span class="flex items-center gap-2">
+            <div class="flex items-start justify-between gap-3 text-sm mb-4">
+                <div class="min-w-0">
+                    <div class="text-muted-color truncate">{{ courseTitleFor(run.courseId) }}</div>
+                    @if (run.startedAt) {
+                        <div class="text-xs text-muted-color mt-0.5">{{ run.startedAt | date: 'medium' }}</div>
+                    }
+                </div>
+                <span class="flex items-center gap-2 shrink-0">
                     @if (isStalled(run)) {
                         <span
                             class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -397,7 +402,7 @@
                             <span jhiTranslate="artemisApp.courseIngestionDashboard.active.running"></span>
                         </span>
                     }
-                    <span class="text-muted-color font-mono">{{ elapsed(run.startedAt) }}</span>
+                    <span class="text-muted-color font-mono whitespace-nowrap">{{ elapsed(run.startedAt) }}</span>
                 </span>
             </div>
 
@@ -475,9 +480,14 @@
             [dismissableMask]="true"
             [style]="{ width: '30rem', 'max-width': '92vw' }"
         >
-            <div class="flex items-center justify-between text-sm mb-4">
-                <span class="text-muted-color">{{ runContext(recent) }}</span>
-                <span class="flex items-center gap-2">
+            <div class="flex items-start justify-between gap-3 text-sm mb-4">
+                <div class="min-w-0">
+                    <div class="text-muted-color truncate">{{ runContext(recent) }}</div>
+                    @if (recent.startedAt || recent.finishedAt) {
+                        <div class="text-xs text-muted-color mt-0.5">{{ recent.startedAt || recent.finishedAt | date: 'medium' }}</div>
+                    }
+                </div>
+                <span class="flex items-center gap-2 shrink-0">
                     @if (recent.outcome === 'FAILED') {
                         <span
                             class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -497,7 +507,7 @@
                             <span jhiTranslate="artemisApp.courseIngestionDashboard.recent.completed"></span>
                         </span>
                     }
-                    <span class="font-mono" [style.color]="recentColor(recent)">{{ formatDuration(recent.totalMillis) }}</span>
+                    <span class="font-mono whitespace-nowrap" [style.color]="recentColor(recent)">{{ formatDuration(recent.totalMillis) }}</span>
                 </span>
             </div>
 
@@ -639,10 +649,8 @@
                                 >
                                     <fa-icon [icon]="faBookOpen" class="shrink-0" [class.text-muted-color]="!isSelected(ln.key)" size="xs" />
                                     <span class="flex-1 min-w-0 truncate">{{ ln.lecture.title || '#' + ln.lecture.entityId }}</span>
-                                    @if (lectureIncomplete(ln.lecture.entityId)) {
-                                        <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="'var(--danger)'"></span>
-                                    }
                                     <span class="text-xs font-mono text-muted-color">{{ ln.units.length }}</span>
+                                    <span class="w-1.5 h-1.5 rounded-full shrink-0" [style.background]="lectureDotColor(ln.lecture.entityId)"></span>
                                 </span>
                             </div>
                             @if (isOpen(ln.key)) {

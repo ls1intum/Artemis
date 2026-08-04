@@ -1031,6 +1031,11 @@ export class CourseIngestionDashboardComponent implements OnInit {
         );
     }
 
+    /** The tree dot color for a lecture: red when any unit needs attention, green when all its units are complete. */
+    protected lectureDotColor(lectureId: number): string {
+        return this.lectureIncomplete(lectureId) ? 'var(--danger)' : 'var(--success)';
+    }
+
     // ----- Browser detail: stored fields (only the populated ones) -----
 
     protected fieldExpandKey(prefix: string, id: string | number): string {
