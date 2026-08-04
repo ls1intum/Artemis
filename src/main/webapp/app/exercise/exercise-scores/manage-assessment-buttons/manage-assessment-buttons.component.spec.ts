@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
 import { MockProvider } from 'ng-mocks';
@@ -133,6 +134,36 @@ describe('ManageAssessmentButtonsComponent', () => {
             const result = comp.getAssessmentLink();
 
             expect(result).toBeDefined();
+        });
+    });
+
+    describe('getAssessmentLink with two correction rounds', () => {
+        /**
+         * The scores overview builds its participation from a DTO carrying a single result, so the result array cannot
+         * identify a correction round. The link must therefore not contain a result id for any round, otherwise round 0
+         * opens whichever result the DTO happens to carry (issue #13396).
+         */
+        it('should not put a result id in the link for either correction round', () => {
+            fixture.componentRef.setInput('exercise', {
+                id: 1,
+                type: ExerciseType.TEXT,
+                exerciseGroup: { id: 3, exam: { id: 2, numberOfCorrectionRoundsInExam: 2 } },
+            } as Exercise);
+            fixture.componentRef.setInput('participation', {
+                id: 1,
+                // The single result the DTO provides is the newest round, not round 0.
+                submissions: [{ id: 1, results: [{ id: 99, completionDate: dayjs() }] } as Submission],
+            } as Participation);
+
+            const firstRoundLink = comp.getAssessmentLink();
+            const secondRoundLink = comp.getAssessmentLink();
+
+            expect(firstRoundLink).toBeDefined();
+            expect(secondRoundLink).toBeDefined();
+            expect(firstRoundLink).not.toContain('99');
+            expect(secondRoundLink).not.toContain('99');
+            // Both rounds address the same submission and are distinguished only by the correction-round parameter.
+            expect(firstRoundLink).toEqual(secondRoundLink);
         });
     });
 

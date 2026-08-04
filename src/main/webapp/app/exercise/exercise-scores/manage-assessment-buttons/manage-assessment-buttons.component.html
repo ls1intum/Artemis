@@ -9,7 +9,7 @@
         ) {
             <div class="d-flex align-items-center gap-1">
                 <a
-                    [routerLink]="getAssessmentLink(correctionRound)"
+                    [routerLink]="getAssessmentLink()"
                     [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(correctionRound) }"
                     class="btn btn-sm"
                     [class.btn-success]="

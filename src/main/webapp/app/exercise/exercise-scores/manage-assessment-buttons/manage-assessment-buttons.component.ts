@@ -61,7 +61,11 @@ export class ManageAssessmentButtonsComponent implements OnInit {
         this.correctionRoundIndices.set([...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
     }
 
-    getAssessmentLink(correctionRound = 0) {
+    /**
+     * The route to the assessment editor. The correction round is not part of it: the template supplies it as the
+     * correction-round query parameter via {@link getCorrectionRoundForAssessmentLink}.
+     */
+    getAssessmentLink() {
         const exercise = this.exercise();
         const course = this.course();
         const participation = this.participation();
@@ -69,19 +73,12 @@ export class ManageAssessmentButtonsComponent implements OnInit {
         if (!exercise.type || !exercise.id || !course.id || !submission?.id) {
             return;
         }
-        correctionRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
-
-        return getLinkToSubmissionAssessment(
-            exercise.type,
-            course.id,
-            exercise.id,
-            participation.id,
-            submission.id,
-            exercise.exerciseGroup?.exam?.id,
-            exercise.exerciseGroup?.id,
-            // TODO do we need to handle this differently for programming exercises?
-            submission.results?.[correctionRound]?.id,
-        );
+        // Navigate by correction round only. The scores overview builds its participation from a DTO that carries a
+        // single result (ExerciseScoresComponent#toParticipation), so indexing that array by correction round cannot
+        // identify the round's result: round 0 would hand over whichever result the DTO happens to carry and any later
+        // round has none at all. The editor resolves the round from the correction-round query parameter, which is
+        // authoritative, and passing no result id also stops the server from reducing the submission to one result.
+        return getLinkToSubmissionAssessment(exercise.type, course.id, exercise.id, participation.id, submission.id, exercise.exerciseGroup?.exam?.id, exercise.exerciseGroup?.id);
     }
 
     getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
