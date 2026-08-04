@@ -589,7 +589,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.isLoading.set(false);
 
                 const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
-                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among them.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.nextSubmissionBusy.set(false);
