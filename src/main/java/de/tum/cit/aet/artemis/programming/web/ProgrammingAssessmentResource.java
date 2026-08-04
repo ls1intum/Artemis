@@ -121,8 +121,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("programming-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
-        return super.cancelAssessment(submissionId);
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return super.cancelAssessment(submissionId, resultId);
     }
 
     /**

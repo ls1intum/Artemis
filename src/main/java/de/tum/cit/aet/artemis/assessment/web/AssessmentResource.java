@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.web;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -202,13 +203,26 @@ public abstract class AssessmentResource {
         }
     }
 
-    protected ResponseEntity<Void> cancelAssessment(long submissionId) {
-        log.debug("REST request to cancel assessment of submission: {}", submissionId);
+    protected ResponseEntity<Void> cancelAssessment(long submissionId, @Nullable Long resultId) {
+        log.debug("REST request to cancel assessment of submission {} and result {}", submissionId, resultId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        // Release the newest correction round, not the result with the highest id: an automatic or Athena result can be
-        // newer than the assessment the tutor is working on, and it carries no assessor, so resolving by id made the
-        // authorization check below dereference null and the lock was never released.
-        Result resultToCancel = submission.getLatestManualResult();
+        // Release the result the caller named. A submission can hold one result per correction round, and the caller is
+        // the only one that knows which round its button belongs to: resolving it here always released the newest round,
+        // so "cancel assessment of correction round 1" released round 2 instead and round 1 stayed locked (#13396).
+        Result resultToCancel;
+        if (resultId != null) {
+            resultToCancel = submission.getManualResultsById(resultId);
+            if (resultToCancel == null) {
+                throw new BadRequestAlertException("The result does not belong to this submission or is not a manual assessment", "result", "resultNotFound");
+            }
+        }
+        else {
+            // Without a result the newest correction round is released, which is what every caller got before the
+            // parameter existed. Not the result with the highest id: an automatic or Athena result can be newer than the
+            // assessment the tutor is working on, and it carries no assessor, so resolving by id made the authorization
+            // check below dereference null and the lock was never released.
+            resultToCancel = submission.getLatestManualResult();
+        }
         // The permission decision falls back to the latest result: a submission whose only result is automatic has nothing
         // to cancel, but another tutor still has to be rejected rather than silently told everything is fine.
         Result resultForAuthorization = resultToCancel != null ? resultToCancel : submission.getLatestResult();

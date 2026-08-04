@@ -102,6 +102,11 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     /**
      * Cancel the current assessment and reload the submissions to reflect the change.
      */
+    /**
+     * Cancels the assessment the clicked button belongs to. The result is passed on explicitly: a submission holds one
+     * result per correction round, and without it the server released the newest round, so cancelling correction round 1
+     * released round 2 and round 1 stayed locked (#13396).
+     */
     cancelAssessment(result: Result, participation: Participation) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
 
@@ -109,16 +114,16 @@ export class ManageAssessmentButtonsComponent implements OnInit {
             let cancelSubscription;
             switch (this.exercise().type) {
                 case ExerciseType.PROGRAMMING:
-                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id, result.id);
                     break;
                 case ExerciseType.MODELING:
-                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id, result.id);
                     break;
                 case ExerciseType.TEXT:
-                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id);
+                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id, result.id);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id);
+                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id, result.id);
                     break;
             }
             cancelSubscription?.subscribe(() => {
