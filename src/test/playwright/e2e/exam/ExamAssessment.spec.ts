@@ -163,8 +163,9 @@ test.describe('Exam assessment', () => {
         test('Instructor makes a second round of assessment', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
-            expect(examAssessment.correctionRoundInUrl()).toBe('1');
+            // startAssessing does not await the editor, so wait for it before reading the URL it navigated to.
             await examAssessment.fillFeedback(9, 'Great job');
+            expect(examAssessment.correctionRoundInUrl()).toBe('1');
 
             // Issue #13396: saving a draft here made the editor fall back to the first correction round and the
             // assessment stopped being submittable. The round is carried only in the URL, so both are asserted.

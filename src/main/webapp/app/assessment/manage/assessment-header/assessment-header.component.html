@@ -104,6 +104,7 @@
             <div class="d-flex flex-wrap flex-lg-nowrap">
                 @if (!result()?.completionDate) {
                     <button
+                        id="save"
                         class="btn m-1 btn-primary"
                         (click)="save.emit()"
                         [disabled]="saveDisabled"

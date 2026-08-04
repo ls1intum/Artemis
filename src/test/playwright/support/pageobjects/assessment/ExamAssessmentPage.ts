@@ -30,8 +30,15 @@ export class ExamAssessmentPage extends AbstractExerciseAssessmentPage {
      * Saves the assessment as a draft without submitting it and returns the save response.
      */
     async saveTextAssessment() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/text/participations/*/results/*/text-assessment`);
-        await this.page.locator('#save').click();
+        // Wait for the button to be enabled rather than racing it: saving is only allowed once the feedback the test
+        // just entered has been validated, and clicking too early produces no request at all.
+        const saveButton = this.page.locator('#save');
+        await saveButton.waitFor({ state: 'visible' });
+        await expect(saveButton).toBeEnabled({ timeout: 10000 });
+        const responsePromise = this.page.waitForResponse(
+            (response) => /\/participations\/\d+\/results\/\d+\/text-assessment$/.test(new URL(response.url()).pathname) && response.request().method() === 'PUT',
+        );
+        await saveButton.click();
         return await responsePromise;
     }
 
