@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -29,7 +29,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Location } from '@angular/common';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
@@ -247,7 +247,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.correctionRound.set(1);
 
         const queryParams = convertToParamMap(param === undefined ? {} : { 'correction-round': param });
-        component['route'].queryParamMap = of(queryParams);
+        // queryParamMap is declared readonly on ActivatedRoute, so the mock is reached through a writable view.
+        (component['route'] as unknown as { queryParamMap: Observable<ParamMap> }).queryParamMap = of(queryParams);
         // ngOnInit is async and subscribes after its first await, so the assertion has to wait for it.
         await component.ngOnInit();
 
