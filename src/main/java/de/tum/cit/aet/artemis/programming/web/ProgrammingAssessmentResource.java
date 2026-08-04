@@ -108,12 +108,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @param resultId     the id of the result to cancel; without it the newest correction round is released
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("programming-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
-        return super.cancelAssessment(submissionId);
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return super.cancelAssessment(submissionId, resultId);
     }
 
     /**

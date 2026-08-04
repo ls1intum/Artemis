@@ -186,18 +186,18 @@ public class AssessmentService {
      * Therefore, no explicit {@code sendParticipantScoreSchedule()} call is needed here, even though
      * {@link ResultService#deleteResult} may take the JPQL path that skips the {@code @PreRemove} callback.
      *
-     * @param submission the submission for which the current assessment should be canceled
+     * @param submission     the submission for which the current assessment should be canceled
+     * @param resultToCancel the manual result to release, as resolved and authorized by the caller
      */
-    public void cancelAssessmentOfSubmission(Submission submission) {
-        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
+    public void cancelAssessmentOfSubmission(Submission submission, Result resultToCancel) {
+        studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
-        // cancel is only possible for the latest result.
-        Result result = submission.getLatestResult();
-
-        // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
-        if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
-            resultService.deleteResult(result, true);
+        // The caller resolves and authorizes the result, so that the authorization check and the deletion cannot act on
+        // two different results. Automatic and Athena results are not correction rounds and are never cancellable.
+        if (resultToCancel == null || resultToCancel.isAutomatic() || resultToCancel.isAthenaBased()) {
+            return;
         }
+        resultService.deleteResult(resultToCancel, true);
     }
 
     /**

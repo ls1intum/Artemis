@@ -623,7 +623,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.onCancelAssessment();
 
-            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id);
+            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id, component.result()?.id);
         });
 
         it('should not cancel assessment when user declines confirmation', () => {
