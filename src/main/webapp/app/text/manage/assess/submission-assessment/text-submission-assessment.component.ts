@@ -246,6 +246,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private updateUrlIfNeeded() {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
+            // Keep the query parameters. The correction round is carried only in the URL, so rebuilding the URL from
+            // the route commands alone dropped it and the next load of this page started the second correction round
+            // as the first one (#13396). The modeling and file upload editors rewrite the hash in place and therefore
+            // never lost it.
             const newUrl = this.router
                 .createUrlTree(
                     getLinkToSubmissionAssessment(
@@ -257,6 +261,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         this.examId,
                         this.exerciseGroupId,
                     ),
+                    { queryParams: this.route.snapshot.queryParams },
                 )
                 .toString();
             this.location.go(newUrl);
