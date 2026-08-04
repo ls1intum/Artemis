@@ -140,10 +140,7 @@ public class LectureUtilService {
      * @return The created Lecture
      */
     public Lecture createLecture(Course course) {
-        Lecture lecture = new Lecture();
-        lecture.setTitle("Test Lecture");
-        lecture.setDescription("Test Lecture");
-        lecture.setCourse(course);
+        Lecture lecture = LectureFactory.generateLecture("Test Lecture", "Test Lecture", null, null, course);
         lectureRepo.save(lecture);
         return lecture;
     }
@@ -157,11 +154,7 @@ public class LectureUtilService {
      * @return The created Lecture
      */
     public Lecture createLecture(Course course, ZonedDateTime startDate, ZonedDateTime endDate) {
-        Lecture lecture = new Lecture();
-        lecture.setTitle("Test Lecture");
-        lecture.setCourse(course);
-        lecture.setStartDate(startDate);
-        lecture.setEndDate(endDate);
+        Lecture lecture = LectureFactory.generateLecture("Test Lecture", null, startDate, endDate, course);
         lectureRepo.save(lecture);
         return lecture;
     }
@@ -348,10 +341,8 @@ public class LectureUtilService {
      * @return The created TextUnit
      */
     public TextUnit createTextUnit(Lecture lecture) {
-        TextUnit textUnit = new TextUnit();
+        TextUnit textUnit = LectureFactory.generateTextUnit("Name Lorem Ipsum", "Lorem Ipsum");
         textUnit.setLecture(lecture);
-        textUnit.setName("Name Lorem Ipsum");
-        textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
     }
 
