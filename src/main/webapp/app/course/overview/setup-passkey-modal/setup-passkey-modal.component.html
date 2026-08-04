@@ -1,42 +1,75 @@
-<p-dialog
-    styleClass="passkey-setup-dialog"
-    [visible]="visible()"
-    (visibleChange)="visible.set($event)"
-    [modal]="true"
-    [closable]="false"
-    [dismissableMask]="false"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '50dvw' }"
->
+<tum-ui-dialog [(visible)]="visible" [modal]="true" [closable]="false" [closeOnEscape]="false" [dismissableMask]="false" [style]="{ width: '42rem' }">
     <ng-template #header>
-        <h4>
+        <div class="flex items-center gap-2">
             <fa-icon [icon]="faShieldHalved" />
             <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.title"></span>
-        </h4>
-    </ng-template>
-    <p jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
-    <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.howItWorks"></p>
-    <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.recommendation"></p>
-    <ng-template #footer>
-        <button type="button" pButton severity="secondary" [outlined]="true" size="small" (click)="remindMeIn30Days()">
-            <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
-        </button>
-
-        <div class="ms-auto">
-            <button
-                type="button"
-                pButton
-                severity="secondary"
-                size="small"
-                (click)="closeModal()"
-                jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"
-                aria-label="Set Up Later"
-            ></button>
-            <button type="button" pButton size="small" (click)="setupPasskey()">
-                <fa-icon [icon]="faKey" />
-                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
-            </button>
         </div>
     </ng-template>
-</p-dialog>
+
+    <!-- Основной контент с исправлениями -->
+    <div class="flex flex-col gap-5 py-2">
+        <!-- Верхний блок с жирным заголовком и полной иконкой -->
+        <div class="flex items-center gap-4 bg-surface-50 dark:bg-surface-900/40 p-4 rounded-xl border border-surface-200 dark:border-surface-800">
+            <div class="flex items-center justify-center w-14 h-14 bg-primary/10 text-primary rounded-xl shrink-0 text-3xl">
+                <fa-icon [icon]="faFingerprint" />
+            </div>
+            <div>
+                <h3 class="text-lg font-extrabold text-surface-900 dark:text-surface-0 m-0 tracking-tight" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.heroTitle"></h3>
+            </div>
+        </div>
+
+        <!-- Блок фактов с центрированием текста по вертикали (items-center) -->
+        <div class="flex flex-col gap-3 bg-surface-50/60 dark:bg-surface-900/20 p-4 rounded-xl border border-surface-200 dark:border-surface-800">
+            <div class="flex items-center gap-3.5">
+                <div
+                    class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-primary shrink-0 shadow-sm"
+                >
+                    <fa-icon [icon]="faBolt" class="text-sm" />
+                </div>
+                <div>
+                    <span class="font-semibold text-surface-900 dark:text-surface-0" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.title"></span>
+                    <span class="text-muted-color text-sm ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.desc"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3.5">
+                <div
+                    class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-primary shrink-0 shadow-sm"
+                >
+                    <fa-icon [icon]="faLock" class="text-sm" />
+                </div>
+                <div>
+                    <span class="font-semibold text-surface-900 dark:text-surface-0" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.title"></span>
+                    <span class="text-muted-color text-sm ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.desc"></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3.5">
+                <div
+                    class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-primary shrink-0 shadow-sm"
+                >
+                    <fa-icon [icon]="faShieldHalved" class="text-sm" />
+                </div>
+                <div>
+                    <span class="font-semibold text-surface-900 dark:text-surface-0" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.title"></span>
+                    <span class="text-muted-color text-sm ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.desc"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="remindMeIn30Days()" [ariaLabel]="'Remind Me in 30 Days'">
+            <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
+        </tum-ui-button>
+
+        <div class="ms-auto flex items-center gap-2">
+            <tum-ui-button severity="secondary" variant="text" size="small" (clicked)="closeModal()" [ariaLabel]="'Set Up Later'">
+                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"></span>
+            </tum-ui-button>
+            <tum-ui-button severity="primary" size="small" [icon]="faKey" (clicked)="setupPasskey()" [ariaLabel]="'Set Up Passkey'">
+                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
+            </tum-ui-button>
+        </div>
+    </ng-template>
+</tum-ui-dialog>
