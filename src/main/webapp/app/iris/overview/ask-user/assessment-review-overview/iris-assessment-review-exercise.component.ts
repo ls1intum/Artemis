@@ -22,13 +22,13 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-in-class-quiz-start-warning.component';
-import { ButtonModule } from 'primeng/button';
 import { DialogService } from 'primeng/dynamicdialog';
-import { TableModule } from 'primeng/table';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
 
 /**
  * A student participation enriched with the router links and repository URI needed to
@@ -56,8 +56,8 @@ interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentPar
         IrisReviewAssessmentButtonComponent,
         QuizTimerBarComponent,
         HelpIconComponent,
-        ButtonModule,
-        TableModule,
+        TumUiButtonDirective,
+        TumUiTableDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

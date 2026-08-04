@@ -18,18 +18,18 @@
                     }
                     <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.inClassQuizTooltip" class="ml-1" />
                     @if (course().isAtLeastEditor) {
-                        <button pButton size="small" type="button" (click)="makeInClassQuizAvailable()">
+                        <button tumUiButton size="small" type="button" (click)="makeInClassQuizAvailable()">
                             <fa-icon [icon]="faBrain" />
                             <span class="hidden md:inline" [jhiTranslate]="inClassQuizButtonLabel()"></span>
                         </button>
                     }
                 </span>
             }
-            <a pButton size="small" [routerLink]="['/course-management', course().id, exercise().type + '-exercises', exercise().id, 'participations']">
+            <a tumUiButton size="small" [routerLink]="['/course-management', course().id, exercise().type + '-exercises', exercise().id, 'participations']">
                 <fa-icon [icon]="faListAlt" />
                 <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.participations"></span>
             </a>
-            <a pButton size="small" severity="info" [routerLink]="['/course-management', course().id, 'programming-exercises', exercise().id, 'scores']">
+            <a tumUiButton size="small" severity="info" [routerLink]="['/course-management', course().id, 'programming-exercises', exercise().id, 'scores']">
                 <fa-icon [icon]="faTable" />
                 <span jhiTranslate="entity.action.scores"></span>
             </a>
@@ -37,8 +37,8 @@
     }
 </div>
 <div class="overflow-x-auto">
-    <p-table [value]="participationRows()" [size]="'small'" [stripedRows]="true" class="assessment-review-participations-table">
-        <ng-template #header>
+    <table tumUiTable [size]="'small'" [striped]="true" class="assessment-review-participations-table">
+        <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.exercise.name"></th>
                 <th scope="col" jhiTranslate="artemisApp.exercise.studentId"></th>
@@ -47,70 +47,72 @@
                     <th class="assessment-review-actions-header"></th>
                 }
             </tr>
-        </ng-template>
-        <ng-template #body let-participation>
-            <tr>
-                <td>
-                    @if (exercise().isAtLeastInstructor) {
-                        <a [routerLink]="participation.participationLink">
-                            {{ participation.student?.name }}
-                        </a>
-                    } @else {
-                        {{ participation.student?.name }}
-                    }
-                </td>
-                <td>{{ participation.student?.login }}</td>
-                <td class="text-center">
-                    @if (exercise().isAtLeastInstructor) {
-                        <a [routerLink]="participation.participationLink">
-                            {{ participation.submissionCount }}
-                        </a>
-                    } @else {
-                        {{ participation.submissionCount }}
-                    }
-                </td>
-                @if (exercise().isAtLeastInstructor) {
-                    <td class="assessment-review-actions-cell">
-                        <div class="assessment-review-action-buttons">
-                            @if (participation.repositoryUri) {
-                                <jhi-code-button
-                                    class="assessment-review-action-button"
-                                    [smallButtons]="true"
-                                    [hideLabelMobile]="true"
-                                    [hideLabelBreakpoint]="'xl'"
-                                    [repositoryUri]="participation.repositoryUri || ''"
-                                    [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, participation.id!]"
-                                />
-                            }
-                            @if (participation.buildPlanId && !localCIEnabled) {
-                                <a pButton size="small" target="_blank" rel="noreferrer" [href]="participation.buildPlanUrl" class="assessment-review-action-button">
-                                    <fa-icon [icon]="faFileCode" />
-                                    <span class="hidden xl:inline ml-1">Build plan</span>
-                                </a>
-                            }
-                            <a
-                                pButton
-                                size="small"
-                                severity="info"
-                                [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', participation.id!]"
-                                class="assessment-review-action-button"
-                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                            >
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                <span class="hidden xl:inline ml-1">Online editor</span>
+        </thead>
+        <tbody>
+            @for (participation of participationRows(); track $index) {
+                <tr>
+                    <td>
+                        @if (exercise().isAtLeastInstructor) {
+                            <a [routerLink]="participation.participationLink">
+                                {{ participation.student?.name }}
                             </a>
-                            <jhi-iris-review-assessment-button
-                                class="assessment-review-action-button"
-                                [smallButton]="true"
-                                [course]="course()"
-                                [exercise]="exercise()"
-                                [participation]="participation"
-                                [inClass]="showStartInClassQuizButton()"
-                            />
-                        </div>
+                        } @else {
+                            {{ participation.student?.name }}
+                        }
                     </td>
-                }
-            </tr>
-        </ng-template>
-    </p-table>
+                    <td>{{ participation.student?.login }}</td>
+                    <td class="text-center">
+                        @if (exercise().isAtLeastInstructor) {
+                            <a [routerLink]="participation.participationLink">
+                                {{ participation.submissionCount }}
+                            </a>
+                        } @else {
+                            {{ participation.submissionCount }}
+                        }
+                    </td>
+                    @if (exercise().isAtLeastInstructor) {
+                        <td class="assessment-review-actions-cell">
+                            <div class="assessment-review-action-buttons">
+                                @if (participation.repositoryUri) {
+                                    <jhi-code-button
+                                        class="assessment-review-action-button"
+                                        [smallButtons]="true"
+                                        [hideLabelMobile]="true"
+                                        [hideLabelBreakpoint]="'xl'"
+                                        [repositoryUri]="participation.repositoryUri || ''"
+                                        [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, participation.id!]"
+                                    />
+                                }
+                                @if (participation.buildPlanId && !localCIEnabled) {
+                                    <a tumUiButton size="small" target="_blank" rel="noreferrer" [href]="participation.buildPlanUrl" class="assessment-review-action-button">
+                                        <fa-icon [icon]="faFileCode" />
+                                        <span class="hidden xl:inline ml-1">Build plan</span>
+                                    </a>
+                                }
+                                <a
+                                    tumUiButton
+                                    size="small"
+                                    severity="info"
+                                    [routerLink]="['/courses', course().id, 'exercises', 'programming-exercises', exercise().id, 'code-editor', participation.id!]"
+                                    class="assessment-review-action-button"
+                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                >
+                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                    <span class="hidden xl:inline ml-1">Online editor</span>
+                                </a>
+                                <jhi-iris-review-assessment-button
+                                    class="assessment-review-action-button"
+                                    [smallButton]="true"
+                                    [course]="course()"
+                                    [exercise]="exercise()"
+                                    [participation]="participation"
+                                    [inClass]="showStartInClassQuizButton()"
+                                />
+                            </div>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

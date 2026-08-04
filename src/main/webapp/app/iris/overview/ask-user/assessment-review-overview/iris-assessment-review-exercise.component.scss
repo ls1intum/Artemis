@@ -2,28 +2,28 @@
     flex-wrap: nowrap;
 }
 
-.assessment-review-participations-table .p-datatable-table {
+table.assessment-review-participations-table {
     table-layout: fixed;
     min-width: 68rem;
 }
 
-.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(1),
-.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(1) {
+.assessment-review-participations-table thead > tr > th:nth-child(1),
+.assessment-review-participations-table tbody > tr > td:nth-child(1) {
     width: 20%;
 }
 
-.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(2),
-.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(2) {
+.assessment-review-participations-table thead > tr > th:nth-child(2),
+.assessment-review-participations-table tbody > tr > td:nth-child(2) {
     width: 15%;
 }
 
-.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(3),
-.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(3) {
+.assessment-review-participations-table thead > tr > th:nth-child(3),
+.assessment-review-participations-table tbody > tr > td:nth-child(3) {
     width: 9rem;
 }
 
-.assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(4),
-.assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(4) {
+.assessment-review-participations-table thead > tr > th:nth-child(4),
+.assessment-review-participations-table tbody > tr > td:nth-child(4) {
     width: 34rem;
 }
 
@@ -52,22 +52,22 @@
 }
 
 @media (max-width: 1199.98px) {
-    .assessment-review-participations-table .p-datatable-table {
+    table.assessment-review-participations-table {
         min-width: 54rem;
     }
 
-    .assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(1),
-    .assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(1) {
+    .assessment-review-participations-table thead > tr > th:nth-child(1),
+    .assessment-review-participations-table tbody > tr > td:nth-child(1) {
         width: 36%;
     }
 
-    .assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(2),
-    .assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(2) {
+    .assessment-review-participations-table thead > tr > th:nth-child(2),
+    .assessment-review-participations-table tbody > tr > td:nth-child(2) {
         width: 20%;
     }
 
-    .assessment-review-participations-table .p-datatable-thead > tr > th:nth-child(4),
-    .assessment-review-participations-table .p-datatable-tbody > tr > td:nth-child(4) {
+    .assessment-review-participations-table thead > tr > th:nth-child(4),
+    .assessment-review-participations-table tbody > tr > td:nth-child(4) {
         width: 24rem;
     }
 }

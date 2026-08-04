@@ -14,17 +14,16 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisAssessmentReviewResolvedData } from 'app/iris/overview/ask-user/services/iris-assessment-review-resolver.service';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
 
 @Component({
     selector: 'jhi-iris-assessment-review',
     templateUrl: './iris-assessment-review.component.html',
     styleUrl: './iris-assessment-review.component.scss',
-    imports: [TranslateDirective, ArtemisTranslatePipe, ButtonModule, TableModule, FaIconComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, TumUiButtonComponent, TumUiTableDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 /**

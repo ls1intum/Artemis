@@ -22,13 +22,13 @@ import {
 } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
 
 /**
  * Filter properties for a result
@@ -72,9 +72,9 @@ interface FilterOption {
         MultiSelectModule,
         HelpIconComponent,
         SearchFilterComponent,
-        PaginatorModule,
-        ButtonModule,
-        MessageModule,
+        TumUiPaginatorComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -116,8 +116,7 @@ export class IrisAssessmentReviewOverviewComponent {
     protected readonly participationsPerFilter = signal<ReadonlyMap<FilterProp, number>>(new Map([[FilterProp.ALL, 0]]));
 
     protected readonly searchNoResults = computed(() => !this.isLoading() && this.exercises().length === 0);
-    protected readonly itemRangeBegin = computed(() => (this.totalRows() === 0 ? 0 : Math.min(this.totalRows(), this.first() + 1)));
-    protected readonly itemRangeEnd = computed(() => Math.min(this.totalRows(), this.first() + this.rows()));
+    protected readonly page = computed(() => (this.rows() > 0 ? Math.floor(this.first() / this.rows()) : 0));
 
     private readonly programmingExercises = computed<ProgrammingExercise[]>(
         () => this.course().exercises?.filter((exercise: Exercise): exercise is ProgrammingExercise => exercise.type === ExerciseType.PROGRAMMING && !exercise.teamMode) ?? [],
@@ -190,12 +189,21 @@ export class IrisAssessmentReviewOverviewComponent {
     }
 
     /**
-     * Applies a PrimeNG paginator change and reloads the current page.
-     * @param event The paginator state emitted by the paginator component
+     * Applies a paginator page change and reloads the selected page.
+     * @param newPage The new zero-based page index emitted by the paginator
      */
-    onPageChange(event: PaginatorState): void {
-        this.first.set(event.first ?? 0);
-        this.rows.set(event.rows ?? this.rows());
+    onPageChange(newPage: number): void {
+        this.first.set(newPage * this.rows());
+        this.loadPage();
+    }
+
+    /**
+     * Applies a paginator page-size change, resets pagination to the first page, and reloads.
+     * @param newSize The new page size emitted by the paginator
+     */
+    onPageSizeChange(newSize: number): void {
+        this.rows.set(newSize);
+        this.first.set(0);
         this.loadPage();
     }
 

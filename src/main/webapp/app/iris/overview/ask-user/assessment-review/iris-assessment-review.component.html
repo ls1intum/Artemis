@@ -2,28 +2,30 @@
     <span>{{ course().title }} - {{ exercise().title }} - {{ assessment().student?.name }} ({{ assessment().student?.login }})</span>
 </h2>
 <div class="overflow-x-auto">
-    <p-table [value]="rows()" [size]="'small'" [stripedRows]="true" class="iris-assessment-review-table">
-        <ng-template #header>
+    <table tumUiTable [size]="'small'" [striped]="true" class="iris-assessment-review-table">
+        <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.question"></th>
                 <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.answer"></th>
                 <th scope="col" jhiTranslate="artemisApp.iris.assessmentReview.qaExchange.reasoning"></th>
             </tr>
-        </ng-template>
-        <ng-template #body let-row>
-            <tr>
-                <td>
-                    <div class="wrapped-content">{{ row.question }}</div>
-                </td>
-                <td>
-                    <div class="wrapped-content">{{ row.answer }}</div>
-                </td>
-                <td>
-                    <div class="wrapped-content">{{ row.reasoning }}</div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+        </thead>
+        <tbody>
+            @for (row of rows(); track $index) {
+                <tr>
+                    <td>
+                        <div class="wrapped-content">{{ row.question }}</div>
+                    </td>
+                    <td>
+                        <div class="wrapped-content">{{ row.answer }}</div>
+                    </td>
+                    <td>
+                        <div class="wrapped-content">{{ row.reasoning }}</div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 @if (assessment() && assessment().verdict !== undefined && assessment().verdict !== null) {
     <span class="iris-verdict">
@@ -33,14 +35,19 @@
 }
 <div class="flex items-center gap-2 mt-3">
     @if (course().isAtLeastEditor) {
-        <button pButton type="button" severity="success" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED" (click)="acceptAnswers()">
-            <fa-icon [icon]="faCheck" />
+        <tum-ui-button
+            type="button"
+            severity="success"
+            size="small"
+            [icon]="faCheck"
+            [disabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED"
+            (clicked)="acceptAnswers()"
+        >
             <span>{{ 'artemisApp.iris.assessmentReview.accept' | artemisTranslate }}</span>
-        </button>
-        <button pButton type="button" severity="danger" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.REJECTED" (click)="rejectAnswers()">
-            <fa-icon [icon]="faX" />
+        </tum-ui-button>
+        <tum-ui-button type="button" severity="danger" size="small" [icon]="faX" [disabled]="assessment().verdictReview === IrisVerdictReview.REJECTED" (clicked)="rejectAnswers()">
             <span>{{ 'artemisApp.iris.assessmentReview.reject' | artemisTranslate }}</span>
-        </button>
+        </tum-ui-button>
     }
     @if (assessment() && (assessment().verdictReview === IrisVerdictReview.ACCEPTED || assessment().verdictReview === IrisVerdictReview.REJECTED)) {
         <span>

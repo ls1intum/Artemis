@@ -117,15 +117,28 @@ describe('IrisAssessmentReviewOverviewComponent', () => {
         expect(searchParticipationsStub.mock.calls[0][1].filterProps).toEqual([FilterProp.SUSPICIOUS]);
     });
 
-    it('should load the selected page when the paginator changes', () => {
+    it('should load the selected page when the paginator page changes', () => {
         searchParticipationsStub.mockClear();
 
-        component.onPageChange({ first: 100, rows: 100 });
+        component.onPageChange(2);
 
         expect((component as any).first()).toBe(100);
+        expect((component as any).rows()).toBe(50);
+        expect(searchParticipationsStub).toHaveBeenCalledOnce();
+        expect(searchParticipationsStub.mock.calls[0][1].page).toBe(2);
+        expect(searchParticipationsStub.mock.calls[0][1].pageSize).toBe(50);
+    });
+
+    it('should reset to the first page and reload when the paginator page size changes', () => {
+        (component as any).first.set(100);
+        searchParticipationsStub.mockClear();
+
+        component.onPageSizeChange(100);
+
+        expect((component as any).first()).toBe(0);
         expect((component as any).rows()).toBe(100);
         expect(searchParticipationsStub).toHaveBeenCalledOnce();
-        expect(searchParticipationsStub.mock.calls[0][1].page).toBe(1);
+        expect(searchParticipationsStub.mock.calls[0][1].page).toBe(0);
         expect(searchParticipationsStub.mock.calls[0][1].pageSize).toBe(100);
     });
 

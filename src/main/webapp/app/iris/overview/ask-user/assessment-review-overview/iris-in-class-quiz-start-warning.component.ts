@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
 @Component({
     selector: 'jhi-iris-in-class-quiz-start-warning',
     templateUrl: './iris-in-class-quiz-start-warning.component.html',
     styleUrls: ['../../../../exercise/exercise-update-warning/exercise-update-warning.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, ButtonModule],
+    imports: [TranslateDirective, FaIconComponent, TumUiButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 /**

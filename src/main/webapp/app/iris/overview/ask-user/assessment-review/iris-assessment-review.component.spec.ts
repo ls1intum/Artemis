@@ -5,8 +5,7 @@ import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -63,8 +62,8 @@ describe('IrisAssessmentReviewComponent', () => {
             ],
         })
             .overrideComponent(IrisAssessmentReviewComponent, {
-                remove: { imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent] },
-                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key), MockComponent(FaIconComponent)] },
+                remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (key: string) => key)] },
             })
             .compileComponents();
 
