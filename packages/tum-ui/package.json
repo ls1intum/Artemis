@@ -13,7 +13,6 @@
         "fesm2022",
         "types",
         "styles.css",
-        "themes.css",
         "README.md",
         "LICENSE"
     ],
@@ -47,8 +46,7 @@
         "storybook:validate": "pnpm run storybook:prepare && pnpm run storybook:typecheck:prepared && pnpm run storybook:test:prepared && pnpm run storybook:build:prepared && pnpm run storybook:docs:test:built"
     },
     "exports": {
-        "./styles.css": "./styles.css",
-        "./themes.css": "./themes.css"
+        "./styles.css": "./styles.css"
     },
     "peerDependencies": {
         "@angular/cdk": "22.1.0",
@@ -114,7 +112,6 @@
         "zone.js": "catalog:"
     },
     "sideEffects": [
-        "./styles.css",
-        "./themes.css"
+        "./styles.css"
     ]
 }

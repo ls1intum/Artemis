@@ -28,6 +28,7 @@ const developmentGradleProfile = readFileSync(resolve(repoRoot, 'gradle/profile_
 const productionGradleProfile = readFileSync(resolve(repoRoot, 'gradle/profile_prod.gradle'), 'utf8');
 const packageTailwind = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind.css'), 'utf8');
 const packageTailwindTheme = readFileSync(resolve(repoRoot, 'packages/tum-ui/tailwind-theme.css'), 'utf8');
+const packageStyleBuilder = readFileSync(resolve(repoRoot, 'packages/tum-ui/build-styles.mjs'), 'utf8');
 const packageRuntimeFiles = globSync(['packages/tum-ui/src/**/*.{html,scss,ts}'], { cwd: repoRoot })
     .filter((file) => !file.endsWith('.spec.ts') && !file.endsWith('.stories.ts'))
     .map((file) => ({ file, source: readFileSync(resolve(repoRoot, file), 'utf8') }));
@@ -48,6 +49,8 @@ const packageStyles = globSync(['packages/tum-ui/src/**/*.{css,scss}', 'packages
     .join('\n');
 const storybookTheme = readFileSync(resolve(repoRoot, 'packages/tum-ui/themes.css'), 'utf8');
 const hostTailwind = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
+const hostGlobalStyles = readFileSync(resolve(repoRoot, 'src/main/webapp/content/scss/global.scss'), 'utf8');
+const artemisPrimeTheme = readFileSync(resolve(repoRoot, 'src/main/webapp/app/primeng-artemis-theme.ts'), 'utf8');
 const workspace = parse(readFileSync(resolve(repoRoot, 'pnpm-workspace.yaml'), 'utf8'));
 const catalog = workspace.catalog ?? {};
 const namedCatalogs = workspace.catalogs ?? {};
@@ -136,7 +139,7 @@ function compiledThemeProperties(file) {
         silenceDeprecations: ['color-functions', 'global-builtin', 'if-function', 'import'],
     }).css;
     const properties = {};
-    postcss.parse(css).walkDecls(/^--(?:artemis-alert|module-bg)/, (declaration) => {
+    postcss.parse(css).walkDecls(/^--(?:artemis-alert|module-bg|danger$|success$|warning$|info$)/, (declaration) => {
         properties[declaration.prop] = declaration.value;
     });
     return properties;
@@ -329,18 +332,19 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects['tum-ui'].architect.build.configurations.pack.project).toBe('packages/tum-ui/ng-package.pack.json');
     });
 
-    it('keeps the package private and declares its stylesheet subpath', () => {
+    it('keeps the package private and declares one complete stylesheet subpath', () => {
         expect(packageJson.private).toBe(true);
-        expect(packageJson.files).toEqual(expect.arrayContaining(['fesm2022', 'types', 'styles.css', 'themes.css', 'README.md', 'LICENSE']));
+        expect(packageJson.files).toEqual(expect.arrayContaining(['fesm2022', 'types', 'styles.css', 'README.md', 'LICENSE']));
+        expect(packageJson.files).not.toContain('themes.css');
         expect(packageJson.files).not.toContain('tailwind-theme.css');
-        expect(packageJson.sideEffects).toEqual(['./styles.css', './themes.css']);
+        expect(packageJson.sideEffects).toEqual(['./styles.css']);
         expect(packageJson.exports).toMatchObject({
             './styles.css': './styles.css',
-            './themes.css': './themes.css',
         });
+        expect(packageJson.exports).not.toHaveProperty('./themes.css');
         expect(packageJson.exports).not.toHaveProperty('./tailwind-theme.css');
         expect(productionBuild.assets).toContain('styles.css');
-        expect(productionBuild.assets).toContain('themes.css');
+        expect(productionBuild.assets).not.toContain('themes.css');
         expect(productionBuild.assets).not.toContain('tailwind-theme.css');
     });
 
@@ -351,25 +355,33 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(angularWorkspace.projects.artemis.architect.build.configurations['tum-ui-source'].tsConfig).toBe('tsconfig.serve.json');
         expect(angularWorkspace.projects.artemis.architect.serve.options.buildTarget).toBe('artemis:build:development,tum-ui-source');
         expect(angularWorkspace.projects.artemis.architect.serve.options.prebundle).toEqual({ exclude: ['@tumaet/ui-angular'] });
+        expect(rootPackageJson.scripts.start).toContain('build:styles -- --development --watch');
+        expect(rootPackageJson.scripts.start).toContain('ng serve --hmr --poll 1000');
         expect(publicApi).not.toMatch(/export\s+\*\s+from/);
         expect(developmentGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
         expect(productionGradleProfile).toContain('"packages/tum-ui/tailwind-theme.css"');
     });
 
-    it('loads the validated package stylesheet after host framework styles', () => {
+    it('loads the complete package stylesheet after host styles', () => {
         const styles = angularWorkspace.projects.artemis.architect.build.options.styles;
         const packageStylesheet = '@tumaet/ui-angular/styles.css';
         const packageTheme = '@tumaet/ui-angular/themes.css';
 
         expect(styles.filter((style) => style === packageStylesheet)).toHaveLength(1);
         expect(styles).not.toContain(packageTheme);
+        expect(hostTailwind).not.toContain(packageTheme);
         expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/content/scss/themes/theme-default.scss'));
         expect(styles.indexOf(packageStylesheet)).toBeGreaterThan(styles.indexOf('src/main/webapp/tailwind.css'));
+    });
+
+    it('does not override package table borders globally', () => {
+        expect(hostGlobalStyles).not.toMatch(/th\s*{[^}]*border-bottom-color:\s*inherit\s*!important/s);
     });
 
     it('keeps Tailwind generation scoped to package runtime sources', () => {
         expect(packageTailwind).toContain('prefix(tum)');
         expect(packageTailwind).toContain('source(none)');
+        expect(packageTailwind).toContain("@import './themes.css' layer(tum-ui-theme)");
         expect(packageTailwind).toContain("@import '@angular/cdk/overlay-prebuilt.css' layer(tum-ui-cdk)");
         expect(packageTailwind).toContain("@source './src'");
         expect(packageTailwind).toContain("@source not './src/**/*.mdx'");
@@ -380,6 +392,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(packageTailwindTheme).toMatch(/--breakpoint-lg:\s*64rem/);
         expect(packageTailwindTheme).toMatch(/--breakpoint-xl:\s*80rem/);
         expect(packageTailwindTheme).toMatch(/--breakpoint-2xl:\s*96rem/);
+        expect(packageStyleBuilder).toContain("const referenceThemePath = resolve(packageRoot, 'themes.css')");
+        expect(packageStyleBuilder).toContain('.watch([componentSourcePath, sourcePath, themePath, referenceThemePath]');
     });
 
     it('keeps package typography coverage in sync with component selectors', () => {
@@ -423,7 +437,7 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(physicalUtilities).toEqual([]);
     });
 
-    it('keeps the package theme namespaced and fully mapped by Artemis', () => {
+    it('keeps the package theme namespaced and limits Artemis to intentional overrides', () => {
         const consumedProperties = [
             ...new Set([...`${packageRuntimeSources}\n${packageTailwind}\n${packageTailwindTheme}`.matchAll(/var\((--tumaet-ui-[\w-]+)/g)].map((match) => match[1])),
         ].sort();
@@ -431,12 +445,8 @@ describe('@tumaet/ui-angular integration contract', () => {
         const referenceProperties = [...new Set([...storybookTheme.matchAll(/--tumaet-ui-[\w-]+/g)].map((match) => match[0]))].sort();
         const tailwindProperties = [...new Set([...packageTailwindTheme.matchAll(/var\((--tumaet-ui-[\w-]+)/g)].map((match) => match[1]))].sort();
         const hostPropertyNames = [];
-        const hostTokens = {};
         postcss.parse(hostTailwind).walkDecls(/^--tumaet-ui-/, (declaration) => {
             hostPropertyNames.push(declaration.prop);
-            if (declaration.prop.startsWith('--tumaet-ui-state-')) {
-                hostTokens[declaration.prop] = declaration.value;
-            }
         });
         const hostProperties = [...new Set(hostPropertyNames)].sort();
 
@@ -446,23 +456,87 @@ describe('@tumaet/ui-angular integration contract', () => {
         expect(packageRuntimeSources).not.toContain(':host-context(');
         expect(consumedProperties).toEqual(packageProperties);
         expect(referenceProperties).toEqual(packageProperties);
-        expect(hostProperties).toEqual(packageProperties);
+        expect(hostProperties).toEqual(
+            [
+                '--tumaet-ui-accent-color',
+                '--tumaet-ui-content-background',
+                '--tumaet-ui-control-background',
+                '--tumaet-ui-control-border-color',
+                '--tumaet-ui-control-border-hover-color',
+                '--tumaet-ui-contrast-color',
+                '--tumaet-ui-disabled-background',
+                '--tumaet-ui-disabled-color',
+                '--tumaet-ui-focus-color',
+                '--tumaet-ui-font-family',
+                '--tumaet-ui-muted-color',
+                '--tumaet-ui-overlay-background',
+                '--tumaet-ui-primary-color',
+                '--tumaet-ui-primary-contrast-color',
+                '--tumaet-ui-state-danger',
+                '--tumaet-ui-state-danger-contrast',
+                '--tumaet-ui-state-danger-foreground',
+                '--tumaet-ui-state-info',
+                '--tumaet-ui-state-info-contrast',
+                '--tumaet-ui-state-info-foreground',
+                '--tumaet-ui-state-success',
+                '--tumaet-ui-state-success-contrast',
+                '--tumaet-ui-state-success-foreground',
+                '--tumaet-ui-state-warning',
+                '--tumaet-ui-state-warning-contrast',
+                '--tumaet-ui-state-warning-foreground',
+                '--tumaet-ui-tooltip-background',
+                '--tumaet-ui-tooltip-color',
+                '--tumaet-ui-text-color',
+            ].sort(),
+        );
+        expect(hostProperties.every((property) => packageProperties.includes(property))).toBe(true);
         expect(tailwindProperties.every((property) => packageProperties.includes(property))).toBe(true);
         expect(hostTailwind).not.toContain('packages/tum-ui/tailwind-theme.css');
         expect(hostTailwind).toMatch(/:root\s*{[^}]*color-scheme:\s*light;/s);
         expect(hostTailwind).toMatch(/\[data-theme='dark']\s*{[^}]*color-scheme:\s*dark;/s);
+        expect(hostTailwind).toMatch(/:root\s*{[^}]*--tumaet-ui-state-danger:\s*var\(--danger\)/s);
+        expect(hostTailwind).toMatch(/:root\s*{[^}]*--tumaet-ui-state-danger-contrast:\s*var\(--white\)/s);
+        expect(hostTailwind).toMatch(/:root\s*{[^}]*--tumaet-ui-state-danger-foreground:\s*var\(--artemis-alert-danger-color\)/s);
+        for (const [packageToken, artemisToken] of [
+            ['control-background', 'control-background'],
+            ['control-border-color', 'control-border'],
+            ['control-border-hover-color', 'control-border-hover'],
+            ['text-color', 'control-color'],
+            ['muted-color', 'control-muted'],
+            ['disabled-background', 'control-disabled-background'],
+            ['disabled-color', 'control-disabled-color'],
+        ]) {
+            expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-${packageToken}:\\s*var\\(--artemis-${artemisToken}\\)`, 's'));
+            expect(artemisPrimeTheme).toContain(`var(--artemis-${artemisToken})`);
+        }
+        for (const state of ['success', 'warning', 'info']) {
+            expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-state-${state}:\\s*var\\(--${state}\\)`, 's'));
+            expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-state-${state}-contrast:\\s*var\\(--black\\)`, 's'));
+            expect(hostTailwind).toMatch(new RegExp(`:root\\s*\\{[^}]*--tumaet-ui-state-${state}-foreground:\\s*var\\(--artemis-alert-${state}-color\\)`, 's'));
+        }
         for (const state of ['danger', 'success', 'warning', 'info']) {
-            expect(hostTokens[`--tumaet-ui-state-${state}`]).toContain(`var(--artemis-alert-${state}-color`);
-            expect(hostTokens[`--tumaet-ui-state-${state}-contrast`]).toContain(`var(--artemis-alert-${state}-background`);
-            expect(hostTokens[`--tumaet-ui-state-${state}-foreground`]).toContain(`var(--artemis-alert-${state}-color`);
+            expect(hostTailwind).toMatch(new RegExp(`\\[data-theme='dark'\\]\\s*\\{[^}]*--tumaet-ui-state-${state}:\\s*var\\(--artemis-alert-${state}-color\\)`, 's'));
+            expect(hostTailwind).toMatch(
+                new RegExp(`\\[data-theme='dark'\\]\\s*\\{[^}]*--tumaet-ui-state-${state}-contrast:\\s*var\\(--artemis-alert-${state}-background\\)`, 's'),
+            );
         }
     });
 
-    it('keeps Artemis state colors readable in both themes', () => {
+    it('keeps Artemis filled, alert, and tinted state colors readable', () => {
         const themes = {
             light: compiledThemeProperties('src/main/webapp/content/scss/themes/theme-default.scss'),
             dark: compiledThemeProperties('src/main/webapp/content/scss/themes/theme-dark.scss'),
         };
+
+        const light = themes.light;
+        for (const [state, contrast] of [
+            ['danger', '#fff'],
+            ['success', '#000'],
+            ['warning', '#000'],
+            ['info', '#000'],
+        ]) {
+            expect(contrastRatio(light[`--${state}`], contrast), `light: filled ${state}`).toBeGreaterThanOrEqual(4.5);
+        }
 
         for (const [theme, properties] of Object.entries(themes)) {
             for (const state of ['danger', 'success', 'warning', 'info']) {
@@ -501,8 +575,6 @@ describe('@tumaet/ui-angular integration contract', () => {
             ['--tumaet-ui-highlight-color', '--tumaet-ui-highlight-background', 4.5],
             ['--tumaet-ui-contrast-color', '--tumaet-ui-contrast-background', 4.5],
             ['--tumaet-ui-tooltip-color', '--tumaet-ui-tooltip-background', 4.5],
-            ['--tumaet-ui-control-border-color', '--tumaet-ui-control-background', 3],
-            ['--tumaet-ui-control-border-hover-color', '--tumaet-ui-control-background', 3],
             ['--tumaet-ui-focus-color', '--tumaet-ui-content-background', 3],
             ['--tumaet-ui-focus-color', '--tumaet-ui-control-background', 3],
             ['--tumaet-ui-focus-color', '--tumaet-ui-overlay-background', 3],

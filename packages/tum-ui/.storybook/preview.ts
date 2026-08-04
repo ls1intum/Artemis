@@ -6,7 +6,6 @@ import addonVitest from '@storybook/addon-vitest';
 import { definePreview } from '@storybook/angular-vite';
 
 import '../styles.css';
-import '../themes.css';
 import documentationJson from '../documentation.json';
 import { ThemedDocsContainer } from './docs-container';
 import { preferredTheme } from './theme';

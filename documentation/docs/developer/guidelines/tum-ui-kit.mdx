@@ -102,17 +102,18 @@ reload cycle.
 The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md)
 documents stylesheet loading, token semantics, dark mode, and host styling.
 
-The package build emits and validates `styles.css` as the required global stylesheet. Consumers do
-not compile package sources or need Tailwind. `themes.css` is an optional package-owned provider
-with complete standalone light and dark values. A custom host omits it and defines the documented
-`--tumaet-ui-*` contract instead.
+The package build emits and validates `styles.css` as its only global stylesheet. Consumers do not
+compile package sources or need Tailwind. The stylesheet includes complete light and dark defaults
+in a low-priority cascade layer, so unlayered host declarations can override intentional semantic
+roles without duplicating the complete contract.
 
-Artemis loads the component stylesheet after its application styles and defines the package
-properties from Artemis foundations and light and dark color roles in `src/main/webapp/tailwind.css`.
+Artemis loads the package stylesheet after application styles. It inherits the package's type
+scale, spacing, shape, elevation, and surface hierarchy while its unlayered Tailwind stylesheet
+overrides the Artemis font family, brand, application surfaces, and status roles.
 Artemis does not import the package's internal Tailwind build theme, so its unprefixed utilities
-remain owned by the Artemis Tailwind configuration. Artemis sets `data-theme="dark"` on
-the document element when dark mode is active and advertises the corresponding CSS `color-scheme`
-so browser-owned controls use the same light or dark appearance.
+remain owned by the Artemis Tailwind configuration. Artemis sets `data-theme="dark"` on the
+document element when dark mode is active and advertises the corresponding CSS `color-scheme` so
+browser-owned controls use the same light or dark appearance.
 
 Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and
 96rem as public styling contracts. Add a token only when a host needs a supported customization

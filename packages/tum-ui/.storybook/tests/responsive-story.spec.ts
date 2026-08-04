@@ -136,18 +136,20 @@ test('keeps selected dates visually selected on hover', async ({ page }) => {
     await expect(selectedDay).toHaveCSS('background-color', selectedBackground);
 });
 
-test('centers the native time control and commits its normalized value', async ({ page }) => {
+test('centers the time selector and commits typed values', async ({ page }) => {
     await page.goto('./iframe.html?id=forms-date-picker--default&viewMode=story');
     await page.getByRole('button', { name: 'Open calendar' }).click();
     const dialog = page.getByRole('dialog');
-    const time = dialog.locator('input[type="time"]');
+    const time = dialog.getByRole('group', { name: 'Time' });
+    const hour = dialog.getByRole('textbox', { name: 'Hour' });
+    const minute = dialog.getByRole('textbox', { name: 'Minute' });
     const dialogBox = (await dialog.boundingBox())!;
     const timeBox = (await time.boundingBox())!;
 
     expect(timeBox.x + timeBox.width / 2).toBeCloseTo(dialogBox.x + dialogBox.width / 2, 0);
-    await expect(time).toHaveAttribute('type', 'time');
-    await expect(time).toHaveAttribute('step', '60');
-    await time.fill('12:34');
+    await hour.fill('12');
+    await minute.fill('34');
+    await minute.press('Tab');
     await expect(page.getByRole('combobox', { name: 'Deadline' })).toHaveValue('13.06.2026 12:34');
 });
 
@@ -188,16 +190,26 @@ test('preserves component transitions in AutoDocs', async ({ page }) => {
 
 test('keeps input-group seams logical in both text directions', async ({ page }) => {
     await page.goto('./iframe.html?id=forms-input-group--default&viewMode=story');
+    const group = page.locator('tum-ui-input-group');
     const addons = page.locator('tum-ui-input-group-addon');
     const input = page.getByRole('textbox', { name: 'Budget' });
 
     const radii = async () =>
-        page.locator('tum-ui-input-group').evaluate((group) =>
-            Array.from(group.children).map((element) => {
-                const style = getComputedStyle(element);
+        group.evaluate((element) =>
+            Array.from(element.children).map((child) => {
+                const style = getComputedStyle(child);
                 return [style.borderTopLeftRadius, style.borderTopRightRadius];
             }),
         );
+    const groupBorderColor = () =>
+        group.evaluate((element) => {
+            const probe = document.createElement('span');
+            probe.style.color = 'var(--tum-ui-input-group-border-color)';
+            element.append(probe);
+            const color = getComputedStyle(probe).color;
+            probe.remove();
+            return color;
+        });
 
     const ltrRadii = await radii();
     expect(ltrRadii[0][0]).not.toBe('0px');
@@ -205,6 +217,14 @@ test('keeps input-group seams logical in both text directions', async ({ page })
     expect(ltrRadii[1]).toEqual(['0px', '0px']);
     expect(ltrRadii[2][0]).toBe('0px');
     expect(ltrRadii[2][1]).toBe(ltrRadii[0][0]);
+
+    await input.hover();
+    await expect(input).toHaveCSS('border-color', await groupBorderColor());
+    await expect(addons.first()).toHaveCSS('border-color', await groupBorderColor());
+    await input.focus();
+    await expect(input).toHaveCSS('border-color', await groupBorderColor());
+    await expect(addons.first()).toHaveCSS('border-color', await groupBorderColor());
+
     await page.locator('html').evaluate((element) => element.setAttribute('dir', 'rtl'));
     await expect(addons.first()).toBeVisible();
     await expect(input).toBeVisible();
@@ -237,4 +257,16 @@ test('keeps input-group seams logical in both text directions', async ({ page })
     await expect(options).toHaveCount(3);
     expect(await options.first().evaluate((element) => getComputedStyle(element).borderRightWidth)).toBe('1px');
     expect(await options.last().evaluate((element) => getComputedStyle(element).borderLeftWidth)).toBe('1px');
+});
+
+test('keeps button component and directive sizes aligned', async ({ page }) => {
+    for (const size of ['small', 'default', 'large']) {
+        await page.goto(`./iframe.html?id=actions-button--default&viewMode=story&args=size:${size}`);
+        const componentHeight = (await page.getByRole('button', { name: 'Continue' }).boundingBox())!.height;
+
+        await page.goto(`./iframe.html?id=actions-button-directive--default&viewMode=story&args=size:${size}`);
+        const directiveHeight = (await page.getByRole('button', { name: 'Native button' }).boundingBox())!.height;
+
+        expect(componentHeight).toBe(directiveHeight);
+    }
 });

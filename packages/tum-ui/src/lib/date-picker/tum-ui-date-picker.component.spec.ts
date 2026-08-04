@@ -180,36 +180,40 @@ describe('TumUiDatePickerComponent', () => {
         fixture.detectChanges();
     }
 
-    function timeField(): HTMLInputElement {
-        return document.querySelector('[role="dialog"] input[type="time"]') as HTMLInputElement;
+    function timeField(label: 'Hour' | 'Minute'): HTMLInputElement {
+        return document.querySelector(`[role="dialog"] input[aria-label="${label}"]`) as HTMLInputElement;
     }
 
-    it('uses the native minute-precision time control', () => {
+    it('updates and normalizes typed hours and minutes', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        expect(timeField().value).toBe('08:30');
-        expect(timeField().step).toBe('60');
-        expect(timeField().getAttribute('aria-label')).toBe('Time');
+        timeField('Hour').value = '9';
+        timeField('Hour').dispatchEvent(new Event('change'));
+        timeField('Minute').value = '5';
+        timeField('Minute').dispatchEvent(new Event('change'));
+        expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 09:05');
+        expect(timeField('Hour').value).toBe('09');
+        expect(timeField('Minute').value).toBe('05');
     });
 
-    it('updates the time from the native control normalized value', () => {
-        fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+    it('wraps spinner steps without changing the day', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T23:00'));
         fixture.detectChanges();
         openPanel();
-        timeField().value = '10:45';
-        timeField().dispatchEvent(new Event('input'));
-        expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 10:45');
+        (document.querySelector('button[aria-label="Increment hour"]') as HTMLButtonElement).click();
+        (document.querySelector('button[aria-label="Decrement minute"]') as HTMLButtonElement).click();
+        expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 00:59');
     });
 
-    it('restores the committed time when the native control is cleared', () => {
+    it('steps from an uncommitted field value with the arrow keys', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
         openPanel();
-        timeField().value = '';
-        timeField().dispatchEvent(new Event('input'));
-        expect(timeField().value).toBe('08:30');
-        expect(component.value()?.format('HH:mm')).toBe('08:30');
+        timeField('Hour').value = '10';
+        timeField('Hour').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        expect(component.value()?.format('HH:mm')).toBe('11:30');
+        expect(timeField('Hour').value).toBe('11');
     });
 
     it('selects a day from the calendar overlay', () => {
@@ -240,9 +244,10 @@ describe('TumUiDatePickerComponent', () => {
     it('bases the date on today, not the 1st of the month, when the time is set on an empty picker', () => {
         expect(component.value()).toBeUndefined();
         openPanel();
-        expect(timeField().value).toBe('00:00');
-        timeField().value = '10:45';
-        timeField().dispatchEvent(new Event('input'));
+        timeField('Hour').value = '10';
+        timeField('Hour').dispatchEvent(new Event('change'));
+        timeField('Minute').value = '45';
+        timeField('Minute').dispatchEvent(new Event('change'));
         expect(component.value()?.format('YYYY-MM-DD')).toBe(dayjs().format('YYYY-MM-DD'));
         expect(component.value()?.format('HH:mm')).toBe('10:45');
     });

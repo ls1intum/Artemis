@@ -39,7 +39,7 @@ if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRu
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
-const allowedLayers = new Set(['properties', 'tum-ui-cdk']);
+const allowedLayers = new Set(['properties', 'tum-ui-cdk', 'tum-ui-theme']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);
@@ -127,6 +127,22 @@ stylesheet.walkRules((rule) => {
         return;
     }
 
+    if (rule.parent.type === 'atrule' && rule.parent.name === 'layer' && rule.parent.params === 'tum-ui-theme') {
+        const validThemeSelector = rule.selector
+            .split(',')
+            .map((selector) => selector.trim())
+            .every((selector) => [':root', '[data-theme=light]', '[data-theme=dark]'].includes(selector));
+        if (!validThemeSelector) {
+            errors.push(`unexpected theme selector ${rule.selector}`);
+        }
+        rule.walkDecls((declaration) => {
+            if (declaration.prop !== 'color-scheme' && !declaration.prop.startsWith('--tumaet-ui-')) {
+                errors.push(`theme selector ${rule.selector} sets ${declaration.prop}`);
+            }
+        });
+        return;
+    }
+
     const selectorClasses = classNames(rule);
     for (const className of selectorClasses) {
         if (!className.startsWith('tum:') && !className.startsWith('tum-ui-') && !cdkOverlayClasses.has(className)) {
@@ -163,11 +179,11 @@ stylesheet.walkDecls(/^--tum-animate-/, (declaration) => {
 });
 if (
     manifest.exports?.['./styles.css'] !== './styles.css' ||
-    manifest.exports?.['./themes.css'] !== './themes.css' ||
+    manifest.exports?.['./themes.css'] ||
     manifest.exports?.['./tailwind-theme.css'] ||
-    JSON.stringify(manifest.sideEffects) !== '["./styles.css","./themes.css"]'
+    JSON.stringify(manifest.sideEffects) !== '["./styles.css"]'
 ) {
-    errors.push('the built manifest does not expose the stylesheet and theme contracts');
+    errors.push('the built manifest does not expose the stylesheet contract');
 }
 if (manifest.peerDependencies?.tailwindcss) {
     errors.push('the built manifest exposes build-only Tailwind as a consumer peer');

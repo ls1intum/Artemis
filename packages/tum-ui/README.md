@@ -14,26 +14,26 @@ import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 
 Deep imports are not supported.
 
-For a complete light and dark default theme, load the reference theme and precompiled component
-stylesheet once, globally, after resets and framework styles:
+Load the precompiled stylesheet once, globally, after resets and framework styles:
 
 ```json
 {
-    "styles": ["src/styles.scss", "@tumaet/ui-angular/themes.css", "@tumaet/ui-angular/styles.css"]
+    "styles": ["src/styles.scss", "@tumaet/ui-angular/styles.css"]
 }
 ```
 
-Set `data-theme="dark"` on the document element to activate the dark reference theme. The theme
-also sets the matching `color-scheme` and a system font stack. No Tailwind dependency,
-configuration, or package source scanning is required.
+The stylesheet includes complete light and dark defaults in a low-priority cascade layer. Set
+`data-theme="dark"` on the document element to activate dark mode. The theme also sets the matching
+`color-scheme` and a system font stack. No Tailwind dependency, configuration, or package source
+scanning is required.
 
-## Custom theme
+## Host theme integration
 
-To integrate an application theme, omit `themes.css`, load `styles.css`, and define every
-`--tumaet-ui-*` property below where it can reach package components and overlay content. Defining
-them on the document element is the safest default. Do not load the reference theme and a custom
-theme together. Set the standard `color-scheme` property on the same theme root so browser-owned
-controls match its light or dark appearance.
+Override only the semantic roles the application owns in an unlayered host stylesheet. Define
+overrides on the document element so package components and overlay content inherit them. The
+package defaults remain as fallbacks because unlayered application declarations take precedence
+over the package theme layer. Set `data-theme` and the standard `color-scheme` property on the same
+root so package and browser-owned controls use the same scheme.
 
 Foundations:
 
@@ -62,13 +62,14 @@ Colors:
   `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.
 
-Color values must remain valid for each active color scheme. Contrast tokens must remain readable
-on their matching background. Primary is the brand fill; accent is the accessible brand foreground
-for content and controls. Each state token is a solid fill or border, its `-contrast` token is text
-on that fill, and its `-foreground` token is text on content or a tinted state surface. Focus must
-remain distinguishable from adjacent content and control surfaces. The package exposes semantic
-roles rather than a numbered color ramp. Artemis maps the package contract to its existing
-foundations and light and dark color roles in its own stylesheet.
+Color values must remain valid for each active color scheme. The default palette uses a cool-slate
+surface hierarchy with restrained control boundaries and visible focus states. Contrast tokens must
+remain readable on their matching background. Primary is the brand fill; accent is the accessible brand foreground for
+content and controls. Each state token is a solid fill or border, its `-contrast` token is text on
+that fill, and its `-foreground` token is text on content or a tinted state surface. Focus must remain
+distinguishable from adjacent content and control surfaces. The package exposes semantic roles
+rather than a numbered color ramp. Artemis inherits the default foundations and surfaces, then
+overrides its font family, brand, application surfaces, and status roles in its own stylesheet.
 
 The component stylesheet uses `tum:`-prefixed Tailwind class names to avoid selector collisions and
 does not depend on the host's source scanner. The prefix and package Tailwind configuration are

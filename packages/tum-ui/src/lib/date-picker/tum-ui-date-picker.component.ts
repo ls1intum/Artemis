@@ -23,7 +23,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import type { FormValueControl } from '@angular/forms/signals';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { faCalendar, faClock, faGlobe, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faChevronDown, faChevronUp, faClock, faGlobe, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent } from '../button/tum-ui-button.component';
 import { TumUiOverlayService } from '../overlay/tum-ui-overlay.service';
 import { TumUiTooltipDirective } from '../tooltip/tum-ui-tooltip.directive';
@@ -78,6 +78,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
     protected readonly faXmark = faXmark;
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
+    protected readonly faChevronUp = faChevronUp;
+    protected readonly faChevronDown = faChevronDown;
     protected get currentTimeZone(): string {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
@@ -105,7 +107,8 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
 
     protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
     protected readonly showClear = computed(() => !!this.inputText());
-    protected readonly displayTime = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText() : '00:00'));
+    protected readonly displayHour = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[0] : '00'));
+    protected readonly displayMinute = computed(() => (TIME_REGEX.test(this.timeText()) ? this.timeText().split(':')[1] : '00'));
 
     constructor() {
         this.destroyRef.onDestroy(() => this.overlayRef?.dispose());
@@ -142,14 +145,70 @@ export class TumUiDatePickerComponent implements FormValueControl<dayjs.Dayjs | 
         }
         this.touch.emit();
     }
-    protected onTimeInput(input: HTMLInputElement): void {
-        const raw = input.value;
-        if (!TIME_REGEX.test(raw)) {
-            input.value = this.displayTime();
+    protected stepHour(delta: number): void {
+        const { hour, minute } = this.currentTimeParts();
+        this.commitTime((hour + delta + 24) % 24, minute);
+    }
+
+    protected stepMinute(delta: number): void {
+        const { hour, minute } = this.currentTimeParts();
+        this.commitTime(hour, (minute + delta + 60) % 60);
+    }
+
+    protected onHourInput(input: HTMLInputElement): void {
+        const parsed = this.parseTimePart(input.value, 23);
+        if (parsed === undefined) {
+            input.value = this.displayHour();
             return;
         }
-        const [hour, minute] = raw.split(':').map(Number);
-        this.commitTime(hour, minute);
+        this.commitTime(parsed, this.currentTimeParts().minute);
+        input.value = this.displayHour();
+    }
+
+    protected onMinuteInput(input: HTMLInputElement): void {
+        const parsed = this.parseTimePart(input.value, 59);
+        if (parsed === undefined) {
+            input.value = this.displayMinute();
+            return;
+        }
+        this.commitTime(this.currentTimeParts().hour, parsed);
+        input.value = this.displayMinute();
+    }
+
+    protected onTimeKeydown(event: KeyboardEvent, input: HTMLInputElement, field: 'hour' | 'minute'): void {
+        const delta = event.key === 'ArrowUp' ? 1 : event.key === 'ArrowDown' ? -1 : 0;
+        if (delta === 0) {
+            return;
+        }
+        event.preventDefault();
+        const { hour, minute } = this.currentTimeParts();
+        if (field === 'hour') {
+            const base = this.parseTimePart(input.value, 23) ?? hour;
+            this.commitTime((base + delta + 24) % 24, minute);
+            input.value = this.displayHour();
+        } else {
+            const base = this.parseTimePart(input.value, 59) ?? minute;
+            this.commitTime(hour, (base + delta + 60) % 60);
+            input.value = this.displayMinute();
+        }
+    }
+
+    private currentTimeParts(): { hour: number; minute: number } {
+        const text = this.timeText();
+        if (!TIME_REGEX.test(text)) {
+            return { hour: 0, minute: 0 };
+        }
+        const [hour, minute] = text.split(':').map(Number);
+        return { hour, minute };
+    }
+
+    private parseTimePart(raw: string, max: number): number | undefined {
+        const trimmed = raw.trim();
+        if (!/^\d{1,2}$/.test(trimmed)) {
+            return undefined;
+        }
+        const value = Number(trimmed);
+        return value <= max ? value : undefined;
     }
     private commitTime(hour: number, minute: number): void {
         this.timeText.set(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);

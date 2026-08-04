@@ -54,61 +54,33 @@
 :root {
     color-scheme: light;
 
-    --tumaet-ui-spacing: 0.25rem;
     --tumaet-ui-font-family: var(--bs-body-font-family);
-    --tumaet-ui-font-size-xs: calc(var(--bs-body-font-size) * 0.8333);
-    --tumaet-ui-font-size-sm: calc(var(--bs-body-font-size) * 0.875);
-    --tumaet-ui-font-size-base: var(--bs-body-font-size);
-    --tumaet-ui-font-size-lg: calc(var(--bs-body-font-size) * 1.25);
-    --tumaet-ui-font-size-xl: calc(var(--bs-body-font-size) * 1.3889);
-    --tumaet-ui-line-height-xs: calc(1 / 0.75);
-    --tumaet-ui-line-height-sm: var(--bs-body-line-height);
-    --tumaet-ui-line-height-base: var(--bs-body-line-height);
-    --tumaet-ui-line-height-lg: var(--bs-body-line-height);
-    --tumaet-ui-line-height-xl: calc(1.75 / 1.25);
-    --tumaet-ui-radius-sm: var(--bs-border-radius-sm);
-    --tumaet-ui-radius-md: var(--bs-border-radius);
-    --tumaet-ui-radius-xl: var(--bs-border-radius-xl);
-    --tumaet-ui-radius-2xl: calc(var(--bs-border-radius-xl) * 2);
-    --tumaet-ui-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --tumaet-ui-shadow-sm: var(--bs-box-shadow-sm);
-    --tumaet-ui-shadow-md: var(--bs-box-shadow);
-    --tumaet-ui-shadow-lg: var(--bs-box-shadow-lg);
-    --tumaet-ui-shadow-xl: var(--bs-box-shadow-lg);
-    --tumaet-ui-primary-color: var(--primary-dark);
+    --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 88%, black);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
     --tumaet-ui-accent-color: var(--primary-dark);
-    --tumaet-ui-focus-color: var(--primary-dark);
-    --tumaet-ui-border-color: var(--border-color);
-    --tumaet-ui-control-border-color: var(--secondary);
-    --tumaet-ui-control-border-hover-color: var(--body-color);
-    --tumaet-ui-text-color: var(--body-color);
-    --tumaet-ui-text-hover-color: var(--body-color);
-    --tumaet-ui-muted-color: var(--text-body-secondary);
-    --tumaet-ui-disabled-color: var(--secondary);
+    --tumaet-ui-focus-color: var(--primary);
     --tumaet-ui-content-background: var(--module-bg);
-    --tumaet-ui-control-background: var(--default-btn-background);
-    --tumaet-ui-overlay-background: var(--popover-bg);
-    --tumaet-ui-hover-background: var(--hover-slightly-darker-body-bg);
-    --tumaet-ui-disabled-background: var(--gray-200);
-    --tumaet-ui-contrast-background: var(--body-color);
+    --tumaet-ui-control-background: var(--artemis-control-background);
+    --tumaet-ui-control-border-color: var(--artemis-control-border);
+    --tumaet-ui-control-border-hover-color: var(--artemis-control-border-hover);
+    --tumaet-ui-text-color: var(--artemis-control-color);
+    --tumaet-ui-muted-color: var(--artemis-control-muted);
+    --tumaet-ui-disabled-background: var(--artemis-control-disabled-background);
+    --tumaet-ui-disabled-color: var(--artemis-control-disabled-color);
     --tumaet-ui-contrast-color: var(--module-bg);
-    --tumaet-ui-highlight-color: var(--primary-dark);
-    --tumaet-ui-highlight-background: var(--sidebar-card-selected-bg);
-    --tumaet-ui-highlight-focus-background: color-mix(in srgb, var(--sidebar-card-selected-bg), var(--primary) 12%);
-    --tumaet-ui-state-danger: var(--artemis-alert-danger-color);
-    --tumaet-ui-state-danger-contrast: var(--artemis-alert-danger-background);
+    --tumaet-ui-overlay-background: var(--module-bg);
+    --tumaet-ui-state-danger: var(--danger);
+    --tumaet-ui-state-danger-contrast: var(--white);
     --tumaet-ui-state-danger-foreground: var(--artemis-alert-danger-color);
-    --tumaet-ui-state-success: var(--artemis-alert-success-color);
-    --tumaet-ui-state-success-contrast: var(--artemis-alert-success-background);
+    --tumaet-ui-state-success: var(--success);
+    --tumaet-ui-state-success-contrast: var(--black);
     --tumaet-ui-state-success-foreground: var(--artemis-alert-success-color);
-    --tumaet-ui-state-warning: var(--artemis-alert-warning-color);
-    --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
+    --tumaet-ui-state-warning: var(--warning);
+    --tumaet-ui-state-warning-contrast: var(--black);
     --tumaet-ui-state-warning-foreground: var(--artemis-alert-warning-color);
-    --tumaet-ui-state-info: var(--artemis-alert-info-color);
-    --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
+    --tumaet-ui-state-info: var(--info);
+    --tumaet-ui-state-info-contrast: var(--black);
     --tumaet-ui-state-info-foreground: var(--artemis-alert-info-color);
-    --tumaet-ui-table-striped-background: color-mix(in srgb, var(--module-bg), var(--body-color) 3%);
     --tumaet-ui-tooltip-background: var(--artemis-dark);
     --tumaet-ui-tooltip-color: var(--tooltip-color);
 }
@@ -116,13 +88,19 @@
 [data-theme='dark'] {
     color-scheme: dark;
 
-    --tumaet-ui-accent-color: color-mix(in srgb, var(--link-color), var(--body-color) 35%);
-    --tumaet-ui-focus-color: color-mix(in srgb, var(--link-color), var(--body-color) 35%);
-    --tumaet-ui-muted-color: var(--gray-500);
-    --tumaet-ui-disabled-color: var(--gray-500);
-    --tumaet-ui-disabled-background: color-mix(in srgb, var(--module-bg), var(--body-color) 14%);
-    --tumaet-ui-highlight-color: var(--body-color);
-    --tumaet-ui-highlight-focus-background: color-mix(in srgb, var(--sidebar-card-selected-bg), var(--body-color) 10%);
+    --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 80%, white);
+    --tumaet-ui-primary-contrast-color: var(--module-bg);
+    --tumaet-ui-accent-color: color-mix(in srgb, var(--primary) 80%, white);
+    --tumaet-ui-focus-color: color-mix(in srgb, var(--primary) 80%, white);
+    --tumaet-ui-state-danger: var(--artemis-alert-danger-color);
+    --tumaet-ui-state-danger-contrast: var(--artemis-alert-danger-background);
+    --tumaet-ui-state-danger-foreground: var(--artemis-alert-danger-color);
+    --tumaet-ui-state-success: var(--artemis-alert-success-color);
+    --tumaet-ui-state-success-contrast: var(--artemis-alert-success-background);
+    --tumaet-ui-state-warning: var(--artemis-alert-warning-color);
+    --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
+    --tumaet-ui-state-info: var(--artemis-alert-info-color);
+    --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */
