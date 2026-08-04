@@ -728,12 +728,19 @@
                                     <div class="flex flex-wrap gap-2 mb-4">
                                         <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[6rem]">
                                             <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statIndexed"></div>
-                                            <div class="text-xl font-semibold font-mono">{{ entry.present }}</div>
+                                            <div
+                                                class="text-xl font-semibold font-mono"
+                                                [style.color]="entry.expected !== null && entry.present === entry.expected ? 'var(--success)' : undefined"
+                                            >
+                                                {{ entry.present }}
+                                            </div>
                                         </div>
                                         @if (entry.expected !== null) {
                                             <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[6rem]">
                                                 <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statExpected"></div>
-                                                <div class="text-xl font-semibold font-mono">{{ entry.expected }}</div>
+                                                <div class="text-xl font-semibold font-mono" [style.color]="entry.present === entry.expected ? 'var(--success)' : undefined">
+                                                    {{ entry.expected }}
+                                                </div>
                                             </div>
                                             <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[6rem]">
                                                 <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statMissing"></div>
@@ -805,6 +812,51 @@
                                 @if (selectedLectureEntity(); as lecture) {
                                     <h3 class="text-base font-semibold m-0 mb-0.5">{{ lecture.title || '#' + lecture.entityId }}</h3>
                                     <div class="text-xs text-muted-color mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaLecture"></div>
+
+                                    @if (selectedLectureStats(); as stats) {
+                                        <div class="flex flex-wrap gap-2 mb-3">
+                                            <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[5.5rem]">
+                                                <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statUnits"></div>
+                                                <div class="text-xl font-semibold font-mono">{{ stats.total }}</div>
+                                            </div>
+                                            <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[5.5rem]">
+                                                <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statComplete"></div>
+                                                <div
+                                                    class="text-xl font-semibold font-mono"
+                                                    [style.color]="stats.complete === stats.total && stats.total > 0 ? 'var(--success)' : undefined"
+                                                >
+                                                    {{ stats.complete }}
+                                                </div>
+                                            </div>
+                                            <div class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[5.5rem]">
+                                                <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statAttention"></div>
+                                                <div class="text-xl font-semibold font-mono" [style.color]="stats.attention > 0 ? 'var(--danger)' : undefined">
+                                                    {{ stats.attention }}
+                                                </div>
+                                            </div>
+                                            @if (stats.processing > 0) {
+                                                <div
+                                                    class="rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-3 py-2 min-w-[5.5rem]"
+                                                >
+                                                    <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statProcessing"></div>
+                                                    <div class="text-xl font-semibold font-mono" [style.color]="'var(--warning)'">{{ stats.processing }}</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    @if (selectedLectureContentTotals().length > 0) {
+                                        <div class="flex flex-wrap items-center gap-2 mb-4">
+                                            @for (total of selectedLectureContentTotals(); track total.key) {
+                                                <span class="inline-flex items-center gap-1.5 text-xs border border-surface-200 dark:border-surface-700 rounded-full px-2.5 py-1">
+                                                    <fa-icon [icon]="contentIcon(total.key)" class="text-muted-color" size="xs" />
+                                                    <span class="text-muted-color" [jhiTranslate]="contentLabelKeyFor(total.key)"></span>
+                                                    <span class="font-mono font-semibold">{{ total.count }}</span>
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+
                                     <div
                                         class="text-xs font-bold uppercase tracking-wider text-muted-color mb-2"
                                         jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedRecord"

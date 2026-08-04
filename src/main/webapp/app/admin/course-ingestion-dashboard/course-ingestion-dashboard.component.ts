@@ -876,6 +876,37 @@ export class CourseIngestionDashboardComponent implements OnInit {
             .map((unit) => ({ unit, key: `unit:${unit.entityId}` }));
     }
 
+    /**
+     * A health summary of the selected lecture's units, so an admin can gauge the lecture at a glance before drilling
+     * into individual units: how many units are indexed, how many are complete, and how many need attention (a content
+     * gap or a failed run).
+     */
+    protected selectedLectureStats(): { total: number; complete: number; attention: number; processing: number } {
+        const units = this.selectedLectureUnits();
+        let complete = 0;
+        let attention = 0;
+        let processing = 0;
+        for (const { unit } of units) {
+            if (this.processingUnit(unit.entityId)) {
+                processing++;
+            }
+            if (this.unitStatus(unit.entityId) === 'ok') {
+                complete++;
+            } else {
+                attention++;
+            }
+        }
+        return { total: units.length, complete, attention, processing };
+    }
+
+    /** The aggregate content object counts across the selected lecture's units, per collection, in collection order. */
+    protected selectedLectureContentTotals(): { key: string; count: number }[] {
+        const unitIds = new Set(this.selectedLectureUnits().map((entry) => entry.unit.entityId));
+        return this.indexedContent()
+            .map((group) => ({ key: group.key, count: group.objects.filter((object) => unitIds.has(Number(object.properties?.['lecture_unit_id']))).length }))
+            .filter((entry) => entry.count > 0);
+    }
+
     /** For a selected unit, its content collections shown as tiles in the detail. */
     protected selectedUnitCollections(): { key: string; count: number; navKey: string }[] {
         const unit = this.selectedUnitEntity();
