@@ -27,8 +27,13 @@ const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lect
  *
  * Run with: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  * Skips itself when the Iris module feature is not active.
+ *
+ * Tagged `@slow`, not `@fast`: this test waits out a full two-round Pyris agent run (tool call plus
+ * follow-up answer, each relayed back over the status callback) and its assertions already budget
+ * 60s per wait — more than the `@fast` project's whole per-test cap (45s in the nightly runner).
+ * See the same note in IrisChatbotWidget.spec.ts and issue #13383.
  */
-test.describe('Iris activity visibility (real Pyris)', { tag: '@fast' }, () => {
+test.describe('Iris activity visibility (real Pyris)', { tag: '@slow' }, () => {
     let lecture: Lecture;
 
     test.beforeAll(async ({ browser }) => {
@@ -40,7 +45,10 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@fast' }, () => {
     });
 
     test.beforeEach(async ({ courseManagementAPIRequests, page }) => {
-        await Commands.login(page, instructor, '/');
+        // No target URL: the calls below only need the instructor JWT cookie, and the test navigates
+        // as the student right after. See IrisChatbotWidget.spec.ts for why the discarded `/` bootstrap
+        // this used to do was the nightly's timeout hot spot (issue #13383).
+        await Commands.login(page, instructor);
         await page.request.put(`api/iris/courses/${course.id}/iris-settings`, { data: { enabled: true, variant: 'default' } });
         lecture = await courseManagementAPIRequests.createLecture(course);
         expect(lecture.id, 'lecture should be created with an id').toBeDefined();

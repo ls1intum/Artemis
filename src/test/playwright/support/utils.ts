@@ -158,8 +158,10 @@ function captureBodyWithoutReplaying(request: Request): void {
  * /api fetches — Playwright routing never sees service-worker-handled requests, which is what
  * defeated an earlier page-scoped version of this capture.
  *
- * Scope guards: GETs are never intercepted (SSE — GET text/event-stream, e.g. Iris — must not be
- * fetched from Node, and GET evictions are recoverable read-side by replay), and multipart bodies
+ * Scope guards: only `/api/` URLs are routed at all (see the glob below — it must stay a string so
+ * Playwright does not widen interception to every request), GETs are continued untouched (SSE — GET
+ * text/event-stream, e.g. Iris — must not be fetched from Node, and GET evictions are recoverable
+ * read-side by replay), and multipart bodies
  * are only captured up to {@link MAX_CAPTURED_MULTIPART_BODY_BYTES} inclusive **and** only when
  * Playwright's copy of the body is byte-complete (see {@link isBodyFaithfullyReplayable}). Multipart
  * was previously skipped outright, which left course create/update (Angular posts them as `FormData`)
@@ -176,10 +178,28 @@ function captureBodyWithoutReplaying(request: Request): void {
  */
 export async function installApiResponseCapture(context: BrowserContext): Promise<void> {
     await context.route(
-        (url) => url.pathname.includes('/api/'),
+        // A STRING GLOB, deliberately — not the equivalent `(url) => url.pathname.includes('/api/')`
+        // predicate. Playwright can only push a URL pattern down to the browser when EVERY matcher
+        // registered on the context is a string: `RouteHandler.prepareInterceptionPatterns` sets
+        // `all = true` for any function/RegExp matcher and then returns `[{ glob: '**/*' }]`. With the
+        // predicate, every request in every E2E context therefore round-tripped through this handler
+        // just to be waved through — measured over 12 Iris test attempts: 20334 `route.continue()`
+        // calls with `**/*` versus 326 with this glob, i.e. ~1700 driver round-trips per attempt of
+        // pure overhead. That is dead weight everywhere and it is not free on a CPU-saturated CI
+        // runner (issue #13383).
+        //
+        // What this does NOT buy: HTTP caching. Playwright disables Chromium's cache whenever any
+        // interception is registered at all (`_updateProtocolRequestInterceptionForSession` sends
+        // `Network.setCacheDisabled: <interception enabled>`), so narrowing the pattern changes
+        // nothing there — the same 12 attempts re-fetched the `max-age=31536000,immutable`
+        // `vite/deps/*` bundles 24x either way. Restoring cacheability would mean not routing these
+        // contexts at all, which is a separate question from this pattern.
+        '**/api/**',
         async (route) => {
             const request = route.request();
-            if (request.method() === 'GET') {
+            // The glob above is the browser-side filter; this is the exact predicate it approximates,
+            // so a URL that merely resembles an API path can never take the capture path below.
+            if (request.method() === 'GET' || !new URL(request.url()).pathname.includes('/api/')) {
                 await route.continue();
                 return;
             }
@@ -356,6 +376,9 @@ export function dayjsToString(day: dayjs.Dayjs) {
 }
 
 export const BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS = 10;
+
+/** The grace period `prepareExam` configures, kept short so tests do not have to wait out the server default of 180s. */
+const EXAM_GRACE_PERIOD_IN_SECONDS = 10;
 
 export function getExamBuildAndTestAfterDueDate(exam: Exam) {
     return getExamEndDateWithGrace(exam).add(BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS, 'seconds');
@@ -761,7 +784,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         examStudentReviewStart: resultDate,
         examStudentReviewEnd: resultDate.add(5, 'minutes'),
         publishResultsDate: resultDate,
-        gracePeriod: 10,
+        gracePeriod: EXAM_GRACE_PERIOD_IN_SECONDS,
     };
     const exam = await examAPIRequests.createExam(examConfig);
     let additionalData = {};
@@ -809,15 +832,19 @@ export async function makeExamSubmission(
 }
 
 /**
- * Waits for the exam to end if it hasn't already.
- * This is necessary because the assessment dashboard button only appears after the exam ends.
- * @param examEnd - The exam end date
+ * Waits for the exam to end if it hasn't already, including its grace period.
+ * This is necessary because the assessment dashboard button only appears after the exam ends, and because the server
+ * refuses to open an assessment until the last student can no longer hand in, which is the exam end plus the grace
+ * period (see SubmissionService#checkThatAssessmentIsPossibleElseThrow). The grace period is read from the exam itself,
+ * so that exams which do not configure one (and therefore get the server default of 180s) are waited out correctly.
+ * @param exam - The exam to wait for, as returned by the create call
  * @param page - The Playwright page object (used for waitForTimeout)
  */
-export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
-    if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
-        console.log(`Waiting ${timeToWait}ms for exam to end...`);
+export async function waitForExamEnd(exam: Exam, page: Page) {
+    const assessableFrom = getExamEndDateWithGrace(exam);
+    if (assessableFrom.isAfter(dayjs())) {
+        const timeToWait = assessableFrom.diff(dayjs()) + 2000; // Add 2 second buffer
+        console.log(`Waiting ${timeToWait}ms for exam (including its ${exam.gracePeriod ?? 0}s grace period) to end...`);
         await page.waitForTimeout(timeToWait);
     }
 }

@@ -1,66 +1,31 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PostPersist;
-import jakarta.persistence.PostRemove;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 
 /**
- * A DragItem.
+ * A DragItem of a {@link DragAndDropQuestion}.
+ * <p>
+ * Formerly a JPA entity backed by the {@code drag_item} table; it is now a plain POJO stored inside the question's {@code content} JSON column (see
+ * {@link DragAndDropQuestionContent}). It no longer holds a back-reference to the question or its mappings.
+ * <p>
+ * The former {@code @PostPersist}/{@code @PostRemove} file-lifecycle callbacks are gone: because the {@code id} is now minted in Java before the owning question is saved, the
+ * {@code pictureFilePath} is written with the real (question-scoped) id directly, and file deletion on question/exercise removal is orchestrated explicitly by the service layer
+ * (see {@code QuizExerciseService}). The picture is served via a question-scoped URL ({@code files/drag-and-drop/questions/{questionId}/drag-items/{dragItemId}/*}).
+ * <p>
+ * It still extends {@link DomainObject} to reuse the {@code id} field and its id-based {@code equals}/{@code hashCode}; the inherited JPA annotations are inert because this class
+ * is
+ * no longer an {@code @Entity}. The {@code id} is question-scoped (unique within the owning question, not globally).
  */
-// No @Cache here on purpose: loaded via cascade during quiz submission merge. See #12574 / #12584.
-@Entity
-@Table(name = "drag_item")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragItem extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DragItem extends DomainObject {
 
-    private static final Logger log = LoggerFactory.getLogger(DragItem.class);
-
-    @Transient
-    private final transient FileService fileService = new FileService();
-
-    @Column(name = "picture_file_path")
     private String pictureFilePath;
 
-    @Column(name = "text")
     private String text;
 
-    @Column(name = "invalid")
     private Boolean invalid = false;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private DragAndDropQuestion question;
-
-    // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
-    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dragItem")
-    @JsonIgnore
-    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public String getPictureFilePath() {
         return pictureFilePath;
@@ -88,15 +53,6 @@ public class DragItem extends DomainObject implements QuizQuestionComponent<Drag
         return this;
     }
 
-    public DragAndDropQuestion getQuestion() {
-        return question;
-    }
-
-    @Override
-    public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
-        this.question = dragAndDropQuestion;
-    }
-
     public Boolean isInvalid() {
         return invalid != null && invalid;
     }
@@ -105,42 +61,8 @@ public class DragItem extends DomainObject implements QuizQuestionComponent<Drag
         this.invalid = invalid;
     }
 
-    public void setMappings(Set<DragAndDropMapping> mappings) {
-        this.mappings = mappings;
-    }
-
-    /**
-     * This method is called after the entity is saved for the first time. We replace the placeholder in the pictureFilePath with the id of the entity because we don't know it
-     * before creation.
-     */
-    @PostPersist
-    public void afterCreate() {
-        // replace placeholder with actual id if necessary (id is no longer null at this point)
-        if (pictureFilePath != null && pictureFilePath.contains(Constants.FILEPATH_ID_PLACEHOLDER)) {
-            pictureFilePath = pictureFilePath.replace(Constants.FILEPATH_ID_PLACEHOLDER, getId().toString());
-        }
-    }
-
-    /**
-     * This method is called when deleting this entity. It makes sure that the corresponding file is deleted as well.
-     */
-    @PostRemove
-    public void onDelete() {
-        // delete old file if necessary
-        try {
-            if (pictureFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(pictureFilePath), FilePathType.DRAG_ITEM), 0);
-            }
-        }
-        catch (FilePathParsingException e) {
-            // if the file path is invalid, we don't need to delete it
-            log.warn("Could not delete file with path {}. Assume already deleted, DragAndDropQuestion {} can be removed.", pictureFilePath, getId());
-        }
-    }
-
     @Override
     public String toString() {
         return "DragItem{" + "id=" + getId() + ", pictureFilePath='" + getPictureFilePath() + "'" + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
-
 }

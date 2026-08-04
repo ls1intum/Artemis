@@ -11,6 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import hljs from 'app/foundation/util/highlight-languages.util';
 
 @Component({
     selector: 'jhi-feedback-node',
@@ -23,10 +24,13 @@ export class FeedbackNodeComponent implements OnInit {
 
     readonly feedbackItemNode = input<FeedbackNode>(undefined!);
     readonly course = input<Course>();
+    /** While the exam summary is being printed, every group renders expanded regardless of its `open` flag. */
+    readonly isPrinting = input(false);
 
     // This is a workaround for type safety in the template
     readonly feedbackItem = signal<FeedbackItem>(undefined!);
     readonly feedbackItemGroup = signal<FeedbackGroup>(undefined!);
+    private readonly highlightedCodeCache = new Map<string, string>();
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
@@ -40,6 +44,17 @@ export class FeedbackNodeComponent implements OnInit {
         } else {
             this.feedbackItem.set(feedbackItemNode as FeedbackItem);
         }
+    }
+
+    /**
+     * Whether the group's members should be shown. A group is expanded while printing (so the exam summary PDF
+     * shows everything) or when the user opened it. Replaces the former parent-side mutate-then-restore of `open`.
+     * Implemented as a method (not a computed) because `group.open` is a plain mutable property toggled on click;
+     * the method re-evaluates each change-detection pass, so it tracks both the `isPrinting()` signal and the
+     * synchronous click mutation — exactly like the previous direct `feedbackItemGroup().open` template read.
+     */
+    isGroupExpanded(): boolean {
+        return this.isPrinting() || !!this.feedbackItemGroup()?.open;
     }
 
     /**
@@ -68,5 +83,26 @@ export class FeedbackNodeComponent implements OnInit {
     toggleFeedbackItemGroupOpen(): void {
         const group = this.feedbackItemGroup();
         group.open = !group.open;
+    }
+
+    highlightCode(code: string | undefined, filePath: string): string {
+        if (!code) {
+            return '';
+        }
+        const cacheKey = `${filePath}\0${code}`;
+        const cachedCode = this.highlightedCodeCache.get(cacheKey);
+        if (cachedCode !== undefined) {
+            return cachedCode;
+        }
+
+        const language = this.getHighlightLanguage(filePath);
+        const highlightedCode = language ? hljs.highlight(code, { language, ignoreIllegals: true }).value : hljs.highlightAuto(code).value;
+        this.highlightedCodeCache.set(cacheKey, highlightedCode);
+        return highlightedCode;
+    }
+
+    private getHighlightLanguage(filePath: string): string | undefined {
+        const extension = filePath.split('.').pop()?.toLowerCase();
+        return extension && hljs.getLanguage(extension) ? extension : undefined;
     }
 }
