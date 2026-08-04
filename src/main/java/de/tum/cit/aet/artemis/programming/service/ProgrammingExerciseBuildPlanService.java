@@ -176,7 +176,17 @@ public class ProgrammingExerciseBuildPlanService {
 
         var buildConfig = programmingExercise.getBuildConfig();
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
-        buildConfig.setBuildPlanConfiguration(buildPlanConfiguration.buildPlan().toBuildPlanConfiguration());
+        final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();
+        // Parse the serialized configuration back with the same bounded reader that reads it at build time. Serializing is
+        // not size-bounded, so without this check an oversized configuration would be stored and then throw on every later
+        // read, surfacing as a 503 that also blocks the regular exercise editor. Rejecting it here leaves the config intact.
+        try {
+            BuildPlanPhasesDTO.fromBuildPlanConfiguration(serializedBuildPlanConfiguration);
+        }
+        catch (JsonProcessingException e) {
+            throw new BadRequestAlertException("The build plan configuration is too large to be processed", "buildConfig", "buildPlanConfigurationTooLarge");
+        }
+        buildConfig.setBuildPlanConfiguration(serializedBuildPlanConfiguration);
         // the structured phases configuration supersedes any legacy build script
         buildConfig.setBuildScript(null);
         buildConfig.setTimeoutSeconds(buildPlanConfiguration.timeoutSeconds());
@@ -193,17 +203,6 @@ public class ProgrammingExerciseBuildPlanService {
     }
 
     /**
-     * Validates that the build plan contains at least one build phase and that the build phase names are unique
-     * (case-insensitively) and do not use reserved names. The name pattern and non-blank constraints are enforced via
-     * bean validation on {@link BuildPhaseDTO}.
-     * <p>
-     * Unlike a build plan configuration that is read from an exercise, where a missing configuration means that the
-     * defaults of the exercise apply, the build plan editor always submits the complete build plan. An empty one would
-     * leave the exercise without any way to build a submission, so it is rejected here.
-     *
-     * @param phases the build phases to validate
-     */
-    /**
      * Validates the Docker image submitted by the build plan editor. A null image is allowed and means that the default
      * image of the exercise is used (see how {@code BuildPlanPhasesDTO#dockerImage()} is consumed when scheduling a
      * build); a blank image, on the other hand, would be persisted verbatim and leave the exercise with an unusable
@@ -218,6 +217,17 @@ public class ProgrammingExerciseBuildPlanService {
         }
     }
 
+    /**
+     * Validates that the build plan contains at least one build phase and that the build phase names are unique
+     * (case-insensitively) and do not use reserved names. The name pattern and non-blank constraints are enforced via
+     * bean validation on {@link BuildPhaseDTO}.
+     * <p>
+     * Unlike a build plan configuration that is read from an exercise, where a missing configuration means that the
+     * defaults of the exercise apply, the build plan editor always submits the complete build plan. An empty one would
+     * leave the exercise without any way to build a submission, so it is rejected here.
+     *
+     * @param phases the build phases to validate
+     */
     private void validateBuildPhaseNames(List<BuildPhaseDTO> phases) {
         if (phases == null || phases.isEmpty()) {
             throw new BadRequestAlertException("A build plan must contain at least one build phase", "buildConfig", "emptyBuildPlan");

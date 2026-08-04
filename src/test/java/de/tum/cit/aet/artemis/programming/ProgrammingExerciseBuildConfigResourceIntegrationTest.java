@@ -148,6 +148,22 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBuildPlanConfigurationExceedingParsingLimit() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a phase whose serialized form exceeds the bounded reader's document limit must be rejected with a 400 up front,
+        // otherwise it would be stored and then fail every later read, leaving the exercise unsavable through any editor
+        var oversizedPhase = new BuildPhaseDTO("compile", "x".repeat(2 * 1024 * 1024), null, false, List.of());
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(oversizedPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsMalformedDockerFlags() throws Exception {
         assertDockerFlagsRejectedAndConfigUnchanged("this is not valid json");
     }

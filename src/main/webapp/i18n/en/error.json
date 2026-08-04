@@ -311,6 +311,7 @@
         "emptyBuildPlan": "The build plan must contain at least one build phase.",
         "duplicateBuildPhaseName": "Build phase names must be unique.",
         "reservedBuildPhaseName": "A build phase uses a reserved name. Please choose a different name.",
+        "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
 }
