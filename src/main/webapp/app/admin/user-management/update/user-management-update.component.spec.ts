@@ -159,15 +159,6 @@ describe('UserManagementUpdateComponent', () => {
             expect(setTitleSpy).toHaveBeenCalledWith('child.page.test');
         });
 
-        it('should set internal field to true by default for new users', () => {
-            (component['route'].parent as any).data = of({ user: undefined });
-
-            component.ngOnInit();
-
-            expect(component.user().internal).toBe(true);
-            expect(component.editForm.get('internal')?.value).toBe(true);
-        });
-
         it('should set page title to default when no page title in route', () => {
             const languageHelper = TestBed.inject(JhiLanguageHelper);
             const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as unknown as typeof MockRouter);

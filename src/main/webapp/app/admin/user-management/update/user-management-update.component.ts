@@ -141,9 +141,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
-        const newUser = new User();
-        newUser.internal = true;
-        this.user.set(newUser);
+        this.user.set(new User());
         this.route.parent!.data.subscribe(({ user }) => {
             if (user) {
                 this.user.set(user.body ? user.body : user);
