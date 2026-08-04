@@ -105,14 +105,36 @@ class LocalVCAccountStateIntegrationTest extends AbstractProgrammingIntegrationL
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, PERSONAL_TOKEN, projectKey1, assignmentRepositorySlug);
     }
 
+    /**
+     * The password branch is the only one that already went through the {@code AuthenticationManager}, whose providers
+     * reject a user with {@code activated = false}. So this is a regression guard rather than new behaviour: the check now
+     * runs before any credential is compared, and a password login must still end in the same error.
+     */
     @Test
     void aDeactivatedAccountCannotUseItsPasswordEither() {
-        // The password path already went through the authentication manager, so this is a regression guard rather than a
-        // new behaviour: the added state check must not have changed which error a password login gets.
         student1.setActivated(false);
         userTestRepository.save(student1);
 
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug,
                 NOT_AUTHORIZED);
+    }
+
+    /**
+     * The deleted flag on its own, without deactivation. Today {@code softDeleteUser} anonymizes the account and thereby
+     * also deactivates it, so the authentication providers would refuse this user anyway - but they only ever look at
+     * {@code activated}, and nothing keeps the two flags tied together. Asserted separately so that the git path keeps
+     * refusing a deleted account even if that coupling goes away.
+     */
+    @Test
+    void aSoftDeletedAccountCannotUseItsPasswordEither() {
+        student1.setDeleted(true);
+        userTestRepository.save(student1);
+
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug,
+                NOT_AUTHORIZED);
+
+        student1.setDeleted(false);
+        userTestRepository.save(student1);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, USER_PASSWORD, projectKey1, assignmentRepositorySlug);
     }
 }
