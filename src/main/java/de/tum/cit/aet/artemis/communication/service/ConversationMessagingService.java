@@ -22,8 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -87,14 +85,12 @@ public class ConversationMessagingService extends PostingService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    private final TransactionTemplate transactionTemplate;
-
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
             ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
             SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
             SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, PlatformTransactionManager transactionManager) {
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -104,7 +100,6 @@ public class ConversationMessagingService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -152,19 +147,15 @@ public class ConversationMessagingService extends PostingService {
         // invoke async due to db write access to avoid that the client has to wait
         conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
-        // The insert and the recipients' unread increment commit together, in this request rather than on the @Async
-        // notification path. The read side resets the counter to zero and nothing orders it against the increment, so
-        // both of the weaker variants leave a recipient holding an unread message they already saw: incrementing
-        // asynchronously lets the increment land after a reader's reset, and incrementing in a separate transaction
-        // right after the save leaves the same window between the two commits. Sharing one transaction closes it,
-        // because a reader cannot observe the new message before the increment is visible, so their reset can only
-        // follow it. It also means the counter is already correct when the websocket broadcast reaches the client.
-        var createdMessage = transactionTemplate.execute(status -> {
-            Post savedMessage = conversationMessageRepository.save(newMessage);
-            conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
-            return savedMessage;
-        });
-        log.debug("      conversationMessageRepository.save and unread increment DONE");
+        var createdMessage = conversationMessageRepository.save(newMessage);
+        log.debug("      conversationMessageRepository.save DONE");
+
+        // Increment the recipients' unread counters here rather than on the @Async notification path below. The read
+        // side resets this counter to zero, and nothing orders the two, so an increment running asynchronously could
+        // land after a recipient had already read the message and leave them an unread badge for it (#13396 in spirit:
+        // the counter contradicted what the user had seen). Running it in the request also means the counter is correct
+        // by the time the websocket broadcast reaches the client.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         log.debug("      conversationMessageRepository.save DONE");

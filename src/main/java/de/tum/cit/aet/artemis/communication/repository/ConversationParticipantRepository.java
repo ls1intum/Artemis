@@ -195,10 +195,9 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
      * message: everyone except the sender, whose {@code unreadMessagesCount} is not null and who has not muted the
      * conversation. Participants failing any of those conditions are left untouched.
      * <p>
-     * Call this from the request that creates the message, in the same transaction as the insert, not from a
-     * background thread. The read side ({@code updateLastReadAsync}) resets the counter to zero and nothing orders the
-     * two, so an increment that becomes visible after the new message does can land after a recipient's read and leave
-     * them with an unread message they already saw.
+     * Call this from the request that creates the message, not from a background thread. The read side
+     * ({@code updateLastReadAsync}) resets the counter to zero and nothing orders the two, so an increment running
+     * asynchronously can land after a recipient's read and leave them with an unread message they already saw.
      *
      * @param conversationId id of the conversation with participants
      * @param senderId       userId of the sender of the message(Post)
