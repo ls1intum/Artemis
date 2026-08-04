@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.dto.RecentIngestionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IngestionHistoryRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
@@ -151,6 +152,9 @@ public class IngestionProgressService {
     private void saveHistory(LectureIngestionWebhookJob job, boolean failed, String startedAtIso, List<PyrisActivityDTO> activities, String errorMessage) {
         ZonedDateTime finishedAt = ZonedDateTime.now();
         ZonedDateTime startedAt = parseInstant(startedAtIso);
+        // On failure, Iris ends the run without flipping the step it died on off RUNNING; coerce any still-running step to
+        // FAILED so the stored timeline shows the failing step as failed rather than as a perpetual spinner.
+        List<PyrisActivityDTO> timeline = failed ? markRunningAsFailed(activities) : activities;
         IngestionHistoryEntry entry = new IngestionHistoryEntry();
         entry.setJobId(job.jobId());
         entry.setCourseId(job.courseId());
@@ -162,9 +166,9 @@ public class IngestionProgressService {
         entry.setStartedAt(startedAt);
         entry.setFinishedAt(finishedAt);
         entry.setTotalMillis(startedAt != null ? Math.max(0, Duration.between(startedAt, finishedAt).toMillis()) : null);
-        entry.setFailedStepName(failed ? failedStepName(activities) : null);
+        entry.setFailedStepName(failed ? failedStepName(timeline) : null);
         entry.setErrorMessage(truncate(errorMessage));
-        entry.setActivities(activities);
+        entry.setActivities(timeline);
         try {
             ingestionHistoryRepository.save(entry);
         }
@@ -228,6 +232,22 @@ public class IngestionProgressService {
             return null;
         }
         return value.length() <= MAX_ERROR_LENGTH ? value : value.substring(0, MAX_ERROR_LENGTH);
+    }
+
+    /**
+     * Returns a copy of the timeline with any still-RUNNING step marked FAILED, so a failed run's timeline shows the
+     * step it died on as failed rather than as a perpetual spinner.
+     */
+    private static List<PyrisActivityDTO> markRunningAsFailed(List<PyrisActivityDTO> activities) {
+        if (activities == null) {
+            return null;
+        }
+        return activities.stream()
+                .map(activity -> activity.state() == PyrisActivityState.RUNNING
+                        ? new PyrisActivityDTO(activity.id(), activity.kind(), activity.name(), PyrisActivityState.FAILED, activity.detail(), activity.result(),
+                                activity.durationMillis())
+                        : activity)
+                .toList();
     }
 
     /**
