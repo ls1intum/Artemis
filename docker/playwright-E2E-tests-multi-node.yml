@@ -95,6 +95,9 @@ services:
       - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
       - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
       - ./nginx/artemis-nginx-playwright.conf:/etc/nginx/conf.d/artemis-nginx-playwright.conf:ro
+      # Lift the nginx request rate limits for the E2E run (see the geo block in artemis-nginx.conf):
+      # a full suite drives hundreds of logins and git operations from one source address.
+      - ./nginx/artemis-rate-limit-exempt-e2e.conf:/etc/nginx/rate-limit-exempt/e2e.conf:ro
       - type: bind
         source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../src/test/playwright/certs/artemis-nginx+4.pem}
         target: "/certs/fullchain.pem"
