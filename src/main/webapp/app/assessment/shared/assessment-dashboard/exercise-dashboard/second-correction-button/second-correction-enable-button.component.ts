@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-second-correction-enable-button',
     templateUrl: './second-correction-enable-button.component.html',
-    host: { class: 'd-inline-block align-middle' },
+    host: { class: 'inline-block align-middle' },
     styles: ['div { cursor: pointer; }'],
     imports: [FaIconComponent, ArtemisTranslatePipe],
 })
