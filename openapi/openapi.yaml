@@ -2295,10 +2295,18 @@ components:
         hint: {type: string}
         invalid: {type: boolean}
     StudentQuizParticipation:
+      discriminator:
+        propertyName: quizQuestionsType
+        mapping: {after-quiz-end: '#/components/schemas/StudentQuizParticipationWithSolutions',
+          live-quiz: '#/components/schemas/StudentQuizParticipationWithQuestions',
+          before-quiz-start: '#/components/schemas/StudentQuizParticipationWithoutQuestions'}
       oneOf:
       - {$ref: '#/components/schemas/StudentQuizParticipationWithSolutions'}
       - {$ref: '#/components/schemas/StudentQuizParticipationWithQuestions'}
       - {$ref: '#/components/schemas/StudentQuizParticipationWithoutQuestions'}
+      properties:
+        quizQuestionsType: {type: string}
+      required: [quizQuestionsType]
     CourseForQuizExercise:
       type: object
       properties:
