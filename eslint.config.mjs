@@ -1,6 +1,7 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
+import storybookPlugin from 'eslint-plugin-storybook';
 import typescriptParser from '@typescript-eslint/parser';
 import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
@@ -38,12 +39,18 @@ const noNgZoneImport = {
         'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
 };
 
+const tumUiConsumerImportPatterns = [
+    {
+        group: ['@tumaet/ui-angular/**'],
+        message: 'Import TUM UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
+    },
+    {
+        group: ['app/shared-ui/tum-ui/**'],
+        message: 'Import TUM UI symbols from the @tumaet/ui-angular public entry point.',
+    },
+];
 export default tseslint.config(
     {
-        // Only src/main/webapp/ and src/test/javascript/ contain lintable client code.
-        // The lint command targets src/main/webapp explicitly, but these ignores also
-        // protect against scanning irrelevant directories when ESLint is invoked
-        // without explicit paths (e.g. by IDEs or lint-staged).
         ignores: [
             // Top-level directories
             '.cache/',
@@ -79,6 +86,9 @@ export default tseslint.config(
             'src/test/playwright/',
             'src/test/resources/',
             'src/test/vitest/',
+            'packages/tum-ui/coverage/',
+            'packages/tum-ui/dist/',
+            'packages/tum-ui/dist-pack/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
             'src/test/javascript/spec/stub.js',
@@ -88,12 +98,32 @@ export default tseslint.config(
         ],
     },
     eslint.configs.recommended,
+    ...storybookPlugin.configs['flat/recommended'],
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['packages/tum-ui/**/*.mjs'],
+        languageOptions: {
+            globals: {
+                clearTimeout: 'readonly',
+                console: 'readonly',
+                process: 'readonly',
+                setTimeout: 'readonly',
+            },
+        },
+    },
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
-                project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.spec.json'],
+                tsconfigRootDir: import.meta.dirname,
+                project: [
+                    './tsconfig.json',
+                    './tsconfig.app.json',
+                    './tsconfig.spec.json',
+                    './packages/tum-ui/tsconfig.lib.json',
+                    './packages/tum-ui/tsconfig.spec.json',
+                    './packages/tum-ui/.storybook/tsconfig.json',
+                ],
             },
             globals: {
                 NodeJS: 'readonly',
@@ -188,6 +218,7 @@ export default tseslint.config(
                         },
                         noNgZoneImport,
                     ],
+                    patterns: tumUiConsumerImportPatterns,
                 },
             ],
             'no-restricted-syntax': [
@@ -218,7 +249,7 @@ export default tseslint.config(
     // wrapper itself holds the single sanctioned `JSON.parse` (line-level disabled), and test code may parse
     // fixtures freely (specs excluded below).
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-restricted-properties': [
@@ -238,7 +269,7 @@ export default tseslint.config(
     // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
     // banned across `src/main/webapp` (production). Specs may still use `any` for mocks/fixtures (excluded below).
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-explicit-any': 'error',
@@ -253,7 +284,7 @@ export default tseslint.config(
     //     type) or a type annotation instead. `assertionStyle: 'as'` keeps `as const` and ordinary downcasts legal.
     // The stronger `as any` / `as unknown` bans live in the localRules block above. Specs may cast freely (excluded).
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-unnecessary-type-assertion': 'error',
@@ -268,7 +299,7 @@ export default tseslint.config(
     //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
     //     mocking (excluded below).
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-console': 'error',
@@ -287,7 +318,7 @@ export default tseslint.config(
     // with the `void` operator (`ignoreVoid: true`). `ignoreIIFE` allows `(async () => { … })()`. This overrides the
     // `'off'` default above for production code; specs may float promises for brevity (excluded below).
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
@@ -299,23 +330,18 @@ export default tseslint.config(
     // `toString()` yields `"[object Object]"` (template literals, `String(x)`, concatenation). Both preserve
     // behavior once fixed — they surface where a conversion was accidental. Companion to `restrict-template-expressions`.
     {
-        files: ['src/main/webapp/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/restrict-plus-operands': 'error',
             '@typescript-eslint/no-base-to-string': 'error',
         },
     },
-    // Ban `ngOnChanges` across client code. Prefer computed() for derived state and effect() for genuine side
-    // effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs), so this is a consistency
-    // ban rather than a correctness rule — but the client is now completely free of the hook (PR #12951), and an
-    // `error` is what keeps it that way: `pnpm run lint` runs without `--max-warnings`, so a warning would let a
-    // reintroduced hook through CI unnoticed. Spec files and the test infrastructure are covered too, so a stub or
-    // mock cannot reintroduce it either. The rare genuinely unavoidable case (SimpleChanges.previousValue /
-    // isFirstChange / before-child-init timing) still uses a justified line-level disable. Full rationale + decision
-    // table: documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
+    // Ban `ngOnChanges` across application, package, and test code. Angular 21 still calls the hook for signal
+    // inputs, so this is a consistency rule. A genuinely unavoidable previous-value or lifecycle-ordering case
+    // requires a justified line-level disable; see the client-development guide.
     {
-        files: ['src/main/webapp/app/**/*.ts', 'src/test/javascript/**/*.ts'],
+        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts', 'src/test/javascript/**/*.ts'],
         rules: {
             'localRules/prefer-signal-reactivity-over-ngonchanges': 'error',
         },
@@ -327,7 +353,7 @@ export default tseslint.config(
     // cannot be signals use a justified line-level disable. Full rationale:
     // documentation/docs/developer/guidelines/client-development.mdx ("Zoneless change detection & signal-based state").
     {
-        files: ['src/main/webapp/app/**/*.ts'],
+        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'localRules/prefer-signal-template-state': 'error',
@@ -352,6 +378,7 @@ export default tseslint.config(
                         noNgZoneImport,
                     ],
                     patterns: [
+                        ...tumUiConsumerImportPatterns,
                         {
                             // Block both absolute (app/shared-ui/**) and relative (../shared-ui, ../../shared-ui, …) imports
                             // so the layer cannot be bypassed with a relative path.
@@ -382,6 +409,7 @@ export default tseslint.config(
                         noNgZoneImport,
                     ],
                     patterns: [
+                        ...tumUiConsumerImportPatterns,
                         {
                             // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
                             group: blockLayerImportPatterns('editor'),
@@ -394,7 +422,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts'],
+        files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts', 'packages/tum-ui/src/**/*.spec.ts'],
         plugins: {
             localRules: localRulesPlugin,
         },
@@ -430,6 +458,7 @@ export default tseslint.config(
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
+                tsconfigRootDir: import.meta.dirname,
                 project: ['./tsconfig.spec.json'],
             },
         },
@@ -443,7 +472,59 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/main/webapp/**/*.html'],
+        files: ['packages/tum-ui/src/lib/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: 'dayjs',
+                            message: "Please import from 'dayjs/esm' instead.",
+                        },
+                        {
+                            name: 'lodash',
+                            message: "Please import from 'lodash-es' instead.",
+                        },
+                        noNgZoneImport,
+                    ],
+                    patterns: [
+                        {
+                            group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            message: 'TUM UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-ui-integration.',
+                        },
+                    ],
+                },
+            ],
+            '@angular-eslint/directive-selector': [
+                'error',
+                {
+                    type: 'attribute',
+                    prefix: 'tumUi',
+                    style: 'camelCase',
+                },
+            ],
+            '@angular-eslint/component-selector': [
+                'error',
+                {
+                    type: 'element',
+                    prefix: 'tum-ui',
+                    style: 'kebab-case',
+                },
+            ],
+        },
+    },
+    {
+        // Attribute-selector components preserve native element semantics while owning a template
+        // or component-scoped styles, so the element-selector convention does not apply.
+        files: ['packages/tum-ui/src/lib/button/tum-ui-button.directive.ts', 'packages/tum-ui/src/lib/table-directive/tum-ui-table-sortable-column.component.ts'],
+        rules: {
+            '@angular-eslint/component-selector': 'off',
+        },
+    },
+    {
+        files: ['src/main/webapp/**/*.html', 'packages/tum-ui/**/*.html'],
         languageOptions: {
             parser: angularTemplateParser,
         },
@@ -464,11 +545,29 @@ export default tseslint.config(
         },
     },
     {
+        files: ['packages/tum-ui/src/lib/**/*.html'],
+        rules: {
+            '@angular-eslint/template/click-events-have-key-events': 'error',
+            '@angular-eslint/template/interactive-supports-focus': 'error',
+            '@angular-eslint/template/label-has-associated-control': 'error',
+            '@angular-eslint/template/alt-text': 'error',
+            '@angular-eslint/template/elements-content': 'error',
+        },
+    },
+    {
+        // These composite widgets manage option focus through aria-activedescendant.
+        files: ['packages/tum-ui/src/lib/autocomplete/tum-ui-autocomplete.component.html', 'packages/tum-ui/src/lib/select/tum-ui-select.component.html'],
+        rules: {
+            '@angular-eslint/template/click-events-have-key-events': 'off',
+            '@angular-eslint/template/interactive-supports-focus': 'off',
+        },
+    },
+    {
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
         // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
         // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
         // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
-        files: ['src/main/webapp/app/**/*.html'],
+        files: ['src/main/webapp/app/**/*.html', 'packages/tum-ui/src/lib/**/*.html'],
         languageOptions: {
             parser: angularTemplateParser,
         },
@@ -507,7 +606,7 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
-            'src/main/webapp/app/shared-ui/tum-ui/**/*.html',
+            'packages/tum-ui/src/lib/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,

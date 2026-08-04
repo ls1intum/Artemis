@@ -9,7 +9,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 ## Tech Stack
 
 - **Server**: Spring Boot 4.1 (Java 25), MySQL, Hibernate, Hazelcast
-- **Client**: Angular 21, TypeScript, SCSS
+- **Client**: Angular 22, TypeScript, SCSS
 - **Build**: Gradle 9.6, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
 - **Testing**: JUnit 6, Vitest, Playwright
 
@@ -189,7 +189,7 @@ Organized by feature module:
 - PascalCase for classes, camelCase for members
 - Single quotes, 4-space indentation
 - Standalone components preferred
-- **Angular 21 signal-based APIs are mandatory for new code:**
+- **Signal-based Angular APIs are mandatory for new code:**
     - Use `input()` / `input.required()` instead of `@Input()`
     - Use `output()` instead of `@Output()`
     - Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`
@@ -199,7 +199,7 @@ Organized by feature module:
     - Legacy decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code
     - In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components
     - An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules
-    - **`ngOnChanges` is banned — use `computed()`/`effect()` instead.** The client no longer contains a single `ngOnChanges`, and an error-level rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) keeps it that way across `src/main/webapp/app` (specs included) and `src/test/javascript`. It matches the member wherever it is declared, including undecorated base classes, because Angular calls an inherited hook just like one on the component. Note: in Angular 21 `ngOnChanges` _does_ fire for signal inputs (it is NOT dead code — that was only true in v17–18), so this is a consistency ban, not a correctness fix. The rare genuinely-unavoidable case (`SimpleChanges.previousValue`/`isFirstChange()`, or logic that must run before child init) needs a detailed comment plus a justified line-level `eslint-disable-next-line`. `ngOnInit`/`ngOnDestroy` are unaffected by signals. See `documentation/docs/developer/guidelines/client-development.mdx`.
+    - **`ngOnChanges` is banned — use `computed()`/`effect()` instead.** An error-level rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) enforces this across `src/main/webapp/app`, `packages/tum-ui/src/lib`, and `src/test/javascript`, including specs and undecorated base classes. Angular 21 does call inherited `ngOnChanges` hooks and fires them for signal inputs, so this is a consistency ban rather than a correctness fix. A genuinely unavoidable use of `SimpleChanges.previousValue`/`isFirstChange()` or pre-child-initialization ordering needs a detailed comment and a justified line-level `eslint-disable-next-line`. `ngOnInit` and `ngOnDestroy` are unaffected. See `documentation/docs/developer/guidelines/client-development.mdx`.
 - **Angular template control flow: use `@if`, `@for`, `@switch`; never use `*ngIf`, `*ngFor`, `*ngSwitch`**
 - Avoid `null`, use `undefined` where possible
 - **Copy objects with `deepClone`, never with object spread, `Object.assign`, or `structuredClone`**
@@ -210,13 +210,14 @@ Organized by feature module:
     - Array spread stays fine: `items.update((items) => [...items, newItem])` is the documented way to append immutably
     - Full rationale and examples: `documentation/docs/developer/guidelines/client-development.mdx` (### Cloning objects)
 - Prefer 100% type safety
-- **UI components: Use PrimeNG instead of Bootstrap components**
-    - All new UI elements must be implemented using PrimeNG components
-    - We are migrating from Bootstrap to **Tailwind CSS v4 (utilities) + PrimeNG (components)**; do not introduce new Bootstrap components, classes, or raw colours
-    - Existing Bootstrap usage will be migrated incrementally
-    - **Colours use semantic tokens, never primitives or Bootstrap classes**: `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` (named state tokens; or PrimeNG `severity`, or `text-muted-color`/`bg-surface-*`) — never `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full standard, decision rules, and the Bootstrap→Tailwind/PrimeNG quick reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling)
-    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`): PrimeNG injects component CSS lazily, so a bare element renders non-deterministically. Render the real component (`<button pButton>`, `<input pInputText>`, `<p-tag>`) — enforced by `localRules/no-primeng-component-classes`
-    - **`@ng-bootstrap/ng-bootstrap` is deprecated** — do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, etc. in new code. Use PrimeNG's `DialogService` (`primeng/dynamicdialog`) for modals, `p-tooltip` for tooltips, etc. ng-bootstrap is incompatible with Angular signal inputs (assigning to `modalRef.componentInstance.X` silently fails when `X` is `input()`/`input.required()`). Existing usages are being migrated.
+- **UI components: use TUM UI and Tailwind CSS**
+    - TUM UI is the target component system; use an existing `@tumaet/ui-angular` component whenever it covers the required behavior.
+    - Use Tailwind CSS v4 utilities for application layout. Do not introduce Bootstrap or ng-bootstrap in new work.
+    - If TUM UI lacks a reusable capability, add or evolve a package component around native HTML or stable Angular CDK primitives. Keep Artemis-specific composition and policy in the application.
+    - PrimeNG is a transitional fallback only when the TUM UI gap cannot reasonably be closed in the same change. Explain the contained fallback in the pull request.
+    - **Colours use semantic tokens, never primitives or Bootstrap classes**: use TUM UI component variants or `text-state-danger`/`text-state-success`/`text-state-warning`/`text-state-info` for plain markup. Never use `--p-<color>-N` primitives, `text-red-500`, `text-danger`, or the superseded arbitrary `text-(--danger)` form. Full decision rules and the Bootstrap migration reference: `documentation/docs/developer/guidelines/client-development.mdx` (### Styling).
+    - **Never hand-write PrimeNG component root classes** (`class="p-button"`, `class="p-inputtext"`). For a contained legacy fallback, render the real PrimeNG component so its styles load deterministically; `localRules/no-primeng-component-classes` enforces this.
+    - See `documentation/docs/developer/guidelines/tum-ui-kit.mdx` for package ownership, public API, theming, stories, and integration rules.
 
 ### General
 
