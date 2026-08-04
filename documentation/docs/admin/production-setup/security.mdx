@@ -37,12 +37,18 @@ jhipster:
 
 ### Startup Validation
 
-Under the `prod` profile, Artemis refuses to start when one of these properties still holds a value that is published in this repository: the JWT signing key, the internal admin password (also when it is identical to the username), and the build-agent git password. The startup error names the property and how to supply a value. Generate the signing key with `openssl rand -base64 64`.
+Under the `prod` profile, Artemis refuses to start when one of these properties still holds a value that is published in this repository: the JWT signing key, the internal admin password (this includes a password identical to the username), and the build-agent git password. The startup error names the property and how to supply a value.
+
+The signing key is checked through both `jhipster.security.authentication.jwt.base64-secret` and the plain `jhipster.security.authentication.jwt.secret`, because either one can be the key that is actually used. It is also rejected when it is absent altogether, and when it decodes to fewer than 64 bytes, which is the minimum HS512 accepts. The comparison happens on the decoded key as well as on the configured spelling, so re-encoding a published value - different padding, an added line break - does not get past it. Generate a key with:
+
+```bash
+openssl rand -base64 64 | tr -d '\n'
+```
 
 `docker/artemis/config/prod.env` therefore keeps placeholders that this validation rejects: a deployment that has not been configured yet fails immediately instead of running on values that anyone can read. Supply your own values from outside version control — an env file of your own added through a compose override file, or `ARTEMIS_ENV_FILE` for the `docker/test-server-*.yml` compose files, which replaces `prod.env` entirely (see [Docker Compose Setup](../../developer/docker-compose.mdx)):
 
 ```env
-JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<openssl rand -base64 64>"
+JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of the command above>"
 ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
 ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with the build agents>"
 ```

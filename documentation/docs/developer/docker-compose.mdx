@@ -83,7 +83,13 @@ JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of: openssl rand -bas
 ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
 ```
 
-and hand it to the setup with a small override file, `docker/local-secrets.yml`:
+If your setup also activates `localvc` or `buildagent` - the setups listed above do not - add a build-agent git password of your own, because the shipped one is rejected as well:
+
+```bash
+ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with the build agents>"
+```
+
+Hand the file to the setup with a small override file, `docker/local-secrets.yml`:
 
 ```yaml
 services:

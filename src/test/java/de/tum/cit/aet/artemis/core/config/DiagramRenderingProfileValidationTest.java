@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assumptions.assumeThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -68,6 +69,11 @@ class DiagramRenderingProfileValidationTest {
 
     @Test
     void testUnconfiguredProfileIsPinnedToSandbox() {
+        // The environment variable is the library's fallback and a process cannot unset its own environment, so this case
+        // is only meaningful when the machine running the tests does not define it. The other cases set the system
+        // property, which takes precedence, and are therefore unaffected.
+        assumeThat(System.getenv(PLANTUML_SECURITY_PROFILE)).isNull();
+
         // The library's own fallback is permissive, so leaving the profile unset must not mean leaving it unrestricted.
         assertThatCode(createValidator()::validateConfigurations).doesNotThrowAnyException();
 
