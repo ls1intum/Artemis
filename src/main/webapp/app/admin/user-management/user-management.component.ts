@@ -13,18 +13,21 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiPaginatorComponent,
+    TumUiRadioButtonComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiRadioButtonComponent } from 'app/shared-ui/tum-ui/radio-button/tum-ui-radio-button.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';

@@ -1,49 +1,13 @@
-/*
- * Tailwind CSS v4 utility layer for Artemis.
- *
- * Preflight (Tailwind's reset) is intentionally NOT imported so Bootstrap's Reboot stays authoritative
- * during the incremental Bootstrap → PrimeNG/Tailwind migration. Until Bootstrap is removed app-wide,
- * utilities also sit in their own layer below unlayered Bootstrap; style PrimeNG components via their own
- * API (props / pass-through), never utility overrides, so no `!important` is needed.
- *
- * `tailwindcss-primeui` binds the color utilities (bg-primary, text-surface-*, text-muted-color, ...) to
- * PrimeNG tokens, which AuraArtemis maps to the Artemis brand — one source of truth, dark-mode aware.
- * Use those tokens for color; never raw palette (text-green-500), which isn't brand-bound (enforced by
- * the `no-raw-tailwind-color-palette` ESLint rule).
- *
- * EXIT CRITERIA (global Bootstrap removal — tracked separately, see client-development.mdx ### Styling):
- * once Bootstrap is gone, replace the two scoped imports below with `@import 'tailwindcss';` (re-enables
- * Preflight), configure PrimeNG cssLayer ordering (`tailwind-base, primeng, tailwind-utilities`) in
- * app.config.ts, and drop `source(none)` + the `@source` allowlist. The brand state-color tokens below need
- * no exit work — they are collision-free and permanent.
- */
+/* Bootstrap Reboot remains the reset while legacy Bootstrap and PrimeNG coexist with TUM UI. */
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 
-/*
- * `source(none)` disables Tailwind v4's automatic whole-project content detection; only the explicit `@source`
- * paths below are scanned. THE COLLISION THIS AVOIDS (the rationale the two guards further down also serve):
- * Tailwind emits a utility for any candidate class it finds in scanned text, and some Bootstrap component class
- * names double as Tailwind utility names — most damagingly `.collapse` -> `visibility: collapse` (which hides the
- * navbar's `.navbar-collapse` app-wide) and `.table` -> `display: table`. Scanning only migrated paths keeps them out.
- */
+/* Limit scanning because Bootstrap classes such as `collapse` and `table` are also valid Tailwind utilities. */
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 
 @plugin 'tailwindcss-primeui';
 
-/*
- * Brand state-color tokens. Defined with `@theme inline` so each utility emits a direct `var(--<brand>)`
- * reference (e.g. `.text-state-danger { color: var(--danger) }`) instead of ALSO creating a redundant
- * `--color-state-*` global custom property. Both `@theme` and `@theme inline` are dark-mode-correct — CSS
- * variables resolve lazily at the element, so `--danger`'s dark value wins either way; `inline` just keeps the
- * extra indirection out of the token surface. Named `state-*` (not `danger`) ON PURPOSE: a `--color-danger`
- * token generates `.text-danger`, which collides with Bootstrap's unlayered
- * `!important` `.text-danger` and would silently lose during coexistence. `state-*` collides with nothing, so it
- * works now AND survives Bootstrap removal with no rename. Usage: `text-state-danger` (the `bg-`/`border-`
- * variants generate on demand from the same token when a surface/border actually needs one). info is CYAN
- * (--info), never blue. For DYNAMIC color, bind `[style.color]` to the raw var, e.g. `[style.color]="'var(--danger)'"`.
- */
 @theme inline {
     --color-state-danger: var(--danger);
     --color-state-success: var(--success);
@@ -51,13 +15,7 @@
     --color-state-info: var(--info);
 }
 
-/*
- * The `source(none)` allowlist: the paths Tailwind may scan. This is a SUPERSET of the no-bootstrap-classes lint
- * lock (eslint.config.mjs) — a module is added here as soon as it uses Tailwind utilities, which can precede being
- * fully Bootstrap-free and lint-locked. Example: `editor/markdown-editor` is scanned (its migrated Imprint/Privacy
- * editor needs utilities) but not yet locked, because its non-admin send button keeps one out-of-scope Bootstrap
- * class. The migration-source-coverage test enforces the one-directional invariant: every locked path is scanned.
- */
+/* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/admin';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
@@ -66,6 +24,10 @@
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
 @source './app/shared-ui/date-time-picker';
+
+/* Only the second-correction button: its host alignment utilities must not depend on an unrelated module
+   happening to use the same classes. Bootstrap's .float-end in this folder keeps winning through !important. */
+@source './app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button';
 @source './app/localci/build-queue';
 @source './app/course/request';
 @source './app/shared-ui/user-import';
@@ -81,34 +43,72 @@
 @source './app/localci/build-agent-details';
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
-@source './app/shared-ui/tum-ui';
 @source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
 @source './app/exercise/unreferenced-feedback';
 
-/*
- * Exclude test files: their prose ("should collapse the sidebar", "renders a table") would trip the same name
- * collisions (Tailwind scans full file text), and specs never carry runtime classes anyway.
- */
+/* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
 
-/*
- * Belt-and-braces: blocklist the bare `collapse`/`table` candidates by NAME, so a scanned migrated file that
- * legitimately mentions them (the feedback-collapse component, data tables, …) still can't regenerate the
- * colliding utility. Only the bare names — Tailwind's `table-*`/`collapse-*` modifier utilities still work.
- */
+/* Prevent bare Bootstrap component names from becoming Tailwind utilities in scanned modules. */
 @source not inline("collapse");
 @source not inline("table");
 
-/* Align Tailwind's `dark:` variant with PrimeNG's darkModeSelector (see app.config.ts). */
-@custom-variant dark (&:where([prime-ng-use-dark-theme='true'], [prime-ng-use-dark-theme='true'] *));
+/* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
-/*
- * Default border color. Preflight is off (above), so a bare `border` / `border-b` utility would otherwise
- * fall back to `currentColor` (the text color) and render as bright/white lines in dark mode. Restore
- * Tailwind's Preflight border default, bound to the PrimeNG content border token so it harmonizes in light
- * AND dark. This lives in the `base` layer (below `utilities`) so explicit `border-<color>` utilities still
- * win, and below unlayered Bootstrap so it never overrides Bootstrap's own component borders.
- */
+:root {
+    color-scheme: light;
+
+    --tumaet-ui-font-family: var(--bs-body-font-family);
+    --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 88%, black);
+    --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
+    --tumaet-ui-accent-color: var(--primary-dark);
+    --tumaet-ui-focus-color: var(--primary);
+    --tumaet-ui-content-background: var(--module-bg);
+    --tumaet-ui-control-background: var(--artemis-control-background);
+    --tumaet-ui-control-border-color: var(--artemis-control-border);
+    --tumaet-ui-control-border-hover-color: var(--artemis-control-border-hover);
+    --tumaet-ui-text-color: var(--artemis-control-color);
+    --tumaet-ui-muted-color: var(--artemis-control-muted);
+    --tumaet-ui-disabled-background: var(--artemis-control-disabled-background);
+    --tumaet-ui-disabled-color: var(--artemis-control-disabled-color);
+    --tumaet-ui-contrast-color: var(--module-bg);
+    --tumaet-ui-overlay-background: var(--module-bg);
+    --tumaet-ui-state-danger: var(--danger);
+    --tumaet-ui-state-danger-contrast: var(--white);
+    --tumaet-ui-state-danger-foreground: var(--artemis-alert-danger-color);
+    --tumaet-ui-state-success: var(--success);
+    --tumaet-ui-state-success-contrast: var(--black);
+    --tumaet-ui-state-success-foreground: var(--artemis-alert-success-color);
+    --tumaet-ui-state-warning: var(--warning);
+    --tumaet-ui-state-warning-contrast: var(--black);
+    --tumaet-ui-state-warning-foreground: var(--artemis-alert-warning-color);
+    --tumaet-ui-state-info: var(--info);
+    --tumaet-ui-state-info-contrast: var(--black);
+    --tumaet-ui-state-info-foreground: var(--artemis-alert-info-color);
+    --tumaet-ui-tooltip-background: var(--artemis-dark);
+    --tumaet-ui-tooltip-color: var(--tooltip-color);
+}
+
+[data-theme='dark'] {
+    color-scheme: dark;
+
+    --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 80%, white);
+    --tumaet-ui-primary-contrast-color: var(--module-bg);
+    --tumaet-ui-accent-color: color-mix(in srgb, var(--primary) 80%, white);
+    --tumaet-ui-focus-color: color-mix(in srgb, var(--primary) 80%, white);
+    --tumaet-ui-state-danger: var(--artemis-alert-danger-color);
+    --tumaet-ui-state-danger-contrast: var(--artemis-alert-danger-background);
+    --tumaet-ui-state-danger-foreground: var(--artemis-alert-danger-color);
+    --tumaet-ui-state-success: var(--artemis-alert-success-color);
+    --tumaet-ui-state-success-contrast: var(--artemis-alert-success-background);
+    --tumaet-ui-state-warning: var(--artemis-alert-warning-color);
+    --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
+    --tumaet-ui-state-info: var(--artemis-alert-info-color);
+    --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
+}
+
+/* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */
 @layer base {
     *,
     ::before,

@@ -141,13 +141,13 @@
                                 [inputId]="'toggle-' + featureInfo.feature"
                                 (changed)="onFeatureToggle(featureInfo)"
                                 data-testid="feature-toggle-switch"
-                                [attr.aria-label]="getFeatureNameKey(featureInfo.feature) | artemisTranslate"
+                                [ariaLabel]="getFeatureNameKey(featureInfo.feature) | artemisTranslate"
                             />
                         </div>
                     </div>
                     <p class="mb-2 text-sm leading-snug text-muted-color">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
                     @if (!featureInfo.isActive) {
-                        <tum-ui-message severity="warn" styleClass="w-full" data-testid="feature-warning">{{
+                        <tum-ui-message severity="warn" class="w-full" data-testid="feature-warning">{{
                             getFeatureWarningKey(featureInfo.feature) | artemisTranslate
                         }}</tum-ui-message>
                     }

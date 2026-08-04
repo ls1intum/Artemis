@@ -99,6 +99,11 @@ node {
     pnpmVersion = "${pnpm_version}"
 }
 
+ext.tumUiRuntimeSources = fileTree("packages/tum-ui/src") {
+    include "**/*.html", "**/*.scss", "**/*.ts"
+    exclude "**/*.spec.ts", "**/*.stories.ts"
+}
+
 apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
