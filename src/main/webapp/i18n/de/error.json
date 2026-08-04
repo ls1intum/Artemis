@@ -310,9 +310,9 @@
         "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut.",
         "buildConfigMissing": "Die Build-Konfiguration der Programmieraufgabe fehlt.",
         "blankDockerImage": "Das Docker-Image darf nicht leer sein.",
-        "emptyBuildPlan": "Der Build-Plan muss mindestens eine Build-Phase enthalten.",
-        "duplicateBuildPhaseName": "Build-Phasennamen müssen eindeutig sein.",
-        "reservedBuildPhaseName": "Eine Build-Phase verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
+        "noBuildPhases": "Der Build-Plan muss mindestens eine Build-Phase enthalten.",
+        "invalidBuildPhaseName": "Ein Build-Phasenname ist ungültig oder verwendet einen reservierten Namen. Bitte wähle einen anderen Namen.",
+        "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
     }

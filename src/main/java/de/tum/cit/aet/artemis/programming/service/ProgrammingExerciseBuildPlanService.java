@@ -4,9 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -171,7 +169,9 @@ public class ProgrammingExerciseBuildPlanService {
      */
     public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, UpdateBuildPlanConfigurationDTO buildPlanConfiguration)
             throws JsonProcessingException {
-        validateBuildPhaseNames(buildPlanConfiguration.buildPlan().phases());
+        // reuse the shared build phase validation so a misconfiguration is rejected with the same error and key as on the
+        // full exercise update path
+        programmingExerciseValidationService.validateBuildPhases(buildPlanConfiguration.buildPlan().phases());
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
 
         var buildConfig = programmingExercise.getBuildConfig();
@@ -214,31 +214,6 @@ public class ProgrammingExerciseBuildPlanService {
     private void validateDockerImage(@Nullable String dockerImage) {
         if (dockerImage != null && dockerImage.isBlank()) {
             throw new BadRequestAlertException("The Docker image must not be blank", "buildConfig", "blankDockerImage");
-        }
-    }
-
-    /**
-     * Validates that the build plan contains at least one build phase and that the build phase names are unique
-     * (case-insensitively) and do not use reserved names. The name pattern and non-blank constraints are enforced via
-     * bean validation on {@link BuildPhaseDTO}.
-     * <p>
-     * Unlike a build plan configuration that is read from an exercise, where a missing configuration means that the
-     * defaults of the exercise apply, the build plan editor always submits the complete build plan. An empty one would
-     * leave the exercise without any way to build a submission, so it is rejected here.
-     *
-     * @param phases the build phases to validate
-     */
-    private void validateBuildPhaseNames(List<BuildPhaseDTO> phases) {
-        if (phases == null || phases.isEmpty()) {
-            throw new BadRequestAlertException("A build plan must contain at least one build phase", "buildConfig", "emptyBuildPlan");
-        }
-
-        var lowerCaseNames = phases.stream().map(phase -> phase.name().toLowerCase(Locale.ROOT)).toList();
-        if (new HashSet<>(lowerCaseNames).size() != lowerCaseNames.size()) {
-            throw new BadRequestAlertException("Build phase names must be unique", "buildConfig", "duplicateBuildPhaseName");
-        }
-        if (lowerCaseNames.stream().anyMatch(BuildPhaseDTO.RESERVED_PHASE_NAMES::contains)) {
-            throw new BadRequestAlertException("Build phase names must not use reserved names", "buildConfig", "reservedBuildPhaseName");
         }
     }
 

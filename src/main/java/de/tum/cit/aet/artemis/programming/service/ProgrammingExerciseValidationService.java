@@ -325,7 +325,18 @@ public class ProgrammingExerciseValidationService {
             return; // default will be used when saving
         }
 
-        if (phases.isEmpty()) {
+        validateBuildPhases(phases);
+    }
+
+    /**
+     * Validates a list of build phases: it must contain at least one phase, and every phase name must match the configured
+     * pattern, avoid the reserved names, and be unique case-insensitively. Shared by the full exercise update and the
+     * dedicated build plan editor so the same misconfiguration is rejected with the same error and key on both pages.
+     *
+     * @param phases the build phases to validate
+     */
+    public void validateBuildPhases(List<BuildPhaseDTO> phases) {
+        if (phases == null || phases.isEmpty()) {
             throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
         }
 

@@ -308,9 +308,9 @@
         "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
         "buildConfigMissing": "The programming exercise build configuration is missing.",
         "blankDockerImage": "The Docker image must not be blank.",
-        "emptyBuildPlan": "The build plan must contain at least one build phase.",
-        "duplicateBuildPhaseName": "Build phase names must be unique.",
-        "reservedBuildPhaseName": "A build phase uses a reserved name. Please choose a different name.",
+        "noBuildPhases": "The build plan must contain at least one build phase.",
+        "invalidBuildPhaseName": "A build phase name is invalid or uses a reserved name. Please choose a different name.",
+        "duplicateBuildPhaseNames": "Build phase names must be unique.",
         "buildPlanConfigurationTooLarge": "The build plan configuration is too large to be processed. Please reduce the size of your build phases.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
     }
