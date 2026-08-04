@@ -259,7 +259,9 @@ public class ConversationMessagingService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+        // Recipients who already read past this message are skipped: this method is @Async, so it is not ordered
+        // against the read triggered by a recipient fetching the conversation right now.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId(), post.getCreationDate());
 
         try {
             autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));

@@ -736,6 +736,48 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testLateUnreadIncrementDoesNotResurrectCountAfterMessageWasRead() throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.CREATED);
+        final long conversationId = createdPost.conversation().id();
+        final ZonedDateTime messageDate = conversationMessageRepository.findById(createdPost.id()).orElseThrow().getCreationDate();
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(conversationId, student2)).isEqualTo(1);
+        });
+
+        userUtilService.changeUser(TEST_PREFIX + "student2");
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", String.valueOf(conversationId));
+        params.add("pagingEnabled", "true");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+        request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(conversationId, student2)).isZero();
+        });
+
+        // The increment runs on the @Async notification path and is not ordered against the read above, so it can still
+        // arrive after it. Replaying it here with the original message date reproduces exactly that ordering: it must be
+        // skipped, because student2 has demonstrably read past this message already.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversationId, student1.getId(), messageDate);
+        assertThat(getUnreadMessagesCount(conversationId, student2)).isZero();
+
+        // Negative control: a message created after the read is still counted, so the guard bounds the skip to messages
+        // the participant has already seen rather than suppressing increments outright.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversationId, student1.getId(), ZonedDateTime.now());
+        assertThat(getUnreadMessagesCount(conversationId, student2)).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDecreaseUnreadMessageCountWhenDeletingMessage() throws Exception {
         final var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         final var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();

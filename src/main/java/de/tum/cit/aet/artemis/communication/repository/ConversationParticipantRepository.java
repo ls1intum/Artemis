@@ -192,9 +192,16 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
 
     /**
      * Increment unreadMessageCount field of ConversationParticipant
+     * <p>
+     * Participants who have already read past {@code messageDate} are skipped. This runs from the {@code @Async}
+     * notification path, so it is not ordered against the {@code updateLastReadAsync} triggered by a recipient
+     * fetching the conversation. Without the {@code lastRead} guard, an increment landing after that reset would
+     * leave the recipient with a phantom unread message they have demonstrably already seen. With it, the outcome
+     * is the same in either order: a recipient whose read happened after the message was created is not counted.
      *
      * @param senderId       userId of the sender of the message(Post)
      * @param conversationId conversationId id of the conversation with participants
+     * @param messageDate    creation date of the message being announced
      */
     @Transactional // ok because of modifying query
     @Modifying
@@ -205,8 +212,10 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
                 AND conversationParticipant.user.id <> :senderId
                 AND conversationParticipant.unreadMessagesCount IS NOT NULL
                 AND conversationParticipant.isMuted = FALSE
+                AND (conversationParticipant.lastRead IS NULL OR conversationParticipant.lastRead < :messageDate)
             """)
-    void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
+    void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId,
+            @Param("messageDate") ZonedDateTime messageDate);
 
     /**
      * Decrement unreadMessageCount field of ConversationParticipant
