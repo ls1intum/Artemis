@@ -293,6 +293,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+        this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
+
         effect(() => {
             // Recalculate whenever the edit mode changes — in BOTH directions. Simple and detailed mode expose a
             // different set (and therefore a different ordering/indexing) of status-bar sections: simple mode drops
@@ -303,16 +306,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.calculateFormStatusSections();
         });
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
-
-        effect(() => {
-            const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-            if (editModeRetrievedFromLocalStorage !== undefined) {
-                this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-            } else {
-                const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-            }
-        });
     }
 
     showGenerateWithAi = computed(() => {
