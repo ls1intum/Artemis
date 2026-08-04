@@ -1,4 +1,5 @@
 import { Location, UpperCasePipe } from '@angular/common';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -133,12 +134,10 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            // Only override when the parameter is really there and sane. Normalising before parsing is what matters:
-            // Number() turns null, '' and whitespace all into 0, which looks like a valid round and would silently mean
-            // the first correction round.
-            const rawCorrectionRound = queryParams.get('correction-round')?.trim();
-            const parsedCorrectionRound = Number(rawCorrectionRound);
-            if (rawCorrectionRound && Number.isSafeInteger(parsedCorrectionRound) && parsedCorrectionRound >= 0) {
+            // Only override when the parameter is really there and usable; see parseCorrectionRound for why Number()
+            // alone will not do. The resolvers share the same parser so the loaded data and the round agree.
+            const parsedCorrectionRound = parseCorrectionRound(queryParams.get('correction-round'));
+            if (parsedCorrectionRound !== undefined) {
                 this.correctionRound.set(parsedCorrectionRound);
             }
         });

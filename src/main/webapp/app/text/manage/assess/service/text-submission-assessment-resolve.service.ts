@@ -10,6 +10,8 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { catchError, map } from 'rxjs/operators';
 
+import { correctionRoundToLoad } from 'app/assessment/shared/util/correction-round.util';
+
 /**
  * What the resolvers below hand to the assessment page. Both swallow load errors so that the page can render instead of
  * the navigation failing, so a missing participation alone does not say why: it means either "there is nothing to
@@ -42,7 +44,9 @@ export class NewStudentParticipationResolver implements Resolve<TextAssessmentRo
      */
     resolve(route: ActivatedRouteSnapshot): Observable<TextAssessmentRouteData> {
         const exerciseId = Number(route.paramMap.get('exerciseId'));
-        const correctionRound = Number(route.queryParamMap.get('correction-round'));
+        // Shared with the assessment editors: an absent or unusable value must not reach the server as NaN, a
+        // fraction or a negative round, and it must resolve to the same round the editor will believe it is in.
+        const correctionRound = correctionRoundToLoad(route.queryParamMap.get('correction-round'));
         if (exerciseId) {
             return this.textSubmissionService.getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound).pipe(
                 map((submission?: TextSubmission) => ({ participation: submission?.participation })),
@@ -63,7 +67,9 @@ export class StudentParticipationResolver implements Resolve<TextAssessmentRoute
      */
     resolve(route: ActivatedRouteSnapshot): Observable<TextAssessmentRouteData> {
         const submissionId = Number(route.paramMap.get('submissionId'));
-        const correctionRound = Number(route.queryParamMap.get('correction-round'));
+        // Shared with the assessment editors: an absent or unusable value must not reach the server as NaN, a
+        // fraction or a negative round, and it must resolve to the same round the editor will believe it is in.
+        const correctionRound = correctionRoundToLoad(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
         if (resultId) {
             return this.textAssessmentService.getFeedbackDataForExerciseSubmission(submissionId, undefined, resultId).pipe(
