@@ -4,7 +4,6 @@
             "title": "Ingestion Dashboard",
             "subtitle": "Course data indexed into Weaviate for global search and the Iris tutor.",
             "refresh": "Refresh",
-            "close": "Close",
             "loading": "Loading...",
             "error": "Failed to load the index overview. Please try again.",
             "system": {
