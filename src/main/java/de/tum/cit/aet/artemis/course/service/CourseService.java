@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,12 +84,10 @@ public class CourseService {
 
     private final FaqRepository faqRepository;
 
-    private final CourseVisibleService courseVisibleService;
-
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -102,7 +101,6 @@ public class CourseService {
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.prerequisitesApi = prerequisitesApi;
         this.faqRepository = faqRepository;
-        this.courseVisibleService = courseVisibleService;
     }
 
     /**
@@ -121,7 +119,7 @@ public class CourseService {
             coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
         }
         else {
-            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getGroups(), pageable);
+            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getId(), pageable);
         }
         return new SearchResultPageDTO<>(coursePage.getContent(), coursePage.getTotalPages());
     }
@@ -187,7 +185,7 @@ public class CourseService {
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
         exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
-        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())));
+        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         lectureApi.ifPresent(api -> course.setLectures(api.filterLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
@@ -216,7 +214,14 @@ public class CourseService {
      * @return an unmodifiable set of all courses for the user
      */
     public Set<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
+        ZonedDateTime now = ZonedDateTime.now();
+        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
+        if (authCheckService.isAdmin(user)) {
+            return new HashSet<>(courseRepository.findAllActive(now));
+        }
+        // Non-admins only see courses they are a member of: push that filter into the query (indexed join) so we load
+        // only the user's own courses instead of all active courses + an in-memory visibility check per course.
+        return new HashSet<>(courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), now));
     }
 
     /**
@@ -228,8 +233,9 @@ public class CourseService {
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
         long start = System.nanoTime();
 
-        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
+        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllActive().stream()
+                : courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), ZonedDateTime.now()).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));

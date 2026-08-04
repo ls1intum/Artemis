@@ -3,21 +3,17 @@ package de.tum.cit.aet.artemis.quiz.domain;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyShortAnswerAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyShortAnswerProportionalWithPenalty;
@@ -25,34 +21,16 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyShortAnswerProp
 
 /**
  * A ShortAnswerQuestion.
+ * <p>
+ * Its spots, solutions and correct mappings are no longer separate JPA entity tables: they are stored inside the {@code quiz_question.content} JSON column as a
+ * {@link ShortAnswerQuestionContent}. This eliminates the eager {@code @OneToMany} fan-out. The public accessors below ({@code getSpots()} / {@code getSolutions()} /
+ * {@code getCorrectMappings()}) keep their original signatures and delegate to the content, so the REST/websocket wire format and all callers are preserved. Correct mappings are
+ * stored normalized (id-based, see {@link ShortAnswerCorrectMapping}) and resolved to object-based {@link ShortAnswerMapping}s on access. Mirrors {@link DragAndDropQuestion}.
  */
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
-
-    // No @Cache on the three child collections below: they are the parent collections of ShortAnswerSpot / ShortAnswerSolution /
-    // ShortAnswerMapping references resolved during submission merge cascade. See #12574 / #12584 for why the clustered NONSTRICT cache failed.
-    // Bidirectional mapping: each child owns the question_id FK via its @ManyToOne back-reference, so a parent saveAndFlush
-    // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
-    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
-    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "spots_order")
-    private List<ShortAnswerSpot> spots = new ArrayList<>();
-
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "solutions_order")
-    private List<ShortAnswerSolution> solutions = new ArrayList<>();
-
-    // Stored as a Set: see DragAndDropQuestion.correctMappings rationale. Position carries no semantic meaning — each
-    // mapping is identified by its (spot, solution) pair. HashSet membership is contract-safe across transient →
-    // persisted transitions because ShortAnswerMapping overrides hashCode() to a class constant (see
-    // ShortAnswerMapping.hashCode). With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
-    // failure mode requires the unidirectional + @JoinColumn shape).
-    // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private Set<ShortAnswerMapping> correctMappings = new HashSet<>();
 
     @Column(name = "similarity_value")
     private Integer similarityValue = 85;
@@ -60,118 +38,228 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Column(name = "match_letter_case")
     private Boolean matchLetterCase = false;
 
-    public List<ShortAnswerSpot> getSpots() {
-        return spots;
-    }
-
-    public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
-        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
-        this.spots = shortAnswerSpots;
+    /**
+     * @return the short-answer content, creating and attaching an empty one if none exists yet.
+     */
+    private ShortAnswerQuestionContent saContent() {
+        if (getContent() instanceof ShortAnswerQuestionContent shortAnswerContent) {
+            return shortAnswerContent;
+        }
+        ShortAnswerQuestionContent created = new ShortAnswerQuestionContent();
+        setContent(created);
+        return created;
     }
 
     /**
-     * Adds a single spot and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Mint a fresh, question-scoped component id: one greater than the largest id currently used by any spot, solution or correct mapping of this question.
+     *
+     * @return the next free component id
+     */
+    private long nextComponentId() {
+        long max = 0;
+        for (Long id : saContent().componentIds()) {
+            if (id != null && id > max) {
+                max = id;
+            }
+        }
+        return max + 1;
+    }
+
+    /**
+     * Assign a fresh, question-scoped id to every component in the given list that does not have one yet. Called from the entity-level bulk setters used by the create/edit/import
+     * flows; the JSON deserialization path goes through {@link ShortAnswerQuestionContent}'s own setters instead and therefore preserves existing ids.
+     *
+     * @param components the components to assign ids to
+     */
+    private void assignMissingComponentIds(List<? extends DomainObject> components) {
+        for (var component : components) {
+            if (component.getId() == null) {
+                component.setId(nextComponentId());
+            }
+        }
+    }
+
+    /**
+     * Mint a fresh, question-scoped id for any spot or solution added without one (e.g. via {@code getSpots().add(...)} / {@code getSolutions().add(...)}, which bypass
+     * {@link #addSpot} / {@link #addSolution}). Called before persisting so the statistics counters (keyed by spot id) and the stored JSON content stay id-consistent.
+     */
+    public void assignMissingComponentIds() {
+        assignMissingComponentIds(getSpots());
+        assignMissingComponentIds(getSolutions());
+    }
+
+    public List<ShortAnswerSpot> getSpots() {
+        return saContent().getSpots();
+    }
+
+    public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
+        saContent().setSpots(shortAnswerSpots);
+        assignMissingComponentIds(saContent().getSpots());
+    }
+
+    /**
+     * Adds a single spot, assigning it a fresh question-scoped id if it does not have one yet.
      *
      * @param shortAnswerSpot the spot to add
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion addSpot(ShortAnswerSpot shortAnswerSpot) {
-        if (this.spots == null) {
-            this.spots = new ArrayList<>();
+        if (shortAnswerSpot.getId() == null) {
+            shortAnswerSpot.setId(nextComponentId());
         }
-        this.spots.add(shortAnswerSpot);
-        shortAnswerSpot.setQuestion(this);
+        saContent().getSpots().add(shortAnswerSpot);
         return this;
     }
 
     /**
-     * Removes a single spot and clears its back-reference; with {@code orphanRemoval = true} the spot will also be deleted on the next flush.
+     * Removes a single spot.
      *
      * @param shortAnswerSpot the spot to remove
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion removeSpot(ShortAnswerSpot shortAnswerSpot) {
-        if (this.spots != null) {
-            this.spots.remove(shortAnswerSpot);
-        }
-        shortAnswerSpot.setQuestion(null);
+        saContent().getSpots().remove(shortAnswerSpot);
         return this;
     }
 
     public List<ShortAnswerSolution> getSolutions() {
-        return solutions;
+        return saContent().getSolutions();
     }
 
     public void setSolutions(List<ShortAnswerSolution> shortAnswerSolutions) {
-        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
-        this.solutions = shortAnswerSolutions;
+        saContent().setSolutions(shortAnswerSolutions);
+        assignMissingComponentIds(saContent().getSolutions());
     }
 
     /**
-     * Adds a single solution and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Adds a single solution, assigning it a fresh question-scoped id if it does not have one yet.
      *
      * @param shortAnswerSolution the solution to add
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion addSolution(ShortAnswerSolution shortAnswerSolution) {
-        if (this.solutions == null) {
-            this.solutions = new ArrayList<>();
+        if (shortAnswerSolution.getId() == null) {
+            shortAnswerSolution.setId(nextComponentId());
         }
-        this.solutions.add(shortAnswerSolution);
-        shortAnswerSolution.setQuestion(this);
+        saContent().getSolutions().add(shortAnswerSolution);
         return this;
     }
 
     /**
-     * Removes a single solution and clears its back-reference; with {@code orphanRemoval = true} the solution will also be deleted on the next flush.
+     * Removes a single solution.
      *
      * @param shortAnswerSolution the solution to remove
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion removeSolution(ShortAnswerSolution shortAnswerSolution) {
-        if (this.solutions != null) {
-            this.solutions.remove(shortAnswerSolution);
-        }
-        shortAnswerSolution.setQuestion(null);
+        saContent().getSolutions().remove(shortAnswerSolution);
         return this;
     }
 
+    /**
+     * The correct mappings resolved into object-based {@link ShortAnswerMapping}s (with their spot / solution objects and derived indices). Built on demand from the normalized
+     * id-based mappings stored in {@link ShortAnswerQuestionContent}. Mutating the returned set does not affect the stored mappings — use {@link #addCorrectMapping},
+     * {@link #removeCorrectMapping} or {@link #setCorrectMappings} instead.
+     *
+     * @return the resolved correct mappings
+     */
     public Set<ShortAnswerMapping> getCorrectMappings() {
-        return correctMappings;
-    }
-
-    public void setCorrectMappings(Set<ShortAnswerMapping> shortAnswerMappings) {
-        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
-        this.correctMappings = shortAnswerMappings;
+        Set<ShortAnswerMapping> result = new HashSet<>();
+        List<ShortAnswerSpot> spots = saContent().getSpots();
+        List<ShortAnswerSolution> solutions = saContent().getSolutions();
+        for (ShortAnswerCorrectMapping entry : saContent().getCorrectMappings()) {
+            ShortAnswerSpot spot = findSpotById(entry.getSpotId());
+            ShortAnswerSolution solution = findSolutionById(entry.getSolutionId());
+            // skip stale mappings whose spot or solution no longer exists (e.g. removed during re-evaluation)
+            if (spot == null || solution == null) {
+                continue;
+            }
+            ShortAnswerMapping mapping = new ShortAnswerMapping();
+            mapping.setId(entry.getId());
+            mapping.setInvalid(entry.isInvalid());
+            mapping.setSpot(spot);
+            mapping.setSolution(solution);
+            int spotIndex = spots.indexOf(spot);
+            mapping.setShortAnswerSpotIndex(spotIndex >= 0 ? spotIndex : null);
+            int solutionIndex = solutions.indexOf(solution);
+            mapping.setShortAnswerSolutionIndex(solutionIndex >= 0 ? solutionIndex : null);
+            result.add(mapping);
+        }
+        return result;
     }
 
     /**
-     * Adds a single mapping and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Replaces the correct mappings, storing them id-based in the content. Missing mapping ids are minted question-scoped.
      *
-     * @param shortAnswerMapping the mapping to add
+     * @param shortAnswerMappings the object-based correct mappings to store
+     */
+    public void setCorrectMappings(Set<ShortAnswerMapping> shortAnswerMappings) {
+        List<ShortAnswerCorrectMapping> entries = new ArrayList<>();
+        if (shortAnswerMappings != null) {
+            for (ShortAnswerMapping mapping : shortAnswerMappings) {
+                entries.add(toEntry(mapping));
+            }
+        }
+        saContent().setCorrectMappings(entries);
+        // Mint ids only after the entries are attached to the content, so nextComponentId() sees each freshly-assigned id and does not hand out the same id to multiple mappings.
+        for (ShortAnswerCorrectMapping entry : saContent().getCorrectMappings()) {
+            if (entry.getId() == null) {
+                entry.setId(nextComponentId());
+            }
+        }
+    }
+
+    /**
+     * Adds a single correct mapping, assigning it a fresh question-scoped id if it does not have one yet. The referenced spot and solution must already have ids (i.e. be added to
+     * this question first).
+     *
+     * @param shortAnswerMapping the correct mapping to add
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        if (this.correctMappings == null) {
-            this.correctMappings = new HashSet<>();
+        Long spotId = shortAnswerMapping.getSpot() != null ? shortAnswerMapping.getSpot().getId() : null;
+        Long solutionId = shortAnswerMapping.getSolution() != null ? shortAnswerMapping.getSolution().getId() : null;
+        // Skip a duplicate mapping for the same (spot, solution) pair: the former Set<ShortAnswerMapping> storage deduplicated by id, so preserve that behavior against a request
+        // that
+        // sends the same pair twice.
+        boolean alreadyMapped = saContent().getCorrectMappings().stream()
+                .anyMatch(entry -> Objects.equals(entry.getSpotId(), spotId) && Objects.equals(entry.getSolutionId(), solutionId));
+        if (alreadyMapped) {
+            return this;
         }
-        this.correctMappings.add(shortAnswerMapping);
-        shortAnswerMapping.setQuestion(this);
+        if (shortAnswerMapping.getId() == null) {
+            shortAnswerMapping.setId(nextComponentId());
+        }
+        saContent().getCorrectMappings().add(toEntry(shortAnswerMapping));
         return this;
     }
 
     /**
-     * Removes a single mapping and clears its back-reference; with {@code orphanRemoval = true} the mapping will also be deleted on the next flush.
+     * Removes the correct mapping with the same spot and solution as the given mapping.
      *
-     * @param shortAnswerMapping the mapping to remove
+     * @param shortAnswerMapping the correct mapping to remove
      * @return this question for fluent chaining
      */
     public ShortAnswerQuestion removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        if (this.correctMappings != null) {
-            this.correctMappings.remove(shortAnswerMapping);
-        }
-        shortAnswerMapping.setQuestion(null);
+        Long spotId = shortAnswerMapping.getSpot() != null ? shortAnswerMapping.getSpot().getId() : null;
+        Long solutionId = shortAnswerMapping.getSolution() != null ? shortAnswerMapping.getSolution().getId() : null;
+        saContent().getCorrectMappings().removeIf(entry -> Objects.equals(entry.getSpotId(), spotId) && Objects.equals(entry.getSolutionId(), solutionId));
         return this;
+    }
+
+    /**
+     * Removes correct-mapping entries whose spot or solution no longer exists on this question (e.g. after a component was deleted during re-evaluation). Keeps the stored content
+     * free of orphan mappings so {@link #isValid()} / {@code nextComponentId()} stay accurate and the JSON does not grow across repeated re-evaluations.
+     */
+    public void removeOrphanCorrectMappings() {
+        saContent().getCorrectMappings().removeIf(entry -> findSpotById(entry.getSpotId()) == null || findSolutionById(entry.getSolutionId()) == null);
+    }
+
+    private ShortAnswerCorrectMapping toEntry(ShortAnswerMapping mapping) {
+        Long spotId = mapping.getSpot() != null ? mapping.getSpot().getId() : null;
+        Long solutionId = mapping.getSolution() != null ? mapping.getSolution().getId() : null;
+        // id may be null here; setCorrectMappings mints missing ids after the entries are attached to the content (addCorrectMapping mints before calling this).
+        return new ShortAnswerCorrectMapping(mapping.getId(), spotId, solutionId, mapping.isInvalid());
     }
 
     public Integer getSimilarityValue() {
@@ -198,8 +286,8 @@ public class ShortAnswerQuestion extends QuizQuestion {
             return false;
         }
 
-        // check if at least one correct mapping exists and if similarity values are in the allowed range
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
+        // check if at least one correct mapping exists (resolved getter, so orphan mappings left behind by a re-evaluation deletion don't count) and similarity values are in range
+        return !getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
 
         // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
@@ -212,9 +300,15 @@ public class ShortAnswerQuestion extends QuizQuestion {
      */
     public Set<ShortAnswerSolution> getCorrectSolutionForSpot(ShortAnswerSpot spot) {
         Set<ShortAnswerSolution> result = new HashSet<>();
-        for (ShortAnswerMapping mapping : correctMappings) {
-            if (mapping.getSpot().equals(spot)) {
-                result.add(mapping.getSolution());
+        if (spot == null || spot.getId() == null) {
+            return result;
+        }
+        for (ShortAnswerCorrectMapping mapping : saContent().getCorrectMappings()) {
+            if (spot.getId().equals(mapping.getSpotId())) {
+                ShortAnswerSolution solution = findSolutionById(mapping.getSolutionId());
+                if (solution != null) {
+                    result.add(solution);
+                }
             }
         }
         return result;
@@ -224,15 +318,12 @@ public class ShortAnswerQuestion extends QuizQuestion {
      * Get solution by ID
      *
      * @param solutionId the ID of the solution, which should be found
-     * @return the sollution with the given ID, or null if the solution is not contained in this question
+     * @return the solution with the given ID, or null if the solution is not contained in this question
      */
     public ShortAnswerSolution findSolutionById(Long solutionId) {
-
         if (solutionId != null) {
-            // iterate through all solutions of this quiz
-            for (ShortAnswerSolution solution : solutions) {
-                // return solution if the IDs are equal
-                if (solution.getId().equals(solutionId)) {
+            for (ShortAnswerSolution solution : saContent().getSolutions()) {
+                if (solutionId.equals(solution.getId())) {
                     return solution;
                 }
             }
@@ -247,90 +338,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
      * @return the spot with the given ID, or null if the spot is not contained in this question
      */
     public ShortAnswerSpot findSpotById(Long spotId) {
-
         if (spotId != null) {
-            // iterate through all spots of this quiz
-            for (ShortAnswerSpot spot : spots) {
-                // return spot if the IDs are equal
-                if (spot.getId().equals(spotId)) {
+            for (ShortAnswerSpot spot : saContent().getSpots()) {
+                if (spotId.equals(spot.getId())) {
                     return spot;
                 }
             }
         }
         return null;
-    }
-
-    /**
-     * undo all solution- and spot-changes which are not allowed ( adding them)
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
-            undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
-            checkInvalidSolutions(shortAnswerOriginalQuestion);
-        }
-    }
-
-    /**
-     * undo all spot-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original spot-object, which will be compared with this question
-     */
-    private void undoUnallowedSpotChanges(ShortAnswerQuestion originalQuestion) {
-
-        // find added spots, which are not allowed to be added
-        Set<ShortAnswerSpot> notAllowedAddedSpots = new HashSet<>();
-        // check every spot of the question
-        for (ShortAnswerSpot spot : this.getSpots()) {
-            // check if the spot were already in the originalQuestion -> if not it's an added spot
-            if (originalQuestion.getSpots().contains(spot)) {
-                // find original spot
-                ShortAnswerSpot originalSpot = originalQuestion.findSpotById(spot.getId());
-                // correct invalid = null to invalid = false
-                if (spot.isInvalid() == null) {
-                    spot.setInvalid(false);
-                }
-                // reset invalid spot if it already set to true (it's not possible to set a spot valid again)
-                spot.setInvalid(spot.isInvalid() || (originalSpot.isInvalid() != null && originalSpot.isInvalid()));
-            }
-            else {
-                // mark the added spot (adding spots is not allowed)
-                notAllowedAddedSpots.add(spot);
-            }
-        }
-        // remove the added spots
-        this.getSpots().removeAll(notAllowedAddedSpots);
-    }
-
-    /**
-     * check all solutions for unset invalid states or state changes
-     *
-     * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
-     */
-    private void checkInvalidSolutions(ShortAnswerQuestion originalQuestion) {
-        // check every solution of the question
-        for (ShortAnswerSolution solution : this.getSolutions()) {
-            // correct invalid = null to invalid = false
-            if (solution.isInvalid() == null) {
-                solution.setInvalid(false);
-            }
-            ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-            // reset invalid solution if it was already set to true (it's not possible to set a solution valid again)
-            solution.setInvalid(solution.isInvalid() || (originalSolution != null && originalSolution.isInvalid() != null && originalSolution.isInvalid()));
-        }
-    }
-
-    @Override
-    public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
-            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
-            // spuriously triggering recalculation when the only difference is row order.
-            return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
-                    || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
-        }
-        return false;
     }
 
     @Override
@@ -339,113 +354,17 @@ public class ShortAnswerQuestion extends QuizQuestion {
         setQuizQuestionStatistic(new ShortAnswerQuestionStatistic());
     }
 
-    /**
-     * check solutions if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuestion the original ShortAnswerQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the solution-changes make an update necessary and false if not
-     */
-    private boolean checkSolutionsIfRecalculationIsNecessary(ShortAnswerQuestion originalQuestion) {
-
-        boolean updateNecessary = false;
-
-        // check every solution of the question
-        for (ShortAnswerSolution solution : this.getSolutions()) {
-            // check if the solution were already in the originalQuizExercise
-            if (originalQuestion.getSolutions().contains(solution)) {
-                // find original solution
-                ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-
-                // check if a solution is set invalid
-                // if true an update of the Statistics and Results is necessary
-                if ((solution.isInvalid() && !this.isInvalid() && originalSolution.isInvalid() == null)
-                        || (solution.isInvalid() && !this.isInvalid() && !originalSolution.isInvalid())) {
-                    updateNecessary = true;
-                }
-            }
-        }
-        // check if a solution was deleted (not allowed added solution are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (this.getSolutions().size() < originalQuestion.getSolutions().size()) {
-            updateNecessary = true;
-        }
-        return updateNecessary;
-    }
-
-    /**
-     * check spots if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuestion the original ShortAnswerQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the spot-changes make an update necessary and false if not
-     */
-    private boolean checkSpotsIfRecalculationIsNecessary(ShortAnswerQuestion originalQuestion) {
-
-        boolean updateNecessary = false;
-
-        // check every spot of the question
-        for (ShortAnswerSpot spot : this.getSpots()) {
-            // check if the spot were already in the originalQuizExercise
-            if (originalQuestion.getSpots().contains(spot)) {
-                // find original spot
-                ShortAnswerSpot originalSpot = originalQuestion.findSpotById(spot.getId());
-
-                // check if a spot is set invalid
-                // if true an update of the Statistics and Results is necessary
-                if ((spot.isInvalid() && !this.isInvalid() && originalSpot.isInvalid() == null) || (spot.isInvalid() && !this.isInvalid() && !originalSpot.isInvalid())) {
-                    updateNecessary = true;
-                }
-            }
-        }
-        // check if a spot was deleted (not allowed added spots are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (this.getSpots().size() < originalQuestion.getSpots().size()) {
-            updateNecessary = true;
-        }
-        return updateNecessary;
-    }
-
-    /**
-     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
-     * via {@code getSpots().add(...)} / {@code getSolutions().add(...)} / {@code getCorrectMappings().add(...)}
-     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
-     */
-    @PrePersist
-    @PreUpdate
-    private void ensureChildBackReferences() {
-        if (spots != null) {
-            for (ShortAnswerSpot spot : spots) {
-                if (spot != null && spot.getQuestion() != this) {
-                    spot.setQuestion(this);
-                }
-            }
-        }
-        if (solutions != null) {
-            for (ShortAnswerSolution solution : solutions) {
-                if (solution != null && solution.getQuestion() != this) {
-                    solution.setQuestion(this);
-                }
-            }
-        }
-        if (correctMappings != null) {
-            for (ShortAnswerMapping mapping : correctMappings) {
-                if (mapping != null && mapping.getQuestion() != this) {
-                    mapping.setQuestion(this);
-                }
-            }
-        }
-    }
-
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        setCorrectMappings(null);
-        setSolutions(null);
+        saContent().setCorrectMappings(new ArrayList<>());
+        saContent().setSolutions(new ArrayList<>());
     }
 
     @Override
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
-        setCorrectMappings(null);
+        saContent().setCorrectMappings(new ArrayList<>());
     }
 
     /**

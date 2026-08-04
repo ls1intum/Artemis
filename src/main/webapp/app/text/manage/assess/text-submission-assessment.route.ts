@@ -22,7 +22,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
-            studentParticipation: NewStudentParticipationResolver,
+            textAssessmentData: NewStudentParticipationResolver,
         },
         runGuardsAndResolvers: 'always',
         canActivate: [UserRouteAccessService],
@@ -35,7 +35,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
-            studentParticipation: StudentParticipationResolver,
+            textAssessmentData: StudentParticipationResolver,
         },
         runGuardsAndResolvers: 'paramsChange',
         canActivate: [UserRouteAccessService],
@@ -48,7 +48,7 @@ export const textSubmissionAssessmentRoutes: Routes = [
             pageTitle: 'artemisApp.textAssessment.title',
         },
         resolve: {
-            studentParticipation: StudentParticipationResolver,
+            textAssessmentData: StudentParticipationResolver,
         },
         runGuardsAndResolvers: 'paramsChange',
         canActivate: [UserRouteAccessService],

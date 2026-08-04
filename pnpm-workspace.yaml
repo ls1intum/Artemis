@@ -19,42 +19,6 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
-# any lockfile entry published within the last day as a supply-chain safeguard.
-# When a freshly-published (<24h) version is pinned deliberately, list it here so the
-# frozen install passes, then remove the entry once the version has aged past the cutoff
-# (by then the gate passes on its own). Entries for versions that have already aged out
-# have been removed — keep this list minimal.
-minimumReleaseAgeExclude:
-  # Angular 22.1.0 (framework) was published 2026-07-29T20:40 and the 22.1.1 CLI/build
-  # train on 2026-07-30T09:45, both <24h before this bump. brace-expansion 5.0.9 and
-  # postcss 8.5.25 are transitive pins published in the same window. Remove each entry
-  # once its version has aged past the 24h cutoff (the gate then passes on its own).
-  - '@angular-devkit/architect@0.2201.1'
-  - '@angular-devkit/build-angular@22.1.1'
-  - '@angular-devkit/build-webpack@0.2201.1'
-  - '@angular-devkit/core@22.1.1'
-  - '@angular-devkit/schematics@22.1.1'
-  - '@angular/build@22.1.1'
-  - '@angular/cdk@22.1.0'
-  - '@angular/cli@22.1.1'
-  - '@angular/common@22.1.0'
-  - '@angular/compiler-cli@22.1.0'
-  - '@angular/compiler@22.1.0'
-  - '@angular/core@22.1.0'
-  - '@angular/forms@22.1.0'
-  - '@angular/language-service@22.1.0'
-  - '@angular/localize@22.1.0'
-  - '@angular/platform-browser-dynamic@22.1.0'
-  - '@angular/platform-browser@22.1.0'
-  - '@angular/router@22.1.0'
-  - '@angular/service-worker@22.1.0'
-  - '@angular/youtube-player@22.1.0'
-  - '@ngtools/webpack@22.1.1'
-  - '@schematics/angular@22.1.1'
-  - brace-expansion@5.0.9
-  - postcss@8.5.25
-
 # Tell pnpm that Angular 22 is an acceptable peer for packages whose published
 # peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
 # We already pin every relevant @angular/* dep under ng-mocks
@@ -79,6 +43,17 @@ peerDependencyRules:
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
 # transitive packages to CVE-patched versions and force the current Angular major
 # across the ng-mocks subtree (its peer range trails the Angular release train).
+#
+# Do NOT add a `vite` override here, and do not reintroduce one when
+# `supporting_scripts/check_client_override_version_updates.sh` reports a newer release.
+# `@angular/build` depends on one exact vite version and configures the dev server's
+# dependency pre-bundling in a format only that version understands (22.1 moved the plugin
+# that runs the Angular linker to `optimizeDeps.rolldownOptions`, which Vite 7 silently
+# ignores). An override that resolves to anything else leaves pre-bundled Angular libraries
+# unlinked, and `pnpm start` serves a blank page with "The injectable '_PlatformLocation'
+# needs to be compiled using the JIT compiler" — while the production build stays green,
+# because it never uses Vite. Without an override, @angular/build's own exact pin governs
+# and the mismatch cannot happen. `pnpm run check:vite-override` fails the build if it does.
 overrides:
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
@@ -137,7 +112,19 @@ overrides:
   tough-cookie: '6.0.2'
   undici: '7.29.0'
   uuid: '14.0.1'
-  vite: '7.3.6'
+  # Scoped to the Vitest toolchain only. The Angular dev server needs the vite version
+  # @angular/build pins (see the note above this block), but the client test suite does not work on
+  # it: spec helpers under src/test/javascript/spec are not in the Angular plugin's TypeScript
+  # program, so their decorators fall through to Vite's own TS transform, which stopped downleveling
+  # them in 8.x. `@Injectable()` then survives into the SSR-rewritten output as
+  # `@(0,__vite_ssr_import_0__.Injectable)(...)` and the module fails to parse. Keep these on 7.x —
+  # including when `check_client_override_version_updates.sh` reports a newer release — until
+  # @analogjs/vite-plugin-angular handles Vite 8 (2.6.4 claims support but does not deliver it).
+  # These entries are scoped, so they cannot reach @angular/build and reintroduce the dev-server bug.
+  'vitest>vite': '7.3.6'
+  '@vitest/mocker>vite': '7.3.6'
+  '@analogjs/vite-plugin-angular>vite': '7.3.6'
+  'vite-tsconfig-paths>vite': '7.3.6'
   webpack: '5.109.2'
   webpack-dev-middleware: '7.4.5'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
