@@ -149,6 +149,13 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         log.debug("      conversationMessageRepository.save DONE");
+
+        // Deliberately not on the @Async notification path: the read side resets this counter to zero, and nothing
+        // orders the two, so an increment running there can land after a recipient's read and leave them with an
+        // unread message they already saw. Running it here also means the counter is already up to date when the
+        // websocket broadcast reaches the client. It is one bulk UPDATE over the participants of this conversation.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+        log.debug("      incrementUnreadMessagesCountOfParticipants DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         log.debug("      conversationMessageRepository.save DONE");
@@ -258,10 +265,6 @@ public class ConversationMessagingService extends PostingService {
                 post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId(), post.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
-
-        // Recipients who already read past this message are skipped: this method is @Async, so it is not ordered
-        // against the read triggered by a recipient fetching the conversation right now.
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId(), post.getCreationDate());
 
         try {
             autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
