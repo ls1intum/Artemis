@@ -76,6 +76,17 @@ class MathFormulaExtractorTest {
     }
 
     @Test
+    void shouldExtractFromABareCarriageReturnLine() {
+        // CommonMark ends a line on a bare CR too, so a formula on such a line is standalone for the renderer downstream
+        // and has to be standalone here. The separators are copied back as written.
+        StringBuilder result = new StringBuilder();
+        List<Formula> formulas = extract("before\r$$x^2$$\rafter", result);
+
+        assertThat(formulas).containsExactly(new Formula("x^2", true));
+        assertThat(result.toString()).startsWith("before\r").endsWith("\rafter").doesNotContain("$$");
+    }
+
+    @Test
     void shouldExtractAFormulaWithThousandsOfEscapedDollarSigns() {
         // One repetition per escaped dollar sign raised a StackOverflowError while matching, so the request failed instead
         // of rendering. Nothing about this input is pathological other than its length.

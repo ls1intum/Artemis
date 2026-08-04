@@ -42,6 +42,11 @@ public final class MathFormulaExtractor {
      * If a line contains {@code $$...$$} mixed with surrounding text, rewrite every {@code $$} on that
      * line to a single {@code $} (making it inline math). Also normalizes {@code \\begin}/{@code \\end}
      * to {@code \begin}/{@code \end}.
+     * <p>
+     * Split on LF alone, and the body of the formula may hold no dollar sign, because this mirrors the client's
+     * {@code FormulaCompatibilityPlugin} - {@code text.split('\n')} and {@code /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/} - and
+     * the two renderers have to agree on what an author's markdown means. A trailing carriage return is ignored, which is
+     * what the client's {@code .} does with it as well.
      *
      * @param markdown the markdown source
      * @return the markdown with formula-authoring quirks normalized
@@ -94,32 +99,53 @@ public final class MathFormulaExtractor {
      * and Java's engine recurses once per repetition: an earlier {@code ^\$\$([^$]*(?:\$(?!\$)[^$]*)*)\$\$$} raised a
      * {@link StackOverflowError} on a line holding a few thousand single dollar signs - not only on crafted input, but on a
      * genuine formula that escapes that many dollars. A scan has no such limit and is linear in the length of the line.
+     * <p>
+     * Lines are separated the way CommonMark separates them - LF, CRLF or a bare CR - and each separator is copied back as
+     * it was written, so what counts as "a line of its own" here is what the renderer downstream will also treat as one.
      *
      * @param markdown the markdown to scan
      * @param formulas the list to append extracted formulas to
      * @return the markdown with display formulas replaced by placeholders
      */
     private static String extractDisplayMath(String markdown, List<Formula> formulas) {
-        String[] lines = markdown.split("\n", -1);
         StringBuilder result = new StringBuilder(markdown.length());
-        for (int i = 0; i < lines.length; i++) {
-            if (i > 0) {
-                result.append('\n');
-            }
-            String line = lines[i];
-            String content = withoutCarriageReturn(line);
-            int[] span = findDoubleDollarSpan(content);
+        int lineStart = 0;
+        while (true) {
+            int terminator = indexOfLineTerminator(markdown, lineStart);
+            String line = markdown.substring(lineStart, terminator < 0 ? markdown.length() : terminator);
+            int[] span = findDoubleDollarSpan(line);
             // Only a line that is nothing but the formula is display math; anything else stays for the inline pattern.
-            String latex = span != null && span[0] == 0 && span[1] == content.length() ? content.substring(2, content.length() - 2).trim() : "";
+            String latex = span != null && span[0] == 0 && span[1] == line.length() ? line.substring(2, line.length() - 2).trim() : "";
             if (latex.isEmpty()) {
                 // Covers both "not display math" and an empty body such as `$$$$`, which is left exactly as written.
                 result.append(line);
-                continue;
             }
-            formulas.add(new Formula(latex, true));
-            result.append(PLACEHOLDER_PREFIX).append(formulas.size() - 1).append(PLACEHOLDER_SUFFIX).append(line, content.length(), line.length());
+            else {
+                formulas.add(new Formula(latex, true));
+                result.append(PLACEHOLDER_PREFIX).append(formulas.size() - 1).append(PLACEHOLDER_SUFFIX);
+            }
+            if (terminator < 0) {
+                return result.toString();
+            }
+            boolean isCrLf = markdown.charAt(terminator) == '\r' && terminator + 1 < markdown.length() && markdown.charAt(terminator + 1) == '\n';
+            result.append(markdown, terminator, terminator + (isCrLf ? 2 : 1));
+            lineStart = terminator + (isCrLf ? 2 : 1);
         }
-        return result.toString();
+    }
+
+    /**
+     * @param text the text to scan
+     * @param from where to start scanning
+     * @return the index of the next CR or LF at or after {@code from}, or {@code -1} when the rest holds neither
+     */
+    private static int indexOfLineTerminator(String text, int from) {
+        for (int position = from; position < text.length(); position++) {
+            char character = text.charAt(position);
+            if (character == '\n' || character == '\r') {
+                return position;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -170,7 +196,7 @@ public final class MathFormulaExtractor {
 
     /**
      * @param line a line as split on {@code \n}
-     * @return the line without a trailing carriage return, so that CRLF input is treated like LF input
+     * @return the line without a trailing carriage return, so that a CRLF document is treated like an LF one
      */
     private static String withoutCarriageReturn(String line) {
         return line.endsWith("\r") ? line.substring(0, line.length() - 1) : line;
