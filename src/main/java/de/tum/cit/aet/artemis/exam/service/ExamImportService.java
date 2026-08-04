@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -247,7 +248,8 @@ public class ExamImportService {
                     .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, examWithExercises)).toList(), examWithExercises.getId());
         });
 
-        return new ExerciseGroupImportResultDTO(examWithExercises.getExerciseGroups(), skippedExerciseTitles, incompleteExerciseTitles);
+        List<ExerciseGroupDTO> exerciseGroupDTOs = examWithExercises.getExerciseGroups().stream().map(ExerciseGroupDTO::ofWithExercises).toList();
+        return new ExerciseGroupImportResultDTO(exerciseGroupDTOs, skippedExerciseTitles, incompleteExerciseTitles);
     }
 
     /**
