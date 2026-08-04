@@ -190,7 +190,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1);
+            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -202,7 +202,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1);
+            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -214,7 +214,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
+            expect(cancelSpy).toHaveBeenCalledWith(1, 1, 1);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -226,7 +226,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1);
+            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
             expect(refreshSpy).toHaveBeenCalled();
         });
 

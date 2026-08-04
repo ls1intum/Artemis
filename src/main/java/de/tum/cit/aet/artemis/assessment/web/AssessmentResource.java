@@ -215,6 +215,12 @@ public abstract class AssessmentResource {
             if (resultToCancel == null) {
                 throw new BadRequestAlertException("The result does not belong to this submission or is not a manual assessment", "result", "resultNotFound");
             }
+            // Cancelling releases a draft assessment, so a finished correction round is not a valid target. Without this
+            // a tutor could name the id of an assessment they had already submitted and delete it through this endpoint,
+            // even though deleting a finished result requires an instructor elsewhere.
+            if (resultToCancel.getCompletionDate() != null) {
+                throw new BadRequestAlertException("The assessment of this correction round is already submitted and cannot be cancelled", "result", "resultAlreadySubmitted");
+            }
         }
         else {
             // Without a result the newest correction round is released, which is what every caller got before the
