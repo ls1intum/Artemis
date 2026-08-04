@@ -21,7 +21,7 @@ import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-in-class-quiz-start-warning.component';
+import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/in-class-quiz-start-warning/iris-in-class-quiz-start-warning.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';

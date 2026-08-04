@@ -124,9 +124,28 @@ describe('Course Management Detail Component', () => {
         expect(irisSpy).toHaveBeenCalledOnce();
     });
 
-    it('should not make iris settings call when not instructor', async () => {
+    it('should make iris settings call when editor (but not instructor)', async () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
+        courseDataSubject.next({ course: { ...course, isAtLeastTutor: true, isAtLeastEditor: true, onboardingDone: true } });
+        const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(
+            of({
+                courseId: 123,
+                settings: {
+                    enabled: true,
+                    askUserModeEnabled: true,
+                    variant: 'default',
+                    askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+                    rateLimit: {},
+                },
+            } as IrisCourseSettingsWithRateLimitDTO),
+        );
+        await component.ngOnInit();
+        expect(irisSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not make iris settings call when not at least tutor', async () => {
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
+        courseDataSubject.next({ course: { ...course, isAtLeastTutor: false } });
         const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         await component.ngOnInit();
         expect(irisSpy).not.toHaveBeenCalled();

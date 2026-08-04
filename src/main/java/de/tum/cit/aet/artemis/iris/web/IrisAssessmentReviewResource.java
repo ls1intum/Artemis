@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -148,7 +148,7 @@ public class IrisAssessmentReviewResource {
      * @return paged participations with pagination headers and filter counts
      */
     @GetMapping("courses/{courseId}/assessment-review/participations")
-    @EnforceAtLeastTutorInExercise
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<IrisAssessmentReviewPageDTO> getAssessmentReviewParticipationsForCourse(@PathVariable long courseId, @Valid IrisAssessmentReviewSearchDTO search,
             @RequestParam(defaultValue = "false") boolean inClass) {
         log.debug("REST request to search Iris assessment review Participations for Course {}, inClass: {}", courseId, inClass);
@@ -161,7 +161,7 @@ public class IrisAssessmentReviewResource {
     }
 
     /**
-     * PATCH programming-exercises/{exerciseId}/ask-user/in-class/available: Starts the instructor-controlled in-class quiz window.
+     * PATCH programming-exercises/{exerciseId}/ask-user/in-class/available: Starts the editor-controlled in-class quiz window.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data

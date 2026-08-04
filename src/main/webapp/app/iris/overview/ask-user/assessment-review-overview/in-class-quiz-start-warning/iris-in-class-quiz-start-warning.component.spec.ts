@@ -6,7 +6,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
-import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-in-class-quiz-start-warning.component';
+import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/in-class-quiz-start-warning/iris-in-class-quiz-start-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('IrisInClassQuizStartWarningComponent', () => {

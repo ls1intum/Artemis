@@ -110,7 +110,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private readonly irisSettings = toSignal(
         combineLatest([toObservable(this.course), this.irisSettingsService.refresh$.pipe(startWith(undefined))]).pipe(
             switchMap(([course]) => {
-                if (!this.irisEnabled() || !course?.isAtLeastInstructor || course.id === undefined) {
+                if (!this.irisEnabled() || !course?.isAtLeastTutor || course.id === undefined) {
                     return of(undefined);
                 }
 

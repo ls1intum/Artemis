@@ -1,57 +1,49 @@
-<div class="flex flex-wrap">
-    <div class="mr-auto flex flex-1 items-center">
-        <div class="mr-2">
-            <jhi-search-filter [placeholderKey]="'artemisApp.exercise.searchForStudents'" (newSearchEvent)="onSearch($event)" />
-        </div>
-        <div class="mr-2">
-            <div class="filter-multiselect-wrapper">
-                <fa-icon class="filter-multiselect-icon" [icon]="faFilter" />
-
-                <p-multiselect
-                    inputId="filter-dropdown-button"
-                    styleClass="filter-multiselect"
-                    [options]="filterOptions()"
-                    [ngModel]="selectedFilters()"
-                    (ngModelChange)="updateParticipationFilters($event)"
-                    optionValue="value"
-                    [showToggleAll]="false"
-                    [showClear]="true"
-                    [filter]="false"
-                    [placeholder]="'artemisApp.iris.assessmentReviewOverview.showAll' | artemisTranslate"
-                    [ariaLabel]="'artemisApp.exercise.scoresFilter' | artemisTranslate"
-                >
-                    <ng-template #selecteditems>
-                        <span class="hidden md:inline">
-                            @for (filter of selectedFilterOptions(); track filter.value; let last = $last) {
-                                {{ filter.translationKey | artemisTranslate }}
-                                ({{ filter.count }})
-
-                                @if (!last) {
-                                    <span>, </span>
-                                }
-                            }
-                        </span>
-                    </ng-template>
-
-                    <ng-template #item let-filter>
-                        <span class="text-nowrap">
-                            {{ filter.translationKey | artemisTranslate }}
-                            ({{ filter.count }})
-                        </span>
-                    </ng-template>
-                </p-multiselect>
-            </div>
-        </div>
-        <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.nonZeroLatestScoreTooltip" class="ml-1" />
-        <div class="p-3">
-            <div class="flex items-center gap-2">
-                <button tumUiButton type="button" size="small" (click)="refresh()">
-                    <fa-icon [icon]="faSync" />
-                    <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
-                </button>
-            </div>
-        </div>
+<div class="flex flex-wrap items-center gap-3 mb-3">
+    <div class="min-w-0 flex-1">
+        <jhi-search-filter [placeholderKey]="'artemisApp.exercise.searchForStudents'" (newSearchEvent)="onSearch($event)" />
     </div>
+    <div class="filter-multiselect-wrapper">
+        <fa-icon class="filter-multiselect-icon" [icon]="faFilter" />
+
+        <p-multiselect
+            inputId="filter-dropdown-button"
+            styleClass="filter-multiselect"
+            [options]="filterOptions()"
+            [ngModel]="selectedFilters()"
+            (ngModelChange)="updateParticipationFilters($event)"
+            optionValue="value"
+            [showToggleAll]="false"
+            [showClear]="true"
+            [filter]="false"
+            [placeholder]="'artemisApp.iris.assessmentReviewOverview.showAll' | artemisTranslate"
+            [ariaLabel]="'artemisApp.exercise.scoresFilter' | artemisTranslate"
+        >
+            <ng-template #selecteditems>
+                <span class="hidden md:inline">
+                    @for (filter of selectedFilterOptions(); track filter.value; let last = $last) {
+                        {{ filter.translationKey | artemisTranslate }}
+                        ({{ filter.count }})
+
+                        @if (!last) {
+                            <span>, </span>
+                        }
+                    }
+                </span>
+            </ng-template>
+
+            <ng-template #item let-filter>
+                <span class="text-nowrap">
+                    {{ filter.translationKey | artemisTranslate }}
+                    ({{ filter.count }})
+                </span>
+            </ng-template>
+        </p-multiselect>
+    </div>
+    <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.nonZeroLatestScoreTooltip" />
+    <button tumUiButton type="button" size="small" (click)="refresh()">
+        <fa-icon [icon]="faSync" />
+        <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
+    </button>
 </div>
 
 @if (searchNoResults()) {

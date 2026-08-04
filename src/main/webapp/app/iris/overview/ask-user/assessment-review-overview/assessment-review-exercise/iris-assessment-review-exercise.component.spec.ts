@@ -25,8 +25,8 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar/quiz-timer-bar.component';
 import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/ask-user/shared/iris-assessment-button/iris-review-assessment-button.component';
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
-import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-assessment-review-exercise.component';
-import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-in-class-quiz-start-warning.component';
+import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/ask-user/assessment-review-overview/assessment-review-exercise/iris-assessment-review-exercise.component';
+import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/in-class-quiz-start-warning/iris-in-class-quiz-start-warning.component';
 
 describe('IrisAssessmentReviewExerciseComponent', () => {
     setupTestBed({ zoneless: true });

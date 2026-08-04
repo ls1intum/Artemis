@@ -9,7 +9,7 @@ import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 @Component({
     selector: 'jhi-iris-in-class-quiz-start-warning',
     templateUrl: './iris-in-class-quiz-start-warning.component.html',
-    styleUrls: ['../../../../exercise/exercise-update-warning/exercise-update-warning.component.scss'],
+    styleUrls: ['../../../../../exercise/exercise-update-warning/exercise-update-warning.component.scss'],
     imports: [TranslateDirective, FaIconComponent, TumUiButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -15,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-assessment-review-exercise.component';
+import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/ask-user/assessment-review-overview/assessment-review-exercise/iris-assessment-review-exercise.component';
 import { IrisAssessmentReviewHttpService, IrisAssessmentReviewParticipation } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { FilterProp, IrisAssessmentReviewOverviewComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-assessment-review-overview.component';
 
