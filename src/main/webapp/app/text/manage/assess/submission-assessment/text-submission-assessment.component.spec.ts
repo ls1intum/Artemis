@@ -237,11 +237,15 @@ describe('TextSubmissionAssessmentComponent', () => {
     it.each([
         { param: undefined, description: 'absent' },
         { param: '', description: 'empty' },
+        { param: '   ', description: 'whitespace only' },
         { param: 'abc', description: 'not a number' },
         { param: '1.5', description: 'fractional' },
+        { param: '-1', description: 'negative' },
+        { param: '9007199254740993', description: 'beyond the safe integer range' },
+        { param: 'Infinity', description: 'infinite' },
     ])('should not treat a $description correction-round parameter as the first round', async ({ param }) => {
-        // Number(null) is 0, so parsing before checking for emptiness silently means the first correction round, which
-        // is exactly how a second-round assessment collapsed into the first one (issue #13396).
+        // Number() turns null, '' and whitespace all into 0, so parsing before normalising silently means the first
+        // correction round, which is exactly how a second-round assessment collapsed into the first one (#13396).
         component.correctionRound.set(1);
 
         const queryParams = convertToParamMap(param === undefined ? {} : { 'correction-round': param });
