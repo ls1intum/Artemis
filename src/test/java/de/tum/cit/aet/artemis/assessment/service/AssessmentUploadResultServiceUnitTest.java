@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRe
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AssessmentUploadResultServiceUnitTest {
@@ -65,13 +66,16 @@ class AssessmentUploadResultServiceUnitTest {
     @Mock
     private LongFeedbackTextRepository longFeedbackTextRepository;
 
+    @Mock
+    private SubmissionTestRepository submissionRepository;
+
     private AssessmentUploadResultService assessmentUploadResultService;
 
     @BeforeEach
     void setUp() {
         assessmentUploadResultService = new AssessmentUploadResultService(userRepository, assessmentUploadResultRepository, assessmentNoteRepository, Optional.empty(),
                 resultWebsocketService, complaintResponseRepository, ratingRepository, feedbackRepository, complaintRepository, participantScoreRepository,
-                longFeedbackTextRepository);
+                longFeedbackTextRepository, submissionRepository);
         TransactionSynchronizationManager.initSynchronization();
     }
 

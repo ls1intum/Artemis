@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -106,6 +107,8 @@ public class AssessmentUploadService {
 
     private final AssessmentUploadResultService assessmentUploadResultService;
 
+    private final SubmissionService submissionService;
+
     private final TransactionTemplate transactionTemplate;
 
     /**
@@ -114,19 +117,22 @@ public class AssessmentUploadService {
      * <b>Preconditions:</b> all parameters are non-{@code null}.
      *
      * @param assessmentUploadParticipationRepository the repository used to resolve participants
-     * @param submissionRepository                    the repository used to create missing submissions
+     * @param submissionRepository                    the repository used to create missing submissions and to persist the ordered results collection
      * @param assessmentUploadResultService           the service used to replace manual assessment results
+     * @param submissionService                       the service enforcing the shared assessment-availability gate
      * @param transactionManager                      the transaction manager used to store the complete upload atomically
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository, final SubmissionRepository submissionRepository,
-            final AssessmentUploadResultService assessmentUploadResultService, final PlatformTransactionManager transactionManager) {
-        if (Stream.of(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, transactionManager).anyMatch(Objects::isNull)) {
+            final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService, final PlatformTransactionManager transactionManager) {
+        if (Stream.of(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, transactionManager)
+                .anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.assessmentUploadParticipationRepository = assessmentUploadParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.assessmentUploadResultService = assessmentUploadResultService;
+        this.submissionService = submissionService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -162,6 +168,17 @@ public class AssessmentUploadService {
         }
         if (exercise.getMaxPoints() == null || exercise.getMaxPoints() <= 0) {
             throw new IllegalArgumentException("The exercise for a manual assessment upload must have positive maximum points");
+        }
+        // A single uploaded result cannot represent several correction rounds, so uploads are limited to exercises with exactly one round (all course exercises, and exams
+        // configured for one round). Checked before anything is read or stored.
+        final Integer numberOfCorrectionRounds = exercise.getNumberOfCorrectionRounds();
+        if (numberOfCorrectionRounds == null || numberOfCorrectionRounds != 1) {
+            throw new BadRequestAlertException("Manual assessments can only be uploaded for exercises with exactly one correction round", ENTITY_NAME,
+                    "assessmentUpload.multipleCorrectionRounds");
+        }
+        // Respect the same manual-result gate as the assessment editor (manual assessment configured and the relevant due date passed).
+        if (!exercise.areManualResultsAllowed()) {
+            throw new BadRequestAlertException("Manual assessments are not allowed for this exercise yet", ENTITY_NAME, "assessmentUpload.manualResultsNotAllowed");
         }
 
         final ZipContents contents = readZipContents(zipFile);
@@ -555,13 +572,15 @@ public class AssessmentUploadService {
      * <b>Preconditions:</b> {@code exercise} is persisted and belongs to a course, {@code validatedRows} is non-empty, every row passed validation (participation resolved and
      * belonging to {@code exercise}, points parsed, matching text file present), and the upload as a whole was error-free.
      * <p>
-     * <b>Postcondition:</b> if no target participation has a complaint on its current manual assessment, a manual assessment has been created (or overwritten) for each row and the
-     * returned result lists the stored identifiers and carries no errors. Otherwise nothing is stored and the returned result carries one {@code EXISTING_COMPLAINT} error per
-     * affected participation (all-or-nothing).
+     * <b>Postcondition:</b> if assessment is possible and no target participation has a complaint on its current manual assessment, a manual assessment has been created (or
+     * overwritten) for each row — attached to the submission's ordered results collection so {@code results_order} stays unique and contiguous — and the returned result lists the
+     * stored identifiers and carries no errors. Otherwise nothing is stored: a complaint yields one {@code EXISTING_COMPLAINT} error per affected participation (all-or-nothing),
+     * and a closed assessment window propagates an exception.
      *
      * @param exercise      the programming exercise the assessments belong to
      * @param validatedRows the fully validated rows to store
      * @return a success result listing the created assessments, or a failure result if a complaint blocks the upload
+     * @throws org.springframework.web.server.ResponseStatusException if assessment of the exercise is not currently possible (e.g. the exam is still running)
      */
     private AssessmentUploadResultDTO storeValidatedRows(final ProgrammingExercise exercise, final List<ValidatedRow> validatedRows) {
         assert exercise != null && exercise.getId() != null : "exercise must be persisted";
@@ -578,18 +597,29 @@ public class AssessmentUploadService {
 
         final Map<Long, StudentParticipation> participationsById = assessmentUploadParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
+        // Enforce the shared assessment-availability gate (e.g. an exam that is not over for all students yet) for every target participation before touching any result.
+        participationsById.values().forEach(participation -> submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation));
+
         final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
-
-        assessmentUploadResultService.deleteManualResults(exercise.getId(), participationIds);
-
-        final List<Result> manualResults = validatedRows.stream().map(row -> {
+        final List<Result> manualResults = new ArrayList<>();
+        final List<Long> replacedResultIds = new ArrayList<>();
+        for (final ValidatedRow row : validatedRows) {
             final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
                     .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
             final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
                     .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
-            return buildManualResult(exercise, submission, row);
-        }).toList();
+            // Remove the existing manual result(s) from the submission's ordered results collection so Hibernate deletes them via orphan removal and keeps results_order unique and
+            // contiguous, then attach the replacement to the same collection.
+            final List<Result> existingManualResults = submission.getResults().stream().filter(result -> result != null && result.isManual()).toList();
+            existingManualResults.stream().map(Result::getId).filter(Objects::nonNull).forEach(replacedResultIds::add);
+            submission.getResults().removeAll(existingManualResults);
+            final Result manualResult = buildManualResult(exercise, submission, row);
+            submission.addResult(manualResult);
+            manualResults.add(manualResult);
+        }
+        // Remove the references Hibernate cannot cascade-delete from a Result (complaints/responses, ratings, participant scores) before the orphan removal is flushed.
+        assessmentUploadResultService.deleteNonCascadedResultReferences(replacedResultIds);
         assessmentUploadResultService.createNewManualResults(manualResults, true);
 
         final List<String> createdIdentifiers = validatedRows.stream().map(ValidatedRow::identifier).toList();

@@ -31,7 +31,9 @@ import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
@@ -67,6 +69,8 @@ public class AssessmentUploadResultService {
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     /**
      * Creates a service for storing and replacing uploaded manual results.
      * <p>
@@ -83,15 +87,16 @@ public class AssessmentUploadResultService {
      * @param complaintRepository              repository used to delete dependent complaints
      * @param participantScoreRepository       repository used to clear dependent participant scores
      * @param longFeedbackTextRepository       repository used to delete dependent long feedback text
+     * @param submissionRepository             repository used to persist the ordered {@code Submission.results} collection so {@code results_order} stays unique and contiguous
      * @throws IllegalArgumentException if a parameter is {@code null}
      */
     public AssessmentUploadResultService(final UserRepository userRepository, final AssessmentUploadResultRepository assessmentUploadResultRepository,
             final AssessmentNoteRepository assessmentNoteRepository, final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService,
             final ComplaintResponseRepository complaintResponseRepository, final RatingRepository ratingRepository, final FeedbackRepository feedbackRepository,
-            final ComplaintRepository complaintRepository, final ParticipantScoreRepository participantScoreRepository,
-            final LongFeedbackTextRepository longFeedbackTextRepository) {
+            final ComplaintRepository complaintRepository, final ParticipantScoreRepository participantScoreRepository, final LongFeedbackTextRepository longFeedbackTextRepository,
+            final SubmissionRepository submissionRepository) {
         if (Stream.of(userRepository, assessmentUploadResultRepository, assessmentNoteRepository, ltiApi, resultWebsocketService, complaintResponseRepository, ratingRepository,
-                feedbackRepository, complaintRepository, participantScoreRepository, longFeedbackTextRepository).anyMatch(Objects::isNull)) {
+                feedbackRepository, complaintRepository, participantScoreRepository, longFeedbackTextRepository, submissionRepository).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload result service dependencies must not be null");
         }
         this.userRepository = userRepository;
@@ -105,17 +110,20 @@ public class AssessmentUploadResultService {
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.longFeedbackTextRepository = longFeedbackTextRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
      * Creates multiple manual results while loading the current assessor and the websocket payload graph only once for the whole upload.
      * <p>
-     * <b>Preconditions:</b> {@code results} is non-{@code null} and contains no {@code null} elements. An empty collection is permitted and produces an empty result.
+     * <b>Preconditions:</b> {@code results} is non-{@code null}, contains no {@code null} elements, and every result is already attached to its submission's {@code results}
+     * collection (via {@link Submission#addResult}) with the submission reference set. An empty collection is permitted and produces an empty result.
      * <p>
-     * <b>Postcondition:</b> every supplied result is stored as a manual result and its notification is sent immediately when no transaction is active, or scheduled for the
-     * surrounding transaction's successful commit.
+     * <b>Postcondition:</b> every supplied result is stored as a manual result — persisted through its owning submission so the ordered {@code Submission.results} collection keeps
+     * unique, contiguous {@code results_order} values — and its notification is sent immediately when no transaction is active, or scheduled for the surrounding transaction's
+     * successful commit.
      *
-     * @param results     newly created results
+     * @param results     newly created results, each attached to its submission's results collection
      * @param ratedResult override value for the rated property of every result
      * @return the stored results with eagerly loaded submissions and feedback
      * @throws IllegalArgumentException if a precondition is violated
@@ -135,7 +143,12 @@ public class AssessmentUploadResultService {
         final ZonedDateTime completionDate = ZonedDateTime.now();
         results.forEach(result -> initializeManualResult(result, ratedResult, assessor, completionDate));
 
-        assessmentUploadResultRepository.saveAll(results);
+        // Persist through the owning (already managed) submissions: flushing cascade-persists each result attached to its submission's results collection, so Hibernate maintains
+        // the ordered collection and writes unique, contiguous results_order values (persisting a Result directly leaves the @OrderColumn unmanaged) and assigns each result its
+        // id.
+        // Every result must already be attached to its submission's results collection by the caller.
+        submissionRepository.flush();
+
         final List<Long> resultIds = results.stream().map(Result::getId).toList();
         final List<Result> savedResults = assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
         notifyAboutNewResultsAfterCommit(savedResults);
@@ -250,14 +263,35 @@ public class AssessmentUploadResultService {
         if (resultIds.stream().anyMatch(resultId -> resultId == null || resultId <= 0)) {
             throw new IllegalArgumentException("The result ids must identify persisted results");
         }
-        complaintResponseRepository.deleteByResultIds(resultIds);
-        complaintRepository.deleteByResultIds(resultIds);
-        ratingRepository.deleteByResultIds(resultIds);
-        participantScoreRepository.clearAllByResultIds(resultIds);
+        deleteNonCascadedResultReferences(resultIds);
         longFeedbackTextRepository.deleteByFeedbackResultIds(resultIds);
         feedbackRepository.deleteByResultIds(resultIds);
         assessmentNoteRepository.deleteByResultIds(resultIds);
         assessmentUploadResultRepository.deleteAllByIds(resultIds);
+    }
+
+    /**
+     * Deletes the references to the given results that Hibernate cannot cascade-delete from a {@link Result} (complaint responses, complaints, ratings and participant scores).
+     * <p>
+     * The assessment-upload replacement removes existing manual results via orphan removal on {@code Submission.results}, which cascades feedback, long feedback text and
+     * assessment
+     * notes but not these entities; they must be deleted first to avoid a foreign-key violation. Complaints are normally absent here because the upload rejects any participation
+     * whose current assessment has a complaint, but they are cleared defensively.
+     * <p>
+     * <b>Precondition:</b> {@code resultIds} is non-{@code null} (an empty collection is a no-op) and contains only persisted result ids.
+     * <p>
+     * <b>Postcondition:</b> no complaint response, complaint, rating or participant score references any of the supplied results.
+     *
+     * @param resultIds ids of the results whose non-cascaded references are removed
+     */
+    public void deleteNonCascadedResultReferences(final Collection<Long> resultIds) {
+        if (resultIds == null || resultIds.isEmpty()) {
+            return;
+        }
+        complaintResponseRepository.deleteByResultIds(resultIds);
+        complaintRepository.deleteByResultIds(resultIds);
+        ratingRepository.deleteByResultIds(resultIds);
+        participantScoreRepository.clearAllByResultIds(resultIds);
     }
 
     /**

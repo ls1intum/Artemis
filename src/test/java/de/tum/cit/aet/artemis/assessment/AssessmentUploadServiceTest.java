@@ -8,7 +8,9 @@ import static org.assertj.core.api.Assertions.within;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -32,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -65,6 +69,13 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise.setMaxPoints(100.0);
         programmingExercise.setBonusPoints(0.0);
+        // Configure the exercise so manual results are allowed (same gate as the assessment editor): semi-automatic assessment with the relevant due dates in the past.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setAllowFeedbackRequests(false);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(7));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(3));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
 
@@ -345,6 +356,61 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip))
                 .withMessage("The exercise for a manual assessment upload must have positive maximum points");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMaintainContiguousResultOrderWhenReplacingManualAssessment() {
+        // An existing automatic result occupies results_order 0 on the submission.
+        final Result automaticResult = participationUtilService.createSubmissionAndResult(participation1, 25, true);
+        automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultRepository.saveAndFlush(automaticResult);
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+
+        // The submission's ordered results list must contain exactly the automatic result and the single manual result, without null padding (which a broken results_order,
+        // e.g. from persisting the result outside the ordered collection, would introduce).
+        final List<Result> orderedResults = getLatestSubmissionResults(participation1.getId());
+        assertThat(orderedResults).doesNotContainNull().hasSize(2);
+        assertThat(orderedResults).anyMatch(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+        assertThat(orderedResults.stream().filter(Result::isManual).toList()).singleElement()
+                .satisfies(manualResult -> assertThat(manualResult.getScore()).isCloseTo(90.0, within(0.01)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUploadForExerciseWithMultipleCorrectionRounds() {
+        // getNumberOfCorrectionRounds() is always 1 for course exercises, so a spy emulates a (multi-round) exam exercise without the exam setup.
+        final ProgrammingExercise exerciseWithTwoRounds = Mockito.spy(programmingExercise);
+        Mockito.doReturn(2).when(exerciseWithTwoRounds).getNumberOfCorrectionRounds();
+        final MockMultipartFile zip = buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(exerciseWithTwoRounds, zip)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("correction round");
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUploadWhenManualResultsAreNotAllowed() {
+        // Move the due date into the future so manual results are not yet allowed for the (non-exam) exercise.
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(5));
+        programmingExerciseRepository.saveAndFlush(programmingExercise);
+        final MockMultipartFile zip = buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+
+        assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("not allowed");
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+    }
+
+    private List<Result> getLatestSubmissionResults(final long participationId) {
+        final var participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow();
+        final Submission latestSubmission = participation.getSubmissions().stream().max(Comparator.comparing(Submission::getId)).orElseThrow();
+        return latestSubmission.getResults();
     }
 
     private void assertManualAssessment(final long participationId, final double expectedScore, final String expectedFeedback) {

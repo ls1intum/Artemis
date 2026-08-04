@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentUploadResource;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -49,21 +50,26 @@ class AssessmentUploadConstructorTest {
         final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository = mock(AssessmentUploadParticipationRepository.class);
         final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
         final AssessmentUploadResultService assessmentUploadResultService = mock(AssessmentUploadResultService.class);
+        final SubmissionService submissionService = mock(SubmissionService.class);
         final PlatformTransactionManager transactionManager = mock(PlatformTransactionManager.class);
 
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(null, submissionRepository, assessmentUploadResultService, transactionManager));
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, null, assessmentUploadResultService, transactionManager));
-        assertThatIllegalArgumentException().isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, null, transactionManager));
+                .isThrownBy(() -> new AssessmentUploadService(null, submissionRepository, assessmentUploadResultService, submissionService, transactionManager));
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, null));
+                .isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, null, assessmentUploadResultService, submissionService, transactionManager));
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, null, submissionService, transactionManager));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, null, transactionManager));
+        assertThatIllegalArgumentException().isThrownBy(
+                () -> new AssessmentUploadService(assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, null));
     }
 
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
         final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), mock(AssessmentNoteRepository.class), Optional.<LtiApi>empty(),
                 mock(ResultWebsocketService.class), mock(ComplaintResponseRepository.class), mock(RatingRepository.class), mock(FeedbackRepository.class),
-                mock(ComplaintRepository.class), mock(ParticipantScoreRepository.class), mock(LongFeedbackTextRepository.class) };
+                mock(ComplaintRepository.class), mock(ParticipantScoreRepository.class), mock(LongFeedbackTextRepository.class), mock(SubmissionRepository.class) };
 
         for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
             final Object[] dependenciesWithNull = dependencies.clone();
@@ -77,7 +83,7 @@ class AssessmentUploadConstructorTest {
         return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (AssessmentNoteRepository) dependencies[2],
                 (Optional<LtiApi>) dependencies[3], (ResultWebsocketService) dependencies[4], (ComplaintResponseRepository) dependencies[5], (RatingRepository) dependencies[6],
                 (FeedbackRepository) dependencies[7], (ComplaintRepository) dependencies[8], (ParticipantScoreRepository) dependencies[9],
-                (LongFeedbackTextRepository) dependencies[10]);
+                (LongFeedbackTextRepository) dependencies[10], (SubmissionRepository) dependencies[11]);
     }
 
     @Test
