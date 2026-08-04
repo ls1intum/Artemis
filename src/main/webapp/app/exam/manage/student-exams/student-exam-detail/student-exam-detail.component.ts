@@ -22,6 +22,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamDetailTableRowComponent } from '../student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -112,9 +113,15 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                     const updatedWorkingTime = updatedStudentExam.workingTime;
                     // The DTO carries the submission date as an ISO string; convert it so the merged exam keeps dayjs semantics.
                     const updatedSubmissionDate = updatedStudentExam.submissionDate ? dayjs(updatedStudentExam.submissionDate) : undefined;
-                    this.studentExam.update((current) =>
-                        current ? Object.assign(new StudentExam(), current, { workingTime: updatedWorkingTime, submissionDate: updatedSubmissionDate }) : current,
-                    );
+                    this.studentExam.update((current) => {
+                        if (!current) {
+                            return current;
+                        }
+                        const merged = deepClone(current);
+                        merged.workingTime = updatedWorkingTime;
+                        merged.submissionDate = updatedSubmissionDate;
+                        return merged;
+                    });
                     this.workingTimeSeconds.set(updatedWorkingTime);
                 }
                 this.isSavingWorkingTime.set(false);

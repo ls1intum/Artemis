@@ -113,7 +113,7 @@ describe('Test Run Management Component', () => {
             const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
             const createdTestRun: StudentExamDTO = { id: 3, testRun: true, user: { id: 90 } };
-            vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: createdTestRun })));
+            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: createdTestRun })));
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
@@ -122,10 +122,13 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
 
-            onCloseSubject.next({} as CreateTestRunDTO);
+            const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
+            onCloseSubject.next(testRunConfiguration);
 
             await Promise.resolve();
 
+            // the component must forward the dialog's configuration verbatim, not rebuild a request body of its own
+            expect(createTestRunSpy).toHaveBeenCalledWith(course.id!, exam.id!, testRunConfiguration);
             expect(component.testRuns()).toHaveLength(3);
         });
 
@@ -138,7 +141,7 @@ describe('Test Run Management Component', () => {
 
             const onCloseSubject = new Subject<CreateTestRunDTO | undefined>();
             vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onCloseSubject.asObservable() } as DynamicDialogRef);
-            vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
+            const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun').mockReturnValue(throwError(() => httpError));
             vi.spyOn(alertService, 'error');
             fixture.detectChanges();
 
@@ -148,9 +151,11 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
 
-            onCloseSubject.next({} as CreateTestRunDTO);
+            const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
+            onCloseSubject.next(testRunConfiguration);
 
             await Promise.resolve();
+            expect(createTestRunSpy).toHaveBeenCalledWith(course.id!, exam.id!, testRunConfiguration);
             expect(alertService.error).toHaveBeenCalledOnce();
         });
 

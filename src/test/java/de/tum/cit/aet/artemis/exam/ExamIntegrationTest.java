@@ -434,6 +434,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     private void verifyStudentExamsExercises(List<Long> ids, int expected) {
         List<StudentExam> studentExamsWithExercises = studentExamRepository.findAllWithEagerExercisesById(ids);
+        // Without this completeness check the loop below passes vacuously when the lookup returns nothing, so a
+        // response that carried the wrong ids (or none at all) would still be reported as green.
+        assertThat(studentExamsWithExercises).as("every requested student exam must be loaded").hasSize(ids.size());
+        assertThat(studentExamsWithExercises).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(ids);
         for (var studentExam : studentExamsWithExercises) {
             assertThat(studentExam.getExercises()).hasSize(expected);
         }
@@ -1196,6 +1200,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(createdTestRun).isNotNull();
         assertThat(createdTestRun.id()).isPositive();
         assertThat(createdTestRun.workingTime()).isEqualTo(6000);
+        // The test-run list template renders the owner, so the create response must carry it (StudentExamDTO.withUser).
+        assertThat(createdTestRun.testRun()).isTrue();
+        assertThat(createdTestRun.user()).isNotNull();
+        assertThat(createdTestRun.user().id()).isEqualTo(instructor.getId());
+
+        // The request only carries exercise ids, so what actually matters is that the server resolved them into the
+        // persisted test run — in the order the instructor picked them, since that order drives the exam navigation.
+        StudentExam persistedTestRun = studentExamRepository.findWithExercisesById(createdTestRun.id()).orElseThrow();
+        assertThat(persistedTestRun.isTestRun()).isTrue();
+        assertThat(persistedTestRun.getExercises()).extracting(Exercise::getId).containsExactlyElementsOf(exerciseIds);
     }
 
     @Test

@@ -24,6 +24,7 @@ import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mappi
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Language } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
 
 function withId<T extends { id?: number }>(entity: T, id: number): T {
     entity.id = id;
@@ -45,7 +46,7 @@ describe('toSubmitStudentExamDTO', () => {
     it('maps only id and exercises, dropping user/exam/dates/sessions', () => {
         const studentExam = new StudentExam();
         studentExam.id = 42;
-        studentExam.user = { id: 7, login: 'student1' } as any;
+        studentExam.user = new User(7, 'student1');
         studentExam.workingTime = 3600;
         studentExam.exercises = [];
 
