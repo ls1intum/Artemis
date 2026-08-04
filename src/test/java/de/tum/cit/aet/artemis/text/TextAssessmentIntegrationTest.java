@@ -1489,7 +1489,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // result for correction round 1 corresponds to the just-submitted second manual result
         assertThat(assessedSubmissionList.getFirst().results()).hasSize(2);
         assertThat(assessedSubmissionList.getFirst().results().getFirst()).isNull();
-        assertThat(assessedSubmissionList.getFirst().results().get(1).id()).isEqualTo(secondSubmittedManualResult.id());
+        assertThat(assessedSubmissionList.getFirst().results().get(1)).isNotNull().extracting(ResultDTO::id).isEqualTo(secondSubmittedManualResult.id());
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
