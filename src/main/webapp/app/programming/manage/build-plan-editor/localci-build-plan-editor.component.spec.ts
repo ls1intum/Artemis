@@ -1,12 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { WritableSignal, signal } from '@angular/core';
+import { Component, WritableSignal, input, output, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { LocalCIBuildPlanEditorComponent } from 'app/programming/manage/build-plan-editor/localci-build-plan-editor.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/build-plan-editor/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { BuildPlanConfigurationService } from 'app/programming/manage/services/build-plan-configuration.service';
@@ -17,6 +26,26 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+
+/**
+ * Lightweight stand-in for the build configuration child. It exposes the timeout bounds that the editor reads through its
+ * view child, so rendering the template lets the timeout validation be exercised for real instead of against an absent
+ * view child. It provides itself as the real component so the {@link viewChild} query resolves to this stub.
+ */
+@Component({
+    selector: 'jhi-programming-exercise-build-configuration',
+    template: '',
+    providers: [{ provide: ProgrammingExerciseBuildConfigurationComponent, useExisting: StubProgrammingExerciseBuildConfigurationComponent }],
+})
+class StubProgrammingExerciseBuildConfigurationComponent {
+    readonly programmingExercise = input<ProgrammingExercise>();
+    readonly dockerImage = input<string>();
+    readonly timeout = input<number>();
+    readonly dockerImageChange = output<string>();
+    readonly timeoutChange = output<number>();
+    readonly timeoutMinValue = signal<number | undefined>(undefined);
+    readonly timeoutMaxValue = signal<number | undefined>(undefined);
+}
 
 describe('LocalCIBuildPlanEditorComponent', () => {
     let fixture: ComponentFixture<LocalCIBuildPlanEditorComponent>;
@@ -44,6 +73,34 @@ describe('LocalCIBuildPlanEditorComponent', () => {
                 { provide: BuildPhasesTemplateService, useValue: { fetchTemplate: fetchTemplateStub, buildPlan: templateBuildPlan } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
+        });
+        // Replace the template children with lightweight mocks (and a stub that reports timeout bounds) so the page can be
+        // rendered and the view-child-based timeout validation is actually exercised.
+        TestBed.overrideComponent(LocalCIBuildPlanEditorComponent, {
+            remove: {
+                imports: [
+                    ProgrammingExerciseBuildConfigurationComponent,
+                    BuildPhasesEditorComponent,
+                    TumUiButtonComponent,
+                    TumUiTooltipDirective,
+                    HelpIconComponent,
+                    UpdatingResultComponent,
+                    TranslateDirective,
+                    ArtemisTranslatePipe,
+                ],
+            },
+            add: {
+                imports: [
+                    StubProgrammingExerciseBuildConfigurationComponent,
+                    MockComponent(BuildPhasesEditorComponent),
+                    MockComponent(TumUiButtonComponent),
+                    MockDirective(TumUiTooltipDirective),
+                    MockComponent(HelpIconComponent),
+                    MockComponent(UpdatingResultComponent),
+                    MockDirective(TranslateDirective),
+                    MockPipe(ArtemisTranslatePipe),
+                ],
+            },
         });
         fixture = TestBed.createComponent(LocalCIBuildPlanEditorComponent);
         comp = fixture.componentInstance;
@@ -198,6 +255,29 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         comp.submit();
 
         expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('should block submitting when the timeout is outside the bounds reported by the build configuration', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        // render the template so the build configuration view child resolves; without rendering the timeout check reads an
+        // absent view child and can never fail
+        fixture.detectChanges();
+        const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
+        buildConfiguration.timeoutMinValue.set(10);
+        buildConfiguration.timeoutMaxValue.set(240);
+        comp.phases.set(phases);
+        comp.dockerImage.set('some-image');
+
+        comp.timeout.set(5);
+        expect(comp.canSubmit()).toBe(false);
+        comp.timeout.set(300);
+        expect(comp.canSubmit()).toBe(false);
+        comp.timeout.set(120);
+        expect(comp.canSubmit()).toBe(true);
     });
 
     const invalidConfigurations: [string, typeof phases, string][] = [
