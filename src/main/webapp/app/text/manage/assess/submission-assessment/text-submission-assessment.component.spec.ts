@@ -236,6 +236,24 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(sharedLayout).not.toBeNull();
     });
 
+    it.each([
+        { param: undefined, description: 'absent' },
+        { param: '', description: 'empty' },
+        { param: 'abc', description: 'not a number' },
+        { param: '1.5', description: 'fractional' },
+    ])('should not treat a $description correction-round parameter as the first round', async ({ param }) => {
+        // Number(null) is 0, so parsing before checking for emptiness silently means the first correction round, which
+        // is exactly how a second-round assessment collapsed into the first one (issue #13396).
+        component.correctionRound.set(1);
+
+        const queryParams = convertToParamMap(param === undefined ? {} : { 'correction-round': param });
+        component['route'].queryParamMap = of(queryParams);
+        // ngOnInit is async and subscribes after its first await, so the assertion has to wait for it.
+        await component.ngOnInit();
+
+        expect(component.correctionRound()).toBe(1);
+    });
+
     it('should keep the query parameters when rewriting the new-assessment url', () => {
         // The correction round lives only in the URL. Rebuilding it without the query parameters turned a second-round
         // assessment into a first-round one on the next reload, which is the core of issue #13396.

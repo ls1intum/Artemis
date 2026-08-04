@@ -163,42 +163,20 @@ test.describe('Exam assessment', () => {
         test('Instructor makes a second round of assessment', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
+            expect(examAssessment.correctionRoundInUrl()).toBe('1');
             await examAssessment.fillFeedback(9, 'Great job');
+
+            // Issue #13396: saving a draft here made the editor fall back to the first correction round and the
+            // assessment stopped being submittable. The round is carried only in the URL, so both are asserted.
+            const saveResponse = await examAssessment.saveTextAssessment();
+            expect(saveResponse.status()).toBe(200);
+            expect(examAssessment.correctionRoundInUrl()).toBe('1');
+            await examAssessment.expectSubmitEnabled();
+
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('90%');
-        });
-
-        /**
-         * Issue #13396: saving a draft in the second correction round made the editor fall back to the first round and
-         * the submission stopped being submittable. The round is carried only in the URL, so this asserts both that the
-         * URL still says round 2 after the save and that the assessment can still be submitted.
-         */
-        test('Saving a draft in the second correction round keeps it in that round', async ({
-            login,
-            examManagement,
-            examAssessment,
-            examParticipation,
-            courseAssessment,
-            exerciseAssessment,
-        }) => {
-            await login(instructor);
-            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
-            expect(examAssessment.correctionRoundInUrl()).toBe('1');
-
-            await examAssessment.fillFeedback(8, 'Draft for the second round');
-            const saveResponse = await examAssessment.saveTextAssessment();
-            expect(saveResponse.status()).toBe(200);
-
-            // The editor must still be in the second correction round and still be submittable.
-            expect(examAssessment.correctionRoundInUrl()).toBe('1');
-            await examAssessment.expectSubmitEnabled();
-
-            const submitResponse = await examAssessment.submitTextAssessment();
-            expect(submitResponse.status()).toBe(200);
-            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
-            await examParticipation.checkResultScore('80%');
         });
 
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
