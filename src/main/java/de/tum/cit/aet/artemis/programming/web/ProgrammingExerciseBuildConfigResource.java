@@ -47,9 +47,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
  * In contrast to the full programming exercise update, this controller only updates the values the build plan editor
  * controls (build phases, Docker image, and timeout), so the build plan can be edited independently of the rest of the
  * exercise configuration.
- * <p>
- * The build plan editor is a LocalCI feature, so this controller is only active under the LocalCI profile. On external CI
- * deployments (e.g. Jenkins) it does not exist, which prevents editors from triggering the LocalCI-only save path there.
  */
 @Profile(PROFILE_LOCALCI)
 @Lazy

@@ -177,9 +177,7 @@ public class ProgrammingExerciseBuildPlanService {
         var buildConfig = programmingExercise.getBuildConfig();
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
         final String serializedBuildPlanConfiguration = buildPlanConfiguration.buildPlan().toBuildPlanConfiguration();
-        // Parse the serialized configuration back with the same bounded reader that reads it at build time. Serializing is
-        // not size-bounded, so without this check an oversized configuration would be stored and then throw on every later
-        // read, surfacing as a 503 that also blocks the regular exercise editor. Rejecting it here leaves the config intact.
+        // parse the serialized configuration back with the same bounded reader used at build time to reject an oversized plan up front
         try {
             BuildPlanPhasesDTO.fromBuildPlanConfiguration(serializedBuildPlanConfiguration);
         }
