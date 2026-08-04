@@ -337,17 +337,13 @@ export default tseslint.config(
             '@typescript-eslint/no-base-to-string': 'error',
         },
     },
-    // Discourage `ngOnChanges` across Angular client files. Prefer computed() for derived state and effect() for
-    // genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs), so this is a
-    // consistency preference, not a correctness rule. The former migration backlog has been cleared; the few
-    // genuinely unavoidable cases (SimpleChanges.previousValue / isFirstChange / before-child-init timing) use a
-    // justified line-level disable. Full rationale + decision table:
-    // documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
+    // Ban `ngOnChanges` across application, package, and test code. Angular 21 still calls the hook for signal
+    // inputs, so this is a consistency rule. A genuinely unavoidable previous-value or lifecycle-ordering case
+    // requires a justified line-level disable; see the client-development guide.
     {
-        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts'],
-        ignores: ['**/*.spec.ts'],
+        files: ['src/main/webapp/app/**/*.ts', 'packages/tum-ui/src/lib/**/*.ts', 'src/test/javascript/**/*.ts'],
         rules: {
-            'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
+            'localRules/prefer-signal-reactivity-over-ngonchanges': 'error',
         },
     },
     // Zoneless correctness: a mutable component/directive field that the template reads must be a signal,
