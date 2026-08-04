@@ -76,6 +76,7 @@ app.kubernetes.io/component: artemis
 {{- define "artemis.secretName"   -}}{{ include "artemis.fullname" . }}-secret{{- end }}
 {{- define "artemis.hostkeySecretName" -}}{{ include "artemis.fullname" . }}-ssh-hostkey{{- end }}
 {{- define "artemis.postgresName" -}}{{ include "artemis.fullname" . }}-postgres{{- end }}
+{{- define "artemis.hadesAdapterName" -}}{{ include "artemis.fullname" . }}-hades-adapter{{- end }}
 {{- define "artemis.registryName" -}}{{ include "artemis.fullname" . }}-registry{{- end }}
 {{- define "artemis.brokerName"   -}}{{ include "artemis.fullname" . }}-broker{{- end }}
 
@@ -120,6 +121,23 @@ jdbc:postgresql://{{ include "artemis.dbHost" . }}:{{ include "artemis.dbPort" .
 {{ include "artemis.brokerName" . }}:{{ .Values.broker.stompPort }}
 {{- else -}}
 {{ required "broker.externalAddresses is required when broker.deploy=false" .Values.broker.externalAddresses }}
+{{- end -}}
+{{- end }}
+
+{{/* Base URL the hades-artemis-adapter uses to reach Artemis (in-cluster http service by default). */}}
+{{- define "artemis.hadesAdapterArtemisBaseUrl" -}}
+{{- .Values.hadesAdapter.artemisBaseUrl | default (printf "http://%s:8080" (include "artemis.httpName" .)) -}}
+{{- end }}
+
+{{/* Effective Hades adapter endpoint Artemis hands to the result parser. When the adapter is
+     deployed by this chart and the user didn't override it, point at the in-cluster adapter. */}}
+{{- define "artemis.hadesAdapterEndpoint" -}}
+{{- if .Values.artemis.config.hades.adapterEndpoint -}}
+{{- .Values.artemis.config.hades.adapterEndpoint -}}
+{{- else if .Values.hadesAdapter.deploy -}}
+http://{{ include "artemis.hadesAdapterName" . }}:{{ .Values.hadesAdapter.port }}{{ .Values.hadesAdapter.ingestPath }}
+{{- else -}}
+{{- required "artemis.config.hades.adapterEndpoint is required when hadesAdapter.deploy=false" .Values.artemis.config.hades.adapterEndpoint -}}
 {{- end -}}
 {{- end }}
 

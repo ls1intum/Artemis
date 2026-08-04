@@ -1,0 +1,19 @@
+{{- if .Values.hadesAdapter.deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "artemis.hadesAdapterName" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: hades-adapter
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "artemis.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: hades-adapter
+  ports:
+    - name: http
+      port: {{ .Values.hadesAdapter.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

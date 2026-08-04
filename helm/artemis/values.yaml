@@ -238,6 +238,43 @@ broker:
       memory: "1Gi"
 
 # -----------------------------------------------------------------------------
+# hades-artemis-adapter - deployed alongside Artemis when using Hades.
+# Hades' result parser posts parsed test results to the adapter, which forwards
+# them to THIS Artemis instance's new-result endpoint. The adapter's auth token
+# and Artemis URL are wired automatically (shared with the Artemis config), so
+# the result path works without extra configuration.
+# https://github.com/ls1intum/hades-artemis-adapter
+# -----------------------------------------------------------------------------
+hadesAdapter:
+  # Deploy the adapter next to Artemis. Keep on whenever Hades is the build
+  # manager; set false only if you run a shared adapter elsewhere (then set
+  # artemis.config.hades.adapterEndpoint explicitly).
+  deploy: true
+  image:
+    repository: ghcr.io/ls1intum/hades-artemis-adapter
+    # Upstream publishes git-SHA tags (e.g. "76270ce") plus "latest". Pin a SHA
+    # for reproducible deployments; "latest" is convenient for per-PR previews.
+    tag: "latest"
+    pullPolicy: Always
+  # Port the adapter listens on (POST /adapter/logs, /adapter/test-results).
+  port: 8082
+  # Path Hades' result parser posts results to; forwarded to Artemis.
+  ingestPath: /adapter/test-results
+  # How the adapter reaches Artemis to POST results. Empty -> the in-cluster
+  # http service (http://<release>-http:8080). Override to the public URL if the
+  # adapter must go through the ingress.
+  artemisBaseUrl: ""
+  # Artemis endpoint the adapter forwards results to (relative path).
+  newResultEndpoint: "api/programming/public/programming-exercises/new-result"
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "250m"
+      memory: "256Mi"
+
+# -----------------------------------------------------------------------------
 # Networking - Kubernetes Gateway API (HTTP + git-over-SSH).
 # -----------------------------------------------------------------------------
 gateway:

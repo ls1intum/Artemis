@@ -28,11 +28,16 @@ outside the chart.
      ├── shared RWX PVC mounted at /opt/artemis/data
      └── node-local emptyDir at /opt/artemis/local (repos-download, tmp, build-logs)
                                  │
-   ┌───────────────┬────────────┴───────────┬────────────────────────────┐
- PostgreSQL   JHipster Registry          ActiveMQ broker         (EXTERNAL) Hades scheduler
- (StatefulSet  (Deployment, Eureka        (Deployment, STOMP      + hades-artemis-adapter
-  + PVC)        discovery :8761)           relay :61613)           reachable via configured URLs
+   ┌───────────────┬────────────┼───────────────┬────────────────────────┐
+ PostgreSQL   JHipster Registry  ActiveMQ broker  hades-artemis-adapter   (EXTERNAL) Hades
+ (StatefulSet  (Deployment,      (Deployment,     (Deployment :8082 -      scheduler,
+  + PVC)        Eureka :8761)     STOMP :61613)    forwards results to     reachable via
+                                                   Artemis, token shared)  configured URL
 ```
+
+Build result flow: **Hades** (external) runs the build and its result parser posts to the in-cluster
+**hades-artemis-adapter**, which forwards the result to Artemis' `new-result` endpoint using a token shared with the
+Artemis config.
 
 ### Why each component exists
 
@@ -43,12 +48,13 @@ outside the chart.
 | JHipster Registry (Eureka) | Yes | **Mandatory** for multi-node. Artemis disables every other Hazelcast joiner and injects TCP-IP cluster members from Eureka metadata. |
 | ActiveMQ broker | Yes (toggle) | STOMP relay that distributes WebSocket messages across nodes. Required once `replicaCount > 1`. |
 | Gateway + HTTPRoute + TCPRoute | Yes | HTTP(S) ingress and git-over-SSH (port 7921). |
-| Hades scheduler + adapter | **No (external)** | Runs builds. Artemis only triggers builds over HTTP and receives results back. |
+| hades-artemis-adapter | Yes (toggle) | Deployed next to Artemis; receives parsed results from Hades and forwards them to this instance's `new-result` endpoint (auth token + URLs auto-wired). |
+| Hades scheduler | **No (external)** | Runs the builds. Artemis triggers builds over HTTP; results come back via the adapter. |
 
 ### What is intentionally NOT included
 
-Keycloak, Iris/Pyris, Athena, Hermes, Weaviate and the rest of the Eduteligence stack, the Hades scheduler/adapter, and
-**MySQL** (PostgreSQL only). Configure any of these as external services via the Artemis config if you need them.
+Keycloak, Iris/Pyris, Athena, Hermes, Weaviate and the rest of the Eduteligence stack, the **Hades scheduler** (external),
+and **MySQL** (PostgreSQL only). Configure any of these as external services via the Artemis config if you need them.
 
 ---
 
@@ -159,12 +165,21 @@ deployment via:
 |-------|---------|---------|
 | `artemis.config.hades.url` | `artemis.continuous-integration.url` | Hades scheduler base URL (`POST /build`, `GET /ping`). |
 | `artemis.config.hades.authKey` | `...hades.auth-key` | Basic-Auth password Artemis sends (username `hades`). |
-| `artemis.config.hades.adapterEndpoint` | `...hades.adapter.endpoint` | Where the adapter is reachable from build containers; it forwards results back to Artemis. |
-| `artemis.config.hades.artemisAuthenticationTokenValue` | `...artemis-authentication-token-value` | Token the adapter presents on Artemis' `new-result` callback. |
+| `artemis.config.hades.adapterEndpoint` | `...hades.adapter.endpoint` | Where Hades' result parser posts results. **Leave empty** to auto-target the bundled adapter (below). |
+| `artemis.config.hades.artemisAuthenticationTokenValue` | `...artemis-authentication-token-value` | Token the adapter presents on Artemis' `new-result` callback (≥ 12 chars). |
 | `artemis.config.hades.cloneImage` / `resultParserImage` | `...hades.images.*` | Public Hades pipeline images (defaults are fine). |
 
 Even with Hades, LocalVC still hosts the exercise repositories, so `artemis.config.versionControl.buildAgentGitUsername`
 / `buildAgentGitPassword` must be set - Hades uses them to clone. See `documentation/docs/admin/hades-setup.mdx`.
+
+### hades-artemis-adapter (bundled)
+
+The chart deploys the [hades-artemis-adapter](https://github.com/ls1intum/hades-artemis-adapter) next to Artemis
+(`hadesAdapter.deploy=true`) and **wires it automatically**: its `ARTEMIS_AUTH_TOKEN` is read from the same Secret as
+`artemis.config.hades.artemisAuthenticationTokenValue` (one source of truth), `ARTEMIS_BASE_URL` points at the in-cluster
+`http` service, and `artemis.config.hades.adapterEndpoint` (if left empty) resolves to the adapter's Service - so the
+result path works with no manual URLs/secrets. Set `hadesAdapter.deploy=false` only if you run a shared adapter elsewhere
+(then set `artemis.config.hades.adapterEndpoint` explicitly).
 
 ---
 
@@ -290,6 +305,18 @@ The existing Gateway must expose an HTTPS listener for the hostname and (for `ss
 | `broker.stompPort` | `61613` | STOMP acceptor port. |
 | `broker.externalAddresses` | `""` | External STOMP address list (when `deploy=false`). |
 | `broker.resources` | see `values.yaml` | Broker resources. |
+
+### hades-artemis-adapter (`hadesAdapter.*`)
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `hadesAdapter.deploy` | `true` | Deploy the adapter next to Artemis and auto-wire it. |
+| `hadesAdapter.image.repository` / `tag` | `ghcr.io/ls1intum/hades-artemis-adapter` / `latest` | Adapter image (upstream uses git-SHA tags; pin one for reproducibility). |
+| `hadesAdapter.port` | `8082` | Adapter listen port. |
+| `hadesAdapter.ingestPath` | `/adapter/test-results` | Path Hades' result parser posts to (used to auto-compute `adapterEndpoint`). |
+| `hadesAdapter.artemisBaseUrl` | `""` (→ `http://<release>-http:8080`) | How the adapter reaches Artemis to POST results. |
+| `hadesAdapter.newResultEndpoint` | `api/.../new-result` | Relative Artemis endpoint the adapter forwards to. |
+| `hadesAdapter.resources` | see `values.yaml` | Adapter resources. |
 
 ### Gateway (`gateway.*`)
 

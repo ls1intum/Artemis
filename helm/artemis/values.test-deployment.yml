@@ -45,19 +45,21 @@ artemis:
       adminName: "Max Mustermann"
     admin:
       username: artemis_admin
-      password: artemis_admin
+      password: "CHANGE_ME"
     # Base64 JWT secret shared by all nodes + the registry.
     # Generate: openssl rand -base64 64 | tr -d '\n'
-    jwtBase64Secret: "4YgQU1vECJFGVFHv+grUJE1NhG0Szba3k/fGJyXWOY4/K2gOmdm42Sl8j2GjJyGaCjZQIBgnpyQLh/0fZjJSyg=="
+    jwtBase64Secret: "CHANGE_ME_BASE64"
     versionControl:
       buildAgentGitUsername: buildjob_user
-      buildAgentGitPassword: buildjob_password
-    # External Hades build system (runs OUTSIDE this chart).
+      buildAgentGitPassword: "CHANGE_ME"
+    # External Hades build system (runs OUTSIDE this chart - but in the same cluster).
     hades:
-      url: "https://hades-test.aet.cit.tum.de"                                # FIXME
-      authKey: "CHANGE_ME"                                                     # FIXME
-      adapterEndpoint: "http://hades-adapter.hades-system.svc:8083/adapter/test-results"  # FIXME
-      # Must be >= 12 chars and MATCH the token the hades-artemis-adapter presents on the new-result callback.
+      url: "https://hades.stud.k8s.aet.cit.tum.de"
+      authKey: "CHANGE_ME"
+      # Leave empty: the chart deploys a hades-artemis-adapter next to Artemis
+      # (hadesAdapter.deploy) and auto-wires this to its in-cluster service.
+      adapterEndpoint: ""
+      # >= 12 chars. Shared automatically with the deployed adapter's ARTEMIS_AUTH_TOKEN.
       artemisAuthenticationTokenValue: "change-me-artemis-token"               # FIXME
 
 # Bundled PostgreSQL (set postgresql.deploy=false to use an external DB).
@@ -65,14 +67,14 @@ postgresql:
   auth:
     database: Artemis
     username: Artemis
-    password: Artemis            # FIXME
+    password: "CHANGE_ME"
 
 # JHipster Registry (Eureka) - required for Hazelcast discovery.
 registry:
-  password: registry
+  password: "CHANGE_ME"
 
 # ActiveMQ STOMP relay for cross-node WebSockets.
 broker:
   auth:
     username: guest
-    password: broker
+    password: "CHANGE_ME"

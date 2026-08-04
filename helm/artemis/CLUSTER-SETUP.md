@@ -388,15 +388,15 @@ HTTPS (443) and git-SSH (7921) are served from the same address when `ssh.mode=t
 
 ## 6. External Hades
 
-The chart does **not** deploy Hades. Before builds can run you need, reachable from the cluster:
+The chart does **not** deploy the **Hades scheduler** - deploy it once per cluster per the
+[Hades](https://github.com/ls1intum/hades) repository, reachable from the cluster (Artemis calls `POST {url}/build`,
+`GET {url}/ping`). Set `artemis.config.hades.url` and `artemis.config.hades.authKey`.
 
-- the **Hades scheduler** (Artemis calls `POST {url}/build`, `GET {url}/ping`), and
-- the **hades-artemis-adapter**, which must be able to reach back to Artemis' result endpoint
-  (`POST .../programming-exercises/new-result`).
-
-Deploy them per the [Hades](https://github.com/ls1intum/hades) and
-[hades-artemis-adapter](https://github.com/ls1intum/hades-artemis-adapter) repositories (their own Helm charts / compose
-files), then set `artemis.config.hades.url`, `artemis.config.hades.authKey`, and `artemis.config.hades.adapterEndpoint`.
+The chart **does** deploy the [hades-artemis-adapter](https://github.com/ls1intum/hades-artemis-adapter) next to each
+Artemis instance and wires it automatically (`hadesAdapter.deploy=true`) - the auth token, Artemis URL, and adapter
+endpoint are shared with the Artemis config, so the result path works without extra configuration. Leave
+`artemis.config.hades.adapterEndpoint` empty to target the bundled adapter. Set `hadesAdapter.deploy=false` only if you
+run a shared adapter elsewhere.
 
 Also remember: the **Artemis image must contain the Hades integration** (the `hades` Spring profile) - see the README
 prerequisites.
