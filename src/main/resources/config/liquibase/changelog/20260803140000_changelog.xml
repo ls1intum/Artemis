@@ -178,6 +178,11 @@
     a single large delete, so the table size is worth checking before the upgrade.
 
     Children are deleted before parents, because jhi_persistent_audit_evt_data's foreign key is ON DELETE RESTRICT.
+
+    Written once per database because the two spell a date offset differently, and H2 is deliberately in neither list: it
+    only appears in the startup smoke check, which runs against an empty schema, so there is nothing to prune there, and the
+    PostgreSQL interval literal is not valid H2 syntax. The migration steps that follow have no dbms filter and run
+    everywhere.
     -->
 
     <changeSet id="20260803140000-09b-prune-expired-general-events" author="krusche" dbms="mysql">
@@ -209,7 +214,7 @@
         </sql>
     </changeSet>
 
-    <changeSet id="20260803140000-09c-prune-expired-general-events" author="krusche" dbms="postgresql,h2">
+    <changeSet id="20260803140000-09c-prune-expired-general-events" author="krusche" dbms="postgresql">
         <sql>
             DELETE FROM jhi_persistent_audit_evt_data
             WHERE event_id IN (
