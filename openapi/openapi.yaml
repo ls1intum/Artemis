@@ -1994,6 +1994,12 @@ components:
           enum: [drag-and-drop]
     QuizQuestionWithoutSolution:
       type: object
+      discriminator:
+        propertyName: type
+        mapping: {multiple-choice: '#/components/schemas/MultipleChoiceQuizQuestionWithoutSolution',
+          drag-and-drop: '#/components/schemas/DragAndDropQuizQuestionWithoutSolution',
+          short-answer: '#/components/schemas/ShortAnswerQuizQuestionWithoutSolution'}
+      oneOf: []
       properties:
         id: {type: integer, format: int64}
         title: {type: string}
@@ -2210,6 +2216,7 @@ components:
           description: Additional type-specific metadata such as courseId, dueDate,
             or points
     StudentQuizParticipationWithoutQuestions:
+      required: [quizQuestionsType]
       type: object
       properties:
         id: {type: integer, format: int64}
@@ -2225,6 +2232,10 @@ components:
           type: array
           items: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
           uniqueItems: true
+        quizQuestionsType:
+          type: string
+          default: before-quiz-start
+          enum: [before-quiz-start]
     CodeGenerationRequest:
       type: object
       properties:
@@ -2247,6 +2258,7 @@ components:
         type: {type: string}
       required: [type]
     StudentQuizParticipationWithSolutions:
+      required: [quizQuestionsType]
       type: object
       properties:
         id: {type: integer, format: int64}
@@ -2262,6 +2274,10 @@ components:
           type: array
           items: {$ref: '#/components/schemas/QuizSubmissionAfterEvaluation'}
           uniqueItems: true
+        quizQuestionsType:
+          type: string
+          default: after-quiz-end
+          enum: [after-quiz-end]
     DomainObject:
       type: object
       properties:
@@ -2415,6 +2431,7 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
     StudentQuizParticipationWithQuestions:
+      required: [quizQuestionsType]
       type: object
       properties:
         id: {type: integer, format: int64}
@@ -2430,6 +2447,10 @@ components:
           type: array
           items: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
           uniqueItems: true
+        quizQuestionsType:
+          type: string
+          default: live-quiz
+          enum: [live-quiz]
     MultipleChoiceSubmittedAnswerFromStudent:
       required: [questionId, selectedOptions, type]
       type: object
