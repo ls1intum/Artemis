@@ -147,6 +147,13 @@ public class ConversationMessagingService extends PostingService {
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         log.debug("      conversationMessageRepository.save DONE");
+
+        // Increment the recipients' unread counters here rather than on the @Async notification path below. The read
+        // side resets this counter to zero, and nothing orders the two, so an increment running asynchronously could
+        // land after a recipient had already read the message and leave them an unread badge for it (#13396 in spirit:
+        // the counter contradicted what the user had seen). Running it in the request also means the counter is correct
+        // by the time the websocket broadcast reaches the client.
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         log.debug("      conversationMessageRepository.save DONE");
@@ -256,8 +263,6 @@ public class ConversationMessagingService extends PostingService {
                 post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId(), post.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
-
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
 
         try {
             autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
