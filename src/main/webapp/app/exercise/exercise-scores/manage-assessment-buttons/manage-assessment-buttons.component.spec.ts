@@ -54,9 +54,10 @@ describe('ManageAssessmentButtonsComponent', () => {
 
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('course', course);
+        // Distinct ids on purpose: with everything set to 1 an assertion cannot tell which id a service received.
         fixture.componentRef.setInput('participation', {
-            id: 1,
-            submissions: [{ id: 1, results: [{ id: 1 } as Result] } as Submission],
+            id: 10,
+            submissions: [{ id: 20, results: [{ id: 30 } as Result] } as Submission],
         } as Participation);
     });
 
@@ -186,11 +187,11 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.PROGRAMMING } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -198,11 +199,11 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(modelingAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.MODELING } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -210,11 +211,11 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1, 1, 1);
+            expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
@@ -222,18 +223,18 @@ describe('ManageAssessmentButtonsComponent', () => {
             const cancelSpy = vi.spyOn(fileUploadAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
             const refreshSpy = vi.spyOn(comp.refresh, 'emit');
             fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.FILE_UPLOAD } as Exercise);
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
-            expect(cancelSpy).toHaveBeenCalledWith(1, 1);
+            expect(cancelSpy).toHaveBeenCalledWith(20, 30);
             expect(refreshSpy).toHaveBeenCalled();
         });
 
         it('should not cancel when user declines confirmation', () => {
             vi.spyOn(window, 'confirm').mockReturnValue(false);
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
-            const result = { id: 1, submission: { id: 1 } } as Result;
+            const result = { id: 30, submission: { id: 20 } } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 
