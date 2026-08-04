@@ -144,9 +144,10 @@ public class AssessmentUploadService {
      * {@code getCourseViaExerciseGroupOrCourseMember()} and a positive {@code maxPoints}).
      * <p>
      * <b>Postconditions:</b> if the returned result has no {@link AssessmentUploadResultDTO#errors() errors}, then for every CSV row a rated manual result with
-     * {@code score = overallPoints / maxPoints * 100} and a single {@code MANUAL_UNREFERENCED} feedback carrying the text-file content has been created, replacing any previous
-     * manual result of that participant, while automatic results are kept; no other persistent state changed. If the result has errors, the persistent state is left completely
-     * unchanged (all-or-nothing).
+     * {@code score = overallPoints / maxPoints * 100} and a single {@code MANUAL_UNREFERENCED} feedback carrying the text-file content has been created on the participant's latest
+     * submission, replacing any previous manual result there while automatic results are kept; a manual result on an older, superseded submission is left untouched (it never
+     * contributes to the score, which is always taken from the latest submission, mirroring the assessment editor). No other persistent state changed. If the result has errors,
+     * the persistent state is left completely unchanged (all-or-nothing).
      *
      * @param exercise the programming exercise the assessments belong to; must not be {@code null}
      * @param zipFile  the uploaded zip file containing {@code assessment-scores.csv} and one {@code .txt} file per participant; must not be {@code null}
@@ -609,6 +610,8 @@ public class AssessmentUploadService {
                     .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
             final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
                     .orElseGet(() -> submissionRepository.initializeSubmission(participation, exercise, SubmissionType.EXTERNAL));
+            // Only the participation's latest submission is assessed. A manual result on an older, superseded submission is intentionally left untouched: it never contributes to
+            // the score (the grade is always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor behaves.
             // Remove the existing manual result(s) from the submission's ordered results collection so Hibernate deletes them via orphan removal and keeps results_order unique and
             // contiguous, then attach the replacement to the same collection.
             final List<Result> existingManualResults = submission.getResults().stream().filter(result -> result != null && result.isManual()).toList();
