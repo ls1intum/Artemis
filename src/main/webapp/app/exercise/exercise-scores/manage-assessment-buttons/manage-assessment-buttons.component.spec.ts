@@ -231,6 +231,22 @@ describe('ManageAssessmentButtonsComponent', () => {
             expect(refreshSpy).toHaveBeenCalled();
         });
 
+        /**
+         * The scores overview builds its rows from ParticipationScoreDTO, and those results have no submission back
+         * reference. Guarding on result.submission?.id therefore swallowed every click and no request was sent (#13396).
+         */
+        it('should cancel even when the result has no submission back reference', () => {
+            const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT } as Exercise);
+            // Exactly the shape ExerciseScoresComponent#toParticipation produces: no `submission` on the result.
+            const dtoShapedResult = { id: 30 } as Result;
+
+            comp.cancelAssessment(dtoShapedResult, comp.participation());
+
+            expect(cancelSpy).toHaveBeenCalledWith(10, 20, 30);
+        });
+
         it('should not cancel when user declines confirmation', () => {
             vi.spyOn(window, 'confirm').mockReturnValue(false);
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
@@ -241,9 +257,12 @@ describe('ManageAssessmentButtonsComponent', () => {
             expect(cancelSpy).not.toHaveBeenCalled();
         });
 
-        it('should not cancel when submission id is missing', () => {
+        it('should not cancel when the participation has no submission', () => {
+            // The submission id comes from the participation now, so that is the precondition that has to be missing.
             const cancelSpy = vi.spyOn(programmingAssessmentService, 'cancelAssessment');
-            const result = { id: 1, submission: undefined } as Result;
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            fixture.componentRef.setInput('participation', { id: 10, submissions: [] } as Participation);
+            const result = { id: 30 } as Result;
 
             comp.cancelAssessment(result, comp.participation());
 

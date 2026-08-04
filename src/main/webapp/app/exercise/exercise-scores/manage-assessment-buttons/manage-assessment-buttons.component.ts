@@ -105,22 +105,27 @@ export class ManageAssessmentButtonsComponent implements OnInit {
      * released round 2 and round 1 stayed locked (#13396).
      */
     cancelAssessment(result: Result, participation: Participation) {
+        // Take the submission from the participation, not from the result. The scores overview builds its rows from
+        // ParticipationScoreDTO (ExerciseScoresComponent#toParticipation), and those results carry no back reference to
+        // their submission, so `result.submission?.id` was always undefined here and the guard below silently swallowed
+        // every click: no request ever left the client and the lock was never released (#13396).
+        const submissionId = participation.submissions?.[0]?.id;
         const confirmCancel = window.confirm(this.cancelConfirmationText);
 
-        if (confirmCancel && result.submission?.id) {
+        if (confirmCancel && submissionId) {
             let cancelSubscription;
             switch (this.exercise().type) {
                 case ExerciseType.PROGRAMMING:
-                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id, result.id);
+                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(submissionId, result?.id);
                     break;
                 case ExerciseType.MODELING:
-                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id, result.id);
+                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(submissionId, result?.id);
                     break;
                 case ExerciseType.TEXT:
-                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id, result.id);
+                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, submissionId, result?.id);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id, result.id);
+                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(submissionId, result?.id);
                     break;
             }
             cancelSubscription?.subscribe(() => {
