@@ -15,15 +15,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/services/iris-assessment-review-http.service';
 import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask-user.service';
-import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
 @Component({
     selector: 'jhi-start-in-class-quiz-button',
     templateUrl: './start-in-class-quiz-button.component.html',
-    imports: [FeatureToggleDirective, ArtemisTranslatePipe, QuizTimerBarComponent, ButtonModule, FaIconComponent],
+    imports: [FeatureToggleDirective, ArtemisTranslatePipe, QuizTimerBarComponent, TumUiButtonDirective, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisStartInClassQuizButtonComponent {
@@ -63,8 +63,8 @@ export class IrisStartInClassQuizButtonComponent {
         { initialValue: false },
     );
     protected readonly quizAlreadyDone = computed(() => this.quizAlreadyDoneFromServer() || this.quizCompletedAfterCurrentRun());
-    protected readonly buttonSeverity = computed<'success' | undefined>(() => (this.quizAlreadyDone() && !this.showQuizActive() ? 'success' : undefined));
-    protected readonly buttonSize = computed<'small' | undefined>(() => (this.smallButtons() ? 'small' : undefined));
+    protected readonly buttonSeverity = computed(() => (this.quizAlreadyDone() && !this.showQuizActive() ? 'success' : 'primary'));
+    protected readonly buttonSize = computed(() => (this.smallButtons() ? 'small' : 'default'));
 
     protected readonly availableInClassQuiz = toSignal(
         toObservable(this.exerciseId).pipe(

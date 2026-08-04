@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
@@ -345,7 +344,7 @@ public class CourseManagementResource {
      * @return {@link IrisAssessmentAttentionDTO} with the corresponding boolean
      */
     @GetMapping("courses/{courseId}/assessment-attention-state")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<IrisAssessmentAttentionDTO> getAssessmentAttentionState(@PathVariable Long courseId) {
         log.debug("REST request to get assessment state of Course : {}", courseId);
 

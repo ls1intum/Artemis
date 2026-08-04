@@ -32,14 +32,16 @@
     </span>
 }
 <div class="flex items-center gap-2 mt-3">
-    <button pButton type="button" severity="success" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED" (click)="acceptAnswers()">
-        <fa-icon [icon]="faCheck" />
-        <span>{{ 'artemisApp.iris.assessmentReview.accept' | artemisTranslate }}</span>
-    </button>
-    <button pButton type="button" severity="danger" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.REJECTED" (click)="rejectAnswers()">
-        <fa-icon [icon]="faX" />
-        <span>{{ 'artemisApp.iris.assessmentReview.reject' | artemisTranslate }}</span>
-    </button>
+    @if (course().isAtLeastEditor) {
+        <button pButton type="button" severity="success" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.ACCEPTED" (click)="acceptAnswers()">
+            <fa-icon [icon]="faCheck" />
+            <span>{{ 'artemisApp.iris.assessmentReview.accept' | artemisTranslate }}</span>
+        </button>
+        <button pButton type="button" severity="danger" size="small" [disabled]="assessment().verdictReview === IrisVerdictReview.REJECTED" (click)="rejectAnswers()">
+            <fa-icon [icon]="faX" />
+            <span>{{ 'artemisApp.iris.assessmentReview.reject' | artemisTranslate }}</span>
+        </button>
+    }
     @if (assessment() && (assessment().verdictReview === IrisVerdictReview.ACCEPTED || assessment().verdictReview === IrisVerdictReview.REJECTED)) {
         <span>
             {{ 'artemisApp.iris.assessmentReview.review.reviewedAs' | artemisTranslate }}

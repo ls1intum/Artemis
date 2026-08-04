@@ -10,11 +10,11 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
 @Component({
     selector: 'jhi-iris-assessment-attention-center',
-    imports: [HelpIconComponent, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, ButtonModule],
+    imports: [HelpIconComponent, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective],
     templateUrl: './iris-assessment-attention-center.component.html',
     styleUrls: ['./iris-assessment-attention-center.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,7 +34,7 @@ export class IrisAssessmentAttentionCenterComponent {
     protected readonly needsAttention = toSignal(
         combineLatest([toObservable(this.course), toObservable(this.assessmentEnabled)]).pipe(
             switchMap(([course, assessmentEnabled]) => {
-                if (!assessmentEnabled || !course.isAtLeastInstructor || course.id === undefined) {
+                if (!assessmentEnabled || !course.isAtLeastTutor || course.id === undefined) {
                     return of(false);
                 }
 

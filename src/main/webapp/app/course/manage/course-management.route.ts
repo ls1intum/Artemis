@@ -304,7 +304,7 @@ export const courseManagementRoutes: Routes = [
                                 (m) => m.IrisAssessmentReviewOverviewComponent,
                             ),
                         data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.iris.assessmentReviewOverview.title',
                             loadWithExercises: true,
                         },
@@ -317,7 +317,7 @@ export const courseManagementRoutes: Routes = [
                         path: 'iris-assessments/:assessmentId/details',
                         loadComponent: () => import('app/iris/overview/ask-user/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
                         data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.iris.assessmentReview.title',
                             inClass: false,
                         },
@@ -333,7 +333,7 @@ export const courseManagementRoutes: Routes = [
                                 (m) => m.IrisAssessmentReviewOverviewComponent,
                             ),
                         data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.iris.assessmentReviewOverview.inClassTitle',
                             loadWithExercises: true,
                             showStartInClassQuizButton: true,
@@ -347,7 +347,7 @@ export const courseManagementRoutes: Routes = [
                         path: 'iris-in-class-assessments/:assessmentId/details',
                         loadComponent: () => import('app/iris/overview/ask-user/assessment-review/iris-assessment-review.component').then((m) => m.IrisAssessmentReviewComponent),
                         data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            authorities: IS_AT_LEAST_TUTOR,
                             pageTitle: 'artemisApp.iris.assessmentReview.title',
                             inClass: true,
                         },
@@ -355,16 +355,6 @@ export const courseManagementRoutes: Routes = [
                         resolve: {
                             reviewData: IrisAssessmentReviewResolver,
                         },
-                    },
-                    {
-                        path: 'iris-settings',
-                        loadComponent: () => import('app/iris/manage/settings/iris-settings-update/iris-settings-update.component').then((m) => m.IrisSettingsUpdateComponent),
-                        data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
-                            pageTitle: 'artemisApp.iris.settings.title.course',
-                        },
-                        canActivate: [UserRouteAccessService, IrisGuard],
-                        canDeactivate: [PendingChangesGuard],
                     },
                     {
                         path: '',

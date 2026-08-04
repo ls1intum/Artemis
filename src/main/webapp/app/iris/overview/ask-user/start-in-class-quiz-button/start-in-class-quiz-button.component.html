@@ -1,7 +1,7 @@
 @if (availableInClassQuiz(); as inClassQuiz) {
     <span class="inline-flex items-center gap-1">
         <button
-            pButton
+            tumUiButton
             type="button"
             (click)="startInClassQuiz()"
             [id]="'start-in-class-quiz-' + exercise().id!"
@@ -11,8 +11,11 @@
             [overwriteDisabled]="!canBeStarted()"
         >
             <fa-icon [icon]="faBrain" />
-            <span class="md:inline" [class.hidden]="hideLabelMobile()">{{ buttonLabel() | artemisTranslate }}</span>
+            <span class="md:inline" [class.hidden]="hideLabelMobile()">
+                {{ buttonLabel() | artemisTranslate }}
+            </span>
         </button>
+
         <jhi-quiz-timer-bar
             [open]="true"
             [timeLimit]="inClassQuiz.timeLimit"

@@ -1,15 +1,15 @@
-<ng-container>
-    <button
-        pButton
-        type="button"
-        (click)="startQuiz()"
-        [id]="'start-askUser-' + exercise().id!"
-        [severity]="buttonSeverity()"
-        [size]="buttonSize()"
-        [jhiFeatureToggle]="FeatureToggle.AskUserMode"
-        [overwriteDisabled]="!canBeStarted() || afterDueDate()"
-    >
-        <fa-icon [icon]="faBrain" />
-        <span class="md:inline" [class.hidden]="hideLabelMobile()">{{ buttonLabel() | artemisTranslate }}</span>
-    </button>
-</ng-container>
+<button
+    tumUiButton
+    type="button"
+    (click)="startQuiz()"
+    [id]="'start-askUser-' + exercise().id!"
+    [severity]="buttonSeverity()"
+    [size]="buttonSize()"
+    [jhiFeatureToggle]="FeatureToggle.AskUserMode"
+    [overwriteDisabled]="!canBeStarted() || afterDueDate()"
+>
+    <fa-icon [icon]="faBrain" />
+    <span class="md:inline" [class.hidden]="hideLabelMobile()">
+        {{ buttonLabel() | artemisTranslate }}
+    </span>
+</button>

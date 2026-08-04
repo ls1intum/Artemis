@@ -9,13 +9,13 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
 @Component({
     selector: 'jhi-iris-review-assessment-button',
     templateUrl: './iris-review-assessment-button.component.html',
-    imports: [FeatureToggleDirective, ArtemisTranslatePipe, RouterLink, ButtonModule, FaIconComponent],
+    imports: [FeatureToggleDirective, ArtemisTranslatePipe, RouterLink, FaIconComponent, TumUiButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisReviewAssessmentButtonComponent {
@@ -34,7 +34,7 @@ export class IrisReviewAssessmentButtonComponent {
 
     protected readonly verdictReview = computed(() => this.irisAssessment()?.verdictReview);
     protected readonly verdict = computed(() => this.irisAssessment()?.verdict);
-    protected readonly buttonSize = computed<'small' | undefined>(() => (this.smallButton() ? 'small' : undefined));
+    protected readonly buttonSize = computed(() => (this.smallButton() ? 'small' : 'default'));
 
     // Returns true when the assessment is either suspicious but not yet reviewed, reviewed as rejected, or the quiz has not been done yet (verdict is missing).
     protected readonly needsAttention = computed(() => {

@@ -81,15 +81,23 @@ class IrisAssessmentRepositoryTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    void findWithReasoningAndExerciseAndCourseByIdElseThrowReturnsFullyLoadedAssessment() {
-        var saved = saveAssessment(IrisVerdict.SUSPICIOUS, IrisVerdictReview.REJECTED, List.of("reason-1"));
+    void findWithStudentByIdElseThrowReturnsAssessmentWithStudentLoaded() {
+        var saved = saveAssessment(null, null, null);
 
-        var loaded = irisAssessmentRepository.findWithReasoningAndExerciseAndCourseByIdElseThrow(saved.getId());
+        var loaded = irisAssessmentRepository.findWithStudentByIdElseThrow(saved.getId());
 
-        assertThat(loaded.getReasoning()).containsExactly("reason-1");
         assertThat(loaded.getStudent().getLogin()).isEqualTo(student.getLogin());
+    }
+
+    @Test
+    void findWithReasoningAndExerciseAndStudentByIdElseThrowReturnsAssessmentWithExerciseAndStudentAndReasoningLoaded() {
+        var saved = saveAssessment(IrisVerdict.UNSUSPICIOUS, null, List.of("first", "second"));
+
+        var loaded = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(saved.getId());
+
         assertThat(loaded.getExercise().getId()).isEqualTo(programmingExercise.getId());
-        assertThat(loaded.getVerdictReview()).isEqualTo(IrisVerdictReview.REJECTED);
+        assertThat(loaded.getStudent().getLogin()).isEqualTo(student.getLogin());
+        assertThat(loaded.getReasoning()).containsExactly("first", "second");
     }
 
     @Test

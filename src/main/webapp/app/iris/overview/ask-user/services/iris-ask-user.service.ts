@@ -255,7 +255,7 @@ export class IrisAskUserService {
     }
 
     /**
-     * starts the instructor-controlled in-class quiz for the exercise for a student
+     * starts the editor-controlled in-class quiz for the exercise for a student
      * @param exerciseId The unique identifier of the exercise
      */
     startInClassQuiz(exerciseId: number): Observable<void> {

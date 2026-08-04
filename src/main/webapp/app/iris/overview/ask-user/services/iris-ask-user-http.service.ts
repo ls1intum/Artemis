@@ -45,7 +45,7 @@ export class IrisAskUserHttpService {
     }
 
     /**
-     * starts the instructor-controlled in-class quiz for the exercise for a student
+     * starts the editor-controlled in-class quiz for the exercise for a student
      * @param exerciseId The unique identifier of the exercise
      * @return returns DTO with undefined timerExpired if no timer was started (because quiz was just stopped by something else)
      */

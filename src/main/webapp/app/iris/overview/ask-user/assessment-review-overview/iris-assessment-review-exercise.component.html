@@ -17,10 +17,12 @@
                         />
                     }
                     <jhi-help-icon text="artemisApp.iris.assessmentReviewOverview.inClassQuizTooltip" class="ml-1" />
-                    <button pButton size="small" type="button" (click)="makeInClassQuizAvailable()">
-                        <fa-icon [icon]="faBrain" />
-                        <span class="hidden md:inline" [jhiTranslate]="inClassQuizButtonLabel()"></span>
-                    </button>
+                    @if (course().isAtLeastEditor) {
+                        <button pButton size="small" type="button" (click)="makeInClassQuizAvailable()">
+                            <fa-icon [icon]="faBrain" />
+                            <span class="hidden md:inline" [jhiTranslate]="inClassQuizButtonLabel()"></span>
+                        </button>
+                    }
                 </span>
             }
             <a pButton size="small" [routerLink]="['/course-management', course().id, exercise().type + '-exercises', exercise().id, 'participations']">

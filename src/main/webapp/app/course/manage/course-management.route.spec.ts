@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { courseManagementRoutes } from 'app/course/manage/course-management.route';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { IrisAssessmentReviewResolver } from 'app/iris/overview/ask-user/services/iris-assessment-review-resolver.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 
@@ -47,7 +47,7 @@ describe('courseManagementRoutes', () => {
 
         expect(route?.data).toEqual(
             expect.objectContaining({
-                authorities: IS_AT_LEAST_INSTRUCTOR,
+                authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.iris.assessmentReviewOverview.title',
                 loadWithExercises: true,
             }),
@@ -61,7 +61,7 @@ describe('courseManagementRoutes', () => {
 
         expect(route?.data).toEqual(
             expect.objectContaining({
-                authorities: IS_AT_LEAST_INSTRUCTOR,
+                authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.iris.assessmentReview.title',
                 inClass: false,
             }),
@@ -76,7 +76,7 @@ describe('courseManagementRoutes', () => {
 
         expect(overviewRoute?.data).toEqual(
             expect.objectContaining({
-                authorities: IS_AT_LEAST_INSTRUCTOR,
+                authorities: IS_AT_LEAST_TUTOR,
                 pageTitle: 'artemisApp.iris.assessmentReviewOverview.inClassTitle',
                 loadWithExercises: true,
                 showStartInClassQuizButton: true,

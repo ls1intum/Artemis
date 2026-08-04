@@ -30,7 +30,7 @@ export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentRevie
 
         return forkJoin({
             courseResponse: this.courseService.find(courseId),
-            assessmentResponse: this.irisAssessmentReviewService.findWithPoints(assessmentId),
+            assessmentResponse: this.irisAssessmentReviewService.findWithStudent(assessmentId),
             rowsResponse: this.irisAssessmentReviewService.getAssessmentChat(assessmentId, inClass),
         }).pipe(
             map(({ courseResponse, assessmentResponse, rowsResponse }) => {

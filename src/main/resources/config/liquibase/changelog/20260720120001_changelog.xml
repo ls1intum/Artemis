@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260720120001" author="PeterNiedermoser">
+        <addColumn tableName="programming_exercise_details">
+            <column name="iris_in_class_quiz_timer" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260720120001-1" author="PeterNiedermoser">
+        <addColumn tableName="iris_session">
+            <column name="in_class_quiz" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

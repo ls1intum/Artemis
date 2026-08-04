@@ -19,10 +19,14 @@
                 </div>
                 <div class="section-body d-flex flex-column flex-xl-row">
                     <jhi-quick-actions #quickActions [course]="course()!" class="mb-3 mb-xl-0" [class.me-xl-3]="course()!.isAtLeastInstructor && irisEnabled()" />
-                    @if (course()!.isAtLeastInstructor && irisEnabled()) {
+                    @if (irisEnabled()) {
                         <div class="iris-course-action-stack">
-                            <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
-                            <jhi-iris-assessment-attention-center class="iris-assessment-attention-panel" [course]="course()!" [assessmentEnabled]="irisAskUserModeEnabled()" />
+                            @if (course()!.isAtLeastInstructor) {
+                                <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
+                            }
+                            @if (course()!.isAtLeastTutor && irisAskUserModeEnabled()) {
+                                <jhi-iris-assessment-attention-center class="iris-assessment-attention-panel" [course]="course()!" [assessmentEnabled]="irisAskUserModeEnabled()" />
+                            }
                         </div>
                     }
                 </div>

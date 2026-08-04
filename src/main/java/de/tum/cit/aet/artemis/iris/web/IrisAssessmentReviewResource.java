@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.web;
 
 import java.util.List;
-import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -22,9 +21,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -81,9 +80,9 @@ public class IrisAssessmentReviewResource {
      *         assessment exists
      */
     @GetMapping("assessments/{assessmentId}/chat")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<List<IrisQAExchangeDTO>> getAssessmentChat(@PathVariable Long assessmentId, @RequestParam(defaultValue = "false") boolean inClass) {
-        var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndCourseByIdElseThrow(assessmentId);
+        var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndStudentByIdElseThrow(assessmentId);
         var user = assessment.getStudent();
         var exercise = validate(assessment.getExercise());
 
@@ -97,7 +96,7 @@ public class IrisAssessmentReviewResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} or {@code 404 (Not Found)} if no assessment exists
      */
     @PatchMapping("assessments/{assessmentId}/accept")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> acceptAnswers(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
@@ -114,7 +113,7 @@ public class IrisAssessmentReviewResource {
      */
 
     @PatchMapping("assessments/{assessmentId}/reject")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditor
     public ResponseEntity<Void> rejectAnswers(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
@@ -132,27 +131,12 @@ public class IrisAssessmentReviewResource {
      */
 
     @GetMapping("assessments/{assessmentId}")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<IrisAssessmentDTO> findWithPoints(@PathVariable Long assessmentId) {
-        var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndCourseByIdElseThrow(assessmentId);
+    @EnforceAtLeastTutor
+    public ResponseEntity<IrisAssessmentDTO> findWithStudent(@PathVariable Long assessmentId) {
+        var assessment = irisAssessmentRepository.findWithStudentByIdElseThrow(assessmentId);
         validate(assessment.getExercise());
 
         return ResponseEntity.ok(IrisAssessmentDTO.of(assessment));
-    }
-
-    /**
-     * GET programming-exercises/{exerciseId}/participations/non-zero-latest-score : get all the participations for a programming exercise if latest score > 0 was achieved
-     *
-     * @param exerciseId The exerciseId of the programming exercise
-     * @param inClass    Whether the request is for the Iris in-class assessment overview
-     * @return A list of all programming student participations for the exercise
-     */
-    @GetMapping("programming-exercises/{exerciseId}/participations/non-zero-latest-score")
-    @EnforceAtLeastTutorInExercise
-    public ResponseEntity<Set<IrisAssessmentProgrammingStudentParticipationDTO>> getAllParticipationsNonZeroLatestScoreForExercise(@PathVariable long exerciseId,
-            @RequestParam(defaultValue = "false") boolean inClass) {
-        log.debug("REST request to get all Participations with non-zero highest score for Exercise {} for Iris assessment overview, inClass: {}", exerciseId, inClass);
-        return ResponseEntity.ok(irisAssessmentReviewService.findAllNonPracticeParticipationsNonZeroLatestScoreForExercise(exerciseId, inClass));
     }
 
     /**
@@ -164,7 +148,7 @@ public class IrisAssessmentReviewResource {
      * @return paged participations with pagination headers and filter counts
      */
     @GetMapping("courses/{courseId}/assessment-review/participations")
-    @EnforceAtLeastTutorInCourse
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<IrisAssessmentReviewPageDTO> getAssessmentReviewParticipationsForCourse(@PathVariable long courseId, @Valid IrisAssessmentReviewSearchDTO search,
             @RequestParam(defaultValue = "false") boolean inClass) {
         log.debug("REST request to search Iris assessment review Participations for Course {}, inClass: {}", courseId, inClass);
@@ -183,7 +167,7 @@ public class IrisAssessmentReviewResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the corresponding timer data
      */
     @PatchMapping("programming-exercises/{exerciseId}/ask-user/in-class/available")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<IrisQuizTimerDTO> makeInClassQuizAvailable(@PathVariable long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
@@ -193,7 +177,7 @@ public class IrisAssessmentReviewResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/ask-user/in-class: Gets the active instructor-controlled in-class quiz window.
+     * GET programming-exercises/{exerciseId}/ask-user/in-class: Gets the active editor-controlled in-class quiz window.
      *
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the timer data, or {@code null} if no timer is active

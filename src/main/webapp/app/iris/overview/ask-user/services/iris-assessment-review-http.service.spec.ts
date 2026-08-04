@@ -77,23 +77,11 @@ describe('IrisAssessmentReviewHttpService', () => {
     it('should find an assessment with points', () => {
         const assessment = { id: 7, verdict: IrisVerdict.SUSPICIOUS } as IrisAssessment;
 
-        service.findWithPoints(7).subscribe((response) => expect(response.body).toEqual(assessment));
+        service.findWithStudent(7).subscribe((response) => expect(response.body).toEqual(assessment));
 
         const request = httpMock.expectOne('api/iris/assessments/7');
         expect(request.request.method).toBe('GET');
         request.flush(assessment);
-    });
-
-    it('should find participations with non-zero latest score and process them', () => {
-        const participations = [{ id: 17 }] as ProgrammingExerciseStudentParticipation[];
-
-        service.findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId, true).subscribe((response) => expect(response.body).toEqual(participations));
-
-        const request = httpMock.expectOne((req) => req.method === 'GET' && req.url === `api/iris/programming-exercises/${exerciseId}/participations/non-zero-latest-score`);
-        expect(request.request.params.get('inClass')).toBe('true');
-        request.flush(participations);
-
-        expect(participationService.processParticipationEntityArrayResponseType).toHaveBeenCalledOnce();
     });
 
     it('should search assessment review participations and map headers and filter counts', () => {

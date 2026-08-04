@@ -3,7 +3,6 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, of, switchMap, take, tap } from 'rxjs';
 import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.model';
 import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
-import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { IrisInClassQuizDTO } from 'app/iris/shared/entities/iris-in-class-quiz-dto.model';
 import dayjs from 'dayjs/esm';
@@ -32,7 +31,6 @@ export class IrisAssessmentReviewHttpService {
     private readonly availableInClassQuizState = new BehaviorSubject<ReadonlyMap<number, IrisInClassQuizDTO>>(new Map());
 
     private http = inject(HttpClient);
-    private participationService = inject(ParticipationService);
 
     public resourceUrl = 'api/iris/assessments';
 
@@ -63,19 +61,8 @@ export class IrisAssessmentReviewHttpService {
         return this.http.get<QAExchangeDTO[]>(`${this.resourceUrl}/${assessmentId}/chat`, { observe: 'response', params });
     }
 
-    findWithPoints(assessmentId: number): Observable<HttpResponse<IrisAssessment>> {
+    findWithStudent(assessmentId: number): Observable<HttpResponse<IrisAssessment>> {
         return this.http.get<IrisAssessment>(`${this.resourceUrl}/${assessmentId}`, { observe: 'response' });
-    }
-
-    findAllParticipationsNonZeroLatestScoreByProgrammingExercise(exerciseId: number, inClass = false): Observable<HttpResponse<ProgrammingExerciseStudentParticipation[]>> {
-        const params = inClass ? new HttpParams().set('inClass', inClass) : undefined;
-
-        return this.http
-            .get<ProgrammingExerciseStudentParticipation[]>(`api/iris/programming-exercises/${exerciseId}/participations/non-zero-latest-score`, {
-                observe: 'response',
-                params,
-            })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseStudentParticipation[]>) => this.participationService.processParticipationEntityArrayResponseType(res)));
     }
 
     searchAssessmentReviewParticipations(courseId: number, search: IrisAssessmentReviewSearch, inClass = false): Observable<IrisAssessmentReviewPage> {

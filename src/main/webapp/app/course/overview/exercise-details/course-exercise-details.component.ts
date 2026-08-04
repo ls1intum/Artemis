@@ -352,7 +352,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
                         this._irisChatEnabled.set(response?.settings?.enabled ?? false);
 
-                        this._irisAskUserModeEnabled.set(askUserModeFeatureEnabled && (response?.settings?.askUserModeEnabled ?? false));
+                        this._irisAskUserModeEnabled.set(askUserModeFeatureEnabled && this.irisChatEnabled() && (response?.settings?.askUserModeEnabled ?? false));
                     });
             }
         }

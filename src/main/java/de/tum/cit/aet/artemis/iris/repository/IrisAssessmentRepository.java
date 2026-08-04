@@ -34,15 +34,22 @@ public interface IrisAssessmentRepository extends ArtemisJpaRepository<IrisAsses
         return getValueElseThrow(findWithExerciseAndCourseById(assessmentId), assessmentId);
     }
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "student", "reasoning" })
+    Optional<IrisAssessment> findWithReasoningAndExerciseAndStudentById(long assessmentId);
+
+    default IrisAssessment findWithReasoningAndExerciseAndStudentByIdElseThrow(long assessmentId) {
+        return getValueElseThrow(findWithReasoningAndExerciseAndStudentById(assessmentId), assessmentId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "exercise.course" })
     Optional<IrisAssessment> findWithExerciseAndCourseById(long assessmentId);
 
-    default IrisAssessment findWithReasoningAndExerciseAndCourseByIdElseThrow(long participationId) {
-        return getValueElseThrow(findWithReasoningAndExerciseAndCourseById(participationId), participationId);
+    default IrisAssessment findWithStudentByIdElseThrow(long assessmentId) {
+        return getValueElseThrow(findWithStudentById(assessmentId), assessmentId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "reasoning", "student", "exercise", "exercise.course" })
-    Optional<IrisAssessment> findWithReasoningAndExerciseAndCourseById(long participationId);
+    @EntityGraph(type = LOAD, attributePaths = { "student" })
+    Optional<IrisAssessment> findWithStudentById(long assessmentId);
 
     @Query("""
             SELECT COUNT(assessment) > 0
