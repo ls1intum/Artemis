@@ -341,7 +341,8 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.unassessedSubmission = submission;
                 if (!submission) {
                     // there are no unassessed submissions
-                    this.submission.set(undefined);
+                    this.navigateBack();
+                    this.alertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
                     return;
                 }
 
