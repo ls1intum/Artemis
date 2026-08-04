@@ -390,6 +390,35 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotShipKatexWhenTheCallerAsksForNoJavaScript() throws Exception {
+        // KaTeX is JavaScript, so includeJs=false has to exclude it too. Before, the scripts were emitted whenever the
+        // statement contained math, whatever the caller asked for.
+        var body = new ProblemStatementRenderRequestDTO("Display:\n$$\\int_0^1 x\\,dx$$", null, null, "en", false, false, true, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("<script");
+        assertThat(result.html()).doesNotContain("katex.min.js");
+        // The stylesheet is a separate switch and stays, so the formula is still styled if the caller wants CSS.
+        assertThat(result.html()).contains("/assets/katex/katex.min.css");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepTheFormulaSourceVisibleWithoutJavaScript() throws Exception {
+        // Without a script nothing replaces the placeholder, so its own text is all the reader gets. An empty span showed
+        // nothing at all; the source is at least readable.
+        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("class=\"katex-formula\"");
+        assertThat(result.html()).doesNotContain("></span>");
+        assertThat(result.html()).contains("\\int_0^1 x\\,dx</span>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotIncludeKatexResourcesWhenNoFormulas() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("# No math here", null, null, "en", false, true, null, null);
 

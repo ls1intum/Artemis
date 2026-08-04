@@ -98,6 +98,36 @@ public final class MathFormulaExtractor {
         return result;
     }
 
+    /** Matches a rendered but still empty formula placeholder, capturing its escaped source and its remaining attributes. */
+    private static final Pattern EMPTY_FORMULA_SPAN = Pattern.compile("<span class=\"katex-formula\" data-formula=\"([^\"]*)\"([^>]*)></span>");
+
+    /**
+     * Copies each formula's source into its placeholder as visible text, so that a document rendered without JavaScript
+     * shows the formula source instead of nothing.
+     * <p>
+     * This deliberately runs <em>after</em> CommonMark rather than in {@link #restore}: inside the markdown the text would
+     * be parsed as markdown, which strips the backslashes (turning {@code x\,dx} into {@code x,dx}) and reads underscores
+     * as emphasis. The escaped attribute value is copied verbatim rather than unescaped and re-escaped, because HTML
+     * attribute escaping is already valid as element text.
+     * <p>
+     * KaTeX replaces the element's content when it renders, so this text is only ever seen when no script runs.
+     *
+     * @param html the rendered HTML
+     * @return the HTML with every formula placeholder carrying its own source as text
+     */
+    public static String fillFormulaSourceAsFallback(String html) {
+        Matcher matcher = EMPTY_FORMULA_SPAN.matcher(html);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            String escapedSource = matcher.group(1);
+            String otherAttributes = matcher.group(2);
+            matcher.appendReplacement(result,
+                    Matcher.quoteReplacement("<span class=\"katex-formula\" data-formula=\"" + escapedSource + "\"" + otherAttributes + ">" + escapedSource + "</span>"));
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
     /**
      * Replaces the placeholders produced by {@link #extract} with {@code <span class="katex-formula">}
      * elements that client-side KaTeX can render. The LaTeX source is HTML-escaped for attribute context.

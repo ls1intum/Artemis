@@ -208,6 +208,10 @@ public class ProblemStatementRenderingService {
         // 7. CommonMark → sanitized HTML.
         String html = renderWithCommonMark(processed);
 
+        // 7a. Give each formula its source as visible text, for readers whose document carries no script. It has to happen
+        // here rather than in restore(): inside the markdown the source would be parsed as markdown and mangled.
+        html = MathFormulaExtractor.fillFormulaSourceAsFallback(html);
+
         // 7b. Process images based on requested mode.
         if (inlineImages) {
             html = inlineMarkdownImages(html);
@@ -236,7 +240,10 @@ public class ProblemStatementRenderingService {
             html = css + html;
         }
 
-        if (!mathFormulas.isEmpty()) {
+        // Gated by includeJs like every other script: KaTeX is JavaScript, so a caller asking for a document without
+        // JavaScript has to get one. Without these scripts the formulas stay as their source text, which the placeholder
+        // now carries, rather than rendering as nothing.
+        if (includeJs && !mathFormulas.isEmpty()) {
             html += "<script src=\"" + HtmlEscaper.escapeAttribute(serverUrl) + KATEX_BASE_PATH + "/katex.min.js\"></script>";
             if (KATEX_AUTO_RENDER_JS != null) {
                 html += "<script>" + KATEX_AUTO_RENDER_JS + "</script>";
