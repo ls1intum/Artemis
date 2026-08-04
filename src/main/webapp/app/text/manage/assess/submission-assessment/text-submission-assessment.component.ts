@@ -452,7 +452,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     async nextSubmission(): Promise<void> {
         const url = getLinkToSubmissionAssessment(ExerciseType.TEXT, this.courseId, this.exerciseId, this.participation!.id, 'new', this.examId, this.exerciseGroupId);
         this.nextSubmissionBusy.set(true);
-        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+        // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among them.
+        await this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
     }
 
     /**

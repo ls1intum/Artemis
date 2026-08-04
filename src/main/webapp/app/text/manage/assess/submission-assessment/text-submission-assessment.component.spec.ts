@@ -484,7 +484,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             'new',
             'assessment',
         ];
-        const queryParams = { queryParams: { 'correction-round': 0 } };
+        const queryParams = { queryParams: { 'correction-round': 0 }, queryParamsHandling: 'merge' };
 
         component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
