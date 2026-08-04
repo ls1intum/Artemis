@@ -137,6 +137,25 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     /**
+     * Get selected repository files for a participation at a specific commit.
+     * @param exerciseId of the exercise to get the files for
+     * @param participationId of the participation to get the files for
+     * @param commitId of the commit to get the files for
+     * @param filePaths repository-relative paths to retrieve
+     */
+    getSelectedParticipationRepositoryFilesAtCommit(
+        exerciseId: number,
+        participationId: number,
+        commitId: string,
+        filePaths: string[],
+    ): Observable<Map<string, string> | undefined> {
+        const params = { commitId, participationId };
+        return this.http
+            .post<Record<string, string>>(`${this.resourceUrl}${exerciseId}/files-content-commit-details/selected`, filePaths, { params })
+            .pipe(map((res: Record<string, string>) => res && new Map(Object.entries(res))));
+    }
+
+    /**
      * Get the vcs access log for a given participation id.
      * The current user needs to be at least an instructor in the course of the participation.
      * @param participationId of the participation to get the vcs Access log

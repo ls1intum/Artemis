@@ -231,7 +231,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithAuthorities(), programmingExercise, RepositoryActionType.READ);
 
-        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation)));
+        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null)));
     }
 
     /**

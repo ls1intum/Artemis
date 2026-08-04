@@ -316,6 +316,7 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException();
         }
 
+        programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }

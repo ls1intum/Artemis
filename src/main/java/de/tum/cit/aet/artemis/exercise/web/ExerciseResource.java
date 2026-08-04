@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -249,6 +250,16 @@ public class ExerciseResource {
                         "programmingExerciseWithOnlyAutomaticAssessment");
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
+        }
+
+        if (exercise.isExamExercise()) {
+            // let the client explain why assessment is not possible yet and from when on it is, instead of running into a 403
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            var examAssessmentDates = ExerciseDateService.computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+            if (examAssessmentDates != null) {
+                exercise.setLatestExamEndDate(examAssessmentDates.latestExamEndDate());
+                exercise.setAssessmentPossibleFrom(examAssessmentDates.assessmentPossibleFrom());
+            }
         }
 
         Set<ExampleSubmission> exampleSubmissions = exerciseService.findExampleSubmissionsForExercise(exercise);
