@@ -1,25 +1,30 @@
 import { globSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcss from 'postcss';
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const cdkOverlayStylesheetPath = resolve(dirname(require.resolve('@angular/cdk/package.json')), 'overlay-prebuilt.css');
 const packageDirectoryArgument = process.argv.indexOf('--package-dir');
 const packageDirectory = packageDirectoryArgument >= 0 ? resolve(process.argv[packageDirectoryArgument + 1]) : resolve(packageRoot, 'dist');
 const stylesheetPath = resolve(packageDirectory, 'styles.css');
 const manifestPath = resolve(packageDirectory, 'package.json');
 const runtimePaths = globSync(resolve(packageRoot, 'src/**/*.{html,scss,ts}')).filter((path) => !path.endsWith('.spec.ts') && !path.endsWith('.stories.ts'));
 const artifactRuntimePaths = globSync(resolve(packageDirectory, 'fesm2022/**/*.mjs'));
-const [css, manifestSource, ...sources] = await Promise.all([
+const [css, manifestSource, cdkOverlayCss, ...sources] = await Promise.all([
     readFile(stylesheetPath, 'utf8'),
     readFile(manifestPath, 'utf8'),
+    readFile(cdkOverlayStylesheetPath, 'utf8'),
     ...runtimePaths.map((path) => readFile(path, 'utf8')),
     ...artifactRuntimePaths.map((path) => readFile(path, 'utf8')),
 ]);
 const runtimeSources = sources.slice(0, runtimePaths.length);
 const artifactRuntimeSources = sources.slice(runtimePaths.length);
 const stylesheet = postcss.parse(css, { from: stylesheetPath });
+const cdkOverlayStylesheet = postcss.parse(cdkOverlayCss, { from: cdkOverlayStylesheetPath });
 const manifest = JSON.parse(manifestSource);
 const errors = [];
 
@@ -34,11 +39,12 @@ if (runtimeSources.some((source) => source.includes('--artemis-')) || artifactRu
 }
 
 const forbiddenAtRules = new Set(['custom-variant', 'import', 'source', 'theme']);
+const allowedLayers = new Set(['properties', 'tum-ui-cdk']);
 stylesheet.walkAtRules((atRule) => {
     if (forbiddenAtRules.has(atRule.name)) {
         errors.push(`the compiled stylesheet contains @${atRule.name}`);
     }
-    if (atRule.name === 'layer' && atRule.params !== 'properties') {
+    if (atRule.name === 'layer' && !allowedLayers.has(atRule.params)) {
         errors.push(`the compiled stylesheet contains unexpected @layer ${atRule.params}`);
     }
     if (atRule.name.endsWith('keyframes') && !atRule.params.startsWith('tum-')) {
@@ -52,6 +58,13 @@ function classNames(rule) {
 
 const compiledClasses = new Set();
 stylesheet.walkRules((rule) => classNames(rule).forEach((className) => compiledClasses.add(className)));
+const cdkOverlayClasses = new Set();
+cdkOverlayStylesheet.walkRules((rule) => classNames(rule).forEach((className) => cdkOverlayClasses.add(className)));
+for (const className of cdkOverlayClasses) {
+    if (!compiledClasses.has(className)) {
+        errors.push(`CDK overlay selector .${className} is missing`);
+    }
+}
 const runtimeClasses = new Set(runtimeSources.flatMap((source) => [...source.matchAll(/tum:[^\s"'`$]+/g)].map((match) => match[0])));
 for (const className of runtimeClasses) {
     if (!compiledClasses.has(className)) {
@@ -116,7 +129,7 @@ stylesheet.walkRules((rule) => {
 
     const selectorClasses = classNames(rule);
     for (const className of selectorClasses) {
-        if (!className.startsWith('tum:') && !className.startsWith('tum-ui-')) {
+        if (!className.startsWith('tum:') && !className.startsWith('tum-ui-') && !cdkOverlayClasses.has(className)) {
             errors.push(`unscoped class selector .${className}`);
         }
     }

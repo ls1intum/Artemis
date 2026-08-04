@@ -370,6 +370,7 @@ describe('@tumaet/ui-angular integration contract', () => {
     it('keeps Tailwind generation scoped to package runtime sources', () => {
         expect(packageTailwind).toContain('prefix(tum)');
         expect(packageTailwind).toContain('source(none)');
+        expect(packageTailwind).toContain("@import '@angular/cdk/overlay-prebuilt.css' layer(tum-ui-cdk)");
         expect(packageTailwind).toContain("@source './src'");
         expect(packageTailwind).toContain("@source not './src/**/*.mdx'");
         expect(packageTailwind).toContain("@source not './src/**/*.spec.ts'");

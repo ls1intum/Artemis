@@ -83,6 +83,24 @@ test('aligns select-like overlays to their trigger', async ({ page }) => {
     }
 });
 
+test('ships a viewport backdrop that dismisses connected overlays', async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 700 });
+    await page.goto('./iframe.html?id=forms-select--default&viewMode=story');
+
+    const trigger = page.getByRole('combobox', { name: 'Course language' });
+    const panel = page.locator('.tum-ui-select-panel');
+    const backdrop = page.locator('.cdk-overlay-backdrop');
+    await trigger.click();
+
+    await expect(panel).toBeVisible();
+    await expect(backdrop).toHaveClass(/cdk-overlay-backdrop-showing/);
+    await expect.poll(() => backdrop.boundingBox()).toEqual({ x: 0, y: 0, width: 900, height: 700 });
+
+    await backdrop.click({ position: { x: 4, y: 4 } });
+    await expect(panel).toBeHidden();
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+});
+
 test('keeps select text and controls separate at compact widths in both directions', async ({ page }) => {
     await page.setViewportSize({ width: 280, height: 640 });
     await page.goto('./iframe.html?id=forms-select--selected&viewMode=story');

@@ -1,5 +1,6 @@
 @import 'tailwindcss/theme.css' prefix(tum);
 @import 'tailwindcss/utilities.css' prefix(tum) source(none);
+@import '@angular/cdk/overlay-prebuilt.css' layer(tum-ui-cdk);
 @import './tailwind-theme.css';
 
 @source './src';
