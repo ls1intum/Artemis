@@ -507,7 +507,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise.set({ id: exerciseId } as Exercise);
             component.exerciseId = exerciseId;
             const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
-            const queryParams = { queryParams: { 'correction-round': correctionRound } };
+            const queryParams = { queryParams: { 'correction-round': correctionRound }, queryParamsHandling: 'merge' };
 
             await fixture.whenStable();
             component.assessNext();
