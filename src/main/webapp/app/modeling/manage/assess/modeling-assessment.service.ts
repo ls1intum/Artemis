@@ -59,8 +59,9 @@ export class ModelingAssessmentService {
         return this.http.get<Result>(url).pipe(map((res) => this.convertResult(res)));
     }
 
-    cancelAssessment(submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null);
+    cancelAssessment(submissionId: number, resultId?: number): Observable<void> {
+        const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
+        return this.http.put<void>(`${this.resourceUrl}/modeling-submissions/${submissionId}/cancel-assessment`, null, { params });
     }
 
     /**

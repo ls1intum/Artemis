@@ -13,7 +13,9 @@
             "edit": "Edit",
             "copy": "Copy",
             "copied": "Copied",
-            "new": "New"
+            "new": "New",
+            "expand": "Expand",
+            "collapse": "Collapse"
         },
         "weekdays": {
             "monday": "Monday",
@@ -38,6 +40,7 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",
             "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
             "searching": "Searching...",
@@ -328,6 +331,7 @@
         },
         "item-count": "Showing {{first}} to {{second}} of {{total}} items",
         "paginator": {
+            "ariaLabel": "Pagination",
             "first": "First page",
             "previous": "Previous page",
             "next": "Next page",
@@ -335,7 +339,11 @@
             "rowsPerPage": "Rows per page"
         },
         "datePicker": {
+            "placeholder": "DD.MM.YYYY HH:mm",
             "open": "Open calendar",
+            "dialog": "Choose date and time",
+            "previousMonth": "Previous month: {{ month }}",
+            "nextMonth": "Next month: {{ month }}",
             "clear": "Clear",
             "done": "Done",
             "time": "Time",
@@ -358,6 +366,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "clear": "Clear",
             "continue": "Continue",
             "units": "Content",
             "dashboard": "Dashboard",
