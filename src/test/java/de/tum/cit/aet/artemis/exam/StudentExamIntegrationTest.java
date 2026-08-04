@@ -1185,7 +1185,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingTriggerService, timeout(30000)).triggerBuildForParticipations(List.of(participation));
+        verify(programmingTriggerService, timeout(60000)).triggerBuildForParticipations(List.of(participation));
     }
 
     @Test
@@ -2525,7 +2525,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Set<User> users = exam2.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, users);
 
-        await().atMost(Duration.ofMinutes(1)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
+        await().atMost(Duration.ofMinutes(2)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
     }

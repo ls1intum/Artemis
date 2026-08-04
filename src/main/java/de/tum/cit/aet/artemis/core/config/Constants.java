@@ -33,6 +33,8 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
+    public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
     /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
