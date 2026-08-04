@@ -9,23 +9,40 @@ import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { PageableResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
+/**
+ * A programming exercise student participation as returned by the assessment review search, extended with
+ * the id of its exercise.
+ */
 export interface IrisAssessmentReviewParticipation extends ProgrammingExerciseStudentParticipation {
     exerciseId?: number;
 }
 
+/**
+ * Search parameters for {@link IrisAssessmentReviewHttpService#searchAssessmentReviewParticipations}.
+ */
 export interface IrisAssessmentReviewSearch extends SearchTermPageableSearch {
     filterProps?: string[];
 }
 
+/**
+ * Raw server response shape for a page of assessment review participations.
+ */
 interface IrisAssessmentReviewPageResponse {
     participations?: IrisAssessmentReviewParticipation[];
     participationsPerFilter?: Record<string, number>;
 }
 
+/**
+ * A page of assessment review participations, together with the number of participations per filter option.
+ */
 export interface IrisAssessmentReviewPage extends PageableResult<IrisAssessmentReviewParticipation> {
     participationsPerFilter: ReadonlyMap<string, number>;
 }
 
+/**
+ * HTTP client for the Iris assessment review feature: accepting/rejecting ask-user chat answers, fetching
+ * assessment chats, searching participations for review, and managing the availability of in-class quizzes.
+ */
 @Injectable({ providedIn: 'root' })
 export class IrisAssessmentReviewHttpService {
     private readonly availableInClassQuizState = new BehaviorSubject<ReadonlyMap<number, IrisInClassQuizDTO>>(new Map());
@@ -61,10 +78,21 @@ export class IrisAssessmentReviewHttpService {
         return this.http.get<QAExchangeDTO[]>(`${this.resourceUrl}/${assessmentId}/chat`, { observe: 'response', params });
     }
 
+    /**
+     * Fetches the Iris assessment together with the associated student data.
+     * @param assessmentId The unique identifier of the assessment
+     */
     findWithStudent(assessmentId: number): Observable<HttpResponse<IrisAssessment>> {
         return this.http.get<IrisAssessment>(`${this.resourceUrl}/${assessmentId}`, { observe: 'response' });
     }
 
+    /**
+     * Searches for programming exercise student participations available for assessment review in a course,
+     * paged and filtered according to the given search parameters.
+     * @param courseId The unique identifier of the course
+     * @param search Paging, sorting, search term, and filter properties
+     * @param inClass Whether to search participations for in-class quizzes instead of regular quizzes
+     */
     searchAssessmentReviewParticipations(courseId: number, search: IrisAssessmentReviewSearch, inClass = false): Observable<IrisAssessmentReviewPage> {
         let params = new HttpParams()
             .set('page', search.page)
@@ -112,6 +140,10 @@ export class IrisAssessmentReviewHttpService {
         );
     }
 
+    /**
+     * Emits the currently available in-class quiz (if any) for the given exercise, and re-emits whenever it changes.
+     * @param exerciseId The unique identifier of the exercise
+     */
     availableInClassQuizForExercise(exerciseId: number): Observable<IrisInClassQuizDTO | undefined> {
         return this.currentAvailableInClassQuizForExercise(exerciseId).pipe(
             switchMap(() => this.availableInClassQuizState.pipe(map((availableInClassQuizzes) => availableInClassQuizzes.get(exerciseId)))),
@@ -139,6 +171,10 @@ export class IrisAssessmentReviewHttpService {
         );
     }
 
+    /**
+     * Fetches the currently available in-class quiz for the exercise from the server and updates the local state.
+     * @param exerciseId The unique identifier of the exercise
+     */
     getAvailableInClassQuiz(exerciseId: number): Observable<HttpResponse<IrisInClassQuizDTO>> {
         return this.http.get<IrisInClassQuizDTO>(`api/iris/programming-exercises/${exerciseId}/ask-user/in-class`, { observe: 'response' }).pipe(
             map((response) => this.convertInClassQuizResponseFromServer(response)),
@@ -146,10 +182,19 @@ export class IrisAssessmentReviewHttpService {
         );
     }
 
+    /**
+     * Clears the locally cached available in-class quiz for the given exercise.
+     * @param exerciseId The unique identifier of the exercise
+     */
     clearActiveInClassQuiz(exerciseId: number): void {
         this.setAvailableInClassQuiz(exerciseId, undefined);
     }
 
+    /**
+     * Converts the server-provided timer fields of an in-class quiz DTO (parsing the expiry date and deriving
+     * the time limit if not explicitly provided).
+     * @param response The raw HTTP response received from the server
+     */
     convertInClassQuizResponseFromServer(response: HttpResponse<IrisInClassQuizDTO>): HttpResponse<IrisInClassQuizDTO> {
         if (!response.body) {
             return response;
@@ -166,6 +211,12 @@ export class IrisAssessmentReviewHttpService {
         });
     }
 
+    /**
+     * Updates the locally cached available in-class quiz for the exercise, storing it only if its timer has
+     * not yet expired, and removing it otherwise.
+     * @param exerciseId The unique identifier of the exercise
+     * @param inClassQuiz The in-class quiz to cache, or undefined to clear it
+     */
     private setAvailableInClassQuiz(exerciseId: number, inClassQuiz: IrisInClassQuizDTO | undefined): void {
         const activeInClassQuizzes = new Map(this.availableInClassQuizState.value);
 

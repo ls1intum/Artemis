@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
- * Service for managing state and result of an iris assessment and the in-class quiz mode management by the instructor.
+ * Service for managing state and result of an iris assessment and the in-class quiz mode management by the editor.
  */
 @Lazy
 @Service
@@ -123,6 +123,14 @@ public class IrisAssessmentReviewService {
         irisAssessmentRepository.save(assessment);
     }
 
+    /**
+     * Appends a reasoning entry to a user's Iris assessment without changing the verdict.
+     *
+     * @param user      the assessed user
+     * @param exercise  the exercise
+     * @param reasoning the reasoning text to append
+     * @param inClass   whether to use the in-class assessment
+     */
     public void addReasoning(User user, Exercise exercise, String reasoning, boolean inClass) {
         IrisAssessment assessment = findOrCreateAssessment(user, exercise, inClass, true);
         addReasoningInternal(assessment, reasoning);
@@ -136,6 +144,12 @@ public class IrisAssessmentReviewService {
         assessment.setReasoning(reasonings);
     }
 
+    /**
+     * Checks whether any Iris assessment in a course was flagged as suspicious and still awaits review.
+     *
+     * @param courseId the course to check
+     * @return true if at least one unreviewed suspicious assessment exists in the course
+     */
     public boolean assessmentAttentionNeededInCourse(long courseId) {
         return irisAssessmentRepository.existsByCourseIdAndVerdictAndVerdictReviewIsNull(courseId, IrisVerdict.SUSPICIOUS);
     }
@@ -200,6 +214,15 @@ public class IrisAssessmentReviewService {
         return participationProjections.stream().map(projection -> projection.toDto(submissionCountMap.get(projection.id()))).collect(Collectors.toSet());
     }
 
+    /**
+     * Counts matching participations for the "All" bucket and for each individual verdict filter, so the UI can show
+     * counts per filter alongside the currently applied text search.
+     *
+     * @param courseId      the course to search in
+     * @param searchPattern the SQL LIKE pattern to match, or null for no text filter
+     * @param inClass       whether to use the in-class Iris assessment relation
+     * @return a map from filter key (including {@code FILTER_ALL}) to the number of matching participations
+     */
     private Map<String, Long> countParticipationsPerFilter(long courseId, String searchPattern, boolean inClass) {
         Map<String, Long> counts = new LinkedHashMap<>();
         counts.put(FILTER_ALL, countParticipations(courseId, searchPattern, inClass, FilterSelection.none()));
@@ -218,6 +241,12 @@ public class IrisAssessmentReviewService {
                 .getTotalElements();
     }
 
+    /**
+     * Builds a SQL LIKE pattern for the given search term, escaping existing wildcard and escape characters.
+     *
+     * @param searchTerm the raw search term, may be null or blank
+     * @return the escaped, wildcard-wrapped LIKE pattern, or null if the search term is null or blank
+     */
     private static String likePattern(String searchTerm) {
         if (searchTerm == null || searchTerm.isBlank()) {
             return null;
@@ -238,6 +267,11 @@ public class IrisAssessmentReviewService {
         irisAssessmentRepository.save(assessment);
     }
 
+    /**
+     * Clears verdict and reasoning for the given Iris assessment.
+     *
+     * @param assessment the assessment to reset
+     */
     public void resetVerdictAndReasoning(IrisAssessment assessment) {
         var assessmentWithReasoning = assessment.getId() == null ? assessment : irisAssessmentRepository.findWithReasoningById(assessment.getId()).orElse(assessment);
         resetVerdictAndReasoningInternal(assessmentWithReasoning);
@@ -384,6 +418,12 @@ public class IrisAssessmentReviewService {
                 i < userMessages.size() ? userMessages.get(i).getContent().getFirst().getContentAsString() : "", i < reasoning.size() ? reasoning.get(i) : "")).toList();
     }
 
+    /**
+     * Validates that the in-class quiz timer for the given exercise is currently active.
+     *
+     * @param exercise the programming exercise to check
+     * @throws ConflictException if the in-class quiz timer has expired or is not active
+     */
     public void validateInClassQuizIsAvailableOrElseThrow(ProgrammingExercise exercise) {
         if (getAvailableInClassQuiz(exercise) == null) {
             throw new ConflictException("The in-class quiz timer has expired or is not active", "Iris", "irisInClassQuizExpired");
@@ -437,6 +477,13 @@ public class IrisAssessmentReviewService {
         return new IrisQuizTimerDTO(expiresAt, timeLimit);
     }
 
+    /**
+     * Schedules a task to clear the in-class quiz timer of an exercise once it expires, replacing and cancelling any
+     * previously scheduled cleanup task for the same exercise.
+     *
+     * @param exerciseId the exercise id
+     * @param expiresAt  the timestamp at which the in-class quiz timer expires
+     */
     private void scheduleInClassQuizTimerCleanup(long exerciseId, ZonedDateTime expiresAt) {
         var previousTimer = availableInClassQuizTimers.remove(exerciseId);
         if (previousTimer != null) {
@@ -448,6 +495,13 @@ public class IrisAssessmentReviewService {
         availableInClassQuizTimers.put(exerciseId, future);
     }
 
+    /**
+     * Clears the in-class quiz timer of an exercise, but only if it still matches the expected expiry timestamp, to
+     * avoid clobbering a timer that has since been reset or renewed.
+     *
+     * @param exercise          the programming exercise
+     * @param expectedExpiresAt the expiry timestamp the timer is expected to still have
+     */
     private void clearInClassQuizTimer(ProgrammingExercise exercise, ZonedDateTime expectedExpiresAt) {
         if (Objects.equals(exercise.getIrisInClassQuizTimer(), expectedExpiresAt)) {
             exercise.setIrisInClassQuizTimer(null);
@@ -456,6 +510,15 @@ public class IrisAssessmentReviewService {
         availableInClassQuizTimers.remove(exercise.getId());
     }
 
+    /**
+     * Finds the existing Iris assessment for a user's participation in an exercise, creating a new one if none exists yet.
+     *
+     * @param user          the assessed user
+     * @param exercise      the exercise
+     * @param inClass       whether to use the in-class assessment relation
+     * @param withReasoning whether the returned assessment must have its reasoning eagerly loaded
+     * @return the existing or newly created Iris assessment
+     */
     private IrisAssessment findOrCreateAssessment(User user, Exercise exercise, boolean inClass, boolean withReasoning) {
         var participation = programmingExerciseStudentParticipationRepository
                 .findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), inClass, false).orElseThrow();
@@ -472,12 +535,21 @@ public class IrisAssessmentReviewService {
         return assessment;
     }
 
+    /**
+     * The set of verdict/review filters selected for an Iris assessment review search.
+     */
     private record FilterSelection(boolean accepted, boolean rejected, boolean unsuspicious, boolean suspicious, boolean missing) {
 
         static FilterSelection none() {
             return new FilterSelection(false, false, false, false, false);
         }
 
+        /**
+         * Parses a comma-separated list of filter keys into a {@link FilterSelection}.
+         *
+         * @param filterProps the comma-separated filter keys, may be null or blank
+         * @return the parsed filter selection, or {@link #none()} if no filter keys were given
+         */
         static FilterSelection from(String filterProps) {
             if (filterProps == null || filterProps.isBlank()) {
                 return none();
@@ -493,6 +565,12 @@ public class IrisAssessmentReviewService {
         }
     }
 
+    /**
+     * The result of an Iris assessment review search: the paged participations and the per-filter result counts.
+     *
+     * @param page                    the requested page of matching participation DTOs
+     * @param participationsPerFilter the number of matching participations per filter key, including {@code FILTER_ALL}
+     */
     public record IrisAssessmentReviewSearchResult(Page<IrisAssessmentProgrammingStudentParticipationDTO> page, Map<String, Long> participationsPerFilter) {
     }
 }

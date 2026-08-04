@@ -12,6 +12,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
+/**
+ * Button that links to the Iris assessment review page for a participation, showing the current verdict
+ * (and whether it still needs attention) via its label and severity.
+ */
 @Component({
     selector: 'jhi-iris-review-assessment-button',
     templateUrl: './iris-review-assessment-button.component.html',

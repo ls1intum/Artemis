@@ -11,6 +11,9 @@ import { IrisAssessment } from 'app/iris/shared/entities/iris-assessment.model';
 import { QAExchangeDTO } from 'app/iris/shared/entities/iris-qa-exchange-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
+/**
+ * Data resolved by {@link IrisAssessmentReviewResolver} before the assessment review route is activated.
+ */
 export interface IrisAssessmentReviewResolvedData {
     readonly course: Course;
     readonly exercise: ProgrammingExercise;
@@ -18,11 +21,21 @@ export interface IrisAssessmentReviewResolvedData {
     readonly rows: QAExchangeDTO[];
 }
 
+/**
+ * Route resolver that loads the course, Iris assessment, and its chat exchanges needed to render the
+ * assessment review page before navigation completes.
+ */
 @Injectable({ providedIn: 'root' })
 export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentReviewResolvedData> {
     private readonly courseService = inject(CourseManagementService);
     private readonly irisAssessmentReviewService = inject(IrisAssessmentReviewHttpService);
 
+    /**
+     * Loads the course, assessment, and assessment chat referenced by the route, and verifies that the
+     * assessment belongs to a programming exercise.
+     * @param route The activated route snapshot containing the `courseId`/`assessmentId` params and `inClass` data
+     * @returns the resolved course, exercise, assessment, and chat rows
+     */
     resolve(route: ActivatedRouteSnapshot): Observable<IrisAssessmentReviewResolvedData> {
         const courseId = this.getRequiredId(route, 'courseId');
         const assessmentId = this.getRequiredId(route, 'assessmentId');
@@ -53,6 +66,12 @@ export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentRevie
         );
     }
 
+    /**
+     * Reads a positive integer route parameter, throwing if it is missing or not a valid positive integer.
+     * @param route The activated route snapshot to read the parameter from
+     * @param parameterName The name of the route parameter
+     * @returns the parsed parameter value
+     */
     private getRequiredId(route: ActivatedRouteSnapshot, parameterName: string): number {
         const rawValue = route.paramMap.get(parameterName);
         const id = Number(rawValue);
@@ -64,6 +83,12 @@ export class IrisAssessmentReviewResolver implements Resolve<IrisAssessmentRevie
         return id;
     }
 
+    /**
+     * Returns the body of an HTTP response, throwing a descriptive error if it is null.
+     * @param response The HTTP response to unwrap
+     * @param entityName Human-readable name of the entity used in the error message
+     * @returns the non-null response body
+     */
     private requireBody<T>(response: HttpResponse<T>, entityName: string): T {
         if (response.body === null) {
             throw new Error(`${entityName} could not be loaded`);

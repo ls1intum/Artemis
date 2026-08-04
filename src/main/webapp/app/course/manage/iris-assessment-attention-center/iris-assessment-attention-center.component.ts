@@ -12,6 +12,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
+/**
+ * Displays a box on the course detail page that draws instructors'/tutors' attention to Iris assessments
+ * (or in-class quiz assessments) that need review, and links to the respective review overview pages.
+ */
 @Component({
     selector: 'jhi-iris-assessment-attention-center',
     imports: [HelpIconComponent, FaIconComponent, RouterLink, TranslateDirective, ArtemisTranslatePipe, TumUiButtonDirective],

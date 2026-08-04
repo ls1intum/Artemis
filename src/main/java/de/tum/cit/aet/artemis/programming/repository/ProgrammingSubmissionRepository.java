@@ -128,6 +128,14 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                         AND newerLatestResult.score > 0
                 )
             """)
+    /**
+     * Finds the id of the latest programming submission for the given participation whose submission date is before or at the exercise due date
+     * (or the exercise has no due date) and whose latest result has a score greater than zero.
+     * "Latest" is determined by submission date, falling back to submission id for ties.
+     *
+     * @param participationId the id of the participation
+     * @return the id of the latest matching programming submission, or an empty {@code Optional} if none exists
+     */
     Optional<Long> findLatestSubmissionIdBeforeExerciseDueDateAndResultScoreGreaterThanZeroByParticipationId(@Param("participationId") long participationId);
 
     @Query("""

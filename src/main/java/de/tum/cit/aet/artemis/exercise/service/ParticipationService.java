@@ -1057,6 +1057,15 @@ public class ParticipationService {
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
+    /**
+     * Maps a participation and its related data to a {@link ParticipationScoreDTO}.
+     *
+     * @param participation           the participation to map
+     * @param submissionCountMap      a map of participation id to submission count
+     * @param resultBySubmissionId    a map of submission id to the latest result with assessment note
+     * @param shouldMapIrisAssessment whether the Iris assessment of the participation should be included in the resulting DTO
+     * @return the mapped {@link ParticipationScoreDTO}
+     */
     private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
             boolean shouldMapIrisAssessment) {
         // Participant info

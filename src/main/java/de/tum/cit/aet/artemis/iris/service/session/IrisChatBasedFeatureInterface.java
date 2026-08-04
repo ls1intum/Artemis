@@ -3,6 +3,12 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
+/**
+ * Interface for Iris features that communicate with the student through a chat-based session,
+ * sending messages over the websocket and requesting responses from Iris.
+ *
+ * @param <S> the type of the Iris session
+ */
 public interface IrisChatBasedFeatureInterface<S extends IrisSession> extends IrisSubFeatureInterface<S> {
 
     /**

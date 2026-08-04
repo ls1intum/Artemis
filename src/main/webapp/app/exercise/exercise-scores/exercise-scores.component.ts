@@ -488,10 +488,19 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         };
     }
 
+    /**
+     * Narrows the currently loaded exercise to a ProgrammingExercise. Callers are only expected to invoke this
+     * when the exercise is known to be a programming exercise (e.g. rendering the Iris assessment review button).
+     */
     toProgrammingExercise(): ProgrammingExercise {
         return this.exercise() as ProgrammingExercise;
     }
 
+    /**
+     * Builds a minimal ProgrammingExerciseStudentParticipation from the flat DTO, extending {@link toParticipation}
+     * with the programming-specific fields (exercise, Iris assessment) needed by the Iris assessment review button.
+     * @param dto The flat participation score DTO returned by the server
+     */
     toProgrammingParticipation(dto: ParticipationScoreDTO): ProgrammingExerciseStudentParticipation {
         const participation = this.toParticipation(dto);
 

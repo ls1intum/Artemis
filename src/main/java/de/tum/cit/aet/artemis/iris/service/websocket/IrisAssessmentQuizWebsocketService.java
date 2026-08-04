@@ -23,10 +23,21 @@ public class IrisAssessmentQuizWebsocketService {
         this.websocketMessagingService = websocketMessagingService;
     }
 
+    /**
+     * Notifies clients subscribed to the in-class assessment quiz topic that the quiz for the given exercise has started.
+     *
+     * @param exerciseId the id of the programming exercise the assessment quiz belongs to
+     */
     public void sendInClassQuizStarted(long exerciseId) {
         websocketMessagingService.sendMessage(getInClassQuizStartedTopic(exerciseId), "");
     }
 
+    /**
+     * Builds the websocket topic used to notify clients that the in-class assessment quiz has started.
+     *
+     * @param exerciseId the id of the programming exercise the assessment quiz belongs to
+     * @return the topic for in-class assessment quiz start events
+     */
     public static String getInClassQuizStartedTopic(long exerciseId) {
         return IN_CLASS_QUIZ_STARTED_TOPIC.formatted(exerciseId);
     }

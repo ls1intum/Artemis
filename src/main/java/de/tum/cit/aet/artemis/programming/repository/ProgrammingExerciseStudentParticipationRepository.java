@@ -91,6 +91,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = "irisAssessmentInClass")
     Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentInClassByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
+    /**
+     * Loads the participation with the Iris assessment eagerly fetched, choosing between the regular and the in-class assessment
+     * depending on the {@code inClass} flag.
+     *
+     * @param exerciseId the id of the exercise
+     * @param username   the login of the student
+     * @param inClass    whether the in-class Iris assessment should be loaded instead of the regular one
+     * @param testRun    whether the participation is a test run participation
+     * @return the participation with the corresponding Iris assessment eagerly fetched, if found
+     */
     default Optional<ProgrammingExerciseStudentParticipation> findWithIrisAssessmentByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean inClass,
             boolean testRun) {
         return inClass ? findWithIrisAssessmentInClassByExerciseIdAndStudentLoginAndTestRun(exerciseId, username, testRun)
@@ -216,6 +226,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = "team.students")
     Optional<ProgrammingExerciseStudentParticipation> findWithTeamStudentsById(long participationId);
 
+    /**
+     * Finds the ids of all in-class Iris assessments that belong to participations of the given exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the ids of the in-class Iris assessments linked to participations of the exercise
+     */
     @Query("""
             SELECT assessment.id
             FROM ProgrammingExerciseStudentParticipation participation
@@ -224,6 +240,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<Long> findIrisAssessmentInClassIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Removes the reference to the in-class Iris assessment from all participations of the given exercise, without deleting the assessments themselves.
+     * Used to detach in-class assessments from their participations, e.g. before a new in-class quiz run.
+     *
+     * @param exerciseId the id of the exercise for which the in-class Iris assessment references should be unset
+     */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -264,6 +286,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return findAllIrisAssessmentInClassParticipationProjectionsByIdIn(participationIds);
     }
 
+    /**
+     * Resolves the ids of non-practice participations of the given exercise whose latest submission's latest result has a positive score.
+     * Chains three queries (latest submission ids, latest result ids, participation ids), short-circuiting with an empty set as soon as one step yields no results.
+     *
+     * @param exerciseId the exercise id
+     * @return the ids of the matching participations
+     */
     private Set<Long> findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(long exerciseId) {
         var latestSubmissionIds = findLatestSubmissionIdsByExerciseId(exerciseId);
         if (latestSubmissionIds.isEmpty()) {
@@ -278,6 +307,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(latestResultIds);
     }
 
+    /**
+     * Finds the ids of the latest submission per non-team participation of the given exercise, restricted to submissions whose latest result has a positive score
+     * and for which no strictly newer submission (by submission date, falling back to id) with a positive-score latest result exists.
+     *
+     * @param exerciseId the exercise id
+     * @return the ids of the qualifying latest submissions
+     */
     @Query("""
             SELECT submission.id
             FROM ProgrammingExerciseStudentParticipation participation
@@ -309,6 +345,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<Long> findLatestSubmissionIdsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Finds, for each of the given submissions, the id of its latest result.
+     *
+     * @param submissionIds the ids of the submissions
+     * @return the ids of the latest result per submission
+     */
     @Query("""
             SELECT MAX(result.id)
             FROM Result result
@@ -317,6 +359,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<Long> findLatestResultIdsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
+    /**
+     * Finds the ids of the (non-practice) participations whose result, among the given result ids, has a positive score.
+     *
+     * @param resultIds the ids of the results to filter on
+     * @return the ids of the matching non-practice participations
+     */
     @Query("""
             SELECT result.submission.participation.id
             FROM Result result
@@ -326,6 +374,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<Long> findParticipationIdsByResultIdsAndScoreGreaterThanZeroAndNotPractice(@Param("resultIds") Set<Long> resultIds);
 
+    /**
+     * Loads Iris assessment participation projections for the given participation ids, joined with their (optional) regular Iris assessment.
+     *
+     * @param participationIds the ids of the participations to project
+     * @return the projections for the matching participations
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
                 participation.id,
@@ -346,6 +400,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
 
+    /**
+     * Loads Iris assessment participation projections for the given participation ids, joined with their (optional) in-class Iris assessment.
+     *
+     * @param participationIds the ids of the participations to project
+     * @return the projections for the matching participations
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
                 participation.id,
@@ -366,6 +426,25 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
 
+    /**
+     * Searches, paginates and filters non-practice participation ids of a course's programming exercises for the Iris assessment review overview.
+     * <p>
+     * A participation is only included if its latest submission's latest result has a positive score (see the {@code EXISTS} subquery, mirroring the logic of
+     * {@link #findLatestSubmissionIdsByExerciseId(long)}). The result is further restricted by an optional student name/login search pattern and, if any verdict
+     * filter is selected, by the Iris verdict/verdict-review of either the regular or the in-class Iris assessment, depending on {@code inClass}.
+     *
+     * @param courseId             the id of the course whose participations are searched
+     * @param searchPattern        a lower-cased {@code LIKE} pattern matched against the student's login or full name, or {@code null} to disable the name filter
+     * @param inClass              whether the in-class Iris assessment (instead of the regular one) should be used for the verdict filters
+     * @param hasSelectedFilter    whether at least one of the verdict filters below is active; if {@code false}, no verdict filtering is applied
+     * @param acceptedSelected     whether to include participations whose relevant assessment verdict review is {@code ACCEPTED}
+     * @param rejectedSelected     whether to include participations whose relevant assessment verdict review is {@code REJECTED}
+     * @param unsuspiciousSelected whether to include participations whose relevant assessment verdict is {@code UNSUSPICIOUS} and not yet reviewed
+     * @param suspiciousSelected   whether to include participations whose relevant assessment verdict is {@code SUSPICIOUS} and not yet reviewed
+     * @param missingSelected      whether to include participations that have no relevant assessment (or no verdict) yet
+     * @param pageable             the pagination and sorting information
+     * @return a page of matching participation ids, ordered by exercise title and student name
+     */
     @Query(value = """
             SELECT participation.id
             FROM ProgrammingExerciseStudentParticipation participation

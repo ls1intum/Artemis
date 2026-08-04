@@ -13,6 +13,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [TranslateDirective, FaIconComponent, ButtonModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Confirmation dialog shown before starting an in-class quiz for an exercise whose due
+ * date has not yet passed, warning the instructor about the effect on students still working.
+ */
 export class IrisInClassQuizStartWarningComponent {
     private readonly dialogRef = inject(DynamicDialogRef);
 

@@ -304,6 +304,14 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
     }
 
+    /**
+     * Determines whether a progress-stalled event should be sent to Iris for the given participation, based on
+     * the student's recent submission history: the most recent submissions were not fully successful and the
+     * student's score trajectory over the last few submissions shows no overall improvement.
+     *
+     * @param studentParticipation the participation to evaluate
+     * @return true if the student needs intervention and a progress-stalled event should be triggered, false otherwise
+     */
     boolean shouldSendProgressStalledEvent(ProgrammingExerciseStudentParticipation studentParticipation) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());

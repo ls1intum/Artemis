@@ -18,6 +18,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
+/**
+ * Button that lets a student start the regular ask-user quiz for an exercise, reflecting whether the quiz is
+ * currently active, already completed, or startable.
+ */
 @Component({
     selector: 'jhi-start-quiz-button',
     templateUrl: './start-quiz-button.component.html',
@@ -91,6 +95,11 @@ export class IrisStartQuizButtonComponent {
         }
     });
 
+    /**
+     * Resets local quiz state on exercise change, fetches the currently started regular/in-class quiz state
+     * for the exercise, reacts to chat pipe events (submission with points, quiz finished), and resets the
+     * active regular quiz whenever the current run fails.
+     */
     constructor() {
         toObservable(this.exerciseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -173,6 +182,10 @@ export class IrisStartQuizButtonComponent {
         });
     }
 
+    /**
+     * Clears the locally active regular-quiz mode and the shared active quiz type for the current exercise,
+     * if a regular quiz is currently considered active.
+     */
     private resetActiveRegularQuiz(): void {
         const exerciseId = this.exerciseId();
         if (exerciseId !== undefined && (this.askUserService.activeQuizType() === 'regular' || this.isAskUserMode())) {
@@ -181,6 +194,10 @@ export class IrisStartQuizButtonComponent {
         }
     }
 
+    /**
+     * Starts the regular quiz for the current exercise, if it can currently be started, rolling back the
+     * local state and showing an alert if the request fails.
+     */
     protected startQuiz(): void {
         const exerciseId = this.exerciseId();
         if (!this.canBeStarted() || exerciseId === undefined) {

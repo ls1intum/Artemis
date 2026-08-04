@@ -27,6 +27,10 @@ import { onError } from 'app/foundation/util/global.utils';
     imports: [TranslateDirective, ArtemisTranslatePipe, ButtonModule, TableModule, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Displays the Iris ask-user-mode assessment for a single participation and lets an
+ * instructor accept or reject its verdict.
+ */
 export class IrisAssessmentReviewComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly irisAssessmentReviewService = inject(IrisAssessmentReviewHttpService);
@@ -53,6 +57,9 @@ export class IrisAssessmentReviewComponent {
      */
     protected readonly assessment = linkedSignal<IrisAssessment>(() => this.resolvedData().assessment);
 
+    /**
+     * Translation key suffix for the assessment's verdict (suspicious/unsuspicious).
+     */
     protected readonly verdictTranslationSuffix = computed(() => {
         switch (this.assessment().verdict) {
             case IrisVerdict.SUSPICIOUS:
@@ -64,6 +71,9 @@ export class IrisAssessmentReviewComponent {
         }
     });
 
+    /**
+     * Translation key suffix for the instructor's review decision (accepted/rejected).
+     */
     protected readonly reviewTranslationSuffix = computed(() => {
         switch (this.assessment().verdictReview) {
             case IrisVerdictReview.ACCEPTED:
@@ -83,6 +93,11 @@ export class IrisAssessmentReviewComponent {
         this.updateReview(IrisVerdictReview.REJECTED);
     }
 
+    /**
+     * Applies the given review decision optimistically, then persists it to the server.
+     * Reverts the local state if the request fails.
+     * @param verdictReview The review decision to apply (accepted or rejected)
+     */
     private updateReview(verdictReview: IrisVerdictReview): void {
         const currentAssessment = this.assessment();
 

@@ -307,6 +307,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         });
     }
 
+    /**
+     * Validation error for the minimum-questions ask-user-mode setting, or undefined if valid.
+     */
     readonly askUserModeMinQuestionsError = computed(() => {
         if (!this.settings()?.askUserModeEnabled) {
             return undefined;
@@ -324,6 +327,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return undefined;
     });
 
+    /**
+     * Validation error for the maximum-questions ask-user-mode setting, or undefined if valid.
+     */
     readonly askUserModeMaxQuestionsError = computed(() => {
         if (!this.settings()?.askUserModeEnabled) {
             return undefined;
@@ -341,6 +347,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return undefined;
     });
 
+    /**
+     * Validation error for the per-question time limit ask-user-mode setting, or undefined if valid.
+     */
     readonly askUserModeQuestionTimeLimitError = computed(() => {
         if (!this.settings()?.askUserModeEnabled) {
             return undefined;
@@ -355,6 +364,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return undefined;
     });
 
+    /**
+     * Validation error for the in-class time limit ask-user-mode setting, or undefined if valid.
+     */
     readonly askUserModeInClassTimeLimitError = computed(() => {
         if (!this.settings()?.askUserModeEnabled) {
             return undefined;
@@ -651,12 +663,23 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
     }
 
+    /**
+     * Ensures a settings object always has an `askUserModeSettings` value, filling in the
+     * defaults when the server response omits it.
+     * @param settings The course settings to fill in
+     */
     private withAskUserModeDefaults(settings: IrisCourseSettingsDTO): IrisCourseSettingsDTO {
         return Object.assign({}, settings, {
             askUserModeSettings: settings.askUserModeSettings ?? createDefaultAskUserModeSettings(),
         });
     }
 
+    /**
+     * Determines the ask-user-mode settings to send when saving. Falls back to the defaults
+     * when ask-user mode is disabled and the current values are not a valid configuration,
+     * so an invalid draft is never persisted.
+     * @param settings The current course settings
+     */
     private normalizeAskUserModeSettingsForSave(settings: IrisCourseSettingsDTO): IrisAskUserModeSettingsDTO {
         const askUserModeSettings = settings.askUserModeSettings ?? createDefaultAskUserModeSettings();
         if (!settings.askUserModeEnabled && !this.isAskUserModeSettingsValid(askUserModeSettings)) {
@@ -665,6 +688,11 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return askUserModeSettings;
     }
 
+    /**
+     * Checks whether the given ask-user-mode settings are within their allowed ranges
+     * (question counts, per-question time limit, and in-class time limit).
+     * @param settings The ask-user-mode settings to validate
+     */
     private isAskUserModeSettingsValid(settings?: IrisAskUserModeSettingsDTO): boolean {
         return (
             !!settings &&

@@ -189,6 +189,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Activates the panel at the given index: switches to it as the single visible panel on narrow
+     * layouts, or expands the right panel preceding it on wide layouts.
+     * @param index The index of the panel to activate
+     */
     activatePanel(index: number): void {
         if (index < 0 || index >= this.panels().length) {
             return;

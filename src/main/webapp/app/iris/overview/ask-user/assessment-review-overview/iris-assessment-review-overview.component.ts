@@ -48,6 +48,10 @@ export type ExerciseViewModel = BaseEntity & {
     readonly searchedAndFilteredParticipations: IrisAssessmentReviewParticipation[];
 };
 
+/**
+ * A selectable verdict-review filter option together with its translation key and the
+ * number of participations it currently matches.
+ */
 interface FilterOption {
     readonly value: FilterProp;
     readonly translationKey: string;
@@ -74,6 +78,11 @@ interface FilterOption {
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Overview page listing, per programming exercise, the participations awaiting or holding
+ * an Iris ask-user-mode assessment review. Supports searching, verdict filtering, and
+ * server-side pagination.
+ */
 export class IrisAssessmentReviewOverviewComponent {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
 
@@ -157,12 +166,20 @@ export class IrisAssessmentReviewOverviewComponent {
         });
     }
 
+    /**
+     * Updates the active verdict filters, resets pagination to the first page, and reloads.
+     * @param filters The verdict filters to apply, or null/undefined to clear all filters
+     */
     updateParticipationFilters(filters: FilterProp[] | null | undefined): void {
         this.selectedFilters.set(filters ?? []);
         this.first.set(0);
         this.loadPage();
     }
 
+    /**
+     * Debounces the search term, then resets pagination to the first page and reloads.
+     * @param searchTerm The raw search input from the search filter component
+     */
     onSearch(searchTerm: string): void {
         this.searchTerm.set(searchTerm);
         clearTimeout(this.searchDebounceTimer);
@@ -172,6 +189,10 @@ export class IrisAssessmentReviewOverviewComponent {
         }, IrisAssessmentReviewOverviewComponent.SEARCH_DEBOUNCE_MS);
     }
 
+    /**
+     * Applies a PrimeNG paginator change and reloads the current page.
+     * @param event The paginator state emitted by the paginator component
+     */
     onPageChange(event: PaginatorState): void {
         this.first.set(event.first ?? 0);
         this.rows.set(event.rows ?? this.rows());
@@ -182,6 +203,14 @@ export class IrisAssessmentReviewOverviewComponent {
         this.loadPage();
     }
 
+    /**
+     * Loads the current page of assessment review participations from the server and
+     * updates the exercise view models, total row count, and per-filter counts.
+     *
+     * Tracks a monotonically increasing request id so that a stale response from an
+     * outdated request (e.g. after the user changed the search term or filters again
+     * before the previous request completed) is discarded instead of overwriting newer state.
+     */
     private loadPage(): void {
         const courseId = this.course().id;
         if (courseId === undefined) {
@@ -213,6 +242,11 @@ export class IrisAssessmentReviewOverviewComponent {
         });
     }
 
+    /**
+     * Builds the server-side search request from the current pagination, search term, and
+     * selected verdict filters.
+     * @returns The search parameters for `searchAssessmentReviewParticipations`
+     */
     private buildSearch(): IrisAssessmentReviewSearch {
         const lazyLoadEvent: TableLazyLoadEvent = {
             first: this.first(),
@@ -233,6 +267,13 @@ export class IrisAssessmentReviewOverviewComponent {
         };
     }
 
+    /**
+     * Groups the given participations by exercise, preserving the exercise order in which
+     * they first appear in the page, and matches each group to its known programming exercise.
+     * Participations referencing an exercise outside the course's programming exercises are dropped.
+     * @param participations The participations returned for the current page
+     * @returns One view model per exercise that has at least one matching participation
+     */
     private createExerciseViewModels(participations: IrisAssessmentReviewParticipation[]): ExerciseViewModel[] {
         const exerciseById = new Map<number, ProgrammingExercise>();
         for (const exercise of this.programmingExercises()) {
@@ -272,6 +313,11 @@ export class IrisAssessmentReviewOverviewComponent {
         });
     }
 
+    /**
+     * Converts the server's per-filter counts into a fully typed map covering every
+     * {@link FilterProp}, defaulting missing entries to 0.
+     * @param participationsPerFilter The raw per-filter counts returned by the server
+     */
     private setParticipationsPerFilter(participationsPerFilter: ReadonlyMap<string, number>): void {
         const typedCounts = new Map<FilterProp, number>();
         for (const filter of Object.values(FilterProp)) {

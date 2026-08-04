@@ -965,6 +965,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.saveMcqResponse(sessionId, message.id, response);
     }
 
+    /**
+     * Persists a student's answer to a multiple-choice question and reports any error via the alert service.
+     * @param sessionId The unique identifier of the chat session
+     * @param messageId The unique identifier of the message containing the question
+     * @param response The selected answer and its submission state
+     */
     private saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): void {
         this.irisChatHttpService
             .saveMcqResponse(sessionId, messageId, response)

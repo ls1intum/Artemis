@@ -274,6 +274,13 @@ public class IrisSettingsService {
                 payload.supportLevel(), sanitizedRateLimit);
     }
 
+    /**
+     * Sanitizes ask-user mode settings, falling back to the defaults when {@code null} and validating the configured limits.
+     *
+     * @param askUserModeSettings incoming ask-user mode settings (nullable)
+     * @return the sanitized ask-user mode settings
+     * @throws BadRequestAlertException if the question limits or time limits are invalid
+     */
     private IrisAskUserModeSettings sanitizeAskUserModeSettings(IrisAskUserModeSettings askUserModeSettings) {
         var settings = Objects.requireNonNullElse(askUserModeSettings, IrisAskUserModeSettings.defaultSettings());
         if (settings.minQuestions() < 1 || settings.maxQuestions() < 1) {

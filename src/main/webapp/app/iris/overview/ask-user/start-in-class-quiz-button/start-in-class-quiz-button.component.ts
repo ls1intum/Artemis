@@ -20,6 +20,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 
+/**
+ * Button that lets a student start the editor-controlled in-class ask-user quiz for an exercise, reflecting
+ * whether the quiz is currently active, already completed, or startable, and displaying its answer timer.
+ */
 @Component({
     selector: 'jhi-start-in-class-quiz-button',
     templateUrl: './start-in-class-quiz-button.component.html',
@@ -106,6 +110,11 @@ export class IrisStartInClassQuizButtonComponent {
         }
     });
 
+    /**
+     * Resets local quiz state on exercise change, fetches the currently started in-class/regular quiz state
+     * for the exercise, reacts to chat pipe events (submission with points, quiz finished), and clears the
+     * in-class quiz state whenever the current run fails.
+     */
     constructor() {
         toObservable(this.exerciseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -192,6 +201,10 @@ export class IrisStartInClassQuizButtonComponent {
         });
     }
 
+    /**
+     * Starts the in-class quiz for the current exercise, if it can currently be started, rolling back the
+     * local state and showing an alert if the request fails.
+     */
     protected startInClassQuiz(): void {
         if (!this.canBeStarted()) {
             return;
@@ -217,6 +230,9 @@ export class IrisStartInClassQuizButtonComponent {
             });
     }
 
+    /**
+     * Clears the locally cached available in-class quiz for the current exercise once its timer has expired.
+     */
     protected handleTimerExpired(): void {
         const exerciseId = this.exerciseId();
         if (exerciseId !== undefined) {

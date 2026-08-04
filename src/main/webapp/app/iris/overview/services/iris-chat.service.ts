@@ -630,6 +630,10 @@ export class IrisChatService implements OnDestroy {
         this.suggestions.next(suggestions);
     }
 
+    /**
+     * Closes the current chat session and starts a fresh course session, then reloads the session list.
+     * @returns A promise that resolves once the new session has been created and the session list reloaded
+     */
     public clearChat(): Promise<void> {
         this.close();
         return new Promise((resolve) => {
@@ -690,6 +694,10 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    /**
+     * Publishes the ask-user pipe event carried by a websocket payload, if any.
+     * @param payload The incoming chat websocket payload
+     */
     private applyPipeEvent(payload: IrisChatWebsocketDTO): void {
         if (!payload.event) {
             return;
@@ -697,6 +705,10 @@ export class IrisChatService implements OnDestroy {
         this.latestEvent.next(payload.event);
     }
 
+    /**
+     * Stops the running ask-user-mode quiz timer once the user sends a message.
+     * @param payload The incoming chat websocket payload
+     */
     private stopQuizTimer(payload: IrisChatWebsocketDTO): void {
         // Stop chat timer when user sends a message
         if (payload.message?.sender === IrisSender.USER) {
@@ -730,6 +742,12 @@ export class IrisChatService implements OnDestroy {
         return true;
     }
 
+    /**
+     * Determines whether a payload is an ask-user-mode message carrying a pipe event, in which case
+     * it should be applied even though it belongs to a run other than the current one.
+     * @param payload The incoming chat websocket payload
+     * @returns Whether the payload is an ask-user-mode message payload
+     */
     private isAskUserMessagePayload(payload: IrisChatWebsocketDTO): boolean {
         return payload.type === IrisChatWebsocketPayloadType.MESSAGE && !!payload.event;
     }
@@ -1113,6 +1131,10 @@ export class IrisChatService implements OnDestroy {
         return this.chatSessions.asObservable();
     }
 
+    /**
+     * Observable stream of the latest ask-user-mode pipe event received for the active session.
+     * @returns Observable emitting the latest pipe event
+     */
     public currentLatestEvent(): Observable<IrisPipeEvent | undefined> {
         return this.latestEvent.asObservable();
     }

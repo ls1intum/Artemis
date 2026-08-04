@@ -13,11 +13,20 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 
 export type IrisAskUserQuizType = 'regular' | 'inClass';
 
+/**
+ * Request to (re-)activate the Iris panel for a given exercise, identified by a monotonically increasing
+ * sequence number so that duplicate/older requests can be distinguished from the latest one.
+ */
 export interface IrisPanelActivationRequest {
     readonly sequence: number;
     readonly exerciseId: number;
 }
 
+/**
+ * Coordinates the "ask user" quiz feature of Iris: tracks whether the feature is enabled, whether a quiz
+ * is currently active/started for the current exercise, manages the quiz answer timer, and reacts to
+ * chat pipe events and page (de)focus/run failures to keep that state consistent.
+ */
 @Injectable()
 export class IrisAskUserService {
     private readonly askUserHttpService = inject(IrisAskUserHttpService);
@@ -74,6 +83,9 @@ export class IrisAskUserService {
 
     readonly isAnyAskUserMode = computed(() => this.activeQuizType() !== undefined);
 
+    /**
+     * Enables the ask-user feature and starts listening to the events it depends on. No-op if already enabled.
+     */
     activate(): void {
         if (this.enabled()) {
             return;
@@ -83,6 +95,9 @@ export class IrisAskUserService {
         this.loadData();
     }
 
+    /**
+     * Disables the ask-user feature. No-op if already disabled.
+     */
     deactivate(): void {
         if (!this.enabled()) {
             return;
@@ -91,6 +106,10 @@ export class IrisAskUserService {
         this._enabled.set(false);
     }
 
+    /**
+     * Wires up the subscriptions the ask-user feature relies on (chat pipe events, page defocus, run failures,
+     * and the chat service's stop-timer signal).
+     */
     private loadData(): void {
         this.handleEvents();
         this.handleDefocus();
@@ -99,6 +118,9 @@ export class IrisAskUserService {
         this.chatService.stopTimer$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.stopAskUserTimer());
     }
 
+    /**
+     * Starts the answer timer for the current programming exercise's quiz session, if applicable.
+     */
     private startAskUserTimer(): void {
         const exerciseId = this.currentProgrammingExerciseId();
         if (exerciseId === undefined) {
@@ -121,6 +143,9 @@ export class IrisAskUserService {
             });
     }
 
+    /**
+     * Clears the local timer state and notifies the server to stop the timer for the current quiz session.
+     */
     protected stopAskUserTimer(): void {
         const exerciseId = this.currentProgrammingExerciseId();
         this.clearAskUserTimerState();
@@ -137,6 +162,10 @@ export class IrisAskUserService {
         this._timeLimit.set(0);
     }
 
+    /**
+     * Resets the local quiz-active/started state, timer state, and the active quiz type for the current
+     * exercise. No-op if there is nothing to reset.
+     */
     private resetAskUserQuizState(): void {
         const exerciseId = this.exerciseId();
         const activeQuizType = exerciseId === undefined ? undefined : this.activeQuizTypeState.value.get(exerciseId);
@@ -152,6 +181,10 @@ export class IrisAskUserService {
         }
     }
 
+    /**
+     * Resets the quiz state after a build-with-points event, but only if the currently active quiz type
+     * for the exercise is the regular (non-in-class) quiz.
+     */
     private resetRegularAskUserQuizStateAfterBuildWithPoints(): void {
         const exerciseId = this.exerciseId();
         if (exerciseId === undefined || this.activeQuizTypeState.value.get(exerciseId) !== 'regular') {
@@ -161,11 +194,18 @@ export class IrisAskUserService {
         this.resetAskUserQuizState();
     }
 
+    /**
+     * @returns the id of the current exercise if it is a programming exercise, otherwise undefined
+     */
     private currentProgrammingExerciseId(): number | undefined {
         const exercise = this.exercise();
         return exercise?.type === ExerciseType.PROGRAMMING ? exercise.id : undefined;
     }
 
+    /**
+     * Subscribes to the chat service's latest pipe event stream and updates the local quiz/timer state
+     * accordingly (e.g. quiz started, first/next question, quiz finished, build with points).
+     */
     private handleEvents(): void {
         this.chatService
             .currentLatestEvent()
@@ -203,11 +243,20 @@ export class IrisAskUserService {
             });
     }
 
+    /**
+     * Requests activation of the Iris panel for the given exercise by publishing a new activation request
+     * with an incremented sequence number so that repeated requests are always distinguishable.
+     * @param exerciseId The unique identifier of the exercise
+     */
     private requestIrisPanelActivation(exerciseId: number): void {
         const previousRequest = this._irisPanelActivationRequest();
         this._irisPanelActivationRequest.set({ sequence: (previousRequest?.sequence ?? 0) + 1, exerciseId });
     }
 
+    /**
+     * Subscribes to the page-leaving signal and ends the currently active quiz (locally and on the server)
+     * if the user navigates away while a quiz is active and no answer is currently being awaited.
+     */
     private handleDefocus(): void {
         this.pageActivity.pageLeaving$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             const exerciseId = this.currentProgrammingExerciseId();
@@ -220,6 +269,9 @@ export class IrisAskUserService {
         });
     }
 
+    /**
+     * Subscribes to the chat service's current run info and resets the ask-user quiz state whenever a run fails.
+     */
     private handleRunFailures(): void {
         this.chatService
             .currentRunInfo()
@@ -231,6 +283,10 @@ export class IrisAskUserService {
             });
     }
 
+    /**
+     * Emits the currently active quiz type (if any) for the given exercise, and re-emits whenever it changes.
+     * @param exerciseId The unique identifier of the exercise
+     */
     activeQuizTypeForExercise(exerciseId: number): Observable<IrisAskUserQuizType | undefined> {
         return this.activeQuizTypeState.pipe(
             map((activeQuizTypes) => activeQuizTypes.get(exerciseId)),
@@ -238,12 +294,23 @@ export class IrisAskUserService {
         );
     }
 
+    /**
+     * Marks the given quiz type as active for the given exercise.
+     * @param exerciseId The unique identifier of the exercise
+     * @param quizType The quiz type to mark as active
+     */
     setActiveQuizTypeForExercise(exerciseId: number, quizType: IrisAskUserQuizType): void {
         const activeQuizTypes = new Map(this.activeQuizTypeState.value);
         activeQuizTypes.set(exerciseId, quizType);
         this.activeQuizTypeState.next(activeQuizTypes);
     }
 
+    /**
+     * Clears the active quiz type for the given exercise. If a quizType is provided, the active type is only
+     * cleared when it matches, so that a stale/superseded request cannot clear a newer active quiz.
+     * @param exerciseId The unique identifier of the exercise
+     * @param quizType Only clear if the currently active type matches this value
+     */
     clearActiveQuizTypeForExercise(exerciseId: number, quizType?: IrisAskUserQuizType): void {
         const activeQuizTypes = new Map(this.activeQuizTypeState.value);
         if (quizType && activeQuizTypes.get(exerciseId) !== quizType) {

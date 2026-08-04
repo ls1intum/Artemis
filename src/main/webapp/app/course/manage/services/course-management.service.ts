@@ -679,6 +679,11 @@ export class CourseManagementService implements OnDestroy {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, { observe: 'response' });
     }
 
+    /**
+     * Gets whether the course has Iris assessments that need attention (e.g. pending review) using a GET request
+     * @param courseId - the id of the course
+     * @returns the assessment attention state for the course
+     */
     public getAssessmentAttentionState(courseId: number): Observable<HttpResponse<IrisAssessmentAttentionDTO>> {
         return this.http.get<IrisAssessmentAttentionDTO>(`${this.resourceUrl}/${courseId}/assessment-attention-state`, { observe: 'response' });
     }

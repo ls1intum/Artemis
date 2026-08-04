@@ -108,10 +108,28 @@ public class PyrisJobService {
         return token;
     }
 
+    /**
+     * Adds a regular chat job to the job map.
+     *
+     * @param courseId      Id of the course the chat session belongs to
+     * @param sessionId     Id of the chat session
+     * @param entityId      Id of the entity (exercise, lecture, or course) the chat session refers to
+     * @param userMessageId Id of the user message that triggered the job
+     * @return the token of the job
+     */
     public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
         return addChatJob(courseId, sessionId, entityId, userMessageId, ChatJob.CHAT_PIPELINE_NAME);
     }
 
+    /**
+     * Adds an ask-user-mode chat job to the job map.
+     *
+     * @param courseId      Id of the course the chat session belongs to
+     * @param sessionId     Id of the chat session
+     * @param entityId      Id of the entity (exercise, lecture, or course) the chat session refers to
+     * @param userMessageId Id of the user message that triggered the job
+     * @return the token of the job
+     */
     public String addAskUserChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
         return addChatJob(courseId, sessionId, entityId, userMessageId, ChatJob.ASK_USER_PIPELINE_NAME);
     }
@@ -305,8 +323,20 @@ public class PyrisJobService {
         return randomStringBuilder.toString().replace("https://", "").replace("http://", "").replace(":", "_").replace(".", "_").replace("/", "_");
     }
 
+    /**
+     * Listens for Hazelcast entry expiration events on the Pyris job map and publishes a {@link PyrisJobExpiredEvent}
+     * for every job whose time-to-live elapses, so that other components can react (e.g. to clean up state tied to
+     * an abandoned job).
+     */
     private class PyrisJobExpiredListener implements EntryExpiredListener<String, PyrisJob> {
 
+        /**
+         * Publishes a {@link PyrisJobExpiredEvent} for the job that just expired.
+         * Depending on the Hazelcast cluster configuration, the expired value may be available as either the old or
+         * the new value of the event.
+         *
+         * @param event the Hazelcast entry expired event
+         */
         @Override
         public void entryExpired(EntryEvent<String, PyrisJob> event) {
             var expiredJob = event.getOldValue() != null ? event.getOldValue() : event.getValue();

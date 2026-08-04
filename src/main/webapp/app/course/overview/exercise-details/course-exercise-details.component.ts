@@ -246,6 +246,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
+    /**
+     * Wires the component to the {@link IrisAskUserService}: keeps the service's exercise reference in sync with
+     * the currently loaded exercise, and activates/deactivates the ask-user session as ask-user mode becomes
+     * enabled/disabled or the component is destroyed.
+     */
     constructor() {
         effect(() => {
             if (!this.irisAskUserModeEnabled()) {

@@ -5,6 +5,10 @@ import { IrisQuizTimerDTO } from 'app/iris/shared/entities/iris-quiz-timer-dto.m
 
 export type IrisAskUserQuizType = 'regular' | 'inClass';
 
+/**
+ * HTTP client for the Iris "ask user" quiz endpoints (starting/stopping quizzes and their timer, and
+ * querying their status).
+ */
 @Injectable({ providedIn: 'root' })
 export class IrisAskUserHttpService {
     private http = inject(HttpClient);
@@ -61,10 +65,19 @@ export class IrisAskUserHttpService {
         return this.http.patch<void>(`${this.resourceUrl}/${exerciseId}/ask-user/start`, null, { observe: 'response' });
     }
 
+    /**
+     * Checks whether the latest submission for the exercise already has points assigned.
+     * @param exerciseId The unique identifier of the exercise
+     */
     latestSubmissionHasPoints(exerciseId: number): Observable<boolean> {
         return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/ask-user/latest-submission-has-points`);
     }
 
+    /**
+     * Checks whether the quiz (regular or in-class) has already been completed for the exercise.
+     * @param exerciseId The unique identifier of the exercise
+     * @param inClass Whether to check the in-class quiz instead of the regular quiz
+     */
     isQuizAlreadyDone(exerciseId: number, inClass: boolean): Observable<boolean> {
         return this.http.get<boolean>(`${this.resourceUrl}/${exerciseId}/ask-user/completed`, { params: { inClass } });
     }

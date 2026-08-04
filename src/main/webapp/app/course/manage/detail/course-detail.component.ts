@@ -409,6 +409,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Sets the given course as the current course, derives the messaging/communication flags from it,
+     * and triggers loading its organizations.
+     * @param course The course to set as the current course
+     */
     private setCourse(course: Course) {
         this.course.set(course);
         this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
@@ -418,6 +423,10 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Returns the currently loaded course, throwing if it has not been loaded yet.
+     * @returns The currently loaded course
+     */
     private requireCourse(): Course {
         const course = this.course();
         if (!course) {

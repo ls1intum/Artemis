@@ -11,6 +11,10 @@ import dayjs from 'dayjs/esm';
     imports: [FaIconComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Displays a countdown progress bar towards a given expiry timestamp, emitting an event
+ * once the timer reaches zero.
+ */
 export class QuizTimerBarComponent {
     timeLimit = input<number | undefined>(0);
     timerExpiresAt = input<dayjs.Dayjs>();
@@ -26,6 +30,10 @@ export class QuizTimerBarComponent {
 
     protected readonly displayedRemainingSeconds = computed(() => this.remainingSeconds() ?? this.timeLimit() ?? 0);
 
+    /**
+     * The remaining time formatted as seconds-only (e.g. "45") when under a minute,
+     * or "m:ss" once a minute or more remains.
+     */
     protected readonly displayedRemainingTime = computed(() => {
         const remainingSeconds = this.displayedRemainingSeconds();
 
@@ -43,6 +51,10 @@ export class QuizTimerBarComponent {
         this.displayedRemainingSeconds() >= 60 ? 'artemisApp.exerciseChatbot.timeLeft' : 'artemisApp.exerciseChatbot.secondsLeft',
     );
 
+    /**
+     * Percentage of the time limit remaining, clamped to [0, 100]. Returns 0 when no time
+     * limit is set, and 100 when the time limit is zero or negative (treated as "full bar").
+     */
     protected readonly progress = computed(() => {
         const timeLimit = this.timeLimit();
 
@@ -57,6 +69,11 @@ export class QuizTimerBarComponent {
         return Math.max(0, Math.min(100, (this.displayedRemainingSeconds() / timeLimit) * 100));
     });
 
+    /**
+     * Sets up an interval that counts down `remainingSeconds` towards `timerExpiresAt`,
+     * emitting `timerExpired` and clearing the interval once it reaches zero. Restarts
+     * whenever `timerExpiresAt` changes, and always clears the interval on cleanup.
+     */
     constructor() {
         // effect is needed here because timer API is non-reactive
         effect((onCleanup) => {

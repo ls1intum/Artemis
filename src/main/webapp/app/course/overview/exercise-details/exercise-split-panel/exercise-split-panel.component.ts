@@ -121,6 +121,9 @@ export class ExerciseSplitPanelComponent {
     protected readonly timerExpiresAt = computed(() => this.askUserService.timerExpiresAt());
     protected readonly timeLimit = computed(() => this.askUserService.timeLimit());
     protected readonly showOnlyAskUserModeMessage = computed(() => this.askUserService.showOnlyAskUserModeMessage());
+    /**
+     * Handles expiry of the ask-user mode quiz timer by clearing the associated timer state.
+     */
     protected handleAskUserTimerExpired() {
         this.askUserService.clearAskUserTimerState();
     }
@@ -302,6 +305,11 @@ export class ExerciseSplitPanelComponent {
         });
     }
 
+    /**
+     * Activates the Iris panel within the resizable panel group, identified by its label.
+     * @param resizablePanels The resizable panels component containing the Iris panel
+     * @returns Whether the Iris panel was found and activated
+     */
     private activateIrisPanel(resizablePanels: ResizablePanelsComponent): boolean {
         const irisPanelIndex = resizablePanels.panels().findIndex((panel) => panel.label() === ExerciseSplitPanelComponent.IRIS_PANEL_LABEL);
         if (irisPanelIndex < 0) {

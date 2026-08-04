@@ -30,6 +30,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 
+/**
+ * A student participation enriched with the router links and repository URI needed to
+ * render its row in the assessment review table.
+ */
 interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentParticipation {
     readonly participationLink?: Array<string | number>;
     readonly repositoryUri?: string;
@@ -57,6 +61,10 @@ interface AssessmentParticipationViewModel extends ProgrammingExerciseStudentPar
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Displays the ask-user-mode assessment review table for a single exercise, including
+ * participation rows and the in-class quiz start/restart controls.
+ */
 export class IrisAssessmentReviewExerciseComponent {
     participations = input<ProgrammingExerciseStudentParticipation[]>([]);
     exercise = input.required<ProgrammingExercise>();
@@ -84,6 +92,10 @@ export class IrisAssessmentReviewExerciseComponent {
     protected readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     private readonly exerciseId = computed(() => this.exercise().id);
 
+    /**
+     * The currently available in-class quiz for this exercise, if any. Re-fetched whenever
+     * the exercise changes; errors are reported via the alert service and treated as "none available".
+     */
     protected readonly availableInClassQuiz = toSignal(
         toObservable(this.exerciseId).pipe(
             switchMap((exerciseId) => {
@@ -106,6 +118,9 @@ export class IrisAssessmentReviewExerciseComponent {
         this.availableInClassQuiz() ? 'artemisApp.iris.assessmentInClassQuiz.restart' : 'artemisApp.iris.assessmentInClassQuiz.start',
     );
 
+    /**
+     * Participation rows enriched with the router links and repository URI used by the table template.
+     */
     protected readonly participationRows = computed<AssessmentParticipationViewModel[]>(() =>
         this.participations().map((participation) => ({
             ...participation,
@@ -122,6 +137,11 @@ export class IrisAssessmentReviewExerciseComponent {
         })),
     );
 
+    /**
+     * Starts (or restarts) the in-class quiz for this exercise. If the exercise's due date has
+     * not passed yet, shows a confirmation dialog first since starting the quiz early affects
+     * students who are still working on the exercise.
+     */
     makeInClassQuizAvailable(): void {
         const exerciseId = this.exercise().id;
 
@@ -152,6 +172,11 @@ export class IrisAssessmentReviewExerciseComponent {
         this.startInClassQuiz(exerciseId);
     }
 
+    /**
+     * Requests the server to make the in-class quiz available for the given exercise and
+     * triggers a refresh of the parent view on success.
+     * @param exerciseId The unique identifier of the exercise
+     */
     private startInClassQuiz(exerciseId: number): void {
         this.assessmentReviewService
             .makeInClassQuizAvailable(exerciseId)
@@ -162,6 +187,9 @@ export class IrisAssessmentReviewExerciseComponent {
             });
     }
 
+    /**
+     * Clears the locally tracked active in-class quiz once its timer has expired.
+     */
     handleInClassQuizTimerExpired(): void {
         const exerciseId = this.exercise().id;
 
