@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.demo.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_DEMO_AND_SCHEDULING;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,12 +31,15 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * Seeding is idempotent: each {@code createDemo} implementation checks for its own data and creates only what is missing. Running it on every startup is therefore safe, and demo
  * content that is added to the seeding routine later appears on the next restart without wiping the existing course.
  * <p>
+ * Seeding runs on the primary node only: several nodes are active with the {@code core} profile in multi node setups, so this service additionally requires
+ * {@code scheduling} to make sure exactly one node seeds per database. Without that restriction, every core node would seed concurrently on startup.
+ * <p>
  * Note that the {@code core} profile has to be active as well, because the event this service listens for is only published by {@code DeferredEagerBeanInitializer}, which itself
- * runs only on core nodes. Activating {@code demo} on its own silently seeds nothing.
+ * runs only on core nodes. Activating {@code demo} without {@code core} and {@code scheduling} silently seeds nothing.
  */
 @Service
 @Lazy
-@Profile(PROFILE_DEMO)
+@Profile(PROFILE_DEMO_AND_SCHEDULING)
 public class DemoDataSeedingService {
 
     private static final Logger log = LoggerFactory.getLogger(DemoDataSeedingService.class);

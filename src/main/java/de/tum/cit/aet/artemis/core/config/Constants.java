@@ -370,6 +370,13 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
+     * Profile combination for seeding the demo course, which must happen exactly once per database.
+     * Multiple nodes run {@link #PROFILE_CORE} (see the node1/node2 deployment configurations), so gating the seeding on {@link #PROFILE_SCHEDULING} as well restricts it to the
+     * primary node. Without this, every core node would seed concurrently on startup and could create the demo data more than once.
+     */
+    public static final String PROFILE_DEMO_AND_SCHEDULING = PROFILE_DEMO + " & " + PROFILE_SCHEDULING;
+
+    /**
      * The name of the module feature used for Theia as an external online IDE.
      */
     public static final String MODULE_FEATURE_THEIA = "theia";
