@@ -194,4 +194,27 @@ describe('CleanupServiceComponent', () => {
         expect(comp.selectedOperation()).toBe(operation);
         expect(comp.showCleanupModal()).toBe(true);
     });
+
+    it('should expose the new data-privacy operations as age-based (no date range) and valid', () => {
+        const operations = comp.cleanupOperations();
+        const ageBasedNames = [
+            'warnOldCoursesReset',
+            'resetOldCourses',
+            'deleteOldFeedback',
+            'deleteOldCourseSubmissionVersions',
+            'warnNotEnrolledUsers',
+            'deleteNotEnrolledUsers',
+            'deletePlagiarismCases',
+        ];
+
+        for (const name of ageBasedNames) {
+            const operation = operations.find((candidate) => candidate.name === name);
+            expect(operation).toBeDefined();
+            expect(operation!.ageBased).toBe(true);
+            // age-based operations have no admin-picked date range and are always executable
+            expect(operation!.deleteFrom).toBeUndefined();
+            expect(operation!.deleteTo).toBeUndefined();
+            expect(operation!.datesValid()).toBe(true);
+        }
+    });
 });

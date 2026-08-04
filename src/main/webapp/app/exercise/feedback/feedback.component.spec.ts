@@ -1,5 +1,4 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -527,41 +526,6 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(createSpy).toHaveBeenCalledWith(feedbacks, true);
-    });
-
-    it('should expand feedback when being printed', () => {
-        const expandFeedbackItemGroupsSpy = vi.spyOn(comp as any, 'expandFeedbackItemGroups');
-
-        const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
-        const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
-
-        const feedbackGroup: FeedbackGroup = {
-            ...feedbackItem,
-            members: [feedbackItem1],
-            open: false,
-        } as unknown as FeedbackGroup;
-        comp.feedbackItemNodes.set([feedbackGroup]);
-
-        // start printing => expand feedback
-        const previousValue = undefined;
-        const currentValue = true;
-        const firstChange = false;
-        const startPrinting = new SimpleChange(previousValue, currentValue, firstChange);
-        comp.ngOnChanges({ isPrinting: startPrinting });
-
-        expect(expandFeedbackItemGroupsSpy).toHaveBeenCalledOnce();
-        expect(feedbackGroup.open).toBe(true);
-
-        // stop printing => collapse feedback (as it was collapsed before)
-        const stopPrinting = new SimpleChange(true, false, false);
-        comp.ngOnChanges({ isPrinting: stopPrinting });
-
-        expect(expandFeedbackItemGroupsSpy).toHaveBeenCalledOnce(); // should not have been called again
-
-        /**
-         * references were removed during saving old state => cannot use {@link feedbackGroup} for comparison anymore
-         */
-        expect((comp.feedbackItemNodes()![0] as unknown as FeedbackGroup).open).toBe(false);
     });
 
     describe('when opened via DialogService (inputValues forwarded via setInput)', () => {

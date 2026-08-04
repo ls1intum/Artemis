@@ -18,7 +18,6 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -27,6 +26,11 @@ import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-d
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { signal } from '@angular/core';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ExerciseHeaderComponent', () => {
@@ -43,8 +47,11 @@ describe('ExerciseHeaderComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
-                MockProvider(ParticipationService),
-                MockProvider(ProfileService),
+                MockProvider(ParticipationService, {
+                    getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
+                        participations.find((participation) => !!participation.testRun === testRun),
+                }),
+                MockProvider(AccountService, { userIdentity: signal({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User) }),
             ],
         });
 
@@ -102,6 +109,105 @@ describe('ExerciseHeaderComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
+    });
+
+    describe('programming exercise AI feedback button', () => {
+        function configureProgrammingExercise(
+            allowOnlineEditor: boolean | undefined,
+            submitted: boolean,
+            hasResult: boolean,
+            feedbackSuggestionModule = 'module_programming_llm',
+        ): void {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.allowFeedbackRequests = true;
+            exercise.feedbackSuggestionModule = feedbackSuggestionModule;
+            exercise.allowOnlineEditor = allowOnlineEditor;
+
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted, results: hasResult ? [new Result()] : [] }];
+            exercise.studentParticipations = [participation];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.detectChanges();
+        }
+
+        it('should enable the feedback button for a submitted submission', () => {
+            configureProgrammingExercise(false, true, false);
+
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+        });
+
+        it.each([false, true])('should disable the feedback button for an unsubmitted submission with hasResult=%s', (hasResult) => {
+            configureProgrammingExercise(false, false, hasResult);
+
+            const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+        });
+
+        it('should pass the active participation to the feedback button', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.allowFeedbackRequests = true;
+            exercise.allowOnlineEditor = false;
+
+            const gradedParticipation = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
+            const practiceParticipation = { id: 20, testRun: true, submissions: [{ submitted: false }] } as StudentParticipation;
+            exercise.studentParticipations = [gradedParticipation, practiceParticipation];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            let feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+            expect(feedbackButton.componentInstance.participationId).toBe(practiceParticipation.id);
+            expect(feedbackButton.componentInstance.isSubmitted).toBe(false);
+        });
+
+        it('should hide the feedback button when the exercise has not been started', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.allowFeedbackRequests = true;
+            exercise.allowOnlineEditor = false;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('athenaEnabled', true);
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
+
+        it.each([true, undefined])('should hide the feedback button when allowOnlineEditor is %s', (allowOnlineEditor) => {
+            configureProgrammingExercise(allowOnlineEditor, true, false);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
+
+        it('should not require a feedback suggestion module in the header action wrapper', () => {
+            configureProgrammingExercise(false, true, false, undefined);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
+        });
     });
 
     it('should show the sidebar collapse button before the exercise heading when enabled and collapsed', () => {

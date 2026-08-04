@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.dto.UpcomingExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 
 /**
@@ -40,11 +41,12 @@ public class AdminExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams.
      */
     @GetMapping("courses/upcoming-exams")
-    public ResponseEntity<List<Exam>> getCurrentAndUpcomingExams() {
+    public ResponseEntity<List<UpcomingExamDTO>> getCurrentAndUpcomingExams() {
         log.debug("REST request to get all upcoming exams");
 
         List<Exam> upcomingExams = examRepository.findAllCurrentAndUpcomingExams();
-        return ResponseEntity.ok(upcomingExams);
+        List<UpcomingExamDTO> upcomingExamDTOs = upcomingExams.stream().map(UpcomingExamDTO::of).toList();
+        return ResponseEntity.ok(upcomingExamDTOs);
     }
 
 }

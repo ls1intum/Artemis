@@ -8,7 +8,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
-import { TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
+import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
