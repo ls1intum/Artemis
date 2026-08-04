@@ -7,7 +7,7 @@ name) before applying.
 ```
 cluster-setup/
 ├── gatewayclass.yaml                 # plain Envoy Gateway GatewayClass
-├── clusterissuer-letsencrypt.yaml    # optional: cert-manager Let's Encrypt issuer
+├── clusterissuer-letsencrypt.yaml    # rarely needed - the chart creates its own issuer by default
 └── metallb-dualstack/                # dual-stack Envoy LB pinned to a MetalLB pool
     ├── envoyproxy.yaml               # references an EXISTING MetalLB pool by name
     └── gatewayclass.yaml             # GatewayClass wired to the EnvoyProxy
@@ -40,10 +40,8 @@ kubectl apply -f cluster-setup/metallb-dualstack/
 > them first - see `../CLUSTER-SETUP.md` section 2 - otherwise this fails with
 > `no matches for kind "EnvoyProxy"`.
 
-Optional TLS (after cert-manager is installed):
-
-```bash
-kubectl apply -f cluster-setup/clusterissuer-letsencrypt.yaml
-```
+TLS is normally handled by the chart itself (it creates a Let's Encrypt `ClusterIssuer` by default). You only need
+`clusterissuer-letsencrypt.yaml` if you prefer a single shared, manually-managed issuer - see `../CLUSTER-SETUP.md`
+section 4. Either way, install cert-manager **with Gateway API support enabled** (`--set config.enableGatewayAPI=true`).
 
 All variants create a GatewayClass named `envoy`, so set `gateway.className=envoy` in your chart values.

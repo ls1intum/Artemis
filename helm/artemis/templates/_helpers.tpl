@@ -128,6 +128,36 @@ jdbc:postgresql://{{ include "artemis.dbHost" . }}:{{ include "artemis.dbPort" .
 http://admin:{{ required "registry.password is required" .Values.registry.password }}@{{ include "artemis.registryName" . }}:{{ .Values.registry.service.port }}/eureka/
 {{- end }}
 
+{{/* TLS Secret backing the HTTPS listener (cert-manager writes the cert here). */}}
+{{- define "artemis.tlsSecretName" -}}
+{{- .Values.gateway.tls.secretName | default (printf "%s-tls" (include "artemis.fullname" .)) -}}
+{{- end }}
+
+{{/* Effective cert-manager issuer name: the created one wins over an existing ref. */}}
+{{- define "artemis.certIssuerName" -}}
+{{- if .Values.gateway.tls.certManagerIssuer.create -}}
+{{- .Values.gateway.tls.certManagerIssuer.name | default (printf "%s-letsencrypt" (include "artemis.fullname" .)) -}}
+{{- else -}}
+{{- .Values.gateway.tls.certManagerClusterIssuer -}}
+{{- end -}}
+{{- end }}
+
+{{/* Name/namespace of the Gateway (created here, or the referenced existing one). */}}
+{{- define "artemis.gatewayName" -}}
+{{- if .Values.gateway.create -}}
+{{- include "artemis.fullname" . -}}
+{{- else -}}
+{{- required "gateway.parentRef.name is required when gateway.create=false" .Values.gateway.parentRef.name -}}
+{{- end -}}
+{{- end }}
+{{- define "artemis.gatewayNamespace" -}}
+{{- if .Values.gateway.create -}}
+{{- .Release.Namespace -}}
+{{- else -}}
+{{- .Values.gateway.parentRef.namespace | default .Release.Namespace -}}
+{{- end -}}
+{{- end }}
+
 {{/* Base Spring profiles shared by every core node. */}}
 {{- define "artemis.baseProfiles" -}}
 prod,core,artemis,localvc,hades,docker

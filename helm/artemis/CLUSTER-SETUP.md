@@ -269,70 +269,120 @@ cluster default) - it does **not** need RWX.
 
 ---
 
-## 4. TLS with cert-manager (optional)
+## 4. TLS with cert-manager + Envoy Gateway
 
-The Gateway's HTTPS listener needs a certificate. Two options:
+The Gateway's HTTPS listener needs a certificate, or it stays un-programmed and the load balancer never comes up. The
+chart can drive this end-to-end with cert-manager and Let's Encrypt - **by default it creates a `ClusterIssuer` and adds
+an HTTP:80 listener for you** (`gateway.tls.certManagerIssuer.create=true`, `gateway.httpListener=true`). You just have
+to make cert-manager Gateway-API-aware and point DNS at the Gateway.
 
-**A. Bring your own** - create a `kubernetes.io/tls` Secret and reference it:
+### How the automatic path works
 
-```bash
-kubectl -n <ns> create secret tls artemis-tls --cert=fullchain.pem --key=privkey.pem
-# then: --set gateway.tls.secretName=artemis-tls
-```
+1. The chart renders a `ClusterIssuer` (`<release>-artemis-letsencrypt`) whose ACME **HTTP-01 solver uses the Gateway API**
+   (`gatewayHTTPRoute`), and annotates the Gateway with `cert-manager.io/cluster-issuer`.
+2. cert-manager's **gateway-shim** sees the annotation + the HTTPS listener's `certificateRefs` and auto-creates a
+   `Certificate` for `<release>-artemis-tls`.
+3. To solve the challenge it creates a temporary `HTTPRoute` on the Gateway's **HTTP:80 listener** plus a solver pod.
+   Let's Encrypt fetches `http://<hostname>/.well-known/acme-challenge/...` → Envoy :80 → solver → validated.
+4. The cert is written to `<release>-artemis-tls`, the HTTPS listener programs, and Envoy serves HTTPS.
 
-**B. Let cert-manager issue it** - install cert-manager and a ClusterIssuer, then let the chart annotate the Gateway:
+### Step 1 - install cert-manager (if not already present)
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
 helm install cert-manager jetstack/cert-manager \
   -n cert-manager --create-namespace \
-  --version v1.16.2 --set crds.enabled=true
+  --version v1.21.1 --set crds.enabled=true \
+  --set config.enableGatewayAPI=true
 ```
 
-```yaml
-# clusterissuer.yaml (HTTP-01 solver via the Gateway API)
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-      - http01:
-          gatewayHTTPRoute:
-            parentRefs:
-              - name: <release-name>-artemis   # the chart's Gateway
-                namespace: <ns>
-                kind: Gateway
-```
+### Step 2 - enable Gateway API support (the easy-to-miss part)
+
+cert-manager only creates `Certificate`s from Gateways and solves `gatewayHTTPRoute` challenges when **Gateway API
+support is enabled**. On cert-manager **v1.15+ (incl. v1.21)** this is the `--set config.enableGatewayAPI=true` Helm value
+- **not** the old `--feature-gates=ExperimentalGatewayAPISupport=true` feature gate, which is ineffective on current
+versions. If cert-manager is already installed:
 
 ```bash
-kubectl apply -f cluster-setup/clusterissuer-letsencrypt.yaml
-# then: --set gateway.tls.certManagerClusterIssuer=letsencrypt-prod
+helm upgrade cert-manager jetstack/cert-manager -n cert-manager --reuse-values \
+  --set config.enableGatewayAPI=true
 ```
 
-cert-manager writes the certificate into `gateway.tls.secretName` (defaults to `<release>-artemis-tls`), which the
-Gateway's HTTPS listener references.
+Verify it took effect (the challenge otherwise fails with `gateway api is not enabled`):
+
+```bash
+# cert-manager >=1.15 uses a config file; confirm the setting is present:
+kubectl -n cert-manager get cm cert-manager -o jsonpath='{.data}' 2>/dev/null | grep -o enableGatewayAPI
+# and that the controller mounts --config=/var/cert-manager/config/config.yaml:
+kubectl -n cert-manager get deploy cert-manager -o jsonpath='{.spec.template.spec.containers[0].args}'
+```
+
+Enabling it also needs the RBAC for cert-manager to watch Gateways/HTTPRoutes; the Helm chart adds it. If you turned the
+flag on by hand-editing args instead of the Helm value, the RBAC (and the config file) may be missing - prefer the Helm
+value.
+
+### Step 3 - contact email
+
+Set the ACME registration email (required by Let's Encrypt):
+
+```bash
+--set gateway.tls.certManagerIssuer.email=you@example.com
+```
+
+While testing, use the **staging** ACME endpoint to avoid the strict production rate limits, then switch to prod:
+
+```bash
+--set gateway.tls.certManagerIssuer.server=https://acme-staging-v02.api.letsencrypt.org/directory
+```
+
+Then continue with [DNS](#5-dns) (the challenge needs the hostname to resolve to the Envoy LB).
+
+### Alternatives
+
+- **Reference an existing issuer** instead of creating one:
+  `--set gateway.tls.certManagerIssuer.create=false --set gateway.tls.certManagerClusterIssuer=<name>`. That issuer must
+  also use a `gatewayHTTPRoute` solver (an ingress-nginx HTTP-01 solver won't validate traffic served by Envoy).
+- **Bring your own certificate** - skip ACME entirely:
+  ```bash
+  kubectl -n <ns> create secret tls artemis-tls --cert=fullchain.pem --key=privkey.pem
+  # --set gateway.tls.certManagerIssuer.create=false --set gateway.tls.secretName=artemis-tls
+  ```
+
+### Troubleshooting
+
+| Symptom | Cause / fix |
+|---------|-------------|
+| Challenge stuck, reason `gateway api is not enabled` | Gateway API support not on. Run Step 2 (`config.enableGatewayAPI=true`) and let cert-manager restart. |
+| No `Certificate` ever appears for the Gateway | gateway-shim not running (Gateway API support off / missing RBAC), or the Gateway lacks the `cert-manager.io/cluster-issuer` annotation. |
+| Solver pod `forbidden: exceeded quota` | The namespace/project `ResourceQuota` is full - the ACME solver pod needs ~100m CPU / 64Mi. Free headroom (fewer/smaller pods) or raise the quota. |
+| Challenge `pending`, never validated | DNS for the hostname doesn't resolve to the **Envoy** LB, or the Gateway has no HTTP:80 listener (`gateway.httpListener=true`). |
+| `too many certificates already issued` | Let's Encrypt **production** rate limit - use the staging server while iterating. |
 
 ---
 
 ## 5. DNS
 
-Find the external address the controller provisioned for the Gateway:
+The external IP lives on the Gateway's **data-plane** LoadBalancer, which Envoy Gateway provisions **per Gateway** once
+the chart is installed. Don't confuse it with the `envoy-gateway` service in `envoy-gateway-system` - that is the
+**control plane** (xDS/admin) and is intentionally `ClusterIP` with no external IP.
 
 ```bash
+# Easiest - the Gateway's own status address (only populated after the chart is deployed):
 kubectl -n <ns> get gateway <release-name>-artemis \
-  -o jsonpath='{.status.addresses[0].value}{"\n"}'
-# or the controller's LB service:
-kubectl -n envoy-gateway-system get svc -l gateway.envoyproxy.io/owning-gateway-namespace=<ns>
+  -o jsonpath='{range .status.addresses[*]}{.value}{"\n"}{end}'
+
+# Or the per-Gateway Envoy data-plane LoadBalancer service:
+kubectl -n envoy-gateway-system get svc \
+  -l gateway.envoyproxy.io/owning-gateway-namespace=<ns> \
+  -o custom-columns='NAME:.metadata.name,IP-FAMILIES:.spec.ipFamilies,EXTERNAL-IP:.status.loadBalancer.ingress[*].ip'
 ```
 
-Point your `gateway.hostname` DNS record (A/AAAA or CNAME) at that address. Both HTTPS (443) and git-SSH (7921) are
-served from the same address when using `ssh.mode=tcproute`.
+Point your `gateway.hostname` DNS record at that address - an **A** record (and an **AAAA** record if you configured
+dual-stack, see [section 2](#optional-metallb-address-pool--dual-stack)), or a CNAME to a name that resolves there. Both
+HTTPS (443) and git-SSH (7921) are served from the same address when `ssh.mode=tcproute`.
+
+> DNS must resolve **before** cert-manager can issue: the ACME HTTP-01 challenge fetches
+> `http://<hostname>/.well-known/acme-challenge/...`, which has to reach the Envoy LB on port 80.
 
 ---
 
@@ -367,7 +417,9 @@ gateway:
   ssh:
     mode: tcproute                     # git-SSH via the Gateway (Envoy supports it)
   tls:
-    certManagerClusterIssuer: letsencrypt-prod   # section 4
+    certManagerIssuer:                 # section 4 - chart creates a LE issuer + HTTP-01 gateway solver
+      create: true
+      email: you@example.com
 
 sharedStorage:
   storageClassName: nfs-rwx            # the RWX class from section 3
@@ -415,7 +467,8 @@ kubectl get gatewayclass
 # RWX StorageClass present
 kubectl get storageclass
 
-# (optional) cert-manager up + issuer ready
+# (optional) cert-manager up + Gateway API support enabled
 kubectl -n cert-manager get pods
-kubectl get clusterissuer
+kubectl -n cert-manager get cm cert-manager -o jsonpath='{.data}' | grep -o enableGatewayAPI   # want a match
+kubectl get clusterissuer   # after install: <release>-artemis-letsencrypt should be Ready
 ```

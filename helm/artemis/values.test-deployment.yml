@@ -1,0 +1,78 @@
+# Example values for a test deployment of the Artemis chart.
+# Mirrors the README "Quick start" and the Envoy Gateway setup in CLUSTER-SETUP.md.
+#
+# Replace every FIXME before using. Do NOT commit real secrets - this file is a
+# template; keep production secrets in a secret manager / --set overrides.
+#
+#   helm install artemis ./helm/artemis -n artemis --create-namespace \
+#     -f helm/artemis/values.test-deployment.yml --wait --timeout 15m
+
+# Artemis image. MUST contain the Hades integration (the `hades` profile).
+# For a per-PR deploy use the PR image tag (e.g. "pr-1234" or the commit SHA).
+image:
+  tag: "pr-13113"
+
+# Networking via the Kubernetes Gateway API + Envoy Gateway (see CLUSTER-SETUP.md).
+gateway:
+  hostname: artemis.envoy.stud.k8s.aet.cit.tum.de
+  className: envoy                    # the GatewayClass created during cluster setup
+  ssh:
+    mode: tcproute                   # git-over-SSH via the Gateway (Envoy supports TCPRoute)
+  # HTTP :80 listener (default on) - needed for the cert-manager HTTP-01 solver below.
+  httpListener: true
+  tls:
+    # The chart creates a release-scoped Let's Encrypt ClusterIssuer that solves
+    # HTTP-01 through this Gateway (default on). Requires cert-manager with
+    # Gateway API support enabled: helm upgrade cert-manager ... --set config.enableGatewayAPI=true
+    certManagerIssuer:
+      create: true
+      email: "admin.aet@xcit.tum.de"    # FIXME (likely should be @cit.tum.de)
+      # server: https://acme-staging-v02.api.letsencrypt.org/directory   # use staging while testing
+    # Alternatively, disable the above and bring your own kubernetes.io/tls Secret:
+    # secretName: artemis-tls
+
+# Shared RWX volume for git repos / uploads / exports across all Artemis nodes.
+sharedStorage:
+  storageClassName: "longhorn"
+  size: 2Gi
+
+artemis:
+  # Total core nodes: 1 = leader only; N = leader + (N-1) members.
+  replicaCount: 2
+  config:
+    operator:
+      name: "TUM"
+      adminName: "Max Mustermann"
+    admin:
+      username: artemis_admin
+      password: artemis_admin
+    # Base64 JWT secret shared by all nodes + the registry.
+    # Generate: openssl rand -base64 64 | tr -d '\n'
+    jwtBase64Secret: "4YgQU1vECJFGVFHv+grUJE1NhG0Szba3k/fGJyXWOY4/K2gOmdm42Sl8j2GjJyGaCjZQIBgnpyQLh/0fZjJSyg=="
+    versionControl:
+      buildAgentGitUsername: buildjob_user
+      buildAgentGitPassword: buildjob_password
+    # External Hades build system (runs OUTSIDE this chart).
+    hades:
+      url: "https://hades-test.aet.cit.tum.de"                                # FIXME
+      authKey: "CHANGE_ME"                                                     # FIXME
+      adapterEndpoint: "http://hades-adapter.hades-system.svc:8083/adapter/test-results"  # FIXME
+      # Must be >= 12 chars and MATCH the token the hades-artemis-adapter presents on the new-result callback.
+      artemisAuthenticationTokenValue: "change-me-artemis-token"               # FIXME
+
+# Bundled PostgreSQL (set postgresql.deploy=false to use an external DB).
+postgresql:
+  auth:
+    database: Artemis
+    username: Artemis
+    password: Artemis            # FIXME
+
+# JHipster Registry (Eureka) - required for Hazelcast discovery.
+registry:
+  password: registry
+
+# ActiveMQ STOMP relay for cross-node WebSockets.
+broker:
+  auth:
+    username: guest
+    password: broker

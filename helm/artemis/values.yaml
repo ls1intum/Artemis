@@ -131,7 +131,9 @@ artemis:
       # containers (it forwards parsed results back to Artemis).
       adapterEndpoint: ""  # REQUIRED
       # Token the adapter presents on the Artemis new-result callback.
-      artemisAuthenticationTokenValue: "demo"  # change in production
+      # MUST be at least 12 characters (validated at startup) and match the
+      # value configured in the hades-artemis-adapter. Change in production.
+      artemisAuthenticationTokenValue: "change-me-artemis-token"
       # Container images for the Hades pipeline steps (public defaults).
       cloneImage: "ghcr.io/ls1intum/hades/hades-clone-container:latest"
       resultParserImage: "ghcr.io/ls1intum/hades/junit-result-parser:latest"
@@ -257,12 +259,33 @@ gateway:
     # sectionName of the TCP/7921 listener on the existing Gateway (optional).
     sshSectionName: ""
 
+  # HTTP :80 listener on the Gateway. Required for the cert-manager HTTP-01
+  # gatewayHTTPRoute solver below (the ACME challenge route attaches to it).
+  # Also lets you add an HTTP->HTTPS redirect later. Default on.
+  httpListener: true
+
   tls:
-    # Name of a Secret (kubernetes.io/tls) for the HTTPS listener. If empty and
-    # certManagerClusterIssuer is set, cert-manager provisions it.
+    # Name of a Secret (kubernetes.io/tls) for the HTTPS listener. If empty it
+    # defaults to "<release>-artemis-tls" (where cert-manager writes the cert).
     secretName: ""
-    # Optional cert-manager ClusterIssuer to auto-provision the certificate.
+    # Reference an EXISTING cert-manager ClusterIssuer by name. Ignored when
+    # certManagerIssuer.create=true (the created issuer takes precedence).
     certManagerClusterIssuer: ""
+    # Create a cert-manager ClusterIssuer (ACME / Let's Encrypt) that solves
+    # HTTP-01 challenges THROUGH this Gateway (gatewayHTTPRoute solver).
+    # Prerequisites: cert-manager with Gateway API support enabled
+    # (--set config.enableGatewayAPI=true) and gateway.httpListener=true.
+    certManagerIssuer:
+      # Whether to create the ClusterIssuer. Default on.
+      create: true
+      # Issuer name. Empty -> "<release>-artemis-letsencrypt" (release-scoped so
+      # per-PR deployments don't collide on this cluster-scoped resource).
+      name: ""
+      # ACME registration contact email. REQUIRED when create=true.
+      email: "admin.aet@xcit.tum.de"
+      # ACME directory URL (use the staging URL while testing to avoid rate limits:
+      # https://acme-staging-v02.api.letsencrypt.org/directory).
+      server: "https://acme-v02.api.letsencrypt.org/directory"
 
   ssh:
     # How git-over-SSH (port 7921) is exposed:

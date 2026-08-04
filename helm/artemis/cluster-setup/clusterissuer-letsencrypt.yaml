@@ -1,17 +1,21 @@
-# Optional: cert-manager ClusterIssuer that solves ACME HTTP-01 challenges
-# through the Gateway API, so the chart's HTTPS listener gets an automatic
-# Let's Encrypt certificate. Requires cert-manager to be installed.
-# Set gateway.tls.certManagerClusterIssuer=letsencrypt-prod in your chart values.
+# NOTE: You usually do NOT need this file. By default the chart creates its own
+# release-scoped ClusterIssuer (gateway.tls.certManagerIssuer.create=true) with a
+# Gateway-API HTTP-01 solver. Use this manifest only if you want a single, shared,
+# manually-managed issuer and set gateway.tls.certManagerIssuer.create=false +
+# gateway.tls.certManagerClusterIssuer=letsencrypt-prod-gateway on the chart.
+#
+# Requires cert-manager with Gateway API support enabled
+# (helm ... --set config.enableGatewayAPI=true). See ../CLUSTER-SETUP.md section 4.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod
+  name: letsencrypt-prod-gateway
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: admin@example.com                 # FIXME: your contact email
     privateKeySecretRef:
-      name: letsencrypt-prod
+      name: letsencrypt-prod-gateway
     solvers:
       - http01:
           gatewayHTTPRoute:

@@ -63,6 +63,10 @@ Keycloak, Iris/Pyris, Athena, Hermes, Weaviate and the rest of the Eduteligence 
     `TCPRoute`, set `gateway.ssh.mode=loadbalancer` or `nodeport` (see [Git-over-SSH](#git-over-ssh)).
 - A **ReadWriteMany (RWX) StorageClass**. All Artemis nodes share the git repositories, so prefer a **performant backend**
   (CephFS, SSD-backed NFS, ...) - cheap cloud file storage bottlenecks on file-lock/metadata I/O under concurrent git load.
+- A **TLS certificate for your hostname** (the Gateway's HTTPS listener stays un-programmed without one, so the load
+  balancer never comes up). By default the chart provisions it via **cert-manager + Let's Encrypt** - which requires
+  cert-manager installed **with Gateway API support enabled** (`--set config.enableGatewayAPI=true`). Alternatively bring
+  your own `kubernetes.io/tls` Secret. See [CLUSTER-SETUP.md §4](./CLUSTER-SETUP.md#4-tls-with-cert-manager--envoy-gateway).
 - An **Artemis image that contains the Hades integration** (the `hades` Spring profile). A plain `develop` image silently
   ignores the profile and builds will not run. See [Hades](#hades-external).
 - A running **Hades scheduler** and **hades-artemis-adapter**, reachable from the cluster; the adapter must be able to
@@ -73,11 +77,17 @@ Keycloak, Iris/Pyris, Athena, Hermes, Weaviate and the rest of the Eduteligence 
 
 ## Quick start
 
+First complete the cluster prerequisites in **[CLUSTER-SETUP.md](./CLUSTER-SETUP.md)**: the Gateway API experimental CRDs,
+an **Envoy Gateway** controller with a `GatewayClass` named **`envoy`**, an RWX StorageClass, cert-manager **with Gateway
+API support enabled**, and a DNS record for your hostname → the Envoy LB. The chart then provisions the TLS certificate
+itself (a Let's Encrypt `ClusterIssuer` + HTTP-01 Gateway solver, on by default).
+
 ```bash
-helm install artemis ./helm/artemis \
-  --namespace artemis --create-namespace \
+helm install artemis ./helm/artemis -n artemis --create-namespace \
   --set gateway.hostname=artemis.example.com \
-  --set gateway.className=cilium \
+  --set gateway.className=envoy \
+  --set gateway.tls.certManagerIssuer.email=you@example.com \
+  --set sharedStorage.storageClassName=<rwx-class> \
   --set artemis.config.admin.password='<admin-pw>' \
   --set artemis.config.jwtBase64Secret="$(openssl rand -base64 64 | tr -d '\n')" \
   --set artemis.config.versionControl.buildAgentGitPassword='<git-pw>' \
@@ -94,13 +104,22 @@ helm install artemis ./helm/artemis \
 Prefer a values file for anything beyond a quick test:
 
 ```bash
-helm install artemis ./helm/artemis -n artemis --create-namespace -f my-values.yaml --wait --timeout 15m
+helm install artemis . -n artemis --create-namespace -f values.test-deployment.yml --wait --timeout 15m
 ```
 
 First startup takes several minutes. Watch it:
 
 ```bash
 kubectl -n artemis get pods -w
+```
+
+Once the `Gateway` exists, Envoy Gateway provisions the external LoadBalancer. Point your `gateway.hostname` DNS record
+(A/AAAA) at its address:
+
+```bash
+kubectl -n envoy-gateway-system get svc \
+  -l gateway.envoyproxy.io/owning-gateway-namespace=artemis \
+  -o custom-columns='NAME:.metadata.name,EXTERNAL-IP:.status.loadBalancer.ingress[*].ip'
 ```
 
 Upgrade / uninstall:
@@ -167,9 +186,18 @@ Secret, generated once and preserved across upgrades) to avoid host-key mismatch
 
 ## TLS
 
-Set `gateway.tls.secretName` to a pre-created `kubernetes.io/tls` Secret, **or** set
-`gateway.tls.certManagerClusterIssuer` to have [cert-manager](https://cert-manager.io/) provision the certificate for the
-HTTPS listener automatically.
+The Gateway's HTTPS listener needs a certificate. Three ways, in order of convenience:
+
+1. **cert-manager, chart-managed (default).** `gateway.tls.certManagerIssuer.create=true` renders a release-scoped
+   Let's Encrypt `ClusterIssuer` with a Gateway-API HTTP-01 solver, adds an HTTP:80 listener (`gateway.httpListener`), and
+   annotates the Gateway so cert-manager issues and renews the cert automatically. Set
+   `gateway.tls.certManagerIssuer.email`. Requires **cert-manager with Gateway API support enabled**
+   (`--set config.enableGatewayAPI=true`) and DNS pointing at the Envoy LB.
+2. **cert-manager, existing issuer.** `certManagerIssuer.create=false` + `certManagerClusterIssuer=<name>` (the issuer must
+   use a `gatewayHTTPRoute` solver).
+3. **Bring your own.** `certManagerIssuer.create=false` + `gateway.tls.secretName=<your-tls-secret>`.
+
+Full setup and troubleshooting: [CLUSTER-SETUP.md §4](./CLUSTER-SETUP.md#4-tls-with-cert-manager--envoy-gateway).
 
 ---
 
@@ -271,8 +299,13 @@ The existing Gateway must expose an HTTPS listener for the hostname and (for `ss
 | `gateway.create` | `true` | Create a Gateway. `false` → attach to `gateway.parentRef`. |
 | `gateway.className` | `""` | `gatewayClassName` (required when `create=true`). |
 | `gateway.parentRef.*` | `""` | Existing Gateway to attach to (when `create=false`). |
-| `gateway.tls.secretName` | `""` | Existing TLS Secret for HTTPS. |
-| `gateway.tls.certManagerClusterIssuer` | `""` | cert-manager ClusterIssuer to auto-provision TLS. |
+| `gateway.httpListener` | `true` | Add an HTTP:80 listener (needed for the cert-manager HTTP-01 Gateway solver). |
+| `gateway.tls.secretName` | `""` (→ `<release>-tls`) | TLS Secret backing the HTTPS listener (cert-manager writes here). |
+| `gateway.tls.certManagerIssuer.create` | `true` | Create a release-scoped Let's Encrypt ClusterIssuer (Gateway HTTP-01 solver). |
+| `gateway.tls.certManagerIssuer.name` | `""` (→ `<release>-artemis-letsencrypt`) | Issuer name. |
+| `gateway.tls.certManagerIssuer.email` | `admin.aet@xcit.tum.de` | ACME contact email (**required** when `create=true`). |
+| `gateway.tls.certManagerIssuer.server` | LE prod URL | ACME directory URL (use the staging URL while testing). |
+| `gateway.tls.certManagerClusterIssuer` | `""` | Reference an existing issuer instead (when `certManagerIssuer.create=false`). |
 | `gateway.ssh.mode` | `tcproute` | `tcproute` / `loadbalancer` / `nodeport` / `none`. |
 | `gateway.ssh.port` | `7921` | git-SSH port. |
 | `gateway.ssh.nodePort` | `""` | NodePort (when `mode=nodeport`). |
@@ -307,6 +340,16 @@ Required values (no default; `helm install` fails fast without them): `artemis.c
   ensure your RWX provisioner allows a root init container to `chown`.
 - **Git SSH host-key mismatch** - all pods share one host key via the `<release>-ssh-hostkey` Secret; it is preserved
   across upgrades. A fresh key is generated only on a fresh install.
+- **App crash-loops with `artemisAuthenticationTokenValue is not set or too short`** - the Hades token
+  (`artemis.config.hades.artemisAuthenticationTokenValue`) must be **≥ 12 characters** and match the hades-artemis-adapter.
+- **HTTPS listener never programs / no cert** - the Gateway needs a valid TLS secret. With cert-manager, the most common
+  cause is Gateway API support not being enabled (challenge fails `gateway api is not enabled`) - enable it with
+  `--set config.enableGatewayAPI=true` (not the `ExperimentalGatewayAPISupport` feature gate). Also confirm DNS resolves to
+  the Envoy LB and the ACME solver pod isn't blocked by a namespace `ResourceQuota`. See
+  [CLUSTER-SETUP.md §4](./CLUSTER-SETUP.md#4-tls-with-cert-manager--envoy-gateway).
+- **`No route to host` / can't reach the Gateway** - the `envoy-gateway` service in `envoy-gateway-system` is the
+  ClusterIP **control plane**; the external LB is the per-Gateway data-plane service (find it via the Gateway's
+  `.status.addresses`). See [CLUSTER-SETUP.md §5](./CLUSTER-SETUP.md#5-dns).
 - **Builds never complete** - verify the image contains the Hades integration, that `artemis.config.hades.url` is
   reachable from the cluster, and that the adapter can reach Artemis' `new-result` endpoint.
 
