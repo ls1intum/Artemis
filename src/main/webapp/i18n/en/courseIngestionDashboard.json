@@ -8,9 +8,12 @@
             "error": "Failed to load the index overview. Please try again.",
             "system": {
                 "title": "Weaviate",
-                "weaviate": "Vector database",
+                "servicesTitle": "Services",
+                "weaviate": "Weaviate (vector database)",
+                "iris": "Iris (ingestion service)",
                 "reachable": "Reachable",
                 "unreachable": "Unreachable",
+                "irisDownHint": "Iris is down, so lecture content cannot be ingested until it is back up.",
                 "address": "Address"
             },
             "collections": {
@@ -28,7 +31,10 @@
                 "unit": "Lecture unit",
                 "starting": "Starting...",
                 "openLecture": "Open lecture",
-                "stalled": "Stalled - no update"
+                "stalled": "Stalled - no Iris activity",
+                "phase_transcribing": "Transcribing",
+                "phase_ingesting": "Indexing",
+                "retried": "{{count}}x retried"
             },
             "recent": {
                 "title": "Recent ingestions",

@@ -24,7 +24,7 @@
 
     @if (overview(); as o) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.system.title' | artemisTranslate">
+            <tum-ui-panel [header]="'artemisApp.courseIngestionDashboard.system.servicesTitle' | artemisTranslate">
                 <div class="flex items-center justify-between py-1">
                     <span jhiTranslate="artemisApp.courseIngestionDashboard.system.weaviate"></span>
                     @if (o.weaviateUp) {
@@ -33,6 +33,22 @@
                         <span class="font-semibold" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.unreachable"></span>
                     }
                 </div>
+                <div class="flex items-center justify-between py-1">
+                    <span jhiTranslate="artemisApp.courseIngestionDashboard.system.iris"></span>
+                    @if (pyrisReachable() === undefined) {
+                        <span class="text-muted-color">…</span>
+                    } @else if (pyrisReachable()) {
+                        <span class="font-semibold" [style.color]="'var(--success)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.reachable"></span>
+                    } @else {
+                        <span class="inline-flex items-center gap-1.5 font-semibold" [style.color]="'var(--danger)'">
+                            <fa-icon [icon]="faTriangleExclamation" size="xs" />
+                            <span jhiTranslate="artemisApp.courseIngestionDashboard.system.unreachable"></span>
+                        </span>
+                    }
+                </div>
+                @if (pyrisReachable() === false) {
+                    <div class="text-xs mt-1" [style.color]="'var(--danger)'" jhiTranslate="artemisApp.courseIngestionDashboard.system.irisDownHint"></div>
+                }
                 @if (o.weaviateAddress) {
                     <div class="flex items-center justify-between py-1">
                         <span jhiTranslate="artemisApp.courseIngestionDashboard.system.address"></span>
@@ -105,8 +121,14 @@
                                     @if (isStalled(run)) {
                                         <div class="flex items-center gap-1.5 mt-0.5 truncate">
                                             <span class="text-xs font-medium truncate" [style.color]="'var(--danger)'">
-                                                {{ 'artemisApp.courseIngestionDashboard.active.stalled' | artemisTranslate }} · {{ currentStepName(run) }}
+                                                {{ 'artemisApp.courseIngestionDashboard.active.stalled' | artemisTranslate }} ·
+                                                {{ run.activities && run.activities.length ? currentStepName(run) : phaseLabel(run) }}
                                             </span>
+                                            @if (run.retryCount > 0) {
+                                                <span class="text-xs shrink-0" [style.color]="'var(--danger)'">
+                                                    · {{ 'artemisApp.courseIngestionDashboard.active.retried' | artemisTranslate: { count: run.retryCount } }}
+                                                </span>
+                                            }
                                             <span class="text-xs text-muted-color font-mono shrink-0">{{ sinceUpdate(run) }}</span>
                                         </div>
                                     } @else {

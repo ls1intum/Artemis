@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.health.contributor.Status;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.ActiveIngestionDTO;
+import de.tum.cit.aet.artemis.iris.dto.PyrisReachabilityDTO;
 import de.tum.cit.aet.artemis.iris.dto.RecentIngestionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.IngestionProgressService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
@@ -71,5 +73,21 @@ public class IrisIngestionAdminResource {
     public ResponseEntity<List<RecentIngestionDTO>> getRecentLectureIngestions() {
         log.debug("REST request to get the recent lecture ingestions");
         return ResponseEntity.ok(ingestionProgressService.getRecentIngestions());
+    }
+
+    /**
+     * GET api/iris/admin/pyris-health : whether the Iris service is currently reachable, for the dashboard health tile.
+     * When Iris is down, dispatched ingestions cannot run, so surfacing this explains an otherwise silent dashboard.
+     *
+     * @return the Iris reachability
+     */
+    @GetMapping("pyris-health")
+    @EnforceAdmin
+    @Operation(summary = "Iris reachability", description = "Whether the Iris service is currently reachable, for the ingestion dashboard health tile")
+    @ApiResponse(responseCode = "200", description = "The Iris reachability")
+    public ResponseEntity<PyrisReachabilityDTO> getPyrisHealth() {
+        log.debug("REST request to get the Iris reachability");
+        boolean reachable = pyrisHealthIndicator.health(true).getStatus() == Status.UP;
+        return ResponseEntity.ok(new PyrisReachabilityDTO(reachable));
     }
 }

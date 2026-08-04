@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitProcessingStatusDTO;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 
 /**
@@ -38,6 +39,16 @@ public class LectureContentProcessingApi extends AbstractLectureApi {
      */
     public void triggerProcessing(AttachmentVideoUnit unit) {
         lectureContentProcessingService.triggerProcessing(unit);
+    }
+
+    /**
+     * The authoritative processing status of every lecture unit currently transcribing or ingesting, so the admin
+     * ingestion dashboard can source its in-flight view from the same state the unit page reads.
+     *
+     * @return the in-flight processing statuses
+     */
+    public List<LectureUnitProcessingStatusDTO> findInFlightProcessingStatuses() {
+        return lectureContentProcessingService.findInFlightProcessingStatuses();
     }
 
     /**

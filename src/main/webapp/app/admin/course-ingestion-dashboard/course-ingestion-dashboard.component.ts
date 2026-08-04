@@ -55,6 +55,7 @@ import {
     IngestionActivity,
     MissingContent,
     MissingEntity,
+    PyrisReachability,
     RecentIngestion,
     TypeIndexCensus,
 } from './course-ingestion-dashboard.model';
@@ -132,6 +133,8 @@ export class CourseIngestionDashboardComponent implements OnInit {
     // drives the elapsed-time display between polls.
     readonly activeIngestions = signal<ActiveIngestion[]>([]);
     readonly recentIngestions = signal<RecentIngestion[]>([]);
+    // Iris reachability, polled with the active ingestions; undefined until the first probe returns.
+    readonly pyrisReachable = signal<boolean | undefined>(undefined);
     private readonly nowMillis = signal(Date.now());
 
     // The run whose milestone detail drawer is open. Keyed by job id so the drawer content follows live poll updates.
@@ -319,13 +322,15 @@ export class CourseIngestionDashboardComponent implements OnInit {
                     forkJoin({
                         active: this.dashboardService.getActiveIngestions().pipe(catchError(() => of([] as ActiveIngestion[]))),
                         recent: this.dashboardService.getRecentIngestions().pipe(catchError(() => of([] as RecentIngestion[]))),
+                        health: this.dashboardService.getPyrisHealth().pipe(catchError(() => of<PyrisReachability>({ reachable: false }))),
                     }),
                 ),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe(({ active, recent }) => {
+            .subscribe(({ active, recent, health }) => {
                 this.activeIngestions.set(active);
                 this.recentIngestions.set(recent);
+                this.pyrisReachable.set(health.reachable);
                 this.nowMillis.set(Date.now());
             });
     }
@@ -425,11 +430,12 @@ export class CourseIngestionDashboardComponent implements OnInit {
     }
 
     /**
-     * The inline left-border style that visually splits the metadata / content column groups. It is applied inline (not
-     * via a border utility) because the tum-ui table directive styles descendant cells with a higher-specificity
-     * arbitrary-variant border-color rule that would otherwise override a plain `border-l` utility and render nothing.
+     * The inline left-border style that visually splits the metadata / content column groups. It uses the table's own
+     * border color so the vertical group divider reads at the same weight as the horizontal row separators instead of a
+     * heavier foreign rule, and is applied inline (not via a border utility) because the tum-ui table directive styles
+     * descendant cells with a higher-specificity arbitrary-variant border-color rule that would otherwise win.
      */
-    protected readonly groupDividerStyle = '1px solid var(--p-surface-300)';
+    protected readonly groupDividerStyle = '1px solid var(--p-content-border-color)';
 
     /** The left divider style for the first column of a group (metadata / content), or null for the rest. */
     protected divider(first: boolean): string | null {
@@ -488,13 +494,25 @@ export class CourseIngestionDashboardComponent implements OnInit {
         return (run.activities ?? []).find((activity) => activity.state === 'RUNNING')?.detail ?? '';
     }
 
-    /** Whether a run looks stalled: no status callback for longer than the threshold (catches a killed Iris quickly). */
+    /**
+     * Whether a run is stalled: the backend marks it stalled when the unit is in flight but Iris has not reported
+     * recently (dispatched but silent, e.g. Iris down). The client-side time check refines it live between polls.
+     */
     protected isStalled(run: ActiveIngestion): boolean {
+        if (run.stalled) {
+            return true;
+        }
         if (!run.lastUpdatedAt) {
             return false;
         }
         const lastMillis = Date.parse(run.lastUpdatedAt);
         return !Number.isNaN(lastMillis) && this.nowMillis() - lastMillis > STALL_THRESHOLD_MS;
+    }
+
+    /** The phase label for a run when Iris has not reported steps yet (stalled), so the row is not blank. */
+    protected phaseLabel(run: ActiveIngestion): string {
+        const key = run.phase === 'TRANSCRIBING' ? 'phase_transcribing' : 'phase_ingesting';
+        return this.translateService.instant(`artemisApp.courseIngestionDashboard.active.${key}`);
     }
 
     /** Human-readable time since a run's last status callback, for the stalled warning. */

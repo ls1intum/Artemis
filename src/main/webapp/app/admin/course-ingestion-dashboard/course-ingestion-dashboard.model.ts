@@ -31,6 +31,17 @@ export interface ActiveIngestion {
     startedAt?: string;
     lastUpdatedAt?: string;
     activities?: IngestionActivity[];
+    /** The authoritative processing phase (TRANSCRIBING or INGESTING) from the unit's processing state. */
+    phase?: string;
+    /** Whether the unit is in flight but Iris has not reported progress recently (dispatched but silent). */
+    stalled: boolean;
+    /** How many attempts have failed for this unit so far. */
+    retryCount: number;
+}
+
+/** Whether the Iris service is currently reachable, for the dashboard health tile. */
+export interface PyrisReachability {
+    reachable: boolean;
 }
 
 /** A finished or failed lecture ingestion kept for the recent-history view. */

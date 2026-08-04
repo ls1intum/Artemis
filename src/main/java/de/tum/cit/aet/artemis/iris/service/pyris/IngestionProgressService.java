@@ -33,8 +33,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitProcessingStatusDTO;
 
 /**
  * Registry of lecture ingestions for the admin ingestion dashboard, fed by the Pyris status callbacks.
@@ -56,6 +58,13 @@ public class IngestionProgressService {
     private static final int MAX_RECENT = 100;
 
     private static final int MAX_ERROR_LENGTH = 2000;
+
+    /**
+     * A unit in flight (transcribing or ingesting) whose last Iris callback is older than this is shown as stalled: Iris
+     * accepted the job but is not reporting progress. Iris heartbeats every few seconds while healthy, so a silence this
+     * long means the run is dead or hung, not merely slow, and the stuck-recovery will eventually fail it.
+     */
+    private static final Duration STALLED_AFTER = Duration.ofSeconds(120);
 
     private static final IrisMessageToolActivityConverter ACTIVITIES_CONVERTER = new IrisMessageToolActivityConverter();
 
@@ -81,12 +90,16 @@ public class IngestionProgressService {
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
+    private final Optional<LectureContentProcessingApi> lectureContentProcessingApi;
+
     public IngestionProgressService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, IngestionHistoryRepository ingestionHistoryRepository,
-            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi) {
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
+            Optional<LectureContentProcessingApi> lectureContentProcessingApi) {
         this.hazelcastInstance = hazelcastInstance;
         this.ingestionHistoryRepository = ingestionHistoryRepository;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureRepositoryApi = lectureRepositoryApi;
+        this.lectureContentProcessingApi = lectureContentProcessingApi;
     }
 
     @PostConstruct
@@ -178,14 +191,46 @@ public class IngestionProgressService {
     }
 
     /**
-     * @return a snapshot of all lecture ingestions currently in flight, enriched with the lecture unit and lecture names
+     * The lecture ingestions currently in flight, sourced from the authoritative lecture-unit processing state (the same
+     * source as the unit-management page, so the two can never disagree) and enriched with the live per-step webhook
+     * activity when Iris is reporting. A unit that is in flight but whose last Iris callback is stale is flagged as
+     * {@code stalled}, which surfaces the "dispatched to Iris but no activity" case the webhook-only view could not see.
+     * <p>
+     * When the lecture processing API is unavailable (Iris integration not configured), it falls back to the raw webhook
+     * registry so nothing is lost.
+     *
+     * @return a snapshot of the in-flight lecture ingestions
      */
     public List<ActiveIngestionDTO> getActiveIngestions() {
-        return activeMap().values().stream()
-                .map(entry -> new ActiveIngestionDTO(entry.job().jobId(), entry.job().courseId(), entry.job().lectureId(), entry.job().lectureUnitId(),
-                        resolveUnitName(entry.job().lectureUnitId()), resolveLectureName(entry.job().lectureId()), entry.runState(), entry.startedAt(), entry.lastUpdatedAt(),
-                        fromJson(entry.activitiesJson())))
-                .toList();
+        if (lectureContentProcessingApi.isEmpty()) {
+            return activeMap().values().stream()
+                    .map(entry -> new ActiveIngestionDTO(entry.job().jobId(), entry.job().courseId(), entry.job().lectureId(), entry.job().lectureUnitId(),
+                            resolveUnitName(entry.job().lectureUnitId()), resolveLectureName(entry.job().lectureId()), entry.runState(), entry.startedAt(), entry.lastUpdatedAt(),
+                            fromJson(entry.activitiesJson()), null, false, 0))
+                    .toList();
+        }
+        return lectureContentProcessingApi.get().findInFlightProcessingStatuses().stream().map(this::toActiveDTO).toList();
+    }
+
+    /**
+     * Builds the active-ingestion DTO for one authoritative in-flight processing state, attaching the live webhook
+     * activity timeline for its current job token when Iris has reported any, and computing the stalled flag from the
+     * most recent activity time.
+     */
+    private ActiveIngestionDTO toActiveDTO(LectureUnitProcessingStatusDTO status) {
+        ActiveEntry entry = status.ingestionJobToken() != null ? activeMap().get(status.ingestionJobToken()) : null;
+        List<PyrisActivityDTO> activities = entry != null ? fromJson(entry.activitiesJson()) : null;
+        // The webhook entry's lastUpdated is per-callback (finer grained); fall back to the processing state's own.
+        String lastUpdatedAt = entry != null ? entry.lastUpdatedAt() : status.lastUpdatedAt();
+        String jobId = status.ingestionJobToken() != null ? status.ingestionJobToken() : "unit-" + status.lectureUnitId();
+        return new ActiveIngestionDTO(jobId, status.courseId(), status.lectureId(), status.lectureUnitId(), status.lectureUnitName(), status.lectureName(), "RUNNING",
+                status.startedAt(), lastUpdatedAt, activities, status.phase(), isStalled(lastUpdatedAt), status.retryCount());
+    }
+
+    /** A run is stalled when its last reported activity is older than {@link #STALLED_AFTER} (Iris went silent). */
+    private static boolean isStalled(String lastUpdatedAtIso) {
+        ZonedDateTime lastUpdated = parseInstant(lastUpdatedAtIso);
+        return lastUpdated != null && Duration.between(lastUpdated, ZonedDateTime.now()).compareTo(STALLED_AFTER) > 0;
     }
 
     /**

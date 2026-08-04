@@ -23,8 +23,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
  * @param startedAt       the ISO-8601 run start time, or null when not reported
  * @param lastUpdatedAt   the ISO-8601 time of the last status callback, so the dashboard can detect a stalled run
  * @param activities      the live per-step activity snapshot, or null when the run has not reported steps yet
+ * @param phase           the authoritative processing phase ({@code TRANSCRIBING} or {@code INGESTING}) from the
+ *                            lecture unit's processing state, so the dashboard matches the unit-management page
+ * @param stalled         whether the unit is in flight but Iris has not reported progress recently (dispatched but no
+ *                            activity), i.e. the run is silent and will be failed by the stuck-recovery
+ * @param retryCount      how many attempts have failed for this unit so far
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ActiveIngestionDTO(String jobId, long courseId, long lectureId, long lectureUnitId, @Nullable String lectureUnitName, @Nullable String lectureName, String runState,
-        @Nullable String startedAt, @Nullable String lastUpdatedAt, @Nullable List<PyrisActivityDTO> activities) {
+        @Nullable String startedAt, @Nullable String lastUpdatedAt, @Nullable List<PyrisActivityDTO> activities, @Nullable String phase, boolean stalled, int retryCount) {
 }

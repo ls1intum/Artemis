@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -23,8 +24,10 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitProcessingStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -77,6 +80,32 @@ public class LectureContentProcessingService {
      */
     public boolean hasProcessingCapabilities() {
         return irisLectureApi.isPresent();
+    }
+
+    /**
+     * The authoritative processing status of every lecture unit currently in an active phase (transcribing or
+     * ingesting), for the admin ingestion dashboard. This is the same {@code LectureUnitProcessingState} the unit page
+     * reads, so a dashboard sourced from it can never disagree with the unit badges. Read-only.
+     *
+     * @return the in-flight processing statuses
+     */
+    @Transactional(readOnly = true)
+    public List<LectureUnitProcessingStatusDTO> findInFlightProcessingStatuses() {
+        return processingStateRepository.findByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING)).stream().map(this::toProcessingStatusDTO).toList();
+    }
+
+    private LectureUnitProcessingStatusDTO toProcessingStatusDTO(LectureUnitProcessingState state) {
+        LectureUnit unit = state.getLectureUnit();
+        Long lectureId = unit != null && unit.getLecture() != null ? unit.getLecture().getId() : null;
+        String lectureName = unit != null && unit.getLecture() != null ? unit.getLecture().getTitle() : null;
+        Long courseId = unit != null && unit.getLecture() != null && unit.getLecture().getCourse() != null ? unit.getLecture().getCourse().getId() : null;
+        return new LectureUnitProcessingStatusDTO(unit != null ? unit.getId() : 0L, unit != null ? unit.getName() : null, lectureId != null ? lectureId : 0L, lectureName,
+                courseId != null ? courseId : 0L, state.getPhase().name(), isoOrNull(state.getStartedAt()), isoOrNull(state.getLastUpdated()), state.getRetryCount(),
+                state.getIngestionJobToken());
+    }
+
+    private static String isoOrNull(ZonedDateTime dateTime) {
+        return dateTime != null ? dateTime.toInstant().toString() : null;
     }
 
     // -------------------- Public API --------------------

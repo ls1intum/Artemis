@@ -8,9 +8,12 @@
             "error": "Die Index-Übersicht konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
             "system": {
                 "title": "Weaviate",
-                "weaviate": "Vektordatenbank",
+                "servicesTitle": "Dienste",
+                "weaviate": "Weaviate (Vektordatenbank)",
+                "iris": "Iris (Ingestion-Dienst)",
                 "reachable": "Erreichbar",
                 "unreachable": "Nicht erreichbar",
+                "irisDownHint": "Iris ist nicht erreichbar, daher können Vorlesungsinhalte erst wieder ingestiert werden, wenn es wieder läuft.",
                 "address": "Adresse"
             },
             "collections": {
@@ -28,7 +31,10 @@
                 "unit": "Vorlesungseinheit",
                 "starting": "Wird gestartet...",
                 "openLecture": "Vorlesung öffnen",
-                "stalled": "Blockiert - keine Aktualisierung"
+                "stalled": "Blockiert - keine Iris-Aktivität",
+                "phase_transcribing": "Transkribiert",
+                "phase_ingesting": "Indexiert",
+                "retried": "{{count}}x wiederholt"
             },
             "recent": {
                 "title": "Letzte Ingestions",

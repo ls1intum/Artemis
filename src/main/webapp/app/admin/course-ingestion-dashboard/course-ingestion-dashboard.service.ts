@@ -9,6 +9,7 @@ import {
     IndexedEntity,
     MissingContent,
     MissingEntity,
+    PyrisReachability,
     RecentIngestion,
 } from './course-ingestion-dashboard.model';
 
@@ -72,5 +73,12 @@ export class CourseIngestionDashboardService {
      */
     getRecentIngestions(): Observable<RecentIngestion[]> {
         return this.http.get<RecentIngestion[]>('api/iris/admin/lecture-ingestion/recent');
+    }
+
+    /**
+     * Whether the Iris service is currently reachable, for the dashboard health tile.
+     */
+    getPyrisHealth(): Observable<PyrisReachability> {
+        return this.http.get<PyrisReachability>('api/iris/admin/pyris-health');
     }
 }
