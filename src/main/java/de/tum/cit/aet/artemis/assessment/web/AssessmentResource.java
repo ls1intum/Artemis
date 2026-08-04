@@ -215,9 +215,14 @@ public abstract class AssessmentResource {
             if (resultToCancel == null) {
                 throw new BadRequestAlertException("The result does not belong to this submission or is not a manual assessment", "result", "resultNotFound");
             }
-            // Cancelling releases a draft assessment, so a finished correction round is not a valid target. Without this
-            // a tutor could name the id of an assessment they had already submitted and delete it through this endpoint,
-            // even though deleting a finished result requires an instructor elsewhere.
+            // Cancelling releases a draft assessment, so a finished correction round is not a valid target here.
+            //
+            // The check is deliberately scoped to this branch. Its job is to make sure the new parameter cannot reach a
+            // result that was unreachable before: without a result id only the newest manual result is ever released,
+            // so naming an id is the only way to reach an older, already submitted correction round. Releasing the
+            // newest manual result even when it carries a completion date is long-standing behaviour that
+            // cancelOwnAssessmentAsTutor and cancelAssessmentOfOtherTutorAsInstructor both assert, and changing it is a
+            // product decision that does not belong in a hotfix.
             if (resultToCancel.getCompletionDate() != null) {
                 throw new BadRequestAlertException("The assessment of this correction round is already submitted and cannot be cancelled", "result", "resultAlreadySubmitted");
             }

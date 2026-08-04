@@ -950,6 +950,26 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(remainingResultIds).as("the tutor's assessment is released and the Athena result is kept").containsExactly(athenaResultId);
     }
 
+    /**
+     * Naming a result explicitly must not reach a correction round that is already submitted. Without a result id only
+     * the newest manual result is ever released, so an id is the only way to reach an older finished round, and
+     * deleting a finished result requires an instructor through the dedicated endpoints.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void cancelAssessmentRejectsAFinishedCorrectionRoundNamedByResultId() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final Result finishedResult = textSubmission.getLatestResult();
+        assertThat(finishedResult.getCompletionDate()).as("setup: the assessment is submitted").isNotNull();
+
+        request.postWithoutLocation("/api/text/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId()
+                + "/cancel-assessment?resultId=" + finishedResult.getId(), null, HttpStatus.BAD_REQUEST, null);
+
+        var remainingResults = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(textSubmission.getId()).orElseThrow().getResults();
+        assertThat(remainingResults.stream().filter(Objects::nonNull).map(Result::getId)).as("the submitted assessment is untouched").containsExactly(finishedResult.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void cancelOwnAssessmentAsStudent() throws Exception {
