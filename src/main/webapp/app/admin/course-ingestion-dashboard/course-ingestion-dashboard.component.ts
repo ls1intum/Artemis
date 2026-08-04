@@ -180,6 +180,10 @@ export class CourseIngestionDashboardComponent implements OnInit {
     readonly pageSize = signal(25);
     readonly currentPage = signal(0);
 
+    // Pagination over the recent ingestions, which the backend caps at 100 (0-based page, matching tum-ui-paginator).
+    readonly recentPageSize = signal(10);
+    readonly recentPage = signal(0);
+
     // Course-content browser modal: the course whose stored Weaviate objects are shown, and the loaded objects.
     readonly browsedCourse = signal<CourseIndexCensus | undefined>(undefined);
     readonly indexedEntities = signal<IndexedEntity[]>([]);
@@ -258,6 +262,18 @@ export class CourseIngestionDashboardComponent implements OnInit {
         return this.displayedCourses().slice(start, start + this.pageSize());
     });
 
+    /** The recent-ingestions page clamped into range, since the list can shrink below the current page index. */
+    readonly recentClampedPage = computed(() => {
+        const pages = Math.max(1, Math.ceil(this.recentIngestions().length / this.recentPageSize()));
+        return Math.min(this.recentPage(), pages - 1);
+    });
+
+    /** The slice of recent ingestions shown on the current page. */
+    readonly pagedRecent = computed(() => {
+        const start = this.recentClampedPage() * this.recentPageSize();
+        return this.recentIngestions().slice(start, start + this.recentPageSize());
+    });
+
     /** Clicking a sortable header selects that column (ascending); clicking it again toggles the direction. */
     protected toggleSort(column: 'course' | 'release'): void {
         if (this.sortColumn() === column) {
@@ -298,6 +314,15 @@ export class CourseIngestionDashboardComponent implements OnInit {
     protected onPageSizeChange(size: number): void {
         this.pageSize.set(size);
         this.currentPage.set(0);
+    }
+
+    protected onRecentPageChange(page: number): void {
+        this.recentPage.set(page);
+    }
+
+    protected onRecentPageSizeChange(size: number): void {
+        this.recentPageSize.set(size);
+        this.recentPage.set(0);
     }
 
     /** True when any filter or a non-default sort is active, so the Reset control is offered. */

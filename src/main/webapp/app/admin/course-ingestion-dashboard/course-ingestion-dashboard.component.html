@@ -163,8 +163,8 @@
                 @if (recentIngestions().length === 0) {
                     <div class="text-muted-color text-sm py-2" jhiTranslate="artemisApp.courseIngestionDashboard.recent.none"></div>
                 } @else {
-                    <div class="flex flex-col" style="max-height: 22rem; overflow-y: auto">
-                        @for (recent of recentIngestions(); track recent.jobId) {
+                    <div class="flex flex-col">
+                        @for (recent of pagedRecent(); track recent.jobId) {
                             <div
                                 class="flex items-center gap-3 py-2 px-2 border-t border-surface-200 dark:border-surface-700 first:border-t-0 cursor-pointer rounded hover:bg-surface-100 dark:hover:bg-surface-800"
                                 role="button"
@@ -197,6 +197,17 @@
                             </div>
                         }
                     </div>
+                    @if (recentIngestions().length > recentPageSize()) {
+                        <tum-ui-paginator
+                            class="mt-3 block"
+                            [totalRecords]="recentIngestions().length"
+                            [page]="recentClampedPage()"
+                            [pageSize]="recentPageSize()"
+                            [pageSizeOptions]="pageSizeOptions"
+                            (pageChange)="onRecentPageChange($event)"
+                            (pageSizeChange)="onRecentPageSizeChange($event)"
+                        />
+                    }
                 }
             </tum-ui-panel>
         </div>
