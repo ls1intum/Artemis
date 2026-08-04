@@ -22,4 +22,11 @@ describe('SecondCorrectionEnableButtonComponent', () => {
         comp.triggerSecondCorrectionButton();
         expect(emitStub).toHaveBeenCalledTimes(1);
     });
+
+    it('should align its host with adjacent buttons', () => {
+        const host: HTMLElement = fixture.nativeElement;
+
+        expect(host.classList).toContain('d-inline-block');
+        expect(host.classList).toContain('align-middle');
+    });
 });
