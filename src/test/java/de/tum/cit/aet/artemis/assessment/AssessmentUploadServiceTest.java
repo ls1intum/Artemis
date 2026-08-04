@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
+import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -49,6 +50,9 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Autowired
     private AssessmentUploadService assessmentUploadService;
+
+    @Autowired
+    private RatingRepository ratingRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -155,6 +159,26 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThat(manualResults).hasSize(1);
         assertThat(manualResults.getFirst().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertManualAssessment(participation1.getId(), 75.0, "uploaded feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReplaceManualAssessmentThatHasARating() {
+        // A student who rated an uploaded manual assessment must still be replaceable. The upload clears the rating before orphan removal deletes the old result, so the
+        // rating's foreign key to that result is not violated when the deletion is flushed.
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        final Result ratedManualResult = getManualResults(participation1.getId()).getFirst();
+        participationUtilService.addRatingToResult(ratedManualResult, 3);
+        assertThat(ratingRepository.findRatingByResultId(ratedManualResult.getId())).isPresent();
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+
+        assertThat(result.errors()).isEmpty();
+        // Exactly one manual result remains with the new score, and the rating that referenced the replaced result was removed instead of violating its foreign key.
+        assertManualAssessment(participation1.getId(), 90.0, "second");
+        assertThat(ratingRepository.findRatingByResultId(ratedManualResult.getId())).isEmpty();
     }
 
     @Test
