@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -32,6 +33,9 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserCreationService userCreationService;
 
     @BeforeEach
     void initTestCase() {
@@ -150,6 +154,27 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // isTestUser = false -> the flag is cleared
         userService.importUsers(List.of(new StudentDTO(login, null, null, null, null, false)));
         assertThat(userRepository.findOneByLogin(login).orElseThrow().isTestUser()).as("flag is cleared when explicitly false").isFalse();
+    }
+
+    @Test
+    void testCreateUser_withManagedUserVM_respectsIsInternalFlag() {
+        String login = TEST_PREFIX + "external_user";
+        ManagedUserVM externalUserDTO = new ManagedUserVM();
+        externalUserDTO.setLogin(login);
+        externalUserDTO.setFirstName("External");
+        externalUserDTO.setLastName("User");
+        externalUserDTO.setEmail("external_test@example.com");
+        externalUserDTO.setInternal(false);
+
+        userCreationService.createUser(externalUserDTO);
+
+        // Reload the user from the repository to verify database persistence
+        Optional<User> reloadedUser = userRepository.findOneByLogin(login);
+        assertThat(reloadedUser).isPresent();
+        assertThat(reloadedUser.get().isInternal()).as("persisted user should be external").isFalse();
+
+        // Cleanup via reloaded entity
+        reloadedUser.ifPresent(userRepository::delete);
     }
 
     @Test

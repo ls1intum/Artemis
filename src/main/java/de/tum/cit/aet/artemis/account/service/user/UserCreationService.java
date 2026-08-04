@@ -139,9 +139,10 @@ public class UserCreationService {
 
         setUserAuthorities(userDTO, user);
 
-        String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
-        String passwordHash = passwordService.hashPassword(password);
-        user.setPassword(passwordHash);
+        if (userDTO.isInternal()) {
+            String password = userDTO.getPassword() == null ? RandomUtil.generatePassword() : userDTO.getPassword();
+            user.setPassword(passwordService.hashPassword(password));
+        }
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
         try {
@@ -153,7 +154,7 @@ public class UserCreationService {
         }
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
-        user.setInternal(true);
+        user.setInternal(userDTO.isInternal());
         user.setTestUser(userDTO.isTestUser());
         // an empty string is considered as null to satisfy the unique constraint on registration number
         if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
