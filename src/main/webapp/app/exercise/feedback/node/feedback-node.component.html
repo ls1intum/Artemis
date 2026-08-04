@@ -44,7 +44,7 @@
             (click)="toggleFeedbackItemGroupOpen()"
         >
             <div class="flex items-center">
-                <fa-icon class="me-2" [icon]="feedbackItemGroup()!.open ? faAngleUp : faAngleDown" />
+                <fa-icon class="me-2" [icon]="isGroupExpanded() ? faAngleUp : faAngleDown" />
                 <h4 class="feedback-item__category mb-0 text-base font-bold">
                     {{ 'artemisApp.feedback.group.' + feedbackItemGroup()!.name | artemisTranslate }} ({{ feedbackItemGroup()!.members.length }})
                 </h4>
@@ -53,10 +53,10 @@
                 <span class="font-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup()!.credits, course()) }}P </span>
             }
         </div>
-        @if (feedbackItemGroup()!.open) {
+        @if (isGroupExpanded()) {
             <div class="mx-3">
                 @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem) {
-                    <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" />
+                    <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" [isPrinting]="isPrinting()" />
                 }
             </div>
         }
