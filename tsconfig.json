@@ -26,7 +26,8 @@
         "typeRoots": ["node_modules/@types"],
         "paths": {
             "app/*": ["./src/main/webapp/app/*"],
-            "src/*": ["./src/*"]
+            "src/*": ["./src/*"],
+            "@tumaet/ui-angular": ["./packages/tum-ui/dist"]
         },
         "importHelpers": true
     },

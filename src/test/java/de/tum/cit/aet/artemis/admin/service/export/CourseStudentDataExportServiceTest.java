@@ -54,7 +54,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
 
     @BeforeEach
     void setup() throws IOException {
-        // The CourseUtilService.addCourseWithExercisesAndSubmissions method expects 4 tutors
+        // The CourseUtilService.addEnrolledCourseWithExercisesAndSubmissions method expects 4 tutors
         userUtilService.addUsers(TEST_PREFIX, 3, 4, 0, 1);
         tempDir = tempFileUtilService.createTempDirectory("student-data-export-test");
     }
@@ -79,7 +79,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_withExercisesAndSubmissions() throws IOException {
         // Create course with exercises and submissions (without complaints)
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
@@ -117,7 +117,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_withGradingScale() throws IOException {
         // Create course with exercises and submissions (without complaints, using empty suffix to match user groups)
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         // Add grading scale to the course
         // intervals: 0-50 (fail), 50-70, 70-85, 85-100 (pass)
@@ -179,7 +179,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportAllStudentData_createsAllExpectedFiles() throws IOException {
         // Create course with various data (without complaints, using empty suffix to match user groups)
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
@@ -200,7 +200,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_verifyPerExerciseColumns() throws IOException {
         // Create course with specific number of exercises (using empty suffix to match user groups)
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         List<String> errors = new ArrayList<>();
         courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
@@ -222,7 +222,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_verifyRoundingWithDefaultAccuracy() throws IOException {
         // Create course with exercises and submissions (default accuracy is 1 decimal place)
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
         assertThat(course.getAccuracyOfScores()).isEqualTo(1);
 
         List<String> errors = new ArrayList<>();
@@ -254,7 +254,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_verifyRoundingWithTwoDecimalPlaces() throws IOException {
         // Create course with exercises and submissions
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         // Update course accuracy to 2 decimal places
         course.setAccuracyOfScores(2);
@@ -289,7 +289,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_verifyRoundingWithZeroDecimalPlaces() throws IOException {
         // Create course with exercises and submissions
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         // Update course accuracy to 0 decimal places (whole numbers only)
         course.setAccuracyOfScores(0);
@@ -324,7 +324,7 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseScores_verifyStatisticsRowsRounding() throws IOException {
         // Create course with exercises and submissions
-        Course course = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
+        Course course = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 2, 2, 2, 0, false, 0, "");
 
         // Use 1 decimal place (default)
         assertThat(course.getAccuracyOfScores()).isEqualTo(1);

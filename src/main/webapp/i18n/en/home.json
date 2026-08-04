@@ -10,6 +10,11 @@
             "saml2": {
                 "pleaseSignInProvider": "Please sign in with {{provider}}.",
                 "pleaseSignIn": "Please sign in using Single Sign-on."
+            },
+            "form": {
+                "loggingInAs": "Logging in as <span class='bold'>{{username}}</span>",
+                "signInWithProvider": "Sign in with {{provider}}",
+                "universityCredentials": "University Credentials"
             }
         },
         "logged": {
