@@ -98,6 +98,16 @@
                                 "glob": "pdfium.wasm",
                                 "input": "./node_modules/@embedpdf/pdfium/dist",
                                 "output": "assets/embedpdf"
+                            },
+                            {
+                                "glob": "{katex.min.js,katex.min.css}",
+                                "input": "./node_modules/katex/dist",
+                                "output": "assets/katex"
+                            },
+                            {
+                                "glob": "**/*.woff2",
+                                "input": "./node_modules/katex/dist/fonts",
+                                "output": "assets/katex/fonts"
                             }
                         ],
                         "styles": [

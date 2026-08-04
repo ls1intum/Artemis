@@ -306,17 +306,18 @@ export default tseslint.config(
             '@typescript-eslint/no-base-to-string': 'error',
         },
     },
-    // Discourage `ngOnChanges` across Angular client files. Prefer computed() for derived state and effect() for
-    // genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs), so this is a
-    // consistency preference, not a correctness rule. The former migration backlog has been cleared; the few
-    // genuinely unavoidable cases (SimpleChanges.previousValue / isFirstChange / before-child-init timing) use a
-    // justified line-level disable. Full rationale + decision table:
-    // documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
+    // Ban `ngOnChanges` across client code. Prefer computed() for derived state and effect() for genuine side
+    // effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs), so this is a consistency
+    // ban rather than a correctness rule — but the client is now completely free of the hook (PR #12951), and an
+    // `error` is what keeps it that way: `pnpm run lint` runs without `--max-warnings`, so a warning would let a
+    // reintroduced hook through CI unnoticed. Spec files and the test infrastructure are covered too, so a stub or
+    // mock cannot reintroduce it either. The rare genuinely unavoidable case (SimpleChanges.previousValue /
+    // isFirstChange / before-child-init timing) still uses a justified line-level disable. Full rationale + decision
+    // table: documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
     {
-        files: ['src/main/webapp/app/**/*.ts'],
-        ignores: ['**/*.spec.ts'],
+        files: ['src/main/webapp/app/**/*.ts', 'src/test/javascript/**/*.ts'],
         rules: {
-            'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
+            'localRules/prefer-signal-reactivity-over-ngonchanges': 'error',
         },
     },
     // Zoneless correctness: a mutable component/directive field that the template reads must be a signal,
