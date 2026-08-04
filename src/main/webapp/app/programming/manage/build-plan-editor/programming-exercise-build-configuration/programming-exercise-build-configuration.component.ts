@@ -23,7 +23,7 @@ interface DockerFlags {
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
-    styleUrls: ['../../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../shared/programming-exercise-form.scss'],
     imports: [TranslateDirective, HelpIconComponent, FormsModule, TableEditableFieldComponent, FaIconComponent, TableViewComponent],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {

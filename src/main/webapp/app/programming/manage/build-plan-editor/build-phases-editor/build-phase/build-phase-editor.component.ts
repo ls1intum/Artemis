@@ -15,7 +15,7 @@ import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
 import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
+import { MonacoEditorFitTextComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
 import { Badge } from 'primeng/badge';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { Tooltip } from 'primeng/tooltip';
