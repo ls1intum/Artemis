@@ -133,9 +133,11 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            const correctionRoundParam = queryParams.get('correction-round');
-            if (correctionRoundParam) {
-                this.correctionRound.set(parseInt(correctionRoundParam, 10));
+            // Only override when the parameter is present and sane: Number(null) is 0, which silently means the first
+            // correction round, and an arbitrary query string could otherwise put NaN or a fraction into the round.
+            const correctionRoundParam = Number(queryParams.get('correction-round'));
+            if (Number.isSafeInteger(correctionRoundParam) && correctionRoundParam >= 0) {
+                this.correctionRound.set(correctionRoundParam);
             }
         });
 
@@ -360,7 +362,9 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.examId,
                     this.exerciseGroupId,
                 );
-                void this.router.navigate(url);
+                // Carry the correction round: the component reads it from the URL, so dropping it here sent the next
+                // submission into the first correction round.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);

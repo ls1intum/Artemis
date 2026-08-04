@@ -62,6 +62,20 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
 }
 
 /**
+ * A correction round indexes only the results that are correction rounds. Automatic results, whether from continuous
+ * integration or from Athena, are not correction rounds and are skipped, matching the server's
+ * {@code Submission#filterNonAutomaticResults}. Filtering only Athena results here made the client disagree with the
+ * server as soon as a plain automatic result was present, for example [AUTOMATIC, SEMI_AUTOMATIC] on a programming
+ * exercise, where the server calls the manual result round 0 and the client called it round 1.
+ *
+ * @param results the results in the order the server returned them
+ * @returns the results that are correction rounds, in order
+ */
+function correctionRoundResults(results: Result[]): Result[] {
+    return results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC && result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
+}
+
+/**
  * Used to access a submissions result for a specific correctionRound
  * Athena Results need to be excluded to avoid an assessment being locked by null
  * @param submission
@@ -69,10 +83,10 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    if (submission?.results && submission?.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
-        return submission.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
+    if (!submission?.results || correctionRound < 0) {
+        return undefined;
     }
-    return undefined;
+    return correctionRoundResults(submission.results)[correctionRound];
 }
 
 /**
@@ -126,7 +140,7 @@ export function setSubmissionResultByCorrectionRound(submission: Submission, res
     }
     const correctionRoundIndices = submission.results
         .map((existingResult, index) => ({ existingResult, index }))
-        .filter(({ existingResult }) => existingResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)
+        .filter(({ existingResult }) => correctionRoundResults([existingResult]).length > 0)
         .map(({ index }) => index);
 
     // A round beyond the known ones is appended rather than written over an unrelated slot.
