@@ -371,6 +371,11 @@ mkdir -p \
 export ADMIN_USERNAME="artemis_admin"
 export ADMIN_PASSWORD="local-e2e-admin-not-a-deployment-credential"
 
+# A JWT signing key committed to the repository would be one anyone can use to forge a token, so it is generated per run.
+# Exported here rather than inside launch_node, which runs in a subshell per node: all three nodes have to sign with the
+# same key, or a token minted on one node is rejected by the next.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 launch_node() {
     local n=$1
     local http_port=${HTTP_PORTS[$((n - 1))]}

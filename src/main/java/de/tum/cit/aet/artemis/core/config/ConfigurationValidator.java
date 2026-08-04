@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationPropertie
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.io.DecodingException;
+import net.sourceforge.plantuml.security.SecurityProfile;
+import net.sourceforge.plantuml.security.SecurityUtils;
 
 /**
  * Validates application configuration at startup.
@@ -45,6 +47,7 @@ import io.jsonwebtoken.io.DecodingException;
  * <li>Passkey configuration (conflicting settings)</li>
  * <li>Internal admin credentials (username/password present together and within length bounds)</li>
  * <li>Security-critical properties that still hold a shipped example value ({@code prod} profile only)</li>
+ * <li>Diagram rendering profile (pinned to the restrictive profile, which the library does not default to)</li>
  * <li>Weaviate configuration (required properties when enabled)</li>
  * </ul>
  */
@@ -71,6 +74,12 @@ public class ConfigurationValidator {
 
     private static final String BUILD_AGENT_GIT_PASSWORD_PROPERTY = "artemis.version-control.build-agent-git-password";
 
+    /**
+     * The name PlantUML reads its rendering profile from, as a JVM system property first and as an environment variable
+     * otherwise. It is not a Spring property, so it is not visible through {@link Environment}.
+     */
+    private static final String PLANTUML_SECURITY_PROFILE_PROPERTY = "PLANTUML_SECURITY_PROFILE";
+
     /** HS512 requires a 512-bit key; {@code Keys.hmacShaKeyFor} rejects anything shorter. */
     private static final int MIN_JWT_SECRET_LENGTH_IN_BYTES = 64;
 
@@ -82,7 +91,10 @@ public class ConfigurationValidator {
      * Entries must never be removed: an operator who once copied a value needs it to keep failing.
      */
     private static final Set<String> KNOWN_DEFAULT_JWT_SECRETS = Set.of("bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=",
-            "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n", "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded");
+            "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded\n", "my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded",
+            // Briefly carried by the docker prod fixtures in a pre-merge revision of this change, so it is readable in
+            // this repository's history. The fixtures now generate a key per run instead.
+            "R6Mmos1yXM2Psu1SJ3wkTEM0g1r4w3EPcCS8CY6BvGllthhMfch6kp7/d3qJS4Nh+XE5ng9Eb6sE34ybi56f9A==");
 
     /**
      * The same shipped keys as plaintext, compared against the decoded key bytes.
@@ -180,6 +192,7 @@ public class ConfigurationValidator {
      */
     @PostConstruct
     public void validateConfigurations() {
+        validateDiagramRenderingProfile();
         validateServerUrl();
         validatePasskeyConfiguration();
         validateAdminConfiguration();
@@ -273,10 +286,29 @@ public class ConfigurationValidator {
         for (String knownDefault : KNOWN_DEFAULT_JWT_SECRET_PLAINTEXTS) {
             matchesDefault |= MessageDigest.isEqual(keyBytes, knownDefault.getBytes(StandardCharsets.UTF_8));
         }
+        // The Base64 entries are compared here as well, decoded: a key re-encoded with different padding or line breaks
+        // is spelled differently but decodes to the same bytes, and a random key has no readable plaintext form to list.
+        for (String knownDefault : KNOWN_DEFAULT_JWT_SECRETS) {
+            byte[] decoded = decodeBase64OrNull(knownDefault);
+            matchesDefault |= decoded != null && MessageDigest.isEqual(keyBytes, decoded);
+        }
         if (matchesDefault) {
             throw new InsecureDefaultCredentialException(propertyPath,
                     "the configured signing key decodes to a value published in the Artemis repository, so anyone can forge a token for any user with any authority",
                     "Generate a fresh key, e.g. `openssl rand -base64 64`.");
+        }
+    }
+
+    /**
+     * @param value a known-default entry, which is either a Base64 spelling of a key or the key's plaintext
+     * @return the decoded bytes, or {@code null} when the entry is not Base64 and therefore has nothing to decode
+     */
+    private static byte[] decodeBase64OrNull(String value) {
+        try {
+            return Decoders.BASE64.decode(value);
+        }
+        catch (DecodingException e) {
+            return null;
         }
     }
 
@@ -347,6 +379,44 @@ public class ConfigurationValidator {
      */
     private static boolean constantTimeEquals(String first, String second) {
         return MessageDigest.isEqual(first.getBytes(StandardCharsets.UTF_8), second.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Pins the diagram renderer to its most restrictive profile and refuses to start if it did not take effect.
+     * <p>
+     * Diagram sources reach the renderer straight from request bodies. The library resolves its profile from
+     * {@code PLANTUML_SECURITY_PROFILE} and falls back to a permissive one when that is unset or unrecognised, and in the
+     * permissive profiles a diagram may pull in local files and remote resources through directives such as
+     * {@code !include}. Artemis passes its own diagram theme as inline content, so nothing it renders needs those
+     * directives and there is no configuration in which loosening this buys anything.
+     * <p>
+     * The order matters. The library resolves the profile once, on the first read, and caches it for the life of the JVM,
+     * so the value has to be in place before anything reads it - hence setting it here, at startup, rather than only
+     * checking it. Reading it back afterwards is what makes the check meaningful: if something had already resolved the
+     * profile earlier, the value set here is ignored and the read returns the permissive one that is actually in effect.
+     * <p>
+     * An explicitly configured value is left alone and then rejected if it is permissive, so an operator gets a startup
+     * failure naming the property instead of a silently downgraded renderer. Like {@link #validateServerUrl()} this throws:
+     * a startup warning is routinely missed, and the point of the check is that the state must not reach a running system.
+     */
+    private void validateDiagramRenderingProfile() {
+        // Mirrors the library's own lookup order: the system property wins, the environment variable is the fallback.
+        boolean configuredExternally = StringUtils.hasText(System.getProperty(PLANTUML_SECURITY_PROFILE_PROPERTY))
+                || StringUtils.hasText(System.getenv(PLANTUML_SECURITY_PROFILE_PROPERTY));
+        if (!configuredExternally) {
+            System.setProperty(PLANTUML_SECURITY_PROFILE_PROPERTY, SecurityProfile.SANDBOX.name());
+        }
+
+        SecurityProfile profile = SecurityUtils.getSecurityProfile();
+        if (profile == SecurityProfile.SANDBOX || profile == SecurityProfile.ALLOWLIST) {
+            log.debug("Diagram rendering uses the {} profile", profile);
+            return;
+        }
+        String errorMessage = ("Diagram rendering resolved the %s profile, which allows a diagram to read local files and fetch remote resources. "
+                + "Unset %s so Artemis can pin %s, or set it to %s or %s explicitly.")
+                .formatted(profile, PLANTUML_SECURITY_PROFILE_PROPERTY, SecurityProfile.SANDBOX, SecurityProfile.SANDBOX, SecurityProfile.ALLOWLIST);
+        log.error(errorMessage);
+        throw new IllegalStateException(errorMessage);
     }
 
     /**

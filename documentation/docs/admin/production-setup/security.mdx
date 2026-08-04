@@ -35,6 +35,20 @@ jhipster:
     Always restrict read access to configuration files for the minimum required set of users (usually only the system user that runs the Artemis service) only.
 </Callout>
 
+### Startup Validation
+
+Under the `prod` profile, Artemis refuses to start when one of these properties still holds a value that is published in this repository: the JWT signing key, the internal admin password (also when it is identical to the username), and the build-agent git password. The startup error names the property and how to supply a value. Generate the signing key with `openssl rand -base64 64`.
+
+`docker/artemis/config/prod.env` therefore keeps placeholders that this validation rejects: a deployment that has not been configured yet fails immediately instead of running on values that anyone can read. Supply your own values from outside version control — an env file of your own added through a compose override file, or `ARTEMIS_ENV_FILE` for the `docker/test-server-*.yml` compose files, which replaces `prod.env` entirely (see [Docker Compose Setup](../../developer/docker-compose.mdx)):
+
+```env
+JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<openssl rand -base64 64>"
+ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
+ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with the build agents>"
+```
+
+Artemis also pins the restrictive rendering profile of the diagram renderer at startup, in every profile. If `PLANTUML_SECURITY_PROFILE` is set explicitly, it has to name either `SANDBOX` or `ALLOWLIST`; any other value is rejected. Artemis passes its diagram theme as inline content, so no Artemis feature depends on the other profiles.
+
 ### Database Credentials
 
 The database services used by `docker/artemis-prod-postgres.yml` and `docker/artemis-prod-mysql.yml` extend the shared `docker/postgres.yml`/`docker/mysql.yml` service definitions, which default to `docker/postgres/default.env` and `docker/mysql/default.env` for local development and testing. Those default env files intentionally use no real authentication (Postgres `POSTGRES_HOST_AUTH_METHOD=trust`, MySQL `MYSQL_ALLOW_EMPTY_PASSWORD=yes` with an empty root password) so a fresh local setup works without any configuration.

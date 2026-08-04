@@ -73,6 +73,9 @@ class ConfigurationValidatorTest {
 
         private static final String SHIPPED_BASE64_SECRET = "bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=";
 
+        /** The key the docker prod fixtures carried in a pre-merge revision of this change. */
+        private static final String FORMER_FIXTURE_SECRET = "R6Mmos1yXM2Psu1SJ3wkTEM0g1r4w3EPcCS8CY6BvGllthhMfch6kp7/d3qJS4Nh+XE5ng9Eb6sE34ybi56f9A==";
+
         @Test
         void testShippedJwtSecretIsRejectedUnderProdProfile() {
             ConfigurationValidator validator = createCredentialValidator(true, SHIPPED_BASE64_SECRET, null, null, null, null);
@@ -110,6 +113,32 @@ class ConfigurationValidatorTest {
                     .encodeToString("my-secret-key-which-should-be-changed-in-production-and-be-base64-encoded".getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
             ConfigurationValidator validator = createCredentialValidator(true, reEncodedShippedSecret, null, null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("published in the Artemis repository");
+        }
+
+        /**
+         * The docker prod fixtures briefly carried this key before they switched to generating one per run, so it is
+         * readable in this repository's history and has to keep failing for anyone who copied it in the meantime.
+         */
+        @Test
+        void testAKeyPublishedByTheDockerFixturesIsRejectedUnderProdProfile() {
+            ConfigurationValidator validator = createCredentialValidator(true, FORMER_FIXTURE_SECRET, null, null, null, null);
+
+            assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
+                    .hasMessageContaining("published in the Artemis repository");
+        }
+
+        /**
+         * Dropping the padding gives a spelling that is not listed as a literal but decodes to the identical key, which is
+         * why the listed Base64 entries are compared decoded as well.
+         */
+        @Test
+        void testAReSpelledPublishedKeyIsRejectedUnderProdProfile() {
+            String unpaddedSecret = FORMER_FIXTURE_SECRET.replace("=", "");
+
+            ConfigurationValidator validator = createCredentialValidator(true, unpaddedSecret, null, null, null, null);
 
             assertThatThrownBy(validator::validateConfigurations).isInstanceOf(InsecureDefaultCredentialException.class)
                     .hasMessageContaining("published in the Artemis repository");
