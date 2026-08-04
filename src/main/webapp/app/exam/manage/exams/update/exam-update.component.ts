@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
@@ -59,6 +59,7 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
         TumUiDialogComponent,
         ExamImportProgressDialogComponent,
         ExamConductionComponent,
+        TumUiDialogComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {

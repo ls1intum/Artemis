@@ -2,7 +2,7 @@ import { Component, WritableSignal, computed, effect, inject, input, output, sig
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';

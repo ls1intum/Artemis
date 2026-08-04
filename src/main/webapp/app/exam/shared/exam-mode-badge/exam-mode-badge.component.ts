@@ -3,7 +3,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTagComponent } from '@tumaet/ui-angular';
 
 export type ExamModeBadgeSize = 'default' | 'large';
 

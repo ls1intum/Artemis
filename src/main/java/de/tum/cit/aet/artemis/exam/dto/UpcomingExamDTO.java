@@ -56,6 +56,6 @@ public record UpcomingExamDTO(Long id, String title, Boolean testExam, @Nullable
      */
     public static UpcomingExamDTO of(Exam exam) {
         CourseForUpcomingExamDTO courseDTO = exam.getCourse() == null ? null : CourseForUpcomingExamDTO.of(exam.getCourse());
-        return new UpcomingExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), courseDTO, exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate());
+        return new UpcomingExamDTO(exam.getId(), exam.getTitle(), !exam.getExamMode().isReal(), courseDTO, exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate());
     }
 }

@@ -65,7 +65,7 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { Message } from 'primeng/message';
 import { ButtonDirective } from 'primeng/button';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiMessageComponent } from '@tumaet/ui-angular';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

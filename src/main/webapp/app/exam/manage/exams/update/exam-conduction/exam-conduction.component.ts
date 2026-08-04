@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiMessageComponent } from '@tumaet/ui-angular';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';

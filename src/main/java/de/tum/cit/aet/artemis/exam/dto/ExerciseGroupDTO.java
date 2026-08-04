@@ -59,7 +59,7 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
          */
         public static ExamForExerciseGroupDTO of(Exam exam) {
             CourseForExerciseGroupDTO courseDTO = exam.getCourse() == null ? null : CourseForExerciseGroupDTO.of(exam.getCourse());
-            return new ExamForExerciseGroupDTO(exam.getId(), exam.isTestExam(), exam.getExampleSolutionPublicationDate(), courseDTO);
+            return new ExamForExerciseGroupDTO(exam.getId(), !exam.getExamMode().isReal(), exam.getExampleSolutionPublicationDate(), courseDTO);
         }
     }
 

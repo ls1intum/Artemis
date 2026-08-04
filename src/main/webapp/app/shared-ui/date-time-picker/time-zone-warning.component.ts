@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { faClock, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-time-zone-warning',
