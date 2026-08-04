@@ -394,10 +394,12 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // The markdown patterns used to backtrack quadratically on a long single line: 100 KB took between eight and
         // twenty-eight seconds depending on how many dollar signs it held, and an unclosed $$ raised a StackOverflowError.
         // The request size limit is 100 KB, so these are the worst inputs the endpoint accepts.
-        // Each of these hit a different pattern: the first four the inline-formula check, the fifth the display-math body,
-        // and the last two the task syntax, whose list previously recursed once per comma and once per parenthesis pair.
+        // Each of these hit a different part: the first four the inline-formula check, the fifth the display-math body, the
+        // two alternating ones the display-math body again (one dollar sign per repetition used to recurse) together with
+        // the placeholder substitution, which cost a pass over the document per formula, and the last two the task syntax,
+        // whose list previously recursed once per comma and once per parenthesis pair.
         String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000),
-                "[task][n](" + "a,".repeat(20_000), "[task][n](" + "a(),".repeat(20_000) };
+                "$$" + "a$".repeat(30_000), "$$" + "a$".repeat(30_000) + "$$", "[task][n](" + "a,".repeat(20_000), "[task][n](" + "a(),".repeat(20_000) };
 
         for (String markdown : pathological) {
             var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);
@@ -405,8 +407,40 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
             request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
             long elapsedMillis = (System.nanoTime() - startedAt) / 1_000_000;
 
-            assertThat(elapsedMillis).as("rendering pathological markdown must not cost seconds of CPU").isLessThan(10_000);
+            // The limit sits between the two: an order of magnitude below the regression it has to catch, and an order of
+            // magnitude above the slowest of these inputs today (about 170 ms for the alternating dollars, under 10 ms for
+            // every other one), so a slow CI machine does not turn it red.
+            assertThat(elapsedMillis).as("rendering pathological markdown must not cost seconds of CPU").isLessThan(2_000);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderADisplayFormulaThatEscapesManyDollarSigns() throws Exception {
+        // A legitimate formula, not crafted input: the body escapes a dollar sign per term. The display-math pattern
+        // recursed once per escaped dollar, so a few thousand of them ended the request with a StackOverflowError rather
+        // than a rendered formula.
+        String formula = "a$".repeat(5_000) + "b";
+        var body = new ProblemStatementRenderRequestDTO("$$" + formula + "$$", null, null, "en", false, false, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-display-mode=\"true\"");
+        assertThat(result.html()).contains(formula);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldLeaveTheFormulaPlaceholderEmptyWithJavaScript() throws Exception {
+        // With KaTeX in the document it overwrites the element as soon as it runs, so putting the source inside would only
+        // show raw LaTeX until then. The source is the fallback for a document without script, not an addition to both.
+        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, true, false, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-formula=\"\\int_0^1 x\\,dx\"");
+        assertThat(result.html()).contains("></span>");
+        assertThat(result.html()).doesNotContain("\\,dx</span>");
     }
 
     @Test

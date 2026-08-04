@@ -221,7 +221,11 @@ public class ProblemStatementRenderingService {
 
         // 7a. Give each formula its source as visible text, for readers whose document carries no script. It has to happen
         // here rather than in restore(): inside the markdown the source would be parsed as markdown and mangled.
-        html = MathFormulaExtractor.fillFormulaSourceAsFallback(html);
+        // Only without JavaScript: where KaTeX runs it overwrites the element anyway, and the source would be visible for
+        // as long as the script takes to get there.
+        if (!includeJs && !mathFormulas.isEmpty()) {
+            html = MathFormulaExtractor.fillFormulaSourceAsFallback(html);
+        }
 
         // 7b. Process images based on requested mode.
         if (inlineImages) {
@@ -229,9 +233,7 @@ public class ProblemStatementRenderingService {
         }
 
         // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
-        for (int i = 0; i < inlineSvgs.size(); i++) {
-            html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
-        }
+        html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX, SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
         String resultAttr = buildResultAttribute(resultSummary);
@@ -604,11 +606,7 @@ public class ProblemStatementRenderingService {
     }
 
     private static String restoreCodeBlocks(String markdown, List<String> codeBlocks) {
-        String result = markdown;
-        for (int i = 0; i < codeBlocks.size(); i++) {
-            result = result.replace(CODE_BLOCK_PLACEHOLDER_PREFIX + i + CODE_BLOCK_PLACEHOLDER_SUFFIX, codeBlocks.get(i));
-        }
-        return result;
+        return IndexedPlaceholders.replaceAll(markdown, CODE_BLOCK_PLACEHOLDER_PREFIX, CODE_BLOCK_PLACEHOLDER_SUFFIX, codeBlocks.size(), codeBlocks::get);
     }
 
     private static Safelist buildSafelist() {
@@ -664,7 +662,8 @@ public class ProblemStatementRenderingService {
         }
         try {
             // Escape the slash in any "</" sequence: the JSON is emitted inside a <script> element, and an unescaped
-            // "</script>" in a translation would terminate it. "<\\/" is an equivalent JSON escape.
+            // "</script>" in a translation would terminate it. "<\\/" is an equivalent JSON escape. The sequence holds no
+            // letter, so this covers "</ScRiPt>" as well - the parser only needs the "</" to start looking for a tag name.
             String json = objectMapper.writeValueAsString(i18n).replace("</", "<\\/");
             return "var __i18n = " + json + ";\n" + INTERACTIVE_JS;
         }
