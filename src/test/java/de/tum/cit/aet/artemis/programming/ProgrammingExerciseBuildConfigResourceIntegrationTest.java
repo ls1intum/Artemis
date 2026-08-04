@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -129,6 +130,20 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsEmptyPhases() throws Exception {
         request.put(buildConfigEndpoint(), configurationWith(List.of(), 0), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsNullPhaseElement() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // a null element must be rejected by bean validation with a 400 instead of reaching the phase validation and failing with a 500
+        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(Arrays.asList(phase("compile"), null), DOCKER_IMAGE), 60, DOCKER_FLAGS);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
     }
 
     @Test

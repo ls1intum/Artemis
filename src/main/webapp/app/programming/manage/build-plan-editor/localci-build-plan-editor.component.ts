@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
@@ -36,6 +37,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
         ProgrammingExerciseBuildConfigurationComponent,
         BuildPhasesEditorComponent,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LocalCIBuildPlanEditorComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
@@ -44,6 +46,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly farPlayCircle = faPlayCircle;
 
@@ -100,7 +103,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.isTimeoutValid());
 
     ngOnInit(): void {
-        this.activatedRoute.data.subscribe(({ exercise }) => {
+        this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {
             this.initEditingState(exercise);
             this.seedDefaultDockerImageIfMissing(exercise);
             this.programmingExercise.set(exercise);
@@ -149,19 +152,22 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
      * the full build config of the resolved exercise (the participation query may not return it).
      */
     private loadParticipationsWithResults(resolvedExercise: ProgrammingExercise): void {
-        this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(resolvedExercise.id!).subscribe({
-            next: (response) => {
-                const exercise = response.body!;
-                exercise.buildConfig = resolvedExercise.buildConfig;
-                this.programmingExercise.set(exercise);
-                this.loadingResults.set(false);
-            },
-            error: (error) => {
-                // the editor stays usable with the resolved exercise; only the live build status is unavailable
-                this.loadingResults.set(false);
-                onError(this.alertService, error);
-            },
-        });
+        this.programmingExerciseService
+            .findWithTemplateAndSolutionParticipationAndLatestResults(resolvedExercise.id!)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    const exercise = response.body!;
+                    exercise.buildConfig = resolvedExercise.buildConfig;
+                    this.programmingExercise.set(exercise);
+                    this.loadingResults.set(false);
+                },
+                error: (error) => {
+                    // the editor stays usable with the resolved exercise; only the live build status is unavailable
+                    this.loadingResults.set(false);
+                    onError(this.alertService, error);
+                },
+            });
     }
 
     /**
@@ -180,6 +186,7 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
                 timeoutSeconds: this.timeout(),
                 dockerFlags: exercise.buildConfig?.dockerFlags,
             })
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
                     this.isSaving.set(false);
