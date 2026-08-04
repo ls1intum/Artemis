@@ -1523,7 +1523,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // The response content reflects a concrete created exam (title / course / dates), not just a 200 status.
         UpcomingExamDTO createdExam = exams.stream().filter(exam -> exam.id().equals(exam1.getId())).findFirst().orElseThrow();
         assertThat(createdExam.title()).isEqualTo(exam1.getTitle());
-        assertThat(createdExam.testExam()).isEqualTo(exam1.isTestExam());
+        assertThat(createdExam.testExam()).isEqualTo(!exam1.getExamMode().isReal());
         assertThat(createdExam.course().id()).isEqualTo(course1.getId());
         assertThat(createdExam.course().title()).isEqualTo(course1.getTitle());
         assertThat(createdExam.visibleDate()).isNotNull();
