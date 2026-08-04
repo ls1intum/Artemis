@@ -87,23 +87,6 @@ export function getSubmissionResultById(submission: Submission | undefined, resu
 }
 
 /**
- * Determines which correction round a result belongs to.
- * <p>
- * Counts only the results that are correction rounds, so Athena results are skipped exactly as
- * {@link getSubmissionResultByCorrectionRound} and {@link setSubmissionResultByCorrectionRound} skip them. Using the raw
- * position in {@link Submission#results} instead would report a round that is too high as soon as an Athena result
- * precedes, which then reads and writes the wrong round.
- *
- * @param submission the submission the result belongs to
- * @param resultId   the id of the result whose correction round is wanted
- * @returns the zero-based correction round, or undefined if the submission has no such result
- */
-export function getCorrectionRoundOfResult(submission: Submission | undefined, resultId: number): number | undefined {
-    const correctionRoundIndex = submission?.results?.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).findIndex((result) => result.id === resultId);
-    return correctionRoundIndex === undefined || correctionRoundIndex < 0 ? undefined : correctionRoundIndex;
-}
-
-/**
  * Used to set / override the latest result in the results list, and set / override the
  * var latestResult
  *

@@ -17,7 +17,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { getCorrectionRoundOfResult, getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
@@ -276,7 +276,8 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.course.set(getCourseFromExercise(exercise));
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            this.correctionRound.set(getCorrectionRoundOfResult(submission, this.resultId) ?? 0);
+            // The correction round stays as read from the URL rather than being looked up in the results list: the
+            // list can be reduced to the requested result, which would report every reopened assessment as round 1.
             this.result.set(getSubmissionResultById(submission, this.resultId));
         } else {
             this.result.set(getLatestSubmissionResult(submission));

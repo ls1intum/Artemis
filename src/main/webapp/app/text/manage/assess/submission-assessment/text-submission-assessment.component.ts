@@ -16,7 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import {
-    getCorrectionRoundOfResult,
     getLatestSubmissionResult,
     getSubmissionResultByCorrectionRound,
     getSubmissionResultById,
@@ -178,7 +177,12 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
+            // Only override when the parameter is actually present: Number(null) is 0, which silently means the first
+            // correction round and would discard a round set from elsewhere.
+            const correctionRoundParam = queryParams.get('correction-round');
+            if (correctionRoundParam) {
+                this.correctionRound.set(Number(correctionRoundParam));
+            }
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
@@ -223,7 +227,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(this.submission, this.resultId()));
-            this.correctionRound.set(getCorrectionRoundOfResult(this.submission, this.resultId()) ?? 0);
+            // The correction round stays as read from the URL. When a resultId is requested the server replies with
+            // only that result (TextAssessmentResource: setResults(List.of(result))), so looking the round up in the
+            // results list always yields 0 and reported every reopened assessment as the first correction round.
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
@@ -246,6 +252,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private updateUrlIfNeeded() {
         if (this.isNewAssessmentRoute) {
             // Update the url with the new id, without reloading the page, to make the history consistent
+            // Keep the query parameters. The correction round lives only in the URL, so rebuilding it without them
+            // silently turned a second-round assessment into a first-round one on the next reload, which is issue
+            // #13396. The modeling and file upload editors rewrite the hash in place and therefore never lost it.
             const newUrl = this.router
                 .createUrlTree(
                     getLinkToSubmissionAssessment(
@@ -257,6 +266,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                         this.examId,
                         this.exerciseGroupId,
                     ),
+                    { queryParams: this.route.snapshot.queryParams },
                 )
                 .toString();
             this.location.go(newUrl);

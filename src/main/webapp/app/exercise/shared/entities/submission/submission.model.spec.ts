@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-    Submission,
-    getCorrectionRoundOfResult,
-    getSubmissionResultByCorrectionRound,
-    setSubmissionResultByCorrectionRound,
-} from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getSubmissionResultByCorrectionRound, setSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
@@ -48,27 +43,6 @@ describe('Submission model correction round accessors', () => {
         expect(getSubmissionResultByCorrectionRound(submission, 0)).toBe(firstRound);
         expect(getSubmissionResultByCorrectionRound(submission, 1)).toBe(savedSecondRound);
         expect(submission.results).toContain(athena);
-    });
-
-    it('should report the correction round of a result skipping an Athena result', () => {
-        const athena = resultWith(10, AssessmentType.AUTOMATIC_ATHENA);
-        const firstRound = resultWith(11, AssessmentType.MANUAL);
-        const secondRound = resultWith(12, AssessmentType.MANUAL);
-        const submission = submissionWith([athena, firstRound, secondRound]);
-
-        // The raw positions are 1 and 2; as correction rounds they are 0 and 1.
-        expect(getCorrectionRoundOfResult(submission, 11)).toBe(0);
-        expect(getCorrectionRoundOfResult(submission, 12)).toBe(1);
-    });
-
-    it('should report no correction round for an unknown or Athena result', () => {
-        const athena = resultWith(10, AssessmentType.AUTOMATIC_ATHENA);
-        const firstRound = resultWith(11, AssessmentType.MANUAL);
-        const submission = submissionWith([athena, firstRound]);
-
-        expect(getCorrectionRoundOfResult(submission, 10)).toBeUndefined();
-        expect(getCorrectionRoundOfResult(submission, 999)).toBeUndefined();
-        expect(getCorrectionRoundOfResult(undefined, 11)).toBeUndefined();
     });
 
     it('should stay symmetric without Athena results', () => {
