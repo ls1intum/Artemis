@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
-import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTabsComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tabs.component';
-import { TumUiTabListComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tab-list.component';
-import { TumUiTabComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tab.component';
-import { TumUiPanelComponent } from 'app/shared-ui/tum-ui/panel/tum-ui-panel.component';
-import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import {
+    TumUiButtonComponent,
+    TumUiMessageComponent,
+    TumUiPanelComponent,
+    TumUiSelectComponent,
+    TumUiTabComponent,
+    TumUiTabListComponent,
+    TumUiTableDirective,
+    TumUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
