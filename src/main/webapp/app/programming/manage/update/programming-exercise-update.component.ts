@@ -22,6 +22,7 @@ import {
     EXERCISE_TITLE_NAME_REGEX,
     INVALID_DIRECTORY_NAME_PATTERN,
     INVALID_REPOSITORY_NAME_PATTERN,
+    MAX_PACKAGE_NAME_LENGTH,
     MAX_PENALTY_PATTERN,
     MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
     PACKAGE_NAME_PATTERN_FOR_DART,
@@ -1479,6 +1480,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
                 translateValues: {},
+            });
+            return;
+        }
+
+        if (this.programmingExercise.packageName.length > MAX_PACKAGE_NAME_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.packageName.maxlength',
+                translateValues: { max: MAX_PACKAGE_NAME_LENGTH },
             });
             return;
         }
