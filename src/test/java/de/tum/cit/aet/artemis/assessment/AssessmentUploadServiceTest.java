@@ -223,6 +223,28 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotCreateSubmissionForSubmissionlessParticipantWhenAnotherParticipantIsBlockedByComplaint() {
+        // Regression test for the all-or-nothing contract: participation1 has a complained manual result that blocks the whole upload, while participation2 has no submission at
+        // all. Because the complaint gate rejects the upload before any missing submission is created, participation2 must not receive a submission — otherwise the transaction
+        // would commit that submission even though the upload reports that nothing was stored.
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        final Result manualResult = getManualResults(participation1.getId()).getFirst();
+        complaintRepo.save(new Complaint().result(manualResult).complaintType(ComplaintType.COMPLAINT));
+        assertThat(getSubmissions(participation2.getId())).isEmpty();
+
+        final String csv = "Identifier,Overall points\n%s,90\n%s,70\n".formatted(identifier1, identifier2);
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip(csv, Map.of(identifier1 + ".txt", "second", identifier2 + ".txt", "feedback two")));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.EXISTING_COMPLAINT);
+        // Nothing was stored: participation1 keeps its original assessment and participation2 never received a submission.
+        assertManualAssessment(participation1.getId(), 40.0, "first");
+        assertThat(getSubmissions(participation2.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotBlockUploadWhenOnlyASupersededSubmissionHasAComplaint() {
         // An older, superseded submission carries a complained manual result, while the latest submission carries a different manual result. The upload replaces only the latest
         // submission's result, so the complaint on the superseded result must neither block the upload nor be deleted.

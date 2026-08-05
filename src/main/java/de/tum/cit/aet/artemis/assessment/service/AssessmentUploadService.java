@@ -334,8 +334,9 @@ public class AssessmentUploadService {
      * <p>
      * <b>Postcondition:</b> if assessment is possible and no target participation has a complaint on its current manual assessment, a manual assessment has been created (or
      * overwritten) for each row — attached to the submission's ordered results collection so {@code results_order} stays unique and contiguous — and the returned result lists the
-     * stored identifiers and carries no errors. Otherwise nothing is stored: a complaint yields one {@code EXISTING_COMPLAINT} error per affected participation (all-or-nothing),
-     * and a closed assessment window propagates an exception.
+     * stored identifiers and carries no errors. Otherwise nothing is stored at all (missing submissions are created only after the complaint gate passes, so a structured failure
+     * return commits no new submission either): a complaint yields one {@code EXISTING_COMPLAINT} error per affected participation (all-or-nothing), and a closed assessment window
+     * propagates an exception.
      *
      * @param exercise      the programming exercise the assessments belong to
      * @param validatedRows the fully validated rows to store
@@ -355,18 +356,18 @@ public class AssessmentUploadService {
 
         final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
-        // First pass: resolve the (latest) submission to assess per row and collect the ids of the manual results that will be replaced, without mutating the managed collections
-        // yet. Only the latest submission is assessed; a manual result on an older, superseded submission is intentionally left untouched — it never contributes to the score (the
-        // grade is always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor behaves.
-        final List<Submission> targetSubmissions = new ArrayList<>(validatedRows.size());
+        // First pass: collect the ids of the manual results that will be replaced, reading only the already existing latest submissions and without mutating any managed collection
+        // or creating anything yet. Only the latest submission is assessed; a manual result on an older, superseded submission is intentionally left untouched — it never
+        // contributes to the score (the grade is always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor
+        // behaves. A participation without a submission contributes no result to replace here; its submission is created only in the second pass, so a complaint-blocked upload
+        // that returns a structured failure below persists nothing.
         final List<Long> replacedResultIds = new ArrayList<>();
         for (final ValidatedRow row : validatedRows) {
-            final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
-                    .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
-            final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
-                    .orElseGet(() -> initializeSubmittedExternalSubmission(participation, exercise));
-            targetSubmissions.add(submission);
-            submission.getResults().stream().filter(result -> result != null && result.isManual()).map(Result::getId).filter(Objects::nonNull).forEach(replacedResultIds::add);
+            final Submission existingSubmission = latestSubmissionsByParticipationId.get(row.participationId());
+            if (existingSubmission != null) {
+                existingSubmission.getResults().stream().filter(result -> result != null && result.isManual()).map(Result::getId).filter(Objects::nonNull)
+                        .forEach(replacedResultIds::add);
+            }
         }
 
         // Reject (instead of silently destroying) participations whose manual result being replaced is referenced by a complaint. The check is scoped to replacedResultIds — the
@@ -381,14 +382,19 @@ public class AssessmentUploadService {
             return AssessmentUploadResultDTO.failure(buildComplaintErrors(validatedRows, participationsWithComplaint));
         }
 
-        // Second pass: replace the manual result on each target submission through its ordered results collection so Hibernate deletes the old result via orphan removal and keeps
-        // results_order unique and contiguous, then attach the replacement to the same collection.
+        // Second pass, reached only once the upload is guaranteed to succeed (so a rejected upload persists nothing): resolve the latest submission to assess
+        // per row, creating and persisting a submitted external submission for a participant without one, then replace the manual result on that submission
+        // through its ordered results collection so Hibernate deletes the old result via orphan removal and keeps results_order unique and contiguous, and
+        // attach the replacement to the same collection.
         final List<Result> manualResults = new ArrayList<>(validatedRows.size());
-        for (int rowIndex = 0; rowIndex < validatedRows.size(); rowIndex++) {
-            final Submission submission = targetSubmissions.get(rowIndex);
+        for (final ValidatedRow row : validatedRows) {
+            final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
+                    .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
+            final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
+                    .orElseGet(() -> initializeSubmittedExternalSubmission(participation, exercise));
             final List<Result> existingManualResults = submission.getResults().stream().filter(result -> result != null && result.isManual()).toList();
             submission.getResults().removeAll(existingManualResults);
-            final Result manualResult = buildManualResult(exercise, submission, validatedRows.get(rowIndex));
+            final Result manualResult = buildManualResult(exercise, submission, row);
             submission.addResult(manualResult);
             manualResults.add(manualResult);
         }
