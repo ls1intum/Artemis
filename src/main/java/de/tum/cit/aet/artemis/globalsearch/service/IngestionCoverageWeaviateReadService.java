@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -84,6 +85,48 @@ public class IngestionCoverageWeaviateReadService {
 
     public IngestionCoverageWeaviateReadService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
+    }
+
+    /**
+     * The live object count of a prefixed Artemis collection (e.g. {@code SearchableEntities}), for the dashboard
+     * overview. Empty if the collection cannot be read (Weaviate unreachable).
+     *
+     * @param baseCollectionName the base (unprefixed) collection name; the Artemis prefix is applied
+     * @return the object count, or empty if it could not be read
+     */
+    public OptionalLong countPrefixedCollection(String baseCollectionName) {
+        try {
+            return OptionalLong.of(countObjects(weaviateService.getCollection(baseCollectionName)));
+        }
+        catch (Exception exception) {
+            log.warn("Could not count collection '{}' (treating as unavailable): {}", baseCollectionName, exception.getMessage());
+            return OptionalLong.empty();
+        }
+    }
+
+    /**
+     * The live object count of an external (unprefixed) Iris collection, for the dashboard overview. Empty if the
+     * collection does not exist on this instance or cannot be read.
+     *
+     * @param collectionName the exact, unprefixed collection name
+     * @return the object count, or empty if it could not be read
+     */
+    public OptionalLong countExternalCollection(String collectionName) {
+        if (!contentCollectionReadable(collectionName)) {
+            return OptionalLong.empty();
+        }
+        try {
+            return OptionalLong.of(countObjects(weaviateService.getExternalCollection(collectionName)));
+        }
+        catch (Exception exception) {
+            log.warn("Could not count Iris content collection '{}' (treating as unavailable): {}", collectionName, exception.getMessage());
+            return OptionalLong.empty();
+        }
+    }
+
+    private long countObjects(CollectionHandle<Map<String, Object>> collection) {
+        Long total = collection.aggregate.overAll(aggregation -> aggregation.includeTotalCount(true)).totalCount();
+        return total == null ? 0 : total;
     }
 
     /**
