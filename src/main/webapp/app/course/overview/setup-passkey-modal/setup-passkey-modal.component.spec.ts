@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from './setup-passkey-modal.component';
@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -24,8 +24,16 @@ describe('SetupPasskeyModalComponent', () => {
     let localStorageService: LocalStorageService;
 
     beforeEach(async () => {
+        const storageMap = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn((key: string) => storageMap.get(key) ?? null),
+            setItem: vi.fn((key: string, value: string) => storageMap.set(key, value)),
+            removeItem: vi.fn((key: string) => storageMap.delete(key)),
+            clear: vi.fn(() => storageMap.clear()),
+        });
+
         await TestBed.configureTestingModule({
-            imports: [SetupPasskeyModalComponent, MockDirective(TranslateDirective)],
+            imports: [SetupPasskeyModalComponent, MockPipe(TranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
                 provideHttpClient(),
@@ -34,7 +42,12 @@ describe('SetupPasskeyModalComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(SetupPasskeyModalComponent, {
+                remove: { imports: [TranslatePipe] },
+                add: { imports: [MockPipe(TranslatePipe)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(SetupPasskeyModalComponent);
         component = fixture.componentInstance;
