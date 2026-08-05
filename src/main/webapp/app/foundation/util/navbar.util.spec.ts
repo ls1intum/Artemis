@@ -152,6 +152,17 @@ describe('navbar util shell metrics', () => {
         }).not.toThrow();
     });
 
+    it('is a no-op while no observer is active', () => {
+        addElement('jhi-navbar', 60);
+
+        // `NavigationEnd` can fire before the app component starts observing, and again after teardown.
+        expect(() => reattachShellMetricsObserver()).not.toThrow();
+        vi.runAllTimers();
+
+        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('');
+        expect(observed.size).toBe(0);
+    });
+
     it('updateHeaderHeight measures the navbar after the current task', () => {
         addElement('jhi-navbar', 44);
 
