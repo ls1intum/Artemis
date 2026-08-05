@@ -1,4 +1,5 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -10,14 +11,13 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 
 export const EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY = 'earliestSetupPasskeyReminderDate';
 
 @Component({
     selector: 'jhi-setup-passkey-modal',
-    imports: [FormsModule, TranslateDirective, FontAwesomeModule, TumUiDialogComponent, TumUiButtonComponent],
+    imports: [FormsModule, TranslateDirective, FontAwesomeModule, TumUiDialogComponent, TumUiButtonComponent, TranslatePipe],
     templateUrl: './setup-passkey-modal.component.html',
 })
 export class SetupPasskeyModalComponent implements OnInit {

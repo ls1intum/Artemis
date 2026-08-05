@@ -1,4 +1,4 @@
-<tum-ui-dialog [(visible)]="visible" [modal]="true" [closable]="false" [closeOnEscape]="false" [dismissableMask]="false" [style]="{ width: '46rem', 'max-width': '95vw' }">
+<tum-ui-dialog [(visible)]="visible" [closable]="false" [closeOnEscape]="false" [dismissableMask]="false" [style]="{ width: '46rem', 'max-width': '95vw' }">
     <ng-template #header>
         <div class="flex items-center gap-2">
             <fa-icon [icon]="faShieldHalved" />
@@ -12,46 +12,37 @@
                 <fa-icon [icon]="faFingerprint" />
             </div>
             <div class="min-w-0 flex-1">
-                <h2
-                    class="text-base sm:text-lg font-bold text-surface-900 dark:text-surface-0 m-0 tracking-tight leading-snug"
-                    jhiTranslate="artemisApp.userSettings.setupPasskeyModal.heroTitle"
-                ></h2>
+                <h2 class="!text-lg sm:!text-xl font-bold text-color m-0 tracking-tight leading-snug" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.heroTitle"></h2>
             </div>
         </div>
 
-        <div class="flex flex-col gap-3 bg-surface-50/80 dark:bg-surface-900/30 p-4 rounded-2xl border border-surface-200/60 dark:border-surface-800">
+        <div class="flex flex-col gap-3 bg-surface-card p-4 rounded-2xl border border-surface">
             <div class="flex items-center gap-3">
-                <div
-                    class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-primary shrink-0 shadow-sm"
-                >
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faBolt" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
-                    <span class="font-semibold text-surface-900 dark:text-surface-0" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.title"></span>
+                    <span class="font-semibold text-color" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.title"></span>
                     <span class="text-muted-color ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.faster.desc"></span>
                 </div>
             </div>
 
             <div class="flex items-center gap-3">
-                <div
-                    class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-primary shrink-0 shadow-sm"
-                >
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faLock" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
-                    <span class="font-semibold text-surface-900 dark:text-surface-0" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.title"></span>
+                    <span class="font-semibold text-color" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.title"></span>
                     <span class="text-muted-color ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.noPasswords.desc"></span>
                 </div>
             </div>
 
             <div class="flex items-center gap-3">
-                <div
-                    class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-0 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 text-primary shrink-0 shadow-sm"
-                >
+                <div class="flex items-center justify-center w-9 h-9 rounded-full bg-surface-card border border-surface text-primary shrink-0 shadow-sm">
                     <fa-icon [icon]="faShieldHalved" class="text-sm" />
                 </div>
                 <div class="text-sm leading-snug">
-                    <span class="font-semibold text-surface-900 dark:text-surface-0" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.title"></span>
+                    <span class="font-semibold text-color" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.title"></span>
                     <span class="text-muted-color ml-1" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.facts.secure.desc"></span>
                 </div>
             </div>
@@ -59,15 +50,33 @@
     </div>
 
     <ng-template #footer>
-        <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="remindMeIn30Days()" [ariaLabel]="'Remind Me in 30 Days'">
+        <tum-ui-button
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            (clicked)="remindMeIn30Days()"
+            [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days' | translate"
+        >
             <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
         </tum-ui-button>
 
         <div class="ms-auto flex items-center gap-2">
-            <tum-ui-button severity="secondary" variant="text" size="small" (clicked)="closeModal()" [ariaLabel]="'Set Up Later'">
+            <tum-ui-button
+                severity="secondary"
+                variant="text"
+                size="small"
+                (clicked)="closeModal()"
+                [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupLater' | translate"
+            >
                 <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"></span>
             </tum-ui-button>
-            <tum-ui-button severity="primary" size="small" [icon]="faKey" (clicked)="setupPasskey()" [ariaLabel]="'Set Up Passkey'">
+            <tum-ui-button
+                severity="primary"
+                size="small"
+                [icon]="faKey"
+                (clicked)="setupPasskey()"
+                [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupPasskey' | translate"
+            >
                 <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
             </tum-ui-button>
         </div>
