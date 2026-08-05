@@ -21,12 +21,7 @@ import { Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { RouterLink } from '@angular/router';
-
-// TUM UI Kit imports
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;

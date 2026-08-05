@@ -6,14 +6,16 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
-import { TumUiChipComponent } from 'app/shared-ui/tum-ui/chip/tum-ui-chip.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiCheckboxComponent,
+    TumUiChipComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiSelectComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -29,10 +31,6 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
-/**
- * Component for creating and updating users in the admin user management.
- * Provides a form with validation for user properties and organizations.
- */
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
