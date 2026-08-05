@@ -485,7 +485,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.cancelBusy.set(true);
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel && this.exercise() && this.submission()) {
-            this.manualResultService.cancelAssessment(this.submission()!.id!).subscribe(() => this.navigateBack());
+            this.manualResultService.cancelAssessment(this.submission()!.id!, this.manualResult()?.id).subscribe(() => this.navigateBack());
         }
         this.cancelBusy.set(false);
         this.hasPendingChanges = false;

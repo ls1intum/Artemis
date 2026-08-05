@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,12 +20,13 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Read DTO for a {@link TextSubmission} returned to the client.
  * <p>
  * Lazy associations (results, blocks, participation) are guarded with {@link Hibernate#isInitialized} so uninitialized
- * proxies map to {@code null}/empty rather than triggering a lazy load. The caller is expected to have trimmed/filtered
- * the entity (e.g. removed null results) before invoking the factory.
+ * proxies map to {@code null}/empty rather than triggering a lazy load. Null result entries are preserved because they
+ * encode correction-round positions for assessor-filtered exam submissions.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextSubmissionResponseDTO(Long id, String submissionExerciseType, String text, Language language, Boolean submitted, ZonedDateTime submissionDate,
-        SubmissionType type, Boolean exampleSubmission, StudentParticipationDTO participation, List<ResultDTO> results, List<TextBlockDTO> blocks) implements Serializable {
+        SubmissionType type, Boolean exampleSubmission, StudentParticipationDTO participation, List<@Nullable ResultDTO> results, List<TextBlockDTO> blocks)
+        implements Serializable {
 
     /**
      * Converts a {@link TextSubmission} into a {@link TextSubmissionResponseDTO} without the participation's student.
@@ -48,9 +50,9 @@ public record TextSubmissionResponseDTO(Long id, String submissionExerciseType, 
             return null;
         }
 
-        List<ResultDTO> results = null;
+        List<@Nullable ResultDTO> results = null;
         if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
-            results = submission.getResults().stream().filter(java.util.Objects::nonNull).map(ResultDTO::of).toList();
+            results = submission.getResults().stream().map(result -> result == null ? null : ResultDTO.of(result)).toList();
         }
 
         List<TextBlockDTO> blocks = null;
