@@ -196,6 +196,14 @@ const childRoutes: Routes = [
         },
         canActivate: [IrisGuard],
     },
+    {
+        path: 'course-ingestion-dashboard',
+        loadComponent: () => import('app/admin/course-ingestion-dashboard/course-ingestion-dashboard.component').then((m) => m.CourseIngestionDashboardComponent),
+        data: {
+            pageTitle: 'artemisApp.courseIngestionDashboard.title',
+            authorities: IS_AT_LEAST_ADMIN,
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,

@@ -234,7 +234,8 @@
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
                     "dependencies": "Dependencies",
-                    "irisDashboard": "Iris Dashboard"
+                    "irisDashboard": "Iris Dashboard",
+                    "courseIngestionDashboard": "Ingestion Coverage"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",

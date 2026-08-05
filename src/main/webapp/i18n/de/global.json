@@ -234,7 +234,8 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
                     "dependencies": "Abhängigkeiten",
-                    "irisDashboard": "Iris Dashboard"
+                    "irisDashboard": "Iris Dashboard",
+                    "courseIngestionDashboard": "Index-Abdeckung"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",
