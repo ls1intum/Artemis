@@ -72,7 +72,8 @@ public record CourseUpdateDTO(
         Boolean dataRetentionHold,
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
-        boolean autoOrchestratorEnabled, @Min(1) Integer debounceWindowSecondsOverride, @Min(1) Integer maxDailyOrchestrationOverride) {
+        boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Applies the DTO values to an existing Course entity.
