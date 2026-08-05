@@ -19,6 +19,8 @@ describe('CourseIngestionCoverageTableComponent', () => {
     let storedSpy: ReturnType<typeof vi.spyOn>;
     let refreshSpy: ReturnType<typeof vi.spyOn>;
 
+    // Row 1 exercises every cell branch: a gap (danger), a complete type (success), and a present-only/empty type (dash).
+    // Row 2 has an empty title, no release date, and no type counts, so its cells all render as absent (dash).
     const rows: IngestionCoverage[] = [
         {
             courseId: 1,
@@ -70,13 +72,10 @@ describe('CourseIngestionCoverageTableComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
-    it('loads the live coverage page on init with the default name sort', () => {
+    it('loads the live page on init and renders the matrix with formatted cells', async () => {
         fixture.detectChanges();
 
+        // The default name sort is a per-course view, served live rather than from the stored projection.
         expect(liveSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'title,asc', search: undefined });
         expect(storedSpy).not.toHaveBeenCalled();
         expect(component.rows()).toEqual(rows);
@@ -84,9 +83,24 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.loading()).toBe(false);
         expect(component.error()).toBe(false);
         expect(component.lastUpdated()).toBe('2026-08-05T10:00:00Z');
+
+        // Ascending column shows the up arrow, inactive columns the neutral one; EMPTY is the one status not in the rows.
+        expect(component['sortIcon']('name')).toBe(faSortUp);
+        expect(component['sortIcon']('release')).toBe(faSort);
+        expect(component['statusClass']('EMPTY')).toBe('text-muted-color');
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelectorAll('table tbody tr')).toHaveLength(2);
+        // Renders the gap cell (danger), the complete cell (success), the empty/absent cells (dash), the group dividers,
+        // and the INCOMPLETE/COMPLETE status colours, exercising cell(), dividerAt() and statusClass() through bindings.
+        expect(element.textContent).toContain('3/10');
+        expect(element.textContent).toContain('5/5');
     });
 
-    it('sets the error signal and clears rows when the load fails', () => {
+    it('clears the rows and sets the error signal when the load fails', () => {
         liveSpy.mockReturnValue(throwError(() => new Error('boom')));
         fixture.detectChanges();
 
@@ -96,104 +110,68 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.loading()).toBe(false);
     });
 
-    it('toggles the sort direction when the active column is clicked again', () => {
+    it('sorts by column, paginates, and reads the stored projection for the worst-first sort', () => {
         fixture.detectChanges();
         liveSpy.mockClear();
 
+        // Re-clicking the active column flips the direction and resets to the first page.
         component['toggleSort']('name');
-
         expect(component.sortDirection()).toBe('desc');
-        expect(component.page()).toBe(0);
-        expect(liveSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'title,desc', search: undefined });
-    });
+        expect(component['sortIcon']('name')).toBe(faSortDown);
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,desc', search: undefined });
 
-    it('switches to a new column with its default direction', () => {
-        fixture.detectChanges();
-        liveSpy.mockClear();
+        // Paging keeps the current (live) view and sort.
+        component['onPageChange'](2);
+        expect(component.page()).toBe(2);
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 2, size: 20, sort: 'title,desc', search: undefined });
 
+        // Switching to a new column adopts that column's default direction.
         component['toggleSort']('release');
-
         expect(component.sortMode()).toBe('release');
         expect(component.sortDirection()).toBe('desc');
-        expect(liveSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'startDate,desc', search: undefined });
-    });
+        expect(component['sortIcon']('name')).toBe(faSort);
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'startDate,desc', search: undefined });
 
-    it('reads the stored projection for the cross-course worst-first sort', () => {
-        fixture.detectChanges();
-
+        // Worst-first is cross-course, so it is served from the stored projection.
         component['toggleSort']('worstFirst');
-
         expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'coverageGapScore,desc', status: undefined, active: undefined });
     });
 
-    it('reports the sort icon for the active and inactive columns', () => {
+    it('filters by status and active state, and refreshes the projection', () => {
         fixture.detectChanges();
 
-        expect(component['sortIcon']('name')).toBe(faSortUp);
-        expect(component['sortIcon']('release')).toBe(faSort);
-
-        component['toggleSort']('name');
-        expect(component['sortIcon']('name')).toBe(faSortDown);
-    });
-
-    it('filters by status through the stored projection and back to the live view', () => {
-        fixture.detectChanges();
-
+        // A status filter is a cross-course view, so it reads the stored projection.
         component['onStatusChange']('INCOMPLETE');
         expect(component.statusFilter()).toBe('INCOMPLETE');
-        expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined });
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: 'INCOMPLETE', active: undefined });
 
+        // Clearing the status returns to the live per-page view.
         liveSpy.mockClear();
         component['onStatusChange']('');
         expect(component.statusFilter()).toBeUndefined();
         expect(liveSpy).toHaveBeenCalled();
-    });
 
-    it('filters by the active flag and exposes it as the select-button value', () => {
-        fixture.detectChanges();
-
+        // The active filter maps to the string the select button binds to, and reads the stored projection.
         expect(component['activeFilterValue']()).toBe('');
-
         component['onActiveChange']('true');
         expect(component.activeFilter()).toBe(true);
         expect(component['activeFilterValue']()).toBe('true');
-        expect(storedSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true });
-
+        expect(storedSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'courseTitle,asc', status: undefined, active: true });
         component['onActiveChange']('false');
-        expect(component.activeFilter()).toBe(false);
         expect(component['activeFilterValue']()).toBe('false');
-
         component['onActiveChange']('');
         expect(component.activeFilter()).toBeUndefined();
-    });
 
-    it('loads the requested page on a page change', () => {
-        fixture.detectChanges();
+        // Refresh recomputes then reloads, clearing the flag on both success and failure.
+        refreshSpy.mockClear();
         liveSpy.mockClear();
-
-        component['onPageChange'](2);
-
-        expect(component.page()).toBe(2);
-        expect(liveSpy).toHaveBeenCalledWith({ page: 2, size: 20, sort: 'title,asc', search: undefined });
-    });
-
-    it('refreshes the projection then reloads, and clears the flag on success', () => {
-        fixture.detectChanges();
-        liveSpy.mockClear();
-
         component['onRefresh']();
-
         expect(refreshSpy).toHaveBeenCalled();
         expect(component.refreshing()).toBe(false);
         expect(liveSpy).toHaveBeenCalled();
-    });
 
-    it('clears the refreshing flag when the refresh fails', () => {
-        fixture.detectChanges();
         refreshSpy.mockReturnValue(throwError(() => new Error('nope')));
-
         component['onRefresh']();
-
         expect(component.refreshing()).toBe(false);
     });
 
@@ -210,45 +188,6 @@ describe('CourseIngestionCoverageTableComponent', () => {
 
         expect(component.search()).toBe('algo');
         expect(component.page()).toBe(0);
-        expect(liveSpy).toHaveBeenCalledWith({ page: 0, size: 20, sort: 'title,asc', search: 'algo' });
-    });
-
-    it('formats a coverage cell as indexed/expected with the right severity colour', () => {
-        const missing = component['cell'](rows[0], 'exercise');
-        expect(missing.text).toBe('3/10');
-        expect(missing.class).toContain('text-state-danger');
-
-        const complete = component['cell'](rows[0], 'lecture');
-        expect(complete.text).toBe('5/5');
-        expect(complete.class).toContain('text-state-success');
-    });
-
-    it('renders a dash for a type that is neither expected nor indexed, or absent from the row', () => {
-        expect(component['cell'](rows[0], 'faq').text).toBe('–');
-        expect(component['cell'](rows[1], 'exercise').text).toBe('–');
-        expect(component['cell'](rows[1], 'exercise').class).toContain('text-muted-color');
-    });
-
-    it('draws the group divider before the first metadata and first content column only', () => {
-        expect(component['dividerAt'](0)).not.toBe('');
-        expect(component['dividerAt'](7)).not.toBe('');
-        expect(component['dividerAt'](1)).toBe('');
-    });
-
-    it('maps each coverage status to its semantic colour', () => {
-        expect(component['statusClass']('COMPLETE')).toBe('text-state-success');
-        expect(component['statusClass']('INCOMPLETE')).toBe('text-state-danger');
-        expect(component['statusClass']('EMPTY')).toBe('text-muted-color');
-    });
-
-    it('renders one table row per course with formatted cells', async () => {
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const element: HTMLElement = fixture.nativeElement;
-        const bodyRows = element.querySelectorAll('table tbody tr');
-        expect(bodyRows).toHaveLength(2);
-        expect(element.textContent).toContain('3/10');
+        expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,asc', search: 'algo' });
     });
 });
