@@ -23,6 +23,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, of, throwError } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;
@@ -34,6 +35,7 @@ describe('GradingInstructionsDetailsComponent', () => {
     let exercise: Exercise;
     let backupExercise: Exercise;
     let generationService: { generate: ReturnType<typeof vi.fn> };
+    let accountService: { isAtLeastEditorForExercise: ReturnType<typeof vi.fn> };
     let alertService: MockAlertService;
 
     const criterionMarkdownText =
@@ -47,6 +49,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
     beforeEach(async () => {
         generationService = { generate: vi.fn() };
+        accountService = { isAtLeastEditorForExercise: vi.fn(() => true) };
         await TestBed.configureTestingModule({
             imports: [GradingInstructionsDetailsComponent],
             providers: [
@@ -55,6 +58,7 @@ describe('GradingInstructionsDetailsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: () => true } },
                 { provide: AssessmentCriteriaGenerationService, useValue: generationService },
+                { provide: AccountService, useValue: accountService },
                 { provide: AlertService, useClass: MockAlertService },
             ],
         })
@@ -103,6 +107,22 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.canShowGenerationButton()).toBe(false);
         });
 
+        it('should use the current user permissions for a new exam exercise without populated permission flags', () => {
+            const examCourse = { id: 7, isAtLeastEditor: false };
+            exercise.course = undefined;
+            exercise.isAtLeastEditor = false;
+            exercise.exerciseGroup = { exam: { course: examCourse } };
+
+            expect(component.canShowGenerationButton()).toBe(true);
+            expect(accountService.isAtLeastEditorForExercise).toHaveBeenCalledWith(exercise);
+
+            accountService.isAtLeastEditorForExercise.mockReturnValue(false);
+            expect(component.canShowGenerationButton()).toBe(false);
+
+            examCourse.isAtLeastEditor = true;
+            expect(component.canShowGenerationButton()).toBe(true);
+        });
+
         it('should show generation for every exercise type that uses the component', () => {
             for (const exerciseType of [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING]) {
                 exercise.type = exerciseType;
@@ -110,7 +130,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             }
         });
 
-        it('should generate once, replace criteria, preserve general text, and prevent duplicate clicks', () => {
+        it('should generate once, replace criteria, preserve in-flight general text edits, and prevent duplicate clicks', () => {
             const response = new Subject<GradingCriterion[]>();
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             exercise.gradingInstructions = 'Keep this text';
@@ -124,11 +144,12 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(generationService.generate).toHaveBeenCalledTimes(1);
             expect(generationService.generate).toHaveBeenCalledWith(exercise, { exampleSolution: undefined, additionalContext: undefined });
             expect(component.isGenerating()).toBe(true);
+            exercise.gradingInstructions = 'Edited while waiting';
             response.next([generatedCriterion]);
             response.complete();
 
             expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
-            expect(exercise.gradingInstructions).toBe('Keep this text');
+            expect(exercise.gradingInstructions).toBe('Edited while waiting');
             expect(component.isGenerating()).toBe(false);
             expect(generatedSpy).toHaveBeenCalledOnce();
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.success');

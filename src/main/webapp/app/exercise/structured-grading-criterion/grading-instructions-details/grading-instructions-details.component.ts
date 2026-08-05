@@ -33,6 +33,7 @@ import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.
 import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -61,6 +62,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private readonly confirmationService = inject(ConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly accountService = inject(AccountService);
 
     private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
@@ -81,7 +83,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     canShowGenerationButton(): boolean {
         const exercise = this.exercise();
         const course = exercise.course ?? exercise.exerciseGroup?.exam?.course;
-        return this.hyperionEnabled && this.editable() && course?.id !== undefined && !!(exercise.isAtLeastEditor || course.isAtLeastEditor);
+        return (
+            this.hyperionEnabled &&
+            this.editable() &&
+            course?.id !== undefined &&
+            !!(exercise.isAtLeastEditor || course.isAtLeastEditor || this.accountService.isAtLeastEditorForExercise(exercise))
+        );
     }
 
     generationDisabledReason(): string | undefined {
@@ -576,7 +583,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             return;
         }
         this.isGenerating.set(true);
-        const gradingInstructions = this.exercise().gradingInstructions;
         defer(() =>
             this.generationService.generate(this.exercise(), {
                 exampleSolution: this.exampleSolution(),
@@ -590,7 +596,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             .subscribe({
                 next: (criteria) => {
                     this.exercise().gradingCriteria = criteria;
-                    this.exercise().gradingInstructions = gradingInstructions;
                     this.criteria.set(criteria);
                     this.criteriaGenerated.emit();
                     if (this.exercise().gradingInstructionFeedbackUsed) {
