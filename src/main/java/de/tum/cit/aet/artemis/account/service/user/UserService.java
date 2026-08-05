@@ -202,7 +202,8 @@ public class UserService {
                 // password reset. For the dedicated local admin this property is meant for, all of that is intended. An
                 // operator who pointed it at a directory account instead needs to see it.
                 log.warn("The configured internal admin {} exists as an externally managed account and is now marked internal: it will authenticate with the "
-                        + "configured password instead of the external directory, and it becomes eligible for the Artemis password reset. Point "
+                        + "configured password instead of the external directory, and it becomes eligible for the Artemis password reset. The flag cannot be "
+                        + "changed back through the admin UI, which offers it only while creating a user. Point "
                         + "artemis.user-management.internal-admin.username at a dedicated local account if that is not what you want.", internalAdminUsername);
                 internalAdmin.setInternal(true);
             }

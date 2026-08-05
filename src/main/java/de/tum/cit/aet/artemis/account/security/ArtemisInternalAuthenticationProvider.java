@@ -70,7 +70,9 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.getPassword())) {
             // BadCredentialsException rather than AuthenticationServiceException: the request is rejected, nothing failed.
             // The distinction decides the status code the caller sees, and it keeps the login out of the message, which
-            // callers are free to propagate. The attempt itself is logged once by whoever called the authentication manager.
+            // callers are free to propagate. The attempt is logged by the caller - PublicUserJwtResource for the web login
+            // and LocalVCFetchFilter for a git fetch, which also writes a VCS access log entry. LocalVCPushFilter does not
+            // log it, which is unchanged by this class and left as it is here.
             throw new BadCredentialsException("Invalid credentials");
         }
         return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());

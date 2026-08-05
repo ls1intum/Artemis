@@ -84,8 +84,11 @@ public class PublicUserJwtResource {
      * @param tool      optional Tool Token Type to define the scope of the token
      * @param request   HTTP request object, used to get the client environment information
      * @param response  HTTP response object, used to set the JWT cookie
-     * @return if successful a map with the access_token information and status 200 (ok), and otherwise an empty body with
-     *         status 401 (unauthorized) - for every reason a login can be refused, so that the response does not say which
+     * @return if successful a map with the access_token information and status 200 (ok). Every credential that the
+     *         authentication manager refuses answers an empty body with status 401 (unauthorized) - the same status for all
+     *         of them, so that the response does not say which check refused. A malformed request still answers 400 and an
+     *         exhausted rate limit 429, both before the credentials are looked at, and a system problem behind
+     *         authentication (an unreachable directory, for instance) stays a 500.
      */
     @PostMapping("authenticate")
     @EnforceNothing
@@ -112,7 +115,10 @@ public class PublicUserJwtResource {
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
         catch (BadCredentialsException ex) {
-            log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
+            // The message is logged as well: the providers raise this for more than a wrong password - a bot account is
+            // refused with it too, and on an LDAP instance so is a login the directory does not know - and without the
+            // message those cases are indistinguishable in the log.
+            log.warn("Wrong credentials during login for user {}: {}", loginVM.getUsername(), ex.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         catch (UserNotActivatedException | ProviderNotFoundException | AccountStatusException ex) {
