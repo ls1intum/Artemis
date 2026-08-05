@@ -190,6 +190,8 @@ public class ExerciseVariantJobService {
      */
     public void updatePhase(String jobId, VariantJobPhase phase) {
         VariantJob job = mutate(jobId, mutableJob -> mutableJob.setPhase(phase));
+        // Phase timeline for evaluation/telemetry: log timestamps yield every phase duration by subtraction.
+        log.info("Variant job {} entering phase {}", jobId, phase);
         publish(job, VariantGenerationEventDTO.phaseChanged(phase));
     }
 
