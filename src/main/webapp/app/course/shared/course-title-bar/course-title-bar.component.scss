@@ -1,8 +1,13 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
-// Must match or exceed the quiz participation bar's z-index (1030)
 #course-title-bar {
+    @include title-bar-frame;
+
+    // Must match or exceed the quiz participation bar's z-index (1030)
     z-index: 1030;
+
+    /* Grey dividers: to the sidebar on the left, to the viewport edge on the right, to the content below. */
+    margin: 0 var(--spacing-divider) var(--spacing-divider);
 }
 
 /* The action controls are projected from page templates, so their styling requires piercing encapsulation. */

@@ -17,7 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiInputGroupAddonComponent, TumUiInputGroupComponent, TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
 /**
@@ -39,8 +39,7 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         TumUiMessageComponent,
-        TumUiInputGroupComponent,
-        TumUiInputGroupAddonComponent,
+        TumUiTableDirective,
         FormDateTimePickerComponent,
     ],
 })

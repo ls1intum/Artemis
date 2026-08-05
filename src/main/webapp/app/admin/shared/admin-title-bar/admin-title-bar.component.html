@@ -1,4 +1,7 @@
-<div id="admin-title-bar" class="module-bg mb-2 flex min-h-11 items-center justify-between rounded-lg px-3 py-2">
+<!-- Height, vertical padding and action-control sizing come from `title-bar-frame` /
+     `title-bar-compact-controls` in the component stylesheet, so this bar stays identical to the course title
+     bar. Only the surface, the horizontal padding and the divider below it are set here. -->
+<div id="admin-title-bar" class="module-bg rounded-lg px-3">
     <div class="self-center">
         @if (customTitleTemplate()) {
             <ng-container *ngTemplateOutlet="customTitleTemplate()!" />

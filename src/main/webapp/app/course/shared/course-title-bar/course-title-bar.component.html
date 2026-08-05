@@ -1,4 +1,7 @@
-<div id="course-title-bar" class="module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top" [style.display]="displayStyle()">
+<!-- Height, vertical padding, action-control sizing and the surrounding dividers come from
+     `title-bar-frame` / `title-bar-compact-controls` in the component stylesheet, so this bar stays identical
+     to the admin title bar. -->
+<div id="course-title-bar" class="module-bg px-3 rounded rounded-3 sticky-top" [style.display]="displayStyle()">
     <div class="align-self-center d-flex">
         <div class="align-self-center">
             @if (customTitleTemplate()) {

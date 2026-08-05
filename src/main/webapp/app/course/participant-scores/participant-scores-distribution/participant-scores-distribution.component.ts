@@ -41,7 +41,17 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     readonly scoreToHighlight = input<number>();
 
+    /**
+     * Accessible name for the chart canvas. Set it whenever a page shows more than one distribution (the exam
+     * scores page renders one before and one after the bonus), so screen-reader users can tell them apart.
+     * Defaults to a generic course/exam-agnostic description.
+     */
+    readonly ariaLabel = input<string>();
+
     readonly onSelect = output<ChartClickEvent>();
+
+    /** Falls back to the generic description when the page does not provide a more specific one. */
+    protected readonly chartAriaLabel = computed(() => this.ariaLabel() ?? this.translateService.instant('statistics.scoreDistributionChartAriaLabel'));
 
     readonly gradingScaleExists = signal(false);
     readonly isBonus = signal<boolean | undefined>(undefined);
@@ -127,9 +137,9 @@ export class ParticipantScoresDistributionComponent implements OnInit {
     }
 
     /**
-     * fill ngxData with a default configuration. The assignment of the names is only a placeholder,
+     * Fills `entries` with a default configuration. The assignment of the names is only a placeholder,
      * they will be set to default labels in createChart.
-     * If a grading key exists, ngxData gets reset according to it in calculateFilterDependentStatistics.
+     * If a grading key exists, `entries` gets reset according to it in calculateFilterDependentStatistics.
      * If no grading key exists, this default configuration is presented to the user.
      */
     private generateDefaultChartSetting(): void {

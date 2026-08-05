@@ -150,9 +150,17 @@ $sidebar-width: 255px;
 $sidebar-header-footer-combined-height: 88px;
 $spacing-modules: 1rem;
 
+// Shell layout — see _default-variables.scss for the rationale. Both themes must define the same metrics.
+$spacing-divider: 6px;
+$title-bar-height: 40px;
+$title-bar-content-height: 28px;
+$title-bar-padding-block: 6px;
+
 // Module and Navigationbar
 $module-bg: $neutral-dark;
 $header-height: 68px;
+// Fallback only: kept in sync with the rendered footer by observeShellMetrics().
+$footer-height: 32px;
 $course-image-bg: $body-bg;
 $link-item-bg: $gray-900;
 $sidebar-card-selected-bg: #353d47;

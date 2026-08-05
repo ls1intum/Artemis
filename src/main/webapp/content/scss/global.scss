@@ -1231,6 +1231,14 @@ body.transparent-background {
     background-color: var(--bs-body-bg);
 }
 
+/*
+ * Horizontal grey dividers around a shell's content region — to the sidebar on one side and to the viewport
+ * edge on the other. One token so the student overview, course management and administration shells match.
+ */
+.shell-divider-x {
+    margin-inline: var(--spacing-divider);
+}
+
 .scrollable-content {
     &.no-header-bar-height {
         --header-height: 16px !important;

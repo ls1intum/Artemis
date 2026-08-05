@@ -14,3 +14,78 @@ export function updateHeaderHeight() {
         }
     });
 }
+
+const SHELL_METRICS: { selector: string; cssVariable: string }[] = [
+    { selector: 'jhi-navbar', cssVariable: '--header-height' },
+    { selector: 'jhi-footer', cssVariable: '--footer-height' },
+];
+
+/** The observer created by the most recent {@link observeShellMetrics} call, or undefined while none is active. */
+let activeObserver: ResizeObserver | undefined;
+
+/**
+ * Keeps `--header-height` and `--footer-height` in sync with the navbar and footer as actually rendered.
+ *
+ * The shells (student overview, course management, administration) size their content region as
+ * `100vh - var(--header-height) - var(--footer-height) - var(--spacing-divider)`. That only lands on an exact
+ * one-divider gap above the footer while both variables reflect reality — the previous hardcoded
+ * `--sidebar-header-footer-combined-height: 88px` under-stated the real ~95px, which is why the gap between
+ * the content and the footer drifted from page to page. Both elements resize (breadcrumbs wrap, the footer's
+ * dev-only git line wraps), hence a `ResizeObserver` rather than a single measurement.
+ *
+ * Call {@link reattachShellMetricsObserver} after a navigation that may have re-created the navbar or footer.
+ *
+ * @returns a teardown function that stops this call's observer. It is idempotent and only clears the shared
+ * reference when it still points at its own observer, so a teardown from a superseded caller (component
+ * re-creation during HMR, overlapping test fixtures) cannot silently disable a live observer.
+ */
+export function observeShellMetrics(): () => void {
+    const observer = new ResizeObserver(() => measureShellMetrics());
+    activeObserver = observer;
+    reattachShellMetricsObserver();
+    return () => {
+        observer.disconnect();
+        if (activeObserver === observer) {
+            activeObserver = undefined;
+        }
+    };
+}
+
+/** Re-targets the observer at the current navbar/footer elements and re-measures. */
+export function reattachShellMetricsObserver(): void {
+    const observer = activeObserver;
+    if (!observer) {
+        return;
+    }
+    observer.disconnect();
+    for (const { selector } of SHELL_METRICS) {
+        const element = document.querySelector(selector);
+        if (element) {
+            observer.observe(element);
+        }
+    }
+    // Deferred like `updateHeaderHeight`: at `NavigationEnd` the newly activated navbar view has not been
+    // change-detected yet, so measuring synchronously can write a transient (possibly 0px) height and cause a
+    // one-frame layout jump. `observe()` above also delivers an initial callback, which corrects any drift.
+    setTimeout(() => measureShellMetrics());
+}
+
+function measureShellMetrics(): void {
+    const root = document.documentElement;
+    for (const { selector, cssVariable } of SHELL_METRICS) {
+        const element = document.querySelector(selector);
+        if (!element) {
+            // The navbar/footer are removed on the skeleton-less routes (LTI embedding, standalone problem
+            // statement, exam conduction for the footer). Drop the inline value so the theme fallback applies
+            // again instead of leaving the last measured height behind.
+            root.style.removeProperty(cssVariable);
+            continue;
+        }
+        // do not use offsetHeight, this might not be defined in Safari!
+        const next = `${element.getBoundingClientRect().height}px`;
+        // Writing an unchanged value would invalidate style for the whole document on every navigation.
+        if (root.style.getPropertyValue(cssVariable) !== next) {
+            root.style.setProperty(cssVariable, next);
+        }
+    }
+}

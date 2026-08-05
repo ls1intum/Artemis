@@ -60,9 +60,21 @@ $sidebar-header-footer-combined-height: 88px;
 $sidebar-width: 255px;
 $spacing-modules: 1rem;
 
+// Shell layout: the grey gaps between sidebar, title bar, content and footer. One token so the student
+// overview, course management and administration shells cannot drift apart. Emitted as --spacing-divider.
+$spacing-divider: 6px;
+
+// Title bars below the breadcrumbs (course + admin). Content height plus twice the padding must equal the
+// total height; `title-bar-compact-controls` pins every projected action control to the content height.
+$title-bar-height: 40px;
+$title-bar-content-height: 28px;
+$title-bar-padding-block: 6px;
+
 // Module and Navigationbar
 $module-bg: $white;
 $header-height: 68px;
+// Fallback only: kept in sync with the rendered footer by observeShellMetrics().
+$footer-height: 32px;
 $course-image-bg: $body-bg;
 $link-item-color: $primary;
 $link-item-bg: $gray-100;

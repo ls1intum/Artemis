@@ -24,10 +24,7 @@
             @for (profileInfo of profileFeatures(); track profileInfo.profile) {
                 <div
                     class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
-                    [class.bg-surface-50]="profileInfo.isActive"
-                    [class.dark:bg-surface-800]="profileInfo.isActive"
-                    [class.bg-surface-100]="!profileInfo.isActive"
-                    [class.dark:bg-surface-700]="!profileInfo.isActive"
+                    [class]="featureCardClasses(profileInfo.isActive)"
                     data-testid="profile-feature-card"
                 >
                     <div class="mb-3 flex items-start justify-between">
@@ -50,7 +47,7 @@
                             @if (profileInfo.isActive) {
                                 <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
                             } @else {
-                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
+                                <tum-ui-tag severity="danger" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
                             }
                         </div>
                     </div>
@@ -69,10 +66,7 @@
             @for (moduleInfo of moduleFeatures(); track moduleInfo.feature) {
                 <div
                     class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
-                    [class.bg-surface-50]="moduleInfo.isActive"
-                    [class.dark:bg-surface-800]="moduleInfo.isActive"
-                    [class.bg-surface-100]="!moduleInfo.isActive"
-                    [class.dark:bg-surface-700]="!moduleInfo.isActive"
+                    [class]="featureCardClasses(moduleInfo.isActive)"
                     data-testid="module-feature-card"
                 >
                     <div class="mb-3 flex items-start justify-between">
@@ -95,7 +89,7 @@
                             @if (moduleInfo.isActive) {
                                 <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
                             } @else {
-                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
+                                <tum-ui-tag severity="danger" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
                             }
                         </div>
                     </div>
@@ -114,8 +108,7 @@
             @for (featureInfo of featureToggles(); track featureInfo.feature) {
                 <div
                     class="rounded-lg border p-4 transition-all duration-200 hover:border-primary"
-                    [class.bg-surface-100]="!featureInfo.isActive"
-                    [class.dark:bg-surface-700]="!featureInfo.isActive"
+                    [class]="featureCardClasses(featureInfo.isActive)"
                     data-testid="runtime-toggle-card"
                 >
                     <div class="mb-3 flex items-start justify-between">

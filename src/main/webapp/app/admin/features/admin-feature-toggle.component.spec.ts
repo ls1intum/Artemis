@@ -306,4 +306,27 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(key).toBe('artemisApp.features.modules.exam.description');
         });
     });
+
+    describe('feature card colours', () => {
+        // Active and inactive cards previously used two near-identical neutral surfaces and could not be told
+        // apart; they must stay clearly distinguishable, and must use semantic state tokens so both themes work.
+        it('should tint an active feature green and an inactive one red', () => {
+            const active = comp['featureCardClasses'](true);
+            const inactive = comp['featureCardClasses'](false);
+
+            expect(active).toContain('bg-state-success');
+            expect(active).toContain('border-state-success');
+            expect(inactive).toContain('bg-state-danger');
+            expect(inactive).toContain('border-state-danger');
+            expect(active).not.toBe(inactive);
+        });
+
+        it('should not rely on raw palette colours or dark-mode variants', () => {
+            for (const classes of [comp['featureCardClasses'](true), comp['featureCardClasses'](false)]) {
+                // Semantic tokens already resolve per theme, so a `dark:` variant would mean a hardcoded colour.
+                expect(classes).not.toContain('dark:');
+                expect(classes).not.toMatch(/(bg|border)-(surface|red|green)-\d/);
+            }
+        });
+    });
 });

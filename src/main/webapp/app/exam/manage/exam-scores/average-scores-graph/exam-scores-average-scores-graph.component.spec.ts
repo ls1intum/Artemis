@@ -148,6 +148,35 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         });
     });
 
+    describe('chart height', () => {
+        // A fixed height squeezed multi-exercise groups into unreadable slivers and made the canvas overflow its
+        // box, covering the next chart's title — so the height must grow with the number of bars.
+        it('should grow with the number of bars', () => {
+            // One bar for the exercise group plus one per exercise: 48px of axis/padding + 4 * 34px.
+            expect(component.chartEntries()).toHaveLength(4);
+            expect(component.chartHeight()).toBe(48 + 4 * 34);
+        });
+
+        it('should shrink for a group with a single exercise', () => {
+            fixture.componentRef.setInput('averageScores', {
+                ...returnValue,
+                exerciseResults: [returnValue.exerciseResults[0]],
+            } as AggregatedExerciseGroupResult);
+            component.ngOnInit();
+
+            expect(component.chartEntries()).toHaveLength(2);
+            expect(component.chartHeight()).toBe(48 + 2 * 34);
+        });
+
+        it('should stay readable for a group without exercises', () => {
+            fixture.componentRef.setInput('averageScores', { ...returnValue, exerciseResults: [] } as AggregatedExerciseGroupResult);
+            component.ngOnInit();
+
+            // Only the exercise-group bar remains, so the box must still be tall enough for one bar plus the axis.
+            expect(component.chartHeight()).toBe(48 + 34);
+        });
+    });
+
     it('should look up absolute value', () => {
         const roundAndPerformLocalConversionSpy = vi.spyOn(component, 'roundAndPerformLocalConversion');
         const updatedCourse = {

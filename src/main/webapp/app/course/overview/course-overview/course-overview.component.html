@@ -40,7 +40,7 @@
                         class="course-body-container"
                         [ngClass]="{
                             'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
-                            'mx-2': !isExamStarted(),
+                            'shell-divider-x': !isExamStarted(),
                         }"
                         [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"
                         cdkScrollable
