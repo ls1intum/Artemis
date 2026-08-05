@@ -294,8 +294,10 @@ class Harness:
             logging.info("Round %s already complete; nothing to do", round_number)
             return []
 
-        logging.info("Round %s: %s runs at concurrency %s", round_number, len(queue), self.concurrency)
+        total = len(queue)
+        logging.info("Round %s: %s runs at concurrency %s", round_number, total, self.concurrency)
         records: List[Dict[str, Any]] = []
+        started = time.time()
         try:
             with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
                 futures = [pool.submit(self.run_one, exercise_type, config_id, round_number) for exercise_type, config_id in queue]
@@ -304,6 +306,13 @@ class Harness:
                         records.append(future.result())
                     except Exception as error:  # noqa: BLE001 — one bad run must not abort the round
                         logging.error("Run failed with an unhandled error: %s", error)
+                    # Progress on its own line, with a remaining-time estimate: these rounds are left running
+                    # unattended for hours, and "is it stuck or just slow?" is otherwise unanswerable without
+                    # reading the instance log.
+                    done = len(records)
+                    elapsed = time.time() - started
+                    remaining = (elapsed / done) * (total - done) if done else 0
+                    logging.info("  progress: round %s — %s/%s runs done, %.0f min elapsed, ~%.0f min left", round_number, done, total, elapsed / 60, remaining / 60)
         except KeyboardInterrupt:
             # Without this the server keeps generating every in-flight run after the client is gone, and the
             # next round then runs against a machine already at concurrency — corrupting its timings.
@@ -343,10 +352,11 @@ class Harness:
         one of them leaves a balanced corpus. Running them concurrently would break that property and the
         interruptibility that goes with it.
         """
+        matrix_started = time.time()
         for index, round_number in enumerate(rounds, start=1):
             if not self.wait_for_server():
                 return
-            logging.info("=== matrix: round %s (%s of %s) ===", round_number, index, len(rounds))
+            logging.info("=== matrix: round %s (%s of %s) — %.1f h elapsed overall ===", round_number, index, len(rounds), (time.time() - matrix_started) / 3600)
             try:
                 self.run_round(round_number, config_ids, exercise_types)
             except KeyboardInterrupt:
