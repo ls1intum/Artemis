@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.atlas.science;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
 import de.tum.cit.aet.artemis.atlas.service.ScienceCourseService;
@@ -101,5 +104,21 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
         final var loggedEvent = loggedEvents.stream().findFirst().get();
         assertThat(loggedEvent.getIdentity()).isEqualTo(TEST_PREFIX + "student1");
         assertThat(loggedEvent.getCourseId()).isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseDeletesScienceEvents() throws Exception {
+        ScienceEvent scienceEvent = new ScienceEvent();
+        scienceEvent.setIdentity(TEST_PREFIX + "student1");
+        scienceEvent.setTimestamp(ZonedDateTime.now());
+        scienceEvent.setType(ScienceEventType.EXERCISE__OPEN);
+        scienceEvent.setResourceId(3L);
+        scienceEvent.setCourseId(course.getId());
+        scienceEvent = scienceEventRepository.save(scienceEvent);
+
+        request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(scienceEventRepository.existsById(scienceEvent.getId())).isFalse();
     }
 }

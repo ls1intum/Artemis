@@ -12,7 +12,7 @@ import { of } from 'rxjs';
 import { AdminContainerComponent } from './admin-container.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Build, CompatibleVersions, Git, Java, ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -24,6 +24,7 @@ describe('AdminContainerComponent', () => {
     let component: AdminContainerComponent;
     let fixture: ComponentFixture<AdminContainerComponent>;
     let profileService: ProfileService;
+    let featureToggleService: FeatureToggleService;
 
     const mockGit: Git = {
         branch: '',
@@ -104,6 +105,7 @@ describe('AdminContainerComponent', () => {
             .compileComponents();
 
         profileService = TestBed.inject(ProfileService);
+        featureToggleService = TestBed.inject(FeatureToggleService);
         fixture = TestBed.createComponent(AdminContainerComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -127,6 +129,7 @@ describe('AdminContainerComponent', () => {
         expect(component.atlasEnabled()).toBe(false);
         expect(component.examEnabled()).toBe(false);
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
+        expect(component.scienceEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
     });
@@ -153,6 +156,17 @@ describe('AdminContainerComponent', () => {
         newFixture.detectChanges();
 
         expect(newComponent.passkeyEnabled()).toBe(true);
+    });
+
+    it('should detect science feature toggle', () => {
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature: FeatureToggle) => of(feature === FeatureToggle.Science));
+
+        const newFixture = TestBed.createComponent(AdminContainerComponent);
+        const newComponent = newFixture.componentInstance;
+        newFixture.detectChanges();
+
+        expect(newComponent.scienceEnabled()).toBe(true);
+        expect(newComponent.standardizedCompetenciesEnabled()).toBe(false);
     });
 
     describe('onResize', () => {

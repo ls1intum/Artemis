@@ -42,11 +42,13 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     readonly atlasEnabled = signal(false);
     readonly examEnabled = signal(false);
     readonly standardizedCompetenciesEnabled = signal(false);
+    readonly scienceEnabled = signal(false);
     readonly passkeyEnabled = signal(false);
     readonly isSuperAdmin = signal(false);
     readonly irisEnabled = signal(false);
 
     private standardizedCompetencySubscription?: Subscription;
+    private scienceSubscription?: Subscription;
     private routerSubscription?: Subscription;
 
     ngOnInit() {
@@ -61,6 +63,9 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled.set(isActive);
         });
+        this.scienceSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((isActive) => {
+            this.scienceEnabled.set(isActive);
+        });
 
         this.updateCollapseState();
 
@@ -72,6 +77,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.standardizedCompetencySubscription?.unsubscribe();
+        this.scienceSubscription?.unsubscribe();
         this.routerSubscription?.unsubscribe();
     }
 
