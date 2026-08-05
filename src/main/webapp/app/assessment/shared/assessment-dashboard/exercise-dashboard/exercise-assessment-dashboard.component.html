@@ -329,7 +329,7 @@
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </p-message>
                     }
-                    @for (roundState of numberOfAssessmentsOfCorrectionRounds(); track roundState; let correctionRound = $index) {
+                    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
                         <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
                                 @if (!isExamMode()) {
@@ -364,7 +364,7 @@
                                     />
                                 }
                             }
-                            @if (numberOfCorrectionRoundsEnabled() > correctionRound) {
+                            @if (numberOfCorrectionRoundsEnabled() > correctionRound && numberOfAssessmentsOfCorrectionRounds().length > correctionRound) {
                                 @if (isTestRun()) {
                                     <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
                                 }
@@ -501,7 +501,7 @@
                                         @if (
                                             isExamMode() &&
                                             (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
-                                            numberOfSubmissions().inTime !== roundState.inTime
+                                            numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
                                             <div class="alert alert-info">
                                                 <span
