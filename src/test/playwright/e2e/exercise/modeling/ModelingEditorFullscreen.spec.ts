@@ -42,6 +42,16 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const fullscreenButton = page.getByTestId('modeling-editor-fullscreen');
         await expect(fullscreenButton).toBeVisible();
         await expect(fullscreenButton).toContainText('Fullscreen');
+        for (const button of [helpButton, fullscreenButton]) {
+            await expect(button).toHaveAttribute('data-slot', 'button');
+            await expect(button).toHaveAttribute('data-variant', 'ghost');
+            await expect(button).toHaveAttribute('data-size', 'sm');
+        }
+        const [helpButtonBox, fullscreenButtonBox] = await Promise.all([helpButton.boundingBox(), fullscreenButton.boundingBox()]);
+        expect(helpButtonBox).not.toBeNull();
+        expect(fullscreenButtonBox).not.toBeNull();
+        expect(helpButtonBox!.height).toBe(28);
+        expect(fullscreenButtonBox!.height).toBe(helpButtonBox!.height);
         await expect(page.locator('.modeling-editor__problem-statement')).toBeHidden();
 
         const problemStatementEditor = page.locator('#field_problemStatement .monaco-editor');
@@ -292,6 +302,20 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-orientation', 'horizontal');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize problem statement');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-valuemin', '224');
+        expect(
+            await horizontalProblemStatementResizer.evaluate((handle) => ({
+                cursor: getComputedStyle(handle).cursor,
+                indicatorOpacity: getComputedStyle(handle, '::after').opacity,
+                indicatorHeight: getComputedStyle(handle, '::after').height,
+            })),
+        ).toEqual({ cursor: 'col-resize', indicatorOpacity: '0.65', indicatorHeight: '60px' });
+        expect(
+            await verticalProblemStatementResizer.evaluate((handle) => ({
+                cursor: getComputedStyle(handle).cursor,
+                indicatorOpacity: getComputedStyle(handle, '::after').opacity,
+                indicatorWidth: getComputedStyle(handle, '::after').width,
+            })),
+        ).toEqual({ cursor: 'row-resize', indicatorOpacity: '0.65', indicatorWidth: '60px' });
 
         const fullscreenDiagramTypeBox = await diagramTypeIsland.boundingBox();
         expect(fullscreenDiagramTypeBox).not.toBeNull();
@@ -453,7 +477,11 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const readAndConfirmButton = page.getByRole('button', { name: 'Read and Confirm' });
         await readAndConfirmButton.click();
         await expect(readAndConfirmButton).toHaveAttribute('aria-pressed', 'true');
-        await page.getByRole('button', { name: 'Define assessment' }).click();
+        const defineAssessmentButton = page.getByRole('button', { name: 'Define assessment' });
+        await expect(defineAssessmentButton).toHaveAttribute('aria-pressed', 'false');
+        await expect(defineAssessmentButton).toHaveAttribute('data-variant', 'ghost');
+        await expect(defineAssessmentButton).toHaveAttribute('data-size', 'sm');
+        await defineAssessmentButton.click();
 
         const assessment = page.locator('jhi-modeling-assessment');
         const workspace = page.locator('jhi-assessment-workspace');
@@ -465,6 +493,10 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(rationale.locator('textarea')).toBeEditable();
         await expect(submissionExplanation).toBeVisible();
         await expect(submissionExplanation.locator('.modeling-explanation-surface__notch')).toContainText('Explanation');
+        await expect(page.getByRole('button', { name: 'Edit model' })).toHaveAttribute('aria-pressed', 'false');
+        await expect(page.getByRole('button', { name: 'Edit model' })).toHaveAttribute('data-variant', 'ghost');
+        await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveAttribute('aria-pressed', 'true');
+        await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveAttribute('data-variant', 'secondary');
         await expect(assessment.locator('.example-assessment-rationale')).toHaveCount(0);
         await expect(workspace.getByRole('heading', { name: 'Instructions' })).toBeVisible();
         await expect(workspace.getByRole('heading', { name: 'Feedback', exact: true })).toBeVisible();

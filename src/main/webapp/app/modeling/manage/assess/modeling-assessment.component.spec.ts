@@ -230,6 +230,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(explanationEditor).not.toBeNull();
         expect(explanationEditor.componentInstance.explanation()).toEqual(explanation);
         expect(explanationEditor.componentInstance.readOnly()).toBe(true);
+        expect(explanationEditor.componentInstance.autosizeMaxRows()).toBe(6);
     });
 
     it('should mount an explanation that arrives after Apollon initialization', async () => {

@@ -136,11 +136,6 @@
     display: flex;
     min-width: 0;
     align-items: center;
-
-    .apollon-chrome-actionbtn[aria-pressed='true'] {
-        background: var(--apollon-chrome-surface-active);
-        color: var(--apollon-primary);
-    }
 }
 
 .assessment-legend {

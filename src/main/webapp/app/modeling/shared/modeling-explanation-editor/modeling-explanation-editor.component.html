@@ -5,8 +5,8 @@
         class="text-editor-textarea nokey nowheel"
         rows="1"
         cdkTextareaAutosize
-        cdkAutosizeMinRows="1"
-        cdkAutosizeMaxRows="3"
+        [cdkAutosizeMinRows]="1"
+        [cdkAutosizeMaxRows]="autosizeMaxRows()"
         [attr.aria-labelledby]="labelId"
         [maxLength]="maxCharacterCount()"
         [(ngModel)]="explanation"

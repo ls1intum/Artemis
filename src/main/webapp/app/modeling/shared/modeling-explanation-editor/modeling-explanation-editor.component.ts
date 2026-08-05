@@ -20,6 +20,7 @@ export class ModelingExplanationEditorComponent {
     placeholderKey = input<string | undefined>('artemisApp.modelingSubmission.explanationPlaceholder');
     maxCharacterCount = input(MAX_SUBMISSION_TEXT_LENGTH);
     notchWidth = input(104);
+    autosizeMaxRows = input(3);
 
     protected readonly textareaId = `modeling-explanation-${++nextExplanationEditorId}`;
     protected readonly labelId = `${this.textareaId}-label`;

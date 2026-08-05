@@ -9,10 +9,18 @@
         </div>
         <section class="instructions-panel apollon-glass">
             <header class="instructions-header">
-                <button type="button" class="apollon-chrome-actionbtn instructions-disclosure" (click)="collapsed.set(true)" [attr.aria-expanded]="true">
-                    <fa-icon [icon]="farListAlt" />
+                <button
+                    type="button"
+                    class="instructions-disclosure"
+                    data-slot="button"
+                    data-variant="ghost"
+                    data-size="sm"
+                    (click)="collapsed.set(true)"
+                    [attr.aria-expanded]="true"
+                >
+                    <fa-icon data-icon="inline-start" [icon]="farListAlt" />
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
-                    <fa-icon class="instructions-disclosure__chevron" [icon]="faChevronRight" aria-hidden="true" />
+                    <fa-icon class="instructions-disclosure__chevron" data-icon="inline-end" [icon]="faChevronRight" aria-hidden="true" />
                 </button>
             </header>
             <div class="instructions-content scroll-container">
@@ -28,10 +36,10 @@
     </div>
 } @else {
     <div class="collapsed-instructions instructions-container apollon-glass apollon-chrome-cluster">
-        <button type="button" class="apollon-chrome-actionbtn instructions-disclosure" (click)="collapsed.set(false)" [attr.aria-expanded]="false">
-            <fa-icon [icon]="farListAlt" />
+        <button type="button" class="instructions-disclosure" data-slot="button" data-variant="ghost" data-size="sm" (click)="collapsed.set(false)" [attr.aria-expanded]="false">
+            <fa-icon data-icon="inline-start" [icon]="farListAlt" />
             <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
-            <fa-icon [icon]="faChevronLeft" aria-hidden="true" />
+            <fa-icon data-icon="inline-end" [icon]="faChevronLeft" aria-hidden="true" />
         </button>
     </div>
 }

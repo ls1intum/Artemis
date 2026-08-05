@@ -92,6 +92,15 @@ describe('ModelingExplanationEditorComponent', () => {
         expect(textarea.maxLength).toBe(2000);
     });
 
+    it('should support a bounded content-aware initial height', () => {
+        fixture.componentRef.setInput('autosizeMaxRows', 6);
+        fixture.detectChanges();
+
+        const autosize = fixture.debugElement.query(By.directive(CdkTextareaAutosize)).injector.get(CdkTextareaAutosize);
+        expect(autosize.minRows).toBe(1);
+        expect(autosize.maxRows).toBe(6);
+    });
+
     it('updates the explanation bidirectionally', async () => {
         fixture.componentRef.setInput('explanation', 'Initial Explanation');
         fixture.detectChanges();

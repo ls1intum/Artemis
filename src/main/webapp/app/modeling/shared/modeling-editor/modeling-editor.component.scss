@@ -175,10 +175,6 @@ $fullscreen-editor-z-index: 4000;
             }
         }
 
-        &-disclosure[aria-expanded='true'] {
-            background: var(--apollon-chrome-surface-active);
-        }
-
         &-panel {
             box-sizing: border-box;
             position: absolute;
@@ -233,15 +229,21 @@ $fullscreen-editor-z-index: 4000;
                 top: 50%;
                 left: 50%;
                 border-radius: var(--apollon-chrome-radius-sm);
-                background: var(--apollon-chrome-accent);
+                background: color-mix(in srgb, var(--apollon-chrome-text) 44%, transparent);
                 content: '';
-                opacity: 0;
+                opacity: 0.65;
                 transform: translate(-50%, -50%);
-                transition: opacity 120ms ease;
+                transition:
+                    opacity 120ms ease,
+                    transform 120ms ease,
+                    background-color 120ms ease;
             }
 
+            &:hover::after,
             &:focus-visible::after {
+                background: color-mix(in srgb, var(--apollon-chrome-text) 72%, transparent);
                 opacity: 1;
+                transform: translate(-50%, -50%) scale(1.08);
             }
 
             &:focus-visible {
@@ -256,7 +258,7 @@ $fullscreen-editor-z-index: 4000;
 
                 &::after {
                     width: 0.1875rem;
-                    height: 2.5rem;
+                    height: 3.75rem;
                 }
             }
 
@@ -267,7 +269,7 @@ $fullscreen-editor-z-index: 4000;
                 height: 10px;
 
                 &::after {
-                    width: 2.5rem;
+                    width: 3.75rem;
                     height: 0.1875rem;
                 }
             }
@@ -375,7 +377,7 @@ $fullscreen-editor-z-index: 4000;
 }
 
 @container (max-width: 42rem) {
-    .modeling-editor__actions .apollon-chrome-actionbtn > span {
+    .modeling-editor__actions [data-slot='button'] > span {
         display: none;
     }
 

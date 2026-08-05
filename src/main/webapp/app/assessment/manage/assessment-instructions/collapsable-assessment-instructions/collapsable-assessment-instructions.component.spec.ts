@@ -40,6 +40,9 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
 
     it('collapses and reopens through the disclosure control', () => {
         const disclosure = fixture.debugElement.query(By.css('.instructions-disclosure')).nativeElement as HTMLButtonElement;
+        expect(disclosure.dataset.slot).toBe('button');
+        expect(disclosure.dataset.variant).toBe('ghost');
+        expect(disclosure.dataset.size).toBe('sm');
         disclosure.click();
         fixture.detectChanges();
         expect(component.collapsed()).toBe(true);

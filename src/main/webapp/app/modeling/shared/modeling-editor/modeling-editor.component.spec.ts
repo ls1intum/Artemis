@@ -313,7 +313,8 @@ describe('ModelingEditorComponent', () => {
 
         expect(editor.getRegionElement).toHaveBeenCalledExactlyOnceWith('top-right');
         expect(editor._regionElements.get('top-right')?.contains(actions)).toBe(true);
-        expect(actions.querySelectorAll('.apollon-chrome-actionbtn')).toHaveLength(2);
+        const actionButtons = actions.querySelectorAll('[data-slot="button"][data-variant="ghost"][data-size="sm"]');
+        expect(actionButtons).toHaveLength(2);
 
         component.ngOnDestroy();
         expect(editor.releaseRegionElement).toHaveBeenCalledExactlyOnceWith('top-right');
@@ -339,6 +340,9 @@ describe('ModelingEditorComponent', () => {
 
         expect(island.hidden).toBe(false);
         expect(disclosure.getAttribute('aria-expanded')).toBe('false');
+        expect(disclosure.dataset.slot).toBe('button');
+        expect(disclosure.dataset.variant).toBe('ghost');
+        expect(disclosure.dataset.size).toBe('sm');
         expect(editor.getRegionElement).toHaveBeenCalledWith('right-rail');
         expect(editor.updateControl).toHaveBeenCalledWith('apollon:host:right-rail', { style: { overflow: 'visible' } });
 
