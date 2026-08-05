@@ -3,4 +3,20 @@
     .scroll-overlay {
         background-color: var(--apollon-scroll-overlay);
     }
+
+    .artemis-apollon-chrome-action {
+        width: auto;
+        min-width: 0;
+        gap: 6px;
+        padding-inline: 8px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+        white-space: nowrap;
+
+        > fa-icon {
+            font-size: 1rem;
+        }
+    }
 }

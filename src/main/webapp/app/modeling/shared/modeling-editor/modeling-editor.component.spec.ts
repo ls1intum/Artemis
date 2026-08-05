@@ -313,8 +313,9 @@ describe('ModelingEditorComponent', () => {
 
         expect(editor.getRegionElement).toHaveBeenCalledExactlyOnceWith('top-right');
         expect(editor._regionElements.get('top-right')?.contains(actions)).toBe(true);
-        const actionButtons = actions.querySelectorAll('[data-slot="button"][data-variant="ghost"][data-size="sm"]');
+        const actionButtons = actions.querySelectorAll('.artemis-apollon-chrome-action.apollon-chrome-iconbtn');
         expect(actionButtons).toHaveLength(2);
+        expect([...actionButtons].every((button) => !button.hasAttribute('data-slot'))).toBe(true);
 
         component.ngOnDestroy();
         expect(editor.releaseRegionElement).toHaveBeenCalledExactlyOnceWith('top-right');
@@ -340,9 +341,9 @@ describe('ModelingEditorComponent', () => {
 
         expect(island.hidden).toBe(false);
         expect(disclosure.getAttribute('aria-expanded')).toBe('false');
-        expect(disclosure.dataset.slot).toBe('button');
-        expect(disclosure.dataset.variant).toBe('ghost');
-        expect(disclosure.dataset.size).toBe('sm');
+        expect(disclosure.classList.contains('artemis-apollon-chrome-action')).toBe(true);
+        expect(disclosure.classList.contains('apollon-chrome-iconbtn')).toBe(true);
+        expect(disclosure.hasAttribute('data-slot')).toBe(false);
         expect(editor.getRegionElement).toHaveBeenCalledWith('right-rail');
         expect(editor.updateControl).toHaveBeenCalledWith('apollon:host:right-rail', { style: { overflow: 'visible' } });
 

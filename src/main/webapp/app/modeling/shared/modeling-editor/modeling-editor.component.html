@@ -37,23 +37,19 @@
             @if (showHelpButton()) {
                 <button
                     type="button"
-                    data-slot="button"
-                    data-variant="ghost"
-                    data-size="sm"
+                    class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
                     (click)="openHelp()"
                     [attr.aria-label]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
                     [title]="'artemisApp.modelingEditor.helpModal.help' | artemisTranslate"
                 >
-                    <fa-icon data-icon="inline-start" [icon]="farQuestionCircle" />
+                    <fa-icon [icon]="farQuestionCircle" />
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>
             }
             @if (showFullscreenButton() && fullscreenSupported) {
                 <button
                     type="button"
-                    data-slot="button"
-                    data-variant="ghost"
-                    data-size="sm"
+                    class="artemis-apollon-chrome-action apollon-chrome-iconbtn"
                     data-testid="modeling-editor-fullscreen"
                     (click)="toggleFullscreen()"
                     [attr.aria-label]="
@@ -63,7 +59,7 @@
                         (fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText') | artemisTranslate
                     "
                 >
-                    <fa-icon data-icon="inline-start" [icon]="fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
+                    <fa-icon [icon]="fullscreenActive() ? faExitFullscreen : faEnterFullscreen" />
                     <span
                         [jhiTranslate]="fullscreenActive() ? 'artemisApp.modelingEditor.fullscreen.exitButtonText' : 'artemisApp.modelingEditor.fullscreen.enterButtonText'"
                     ></span>
@@ -84,10 +80,7 @@
             >
                 <button
                     type="button"
-                    class="modeling-editor__problem-statement-disclosure"
-                    data-slot="button"
-                    data-variant="ghost"
-                    data-size="sm"
+                    class="modeling-editor__problem-statement-disclosure artemis-apollon-chrome-action apollon-chrome-iconbtn"
                     data-testid="modeling-editor-problem-statement"
                     (click)="toggleProblemStatement()"
                     [attr.aria-expanded]="problemStatementVisible()"
@@ -96,9 +89,9 @@
                     [title]="'artemisApp.modelingSubmission.problemStatement' | artemisTranslate"
                     [id]="problemStatementPanelId + '-trigger'"
                 >
-                    <fa-icon data-icon="inline-start" [icon]="faProblemStatement" />
+                    <fa-icon [icon]="faProblemStatement" />
                     <span jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
-                    <fa-icon data-icon="inline-end" [icon]="problemStatementVisible() ? faCollapseProblemStatement : faExpandProblemStatement" aria-hidden="true" />
+                    <fa-icon [icon]="problemStatementVisible() ? faCollapseProblemStatement : faExpandProblemStatement" aria-hidden="true" />
                 </button>
             </div>
             <section

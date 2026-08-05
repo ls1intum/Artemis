@@ -88,21 +88,19 @@
                     [tile]="true"
                 >
                     <div modelingEditorTopLeft class="example-submission-mode-switch" role="group" [attr.aria-label]="'artemisApp.exampleSubmission.viewMode' | artemisTranslate">
-                        <button type="button" data-slot="button" data-variant="secondary" data-size="sm" aria-pressed="true">
-                            <fa-icon data-icon="inline-start" [icon]="faShapes" />
+                        <button type="button" class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle" aria-pressed="true">
+                            <fa-icon [icon]="faShapes" />
                             <span jhiTranslate="artemisApp.exampleSubmission.submissionMode"></span>
                         </button>
                         @if (exampleSubmission() && !isNewSubmission()) {
                             <button
                                 type="button"
-                                data-slot="button"
-                                data-variant="ghost"
-                                data-size="sm"
+                                class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
                                 aria-pressed="false"
                                 (click)="showAssessment()"
                                 id="show-modeling-example-assessment"
                             >
-                                <fa-icon data-icon="inline-start" [icon]="faClipboardCheck" />
+                                <fa-icon [icon]="faClipboardCheck" />
                                 <span jhiTranslate="artemisApp.exampleSubmission.assessmentMode"></span>
                             </button>
                         }
@@ -135,13 +133,18 @@
                                 [attr.aria-label]="'artemisApp.exampleSubmission.viewMode' | artemisTranslate"
                             >
                                 @if (exampleSubmission() && !isNewSubmission() && !readOnly() && !toComplete()) {
-                                    <button type="button" data-slot="button" data-variant="ghost" data-size="sm" aria-pressed="false" (click)="showSubmission()">
-                                        <fa-icon data-icon="inline-start" [icon]="faShapes" />
+                                    <button
+                                        type="button"
+                                        class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
+                                        aria-pressed="false"
+                                        (click)="showSubmission()"
+                                    >
+                                        <fa-icon [icon]="faShapes" />
                                         <span jhiTranslate="artemisApp.exampleSubmission.submissionMode"></span>
                                     </button>
                                 }
-                                <button type="button" data-slot="button" data-variant="secondary" data-size="sm" aria-pressed="true">
-                                    <fa-icon data-icon="inline-start" [icon]="faClipboardCheck" />
+                                <button type="button" class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle" aria-pressed="true">
+                                    <fa-icon [icon]="faClipboardCheck" />
                                     <span
                                         [jhiTranslate]="
                                             toComplete()

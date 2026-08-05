@@ -42,16 +42,39 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const fullscreenButton = page.getByTestId('modeling-editor-fullscreen');
         await expect(fullscreenButton).toBeVisible();
         await expect(fullscreenButton).toContainText('Fullscreen');
+        const zoomOutButton = page.locator('[data-apollon-control="apollon:zoom"] .apollon-chrome-iconbtn').first();
+        await expect(zoomOutButton).toBeVisible();
         for (const button of [helpButton, fullscreenButton]) {
-            await expect(button).toHaveAttribute('data-slot', 'button');
-            await expect(button).toHaveAttribute('data-variant', 'ghost');
-            await expect(button).toHaveAttribute('data-size', 'sm');
+            await expect(button).toHaveClass(/artemis-apollon-chrome-action/);
+            await expect(button).toHaveClass(/apollon-chrome-iconbtn/);
+            await expect(button).not.toHaveAttribute('data-slot');
         }
-        const [helpButtonBox, fullscreenButtonBox] = await Promise.all([helpButton.boundingBox(), fullscreenButton.boundingBox()]);
+        const [helpButtonBox, fullscreenButtonBox, zoomOutButtonBox] = await Promise.all([helpButton.boundingBox(), fullscreenButton.boundingBox(), zoomOutButton.boundingBox()]);
         expect(helpButtonBox).not.toBeNull();
         expect(fullscreenButtonBox).not.toBeNull();
-        expect(helpButtonBox!.height).toBe(28);
+        expect(zoomOutButtonBox).not.toBeNull();
+        expect(helpButtonBox!.height).toBe(zoomOutButtonBox!.height);
         expect(fullscreenButtonBox!.height).toBe(helpButtonBox!.height);
+        const editorChromeStyle = async (button: typeof helpButton) =>
+            button.evaluate((element) => {
+                const style = getComputedStyle(element);
+                return {
+                    backgroundColor: style.backgroundColor,
+                    borderRadius: style.borderRadius,
+                    color: style.color,
+                    gap: style.gap,
+                    transitionDuration: style.transitionDuration,
+                    transitionProperty: style.transitionProperty,
+                };
+            });
+        const zoomChromeStyle = await editorChromeStyle(zoomOutButton);
+        const { gap: zoomGap, ...zoomControlStyle } = zoomChromeStyle;
+        expect(zoomGap).toBe('normal');
+        for (const labeledButton of [helpButton, fullscreenButton]) {
+            const { gap, ...labeledControlStyle } = await editorChromeStyle(labeledButton);
+            expect(gap).toBe('6px');
+            expect(labeledControlStyle).toEqual(zoomControlStyle);
+        }
         await expect(page.locator('.modeling-editor__problem-statement')).toBeHidden();
 
         const problemStatementEditor = page.locator('#field_problemStatement .monaco-editor');
@@ -249,6 +272,9 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const verticalProblemStatementResizer = problemStatementIsland.locator('.modeling-editor__problem-statement-resizer--bottom');
         await expect(problemStatementIsland).toBeVisible();
         await expect(problemStatementButton).toBeVisible();
+        await expect(problemStatementButton).toHaveClass(/artemis-apollon-chrome-action/);
+        await expect(problemStatementButton).toHaveClass(/apollon-chrome-iconbtn/);
+        await expect(problemStatementButton).not.toHaveAttribute('data-slot');
         await expect(problemStatementButton).toHaveAttribute('aria-expanded', 'true');
         await expect(problemStatementPanel).toBeVisible();
         await expect(problemStatementPanel).toContainText('Design task');
@@ -479,8 +505,10 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(readAndConfirmButton).toHaveAttribute('aria-pressed', 'true');
         const defineAssessmentButton = page.getByRole('button', { name: 'Define assessment' });
         await expect(defineAssessmentButton).toHaveAttribute('aria-pressed', 'false');
-        await expect(defineAssessmentButton).toHaveAttribute('data-variant', 'ghost');
-        await expect(defineAssessmentButton).toHaveAttribute('data-size', 'sm');
+        await expect(defineAssessmentButton).toHaveClass(/artemis-apollon-chrome-action/);
+        await expect(defineAssessmentButton).toHaveClass(/apollon-chrome-iconbtn/);
+        await expect(defineAssessmentButton).toHaveClass(/apollon-chrome-iconbtn--toggle/);
+        await expect(defineAssessmentButton).not.toHaveAttribute('data-slot');
         await defineAssessmentButton.click();
 
         const assessment = page.locator('jhi-modeling-assessment');
@@ -494,9 +522,9 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(submissionExplanation).toBeVisible();
         await expect(submissionExplanation.locator('.modeling-explanation-surface__notch')).toContainText('Explanation');
         await expect(page.getByRole('button', { name: 'Edit model' })).toHaveAttribute('aria-pressed', 'false');
-        await expect(page.getByRole('button', { name: 'Edit model' })).toHaveAttribute('data-variant', 'ghost');
+        await expect(page.getByRole('button', { name: 'Edit model' })).toHaveClass(/apollon-chrome-iconbtn--toggle/);
         await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveAttribute('aria-pressed', 'true');
-        await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveAttribute('data-variant', 'secondary');
+        await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveClass(/apollon-chrome-iconbtn--toggle/);
         await expect(assessment.locator('.example-assessment-rationale')).toHaveCount(0);
         await expect(workspace.getByRole('heading', { name: 'Instructions' })).toBeVisible();
         await expect(workspace.getByRole('heading', { name: 'Feedback', exact: true })).toBeVisible();
