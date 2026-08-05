@@ -18,6 +18,12 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ScienceEnabledCourseRepository extends ArtemisJpaRepository<ScienceEnabledCourse, Long> {
 
+    @Query("""
+            SELECT enabledCourse
+            FROM ScienceEnabledCourse enabledCourse
+                JOIN FETCH enabledCourse.course
+            ORDER BY enabledCourse.lastModifiedDate DESC
+            """)
     List<ScienceEnabledCourse> findAllByOrderByLastModifiedDateDesc();
 
     @Query("""

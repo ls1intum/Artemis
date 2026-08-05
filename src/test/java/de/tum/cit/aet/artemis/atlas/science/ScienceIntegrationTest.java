@@ -108,6 +108,35 @@ class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetEnabledCourseHistoryLoadsCourseData() {
+        scienceCourseService.enableCourse(course.getId());
+
+        var enabledCourseHistory = scienceCourseService.getEnabledCourseHistory();
+
+        assertThat(enabledCourseHistory).anySatisfy(enabledCourse -> {
+            assertThat(enabledCourse.courseId()).isEqualTo(course.getId());
+            assertThat(enabledCourse.courseTitle()).isEqualTo(course.getTitle());
+            assertThat(enabledCourse.courseShortName()).isEqualTo(course.getShortName());
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testGetConsentsForCurrentUserLoadsCourseData() {
+        scienceCourseService.enableCourse(course.getId());
+        scienceCourseService.saveConsentForCurrentUser(course.getId(), true);
+
+        var consents = scienceCourseService.getConsentsForCurrentUser();
+
+        assertThat(consents).anySatisfy(consent -> {
+            assertThat(consent.courseId()).isEqualTo(course.getId());
+            assertThat(consent.courseTitle()).isEqualTo(course.getTitle());
+            assertThat(consent.courseShortName()).isEqualTo(course.getShortName());
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseDeletesScienceEvents() throws Exception {
         ScienceEvent scienceEvent = new ScienceEvent();
         scienceEvent.setIdentity(TEST_PREFIX + "student1");
