@@ -155,6 +155,30 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(exercise.gradingInstructions).toBe('Current unsaved text');
         });
 
+        it('should keep generated criterion markup out of the general editor when grading instruction feedback is used', () => {
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            const markdownEditor = {
+                parseMarkdown: vi.fn(() => {
+                    exercise.gradingInstructions = 'General assessment instructions';
+                }),
+                setMarkdown: vi.fn(),
+            };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            exercise.gradingInstructionFeedbackUsed = true;
+            generationService.generate.mockReturnValue(of([generatedCriterion]));
+            const initializeMarkdownSpy = vi.spyOn(component, 'initializeMarkdown').mockImplementation(() => undefined);
+            const generateMarkdownSpy = vi.spyOn(component, 'generateMarkdown');
+
+            component.generateAssessmentCriteria();
+
+            expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
+            expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
+            expect(generateMarkdownSpy).not.toHaveBeenCalled();
+            expect(initializeMarkdownSpy).toHaveBeenCalledOnce();
+            expect(markdownEditor.setMarkdown).not.toHaveBeenCalled();
+            expect(exercise.gradingInstructions).toBe('General assessment instructions');
+        });
+
         it('should abort when edit-as-text syntax cannot be parsed', () => {
             const markdownEditor = {
                 parseMarkdown: vi.fn(() => {
@@ -237,6 +261,17 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.ngOnInit();
             // THEN
             expect(component.markdownEditorText()).toEqual('Add Assessment Instruction text here\n\n' + criterionMarkdownText);
+        });
+
+        it('should initialize only general instructions in the main editor when grading instruction feedback is used', () => {
+            exercise.gradingInstructions = 'General assessment instructions';
+            exercise.gradingCriteria = [gradingCriterion];
+            exercise.gradingInstructionFeedbackUsed = true;
+
+            component.ngOnInit();
+
+            expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
+            expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
         });
     });
 

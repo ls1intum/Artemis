@@ -139,13 +139,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     ngOnInit() {
         this.criteria.set(this.exercise().gradingCriteria || []);
         this.backupExercise = cloneDeep(this.exercise());
-        this.markdownEditorText.set(this.generateMarkdown());
+        const markdown = this.exercise().gradingInstructionFeedbackUsed ? this.initializeExerciseGradingInstructionText() : this.generateMarkdown();
+        this.markdownEditorText.set(markdown);
         this.showEditMode.set(true);
     }
 
     ngAfterContentInit() {
         if (this.exercise().gradingInstructionFeedbackUsed) {
-            this.markdownEditorText.set(this.initializeExerciseGradingInstructionText());
             this.initializeMarkdown();
         }
     }
@@ -593,11 +593,14 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     this.exercise().gradingInstructions = gradingInstructions;
                     this.criteria.set(criteria);
                     this.criteriaGenerated.emit();
-                    this.markdownEditorText.set(this.generateMarkdown());
-                    if (!this.showEditMode()) {
-                        this.markdownEditor().setMarkdown(this.markdownEditorText());
-                    } else if (this.exercise().gradingInstructionFeedbackUsed) {
+                    if (this.exercise().gradingInstructionFeedbackUsed) {
+                        this.markdownEditorText.set(this.initializeExerciseGradingInstructionText());
                         this.initializeMarkdown();
+                    } else {
+                        this.markdownEditorText.set(this.generateMarkdown());
+                        if (!this.showEditMode()) {
+                            this.markdownEditor().setMarkdown(this.markdownEditorText());
+                        }
                     }
                     this.alertService.success('artemisApp.exercise.assessmentCriteriaGeneration.success');
                 },

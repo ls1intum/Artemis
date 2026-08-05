@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeExerciseContent;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
 
 import java.util.ArrayList;
@@ -89,9 +90,9 @@ public class HyperionAssessmentCriteriaGenerationService {
         var outputConverter = new BeanOutputConverter<>(GeneratedCriteriaOutput.class);
         String systemPrompt = templateService.render(SYSTEM_PROMPT, Map.of());
         String userPrompt = templateService.renderObject(USER_PROMPT,
-                Map.of("problemStatement", sanitizeInput(request.problemStatement()), "maxPoints", request.maxPoints(), "bonusPoints", request.bonusPoints(), "gradingInstructions",
-                        sanitizeInput(request.gradingInstructions()), "exampleSolution", sanitizeInput(request.exampleSolution()), "additionalContext",
-                        sanitizeInput(request.additionalContext()), "format", outputConverter.getFormat()));
+                Map.of("problemStatement", sanitizeExerciseContent(request.problemStatement()), "maxPoints", request.maxPoints(), "bonusPoints", request.bonusPoints(),
+                        "gradingInstructions", sanitizeExerciseContent(request.gradingInstructions()), "exampleSolution", sanitizeExerciseContent(request.exampleSolution()),
+                        "additionalContext", sanitizeExerciseContent(request.additionalContext()), "format", outputConverter.getFormat()));
 
         ChatResponse chatResponse;
         try {
