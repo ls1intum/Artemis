@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.atlas.web.admin;
 
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -92,13 +97,35 @@ public class AdminScienceResource {
      *
      * @param request the export filter and purpose
      * @return the ResponseEntity with status 200 (OK) and the generated CSV file
+     * @throws IOException if the generated file cannot be streamed
      */
     @PostMapping("exports")
-    public ResponseEntity<ByteArrayResource> createScienceResearchExport(@RequestBody ScienceResearchExportRequestDTO request) {
-        byte[] csvBytes = scienceCourseService.createResearchExport(request);
+    public ResponseEntity<Resource> createScienceResearchExport(@RequestBody @Valid ScienceResearchExportRequestDTO request) throws IOException {
+        var export = scienceCourseService.createResearchExport(request);
         String filename = "science-research-export-" + ZonedDateTime.now().toInstant().toEpochMilli() + ".csv";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
-        return ResponseEntity.ok().headers(headers).contentLength(csvBytes.length).contentType(MediaType.TEXT_PLAIN).body(new ByteArrayResource(csvBytes));
+        return ResponseEntity.ok().headers(headers).contentLength(export.contentLength()).contentType(MediaType.TEXT_PLAIN)
+                .body(new InputStreamResource(new AutoDeletingFileInputStream(export.path())));
+    }
+
+    private static final class AutoDeletingFileInputStream extends FilterInputStream {
+
+        private final java.nio.file.Path path;
+
+        private AutoDeletingFileInputStream(java.nio.file.Path path) throws IOException {
+            super(java.nio.file.Files.newInputStream(path));
+            this.path = path;
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                super.close();
+            }
+            finally {
+                java.nio.file.Files.deleteIfExists(path);
+            }
+        }
     }
 }

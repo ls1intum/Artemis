@@ -37,6 +37,7 @@ import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/s
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 /**
  * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
@@ -81,6 +82,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseOverviewGuard = inject(CourseOverviewGuard);
     private courseTitleBarService = inject(CourseTitleBarService);
     private scienceSettingsService = inject(ScienceSettingsService);
+    private featureToggleService = inject(FeatureToggleService);
 
     // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
     protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
@@ -90,6 +92,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel?: string;
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
+    private scienceFeatureToggleSubscription?: Subscription;
+    private scienceFeatureActive = false;
 
     showUnenrollModal = signal<boolean>(false);
     showScienceConsentModal = signal<boolean>(false);
@@ -132,6 +136,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     next: () => this.sidebarItems.set(this.getSidebarItems()),
                 });
             }
+        });
+        this.scienceFeatureToggleSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.Science).subscribe((active) => {
+            this.scienceFeatureActive = active;
+            if (!active) {
+                this.showScienceConsentModal.set(false);
+                this.scienceConsentCourse.set(undefined);
+                return;
+            }
+            this.checkScienceConsent(this.course()?.id);
         });
         await super.ngOnInit();
 
@@ -289,7 +302,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     private checkScienceConsent(courseId?: number): void {
-        if (!courseId) {
+        if (!courseId || !this.scienceFeatureActive) {
             return;
         }
         this.scienceSettingsService.getConsentForCourse(courseId).subscribe({
@@ -511,5 +524,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.quizExercisesSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
+        this.scienceFeatureToggleSubscription?.unsubscribe();
     }
 }

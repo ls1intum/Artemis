@@ -2,13 +2,13 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20260730120000-1" author="artemis">
+    <changeSet id="20260730120000-1" author="maximiliananzinger">
         <addColumn tableName="science_event">
             <column name="course_id" type="bigint"/>
         </addColumn>
     </changeSet>
 
-    <changeSet id="20260730120000-2" author="artemis">
+    <changeSet id="20260730120000-2" author="maximiliananzinger">
         <comment>Backfill course ids for legacy science events where the original resource id can be resolved deterministically.</comment>
         <sql>
             UPDATE science_event
@@ -64,7 +64,7 @@
         </sql>
     </changeSet>
 
-    <changeSet id="20260730120000-3" author="artemis">
+    <changeSet id="20260730120000-3" author="maximiliananzinger">
         <createTable tableName="science_enabled_course">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -87,7 +87,7 @@
                                  referencedColumnNames="id" referencedTableName="course"/>
     </changeSet>
 
-    <changeSet id="20260730120000-4" author="artemis">
+    <changeSet id="20260730120000-4" author="maximiliananzinger">
         <createTable tableName="science_course_consent">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -109,13 +109,13 @@
             <column name="last_modified_date" type="datetime(3)"/>
         </createTable>
         <addUniqueConstraint columnNames="user_id, course_id" constraintName="UKScienceCourseConsentUserIdCourseId" tableName="science_course_consent"/>
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="science_course_consent" constraintName="FKScienceCourseConsentUserId" referencedColumnNames="id"
-                                 referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="science_course_consent" constraintName="FKScienceCourseConsentUserId" onDelete="CASCADE"
+                                 referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="science_course_consent" constraintName="FKScienceCourseConsentCourseId" onDelete="CASCADE"
                                  referencedColumnNames="id" referencedTableName="course"/>
     </changeSet>
 
-    <changeSet id="20260730120000-5" author="artemis">
+    <changeSet id="20260730120000-5" author="maximiliananzinger" dbms="mysql,h2">
         <createTable tableName="science_research_export_audit">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -123,12 +123,7 @@
             <column name="purpose" type="varchar(1000)">
                 <constraints nullable="false"/>
             </column>
-            <column name="course_filter" type="clob">
-                <constraints nullable="false"/>
-            </column>
-            <column name="date_from" type="varchar(255)"/>
-            <column name="date_to" type="varchar(255)"/>
-            <column name="event_types" type="clob">
+            <column name="filter" type="json">
                 <constraints nullable="false"/>
             </column>
             <column name="file_checksum" type="varchar(255)"/>
@@ -141,7 +136,28 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="20260730120000-6" author="artemis">
+    <changeSet id="20260730120000-5-postgresql" author="maximiliananzinger" dbms="postgresql">
+        <createTable tableName="science_research_export_audit">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="purpose" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filter" type="jsonb">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_checksum" type="varchar(255)"/>
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime(3)"/>
+            <column name="last_modified_by" type="varchar(50)"/>
+            <column name="last_modified_date" type="datetime(3)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260730120000-6" author="maximiliananzinger">
         <createIndex indexName="IDXScienceEventCourseIdTimestamp" tableName="science_event">
             <column name="course_id"/>
             <column name="timestamp"/>

@@ -46,4 +46,12 @@ describe('ScienceService', () => {
         expect(putStub).toHaveBeenCalledOnce();
         expect(putStub).toHaveBeenCalledWith('api/atlas/science', expect.objectContaining({ type, courseId: 1 }), { observe: 'response' });
     });
+
+    it('should not send an event when course consent is not active', () => {
+        vi.spyOn(TestBed.inject(ScienceSettingsService), 'eventLoggingAllowed').mockReturnValue(false);
+
+        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
+
+        expect(putStub).not.toHaveBeenCalled();
+    });
 });

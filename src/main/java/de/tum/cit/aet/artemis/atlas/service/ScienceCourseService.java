@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.io.IOException;
-import java.io.StringWriter;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
@@ -10,7 +13,9 @@ import java.util.EnumSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -18,15 +23,21 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceCourseConsent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEnabledCourse;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceResearchExportAudit;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceResearchExportFilter;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceCourseConsentDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEnabledCourseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceResearchExportAuditDTO;
@@ -38,6 +49,7 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceResearchExportAuditReposit
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
@@ -47,6 +59,8 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 public class ScienceCourseService {
 
     private static final String ENTITY_NAME = "science";
+
+    private static final int RESEARCH_EXPORT_PAGE_SIZE = 1000;
 
     private final CourseRepository courseRepository;
 
@@ -64,10 +78,14 @@ public class ScienceCourseService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final TempFileUtilService tempFileUtilService;
+
+    private final TransactionTemplate transactionTemplate;
+
     public ScienceCourseService(CourseRepository courseRepository, UserRepository userRepository, ScienceEnabledCourseRepository scienceEnabledCourseRepository,
             ScienceCourseConsentRepository scienceCourseConsentRepository, ScienceEventRepository scienceEventRepository,
-            ScienceResearchExportAuditRepository scienceResearchExportAuditRepository, ScienceEventService scienceEventService,
-            AuthorizationCheckService authorizationCheckService) {
+            ScienceResearchExportAuditRepository scienceResearchExportAuditRepository, ScienceEventService scienceEventService, AuthorizationCheckService authorizationCheckService,
+            TempFileUtilService tempFileUtilService, PlatformTransactionManager transactionManager) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.scienceEnabledCourseRepository = scienceEnabledCourseRepository;
@@ -76,6 +94,8 @@ public class ScienceCourseService {
         this.scienceResearchExportAuditRepository = scienceResearchExportAuditRepository;
         this.scienceEventService = scienceEventService;
         this.authorizationCheckService = authorizationCheckService;
+        this.tempFileUtilService = tempFileUtilService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -189,27 +209,29 @@ public class ScienceCourseService {
      * @return the updated consent state
      */
     public ScienceCourseConsentDTO saveConsentForCurrentUser(long courseId, boolean active) {
-        User user = userRepository.getUser();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
-        checkMayCreateOrActivateConsent(course, user, consent, active);
-        boolean scienceEnabled = scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId);
-        boolean isNewConsent = consent == null;
-        boolean previousActive = consent != null && consent.isActive();
-        if (consent == null) {
-            consent = new ScienceCourseConsent();
-        }
-        consent.setUser(user);
-        consent.setCourse(course);
-        consent.setActive(active);
-        ScienceCourseConsent savedConsent = scienceCourseConsentRepository.save(consent);
-        if (active && (isNewConsent || !previousActive)) {
-            scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__OPT_IN, courseId);
-        }
-        if (!active && (isNewConsent || previousActive)) {
-            scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__OPT_OUT, courseId);
-        }
-        return new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), savedConsent.isActive(), savedConsent.getLastModifiedDate(), scienceEnabled);
+        return Objects.requireNonNull(transactionTemplate.execute(status -> {
+            User user = userRepository.getUser();
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
+            checkMayCreateOrActivateConsent(course, user, consent, active);
+            boolean scienceEnabled = scienceEnabledCourseRepository.existsByCourseIdAndActiveTrue(courseId);
+            boolean isNewConsent = consent == null;
+            boolean previousActive = consent != null && consent.isActive();
+            if (consent == null) {
+                consent = new ScienceCourseConsent();
+            }
+            consent.setUser(user);
+            consent.setCourse(course);
+            consent.setActive(active);
+            ScienceCourseConsent savedConsent = scienceCourseConsentRepository.save(consent);
+            if (active && (isNewConsent || !previousActive)) {
+                scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__OPT_IN, courseId);
+            }
+            if (!active && (isNewConsent || previousActive)) {
+                scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__OPT_OUT, courseId);
+            }
+            return new ScienceCourseConsentDTO(courseId, course.getTitle(), course.getShortName(), savedConsent.isActive(), savedConsent.getLastModifiedDate(), scienceEnabled);
+        }));
     }
 
     /**
@@ -218,34 +240,44 @@ public class ScienceCourseService {
      * @param courseId the id of the course
      */
     public void deleteScienceDataForCurrentUser(long courseId) {
-        User user = userRepository.getUser();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
-        checkMayDeleteScienceData(course, user, consent);
-        scienceEventRepository.deleteInteractionEventsByIdentityAndCourseId(user.getLogin(), courseId, ScienceEventService.SCIENCE_AUDIT_EVENT_TYPES);
-        scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__DATA_DELETED, courseId);
+        transactionTemplate.executeWithoutResult(status -> {
+            User user = userRepository.getUser();
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            ScienceCourseConsent consent = scienceCourseConsentRepository.findByUserIdAndCourseId(user.getId(), courseId).orElse(null);
+            checkMayDeleteScienceData(course, user, consent);
+            scienceEventRepository.deleteInteractionEventsByIdentityAndCourseId(user.getLogin(), courseId, ScienceEventService.SCIENCE_AUDIT_EVENT_TYPES);
+            scienceEventService.logAuditEvent(user.getLogin(), ScienceEventType.SCIENCE__DATA_DELETED, courseId);
+        });
     }
 
     /**
      * Creates a research CSV export for the selected courses, dates, and event types.
      *
      * @param request the export filter and purpose
-     * @return the generated CSV file bytes
+     * @return the generated CSV export file
      */
-    public byte[] createResearchExport(ScienceResearchExportRequestDTO request) {
+    public ScienceResearchExport createResearchExport(ScienceResearchExportRequestDTO request) {
         validateResearchExportRequest(request);
         Set<ScienceEventType> eventTypes = request.eventTypes() == null || request.eventTypes().isEmpty() ? EnumSet.allOf(ScienceEventType.class) : request.eventTypes();
-        var scienceEvents = scienceEventRepository.findForResearchExport(request.courseIds(), request.from(), request.to(), eventTypes);
-        byte[] csvBytes = createScienceEventCsv(scienceEvents, UUID.randomUUID().toString());
+        ScienceResearchExport export = createScienceEventCsv(request, eventTypes, UUID.randomUUID().toString());
         ScienceResearchExportAudit audit = new ScienceResearchExportAudit();
         audit.setPurpose(request.purpose().trim());
-        audit.setCourseFilter(request.courseIds().stream().sorted().map(String::valueOf).collect(Collectors.joining(",")));
-        audit.setDateFrom(request.from() == null ? null : request.from().toString());
-        audit.setDateTo(request.to() == null ? null : request.to().toString());
-        audit.setEventTypes(eventTypes.stream().map(Enum::name).sorted().collect(Collectors.joining(",")));
-        audit.setFileChecksum(sha256Hex(csvBytes));
-        scienceResearchExportAuditRepository.save(audit);
-        return csvBytes;
+        audit.setFilter(new ScienceResearchExportFilter(new TreeSet<>(request.courseIds()), request.from() == null ? null : request.from().toString(),
+                request.to() == null ? null : request.to().toString(), EnumSet.copyOf(eventTypes)));
+        audit.setFileChecksum(export.fileChecksum());
+        try {
+            scienceResearchExportAuditRepository.save(audit);
+        }
+        catch (RuntimeException e) {
+            try {
+                Files.deleteIfExists(export.path());
+            }
+            catch (IOException ignored) {
+                // Best-effort cleanup. Keep the original persistence exception as the failure cause.
+            }
+            throw e;
+        }
+        return export;
     }
 
     /**
@@ -271,18 +303,31 @@ public class ScienceCourseService {
         }
     }
 
-    private static byte[] createScienceEventCsv(List<de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent> scienceEvents, String exportSalt) {
+    private ScienceResearchExport createScienceEventCsv(ScienceResearchExportRequestDTO request, Set<ScienceEventType> eventTypes, String exportSalt) {
         String[] header = { "identity", "timestamp", "event_type", "course_id", "resource_id" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(header).get();
-        try (StringWriter writer = new StringWriter(); CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
-            for (var scienceEvent : scienceEvents) {
-                printer.printRecord(pseudonymizeIdentity(scienceEvent.getIdentity(), exportSalt), scienceEvent.getTimestamp(), scienceEvent.getType(), scienceEvent.getCourseId(),
-                        scienceEvent.getResourceId());
+        try {
+            Path exportFile = tempFileUtilService.createTempFile("science-research-export-", ".csv");
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (DigestOutputStream digestOutputStream = new DigestOutputStream(Files.newOutputStream(exportFile), digest);
+                    OutputStreamWriter writer = new OutputStreamWriter(digestOutputStream, StandardCharsets.UTF_8);
+                    CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
+                Page<ScienceEvent> page;
+                int pageNumber = 0;
+                do {
+                    page = scienceEventRepository.findForResearchExport(request.courseIds(), request.from(), request.to(), eventTypes,
+                            PageRequest.of(pageNumber, RESEARCH_EXPORT_PAGE_SIZE));
+                    for (var scienceEvent : page.getContent()) {
+                        printer.printRecord(pseudonymizeIdentity(scienceEvent.getIdentity(), exportSalt), scienceEvent.getTimestamp(), scienceEvent.getType(),
+                                scienceEvent.getCourseId(), scienceEvent.getResourceId());
+                    }
+                    pageNumber++;
+                }
+                while (page.hasNext());
             }
-            printer.flush();
-            return writer.toString().getBytes(StandardCharsets.UTF_8);
+            return new ScienceResearchExport(exportFile, HexFormat.of().formatHex(digest.digest()), Files.size(exportFile));
         }
-        catch (IOException e) {
+        catch (IOException | NoSuchAlgorithmException e) {
             throw new BadRequestAlertException("Could not create science export", ENTITY_NAME, "scienceExportFailed");
         }
     }
@@ -298,5 +343,8 @@ public class ScienceCourseService {
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is not available", e);
         }
+    }
+
+    public record ScienceResearchExport(Path path, String fileChecksum, long contentLength) {
     }
 }

@@ -112,7 +112,7 @@
                     <tr>
                         <td>{{ audit.createdDate }}</td>
                         <td>{{ audit.createdBy }}</td>
-                        <td>{{ audit.courseFilter }}</td>
+                        <td>{{ audit.filter?.courseIds?.join(', ') }}</td>
                         <td>{{ audit.purpose }}</td>
                         <td class="admin-science-checksum">{{ audit.fileChecksum }}</td>
                     </tr>

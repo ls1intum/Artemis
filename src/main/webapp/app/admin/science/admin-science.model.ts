@@ -16,11 +16,15 @@ export interface ScienceResearchExportAudit {
     createdDate?: string;
     createdBy?: string;
     purpose?: string;
-    courseFilter?: string;
+    filter?: ScienceResearchExportFilter;
+    fileChecksum?: string;
+}
+
+export interface ScienceResearchExportFilter {
+    courseIds?: number[];
     dateFrom?: string;
     dateTo?: string;
-    eventTypes?: string;
-    fileChecksum?: string;
+    eventTypes?: ScienceEventType[];
 }
 
 export interface ScienceResearchExportRequest {

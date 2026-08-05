@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.atlas.web;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -81,7 +83,7 @@ public class ScienceResource {
      */
     @PutMapping("science/courses/{courseId}/consent")
     @EnforceAtLeastStudent
-    public ResponseEntity<ScienceCourseConsentDTO> saveConsentForCurrentUser(@PathVariable long courseId, @RequestBody ScienceConsentUpdateDTO consentUpdate) {
+    public ResponseEntity<ScienceCourseConsentDTO> saveConsentForCurrentUser(@PathVariable long courseId, @RequestBody @Valid ScienceConsentUpdateDTO consentUpdate) {
         return ResponseEntity.ok(scienceCourseService.saveConsentForCurrentUser(courseId, consentUpdate.active()));
     }
 

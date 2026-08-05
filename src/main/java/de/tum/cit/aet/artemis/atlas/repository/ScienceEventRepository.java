@@ -1,10 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -44,8 +45,8 @@ public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEven
                 AND se.type IN :eventTypes
             ORDER BY se.timestamp ASC
             """)
-    List<ScienceEvent> findForResearchExport(@Param("courseIds") Set<Long> courseIds, @Param("from") java.time.ZonedDateTime from, @Param("to") java.time.ZonedDateTime to,
-            @Param("eventTypes") Set<ScienceEventType> eventTypes);
+    Page<ScienceEvent> findForResearchExport(@Param("courseIds") Set<Long> courseIds, @Param("from") java.time.ZonedDateTime from, @Param("to") java.time.ZonedDateTime to,
+            @Param("eventTypes") Set<ScienceEventType> eventTypes, Pageable pageable);
 
     @Transactional // ok because of modifying query
     @Modifying
