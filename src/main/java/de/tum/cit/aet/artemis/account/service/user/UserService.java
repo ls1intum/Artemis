@@ -190,11 +190,20 @@ public class UserService {
             log.info("Update internal admin user {}", internalAdminUsername);
             User internalAdmin = existingInternalAdmin.get();
             if (!internalAdmin.isInternal()) {
-                // An instance that ran a version which created this account as external keeps an admin that cannot use the
-                // password configured for it, and an upgrade alone would not repair it. The account belongs to Artemis by
-                // configuration and its password is set right here on every startup, so owning the flag as well is what makes
-                // that configuration mean something. Logged, because it changes how an existing account authenticates.
-                log.info("Marking the configured internal admin {} as an internal user so that the configured password applies", internalAdminUsername);
+                // An instance that started up between #13394 and this change has an admin that was created as an externally
+                // managed account and therefore cannot use the password configured for it. Creating it correctly is not
+                // enough for those instances: the account exists, so only this branch is reached. The account belongs to
+                // Artemis by configuration and its password is set right here on every startup, so owning the flag as well
+                // is what makes that configuration mean something.
+                //
+                // Warned rather than logged quietly, and spelled out, because the flag decides more than the password check:
+                // LdapAuthenticationProvider skips internal users, so this account stops authenticating against the
+                // directory, and prepareUserForPasswordReset accepts internal users, so it becomes eligible for the e-mail
+                // password reset. For the dedicated local admin this property is meant for, all of that is intended. An
+                // operator who pointed it at a directory account instead needs to see it.
+                log.warn("The configured internal admin {} exists as an externally managed account and is now marked internal: it will authenticate with the "
+                        + "configured password instead of the external directory, and it becomes eligible for the Artemis password reset. Point "
+                        + "artemis.user-management.internal-admin.username at a dedicated local account if that is not what you want.", internalAdminUsername);
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
@@ -215,9 +224,11 @@ public class UserService {
         userDto.setLogin(login);
         userDto.setPassword(password);
         userDto.setActivated(true);
-        // UserDTO defaults this to false, which would store the admin as an externally managed account and make the password
-        // configured right here unusable: ArtemisInternalAuthenticationProvider only ever looks for internal users. The
-        // update branch above repairs an account that a previous version created that way.
+        // Set explicitly because #13394 made the flag caller-controlled - UserCreationService.createUser used to force
+        // internal = true for everyone - and UserDTO defaults it to false. Without this the admin is stored as an externally
+        // managed account and the password configured right here is unusable, because
+        // ArtemisInternalAuthenticationProvider only ever looks for internal users. The update branch above repairs an
+        // account that was created in between.
         userDto.setInternal(true);
         userDto.setFirstName("Administrator");
         userDto.setLastName("Administrator");
