@@ -123,7 +123,7 @@ public class PublicUserJwtResource {
             // not a server fault, and answering it with a server error tells an operator to go looking for an outage while
             // telling the client nothing it can act on. The reason is logged; the response says no more than "unauthorized",
             // so it stays a single answer for "these credentials do not work" and reveals nothing about which part failed.
-            log.warn("Login for user {} was refused: {}", loginVM.getUsername(), ex.getMessage());
+            log.warn("Login for user {} was refused ({}): {}", loginVM.getUsername(), ex.getClass().getSimpleName(), ex.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }

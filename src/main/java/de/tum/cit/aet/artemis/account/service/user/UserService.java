@@ -188,11 +188,20 @@ public class UserService {
         Optional<User> existingInternalAdmin = userRepository.findOneWithAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
-            existingInternalAdmin.get().setActivated(true);
-            existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
+            User internalAdmin = existingInternalAdmin.get();
+            if (!internalAdmin.isInternal()) {
+                // An instance that ran a version which created this account as external keeps an admin that cannot use the
+                // password configured for it, and an upgrade alone would not repair it. The account belongs to Artemis by
+                // configuration and its password is set right here on every startup, so owning the flag as well is what makes
+                // that configuration mean something. Logged, because it changes how an existing account authenticates.
+                log.info("Marking the configured internal admin {} as an internal user so that the configured password applies", internalAdminUsername);
+                internalAdmin.setInternal(true);
+            }
+            internalAdmin.setActivated(true);
+            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
             // needs to be mutable --> new HashSet<>(Set.of(...))
-            existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-            saveUser(existingInternalAdmin.get());
+            internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+            saveUser(internalAdmin);
         }
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
@@ -208,8 +217,7 @@ public class UserService {
         userDto.setActivated(true);
         // UserDTO defaults this to false, which would store the admin as an externally managed account and make the password
         // configured right here unusable: ArtemisInternalAuthenticationProvider only ever looks for internal users. The
-        // update branch of ensureInternalAdminExists leaves the flag alone, so this only ever went wrong where the account
-        // had to be created - a new instance, or a test stack whose admin is not part of the seed data.
+        // update branch above repairs an account that a previous version created that way.
         userDto.setInternal(true);
         userDto.setFirstName("Administrator");
         userDto.setLastName("Administrator");

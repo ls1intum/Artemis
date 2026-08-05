@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -167,6 +168,27 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         String adminPassword = "a-password-for-the-fresh-admin";
         userService.ensureInternalAdminExists(adminLogin, adminPassword);
 
+        request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(adminLogin, adminPassword), HttpStatus.OK, browserHeaders());
+    }
+
+    /**
+     * An instance that ran a version which created the admin as an external account keeps an admin whose configured password
+     * does not work, and starting the new version alone would not repair it: the account exists, so the update branch runs.
+     * The flag is therefore corrected there as well.
+     */
+    @Test
+    @WithAnonymousUser
+    void testAnExistingExternalAdminIsRepairedSoItsConfiguredPasswordWorks() throws Exception {
+        String adminLogin = TEST_PREFIX + "externaladmin";
+        String adminPassword = "a-password-for-the-repaired-admin";
+        User externalAdmin = UserFactory.generateActivatedUser(adminLogin);
+        externalAdmin.setInternal(false);
+        externalAdmin.setPassword(passwordService.hashPassword("some-other-password"));
+        userTestRepository.save(externalAdmin);
+
+        userService.ensureInternalAdminExists(adminLogin, adminPassword);
+
+        assertThat(userTestRepository.getUserByLoginElseThrow(adminLogin).isInternal()).isTrue();
         request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(adminLogin, adminPassword), HttpStatus.OK, browserHeaders());
     }
 
