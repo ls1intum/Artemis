@@ -1,0 +1,79 @@
+{
+    "artemisApp": {
+        "courseIngestionDashboard": {
+            "title": "Ingestion Coverage",
+            "subtitle": "Per course, how complete the global-search index is compared to what the database expects. Read-only.",
+            "loading": "Loading...",
+            "overview": {
+                "title": "Search index overview",
+                "refresh": "Reload overview",
+                "error": "Failed to load the index overview. Please try again."
+            },
+            "services": {
+                "title": "Services",
+                "reachable": "Weaviate reachable",
+                "unreachable": "Weaviate unreachable",
+                "address": "Address",
+                "irisModule": "Iris module",
+                "enabled": "Enabled",
+                "disabled": "Disabled"
+            },
+            "collections": {
+                "title": "Indexed collections",
+                "collection": "Collection",
+                "objects": "Objects",
+                "unavailable": "Unavailable"
+            },
+            "matrix": {
+                "title": "Coverage by course",
+                "lastUpdatedLabel": "Last updated",
+                "refresh": "Refresh data",
+                "refreshHint": "Recomputes coverage across all courses; may take a while and load Weaviate.",
+                "search": "Search courses",
+                "sortBy": "Sort by",
+                "filterByStatus": "Filter by status",
+                "empty": "No courses to show.",
+                "error": "Failed to load course coverage. Please try again.",
+                "courseFallback": "Course",
+                "legend": "Each cell shows indexed / expected per type. Green = complete, red = missing, grey = none expected.",
+                "sort": {
+                    "name": "Name",
+                    "release": "Release date",
+                    "worstFirst": "Worst first",
+                    "lastIngested": "Last ingested"
+                },
+                "status": {
+                    "all": "All"
+                },
+                "group": {
+                    "metadata": "Entity metadata",
+                    "content": "Lecture content"
+                },
+                "column": {
+                    "course": "Course",
+                    "release": "Release date",
+                    "status": "Status",
+                    "lastIngested": "Last ingested at"
+                },
+                "type": {
+                    "exercise": "Exercise",
+                    "lecture": "Lecture",
+                    "lecture_unit": "Unit",
+                    "exam": "Exam",
+                    "faq": "FAQ",
+                    "channel": "Channel",
+                    "course": "Course",
+                    "slides": "Slides",
+                    "transcript": "Transcript",
+                    "segment_summary": "Seg. summary",
+                    "unit_summary": "Unit summary"
+                }
+            },
+            "status": {
+                "COMPLETE": "Complete",
+                "INCOMPLETE": "Incomplete",
+                "EMPTY": "Empty"
+            }
+        }
+    }
+}

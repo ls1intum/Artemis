@@ -14,6 +14,7 @@ import {
     faKey,
     faList,
     faLock,
+    faMagnifyingGlassChart,
     faPlug,
     faPuzzlePiece,
     faRobot,
@@ -222,6 +223,13 @@ export class AdminSidebarComponent {
                 title: 'Websocket',
                 translation: 'global.menu.admin.sidebar.websocket',
                 testId: 'admin-websocket',
+            },
+            {
+                routerLink: '/admin/course-ingestion-dashboard',
+                icon: faMagnifyingGlassChart,
+                title: 'Ingestion Coverage',
+                translation: 'global.menu.admin.sidebar.courseIngestionDashboard',
+                testId: 'admin-course-ingestion-dashboard',
             },
         ];
 
