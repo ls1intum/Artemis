@@ -17,6 +17,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
@@ -24,10 +26,20 @@ import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -41,6 +53,21 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserTestRepository userTestRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ResultTestRepository resultTestRepository;
+
+    @Autowired
+    private SubmissionService submissionService;
 
     private ZonedDateTime startDate;
 
@@ -96,6 +123,67 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(entryList).as("Result contains the entry for 19.11.21").anyMatch((entry) -> compareStatisticsEntries(entry, entry191121));
 
         persistenceAuditEventRepository.deleteAll();
+    }
+
+    /**
+     * Tests that users flagged as test users (isTestUser = true) are excluded from the logged-in users statistics,
+     * which replaced the previous "login NOT LIKE '%test%'" heuristic.
+     */
+    @Test
+    void testLoggedInUsersExcludesTestUsers() {
+        SecurityUtils.setAuthorizationObject();
+        var endDate = ZonedDateTime.of(2021, 11, 21, 23, 59, 59, 0, startDate.getZone());
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        // Mark student2 as a test user: it must be excluded from the statistics, even though its login does not contain "test".
+        User testUser = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        testUser.setTestUser(true);
+        userTestRepository.save(testUser);
+        // Both students "log in" on the same day; only the non-test student1 must be counted.
+        persistenceAuditEventRepository.saveAll(List.of(setupPersistentEvent(TEST_PREFIX + "student1", startDate), setupPersistentEvent(TEST_PREFIX + "student2", startDate)));
+
+        List<StatisticsEntry> entryList = statisticsRepository.getNumberOfEntriesPerTimeSlot(GraphType.LOGGED_IN_USERS, SpanType.WEEK, startDate, endDate, StatisticsView.ARTEMIS,
+                null);
+
+        StatisticsEntry expected = new StatisticsEntry(startDate, 1);
+        assertThat(entryList).as("only the non-test user is counted for the slot").anyMatch((entry) -> compareStatisticsEntries(entry, expected));
+        assertThat(entryList).as("no slot counts the excluded test user").allSatisfy((entry) -> assertThat(entry.getAmount()).isEqualTo(1));
+
+        persistenceAuditEventRepository.deleteAll();
+    }
+
+    /**
+     * Tests that example results (from example submissions) are excluded from the created-results statistics.
+     * The rewritten queries filter the denormalized {@code r.exerciseId} directly, so example results must be
+     * excluded explicitly to preserve the previous behaviour, where the submission → participation → exercise join
+     * dropped them (example submissions have no participation).
+     */
+    @Test
+    void testCreatedResultsForCourseExcludesExampleResults() {
+        SecurityUtils.setAuthorizationObject();
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        TextExercise exercise = (TextExercise) course.getExercises().iterator().next();
+        var now = ZonedDateTime.now();
+        var completionDate = now.minusMinutes(30);
+
+        // a normal (student-participation-backed) result -> must be counted
+        var normalSubmission = new TextSubmission();
+        normalSubmission.setSubmissionDate(now.minusHours(1));
+        var savedNormalSubmission = participationUtilService.addSubmission(exercise, normalSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, completionDate, savedNormalSubmission);
+
+        // a real example submission has no participation; its flagged result must be excluded, exactly as the previous
+        // submission -> participation -> exercise join excluded it
+        ExampleSubmission exampleSubmission = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("example text", exercise, true));
+        assertThat(exampleSubmission.getSubmission().getParticipation()).as("example submissions have no participation").isNull();
+        Result exampleResult = submissionService.saveNewEmptyResult(exampleSubmission.getSubmission(), exercise.getId());
+        exampleResult.setExampleResult(true);
+        exampleResult.setCompletionDate(completionDate);
+        resultTestRepository.save(exampleResult);
+
+        List<StatisticsEntry> createdResults = statisticsRepository.getCreatedResultsForCourse(now.minusDays(1), now.plusDays(1), List.of(exercise.getId()));
+        long total = createdResults.stream().mapToLong(StatisticsEntry::getAmount).sum();
+        assertThat(total).as("example results are excluded from the created-results statistics").isEqualTo(1);
     }
 
     /**

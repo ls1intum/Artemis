@@ -1,18 +1,15 @@
 <tum-ui-dialog
     [(visible)]="visible"
-    [modal]="true"
     [closable]="true"
     [closeOnEscape]="false"
     [dismissableMask]="false"
-    [draggable]="false"
-    [appendTo]="'body'"
-    [style]="{ width: '50dvw' }"
+    size="medium"
     [header]="'cleanupService.operation.' + operation().name | artemisTranslate"
 >
     @if (dialogError(); as error) {
-        <tum-ui-message severity="error" [text]="error" styleClass="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
+        <tum-ui-message severity="error" [text]="error" class="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
     }
-    @if (operation().name === 'deleteOrphans') {
+    @if (operation().ageBased) {
         <p
             [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
             [translateValues]="{

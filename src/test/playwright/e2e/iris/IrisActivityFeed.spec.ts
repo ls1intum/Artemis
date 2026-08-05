@@ -3,12 +3,17 @@ import { Course } from 'app/course/shared/entities/course.model';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { instructor, studentOne } from '../../support/users';
+import { instructor, studentTwo } from '../../support/users';
 import { SEED_COURSES } from '../../support/seedData';
 import { Commands } from '../../support/commands';
 import { IrisChatbotWidget } from '../../support/pageobjects/iris/IrisChatbotWidget';
 
-// Course 9022 (lectureManagement); studentOne (artemis_test_user_1) is enrolled.
+// Course 9022 (lectureManagement); studentTwo (artemis_test_user_2) is enrolled.
+//
+// This suite deliberately uses a DIFFERENT student than IrisChatbotWidget.spec.ts: the server reuses
+// today's still-empty COURSE_CHAT session per (user, course) (IrisChatSessionService#findOrCreateEmptyCourseSession),
+// so two specs running in parallel as the same student in the same course land in the SAME chat session and
+// see each other's messages — which broke the exact-message-count assertions below (issue #13301).
 const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lectureManagement.title } as Course;
 
 /**
@@ -22,8 +27,13 @@ const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lect
  *
  * Run with: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
  * Skips itself when the Iris module feature is not active.
+ *
+ * Tagged `@slow`, not `@fast`: this test waits out a full two-round Pyris agent run (tool call plus
+ * follow-up answer, each relayed back over the status callback) and its assertions already budget
+ * 60s per wait — more than the `@fast` project's whole per-test cap (45s in the nightly runner).
+ * See the same note in IrisChatbotWidget.spec.ts and issue #13383.
  */
-test.describe('Iris activity visibility (real Pyris)', { tag: '@fast' }, () => {
+test.describe('Iris activity visibility (real Pyris)', { tag: '@slow' }, () => {
     let lecture: Lecture;
 
     test.beforeAll(async ({ browser }) => {
@@ -35,7 +45,10 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@fast' }, () => {
     });
 
     test.beforeEach(async ({ courseManagementAPIRequests, page }) => {
-        await Commands.login(page, instructor, '/');
+        // No target URL: the calls below only need the instructor JWT cookie, and the test navigates
+        // as the student right after. See IrisChatbotWidget.spec.ts for why the discarded `/` bootstrap
+        // this used to do was the nightly's timeout hot spot (issue #13383).
+        await Commands.login(page, instructor);
         await page.request.put(`api/iris/courses/${course.id}/iris-settings`, { data: { enabled: true, variant: 'default' } });
         lecture = await courseManagementAPIRequests.createLecture(course);
         expect(lecture.id, 'lecture should be created with an id').toBeDefined();
@@ -50,7 +63,7 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@fast' }, () => {
     test('shows the real tool call live, never the fake rotation, and persists the trail on the answer', async ({ login, page }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
 
-        await login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
+        await login(studentTwo, `/courses/${course.id}/lectures/${lecture.id}`);
         await Commands.ensureRendered(page);
 
         const widget = new IrisChatbotWidget(page);

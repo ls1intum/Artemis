@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.core.dto;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -17,6 +17,7 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.Organization;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.AuditingEntityDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 
 /**
  * A DTO representing a user, with their authorities.
@@ -67,9 +69,16 @@ public class UserDTO extends AuditingEntityDTO {
 
     private boolean internal;
 
+    /**
+     * Marks accounts used only for testing/load-testing (e.g. QA or synthetic users). These are excluded from usage statistics.
+     * The wire name is pinned so that it matches {@link StudentDTO#isTestUser()} used by the user CSV import.
+     */
+    @JsonProperty("isTestUser")
+    private boolean isTestUser;
+
     private Set<String> authorities = new HashSet<>();
 
-    private Set<String> groups = new HashSet<>();
+    private List<CourseAccessRightsDTO> courseRoles;
 
     private Set<Organization> organizations;
 
@@ -102,45 +111,41 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
-                user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
-                user.getSelectedLLMUsage(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
-    }
-
-    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean internal, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved, String createdBy, Instant createdDate, String lastModifiedBy,
-            Instant lastModifiedDate, Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, AiSelectionDecision selectedLLMUsage,
-            ZonedDateTime selectedLLMUsageTimestamp, boolean memirisEnabled) {
-        this.id = id;
-        this.login = login;
-        this.name = name;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.visibleRegistrationNumber = visibleRegistrationNumber;
-        this.activated = activated;
-        this.imageUrl = imageUrl;
-        this.langKey = langKey;
-        this.internal = internal;
-        this.setCreatedBy(createdBy);
-        this.setCreatedDate(createdDate);
-        this.setLastModifiedBy(lastModifiedBy);
-        this.setLastModifiedDate(lastModifiedDate);
+        this.id = user.getId();
+        this.login = user.getLogin();
+        this.name = user.getName();
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
+        this.email = user.getEmail();
+        this.visibleRegistrationNumber = user.getVisibleRegistrationNumber();
+        this.activated = user.getActivated();
+        this.imageUrl = user.getImageUrl();
+        this.langKey = user.getLangKey();
+        this.internal = user.isInternal();
+        this.isTestUser = user.isTestUser();
+        this.setCreatedBy(user.getCreatedBy());
+        this.setCreatedDate(user.getCreatedDate());
+        this.setLastModifiedBy(user.getLastModifiedBy());
+        this.setLastModifiedDate(user.getLastModifiedDate());
+        Set<Authority> authorities = user.getAuthorities();
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
-        if (groups != null && Hibernate.isInitialized(groups)) {
-            this.groups = groups;
+        Set<UserCourseRole> userCourseRoles = user.getCourseRoles();
+        // getCourseRoles() returns an unmodifiable wrapper, which is never a PersistentSet and would always report as
+        // initialised, so ask the entity about the underlying collection instead.
+        if (user.isCourseRolesLoaded()) {
+            this.courseRoles = userCourseRoles.stream()
+                    .collect(Collectors.groupingBy(ucr -> ucr.getCourse().getId(), Collectors.mapping(UserCourseRole::getRole, Collectors.toSet()))).entrySet().stream()
+                    .map(e -> new CourseAccessRightsDTO(e.getKey(), e.getValue())).toList();
         }
+        Set<Organization> organizations = user.getOrganizations();
         if (organizations != null && Hibernate.isInitialized(organizations)) {
             this.organizations = organizations;
         }
-        this.selectedLLMUsage = selectedLLMUsage;
-        this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
-        this.memirisEnabled = memirisEnabled;
-        this.isLoggedInWithPasskey = isLoggedInWithPasskey;
-        this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
+        this.selectedLLMUsage = user.getSelectedLLMUsage();
+        this.selectedLLMUsageTimestamp = user.getSelectedLLMUsageTimestamp();
+        this.memirisEnabled = user.isMemirisEnabled();
     }
 
     public Long getId() {
@@ -231,12 +236,12 @@ public class UserDTO extends AuditingEntityDTO {
         this.authorities = authorities;
     }
 
-    public Set<String> getGroups() {
-        return groups;
+    public List<CourseAccessRightsDTO> getCourseRoles() {
+        return courseRoles;
     }
 
-    public void setGroups(Set<String> groups) {
-        this.groups = groups;
+    public void setCourseRoles(List<CourseAccessRightsDTO> courseRoles) {
+        this.courseRoles = courseRoles;
     }
 
     public Set<Organization> getOrganizations() {
@@ -298,6 +303,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setInternal(boolean internal) {
         this.internal = internal;
+    }
+
+    public boolean isTestUser() {
+        return isTestUser;
+    }
+
+    public void setTestUser(boolean isTestUser) {
+        this.isTestUser = isTestUser;
     }
 
     public AiSelectionDecision getSelectedLLMUsage() {
