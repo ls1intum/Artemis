@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -115,6 +117,27 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         assertManualAssessment(participation1.getId(), 80.0, "Great work, student one!");
         assertManualAssessment(participation2.getId(), 55.5, "Some issues, student two.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMarkNewlyCreatedSubmissionAsSubmittedForParticipantWithoutSubmission() {
+        // Regression test: a participant who never pushed a submission must receive a submitted, dated EXTERNAL submission. Otherwise the imported assessment is left on an
+        // unsubmitted, undated submission and is omitted from finished-assessment queries and result views that require submission.submitted = TRUE.
+        assertThat(getSubmissions(participation1.getId())).isEmpty();
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback")));
+
+        assertThat(result.errors()).isEmpty();
+        final List<Submission> submissions = getSubmissions(participation1.getId());
+        assertThat(submissions).singleElement().satisfies(submission -> {
+            assertThat(submission.getType()).isEqualTo(SubmissionType.EXTERNAL);
+            assertThat(submission.isSubmitted()).isTrue();
+            assertThat(submission.getSubmissionDate()).isNotNull();
+            assertThat(submission.getSubmissionDate().toInstant()).isCloseTo(ZonedDateTime.now().toInstant(), within(1, ChronoUnit.MINUTES));
+        });
+        assertManualAssessment(participation1.getId(), 80.0, "feedback");
     }
 
     @Test
@@ -480,6 +503,11 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     private List<Result> getManualResults(final long participationId) {
         final var participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow();
         return participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Result::isManual).toList();
+    }
+
+    private List<Submission> getSubmissions(final long participationId) {
+        final var participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow();
+        return participation.getSubmissions().stream().toList();
     }
 
     private MockMultipartFile buildZip(final String csvContent, final Map<String, String> textFilesByName) {

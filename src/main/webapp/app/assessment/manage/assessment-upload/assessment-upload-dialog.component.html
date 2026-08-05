@@ -1,11 +1,11 @@
 <tum-ui-dialog
     [(visible)]="visible"
     [header]="'artemisApp.assessmentUpload.title' | artemisTranslate"
-    [style]="{ width: '60rem' }"
+    size="large"
     [closable]="!isUploading()"
     [closeOnEscape]="!isUploading()"
     [dismissableMask]="false"
-    (onShow)="resetState()"
+    (shown)="resetState()"
 >
     <div class="assessment-upload">
         <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
