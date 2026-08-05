@@ -106,11 +106,12 @@ export class TumUiDialogComponent implements OnDestroy {
     protected readonly titleId = `tum-ui-dialog-title-${nextDialogId++}`;
     protected readonly faXmark = faXmark;
     protected readonly labelledBy = computed(() => (this.showHeader() && (this.header()?.trim() || this.headerTemplate()) ? this.titleId : undefined));
-    protected readonly panelClasses = computed(() => {
-        const base =
-            'tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-xl';
+    // Only the size varies. The rest of the panel's classes stay a static attribute on the template so the
+    // element never renders class-less for a frame: a host that transitions background-color would otherwise
+    // animate the panel in from transparent, showing the backdrop through it.
+    protected readonly sizeClasses = computed(() => {
         const size = this.size();
-        return size ? `${base} ${DIALOG_SIZE_CLASSES[size]}` : base;
+        return size ? DIALOG_SIZE_CLASSES[size] : '';
     });
 
     private dialogRef?: DialogRef;
