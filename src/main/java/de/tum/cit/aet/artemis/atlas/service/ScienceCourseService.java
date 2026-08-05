@@ -23,7 +23,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -312,18 +311,23 @@ public class ScienceCourseService {
             try (DigestOutputStream digestOutputStream = new DigestOutputStream(Files.newOutputStream(exportFile), digest);
                     OutputStreamWriter writer = new OutputStreamWriter(digestOutputStream, StandardCharsets.UTF_8);
                     CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
-                Page<ScienceEvent> page;
-                int pageNumber = 0;
-                do {
-                    page = scienceEventRepository.findForResearchExport(request.courseIds(), request.from(), request.to(), eventTypes,
-                            PageRequest.of(pageNumber, RESEARCH_EXPORT_PAGE_SIZE));
-                    for (var scienceEvent : page.getContent()) {
-                        printer.printRecord(pseudonymizeIdentity(scienceEvent.getIdentity(), exportSalt), scienceEvent.getTimestamp(), scienceEvent.getType(),
-                                scienceEvent.getCourseId(), scienceEvent.getResourceId());
+                Long maxEventId = scienceEventRepository.findMaxIdForResearchExport(request.courseIds(), request.from(), request.to(), eventTypes);
+                ZonedDateTime lastTimestamp = null;
+                Long lastId = null;
+                List<ScienceEvent> scienceEvents = List.of();
+                if (maxEventId != null) {
+                    do {
+                        scienceEvents = scienceEventRepository.findNextPageForResearchExport(request.courseIds(), request.from(), request.to(), eventTypes, maxEventId,
+                                lastTimestamp, lastId, PageRequest.ofSize(RESEARCH_EXPORT_PAGE_SIZE));
+                        for (var scienceEvent : scienceEvents) {
+                            lastTimestamp = scienceEvent.getTimestamp();
+                            lastId = scienceEvent.getId();
+                            printer.printRecord(pseudonymizeIdentity(scienceEvent.getIdentity(), exportSalt), scienceEvent.getTimestamp(), scienceEvent.getType(),
+                                    scienceEvent.getCourseId(), scienceEvent.getResourceId());
+                        }
                     }
-                    pageNumber++;
+                    while (scienceEvents.size() == RESEARCH_EXPORT_PAGE_SIZE);
                 }
-                while (page.hasNext());
             }
             return new ScienceResearchExport(exportFile, HexFormat.of().formatHex(digest.digest()), Files.size(exportFile));
         }

@@ -64,6 +64,11 @@
         </sql>
     </changeSet>
 
+    <changeSet id="20260730120000-2-science-event-course-fk" author="maximiliananzinger">
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="science_event" constraintName="FKScienceEventCourseId" onDelete="CASCADE"
+                                 referencedColumnNames="id" referencedTableName="course"/>
+    </changeSet>
+
     <changeSet id="20260730120000-3" author="maximiliananzinger">
         <createTable tableName="science_enabled_course">
             <column autoIncrement="true" name="id" type="bigint">

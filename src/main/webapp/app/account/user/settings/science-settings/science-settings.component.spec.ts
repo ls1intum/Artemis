@@ -7,12 +7,14 @@ import { ScienceSettingsComponent } from 'app/account/user/settings/science-sett
 import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('ScienceSettingsComponent', () => {
     let fixture: ComponentFixture<ScienceSettingsComponent>;
     let component: ScienceSettingsComponent;
     let scienceSettingsService: ScienceSettingsService;
     let alertService: AlertService;
+    let featureToggleService: FeatureToggleService;
 
     const activeConsent: ScienceCourseConsent = {
         courseId: 1,
@@ -25,16 +27,23 @@ describe('ScienceSettingsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ScienceSettingsComponent],
-            providers: [MockProvider(ScienceSettingsService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(ScienceSettingsService),
+                MockProvider(AlertService),
+                MockProvider(FeatureToggleService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScienceSettingsComponent);
         component = fixture.componentInstance;
         scienceSettingsService = TestBed.inject(ScienceSettingsService);
         alertService = TestBed.inject(AlertService);
+        featureToggleService = TestBed.inject(FeatureToggleService);
 
         vi.spyOn(scienceSettingsService, 'getScienceSettingsUpdates').mockReturnValue(of([activeConsent]));
         vi.spyOn(scienceSettingsService, 'refreshScienceSettings').mockReturnValue(of([activeConsent]));
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature: FeatureToggle) => of(feature === FeatureToggle.Science));
     });
 
     it('loads per-course consents and clears the loading state after refresh', () => {
@@ -42,6 +51,17 @@ describe('ScienceSettingsComponent', () => {
 
         expect(component.consents()).toEqual([activeConsent]);
         expect(component.loading()).toBe(false);
+    });
+
+    it('does not load per-course consents when science is disabled', () => {
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(false));
+        const refreshSpy = vi.spyOn(scienceSettingsService, 'refreshScienceSettings');
+
+        component.ngOnInit();
+
+        expect(component.scienceFeatureActive()).toBe(false);
+        expect(component.consents()).toEqual([]);
+        expect(refreshSpy).not.toHaveBeenCalled();
     });
 
     it('shows an error and clears loading when refresh fails', () => {

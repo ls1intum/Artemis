@@ -6,44 +6,48 @@
 </div>
 
 <div class="science-settings-list">
-    @for (consent of consents(); track consent.courseId) {
-        <div class="science-settings-item">
-            <div>
-                <div class="science-settings-course-title">{{ consent.courseTitle }}</div>
-                <div class="science-settings-course-meta text-muted-color">
-                    {{ consent.courseShortName }}
-                    @if (!consent.scienceEnabled) {
-                        <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.disabled"></span>
-                    }
+    @if (scienceFeatureActive()) {
+        @for (consent of consents(); track consent.courseId) {
+            <div class="science-settings-item">
+                <div>
+                    <div class="science-settings-course-title">{{ consent.courseTitle }}</div>
+                    <div class="science-settings-course-meta text-muted-color">
+                        {{ consent.courseShortName }}
+                        @if (!consent.scienceEnabled) {
+                            <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.disabled"></span>
+                        }
+                    </div>
+                </div>
+                <div class="science-settings-actions">
+                    <label class="science-settings-switch" for="science-course-{{ consent.courseId }}">
+                        <tum-ui-toggle-switch
+                            inputId="science-course-{{ consent.courseId }}"
+                            [ngModel]="consent.active === true"
+                            [disabled]="!consent.scienceEnabled && consent.active !== true"
+                            (changed)="toggleConsent(consent)"
+                        />
+                        <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.contribute"></span>
+                    </label>
+                    <button
+                        type="button"
+                        tumUiButton
+                        severity="danger"
+                        size="small"
+                        variant="outlined"
+                        [attr.aria-label]="
+                            'artemisApp.userSettings.scienceSettingsPage.deleteData'
+                                | artemisTranslate: { courseTitle: consent.courseTitle ?? ('artemisApp.userSettings.scienceSettingsPage.thisCourse' | artemisTranslate) }
+                        "
+                        (click)="deleteData(consent)"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
                 </div>
             </div>
-            <div class="science-settings-actions">
-                <label class="science-settings-switch" for="science-course-{{ consent.courseId }}">
-                    <tum-ui-toggle-switch
-                        inputId="science-course-{{ consent.courseId }}"
-                        [ngModel]="consent.active === true"
-                        [disabled]="!consent.scienceEnabled && consent.active !== true"
-                        (changed)="toggleConsent(consent)"
-                    />
-                    <span jhiTranslate="artemisApp.userSettings.scienceSettingsPage.contribute"></span>
-                </label>
-                <button
-                    type="button"
-                    tumUiButton
-                    severity="danger"
-                    size="small"
-                    variant="outlined"
-                    [attr.aria-label]="
-                        'artemisApp.userSettings.scienceSettingsPage.deleteData'
-                            | artemisTranslate: { courseTitle: consent.courseTitle ?? ('artemisApp.userSettings.scienceSettingsPage.thisCourse' | artemisTranslate) }
-                    "
-                    (click)="deleteData(consent)"
-                >
-                    <fa-icon [icon]="faTrash" />
-                </button>
-            </div>
-        </div>
-    } @empty {
-        <div class="science-settings-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.empty"></div>
+        } @empty {
+            <div class="science-settings-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.empty"></div>
+        }
+    } @else {
+        <div class="science-settings-empty" jhiTranslate="artemisApp.userSettings.scienceSettingsPage.disabled"></div>
     }
 </div>

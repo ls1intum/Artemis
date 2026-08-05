@@ -9,6 +9,7 @@ import { ScienceCourseConsent, ScienceSettingsService, isScienceCourseConsent } 
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
 import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
 import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/tum-ui-toggle-switch.component';
@@ -24,17 +25,30 @@ export class ScienceSettingsComponent implements OnInit {
     private readonly scienceSettingsService = inject(ScienceSettingsService);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     readonly consents = signal<ScienceCourseConsent[]>([]);
     readonly userSettings = signal<UserSettingsStructure<Setting> | undefined>(undefined);
     readonly settings = signal<Setting[]>([]);
     readonly loading = signal(false);
+    readonly scienceFeatureActive = signal(true);
 
     protected readonly faInfoCircle = faInfoCircle;
     protected readonly faTrash = faTrash;
 
     ngOnInit(): void {
-        this.loadConsents();
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.Science)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((active) => {
+                this.scienceFeatureActive.set(active);
+                if (active) {
+                    this.loadConsents();
+                } else {
+                    this.loading.set(false);
+                    this.consents.set([]);
+                }
+            });
     }
 
     loadConsents(): void {

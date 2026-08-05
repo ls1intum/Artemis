@@ -1,10 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,16 +38,30 @@ public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEven
     Set<ScienceEvent> findAllByIdentity(String identity);
 
     @Query("""
+            SELECT MAX(se.id)
+            FROM ScienceEvent se
+            WHERE se.courseId IN :courseIds
+                AND (:from IS NULL OR se.timestamp >= :from)
+                AND (:to IS NULL OR se.timestamp <= :to)
+                AND se.type IN :eventTypes
+            """)
+    Long findMaxIdForResearchExport(@Param("courseIds") Set<Long> courseIds, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to,
+            @Param("eventTypes") Set<ScienceEventType> eventTypes);
+
+    @Query("""
             SELECT se
             FROM ScienceEvent se
             WHERE se.courseId IN :courseIds
                 AND (:from IS NULL OR se.timestamp >= :from)
                 AND (:to IS NULL OR se.timestamp <= :to)
                 AND se.type IN :eventTypes
-            ORDER BY se.timestamp ASC
+                AND se.id <= :maxEventId
+                AND (:lastTimestamp IS NULL OR se.timestamp > :lastTimestamp OR (se.timestamp = :lastTimestamp AND se.id > :lastId))
+            ORDER BY se.timestamp ASC, se.id ASC
             """)
-    Page<ScienceEvent> findForResearchExport(@Param("courseIds") Set<Long> courseIds, @Param("from") java.time.ZonedDateTime from, @Param("to") java.time.ZonedDateTime to,
-            @Param("eventTypes") Set<ScienceEventType> eventTypes, Pageable pageable);
+    List<ScienceEvent> findNextPageForResearchExport(@Param("courseIds") Set<Long> courseIds, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to,
+            @Param("eventTypes") Set<ScienceEventType> eventTypes, @Param("maxEventId") long maxEventId, @Param("lastTimestamp") ZonedDateTime lastTimestamp,
+            @Param("lastId") Long lastId, Pageable pageable);
 
     @Transactional // ok because of modifying query
     @Modifying
