@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, signa
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
