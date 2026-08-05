@@ -59,7 +59,7 @@
                     <div class="col">
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.title" for="field_title"></label>
-                            <input type="text" tumUiInput name="title" id="field_title" formControlName="title" required />
+                            <input type="text" tumUiInput class="w-full" name="title" id="field_title" formControlName="title" required />
                         </div>
                     </div>
                     <div class="col-2">
@@ -82,6 +82,7 @@
                         required
                         type="text"
                         tumUiInput
+                        class="w-full"
                         name="shortName"
                         id="field_shortName"
                         formControlName="shortName"
@@ -100,7 +101,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
-                    <textarea id="field_description" tumUiTextarea rows="2" formControlName="description"></textarea>
+                    <textarea id="field_description" tumUiTextarea class="w-full" rows="2" formControlName="description"></textarea>
                 </div>
                 @if (isAdmin()) {
                     <div class="form-group">
@@ -222,7 +223,17 @@
                     <div class="form-group col-xl mb-2 mb-xl-3">
                         <label class="form-control-label" for="field_maxPoints" jhiTranslate="artemisApp.course.maxPoints.title"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxPoints.info' | artemisTranslate" />
-                        <input type="number" tumUiInput name="maxPoints" id="field_maxPoints" min="1" step="1" [attr.max]="MAX_GRADING_POINTS" formControlName="maxPoints" />
+                        <input
+                            type="number"
+                            tumUiInput
+                            class="w-full"
+                            name="maxPoints"
+                            id="field_maxPoints"
+                            min="1"
+                            step="1"
+                            [attr.max]="MAX_GRADING_POINTS"
+                            formControlName="maxPoints"
+                        />
                         @if (courseForm.get('maxPoints')?.hasError('min')) {
                             <tum-ui-message severity="error" class="mt-2">{{ 'artemisApp.course.maxPoints.min' | artemisTranslate }}</tum-ui-message>
                         }
@@ -236,7 +247,17 @@
                     <div class="form-group col-xl">
                         <label class="form-control-label" for="field_accuracyOfScores" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.accuracyOfScores.info' | artemisTranslate" />
-                        <input required type="number" tumUiInput name="accuracyOfScores" id="field_accuracyOfScores" min="0" max="5" formControlName="accuracyOfScores" />
+                        <input
+                            required
+                            type="number"
+                            tumUiInput
+                            class="w-full"
+                            name="accuracyOfScores"
+                            id="field_accuracyOfScores"
+                            min="0"
+                            max="5"
+                            formControlName="accuracyOfScores"
+                        />
                     </div>
                 </div>
                 <div class="form-group">
@@ -265,18 +286,26 @@
                             <div class="col-md">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaints.title" for="field_maxComplaints"></label>
                                 <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxComplaints.description' | artemisTranslate" />
-                                <input required type="number" tumUiInput name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
+                                <input required type="number" tumUiInput class="w-full" name="maxComplaints" id="field_maxComplaints" formControlName="maxComplaints" />
                             </div>
                             <div class="col-md">
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title" for="field_maxTeamComplaints"></label>
                                 <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxTeamComplaints.description' | artemisTranslate" />
-                                <input required type="number" tumUiInput name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
+                                <input required type="number" tumUiInput class="w-full" name="maxTeamComplaints" id="field_maxTeamComplaints" formControlName="maxTeamComplaints" />
                             </div>
                         </div>
                         <div class="nested-form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title" for="field_maxComplaintTimeDays"></label>
                             <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.maxComplaintTimeDays.description' | artemisTranslate" />
-                            <input required type="number" tumUiInput name="maxComplaintTimeDays" id="field_maxComplaintTimeDays" formControlName="maxComplaintTimeDays" />
+                            <input
+                                required
+                                type="number"
+                                tumUiInput
+                                class="w-full"
+                                name="maxComplaintTimeDays"
+                                id="field_maxComplaintTimeDays"
+                                formControlName="maxComplaintTimeDays"
+                            />
                         </div>
                         <div class="row nested-form-group last">
                             <div class="col-xl mb-2 mb-xl-3">
@@ -286,7 +315,15 @@
                                     class="text-secondary"
                                     [tumUiTooltip]="'artemisApp.course.maxComplaintTextLimit.description' | artemisTranslate"
                                 />
-                                <input required type="number" tumUiInput name="maxComplaintTextLimit" id="field_maxComplaintTextLimit" formControlName="maxComplaintTextLimit" />
+                                <input
+                                    required
+                                    type="number"
+                                    tumUiInput
+                                    class="w-full"
+                                    name="maxComplaintTextLimit"
+                                    id="field_maxComplaintTextLimit"
+                                    formControlName="maxComplaintTextLimit"
+                                />
                             </div>
                             <div class="col-xl">
                                 <label
@@ -303,6 +340,7 @@
                                     required
                                     type="number"
                                     tumUiInput
+                                    class="w-full"
                                     name="maxComplaintResponseTextLimit"
                                     id="field_maxComplaintResponseTextLimit"
                                     formControlName="maxComplaintResponseTextLimit"
@@ -334,6 +372,7 @@
                             required
                             type="number"
                             tumUiInput
+                            class="w-full"
                             name="maxRequestMoreFeedbackTimeDays"
                             id="field_maxRequestMoreFeedbackTimeDays"
                             formControlName="maxRequestMoreFeedbackTimeDays"
