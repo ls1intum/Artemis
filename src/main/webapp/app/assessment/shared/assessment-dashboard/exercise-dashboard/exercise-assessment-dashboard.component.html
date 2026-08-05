@@ -232,6 +232,30 @@
             </div>
         }
 
+        @if (
+            tutorParticipationStatus() === NOT_PARTICIPATED &&
+            exercise().isAtLeastInstructor &&
+            exam()?.numberOfCorrectionRoundsInExam &&
+            exam()?.numberOfCorrectionRoundsInExam! > 1 &&
+            isExamMode() &&
+            !isTestRun()
+        ) {
+            <div data-testid="correction-round-1">
+                <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
+                <fa-icon
+                    class="text-secondary"
+                    [icon]="faQuestionCircle"
+                    ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                />
+                <jhi-second-correction-enable-button
+                    data-testid="toggle-second-correction"
+                    (ngModelChange)="toggleSecondCorrection()"
+                    [secondCorrectionEnabled]="secondCorrectionEnabled()"
+                    [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
+                />
+            </div>
+        }
+
         @if (tutorParticipationStatus() !== NOT_PARTICIPATED || isTestRun()) {
             <div class="d-flex">
                 <div class="flex-grow-1">

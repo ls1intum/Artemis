@@ -756,6 +756,19 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
     });
 
+    it('should show the second correction toggle before the instructor participates', () => {
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        instructorExercise.tutorParticipations = [{ status: TutorParticipationStatus.NOT_PARTICIPATED }];
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
+
+        fixture.detectChanges();
+
+        const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
+    });
+
     it('should check if complaint locked', () => {
         comp.exercise.set(exercise);
         const complaintService = TestBed.inject(ComplaintService);
