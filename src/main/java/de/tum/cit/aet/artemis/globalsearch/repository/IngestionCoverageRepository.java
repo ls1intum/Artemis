@@ -40,6 +40,14 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
     Optional<IngestionCoverageEntry> findByCourseId(long courseId);
 
     /**
+     * Returns the row with the oldest {@code computed_at}, so the recompute can decide whether the projection as a whole
+     * is stale (the freshest possible view is only as fresh as its oldest row). Empty when nothing has been computed yet.
+     *
+     * @return the least recently computed row, if any
+     */
+    Optional<IngestionCoverageEntry> findTopByOrderByComputedAtAsc();
+
+    /**
      * Reads the stored rows for a set of courses in one query, for the live-per-page path that compares the visible
      * courses' fresh values against the stored projection.
      *

@@ -6,7 +6,7 @@
 
     <!-- Persisted per-course projection of search-index coverage. A plain read model (NOT a cache): written only by the
          coverage recompute, read by the ingestion-observability dashboard. The denormalized course sort/display fields
-         and the precomputed worst_rank let the matrix sort and filter across all courses as a single-table indexed read
+         and the precomputed coverage_gap_score let the matrix sort and filter across all courses as a single-table indexed read
          with no join to the course table. -->
     <changeSet id="20260805000704-01-create-ingestion-coverage" author="nayerkotry">
         <createTable tableName="ingestion_coverage">
@@ -19,7 +19,7 @@
             <column name="type_counts" type="json">
                 <constraints nullable="false"/>
             </column>
-            <column name="worst_rank" type="int">
+            <column name="coverage_gap_score" type="int">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="varchar(31)">
@@ -36,8 +36,8 @@
             </column>
             <column name="last_ingested_at" type="datetime(3)"/>
         </createTable>
-        <createIndex indexName="idx_ingestion_coverage_worst_rank" tableName="ingestion_coverage">
-            <column name="worst_rank"/>
+        <createIndex indexName="idx_ingestion_coverage_gap_score" tableName="ingestion_coverage">
+            <column name="coverage_gap_score"/>
         </createIndex>
         <createIndex indexName="idx_ingestion_coverage_release_date" tableName="ingestion_coverage">
             <column name="release_date"/>
