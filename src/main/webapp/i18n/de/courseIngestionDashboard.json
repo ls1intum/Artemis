@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "courseIngestionDashboard": {
-            "title": "Index-Abdeckung",
+            "title": "Index-Dashboard",
             "subtitle": "Pro Kurs, wie vollständig der Global-Search-Index im Vergleich zu den Erwartungen der Datenbank ist. Schreibgeschützt.",
             "loading": "Wird geladen...",
             "overview": {

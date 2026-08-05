@@ -1,4 +1,7 @@
-import { Routes } from '@angular/router';
+import { CanActivateFn, Router, Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_GLOBAL_SEARCH } from 'app/app.constants';
 import { userManagementRoute } from 'app/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
 
@@ -14,6 +17,17 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.constants';
 import { AdminContainerComponent } from 'app/admin/admin-container/admin-container.component';
+
+/**
+ * Only allow the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance;
+ * otherwise redirect to the landing page. Mirrors how {@link IrisGuard} gates Iris-only admin routes.
+ */
+const globalSearchEnabledGuard: CanActivateFn = () => {
+    if (inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_GLOBAL_SEARCH)) {
+        return true;
+    }
+    return inject(Router).createUrlTree(['/']);
+};
 
 const childRoutes: Routes = [
     {
@@ -203,6 +217,7 @@ const childRoutes: Routes = [
             pageTitle: 'artemisApp.courseIngestionDashboard.title',
             authorities: IS_AT_LEAST_ADMIN,
         },
+        canActivate: [globalSearchEnabledGuard],
     },
     ...organizationMgmtRoute,
     ...userManagementRoute,

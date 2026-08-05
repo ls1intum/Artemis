@@ -536,6 +536,12 @@ public final class Constants {
     public static final String MODULE_FEATURE_SAML2 = "saml2";
 
     /**
+     * The name of the module feature used for the global search (Weaviate) integration. It is published to the client
+     * when {@link #WEAVIATE_ENABLED_PROPERTY_NAME} is enabled, so the client can gate global-search admin surfaces.
+     */
+    public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
