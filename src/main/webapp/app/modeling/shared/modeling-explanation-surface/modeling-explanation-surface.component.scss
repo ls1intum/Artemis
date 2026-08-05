@@ -50,7 +50,7 @@
 
 .modeling-explanation-surface__shape {
     stroke: var(--apollon-chrome-border);
-    stroke-width: 1px;
+    stroke-width: var(--artemis-apollon-chrome-border-width);
     vector-effect: non-scaling-stroke;
 }
 

@@ -1,7 +1,10 @@
+@use 'sass:math';
 @use 'src/main/webapp/content/scss/artemis-variables' as artemis;
 
 $draggable-width: 15px;
 $fullscreen-editor-z-index: 4000;
+$problem-statement-resize-hit-size: 10px;
+$problem-statement-resize-hit-offset: math.div($problem-statement-resize-hit-size, 2);
 
 .modeling-editor {
     --modeling-editor-corner-radius: #{artemis.$border-radius-lg};
@@ -152,6 +155,11 @@ $fullscreen-editor-z-index: 4000;
             display: none;
         }
 
+        &-trigger-island,
+        &-panel {
+            border-width: var(--artemis-apollon-chrome-border-width);
+        }
+
         &-trigger-island {
             position: relative;
             align-self: flex-end;
@@ -188,7 +196,7 @@ $fullscreen-editor-z-index: 4000;
             max-width: calc(100cqi - var(--apollon-chrome-edge) - var(--apollon-chrome-edge));
             max-height: calc(100dvh - 10rem);
             flex-direction: column;
-            overflow: hidden;
+            overflow: visible;
             pointer-events: auto;
             border-radius: var(--apollon-chrome-radius-lg) 0 var(--apollon-chrome-radius-lg) var(--apollon-chrome-radius-lg);
             background-color: var(--apollon-chrome-glass-solid);
@@ -209,6 +217,7 @@ $fullscreen-editor-z-index: 4000;
             flex: 1;
             overflow: auto;
             overscroll-behavior: contain;
+            border-radius: inherit;
 
             .markdown-preview {
                 min-width: 0;
@@ -228,7 +237,7 @@ $fullscreen-editor-z-index: 4000;
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                border-radius: var(--apollon-chrome-radius-sm);
+                border-radius: var(--apollon-radius-sm);
                 background: color-mix(in srgb, var(--apollon-chrome-text) 44%, transparent);
                 content: '';
                 opacity: 0.65;
@@ -243,7 +252,6 @@ $fullscreen-editor-z-index: 4000;
             &:focus-visible::after {
                 background: color-mix(in srgb, var(--apollon-chrome-text) 72%, transparent);
                 opacity: 1;
-                transform: translate(-50%, -50%) scale(1.08);
             }
 
             &:focus-visible {
@@ -251,26 +259,36 @@ $fullscreen-editor-z-index: 4000;
             }
 
             &--left {
-                top: 0;
-                bottom: 0;
-                left: -5px;
-                width: 10px;
+                top: calc(-1 * var(--artemis-apollon-chrome-border-width));
+                bottom: calc(-1 * var(--artemis-apollon-chrome-border-width));
+                left: calc(-1 * (#{$problem-statement-resize-hit-offset} + var(--artemis-apollon-chrome-border-width)));
+                width: $problem-statement-resize-hit-size;
 
                 &::after {
                     width: 0.1875rem;
                     height: 3.75rem;
                 }
+
+                &:hover::after,
+                &:focus-visible::after {
+                    transform: translate(-50%, -50%) scaleY(1.08);
+                }
             }
 
             &--bottom {
-                right: 0;
-                bottom: 0;
-                left: 0;
-                height: 10px;
+                right: calc(-1 * var(--artemis-apollon-chrome-border-width));
+                bottom: calc(-1 * (#{$problem-statement-resize-hit-offset} + var(--artemis-apollon-chrome-border-width)));
+                left: calc(-1 * var(--artemis-apollon-chrome-border-width));
+                height: $problem-statement-resize-hit-size;
 
                 &::after {
                     width: 3.75rem;
                     height: 0.1875rem;
+                }
+
+                &:hover::after,
+                &:focus-visible::after {
+                    transform: translate(-50%, -50%) scaleX(1.08);
                 }
             }
         }

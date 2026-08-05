@@ -315,6 +315,16 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(Math.abs(disclosureBoxBefore!.y - disclosureBoxAfter!.y)).toBeLessThanOrEqual(1);
         expect(Math.abs(panelBoxAfter!.y - (triggerIslandBoxAfter!.y + triggerIslandBoxAfter!.height - 2))).toBeLessThanOrEqual(1);
         expect(panelBoxAfter!.y).toBeGreaterThan(triggerIslandBoxAfter!.y);
+        const [problemStatementBorderWidths, explanationBorderWidth, explanationHandleBorderRadius] = await Promise.all([
+            problemStatementPanel.evaluate((panel) => {
+                const style = getComputedStyle(panel);
+                return [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth];
+            }),
+            bottomCenter.locator('.modeling-explanation-surface__body-shape').evaluate((shape) => getComputedStyle(shape).strokeWidth),
+            bottomCenter.locator('.modeling-explanation-surface__resizer').evaluate((handle) => getComputedStyle(handle, '::after').borderRadius),
+        ]);
+        expect(problemStatementBorderWidths).toEqual(['1px', '1px', '1px', '1px']);
+        expect(explanationBorderWidth).toBe(problemStatementBorderWidths[0]);
         expect(Math.abs(explanationBoxBeforeStatement!.x - explanationBoxAfterStatement!.x)).toBeLessThanOrEqual(1);
         expect(Math.abs(explanationBoxBeforeStatement!.y - explanationBoxAfterStatement!.y)).toBeLessThanOrEqual(1);
         await expect(horizontalProblemStatementResizer).toBeVisible();
@@ -328,20 +338,47 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-orientation', 'horizontal');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize problem statement');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-valuemin', '224');
-        expect(
-            await horizontalProblemStatementResizer.evaluate((handle) => ({
-                cursor: getComputedStyle(handle).cursor,
-                indicatorOpacity: getComputedStyle(handle, '::after').opacity,
-                indicatorHeight: getComputedStyle(handle, '::after').height,
-            })),
-        ).toEqual({ cursor: 'col-resize', indicatorOpacity: '0.65', indicatorHeight: '60px' });
-        expect(
-            await verticalProblemStatementResizer.evaluate((handle) => ({
-                cursor: getComputedStyle(handle).cursor,
-                indicatorOpacity: getComputedStyle(handle, '::after').opacity,
-                indicatorWidth: getComputedStyle(handle, '::after').width,
-            })),
-        ).toEqual({ cursor: 'row-resize', indicatorOpacity: '0.65', indicatorWidth: '60px' });
+        const horizontalProblemStatementHandleStyle = await horizontalProblemStatementResizer.evaluate((handle) => ({
+            cursor: getComputedStyle(handle).cursor,
+            indicatorBorderRadius: getComputedStyle(handle, '::after').borderRadius,
+            indicatorOpacity: getComputedStyle(handle, '::after').opacity,
+            indicatorHeight: getComputedStyle(handle, '::after').height,
+        }));
+        expect(horizontalProblemStatementHandleStyle).toEqual({
+            cursor: 'col-resize',
+            indicatorBorderRadius: explanationHandleBorderRadius,
+            indicatorOpacity: '0.65',
+            indicatorHeight: '60px',
+        });
+        const verticalProblemStatementHandleStyle = await verticalProblemStatementResizer.evaluate((handle) => ({
+            cursor: getComputedStyle(handle).cursor,
+            indicatorBorderRadius: getComputedStyle(handle, '::after').borderRadius,
+            indicatorOpacity: getComputedStyle(handle, '::after').opacity,
+            indicatorWidth: getComputedStyle(handle, '::after').width,
+        }));
+        expect(verticalProblemStatementHandleStyle).toEqual({
+            cursor: 'row-resize',
+            indicatorBorderRadius: explanationHandleBorderRadius,
+            indicatorOpacity: '0.65',
+            indicatorWidth: '60px',
+        });
+        const handlePlacement = await problemStatementPanel.evaluate((panel) => {
+            const panelBounds = panel.getBoundingClientRect();
+            const leftHandle = panel.querySelector<HTMLElement>('.modeling-editor__problem-statement-resizer--left')!;
+            const bottomHandle = panel.querySelector<HTMLElement>('.modeling-editor__problem-statement-resizer--bottom')!;
+            const leftBounds = leftHandle.getBoundingClientRect();
+            const bottomBounds = bottomHandle.getBoundingClientRect();
+            return {
+                leftCenterOffset: Math.abs(leftBounds.left + leftBounds.width / 2 - panelBounds.left),
+                bottomCenterOffset: Math.abs(bottomBounds.top + bottomBounds.height / 2 - panelBounds.bottom),
+                leftOutsideHit: document.elementFromPoint(panelBounds.left - 3, panelBounds.top + panelBounds.height / 2) === leftHandle,
+                bottomOutsideHit: document.elementFromPoint(panelBounds.left + panelBounds.width / 2, panelBounds.bottom + 3) === bottomHandle,
+            };
+        });
+        expect(handlePlacement.leftCenterOffset).toBeLessThanOrEqual(0.5);
+        expect(handlePlacement.bottomCenterOffset).toBeLessThanOrEqual(0.5);
+        expect(handlePlacement.leftOutsideHit).toBe(true);
+        expect(handlePlacement.bottomOutsideHit).toBe(true);
 
         const fullscreenDiagramTypeBox = await diagramTypeIsland.boundingBox();
         expect(fullscreenDiagramTypeBox).not.toBeNull();
