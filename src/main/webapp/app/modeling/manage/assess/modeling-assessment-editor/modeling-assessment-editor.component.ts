@@ -152,7 +152,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
             // Only override when the parameter is really there and usable; see parseCorrectionRound for why Number()
-            // alone will not do. The resolvers share the same parser so the loaded data and the round agree.
+            // alone will not do. Keeping the current round on an unusable parameter is safe here because this component
+            // requests the submission with the very same signal, so the round it loads and the round it displays are one
+            // value. The text editor cannot do that: its resolver loads before the component exists.
             const parsedCorrectionRound = parseCorrectionRound(queryParams.get('correction-round'));
             if (parsedCorrectionRound !== undefined) {
                 this.correctionRound.set(parsedCorrectionRound);

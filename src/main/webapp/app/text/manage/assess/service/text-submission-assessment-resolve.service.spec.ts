@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
@@ -55,6 +56,33 @@ describe('Text submission assessment resolvers', () => {
 
             expect(spy).toHaveBeenCalledExactlyOnceWith(7, 'lock', 0);
         });
+
+        it.each([
+            { param: '1', description: 'a usable' },
+            { param: undefined, description: 'an absent' },
+            { param: 'abc', description: 'an unusable' },
+        ])('should report the very round it requested for $description parameter', ({ param }) => {
+            // The page indexes the loaded results by the round, so it takes the round from here instead of parsing the
+            // URL a second time. The two must therefore be the same value, not two fallbacks that happen to agree.
+            const spy = vi.spyOn(submissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+            let reportedCorrectionRound: number | undefined;
+
+            resolver
+                .resolve(routeSnapshot(param === undefined ? {} : { 'correction-round': param }, { exerciseId: '7' }))
+                .subscribe((routeData) => (reportedCorrectionRound = routeData.correctionRound));
+
+            expect(reportedCorrectionRound).toBe(spy.mock.calls[0][2]);
+        });
+
+        it('should still report the round when the load fails', () => {
+            // The page renders an explanation instead of the assessment in this case, and still shows which round it is.
+            vi.spyOn(submissionService, 'getSubmissionWithoutAssessment').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            let reportedCorrectionRound: number | undefined;
+
+            resolver.resolve(routeSnapshot({ 'correction-round': '1' }, { exerciseId: '7' })).subscribe((routeData) => (reportedCorrectionRound = routeData.correctionRound));
+
+            expect(reportedCorrectionRound).toBe(1);
+        });
     });
 
     describe('StudentParticipationResolver', () => {
@@ -85,6 +113,21 @@ describe('Text submission assessment resolvers', () => {
             resolver.resolve(routeSnapshot(param === undefined ? {} : { 'correction-round': param }, { submissionId: '42' })).subscribe();
 
             expect(spy).toHaveBeenCalledExactlyOnceWith(42, 0);
+        });
+
+        it.each([
+            { param: '1', description: 'a usable' },
+            { param: undefined, description: 'an absent' },
+            { param: '-1', description: 'an unusable' },
+        ])('should report the very round it requested for $description parameter', ({ param }) => {
+            const spy = vi.spyOn(assessmentService, 'getFeedbackDataForExerciseSubmission').mockReturnValue(of({} as StudentParticipation));
+            let reportedCorrectionRound: number | undefined;
+
+            resolver
+                .resolve(routeSnapshot(param === undefined ? {} : { 'correction-round': param }, { submissionId: '42' }))
+                .subscribe((routeData) => (reportedCorrectionRound = routeData.correctionRound));
+
+            expect(reportedCorrectionRound).toBe(spy.mock.calls[0][1]);
         });
     });
 });

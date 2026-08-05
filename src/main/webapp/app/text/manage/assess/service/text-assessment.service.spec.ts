@@ -327,7 +327,7 @@ describe('TextAssessment Service', () => {
         spyOnLoad().mockReturnValue(throwError(() => error));
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1, submissionId: 2 }),
-            queryParamMap: convertToParamMap({ 'correction-round': 0 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '0' }),
         } as unknown as ActivatedRouteSnapshot;
 
         const routeData = await firstValueFrom(injectResolver().resolve(snapshot));
@@ -340,12 +340,13 @@ describe('TextAssessment Service', () => {
         vi.spyOn(service, 'getFeedbackDataForExerciseSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
         const snapshot = {
             paramMap: convertToParamMap({ submissionId: 2 }),
-            queryParamMap: convertToParamMap({ 'correction-round': 0 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '0' }),
         } as unknown as ActivatedRouteSnapshot;
 
         const routeData = await firstValueFrom(TestBed.inject(StudentParticipationResolver).resolve(snapshot));
 
-        expect(routeData).toEqual({ assessmentNotPossibleYet: undefined });
+        // The round is reported even for a failed load, so the page can say which round it could not open.
+        expect(routeData).toEqual({ assessmentNotPossibleYet: undefined, correctionRound: 0 });
     });
 
     afterEach(() => {

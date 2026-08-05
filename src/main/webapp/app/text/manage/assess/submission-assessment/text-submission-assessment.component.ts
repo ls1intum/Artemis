@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -178,12 +177,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         await super.ngOnInit();
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            // Only override when the parameter is really there and usable; see parseCorrectionRound for why Number()
-            // alone will not do. The resolvers share the same parser so the loaded data and the round agree.
-            const parsedCorrectionRound = parseCorrectionRound(queryParams.get('correction-round'));
-            if (parsedCorrectionRound !== undefined) {
-                this.correctionRound.set(parsedCorrectionRound);
-            }
         });
 
         this.activatedRoute.paramMap.subscribe((paramMap) => {
@@ -210,6 +203,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private setPropertiesFromServerResponse(routeData?: TextAssessmentRouteData) {
         this.resetComponent();
         this.loadingInitialSubmission.set(false);
+        // The round comes from the resolver, which requested the participation for it, rather than from the URL again:
+        // the results below are indexed by the round, so reading the parameter a second time here would let the page
+        // index a round the resolver never loaded. This also matters when the router reuses this component for the next
+        // submission, where the round must follow the newly resolved data instead of staying on the previous one.
+        this.correctionRound.set(routeData?.correctionRound ?? 0);
         const studentParticipation = routeData?.participation;
         if (!studentParticipation) {
             // The resolver swallows load errors, so a missing participation can also mean that the exam is still running.
