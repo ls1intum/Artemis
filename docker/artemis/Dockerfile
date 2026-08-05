@@ -39,6 +39,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # be present at install time (pnpm applies patches during resolution, not via a
 # postinstall hook like patch-package did).
 COPY patches patches/
+# pnpm resolves the `workspace:*` dependencies while installing, so every workspace member's
+# manifest has to exist by then. Manifests only: copying sources here would invalidate the cached
+# install layer on every package edit. A new member without its own COPY aborts the install.
+COPY packages/tum-ui/package.json packages/tum-ui/
 
 # One Gradle invocation does both the cache config and the pnpm install. The
 # BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
