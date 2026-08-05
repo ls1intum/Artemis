@@ -32,10 +32,10 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
-import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParser.CsvParseError;
-import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParser.CsvParseResult;
-import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParser.ParsedCsv;
-import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParser.ZipContents;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.CsvParseError;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.CsvParseResult;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ParsedCsv;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -70,7 +70,7 @@ public class AssessmentUploadService {
     /** The extension (including the leading dot) of the per-participant feedback files inside the zip, used when reporting text files in errors. */
     private static final String TEXT_FILE_EXTENSION = ".txt";
 
-    private final AssessmentUploadArchiveParser archiveParser;
+    private final AssessmentUploadArchiveParsingService archiveParser;
 
     private final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository;
 
@@ -95,7 +95,7 @@ public class AssessmentUploadService {
      * @param transactionManager                      the transaction manager used to store the complete upload atomically
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
-    public AssessmentUploadService(final AssessmentUploadArchiveParser archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
+    public AssessmentUploadService(final AssessmentUploadArchiveParsingService archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
             final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService,
             final PlatformTransactionManager transactionManager) {
         if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, transactionManager)

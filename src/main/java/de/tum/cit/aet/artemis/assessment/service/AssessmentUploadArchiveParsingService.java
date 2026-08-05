@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class AssessmentUploadArchiveParser {
+public class AssessmentUploadArchiveParsingService {
 
     private static final String ENTITY_NAME = "assessmentUpload";
 

@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
-import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParser;
+import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentUploadResource;
@@ -48,7 +48,7 @@ class AssessmentUploadConstructorTest {
 
     @Test
     void shouldRejectNullAssessmentUploadServiceDependencies() {
-        final AssessmentUploadArchiveParser archiveParser = mock(AssessmentUploadArchiveParser.class);
+        final AssessmentUploadArchiveParsingService archiveParser = mock(AssessmentUploadArchiveParsingService.class);
         final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository = mock(AssessmentUploadParticipationRepository.class);
         final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
         final AssessmentUploadResultService assessmentUploadResultService = mock(AssessmentUploadResultService.class);
