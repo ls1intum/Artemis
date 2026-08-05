@@ -62,7 +62,7 @@ COPY . .
 #
 # `-Psbom` includes the server + client Software Bill of Materials inside the WAR.
 # This Dockerfile is the production image build path (used by the `docker-release`
-# job in .github/workflows/build.yml, which only fires on push to develop / main /
+# job in .github/workflows/ci-build.yml, which only fires on push to develop / main /
 # release/* / version tags and on release events). Always emitting the SBOM here
 # guarantees that deployed images expose the dependency inventory via
 # AdminSbomResource and the weekly vulnerability scan finds something to scan.
@@ -137,6 +137,10 @@ WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 
+# The directive list is a denylist: revisit it whenever Tailwind gains one. The same invariant is
+# asserted for the package stylesheet in packages/tum-ui/check-styles.mjs.
+# `jar` prefix-matches entry names, so every stylesheet arrives together with its .css.map, and that
+# map embeds the original source, directives and all. Only the .css files are scanned.
 RUN set -eu; \
   war_entries="$(jar tf Artemis.war)"; \
   if ! printf '%s\n' "$war_entries" | grep -qx 'WEB-INF/classes/static/index.html'; then \
@@ -145,6 +149,26 @@ RUN set -eu; \
   fi; \
   if ! printf '%s\n' "$war_entries" | grep -Eq '^WEB-INF/classes/static/main-.*\.js$'; then \
     echo "Artemis.war does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi; \
+  stylesheets="$(printf '%s\n' "$war_entries" | grep -E '^WEB-INF/classes/static/[^/]+\.css$' || true)"; \
+  if [ -z "$stylesheets" ]; then \
+    echo "Artemis.war contains no WEB-INF/classes/static/*.css bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi; \
+  extracted="$(mktemp -d)"; \
+  printf '%s\n' "$stylesheets" | while read -r stylesheet; do jar xf Artemis.war -C "$extracted" "$stylesheet"; done; \
+  if [ "$(find "$extracted" -name '*.css' | wc -l)" -ne "$(printf '%s\n' "$stylesheets" | wc -l)" ]; then \
+    echo "Could not extract the stylesheet bundles from Artemis.war; the Tailwind check did not run."; \
+    rm -rf "$extracted"; \
+    exit 1; \
+  fi; \
+  uncompiled="$(find "$extracted" -name '*.css' -exec grep -hoE '@(tailwind|source|theme|plugin|custom-variant|utility|variant|apply|reference|config)[[:space:]("{]' {} + | sed 's/.$//' | sort -u | paste -sd' ' - || true)"; \
+  rm -rf "$extracted"; \
+  if [ -n "$uncompiled" ]; then \
+    echo "Artemis.war ships a client stylesheet that still contains Tailwind source directives: ${uncompiled}."; \
+    echo "The Tailwind PostCSS plugin did not transform it, so no utility class in the templates resolves to a rule and the application renders unstyled."; \
+    echo "Check that a PostCSS config at the repository root names the plugin and that the build which produced this WAR could read it; for an in-Docker build that means .dockerignore."; \
     exit 1; \
   fi
 
