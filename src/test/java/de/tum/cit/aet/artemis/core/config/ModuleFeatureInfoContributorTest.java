@@ -38,7 +38,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.ATHENA_ENABLED_PROPERTY_NAME,
         Constants.APOLLON_ENABLED_PROPERTY_NAME,
         Constants.LDAP_ENABLED_PROPERTY_NAME,
-        Constants.SAML2_ENABLED_PROPERTY_NAME
+        Constants.SAML2_ENABLED_PROPERTY_NAME,
+        Constants.WEAVIATE_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
@@ -62,7 +63,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_ATHENA,
         Constants.MODULE_FEATURE_APOLLON,
         Constants.MODULE_FEATURE_LDAP,
-        Constants.MODULE_FEATURE_SAML2
+        Constants.MODULE_FEATURE_SAML2,
+        Constants.MODULE_FEATURE_GLOBAL_SEARCH
     );
     // @formatter:on
 
