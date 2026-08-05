@@ -46,7 +46,8 @@ class ContentChangeAccumulatorServiceTest {
         AtlasOrchestratorProperties properties = new AtlasOrchestratorProperties("gpt-test", 1.0, "", DEBOUNCE_WINDOW_SECONDS, DAILY_CAP, 30000L, 10);
         courseConfigurationRepository = mock(CourseConfigurationRepository.class);
         // Default: every course resolves to the global defaults (no per-course override).
-        lenient().when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(anyLong())).thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
+        lenient().when(courseConfigurationRepository.findAutoOrchestrationConfigByCourseId(anyLong()))
+                .thenReturn(Optional.of(new CourseAutoOrchestrationConfigDTO(true, null, null)));
         service = new ContentChangeAccumulatorService(Optional.of(new LocalDataProviderService()), clock, properties, courseConfigurationRepository);
         service.clearForTesting();
     }

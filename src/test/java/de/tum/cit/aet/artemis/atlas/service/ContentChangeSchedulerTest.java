@@ -68,8 +68,7 @@ class ContentChangeSchedulerTest {
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2026-04-24T12:00:00Z"), ZoneOffset.UTC);
-        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository,
-                fixedClock);
+        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, courseConfigurationRepository, fixedClock);
     }
 
     /** Stub the course as auto-orchestration enabled so {@code processCourse} proceeds to claim. */
