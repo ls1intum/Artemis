@@ -746,7 +746,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise, headers: new HttpHeaders() })));
 
         fixture.detectChanges();
-        comp.numberOfAssessmentsOfCorrectionRounds.set([numberOfAssessmentsOfCorrectionRounds[0]]);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((correctionRounds) => correctionRounds.slice(0, 1));
         fixture.detectChanges();
 
         const firstCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-0"]');
