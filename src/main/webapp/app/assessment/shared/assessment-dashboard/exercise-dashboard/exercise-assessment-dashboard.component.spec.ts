@@ -751,9 +751,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         const firstCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-0"]');
         const secondCorrectionRound = fixture.nativeElement.querySelector('[data-testid="correction-round-1"]');
+        const secondCorrectionToggles = fixture.nativeElement.querySelectorAll('[data-testid="toggle-second-correction"]');
 
         expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
-        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
+        expect(secondCorrectionToggles).toHaveLength(1);
+        expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
     });
 
     it('should show the second correction toggle before the instructor participates', () => {
