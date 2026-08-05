@@ -1,11 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { CellTemplateRef, ColumnDef, TumUiButtonDirective, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiTableComponent } from 'app/shared-ui/tum-ui/table/tum-ui-table.component';
-import { CellTemplateRef, ColumnDef, TumUiTableQueryEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table.types';
-import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui/table/tum-ui-table-request-builder';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui-integration/tum-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
