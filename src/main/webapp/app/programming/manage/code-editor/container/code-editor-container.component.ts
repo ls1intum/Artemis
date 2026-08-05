@@ -89,6 +89,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     isTutorAssessment = input<boolean>(false);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
+    /**
+     * Manual feedback attached to code locations (in-line feedback and auto-accepted Athena suggestions), used to
+     * (re)compute file badges. Passed as its own signal input rather than derived only from `participation()`:
+     * the parent updates it via `.set()` with a fresh array reference on every change, including merges that
+     * mutate the existing participation object in place and would therefore not otherwise be picked up by the
+     * badge-update effect below.
+     */
+    referencedFeedback = input<Feedback[]>([]);
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
@@ -208,7 +216,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
-        for (const feedback of this.feedbackForSubmission()) {
+        for (const feedback of this.referencedFeedback()) {
             if (!Feedback.isFeedbackSuggestion(feedback)) {
                 continue;
             }

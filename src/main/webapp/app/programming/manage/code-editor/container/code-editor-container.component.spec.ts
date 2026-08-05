@@ -96,23 +96,13 @@ describe('CodeEditorContainerComponent', () => {
     });
 
     it('should update file badges from Athena feedback suggestions among the submission feedback', () => {
-        fixture.componentRef.setInput('participation', {
-            submissions: [
-                {
-                    results: [
-                        {
-                            feedbacks: [
-                                { text: 'FeedbackSuggestion:accepted:1', reference: 'file:src/main/App.java_line:3' } as Feedback,
-                                { text: 'FeedbackSuggestion:accepted:2', reference: 'file:src/main/App.java_line:10' } as Feedback,
-                                { text: 'FeedbackSuggestion:accepted:3', reference: 'file:src/Other.java_line:5' } as Feedback,
-                                // Not a suggestion - must not be counted towards the badge
-                                { text: 'Regular manual feedback', reference: 'file:src/Other.java_line:9' } as Feedback,
-                            ],
-                        } as Result,
-                    ],
-                } as Submission,
-            ],
-        } as Participation);
+        fixture.componentRef.setInput('referencedFeedback', [
+            { text: 'FeedbackSuggestion:accepted:1', reference: 'file:src/main/App.java_line:3' } as Feedback,
+            { text: 'FeedbackSuggestion:accepted:2', reference: 'file:src/main/App.java_line:10' } as Feedback,
+            { text: 'FeedbackSuggestion:accepted:3', reference: 'file:src/Other.java_line:5' } as Feedback,
+            // Not a suggestion - must not be counted towards the badge
+            { text: 'Regular manual feedback', reference: 'file:src/Other.java_line:9' } as Feedback,
+        ]);
         fixture.detectChanges();
 
         expect(Object.keys(component.fileBadges())).toEqual(expect.arrayContaining(['src/main/App.java', 'src/Other.java']));
