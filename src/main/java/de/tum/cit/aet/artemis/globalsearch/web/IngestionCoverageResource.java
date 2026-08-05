@@ -100,14 +100,16 @@ public class IngestionCoverageResource {
      * stored table instantly and triggers a background recompute when it is stale (stale-while-revalidate).
      *
      * @param status   an optional status to filter by
+     * @param active   an optional active/inactive course filter
      * @param pageable the page and sort
      * @return the requested page of stored coverage rows
      */
     @GetMapping("coverage")
-    public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status, Pageable pageable) {
+    public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
+            @RequestParam(required = false) Boolean active, Pageable pageable) {
         // Cross-bean call so the @Async recompute actually runs off the request thread.
         coverageRecomputeService.triggerRecomputeIfStale();
-        Page<IngestionCoverageDTO> page = coverageRecomputeService.readStoredCoverage(status, pageable);
+        Page<IngestionCoverageDTO> page = coverageRecomputeService.readStoredCoverage(status, active, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

@@ -32,6 +32,7 @@
                 "search": "Kurse suchen",
                 "sortBy": "Sortieren nach",
                 "filterByStatus": "Nach Status filtern",
+                "filterByActive": "Nach Aktivität filtern",
                 "empty": "Keine Kurse vorhanden.",
                 "error": "Die Kursabdeckung konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
                 "courseFallback": "Kurs",
@@ -44,6 +45,11 @@
                 },
                 "status": {
                     "all": "Alle"
+                },
+                "active": {
+                    "all": "Alle",
+                    "active": "Aktiv",
+                    "inactive": "Inaktiv"
                 },
                 "group": {
                     "metadata": "Entitäts-Metadaten",

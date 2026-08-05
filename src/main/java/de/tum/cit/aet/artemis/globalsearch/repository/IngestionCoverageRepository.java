@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -19,7 +21,7 @@ import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 /**
  * Read/write access to the {@link IngestionCoverageEntry} projection. The dashboard reads it here: cross-course sorts
  * (worst-first, release-date, most-recent-ingestion) go through a {@link Pageable} {@code Sort} on the indexed columns,
- * the status filter through {@link #findAllByStatus}, and the live-per-page path (stored values for the visible courses)
+ * the status/active filters through {@link #findFiltered}, and the live-per-page path (stored values for the visible courses)
  * through {@link #findAllByCourseIdIn}.
  * <p>
  * Not gated on Weaviate: the projection table is created unconditionally by Liquibase and the recompute is the only
@@ -57,11 +59,20 @@ public interface IngestionCoverageRepository extends ArtemisJpaRepository<Ingest
     List<IngestionCoverageEntry> findAllByCourseIdIn(Collection<Long> courseIds);
 
     /**
-     * Reads the rows with the given overall status, paginated, for the matrix status filter.
+     * Reads the projection rows for the cross-course matrix, optionally filtered by overall status and/or by whether the
+     * course is currently active. A {@code null} filter means "any", so passing {@code null} for both returns every row;
+     * this single query backs the unfiltered view and the status and active filters in any combination.
      *
-     * @param status   the coverage status to filter by
+     * @param status   the coverage status to filter by, or {@code null} for any status
+     * @param active   {@code true}/{@code false} to keep only active/inactive courses, or {@code null} for either
      * @param pageable the page and sort
      * @return the matching page of coverage rows
      */
-    Page<IngestionCoverageEntry> findAllByStatus(IngestionCoverageStatus status, Pageable pageable);
+    @Query("""
+            SELECT e
+            FROM IngestionCoverageEntry e
+            WHERE (:status IS NULL OR e.status = :status)
+                AND (:active IS NULL OR e.active = :active)
+            """)
+    Page<IngestionCoverageEntry> findFiltered(@Param("status") IngestionCoverageStatus status, @Param("active") Boolean active, Pageable pageable);
 }

@@ -19,6 +19,15 @@
             (ngModelChange)="onStatusChange($event)"
             [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByStatus' | artemisTranslate"
         />
+        <tum-ui-select-button
+            [options]="activeOptions"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            [ngModel]="activeFilterValue()"
+            (ngModelChange)="onActiveChange($event)"
+            [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByActive' | artemisTranslate"
+        />
         <div class="flex items-center gap-2 ms-auto">
             @if (lastUpdated(); as updated) {
                 <span class="text-sm text-muted-color">
