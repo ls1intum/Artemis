@@ -78,6 +78,7 @@ describe('CourseIngestionDashboardService', () => {
 
         const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
         expect(req.request.params.has('status')).toBe(false);
+        expect(req.request.params.has('active')).toBe(false);
         expect(req.request.params.has('page')).toBe(false);
         expect(req.request.params.has('size')).toBe(false);
         expect(req.request.params.has('sort')).toBe(false);
@@ -86,6 +87,18 @@ describe('CourseIngestionDashboardService', () => {
         const result = await resultPromise;
         expect(result.content).toEqual([]);
         expect(result.totalElements).toBe(0);
+        httpMock.verify();
+    });
+
+    it('should GET stored coverage with the active filter param', async () => {
+        const resultPromise = firstValueFrom(service.getStoredCoverage({ active: false, page: 0, size: 20 }));
+
+        const req = httpMock.expectOne((r) => r.url === `${baseUrl}/coverage` && r.method === 'GET');
+        expect(req.request.params.get('active')).toBe('false');
+        expect(req.request.params.has('status')).toBe(false);
+        req.flush([]);
+
+        await resultPromise;
         httpMock.verify();
     });
 

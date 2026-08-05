@@ -32,6 +32,7 @@
                 "search": "Search courses",
                 "sortBy": "Sort by",
                 "filterByStatus": "Filter by status",
+                "filterByActive": "Filter by activity",
                 "empty": "No courses to show.",
                 "error": "Failed to load course coverage. Please try again.",
                 "courseFallback": "Course",
@@ -44,6 +45,11 @@
                 },
                 "status": {
                     "all": "All"
+                },
+                "active": {
+                    "all": "All",
+                    "active": "Active",
+                    "inactive": "Inactive"
                 },
                 "group": {
                     "metadata": "Entity metadata",

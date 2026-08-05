@@ -100,21 +100,47 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
         ingestionCoverageRepository.save(entry(2L, 0, IngestionCoverageStatus.COMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
         ingestionCoverageRepository.save(entry(3L, 4, IngestionCoverageStatus.INCOMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
 
-        var incompletePage = ingestionCoverageRepository.findAllByStatus(IngestionCoverageStatus.INCOMPLETE,
+        var incompletePage = ingestionCoverageRepository.findFiltered(IngestionCoverageStatus.INCOMPLETE, null,
                 PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "coverageGapScore")));
 
         assertThat(incompletePage.getTotalElements()).isEqualTo(2);
         assertThat(incompletePage.getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(1L);
     }
 
+    @Test
+    void filtersByActiveAndStatusIndependently() {
+        ZonedDateTime now = ZonedDateTime.now();
+        ingestionCoverageRepository.save(entry(1L, 5, IngestionCoverageStatus.INCOMPLETE, now, now, true));
+        ingestionCoverageRepository.save(entry(2L, 4, IngestionCoverageStatus.INCOMPLETE, now, now, false));
+        ingestionCoverageRepository.save(entry(3L, 0, IngestionCoverageStatus.COMPLETE, now, now, false));
+
+        PageRequest byGapScore = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "coverageGapScore"));
+
+        // A null status keeps both filters "any"; the active flag alone selects the inactive courses.
+        var inactive = ingestionCoverageRepository.findFiltered(null, false, byGapScore);
+        assertThat(inactive.getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(2L, 3L);
+
+        // Status and active combine: only the inactive INCOMPLETE course remains.
+        var inactiveIncomplete = ingestionCoverageRepository.findFiltered(IngestionCoverageStatus.INCOMPLETE, false, byGapScore);
+        assertThat(inactiveIncomplete.getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(2L);
+
+        // Both filters null returns every row.
+        assertThat(ingestionCoverageRepository.findFiltered(null, null, byGapScore).getTotalElements()).isEqualTo(3);
+    }
+
     private IngestionCoverageEntry entry(long courseId, int coverageGapScore, IngestionCoverageStatus status, ZonedDateTime releaseDate, ZonedDateTime lastIngestedAt) {
+        return entry(courseId, coverageGapScore, status, releaseDate, lastIngestedAt, true);
+    }
+
+    private IngestionCoverageEntry entry(long courseId, int coverageGapScore, IngestionCoverageStatus status, ZonedDateTime releaseDate, ZonedDateTime lastIngestedAt,
+            boolean active) {
         IngestionCoverageEntry entry = new IngestionCoverageEntry();
         entry.setCourseId(courseId);
         entry.setCoverageGapScore(coverageGapScore);
         entry.setStatus(status);
         entry.setCourseTitle("Course " + courseId);
         entry.setReleaseDate(releaseDate);
-        entry.setActive(true);
+        entry.setActive(active);
         entry.setSemester("WS2026");
         entry.setComputedAt(ZonedDateTime.now());
         entry.setLastIngestedAt(lastIngestedAt);

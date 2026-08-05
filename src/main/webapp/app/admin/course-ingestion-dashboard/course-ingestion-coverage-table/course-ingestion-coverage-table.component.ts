@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -83,6 +83,13 @@ interface SelectOption {
         ArtemisDatePipe,
     ],
     templateUrl: './course-ingestion-coverage-table.component.html',
+    // The tum-ui input already turns its border to the focus colour on focus; drop the kit's extra offset outline so
+    // the search box shows a single clean focus ring instead of a border plus a detached outer ring.
+    styles: `
+        input[tumUiInput]:focus-visible {
+            outline: none;
+        }
+    `,
 })
 export class CourseIngestionCoverageTableComponent implements OnInit {
     private readonly dashboardService = inject(CourseIngestionDashboardService);
@@ -111,13 +118,23 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     readonly sortMode = signal<SortMode>('name');
     readonly sortDirection = signal<SortDirection>('asc');
     readonly statusFilter = signal<IngestionCoverageStatus | undefined>(undefined);
+    readonly activeFilter = signal<boolean | undefined>(undefined);
     readonly search = signal('');
+
+    /** The active filter as the string the select-button binds to (empty = any). */
+    protected readonly activeFilterValue = computed(() => (this.activeFilter() === undefined ? '' : String(this.activeFilter())));
 
     protected readonly statusOptions: SelectOption[] = [
         { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.status.all'), value: '' },
         { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.COMPLETE'), value: 'COMPLETE' },
         { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.INCOMPLETE'), value: 'INCOMPLETE' },
         { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.EMPTY'), value: 'EMPTY' },
+    ];
+
+    protected readonly activeOptions: SelectOption[] = [
+        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.all'), value: '' },
+        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.active'), value: 'true' },
+        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.inactive'), value: 'false' },
     ];
 
     constructor() {
@@ -139,10 +156,10 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         const size = this.pageSize();
         const config = SORT_CONFIG[this.sortMode()];
         const direction = this.sortDirection();
-        // A status filter or a cross-course sort (worst-first) must read the stored projection.
-        const useStored = config.requiresStored || this.statusFilter() !== undefined;
+        // A status/active filter or a cross-course sort (worst-first) must read the stored projection.
+        const useStored = config.requiresStored || this.statusFilter() !== undefined || this.activeFilter() !== undefined;
         const request$ = useStored
-            ? this.dashboardService.getStoredCoverage({ page, size, sort: `${config.storedField},${direction}`, status: this.statusFilter() })
+            ? this.dashboardService.getStoredCoverage({ page, size, sort: `${config.storedField},${direction}`, status: this.statusFilter(), active: this.activeFilter() })
             : this.dashboardService.getLiveCoveragePage({ page, size, sort: `${config.liveField},${direction}`, search: this.search() || undefined });
 
         request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -183,6 +200,12 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
 
     protected onStatusChange(value: string | undefined): void {
         this.statusFilter.set(value ? (value as IngestionCoverageStatus) : undefined);
+        this.page.set(0);
+        this.load();
+    }
+
+    protected onActiveChange(value: string | undefined): void {
+        this.activeFilter.set(value ? value === 'true' : undefined);
         this.page.set(0);
         this.load();
     }

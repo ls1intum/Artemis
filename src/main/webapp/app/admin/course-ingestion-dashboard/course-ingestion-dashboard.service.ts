@@ -12,9 +12,10 @@ export interface CoveragePageRequest {
     sort?: string;
 }
 
-/** Page request for the stored cross-course view, optionally filtered by status. */
+/** Page request for the stored cross-course view, optionally filtered by status and/or by whether the course is active. */
 export interface StoredCoverageRequest extends CoveragePageRequest {
     status?: IngestionCoverageStatus;
+    active?: boolean;
 }
 
 /** Page request for the live per-page view, optionally filtered by a case-insensitive course-title search. */
@@ -46,6 +47,9 @@ export class CourseIngestionDashboardService {
         let params = this.paginationParams(request);
         if (request.status !== undefined) {
             params = params.set('status', request.status);
+        }
+        if (request.active !== undefined) {
+            params = params.set('active', request.active);
         }
         return this.http
             .get<IngestionCoverage[]>(`${this.baseUrl}/coverage`, { params, observe: 'response' })
