@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
  * only a denormalized snapshot so the matrix can sort and filter across all courses without joining or re-scanning.
  * <p>
  * The denormalized course fields ({@link #courseTitle}, {@link #releaseDate}, {@link #active}, {@link #semester}) and the
- * precomputed {@link #worstRank} exist so the list view is a single indexed read on this table with no join to
+ * precomputed {@link #coverageGapScore} exist so the list view is a single indexed read on this table with no join to
  * {@code course}. There is intentionally no foreign key to the course: the recompute inserts, updates, and deletes rows
  * to keep the projection in step with the current set of courses.
  */
@@ -46,12 +46,12 @@ public class IngestionCoverageEntry extends DomainObject {
     private List<IngestionTypeCountDTO> typeCounts = new ArrayList<>();
 
     /**
-     * Precomputed triage score, higher is worse, so worst-first ordering is a plain {@code ORDER BY worst_rank DESC} on
-     * an indexed column rather than a computation at read time. It is a per-course severity score, not a positional rank,
-     * so it never needs a global re-ranking when one course changes.
+     * Precomputed coverage-gap severity, higher is worse, so worst-first ordering is a plain
+     * {@code ORDER BY coverage_gap_score DESC} on an indexed column rather than a computation at read time. It is a
+     * per-course severity score, not a positional rank, so it never needs a global re-ranking when one course changes.
      */
-    @Column(name = "worst_rank", nullable = false)
-    private int worstRank;
+    @Column(name = "coverage_gap_score", nullable = false)
+    private int coverageGapScore;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -95,12 +95,12 @@ public class IngestionCoverageEntry extends DomainObject {
         this.typeCounts = typeCounts;
     }
 
-    public int getWorstRank() {
-        return worstRank;
+    public int getCoverageGapScore() {
+        return coverageGapScore;
     }
 
-    public void setWorstRank(int worstRank) {
-        this.worstRank = worstRank;
+    public void setCoverageGapScore(int coverageGapScore) {
+        this.coverageGapScore = coverageGapScore;
     }
 
     public IngestionCoverageStatus getStatus() {

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -26,6 +28,14 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Lazy
 @Repository
 public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
+
+    // Every FAQ is indexed regardless of state (state is a query-time filter property, not an index gate).
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(faq.course.id, faq.id)
+            FROM Faq faq
+            WHERE faq.course.id IN :courseIds
+            """)
+    List<CourseEntityIdDTO> findFaqIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     @EntityGraph(type = LOAD, attributePaths = "categories")
     List<Faq> findAllByCourseIdOrderByCreatedDateDesc(Long courseId);

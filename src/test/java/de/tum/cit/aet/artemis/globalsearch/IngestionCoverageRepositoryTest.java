@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 /**
  * Repository tests for the {@link IngestionCoverageEntry} projection. Sorting and filtering the matrix across all courses
  * must be a single-table indexed read with no join to the course table, so these assert that the JSON per-type counts
- * round-trip, that {@code ORDER BY worst_rank / release_date / last_ingested_at} and the status filter return the right
+ * round-trip, that {@code ORDER BY coverage_gap_score / release_date / last_ingested_at} and the status filter return the right
  * rows with pagination, and that the id-set-scoped read works, against a real database.
  */
 class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -41,7 +41,7 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
 
         IngestionCoverageEntry found = ingestionCoverageRepository.findByCourseId(1L).orElseThrow();
         assertThat(found.getStatus()).isEqualTo(IngestionCoverageStatus.INCOMPLETE);
-        assertThat(found.getWorstRank()).isEqualTo(3);
+        assertThat(found.getCoverageGapScore()).isEqualTo(3);
         assertThat(found.getTypeCounts()).containsExactly(new IngestionTypeCountDTO("exercise", 5, 4, 1, 0), new IngestionTypeCountDTO("slides", 2, 2, 0, 0));
     }
 
@@ -57,12 +57,12 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    void sortsByWorstRankDescending() {
+    void sortsByCoverageGapScoreDescending() {
         ingestionCoverageRepository.save(entry(1L, 1, IngestionCoverageStatus.INCOMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
         ingestionCoverageRepository.save(entry(2L, 9, IngestionCoverageStatus.INCOMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
         ingestionCoverageRepository.save(entry(3L, 5, IngestionCoverageStatus.INCOMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
 
-        List<IngestionCoverageEntry> page = ingestionCoverageRepository.findAll(PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "worstRank"))).getContent();
+        List<IngestionCoverageEntry> page = ingestionCoverageRepository.findAll(PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "coverageGapScore"))).getContent();
 
         // Worst first: 9, 5, 1 -> courses 2, 3, 1.
         assertThat(page).extracting(IngestionCoverageEntry::getCourseId).containsExactly(2L, 3L, 1L);
@@ -100,16 +100,17 @@ class IngestionCoverageRepositoryTest extends AbstractSpringIntegrationIndepende
         ingestionCoverageRepository.save(entry(2L, 0, IngestionCoverageStatus.COMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
         ingestionCoverageRepository.save(entry(3L, 4, IngestionCoverageStatus.INCOMPLETE, ZonedDateTime.now(), ZonedDateTime.now()));
 
-        var incompletePage = ingestionCoverageRepository.findAllByStatus(IngestionCoverageStatus.INCOMPLETE, PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "worstRank")));
+        var incompletePage = ingestionCoverageRepository.findAllByStatus(IngestionCoverageStatus.INCOMPLETE,
+                PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "coverageGapScore")));
 
         assertThat(incompletePage.getTotalElements()).isEqualTo(2);
         assertThat(incompletePage.getContent()).extracting(IngestionCoverageEntry::getCourseId).containsExactly(1L);
     }
 
-    private IngestionCoverageEntry entry(long courseId, int worstRank, IngestionCoverageStatus status, ZonedDateTime releaseDate, ZonedDateTime lastIngestedAt) {
+    private IngestionCoverageEntry entry(long courseId, int coverageGapScore, IngestionCoverageStatus status, ZonedDateTime releaseDate, ZonedDateTime lastIngestedAt) {
         IngestionCoverageEntry entry = new IngestionCoverageEntry();
         entry.setCourseId(courseId);
-        entry.setWorstRank(worstRank);
+        entry.setCoverageGapScore(coverageGapScore);
         entry.setStatus(status);
         entry.setCourseTitle("Course " + courseId);
         entry.setReleaseDate(releaseDate);
