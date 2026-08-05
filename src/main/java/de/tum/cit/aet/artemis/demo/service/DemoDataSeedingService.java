@@ -20,8 +20,13 @@ import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.modeling.api.ModelingApi;
+import de.tum.cit.aet.artemis.programming.api.ProgrammingExerciseApi;
+import de.tum.cit.aet.artemis.quiz.api.QuizExerciseApi;
+import de.tum.cit.aet.artemis.text.api.TextApi;
 
 /**
  * Seeds the demo course when the {@code demo} profile is active.
@@ -53,11 +58,27 @@ public class DemoDataSeedingService {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    public DemoDataSeedingService(CourseApi courseApi, UserApi userApi, Optional<LectureApi> lectureApi, Optional<CompetencyApi> competencyApi) {
+    private final Optional<TextApi> textApi;
+
+    private final Optional<ModelingApi> modelingApi;
+
+    private final Optional<FileUploadApi> fileUploadApi;
+
+    private final QuizExerciseApi quizExerciseApi;
+
+    private final ProgrammingExerciseApi programmingExerciseApi;
+
+    public DemoDataSeedingService(CourseApi courseApi, UserApi userApi, Optional<LectureApi> lectureApi, Optional<CompetencyApi> competencyApi, Optional<TextApi> textApi,
+            Optional<ModelingApi> modelingApi, Optional<FileUploadApi> fileUploadApi, QuizExerciseApi quizExerciseApi, ProgrammingExerciseApi programmingExerciseApi) {
         this.courseApi = courseApi;
         this.userApi = userApi;
         this.lectureApi = lectureApi;
         this.competencyApi = competencyApi;
+        this.textApi = textApi;
+        this.modelingApi = modelingApi;
+        this.fileUploadApi = fileUploadApi;
+        this.quizExerciseApi = quizExerciseApi;
+        this.programmingExerciseApi = programmingExerciseApi;
     }
 
     /**
@@ -84,6 +105,13 @@ public class DemoDataSeedingService {
         try {
             List<LectureUnit> lectureUnits = lectureApi.map(api -> api.createDemo(course)).orElse(List.of());
             competencyApi.ifPresent(api -> api.createDemo(course, lectureUnits));
+
+            // One exercise of every type, each of them currently ongoing so that demo students can participate right away.
+            textApi.ifPresent(api -> api.createDemo(course));
+            modelingApi.ifPresent(api -> api.createDemo(course));
+            fileUploadApi.ifPresent(api -> api.createDemo(course));
+            quizExerciseApi.createDemo(course);
+            programmingExerciseApi.createDemo(course);
         }
         finally {
             SecurityContextHolder.setContext(previousContext);
