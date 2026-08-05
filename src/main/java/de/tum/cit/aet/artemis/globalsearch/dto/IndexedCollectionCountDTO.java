@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param count      the number of objects in the collection, or {@code null} if it could not be read
  * @param readable   whether the count could be read
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IndexedCollectionCountDTO(String collection, Long count, boolean readable) {
 
     public static IndexedCollectionCountDTO of(String collection, long count) {
