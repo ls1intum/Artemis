@@ -162,11 +162,11 @@
                 "facts": {
                     "faster": {
                         "title": "Schnellere Anmeldung:",
-                        "desc": "überspringe wiederholte Anmeldebildschirme, sobald dein Gerät dich erkennt"
+                        "desc": "direkter Login nach Erkennung deines Geräts"
                     },
                     "noPasswords": {
                         "title": "Keine Passwörter nötig:",
-                        "desc": "nie wieder ein Passwort vergessen oder zurücksetzen"
+                        "desc": "nie wieder Passwörter vergessen oder zurücksetzen"
                     },
                     "secure": {
                         "title": "Sicherer als Passwörter:",
