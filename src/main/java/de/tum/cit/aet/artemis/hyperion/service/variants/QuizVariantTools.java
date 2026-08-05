@@ -27,7 +27,10 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionComponent;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
@@ -356,10 +359,76 @@ class QuizVariantTools implements VariantToolset {
                 reconnectComponents(saQuestion.getSpots(), saQuestion);
                 reconnectComponents(saQuestion.getSolutions(), saQuestion);
                 reconnectComponents(saQuestion.getCorrectMappings(), saQuestion);
+                reconnectShortAnswerMappings(saQuestion);
             }
             default -> {
             }
         }
+    }
+
+    /**
+     * Rebuilds the correct mappings of a replaced short-answer question the way the quiz editor does.
+     * <p>
+     * Two things are wrong with the mappings as they arrive from the model, and both break the save:
+     * <ul>
+     * <li>Each mapping carries the <em>id</em> it was serialized with. The editor's supported path
+     * ({@code ShortAnswerQuestionFromEditorDTO.toDomainObject}) never round-trips a mapping id — it always
+     * builds {@code new ShortAnswerMapping()} and lets {@code orphanRemoval} delete the superseded rows.
+     * Saving a mapping that has an id hands Hibernate a detached entity ("Detached entity passed to
+     * persist", and once the row has moved on, an optimistic-lock failure).</li>
+     * <li>The mapping's spot and solution arrive nested, so Jackson deserializes each as a separate
+     * instance rather than the one held in the question's own spots/solutions collections.</li>
+     * </ul>
+     * Spot and solution ids are kept, exactly as the editor keeps them; only the mapping is recreated.
+     * <p>
+     * A mapping whose spot or solution cannot be resolved is dropped rather than persisted: the quiz then
+     * fails {@code isValid()} with "spot has no mapped solution", which routes the problem back to the
+     * agent as repair feedback instead of aborting the save. The editor rejects the whole request there,
+     * but here the agent is mid-repair and a specific, recoverable complaint is worth more than a 400.
+     */
+    private static void reconnectShortAnswerMappings(ShortAnswerQuestion question) {
+        if (question.getCorrectMappings() == null || question.getCorrectMappings().isEmpty()) {
+            return;
+        }
+        List<ShortAnswerSpot> spots = question.getSpots() == null ? List.of() : question.getSpots();
+        List<ShortAnswerSolution> solutions = question.getSolutions() == null ? List.of() : question.getSolutions();
+
+        Set<ShortAnswerMapping> rebuilt = new HashSet<>();
+        for (ShortAnswerMapping incoming : question.getCorrectMappings()) {
+            ShortAnswerSpot spot = findSpot(spots, incoming.getSpot());
+            ShortAnswerSolution solution = findSolution(solutions, incoming.getSolution());
+            if (spot == null || solution == null) {
+                log.debug("Dropping a short-answer mapping whose spot or solution is not part of the replaced question");
+                continue;
+            }
+            // A fresh instance, never the incoming one: carrying the model-echoed id over is exactly what
+            // makes the save fail. orphanRemoval deletes the superseded rows.
+            ShortAnswerMapping mapping = new ShortAnswerMapping();
+            mapping.setSpot(spot);
+            mapping.setSolution(solution);
+            mapping.setQuestion(question);
+            mapping.setInvalid(incoming.isInvalid());
+            rebuilt.add(mapping);
+        }
+        question.setCorrectMappings(rebuilt);
+    }
+
+    /** Matches by spot number first — the model may drop ids, but a spot without a number is meaningless. */
+    private static ShortAnswerSpot findSpot(List<ShortAnswerSpot> spots, ShortAnswerSpot target) {
+        if (target == null) {
+            return null;
+        }
+        return spots.stream().filter(spot -> Objects.equals(spot.getSpotNr(), target.getSpotNr())).findFirst()
+                .or(() -> spots.stream().filter(spot -> target.getId() != null && Objects.equals(spot.getId(), target.getId())).findFirst()).orElse(null);
+    }
+
+    /** Matches by id first, falling back to text for a solution the model added without one. */
+    private static ShortAnswerSolution findSolution(List<ShortAnswerSolution> solutions, ShortAnswerSolution target) {
+        if (target == null) {
+            return null;
+        }
+        return solutions.stream().filter(solution -> target.getId() != null && Objects.equals(solution.getId(), target.getId())).findFirst()
+                .or(() -> solutions.stream().filter(solution -> Objects.equals(solution.getText(), target.getText())).findFirst()).orElse(null);
     }
 
     private static <Q extends QuizQuestion> void reconnectComponents(Collection<? extends QuizQuestionComponent<Q>> components, Q question) {
