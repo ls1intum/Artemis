@@ -17,8 +17,7 @@
     line-height: 1;
     font-weight: 600;
 
-    // Claim the row so projected `[tumUiPanelHeader]` markup can lay itself out across the full width; the
-    // toggler stays right-aligned either way (the header is space-between). min-width:0 lets it shrink.
+    // Let projected `[tumUiPanelHeader]` markup use the full row width.
     flex: 1;
     min-width: 0;
 }

@@ -202,9 +202,8 @@ export class ExerciseTableComponent {
     });
 
     /**
-     * Largest actions-column width (px) reported by any row, so the shared column fits the widest quiz row. Only
-     * grows — a stale floor at worst makes the table scroll a touch sooner, but never clips a button. Stays 0 when
-     * no row has quiz lifecycle buttons, so the column keeps the narrow SCSS default.
+     * Largest actions-column width (px) any row reported, so the shared column fits the widest quiz row. Grows only: a
+     * stale floor makes the table scroll sooner but never clips. Stays 0 without quiz buttons, keeping the SCSS default.
      */
     private readonly maxQuizActionsMinWidth = signal(0);
     /** CSS value for the actions-column floor, or undefined when no quiz buttons are present. */

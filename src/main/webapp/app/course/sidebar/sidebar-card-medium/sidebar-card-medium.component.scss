@@ -36,8 +36,7 @@
     border: 1px solid var(--border-color) !important;
 }
 
-// Inside a connected variant group the group container draws the single outline (see sidebar-accordion), so each tile
-// squares its corners and drops its own border
+// The group container draws the single outline (see sidebar-accordion), so tiles drop their own.
 :host-context(.sidebar-group--connected) {
     .rounded-3 {
         border-radius: 0 !important;
@@ -48,8 +47,7 @@
     }
 }
 
-// Header card of a connected variant group: light purple tint marking a multi-variant exercise, with the left
-// difficulty-stripe slot hidden so the header text aligns with the nested variant tiles (which keep their stripes).
+// Header of a connected variant group; the difficulty stripe is hidden so its text aligns with the nested tiles.
 .group-header {
     border-left-color: transparent !important;
     background-color: color-mix(in srgb, var(--purple) 4%, var(--module-bg)) !important;

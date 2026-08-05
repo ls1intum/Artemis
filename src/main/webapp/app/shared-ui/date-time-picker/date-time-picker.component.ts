@@ -65,9 +65,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     value = signal<dayjs.Dayjs | Date | null | undefined>(undefined);
     disabled = input<boolean>(false);
     /**
-     * When true the field is read-only because its value is governed by the exercise's variant group: editing is
-     * disabled, a lock icon is shown, and clicking the field emits {@link lockedClick} (instead of opening the picker)
-     * so the host can open the group-edit dialog.
+     * Marks the field read-only because a variant group governs its value: editing is disabled, a lock icon shows, and
+     * clicking emits {@link lockedClick} instead of opening the picker.
      */
     lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks a {@link lockedToGroup} field. */

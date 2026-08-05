@@ -1,17 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 /**
- * Checks whether an element matches a search value on any of the given fields.
- *
- * When `nestedField` is set and the element carries an array under that key, the element also matches if any of its
- * nested entries matches on the same fields. This keeps container items (e.g. a variant-group sidebar card, which has
- * its own title but no type) visible when the search matches one of the items rendered inside them.
- *
+ * Checks whether an element matches a search value on any of the given fields. With `nestedField` set, a match on
+ * any nested entry also counts, keeping container items (e.g. a variant-group card) visible.
  * @param element the element to test
  * @param fields the field names to match against
  * @param value the search value; matching is case-insensitive
  * @param nestedField optional name of a nested array field whose entries are matched one level deep
- * @returns true if the element itself or, when applicable, any nested entry matches
+ * @returns true if the element itself or any nested entry matches
  */
 export function matchesSearch<T>(element: T, fields: string[], value: string, nestedField?: string): boolean {
     if (!element) {

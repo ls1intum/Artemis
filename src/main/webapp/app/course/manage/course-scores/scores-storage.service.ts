@@ -90,9 +90,8 @@ export class ScoresStorageService implements OnDestroy {
     }
 
     /**
-     * Returns the server-computed points the user earns from the given variant group in the given course (capped at
-     * the group's maxPoints if it has one, otherwise the raw sum), or {@code undefined} if no contribution was stored
-     * for it (e.g. no rated results in that group, or a course-wide plagiarism verdict zeroed the student's score).
+     * The server-computed points the user earns from a variant group (capped where the group has a cap), or
+     * {@code undefined} when nothing was stored for it.
      */
     getStoredAchievedGroupPoints(courseId: number, groupId: number): number | undefined {
         return this.storedAchievedPointsPerVariantGroup.get(courseId)?.get(groupId);

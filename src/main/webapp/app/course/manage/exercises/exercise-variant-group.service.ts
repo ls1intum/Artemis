@@ -117,9 +117,8 @@ export class ExerciseVariantGroupService {
 }
 
 /**
- * A group that carries everything the server needs to persist it. `title` is optional on the view model but required
- * by the payload, so the guarantee is expressed in the type rather than asserted with `!` at the mapping site — callers
- * narrow through {@link isPersistableGroup} first.
+ * A group carrying everything the server needs to persist it. `title` is optional on the view model but required by
+ * the payload, so callers narrow through {@link isPersistableGroup} instead of asserting with `!`.
  */
 export type PersistableGroup = CourseExerciseGroup & { title: string };
 
@@ -149,9 +148,8 @@ export function toUpdateGroupPayload(group: PersistableGroup, id: number): Exerc
 }
 
 /**
- * Maps a server DTO to the client {@link CourseExerciseGroup} model used by the management view. Members are resolved
- * from {@code exercisesById} since the DTO only carries exercise ids. The client-only {@code order} field (not part of
- * the DTO) stays undefined.
+ * Maps a server DTO to the client {@link CourseExerciseGroup}. Members are resolved from {@code exercisesById} since
+ * the DTO carries only ids; the client-only {@code order} stays undefined.
  */
 export function toCourseExerciseGroup(dto: ExerciseVariantGroupDTO, exercisesById: Map<number, Exercise>): CourseExerciseGroup {
     return {

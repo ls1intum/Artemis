@@ -526,9 +526,8 @@ export class ExerciseActionsComponent {
     }
 
     /**
-     * Relays an optimistic quiz update from the lifecycle component to the parent. The client-derived `status` /
-     * `quizStarted` flags are recomputed first (as the develop quiz view does) so the action buttons reflect the new
-     * state immediately.
+     * Relays an optimistic quiz update to the parent, recomputing the client-derived `status` / `quizStarted` flags first
+     * so the action buttons reflect the new state immediately.
      */
     protected onQuizLifecycleUpdate(quiz: QuizExercise): void {
         quiz.status = this.quizExerciseService.getStatus(quiz);

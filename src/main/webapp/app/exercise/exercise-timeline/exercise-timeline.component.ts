@@ -18,9 +18,8 @@ export interface TimelineItem {
     date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
     /**
-     * Restricts the ordering check to these items. By default an item must not precede any earlier item in
-     * {@link ExerciseTimelineComponent.timelineItems}, which is too strict for e.g. a variant group's example
-     * solution publication date (only `>= releaseDate`, see `ExerciseVariantGroup#areDatesValid`).
+     * Restricts the ordering check to these items. The default (no item may precede any earlier one) is too strict for
+     * e.g. a group's example solution publication date, which only needs `>= releaseDate`.
      */
     orderCheckAgainst?: TimelineItem[];
 }

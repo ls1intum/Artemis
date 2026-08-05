@@ -2,9 +2,8 @@ import { Component, input, output } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
- * Stub for {@code ExerciseGroupTimelineLockComponent}. The update-form templates reference it through a template
- * variable (e.g. {@code #variantLock}) and call {@code variantLock.locked()} / {@code variantLock.openModal()} on the
- * timeline date pickers, so the stub must expose those members (a plain ng-mocks mock only provides inputs/outputs).
+ * Stub for {@code ExerciseGroupTimelineLockComponent}. Update-form templates call {@code locked()} /
+ * {@code openModal()} through a template variable, which a plain ng-mocks mock does not expose.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',

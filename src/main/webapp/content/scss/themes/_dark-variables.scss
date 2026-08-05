@@ -125,8 +125,7 @@ $table-color: $body-color;
 $artemis-dark: #353d47;
 $link-color: #3e8acc;
 
-// Per-exercise-type accent colors (see _default-variables.scss). Lightened against the dark $body-bg
-// so the accent stays legible; same hues as the light theme.
+// Per-exercise-type accent colors: the light theme's hues, lightened to stay legible on the dark $body-bg.
 $exercise-accent-programming: #818cf8;
 $exercise-accent-quiz: #fbbf24;
 $exercise-accent-modeling: #38bdf8;

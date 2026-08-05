@@ -3,11 +3,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /**
- * Course-level grouping of exercises. Distinct from the exam-scoped `ExerciseGroup`.
- *
- * Exercises within a group are implicit variants of one another: they cover the same course
- * topic and differ only in difficulty, time effort, and application theme (e.g. the same loop
- * pattern from the lecture, themed around cars vs. planes). Variant relationships are not enforced.
+ * Course-level grouping of exercises, distinct from the exam-scoped `ExerciseGroup`. Members are implicit
+ * (unenforced) variants of one another, differing only in difficulty, time effort and theme.
  */
 export class CourseExerciseGroup {
     id?: number;
@@ -17,12 +14,8 @@ export class CourseExerciseGroup {
     order?: number;
 
     /**
-     * Optional group-level timeline. When a date is set on the group, it applies to ALL exercises
-     * in the group and the corresponding individual exercise date is ignored.
-     *
-     * A programming exercise's "build and test after due date" is deliberately absent: on LocalCI that date is
-     * derived per exercise from its own build plan, so members of one group legitimately differ. Each member
-     * keeps its own, re-derived from the shared due date.
+     * Optional group-level timeline; a date set here governs every member and overrides its individual date.
+     * "Build and test after due date" is excluded on purpose: LocalCI derives it per exercise from its build plan.
      */
     releaseDate?: dayjs.Dayjs;
     startDate?: dayjs.Dayjs;
@@ -40,11 +33,8 @@ export class CourseExerciseGroup {
 }
 
 /**
- * Reconstructs the course-level variant groups from a list of exercises by grouping on the
- * embedded {@link Exercise.exerciseVariantGroup} reference. Used by the student views, where the
- * dashboard already carries each (release-filtered) exercise's group, so no extra request is needed.
- * Exercises without a group are ignored. Group metadata (title, dates, caps) is taken from the
- * embedded reference; dates are converted from their server representation to dayjs.
+ * Rebuilds the variant groups from the {@link Exercise.exerciseVariantGroup} reference the dashboard already
+ * carries, so student views need no extra request. Ungrouped exercises are ignored.
  */
 export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseGroup[] {
     const groupsById = new Map<number, CourseExerciseGroup>();
@@ -76,10 +66,8 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
 export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate';
 
 /**
- * Resolves the date that actually applies to an exercise for a given timeline field. Once an exercise
- * belongs to a group, the group's timeline fully governs it: the group date is used even when it is
- * unset (the exercise's own date is ignored in that case too). Only ungrouped exercises fall back to
- * their individual dates.
+ * The date that actually applies for a timeline field. A group governs its members fully — its date wins even
+ * when unset — so only ungrouped exercises fall back to their own.
  */
 export function effectiveDate(exercise: Exercise, group: CourseExerciseGroup | undefined, field: GroupTimelineField): dayjs.Dayjs | undefined {
     if (group) {

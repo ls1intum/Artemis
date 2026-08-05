@@ -17,8 +17,8 @@ a {
     white-space: nowrap;
 }
 
-// Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
-// Qualified with the element so it outranks the kit button's padding utilities on the same host element.
+// Fixed width so the overflow calculation can reserve ELLIPSIS_WIDTH_PX. Element-qualified to outrank the kit
+// button's padding utilities.
 button.action-more {
     flex: none;
     justify-content: center;
@@ -28,8 +28,7 @@ button.action-more {
     padding-inline: 0;
 }
 
-// The popover renders its panel in the overlay container, so this host shows nothing inline — but as a flex child it
-// would still claim a `gap-1` (4px) the overflow calculation doesn't account for, eating into the anti-clip margin.
+// Renders into the overlay container, so the inline host must not claim a flex `gap-1` the overflow maths misses.
 tum-ui-popover {
     display: none;
 }

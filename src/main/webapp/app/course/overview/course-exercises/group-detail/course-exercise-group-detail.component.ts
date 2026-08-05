@@ -87,9 +87,8 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly exercises = computed<Exercise[]>(() => this.group()?.exercises ?? []);
 
     /**
-     * Sum of maxPoints across the group's exercises that count toward the course maximum. Only INCLUDED_COMPLETELY
-     * variants are summed, matching the server's inclusion rule (CourseScoreCalculationService only adds those to the
-     * course maximum before applying the group cap) — bonus or not-included variants must not inflate the denominator.
+     * Sum of maxPoints over the INCLUDED_COMPLETELY variants only, matching the server's inclusion rule; bonus and
+     * not-included variants must not inflate the denominator.
      */
     protected readonly exerciseSumMaxPoints = computed<number>(() =>
         this.exercises()
@@ -98,11 +97,8 @@ export class CourseExerciseGroupDetailComponent {
     );
 
     /**
-     * The group's true maximum contribution to the course score: the sum of the variants' max points, capped at the
-     * group's configured maxPoints. A cap above the sum never raises the achievable maximum (a student cannot earn more
-     * than the variants offer), so the denominator shown to the student is min(sum, cap) — matching the server, which
-     * credits min(achieved, cap). A cap is only considered present via an explicit undefined check, so a zero cap
-     * (which discards all group points) is handled correctly instead of being treated as "no cap".
+     * The group's real maximum: min(sum of variant max points, group cap), since a cap above the sum cannot raise
+     * what is achievable. The cap is detected with an explicit undefined check so a zero cap still applies.
      */
     protected readonly effectiveGroupMaxPoints = computed<number>(() => {
         const cap = this.group()?.maxPoints;
@@ -118,12 +114,8 @@ export class CourseExerciseGroupDetailComponent {
     });
 
     /**
-     * The points the student earns from this group toward the course score, read from the authoritative server value
-     * (via {@link ScoresStorageService}, populated by the course dashboard load). That value is already capped at the
-     * group's maxPoints and adjusted for plagiarism verdicts, so it matches the official course-score contribution
-     * exactly — reconstructing it from raw result scores here would miss those deductions. Falls back to 0 before the
-     * dashboard scores are loaded or when the group contributes nothing. Keyed on {@link group} so it re-derives once
-     * the group resolves from the loaded course exercises.
+     * The student's group points, taken from the authoritative server value via {@link ScoresStorageService}, which is
+     * already capped and plagiarism-adjusted. Falls back to 0 until the dashboard scores load.
      */
     protected readonly achievedGroupPoints = computed<number>(() => {
         const group = this.group();
@@ -293,9 +285,8 @@ export class CourseExerciseGroupDetailComponent {
     }
 
     /**
-     * The graded participation for the given variant. The dashboard response intentionally includes practice test runs
-     * in unspecified order, so picking the first entry could show practice points/status on the card while the group
-     * total and the normal course rows use the graded participation.
+     * The graded participation for a variant. The dashboard also returns practice runs in unspecified order, so the
+     * first entry could otherwise show practice points on the card.
      */
     protected exerciseParticipation(exercise: Exercise): StudentParticipation | undefined {
         return this.participationService.getSpecificStudentParticipation(exercise.studentParticipations ?? [], false);

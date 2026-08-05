@@ -27,9 +27,8 @@ export class SidebarCardMediumComponent {
     readonly groupKey = input<string>();
 
     /**
-     * True when this card is the header of a *connected* variant group (the group's own item carries its variants in
-     * `groupedItems`). The card styles itself accordingly — see the `.group-header` rules in the SCSS — so the
-     * accordion does not have to reach into this component's markup to do it.
+     * True when this card heads a connected variant group. The card styles itself (see `.group-header` in the SCSS) so
+     * the accordion need not reach into its markup.
      */
     protected readonly isConnectedGroupHeader = computed<boolean>(() => {
         const item = this.sidebarItem();

@@ -74,9 +74,8 @@ export enum IncludedInOverallScore {
 }
 
 /**
- * The variant group an exercise belongs to, as embedded in the serialized exercise (mirrors the
- * server `ExerciseVariantGroup` entity, minus its back-reference exercise list). Lets the student
- * dashboard reconstruct groups from its already-filtered exercises without a separate request.
+ * The variant group this exercise belongs to, as embedded in the serialized exercise (the server entity minus its
+ * back-reference list), so the student dashboard can rebuild groups without a separate request.
  */
 export interface ExerciseVariantGroupReference {
     id?: number;

@@ -11,9 +11,7 @@ export class QuizExerciseOverviewPage {
     }
 
     /**
-     * Opens the batch management popover for the given quiz. The add-batch and per-batch start buttons live inside a
-     * PrimeNG popover that is only rendered while open, so callers must open it before interacting with those buttons.
-     * Idempotent: does nothing if the popover is already open.
+     * Opens the quiz's batch popover, which only renders its add/start buttons while open. Idempotent.
      * @param exerciseId The ID of the quiz exercise whose batch popover to open.
      */
     private async openBatchMenu(exerciseId: number) {

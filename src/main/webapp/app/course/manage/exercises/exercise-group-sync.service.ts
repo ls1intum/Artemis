@@ -7,9 +7,8 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { ExerciseVariantGroupDTO, toCourseExerciseGroup } from 'app/course/manage/exercises/exercise-variant-group.service';
 
 /**
- * Keeps the exercise management page's local exercise/group state in sync with variant-group and quiz data loaded from
- * the server, mirroring the server-side group timeline propagation so member dates and quiz badges update without a
- * full page reload. Pure state mapping only — the HTTP calls stay with the callers.
+ * Keeps the exercise management page's local exercise and group state in sync with server data, mirroring the
+ * server-side group timeline propagation. Pure state mapping; the HTTP calls stay with the callers.
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseGroupSyncService {
@@ -22,9 +21,8 @@ export class ExerciseGroupSyncService {
     }
 
     /**
-     * Applies a group's shared timeline to one member exercise (returning a fresh copy so signal inputs react) and
-     * recomputes quiz client state, mirroring the server-side re-sync in `applyGroupTimelineToExercises`. Used after a
-     * group edit so member dates and quiz badges / lifecycle buttons update without a full page reload.
+     * Applies a group's shared timeline to one member, returning a fresh copy so signal inputs react, and recomputes
+     * quiz client state.
      */
     applyGroupTimelineToMember(exercise: Exercise, groupDto: ExerciseVariantGroupDTO, now: dayjs.Dayjs): Exercise {
         const updated: Exercise = {
@@ -40,10 +38,8 @@ export class ExerciseGroupSyncService {
     }
 
     /**
-     * Merges freshly loaded variant groups into the exercise list: exercises whose group membership changed get a new
-     * object reference (so dependent signal computeds react) carrying the new group reference and the group's shared
-     * timeline; removed members keep their own dates (the server keeps them on unassignment too) and only drop the
-     * group reference. Returns the updated exercise list plus the mapped view-model groups.
+     * Merges freshly loaded groups into the exercise list, giving exercises whose membership changed a new object
+     * reference so signal computeds react. Removed members keep their own dates and only drop the group reference.
      */
     mergeGroupsIntoExercises(exercises: Exercise[], dtos: ExerciseVariantGroupDTO[]): { exercises: Exercise[]; groups: CourseExerciseGroup[] } {
         const refByExerciseId = new Map<number, ExerciseVariantGroupReference>();
@@ -93,10 +89,8 @@ export class ExerciseGroupSyncService {
     }
 
     /**
-     * Merges quiz batches and editability loaded from the dedicated quiz endpoint into the exercise list (the
-     * /with-exercises response does not load the quizBatches association) and recomputes the batch-dependent quiz
-     * status. Replaced quizzes get a fresh object reference so the row's signal input reacts; the groups are pointed at
-     * the same new objects. Returns undefined when nothing needed to change.
+     * Merges quiz batches and editability from the dedicated quiz endpoint (the /with-exercises response omits the
+     * quizBatches association) and recomputes quiz status. Returns undefined when nothing changed.
      */
     mergeQuizInfo(exercises: Exercise[], groups: CourseExerciseGroup[], quizzes: QuizExercise[]): { exercises: Exercise[]; groups: CourseExerciseGroup[] } | undefined {
         // quizInfoById carries both quizBatches (for status computation) and isEditable (from the server,
