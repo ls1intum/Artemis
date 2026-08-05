@@ -1,38 +1,26 @@
 /**
- * The correction round an assessment page works on is carried only in the `correction-round` query parameter, and it is
- * both sent to the server as the round to load and used to index the results of the loaded submission. `Number()` alone
- * cannot be trusted with that: it turns `null`, `''` and whitespace all into `0`, which is indistinguishable from an
- * explicit `correction-round=0`, and it happily produces `NaN`, `Infinity` or a fraction from a hand-edited URL. Such a
- * value then reaches the endpoint as the requested round and the results array as an index (issue #13396).
+ * The correction round an assessment page works on is carried only in the `correction-round` query parameter. It is both
+ * sent to the server as the round to load and used to index the results of the loaded submission, so it has to be one
+ * value derived in one place. `Number()` cannot be used for that on its own: it turns `null`, `''` and whitespace all
+ * into `0`, and it happily produces `NaN`, `Infinity` or a fraction from a hand-edited URL. Such a value then reaches
+ * the endpoint as the requested round and the results array as an index (issue #13396).
  *
- * Whoever both loads and displays the data reads the parameter with this function and keeps its current round when the
- * parameter is unusable, because that round is the one it requested. Where loading and displaying are split, as in the
- * text assessment whose route resolver loads before the component exists, the round must not be derived twice. There the
- * resolver uses {@link correctionRoundToLoad} and hands the round it requested to the page.
+ * An absent or unusable parameter means the first correction round, which is what a request without the parameter has
+ * always meant. The URL is the only authority: falling back to the round a page happens to be on instead would make the
+ * same URL show different rounds depending on how it was reached.
  *
  * @param rawCorrectionRound the raw query parameter value, as returned by `ParamMap#get`
- * @returns the correction round, or undefined when the parameter is absent or not a usable round
+ * @returns the correction round named by the parameter, or the first one when it is absent or unusable
  */
-export function parseCorrectionRound(rawCorrectionRound: string | null | undefined): number | undefined {
+export function parseCorrectionRound(rawCorrectionRound: string | null | undefined): number {
     const normalizedCorrectionRound = rawCorrectionRound?.trim();
-    if (!normalizedCorrectionRound) {
-        return undefined;
+    // Digits only. Artemis always writes the round as a plain decimal integer, and `Number()` accepts far more than
+    // that: `1e3` becomes 1000, `0x2` becomes 2 and `+1` becomes 1, none of which any link produces. Accepting them
+    // would only widen what a hand-edited URL can push into the request and into the results index.
+    if (!normalizedCorrectionRound || !/^\d+$/.test(normalizedCorrectionRound)) {
+        return 0;
     }
+    // A long enough digit string still exceeds the range in which integers are exact, so it is no usable round either.
     const correctionRound = Number(normalizedCorrectionRound);
-    return Number.isSafeInteger(correctionRound) && correctionRound >= 0 ? correctionRound : undefined;
-}
-
-/**
- * The correction round to request data for, for callers that have to name a concrete round rather than "unknown". A route
- * resolver is such a caller: it runs per navigation and has no round of its own to keep, so an absent or unusable
- * parameter falls back to the first correction round, which is what a request without the parameter has always meant.
- *
- * The round returned here is the one the loaded data belongs to, so it is handed on to the page instead of being derived
- * from the URL again. Two independent fallbacks would let the page index a round the request never asked for.
- *
- * @param rawCorrectionRound the raw query parameter value, as returned by `ParamMap#get`
- * @returns the correction round to load, defaulting to the first one
- */
-export function correctionRoundToLoad(rawCorrectionRound: string | null | undefined): number {
-    return parseCorrectionRound(rawCorrectionRound) ?? 0;
+    return Number.isSafeInteger(correctionRound) ? correctionRound : 0;
 }

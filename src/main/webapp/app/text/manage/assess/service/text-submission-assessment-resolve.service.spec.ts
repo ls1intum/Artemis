@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { Component } from '@angular/core';
+import { ActivatedRouteSnapshot, Route, convertToParamMap, provideRouter, withRouterConfig } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { textSubmissionAssessmentRoutes } from 'app/text/manage/assess/text-submission-assessment.route';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -128,6 +131,65 @@ describe('Text submission assessment resolvers', () => {
                 .subscribe((routeData) => (reportedCorrectionRound = routeData.correctionRound));
 
             expect(reportedCorrectionRound).toBe(spy.mock.calls[0][1]);
+        });
+    });
+
+    describe('re-resolving when the correction round in the url changes', () => {
+        @Component({ template: '' })
+        class AssessmentPageStub {}
+
+        /**
+         * Takes the resolver and the `runGuardsAndResolvers` policy from the production route, so that the policy those
+         * tests pin is the one the application ships. The rest of the route (guards, data, lazily loaded component) is
+         * left out because it is not what is under test here.
+         *
+         * @param path the path of the production route to exercise
+         * @returns that route, wired to a stub component
+         */
+        function productionRoute(path: string): Route {
+            const route = textSubmissionAssessmentRoutes.find((candidate) => candidate.path === path);
+            expect(route).toBeDefined();
+            return { path, component: AssessmentPageStub, resolve: route!.resolve, runGuardsAndResolvers: route!.runGuardsAndResolvers };
+        }
+
+        it('should load the newly requested round when only the query parameter changes, and only then', async () => {
+            // The round is a query parameter, and the resolver loads the participation of that round. Angular re-runs a
+            // resolver only for the changes named by `runGuardsAndResolvers`, and its default of `paramsChange` ignores
+            // query parameters, which left the page showing the round it had been opened with (#13396).
+            // The repeated navigation matters as much as the changed one: the application configures
+            // `onSameUrlNavigation: 'reload'`, so under `always` every repeat would load again and lock a result again.
+            TestBed.configureTestingModule({
+                providers: [
+                    MockProvider(TextAssessmentService),
+                    provideRouter([productionRoute('submissions/:submissionId/assessment')], withRouterConfig({ onSameUrlNavigation: 'reload' })),
+                ],
+            });
+            const spy = vi.spyOn(TestBed.inject(TextAssessmentService), 'getFeedbackDataForExerciseSubmission').mockReturnValue(of({} as StudentParticipation));
+            const harness = await RouterTestingHarness.create();
+
+            await harness.navigateByUrl('/submissions/42/assessment?correction-round=1');
+            await harness.navigateByUrl('/submissions/42/assessment?correction-round=0');
+            await harness.navigateByUrl('/submissions/42/assessment?correction-round=0');
+
+            expect(spy.mock.calls.map((call) => call[1])).toEqual([1, 0]);
+        });
+
+        it('should not load again when a named result stays the same', async () => {
+            // This route resolves by the result id, and a result identifies its own round, so a query parameter that
+            // changes must not trigger another load.
+            TestBed.configureTestingModule({
+                providers: [
+                    MockProvider(TextAssessmentService),
+                    provideRouter([productionRoute('submissions/:submissionId/assessments/:resultId')], withRouterConfig({ onSameUrlNavigation: 'reload' })),
+                ],
+            });
+            const spy = vi.spyOn(TestBed.inject(TextAssessmentService), 'getFeedbackDataForExerciseSubmission').mockReturnValue(of({} as StudentParticipation));
+            const harness = await RouterTestingHarness.create();
+
+            await harness.navigateByUrl('/submissions/42/assessments/7?correction-round=1');
+            await harness.navigateByUrl('/submissions/42/assessments/7?correction-round=0');
+
+            expect(spy).toHaveBeenCalledExactlyOnceWith(42, undefined, 7);
         });
     });
 });

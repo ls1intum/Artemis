@@ -49,6 +49,7 @@ import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/e
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
@@ -190,7 +191,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         });
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. This round is sent to the server when the submission is locked, so `NaN` from
+            // a hand-edited URL used to leave the tutor on an empty editor.
+            this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
         });
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
@@ -524,7 +528,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     this.exerciseGroupId,
                     undefined,
                 );
-                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() } });
+                // Merge rather than replace: a supplied queryParams object drops every other parameter, testRun among
+                // them. The other three assessment editors were fixed this way in #13421, this one was missed.
+                void this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound() }, queryParamsHandling: 'merge' });
             },
             error: (error: HttpErrorResponse) => {
                 this.loadingParticipation.set(false);

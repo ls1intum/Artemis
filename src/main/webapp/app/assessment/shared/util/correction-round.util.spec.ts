@@ -1,40 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { correctionRoundToLoad, parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 
 describe('correction round util', () => {
-    describe('parseCorrectionRound', () => {
-        it.each([
-            { raw: '0', expected: 0 },
-            { raw: '1', expected: 1 },
-            { raw: ' 1 ', expected: 1 },
-        ])('should accept $raw as a usable correction round', ({ raw, expected }) => {
-            expect(parseCorrectionRound(raw)).toBe(expected);
-        });
-
-        it.each([
-            { raw: null, description: 'absent' },
-            { raw: undefined, description: 'undefined' },
-            { raw: '', description: 'empty' },
-            { raw: '   ', description: 'whitespace only' },
-            { raw: 'abc', description: 'not a number' },
-            { raw: '1.5', description: 'fractional' },
-            { raw: '-1', description: 'negative' },
-            { raw: 'Infinity', description: 'infinite' },
-            { raw: '9007199254740993', description: 'beyond the safe integer range' },
-        ])('should reject a $description value', ({ raw }) => {
-            // Number() would turn null, '' and whitespace into 0, which is indistinguishable from correction-round=0.
-            expect(parseCorrectionRound(raw)).toBeUndefined();
-        });
+    it.each([
+        { raw: '0', expected: 0 },
+        { raw: '1', expected: 1 },
+        { raw: ' 1 ', expected: 1 },
+        { raw: '2', expected: 2 },
+    ])('should read $raw as correction round $expected', ({ raw, expected }) => {
+        expect(parseCorrectionRound(raw)).toBe(expected);
     });
 
-    describe('correctionRoundToLoad', () => {
-        it('should keep a usable round', () => {
-            expect(correctionRoundToLoad('1')).toBe(1);
-        });
+    it.each([
+        { raw: null, description: 'absent' },
+        { raw: undefined, description: 'undefined' },
+        { raw: '', description: 'empty' },
+        { raw: '   ', description: 'whitespace only' },
+        { raw: 'abc', description: 'not a number' },
+        { raw: '1.5', description: 'fractional' },
+        { raw: '-1', description: 'negative' },
+        { raw: 'Infinity', description: 'infinite' },
+        { raw: 'NaN', description: 'literally NaN' },
+        { raw: '9007199254740993', description: 'beyond the safe integer range' },
+        { raw: '1e3', description: 'exponential' },
+        { raw: '0x2', description: 'hexadecimal' },
+        { raw: '+1', description: 'explicitly signed' },
+        { raw: '1 2', description: 'two numbers' },
+        { raw: '2px', description: 'number with a suffix' },
+    ])('should fall back to the first round for a $description value', ({ raw }) => {
+        // These are the values a hand-edited or truncated URL produces. Bare Number() would pass NaN, Infinity, a
+        // fraction or a negative round on to the endpoint and to the results array as an index.
+        expect(parseCorrectionRound(raw)).toBe(0);
+    });
 
-        it.each([null, undefined, '', '   ', 'abc', '1.5', '-1', 'Infinity'])('should fall back to the first round for %s', (raw) => {
-            // Callers that request data need a concrete round, and an unusable value must never reach the server.
-            expect(correctionRoundToLoad(raw)).toBe(0);
-        });
+    it('should accept a round that is a plain integer string of more than one digit', () => {
+        // Guards against a stricter check that only accepts single digits, since the number of rounds is not capped at 10.
+        expect(parseCorrectionRound('12')).toBe(12);
     });
 });

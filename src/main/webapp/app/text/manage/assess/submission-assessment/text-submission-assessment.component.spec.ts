@@ -14,7 +14,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
+import { ReplaySubject, of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -29,7 +29,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { Location } from '@angular/common';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
@@ -157,7 +157,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         mockActivatedRoute = {
             paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
-            queryParamMap: of(convertToParamMap({ testRun: 'false', 'correction-round': '0' })),
+            queryParamMap: of(convertToParamMap({ testRun: 'false', 'correction-round': '2' })),
             data: of({
                 // The resolver reports the round it loaded the participation for; the page takes the round from here.
                 textAssessmentData: { participation, correctionRound: 0 },
@@ -268,10 +268,34 @@ describe('TextSubmissionAssessmentComponent', () => {
             { correctionRound: 0, expectedResultId: firstRoundResult.id },
             { correctionRound: 1, expectedResultId: secondRoundResult.id },
         ])('should assess the result of round $correctionRound when the resolver loaded that round', ({ correctionRound, expectedResultId }) => {
+            // Start from the other round, so that neither row can pass merely because the signal happens to be 0.
+            component['setPropertiesFromServerResponse']({ participation, correctionRound: correctionRound === 0 ? 1 : 0 });
+
             component['setPropertiesFromServerResponse']({ participation, correctionRound });
 
             expect(component.correctionRound()).toBe(correctionRound);
             expect(component.result()?.id).toBe(expectedResultId);
+        });
+
+        it('should keep the round of the loaded data when the query parameters change later', async () => {
+            // The one thing that must not come back: reading the round from the url here as well. The resolver decides it,
+            // and a url that says something else has to reload rather than move this page to a round it never loaded.
+            // A late emission is the only way to see such a re-read, because the resolved data always arrives last.
+            const queryParams = new ReplaySubject<ParamMap>(1);
+            queryParams.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+            component['route'] = { queryParamMap: queryParams, snapshot: { queryParams: {} } } as unknown as ActivatedRoute;
+            component['activatedRoute'] = {
+                paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1 })),
+                data: of({ textAssessmentData: { participation, correctionRound: 0 } }),
+            } as unknown as ActivatedRoute;
+
+            await component.ngOnInit();
+            expect(component.correctionRound()).toBe(0);
+
+            queryParams.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+
+            expect(component.correctionRound()).toBe(0);
+            expect(component.result()?.id).toBe(firstRoundResult.id);
         });
 
         it('should follow the round of the newly loaded submission when the component is reused', () => {

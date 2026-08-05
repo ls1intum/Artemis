@@ -10,7 +10,7 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { catchError, map } from 'rxjs/operators';
 
-import { correctionRoundToLoad } from 'app/assessment/shared/util/correction-round.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 
 /**
  * What the resolvers below hand to the assessment page. Both swallow load errors so that the page can render instead of
@@ -55,7 +55,7 @@ export class NewStudentParticipationResolver implements Resolve<TextAssessmentRo
         const exerciseId = Number(route.paramMap.get('exerciseId'));
         // The round the page works on is decided here, once, and handed on below. An absent or unusable value must not
         // reach the server as NaN, a fraction or a negative round.
-        const correctionRound = correctionRoundToLoad(route.queryParamMap.get('correction-round'));
+        const correctionRound = parseCorrectionRound(route.queryParamMap.get('correction-round'));
         if (exerciseId) {
             return this.textSubmissionService.getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound).pipe(
                 map((submission?: TextSubmission) => ({ participation: submission?.participation, correctionRound })),
@@ -78,7 +78,7 @@ export class StudentParticipationResolver implements Resolve<TextAssessmentRoute
         const submissionId = Number(route.paramMap.get('submissionId'));
         // The round the page works on is decided here, once, and handed on below. An absent or unusable value must not
         // reach the server as NaN, a fraction or a negative round.
-        const correctionRound = correctionRoundToLoad(route.queryParamMap.get('correction-round'));
+        const correctionRound = parseCorrectionRound(route.queryParamMap.get('correction-round'));
         const resultId = Number(route.paramMap.get('resultId'));
         if (resultId) {
             // A named result identifies its round by itself, so the page derives the round from the result it got back

@@ -61,12 +61,14 @@ describe('ModelingAssessmentEditorComponent', () => {
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
     let paramMapSubject: BehaviorSubject<ParamMap>;
+    let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
         // jsdom's ApollonEditor fires modelChange with empty assessments on every model update under
         // signal-driven rendering, which would wipe the parent's referencedFeedback mid-test.
         vi.spyOn(ApollonEditor.prototype, 'subscribeToModelChange').mockReturnValue(undefined as any);
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
+        queryParamMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
@@ -82,7 +84,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         paramMap: paramMapSubject.asObservable(),
-                        queryParamMap: of(convertToParamMap({})),
+                        queryParamMap: queryParamMapSubject.asObservable(),
                         params: of({}),
                         queryParams: of({}),
                         snapshot: {
@@ -193,6 +195,47 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
             expect(component.assessmentsAreValid()).toBe(true);
+        });
+
+        it.each([
+            { param: '1', expectedRound: 1, description: 'a usable round' },
+            { param: undefined, expectedRound: 0, description: 'an absent round' },
+            { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+            { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+            { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+            { param: '-1', expectedRound: 0, description: 'a negative round' },
+            { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+        ])('should request the submission for $description', async ({ param, expectedRound }) => {
+            // The round is requested from the server and then used to index the loaded results, so an unusable value must
+            // not travel on as NaN, a fraction or a negative number. The URL decides, and no usable value means the
+            // first round, so the same URL always opens the same round (#13396).
+            // The component is already initialized by the fixture, so the route is driven instead of calling ngOnInit
+            // again, which would subscribe a second time and load twice.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap(param === undefined ? {} : { 'correction-round': param }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(expectedRound);
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, expectedRound, 0);
+        });
+
+        it('should open the first round for a url without the parameter even on a reused component', async () => {
+            // Pins existing behaviour rather than a change: this editor already took the round from the url on every
+            // navigation. The same url has to open the same round, whether it is reached directly or through the next
+            // submission of a round that was not the first.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(component.correctionRound()).toBe(1);
+
+            queryParamMapSubject.next(convertToParamMap({}));
+            paramMapSubject.next(convertToParamMap({ submissionId: '3', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(0);
+            expect(getSubmissionSpy).toHaveBeenLastCalledWith(3, 0, 0);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {

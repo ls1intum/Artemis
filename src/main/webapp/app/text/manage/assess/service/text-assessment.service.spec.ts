@@ -286,13 +286,16 @@ describe('TextAssessment Service', () => {
 
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1 }),
-            queryParamMap: convertToParamMap({ correctionRound: 0 }),
+            // A round the fallback would not produce, so that the assertion below really pins the parameter being read.
+            // The key has to be the one the url uses, and the value a string: `correctionRound: 0` reads the same but is
+            // neither, so it silently exercised the absent-parameter path instead.
+            queryParamMap: convertToParamMap({ 'correction-round': '1' }),
         } as unknown as ActivatedRouteSnapshot;
 
         resolver.resolve(snapshot);
 
         expect(newStudentParticipationStub).toHaveBeenCalledOnce();
-        expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 0);
+        expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 1);
     });
 
     it('should resolve the needed StudentParticipations for TextSubmissionAssessmentComponent', () => {
@@ -301,12 +304,13 @@ describe('TextAssessment Service', () => {
 
         const snapshot = {
             paramMap: convertToParamMap({ participationId: 1, submissionId: 2, resultId: 1 }),
-            queryParamMap: convertToParamMap({ correctionRound: 0 }),
+            queryParamMap: convertToParamMap({ 'correction-round': '1' }),
         } as unknown as ActivatedRouteSnapshot;
 
         resolver.resolve(snapshot);
 
         expect(studentParticipationSpy).toHaveBeenCalledOnce();
+        // A named result identifies its own round, so this branch deliberately passes no round even though the url has one.
         expect(studentParticipationSpy).toHaveBeenCalledWith(2, undefined, 1);
     });
 
