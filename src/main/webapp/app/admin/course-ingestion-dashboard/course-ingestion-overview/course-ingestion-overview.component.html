@@ -27,13 +27,19 @@
             <tum-ui-card [header]="'artemisApp.courseIngestionDashboard.services.title' | artemisTranslate">
                 <div class="flex flex-col gap-3">
                     <div class="flex flex-col gap-1">
-                        <tum-ui-message [severity]="o.weaviateReachable ? 'success' : 'error'" data-testid="weaviate-status">
+                        <div
+                            class="inline-flex items-center gap-2 {{ o.weaviateReachable ? 'text-state-success' : 'text-state-danger' }}"
+                            data-testid="weaviate-status"
+                            [attr.data-severity]="o.weaviateReachable ? 'success' : 'error'"
+                        >
+                            <span aria-hidden="true">&#9679;</span>
                             <span
+                                class="font-medium"
                                 [jhiTranslate]="
                                     o.weaviateReachable ? 'artemisApp.courseIngestionDashboard.services.reachable' : 'artemisApp.courseIngestionDashboard.services.unreachable'
                                 "
                             ></span>
-                        </tum-ui-message>
+                        </div>
                         <div class="text-sm text-muted-color">
                             <span jhiTranslate="artemisApp.courseIngestionDashboard.services.address"></span>:
                             <span class="font-mono" data-testid="weaviate-address">{{ o.weaviateAddress }}</span>
