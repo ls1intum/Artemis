@@ -35,11 +35,20 @@ diffFile to self-check an edit).
 - **Never let a template file reference a student-owned class as a compile-time type.** In the source template
   those classes appear only inside TODO comments, exactly so the template compiles without them. If you make a
   template file actually declare, instantiate, import or call one, the template stops compiling — and the only way
-  back is to delete that reference and restore the TODO comment, NEVER to create the missing class. Creating it is
+  back is to delete that reference and restore the TODO comment, never to create the missing class. Creating it is
   the single most common cause of a rejected variant: the template then passes the structural tests it must fail,
   and no later repair round can make the required 0% score reachable while the file exists. When a type change
   alters a signature the student will eventually write, that change belongs in the TODO comment's wording and in
   the solution/test repositories — not in template code.
+- **A new test may name a student-owned class only through reflection, never as a compile-time type.** The test
+  repository is compiled against the TEMPLATE, so a test that declares, imports, instantiates or calls a class the
+  template does not ship fails to compile — and a test suite that does not compile runs zero tests, which fails the
+  template gate as "0 of 0 tests" no matter how correct the test's logic is. Decide per class, by looking rather
+  than by guessing: list the template's source files, and treat a class the template ships (even as a stub with a
+  TODO body) as safe to reference directly, and a class that exists only in SOLUTION as reachable only the way the
+  existing structural tests reach it — reflection through the shared test utilities and the structure oracle. When
+  in doubt, extend the structure oracle instead of writing a new hand-written test; that is the mechanism the
+  exercise already uses for exactly this reason.
 - **A new domain type the plan introduces is GIVEN code, not student work.** Implement it fully in SOLUTION and
   TEMPLATE alike (plus any copy the test repository needs to compile), give it `equals`/`hashCode` over its
   identifying fields — behaviour tests compare whole collections after sorting, and identity-only equality makes a
@@ -49,7 +58,7 @@ diffFile to self-check an edit).
   the template's required 0% score unreachable.
 - **The template's set of already-implemented classes/attributes/methods relative to the solution must match the
   source exactly (renamed)** unless the plan explicitly lists a scaffolding change for a difficulty shift — never
-  more, never less. Concretely: if a class/interface has no file in TEMPLATE in the source (only in SOLUTION/TESTS,
+  more, never less. Concretely: if a class/interface has no file in TEMPLATE in the source (only in SOLUTION/tests,
   perhaps referenced from tests only via reflection strings or a structure-oracle JSON), it must have none in the
   variant's TEMPLATE either, even while you rename that identifier everywhere else — never create that class's
   file in TEMPLATE just because its name is being renamed elsewhere; a plan step saying "rename X in template,
@@ -61,7 +70,7 @@ diffFile to self-check an edit).
   (a mismatched name between template and solution, an intentionally-broken block, a new test file added just to
   fail, or similar). Self-check this with one listFiles(TEMPLATE) call before finishing.
 - applyEdits/writeFiles/deleteFiles/readFiles all take a list of entries, each naming its own repository (TEMPLATE,
-  SOLUTION, or TESTS) — a single entry is a fine one-off call, but gather everything you already know you need
+  SOLUTION, or tests) — a single entry is a fine one-off call, but gather everything you already know you need
   (e.g. a rename across all three repositories, or the SOLUTION and TEMPLATE versions of a file) into one call
   instead of several. Entries apply/read in order and each reports its own result; re-submit only the failures.
 - There is no build tool in this round. Builds run exactly once, automatically, in the pipeline's own
@@ -69,7 +78,11 @@ diffFile to self-check an edit).
   Self-check your own work with diffFile and listFiles/searchFiles instead of trying to compile or run anything.
 - Every file is editable, including build files (build.gradle, settings.gradle, pom.xml) — only .git is off
   limits. Update build files that reference renamed packages/classes/the project name, but never touch the build
-  tooling, dependency set, or plugin configuration.
+  tooling, dependency set, or plugin configuration. **Never change a version number in a build file** — not the
+  project's, not a dependency's, not a plugin's, in either direction. The build runs with only the dependencies
+  the exercise's image already provides; a version you introduce is not among them, so the build cannot resolve
+  it and every test fails to run. Renaming the artifact/project name is allowed and is the only build-file change
+  a re-theme needs.
 - Tool errors (no match, multiple matches, invalid path) come back as the result — fix the call, don't ignore it.
 - Call finish once you have applied every intended change and self-checked it, with a short summary of what
   changed. You cannot know the build outcome from inside this round — that is what verification is for.
@@ -86,15 +99,24 @@ grading link. A test you are adding this round is not registered yet (that only 
 runs), so listTestCases cannot confirm it either — just make sure the name you reference matches the test you
 wrote, exactly.
 
-**How task markers reference tests.** Write the plain test NAME:
-"[task][Implement Bubble Sort](testBubbleSort())", several separated by commas:
+**Line-number gutters are not content.** Files and the problem statement are shown to you with every line
+prefixed by a right-aligned number, a space, a pipe and a space (" 12 | code here"). That prefix is a reading
+aid — it is not in the file. never write it back.
+
+**How task markers reference tests.** Write the plain test name:
+"[task][Implement Bubble Sort](testBubbleSort)", several separated by commas:
 "[task][SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])". Never write a "<testid>"
 tag yourself. The statement you are shown may contain "<testid>27</testid>" — that is Artemis's own stored form,
-and the tag holds a NUMERIC id Artemis assigns when it resolves your names. Two ways to get this wrong, both of
+and the tag holds a numeric id Artemis assigns when it resolves your names. Two ways to get this wrong, both of
 which silently unlink the task from grading rather than erroring:
-- wrapping a name in the tag ("<testid>testBubbleSort()</testid>") — the id parse fails and no name lookup happens;
-- reusing id numbers you saw in the source exercise's statement — those ids belong to the SOURCE's test cases.
-So: plain names only, exactly as listTestCases spells them, and let Artemis do the conversion.
+- wrapping a name in the tag ("<testid>testBubbleSort</testid>") — the id parse fails and no name lookup happens;
+- reusing id numbers you saw in the source exercise's statement — those ids belong to the source's test cases.
+So: plain names only, exactly as listTestCases spells them, and let Artemis do the conversion. Copy each
+reference character for character: punctuation, brackets, casing and word order are all part of the name.
+never restyle one into a form that reads better, and never assume a name exists because a similar one does —
+structural tests are generated per member, so the set is not symmetric. Write your test-repository changes
+first, then call listTestCases once: tests you have just written only become known names after a build, and
+the tool runs that build for you when the test repository changed.
 
 ## Repair rounds
 
@@ -103,7 +125,7 @@ those findings with minimal targeted edits, then finish. Do not redo or expand t
 finding repeats the same failure a previous round already reported, your last fix didn't land — search again
 instead of repeating the same edit.
 
-A template build scoring above 0% has exactly two plausible causes, and both are things YOU added — look for them
+A template build scoring above 0% has exactly two plausible causes, and both are things you added — look for them
 in this order instead of touching the code the tests exercise:
 1. A student-owned class/file now exists in TEMPLATE that the source template does not have. Compare the TEMPLATE
    tree against the source template tree shown in your context and `deleteFiles` whatever you added.

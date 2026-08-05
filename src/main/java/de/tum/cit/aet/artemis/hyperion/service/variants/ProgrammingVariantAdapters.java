@@ -3,16 +3,20 @@ package de.tum.cit.aet.artemis.hyperion.service.variants;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -64,6 +68,9 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantAdapters.class);
+
+    /** A resolved test reference as Artemis stores it: the tag plus its numeric id. */
+    private static final Pattern TESTID_REFERENCE = Pattern.compile("<testid>(\\d+)</testid>");
 
     /** Suffix-retry budget for short-name/project-key collisions. */
     private static final int MAX_NAME_ATTEMPTS = 10;
@@ -149,7 +156,9 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         // Reload with participations so the renderer can resolve the repository URIs (the pipeline only holds a
         // plain findById copy). No new rendering logic.
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(source.getId());
-        return contextRendererService.renderContext(exercise);
+        // Without line-number gutters: this toolset edits by unique text match and never cites a line number,
+        // so the gutters only cost tokens and get echoed back into the generated problem statement.
+        return contextRendererService.renderContext(exercise, false);
     }
 
     @Override
@@ -190,6 +199,13 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
                 Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
                         .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
                 programmingExerciseTaskService.updateTestIds(imported, newTestCaseIdByOldId);
+                // Whatever <testid> survives the remap above cannot be valid: the remap covers every id the source
+                // actually had, so a leftover id was never a real test case — the planner invented it. Observed on
+                // a run whose statement carried six ids belonging to neither exercise, which silently unlinked
+                // those tasks from grading while every gate reported green. Ids are unguessable by construction
+                // (they are assigned when the variant is created, after the plan is written), so dropping them is
+                // provably right, and dropping the reference rather than the task keeps the visible text intact.
+                imported.setProblemStatement(dropUnresolvableTestIds(imported.getProblemStatement(), variantTestIdByName.values()));
                 imported = programmingExerciseRepository.save(imported);
                 programmingExerciseTaskService.updateTasksFromProblemStatement(imported);
                 // Return a copy WITHOUT an initialized task collection: task rows change again after provisioning
@@ -222,7 +238,40 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(job.getSourceExerciseId());
         User user = userRepository.getUserWithGroupsAndAuthorities(job.getInitiatorLogin());
         return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, programmingExerciseRepository, programmingExerciseTaskService,
-                defaultBranch, sourceExercise, programmingExerciseTestCaseRepository);
+                defaultBranch, sourceExercise, programmingExerciseTestCaseRepository, this::runSolutionBuildForTestDiscovery);
+    }
+
+    /**
+     * Runs the SOLUTION build and waits for it, so that tests written this round become registered test cases.
+     * <p>
+     * A {@link ProgrammingExerciseTestCase} row only exists once a build has compiled and executed the test, so an
+     * agent that has just written tests cannot learn their real names from {@code listTestCases} — it is forced to
+     * guess, and a guessed name in a task marker silently unlinks the task from grading. Only the solution build
+     * is needed: it is the one that executes the suite.
+     *
+     * @param exercise the variant exercise whose tests should be discovered
+     * @param jobId    the job id, for build telemetry
+     */
+    void runSolutionBuildForTestDiscovery(ProgrammingExercise exercise, String jobId) {
+        LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(RepositoryType.SOLUTION);
+        if (repositoryUri == null) {
+            return;
+        }
+        String commitHash = gitService.getLastCommitHash(repositoryUri);
+        Instant triggeredAt = Instant.now();
+        try {
+            continuousIntegrationTriggerService.triggerBuild(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise), commitHash, RepositoryType.SOLUTION);
+            buildVerificationService.waitForBuildResults(exercise, Map.of(RepositoryType.SOLUTION, new PendingBuild(commitHash, triggeredAt)));
+            jobService.recordBuildStat(jobId, "TEST_DISCOVERY:SOLUTION", Duration.between(triggeredAt, Instant.now()).toMillis());
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for the test-discovery build", e);
+        }
+        catch (ContinuousIntegrationException e) {
+            // Best effort: the agent falls back to the test cases already registered, exactly as before.
+            log.warn("Could not run the test-discovery build for variant exercise {}: {}", exercise.getId(), e.getMessage());
+        }
     }
 
     @Override
@@ -387,6 +436,37 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
         return problemStatement.replaceAll("(?m)^[ \\t]*```[\\w-]*[ \\t]*\\n(\\s*@startuml)", "$1").replaceAll("(?m)(@enduml)\\s*\\n[ \\t]*```[ \\t]*$", "$1");
     }
 
+    /**
+     * Removes {@code <testid>} references that name no test case of the variant, leaving the task's visible text.
+     * <p>
+     * Applied once, right after the source-to-variant id remap, where the set of valid ids is known exactly.
+     * Anything still unresolvable at that point was never a real id in either exercise: the planner writes its
+     * statement before the variant exists, so it cannot know an id, and every id the source did have has just
+     * been remapped. Such a reference is silently unlinked from grading rather than rejected anywhere, so it
+     * survives to the finished exercise while the pipeline reports success — which is why this drops them instead
+     * of leaving them for a later gate. A task whose references are all dropped keeps its heading and prose; only
+     * the broken link disappears.
+     *
+     * @param problemStatement the statement after id remapping
+     * @param validTestIds     ids of the variant's own test cases
+     * @return the statement with unresolvable {@code <testid>} references removed
+     */
+    static String dropUnresolvableTestIds(String problemStatement, Collection<Long> validTestIds) {
+        if (problemStatement == null || problemStatement.isBlank()) {
+            return problemStatement;
+        }
+        Set<String> valid = validTestIds.stream().map(String::valueOf).collect(Collectors.toSet());
+        Matcher matcher = TESTID_REFERENCE.matcher(problemStatement);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            // Drop the reference AND a comma that would otherwise be left dangling beside it.
+            matcher.appendReplacement(result, valid.contains(matcher.group(1)) ? Matcher.quoteReplacement(matcher.group()) : "");
+        }
+        matcher.appendTail(result);
+        // Tidy the separators the removals leave behind: ",,", a leading or trailing comma inside "(...)".
+        return result.toString().replaceAll(",{2,}", ",").replaceAll("\\(\\s*,", "(").replaceAll(",\\s*\\)", ")");
+    }
+
     /** PascalCases the alphanumeric words of the title into a valid exercise short name (starts with a letter, ≥3 chars). */
     private static String deriveShortName(String title) {
         StringBuilder builder = new StringBuilder();
@@ -530,7 +610,13 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
      * reports unresolved references instead of silently dropping them).
      */
     private void checkTestReferences(ProgrammingExercise exercise, List<VerificationReport.VerificationFinding> findings) {
-        List<String> unresolved = programmingExerciseTaskService.findUnresolvedTaskTestReferences(exercise);
+        // Reload before checking. findUnresolvedTaskTestReferences parses exercise.getProblemStatement() from the
+        // object it is handed, so checking the in-memory copy validates whatever statement that object happens to
+        // hold rather than the one that will ship. Observed reporting "all gates green" on a run whose persisted
+        // statement carried 20 unresolvable references — a false green that hands the instructor an exercise whose
+        // tasks are silently unlinked from grading, which is strictly worse than failing loudly.
+        ProgrammingExercise persisted = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
+        List<String> unresolved = programmingExerciseTaskService.findUnresolvedTaskTestReferences(persisted);
         if (!unresolved.isEmpty()) {
             // A reference that is <testid>-wrapped but unresolved is a different defect from a wrong name, and the
             // generic "use the exact current test name" advice does not describe its fix at all — spell the format
@@ -538,12 +624,20 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
             boolean malformedTestId = unresolved.stream().anyMatch(reference -> reference.startsWith("<testid>"));
             String hint = malformedTestId
                     ? " A <testid> tag may ONLY contain a numeric test-case id (<testid>27</testid>); the references above wrap something else, so they can never resolve. "
-                            + "Do not write <testid> tags at all — put the plain test name in the marker instead, e.g. \"[task][Implement Bubble Sort](testBubbleSort())\", "
-                            + "and Artemis converts it to an id itself."
+                            + "Do not write <testid> tags at all — put the plain test name in the marker instead, e.g. \"[task][Implement Bubble Sort](testBubbleSort)\", "
+                            + "and Artemis converts it to an id itself. The name carries no parentheses and no parameter list: \"testBubbleSort()\" resolves to nothing."
                     : " Update the task marker(s) to use the exact current test name(s).";
+            // Naming the problem without naming the remedy left this gate unable to repair itself: observed
+            // burning four consecutive attempts while the agent kept re-emitting invented names
+            // (testSortStrategyInterface for testClass[SortStrategy]). Structural test names are generated per
+            // member, so they cannot be guessed from the class name — listing them inline removes both the tool
+            // round-trip and the chance the agent simply does not look.
+            String available = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId()).stream().map(ProgrammingExerciseTestCase::getTestName).sorted()
+                    .collect(Collectors.joining(", "));
             findings.add(new VerificationReport.VerificationFinding(VerificationReport.VerificationGate.TEST_REFERENCES,
                     "The problem statement references test(s) that do not exist in the test repository: " + String.join(", ", unresolved) + "." + hint
-                            + " Call listTestCases to see what actually exists."));
+                            + " These are the only test names that exist — copy one of them character for character, and do not adapt it to read better: [" + available
+                            + "]. A name not in that list cannot be made to work by rewording the statement; either use the listed name that covers the same requirement, or drop the reference."));
         }
     }
 

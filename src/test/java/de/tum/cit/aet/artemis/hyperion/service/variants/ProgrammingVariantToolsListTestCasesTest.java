@@ -31,14 +31,26 @@ class ProgrammingVariantToolsListTestCasesTest {
         ExerciseVariantJobService jobService = mock(ExerciseVariantJobService.class);
         when(jobService.isCancelRequested(JOB_ID)).thenReturn(false);
 
-        return new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, null, null, null, null, "main", null, testCaseRepository);
+        return new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, null, null, null, null, "main", null, testCaseRepository, (exerciseArgument, jobArgument) -> {
+        });
     }
 
     @Test
     void shouldReturnSortedTestNames() {
         ProgrammingVariantTools tools = tools(Set.of(new ProgrammingExerciseTestCase().testName("testMergeSort"), new ProgrammingExerciseTestCase().testName("testBubbleSort")));
 
-        assertThat(tools.listTestCases()).isEqualTo("testBubbleSort\ntestMergeSort");
+        // The names must end the output, one per line and sorted, so they stay copyable verbatim; the preamble
+        // in front of them is guidance and is asserted separately rather than pinned word for word.
+        assertThat(tools.listTestCases()).endsWith("testBubbleSort\ntestMergeSort");
+    }
+
+    @Test
+    void shouldStateThatTheListedNamesAreTheCompleteSet() {
+        ProgrammingVariantTools tools = tools(Set.of(new ProgrammingExerciseTestCase().testName("testBubbleSort")));
+
+        // Agents were observed rewriting generated names such as testClass[SortStrategy] into tidier-looking ones,
+        // which silently unlinks the task from grading — the output has to read as a closed set, not a suggestion.
+        assertThat(tools.listTestCases()).contains("complete set").contains("character for character");
     }
 
     @Test

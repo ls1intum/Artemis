@@ -55,7 +55,8 @@ class ProgrammingVariantToolsPathTest {
         // No file exists yet, so writeFile creates instead of replacing.
         when(gitService.getFileByName(any(), anyString())).thenReturn(Optional.empty());
 
-        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", null, null);
+        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", null, null, (exerciseArgument, jobArgument) -> {
+        });
     }
 
     @Test

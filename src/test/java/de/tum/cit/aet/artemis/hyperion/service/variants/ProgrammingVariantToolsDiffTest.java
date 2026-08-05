@@ -76,7 +76,9 @@ class ProgrammingVariantToolsDiffTest {
         ExerciseVariantJobService jobService = mock(ExerciseVariantJobService.class);
         when(jobService.isCancelRequested(JOB_ID)).thenReturn(false);
 
-        tools = new ProgrammingVariantTools(variantExercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", sourceExercise, null);
+        tools = new ProgrammingVariantTools(variantExercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", sourceExercise, null,
+                (exerciseArgument, jobArgument) -> {
+                });
     }
 
     @Test

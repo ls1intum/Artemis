@@ -116,6 +116,15 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    /** Runs one solution build so tests written this round become registered test cases (see {@link #listTestCases()}). */
+    @FunctionalInterface
+    interface SolutionBuildForTestDiscovery {
+
+        void run(ProgrammingExercise exercise, String jobId);
+    }
+
+    private final SolutionBuildForTestDiscovery solutionBuildForTestDiscovery;
+
     private final String defaultBranch;
 
     /** The exercise this variant was generated from; used only by {@link #diffFile} to read the ORIGINAL file content. */
@@ -141,7 +150,8 @@ class ProgrammingVariantTools implements VariantToolset {
 
     ProgrammingVariantTools(ProgrammingExercise exercise, User user, String jobId, ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch,
-            ProgrammingExercise sourceExercise, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            ProgrammingExercise sourceExercise, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            SolutionBuildForTestDiscovery solutionBuildForTestDiscovery) {
         this.exercise = exercise;
         this.user = user;
         this.jobId = jobId;
@@ -152,6 +162,7 @@ class ProgrammingVariantTools implements VariantToolset {
         this.sourceExercise = sourceExercise;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.solutionBuildForTestDiscovery = solutionBuildForTestDiscovery;
         this.defaultBranch = defaultBranch;
     }
 
@@ -746,25 +757,47 @@ class ProgrammingVariantTools implements VariantToolset {
         return report.toString();
     }
 
-    @Tool(description = "List the exact names of every test case Artemis currently has registered for this exercise (discovered from build results). Call this before writing or "
-            + "updating problem-statement task markers so every test name you reference is exact — a stale or typo'd name silently drops the task-test link instead of erroring.")
+    @Tool(description = "List the exact names of every test case Artemis has registered for this exercise. Call this before writing or updating problem-statement task markers so "
+            + "every test name you reference is exact — a stale or typo'd name silently drops the task-test link instead of erroring. Cost: test cases are discovered from build "
+            + "results, so if you edited the test repository since the last build, this call runs a full build (tens of seconds) to discover the real names. Finish your "
+            + "test-repository changes first, then call this once and write every task marker from that single result. It is instant when you have not touched the test "
+            + "repository since the last build, so calling it before you start editing costs nothing.")
     public String listTestCases() {
         String stop = stopNotice();
         if (stop != null) {
             return stop;
         }
+        // Test cases are only discovered from build results, so anything written to the test repository this
+        // round is invisible here until a build has executed it. Rather than let the agent guess a name — a
+        // guessed reference silently unlinks its task from grading — commit the round's work and run one
+        // solution build, but ONLY when the test repository actually changed since the last one.
+        if (touchedTestRepo) {
+            flushPendingChanges();
+            solutionBuildForTestDiscovery.run(exercise, jobId);
+            touchedTestRepo = false;
+        }
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
         if (testCases.isEmpty()) {
             return "No test cases are registered yet for this exercise. Test cases are discovered from build results — run a build first.";
         }
-        return testCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().collect(Collectors.joining("\n"));
+        List<String> names = testCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList();
+        // Framed as "the complete set, copy verbatim" rather than as a bare list: the names below are the only
+        // strings a task marker can contain, and several are generated per member (testClass[SortStrategy]) in a
+        // set that is deliberately not symmetric — a class having testMethods[X] implies nothing about
+        // testClass[X] existing. Agents were observed rewriting these into tidier-looking names, which silently
+        // unlinks the task from grading.
+        return "These " + names.size() + " names are the complete set of tests that exist, and the only strings a task marker may reference. "
+                + "Copy one character for character — no parentheses, no parameter list, no rewording — or the task loses its grading link:\n" + String.join("\n", names);
     }
 
-    @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this LAST, after the final test names are settled, "
-            + "so every test referenced in the tasks actually exists in the test repository. Task markers reference tests BY NAME: "
-            + "\"[task][Implement Bubble Sort](testBubbleSort())\", several separated by commas. Write plain test names exactly as listTestCases reports them and never write "
-            + "a <testid> tag yourself — Artemis converts names to ids on its own. A <testid> tag may only ever contain a NUMBER, so wrapping a name in one "
-            + "(<testid>testBubbleSort()</testid>) resolves to nothing and silently unlinks that task from grading.")
+    @Tool(description = "Replace the variant exercise's problem statement (Markdown). Call this last, after the final test names are settled, "
+            + "so every test referenced in the tasks actually exists in the test repository. Task markers reference tests by name: "
+            + "\"[task][Implement Bubble Sort](testBubbleSort)\", several separated by commas. Each name must be copied character for character from "
+            + "listTestCases — no parentheses, no parameter list, and never reworded to read better: many names are generated per member and look "
+            + "like \"testClass[SortStrategy]\", which cannot be guessed from the class name. This call reports any reference that does not match a "
+            + "real test, together with the names that do exist. Never write a <testid> tag yourself — Artemis converts names to ids on its own. "
+            + "A <testid> tag may only ever contain a number, so wrapping a name in one (<testid>testBubbleSort</testid>) resolves to nothing and "
+            + "silently unlinks that task from grading.")
     public String updateProblemStatement(
             @ToolParam(description = "the full new problem statement in Artemis Markdown; task markers reference tests by plain name") String problemStatement) {
         String stop = stopNotice();
@@ -784,13 +817,45 @@ class ProgrammingVariantTools implements VariantToolset {
             // Keep the task/test-case mapping in sync, exactly like the regular problem-statement update endpoint.
             programmingExerciseTaskService.updateTasksFromProblemStatement(persisted);
             exercise.setProblemStatement(persisted.getProblemStatement());
-            return repaired ? "Problem statement updated. NOTE: task markers contained <testid> tags wrapping test NAMES — a <testid> tag may only contain a numeric id, so those "
-                    + "would have unlinked their tasks from grading. They were rewritten to plain test names for you. Reference tests by plain name; never emit <testid> yourself."
+            String message = repaired
+                    ? "Problem statement updated. Note: task markers contained <testid> tags wrapping test names — a <testid> tag may only contain a numeric id, so those "
+                            + "would have unlinked their tasks from grading. They were rewritten to plain test names for you. Reference tests by plain name; never emit <testid> yourself."
                     : "Problem statement updated.";
+            return message + unresolvedReferenceReport(persisted);
         }
         catch (Exception e) {
             return "Error: could not update the problem statement: " + e.getMessage();
         }
+    }
+
+    /**
+     * Reports task-marker references that match no real test case, together with the names that do exist.
+     * <p>
+     * The same check runs later as the TEST_REFERENCES verification gate, but only after a full build round and
+     * only when the build gate is already clean — so an agent that invents a name learns about it minutes later,
+     * or (when the build is red) never. Reporting it in the tool's own return value closes the loop where the
+     * mistake is made, while the statement is still in hand. Deliberately not an error: the statement is saved
+     * either way, since a partially-linked statement is still better than none and the agent may be mid-repair.
+     *
+     * @param exercise the freshly persisted variant exercise
+     * @return an empty string when everything resolves, otherwise a correction notice
+     */
+    private String unresolvedReferenceReport(ProgrammingExercise exercise) {
+        List<String> unresolved;
+        try {
+            unresolved = programmingExerciseTaskService.findUnresolvedTaskTestReferences(exercise);
+        }
+        catch (Exception e) {
+            return "";
+        }
+        if (unresolved.isEmpty()) {
+            return "";
+        }
+        String available = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId()).stream().map(ProgrammingExerciseTestCase::getTestName).sorted()
+                .collect(Collectors.joining(", "));
+        return " WARNING: these task-marker references match no test and are therefore not linked to grading: " + String.join(", ", unresolved)
+                + ". The only names that exist are [" + available + "]. Copy one of them character for character — do not reword it, and do not add parentheses. "
+                + "If none of them covers the requirement, remove the reference rather than inventing a name, then call updateProblemStatement again.";
     }
 
     /**

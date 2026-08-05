@@ -75,7 +75,8 @@ class ProgrammingVariantToolsBatchEditTest {
             return null;
         }).when(repositoryService).createFile(any(), anyString(), any());
 
-        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", null, null);
+        tools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryService, null, null, "main", null, null, (exerciseArgument, jobArgument) -> {
+        });
     }
 
     @Test
@@ -181,8 +182,9 @@ class ProgrammingVariantToolsBatchEditTest {
         ExerciseVariantJobService jobService = mock(ExerciseVariantJobService.class);
         when(jobService.isCancelRequested(JOB_ID)).thenReturn(false);
 
-        ProgrammingVariantTools crossRepoTools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryServiceLocal, null, null, "main", null,
-                null);
+        ProgrammingVariantTools crossRepoTools = new ProgrammingVariantTools(exercise, null, JOB_ID, jobService, gitService, repositoryServiceLocal, null, null, "main", null, null,
+                (exerciseArgument, jobArgument) -> {
+                });
 
         String result = crossRepoTools.applyEdits(List.of(new BatchEdit("TEMPLATE", "A.java", "Cargo", "Freight"), new BatchEdit("SOLUTION", "A.java", "Cargo", "Freight")));
 
