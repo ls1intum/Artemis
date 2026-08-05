@@ -30,11 +30,11 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
 
     private static final String TEXT_REQUEST = """
             {
-              "exerciseType": "TEXT",
               "problemStatement": "Explain idempotency.",
               "maxPoints": 5,
               "bonusPoints": 0,
-              "gradingInstructions": "Reward precise terminology."
+              "gradingInstructions": "Reward precise terminology.",
+              "exampleSolution": "Repeating the operation has the same effect."
             }
             """;
 
@@ -90,9 +90,19 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
-    void shouldRejectMissingModelingContext() throws Exception {
+    void shouldRejectNonPositiveMaximumPoints() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
-        String requestBody = TEXT_REQUEST.replace("\"TEXT\"", "\"MODELING\"");
+        String requestBody = TEXT_REQUEST.replace("\"maxPoints\": 5", "\"maxPoints\": 0");
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/assessment-criteria/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldRejectNegativeBonusPoints() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        String requestBody = TEXT_REQUEST.replace("\"bonusPoints\": 0", "\"bonusPoints\": -1");
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/assessment-criteria/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isBadRequest());
@@ -108,6 +118,18 @@ class HyperionAssessmentCriteriaGenerationResourceTest extends AbstractSpringInt
                       "gradingScale": "Full credit",
                       "instructionDescription": "The explanation is correct.",
                       "feedback": "Your explanation is correct.",
+                      "usageCount": 1
+                    }, {
+                      "credits": 2.5,
+                      "gradingScale": "Partial credit",
+                      "instructionDescription": "The explanation is partly correct.",
+                      "feedback": "Complete the explanation.",
+                      "usageCount": 1
+                    }, {
+                      "credits": 0,
+                      "gradingScale": "No credit",
+                      "instructionDescription": "The explanation is incorrect.",
+                      "feedback": "Review idempotency.",
                       "usageCount": 1
                     }]
                   }]

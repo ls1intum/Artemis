@@ -340,6 +340,17 @@ describe('ModelingExerciseUpdateComponent', () => {
                 expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(currentModel));
             });
 
+            it('should provide all modeling-specific assessment criteria context', () => {
+                comp.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
+                comp.modelingExercise.exampleSolutionModel = '{"elements":{"class":{}}}';
+                comp.modelingExercise.exampleSolutionExplanation = 'The classes use inheritance.';
+
+                const context = comp.assessmentCriteriaAdditionalContext();
+                expect(context).toContain('Diagram type:\nClassDiagram');
+                expect(context).toContain('Serialized example solution model:\n{"elements":{"class":{}}}');
+                expect(context).toContain('Example solution explanation:\nThe classes use inheritance.');
+            });
+
             it('should show backend error alert and reset saving state on save error', async () => {
                 const error = new HttpErrorResponse({
                     error: {

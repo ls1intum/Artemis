@@ -22,7 +22,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -67,6 +66,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
     readonly exercise = input.required<Exercise>();
     readonly editable = input(true);
+    readonly exampleSolution = input<string>();
+    readonly additionalGenerationContext = input<() => string | undefined>(() => undefined);
     readonly synchronizeExercise = input<() => void>(() => undefined);
     readonly criteriaGenerated = output<void>();
     private instructions: GradingInstruction[] = [];
@@ -80,8 +81,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     canShowGenerationButton(): boolean {
         const exercise = this.exercise();
         const course = exercise.course ?? exercise.exerciseGroup?.exam?.course;
-        const supportedExercise = exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING;
-        return this.hyperionEnabled && supportedExercise && this.editable() && course?.id !== undefined && !!(exercise.isAtLeastEditor || course.isAtLeastEditor);
+        return this.hyperionEnabled && this.editable() && course?.id !== undefined && !!(exercise.isAtLeastEditor || course.isAtLeastEditor);
     }
 
     generationDisabledReason(): string | undefined {
@@ -577,7 +577,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
         this.isGenerating.set(true);
         const gradingInstructions = this.exercise().gradingInstructions;
-        defer(() => this.generationService.generate(this.exercise()))
+        defer(() =>
+            this.generationService.generate(this.exercise(), {
+                exampleSolution: this.exampleSolution(),
+                additionalContext: this.additionalGenerationContext()(),
+            }),
+        )
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isGenerating.set(false)),

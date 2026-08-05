@@ -343,6 +343,13 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
     };
 
+    readonly assessmentCriteriaAdditionalContext = () =>
+        [
+            `Diagram type:\n${this.modelingExercise.diagramType ?? ''}`,
+            `Serialized example solution model:\n${this.modelingExercise.exampleSolutionModel ?? ''}`,
+            `Example solution explanation:\n${this.modelingExercise.exampleSolutionExplanation ?? ''}`,
+        ].join('\n\n');
+
     /**
      * Return to the exercise overview page
      */

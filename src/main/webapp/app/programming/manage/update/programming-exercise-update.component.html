@@ -59,6 +59,8 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [editable]="!isSaving()"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
             />
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">

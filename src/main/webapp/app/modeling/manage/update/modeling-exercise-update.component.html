@@ -200,6 +200,7 @@
                 [exercise]="modelingExercise"
                 [editable]="!isSaving()"
                 [synchronizeExercise]="synchronizeForAssessmentCriteriaGeneration"
+                [additionalGenerationContext]="assessmentCriteriaAdditionalContext"
                 (criteriaGenerated)="editForm.form.markAsDirty()"
             />
         </div>

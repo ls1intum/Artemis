@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedAssessmentInstructionDTO;
 import io.micrometer.observation.annotation.Observed;
 
 /**
- * Generates structured assessment criteria for text and modeling exercises.
+ * Generates structured assessment criteria for exercises.
  */
 @Service
 @Lazy
@@ -49,6 +49,10 @@ public class HyperionAssessmentCriteriaGenerationService {
     private static final String USER_PROMPT = "/prompts/hyperion/generate_assessment_criteria_user.st";
 
     private static final int MAX_DATABASE_VARCHAR_LENGTH = 255;
+
+    private static final int REQUIRED_INSTRUCTION_COUNT = 3;
+
+    private static final double POINT_COMPARISON_TOLERANCE = 0.000_001;
 
     private static final ObjectMapper OBJECT_MAPPER = JsonObjectMapper.get();
 
@@ -84,15 +88,10 @@ public class HyperionAssessmentCriteriaGenerationService {
 
         var outputConverter = new BeanOutputConverter<>(GeneratedCriteriaOutput.class);
         String systemPrompt = templateService.render(SYSTEM_PROMPT, Map.of());
-        String modelingContext = "";
-        if (request.modelingContext() != null) {
-            modelingContext = "Diagram type: " + sanitizeInput(request.modelingContext().diagramType()) + "\nCurrent example solution model:\n"
-                    + sanitizeInput(request.modelingContext().exampleSolutionModel());
-        }
         String userPrompt = templateService.renderObject(USER_PROMPT,
-                Map.of("exerciseType", request.exerciseType().name(), "problemStatement", sanitizeInput(request.problemStatement()), "maxPoints", request.maxPoints(),
-                        "bonusPoints", request.bonusPoints(), "gradingInstructions", sanitizeInput(request.gradingInstructions()), "modelingContext", modelingContext, "format",
-                        outputConverter.getFormat()));
+                Map.of("problemStatement", sanitizeInput(request.problemStatement()), "maxPoints", request.maxPoints(), "bonusPoints", request.bonusPoints(), "gradingInstructions",
+                        sanitizeInput(request.gradingInstructions()), "exampleSolution", sanitizeInput(request.exampleSolution()), "additionalContext",
+                        sanitizeInput(request.additionalContext()), "format", outputConverter.getFormat()));
 
         ChatResponse chatResponse;
         try {
@@ -123,22 +122,23 @@ public class HyperionAssessmentCriteriaGenerationService {
             log.error("Failed to parse generated assessment criteria for course [{}]", course.getId(), e);
             throw generationError("Generated assessment criteria are malformed", "invalidResponse");
         }
-        return mapAndValidate(output);
+        return mapAndValidate(output, request.maxPoints() + request.bonusPoints());
     }
 
-    private AssessmentCriteriaGenerationResponseDTO mapAndValidate(@Nullable GeneratedCriteriaOutput output) {
+    private AssessmentCriteriaGenerationResponseDTO mapAndValidate(@Nullable GeneratedCriteriaOutput output, double expectedTotalPoints) {
         if (output == null || output.criteria() == null || output.criteria().isEmpty()) {
             throw generationError("Generated assessment criteria are empty", "emptyResponse");
         }
 
         List<GeneratedAssessmentCriterionDTO> criteria = new ArrayList<>();
+        double fullCreditSum = 0;
         for (GeneratedCriterionOutput criterion : output.criteria()) {
             if (criterion == null) {
                 throw generationError("Generated assessment criterion is null", "invalidResponse");
             }
             String title = sanitizeInput(criterion.title());
             if (title.isBlank() || title.length() > MAX_DATABASE_VARCHAR_LENGTH || criterion.structuredGradingInstructions() == null
-                    || criterion.structuredGradingInstructions().isEmpty()) {
+                    || criterion.structuredGradingInstructions().size() != REQUIRED_INSTRUCTION_COUNT) {
                 throw generationError("Generated assessment criterion is invalid", "invalidResponse");
             }
 
@@ -146,13 +146,18 @@ public class HyperionAssessmentCriteriaGenerationService {
             for (GeneratedInstructionOutput instruction : criterion.structuredGradingInstructions()) {
                 instructions.add(mapAndValidateInstruction(instruction));
             }
+            validateCreditLevels(instructions);
+            fullCreditSum += instructions.getFirst().credits();
             criteria.add(new GeneratedAssessmentCriterionDTO(title, instructions));
+        }
+        if (!approximatelyEqual(fullCreditSum, expectedTotalPoints)) {
+            throw generationError("Generated full-credit values do not add up to the maximum points including bonus", "invalidResponse");
         }
         return new AssessmentCriteriaGenerationResponseDTO(criteria);
     }
 
     private GeneratedAssessmentInstructionDTO mapAndValidateInstruction(@Nullable GeneratedInstructionOutput instruction) {
-        if (instruction == null || !Double.isFinite(instruction.credits()) || instruction.usageCount() < 0) {
+        if (instruction == null || !Double.isFinite(instruction.credits()) || instruction.credits() < 0 || instruction.usageCount() != 1) {
             throw generationError("Generated assessment instruction has invalid numeric values", "invalidResponse");
         }
         String gradingScale = sanitizeInput(instruction.gradingScale());
@@ -164,6 +169,19 @@ public class HyperionAssessmentCriteriaGenerationService {
         return new GeneratedAssessmentInstructionDTO(instruction.credits(), gradingScale, description, feedback, instruction.usageCount());
     }
 
+    private void validateCreditLevels(List<GeneratedAssessmentInstructionDTO> instructions) {
+        double fullCredit = instructions.get(0).credits();
+        double partialCredit = instructions.get(1).credits();
+        double noCredit = instructions.get(2).credits();
+        if (fullCredit <= 0 || partialCredit <= 0 || partialCredit >= fullCredit || !approximatelyEqual(noCredit, 0)) {
+            throw generationError("Generated assessment criterion has invalid credit levels", "invalidResponse");
+        }
+    }
+
+    private boolean approximatelyEqual(double first, double second) {
+        return Math.abs(first - second) <= POINT_COMPARISON_TOLERANCE;
+    }
+
     private InternalServerErrorAlertException generationError(String message, String errorKey) {
         return new InternalServerErrorAlertException(message, "AssessmentCriteriaGeneration", "AssessmentCriteriaGeneration." + errorKey);
     }
@@ -172,12 +190,12 @@ public class HyperionAssessmentCriteriaGenerationService {
     }
 
     record GeneratedCriterionOutput(@JsonPropertyDescription("Nonempty criterion title, at most 255 characters") String title,
-            @JsonPropertyDescription("One or more ordered grading instructions") List<GeneratedInstructionOutput> structuredGradingInstructions) {
+            @JsonPropertyDescription("Exactly three grading instructions ordered as full credit, partial credit, and no credit") List<GeneratedInstructionOutput> structuredGradingInstructions) {
     }
 
-    record GeneratedInstructionOutput(@JsonPropertyDescription("Finite credits; use negative values for deductions where appropriate") double credits,
-            @JsonPropertyDescription("Nonempty grading scale, at most 255 characters") String gradingScale,
+    record GeneratedInstructionOutput(@JsonPropertyDescription("Finite nonnegative credits") double credits,
+            @JsonPropertyDescription("Translated full-credit, partial-credit, or no-credit label, at most 255 characters") String gradingScale,
             @JsonPropertyDescription("Nonempty instruction description") String instructionDescription, @JsonPropertyDescription("Nonempty useful feedback") String feedback,
-            @JsonPropertyDescription("Nonnegative integer usage limit") int usageCount) {
+            @JsonPropertyDescription("Usage limit; must be exactly 1") int usageCount) {
     }
 }

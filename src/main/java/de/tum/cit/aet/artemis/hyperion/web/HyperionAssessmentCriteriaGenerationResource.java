@@ -42,7 +42,7 @@ public class HyperionAssessmentCriteriaGenerationResource {
     }
 
     /**
-     * Generates structured assessment criteria for an unsaved text or modeling exercise.
+     * Generates structured assessment criteria for an unsaved exercise.
      *
      * @param courseId course containing the exercise
      * @param request  current exercise context

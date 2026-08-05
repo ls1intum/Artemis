@@ -103,6 +103,13 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.canShowGenerationButton()).toBe(false);
         });
 
+        it('should show generation for every exercise type that uses the component', () => {
+            for (const exerciseType of [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING]) {
+                exercise.type = exerciseType;
+                expect(component.canShowGenerationButton()).toBe(true);
+            }
+        });
+
         it('should generate once, replace criteria, preserve general text, and prevent duplicate clicks', () => {
             const response = new Subject<GradingCriterion[]>();
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
@@ -115,6 +122,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             component.generateAssessmentCriteria();
 
             expect(generationService.generate).toHaveBeenCalledTimes(1);
+            expect(generationService.generate).toHaveBeenCalledWith(exercise, { exampleSolution: undefined, additionalContext: undefined });
             expect(component.isGenerating()).toBe(true);
             response.next([generatedCriterion]);
             response.complete();
@@ -203,10 +211,15 @@ describe('GradingInstructionsDetailsComponent', () => {
         it('should generate immediately when no structured criteria exist', () => {
             exercise.gradingCriteria = [];
             generationService.generate.mockReturnValue(of([]));
+            fixture.componentRef.setInput('exampleSolution', 'Example answer');
+            fixture.componentRef.setInput('additionalGenerationContext', () => 'Diagram type: ClassDiagram');
 
             component.generateAssessmentCriteria();
 
-            expect(generationService.generate).toHaveBeenCalledOnce();
+            expect(generationService.generate).toHaveBeenCalledWith(exercise, {
+                exampleSolution: 'Example answer',
+                additionalContext: 'Diagram type: ClassDiagram',
+            });
         });
     });
 

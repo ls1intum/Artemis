@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -54,6 +54,8 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     importOptions = input.required<ImportOptions>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    editable = input(true);
+    criteriaGenerated = output<void>();
 
     submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
     lifecycleComponent = viewChild(ProgrammingExerciseUpdateTimelineComponent);

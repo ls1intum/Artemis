@@ -1,9 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { HyperionAssessmentCriteriaGenerationApi } from 'app/openapi/api/hyperion-assessment-criteria-generation-api';
-import { AssessmentCriteriaGenerationRequest, AssessmentCriteriaGenerationRequestExerciseTypeEnum } from 'app/openapi/model/assessment-criteria-generation-request';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { AssessmentCriteriaGenerationRequest } from 'app/openapi/model/assessment-criteria-generation-request';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
@@ -12,12 +11,17 @@ export interface AssessmentCriteriaGenerationCall {
     request: AssessmentCriteriaGenerationRequest;
 }
 
+export interface AssessmentCriteriaGenerationContext {
+    exampleSolution?: string;
+    additionalContext?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AssessmentCriteriaGenerationService {
     private readonly api = inject(HyperionAssessmentCriteriaGenerationApi);
 
-    generate(exercise: Exercise): Observable<GradingCriterion[]> {
-        const { courseId, request } = this.buildGenerationCall(exercise);
+    generate(exercise: Exercise, context: AssessmentCriteriaGenerationContext = {}): Observable<GradingCriterion[]> {
+        const { courseId, request } = this.buildGenerationCall(exercise, context);
         return this.api.generateAssessmentCriteria(courseId, request).pipe(
             map((response) =>
                 response.criteria.map((generatedCriterion) => {
@@ -38,31 +42,30 @@ export class AssessmentCriteriaGenerationService {
         );
     }
 
-    buildGenerationCall(exercise: Exercise): AssessmentCriteriaGenerationCall {
+    buildGenerationCall(exercise: Exercise, context: AssessmentCriteriaGenerationContext = {}): AssessmentCriteriaGenerationCall {
         const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
         if (courseId === undefined) {
             throw new Error('Assessment criteria generation requires a course');
         }
-        if (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) {
-            throw new Error('Assessment criteria generation supports only text and modeling exercises');
-        }
 
         const request: AssessmentCriteriaGenerationRequest = {
-            exerciseType:
-                exercise.type === ExerciseType.TEXT ? AssessmentCriteriaGenerationRequestExerciseTypeEnum.Text : AssessmentCriteriaGenerationRequestExerciseTypeEnum.Modeling,
             problemStatement: exercise.problemStatement?.trim() ?? '',
             maxPoints: exercise.maxPoints!,
             bonusPoints: exercise.bonusPoints ?? 0,
-            gradingInstructions: exercise.gradingInstructions?.trim() || undefined,
         };
-
-        if (exercise.type === ExerciseType.MODELING) {
-            const modelingExercise = exercise as ModelingExercise;
-            request.modelingContext = {
-                diagramType: String(modelingExercise.diagramType),
-                exampleSolutionModel: modelingExercise.exampleSolutionModel,
-            };
+        const gradingInstructions = exercise.gradingInstructions?.trim();
+        if (gradingInstructions) {
+            request.gradingInstructions = gradingInstructions;
         }
+        const exampleSolution = context.exampleSolution?.trim();
+        if (exampleSolution) {
+            request.exampleSolution = exampleSolution;
+        }
+        const additionalContext = context.additionalContext?.trim();
+        if (additionalContext) {
+            request.additionalContext = additionalContext;
+        }
+
         return { courseId, request };
     }
 }

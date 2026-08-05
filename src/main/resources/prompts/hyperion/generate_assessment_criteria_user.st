@@ -1,18 +1,20 @@
 Generate structured assessment criteria from the following context.
 
 --- BEGIN UNTRUSTED EXERCISE DATA ---
-Exercise type: {{exerciseType}}
-Maximum points: {{maxPoints}}
-Bonus points: {{bonusPoints}}
+Maximum regular points: {{maxPoints}}
+Maximum bonus points: {{bonusPoints}}
 
 Problem statement:
 {{problemStatement}}
 
-General assessment instructions:
+General assessment instructions (may be empty):
 {{gradingInstructions}}
 
-Modeling context (empty for text exercises):
-{{modelingContext}}
+Example solution (may be empty):
+{{exampleSolution}}
+
+Additional exercise-specific context (may be empty):
+{{additionalContext}}
 --- END UNTRUSTED EXERCISE DATA ---
 
 Produce JSON that strictly follows this schema:

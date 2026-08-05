@@ -4,7 +4,6 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,5 +13,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(description = "Generated structured assessment criterion")
 public record GeneratedAssessmentCriterionDTO(@NotBlank @Size(max = 255) @Schema(description = "Criterion title") String title,
-        @NotEmpty @Schema(description = "Ordered grading instructions") List<@Valid GeneratedAssessmentInstructionDTO> structuredGradingInstructions) {
+        @Size(min = 3, max = 3) @Schema(description = "Full-credit, partial-credit, and no-credit instructions, in that order") List<@Valid GeneratedAssessmentInstructionDTO> structuredGradingInstructions) {
 }

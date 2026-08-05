@@ -4,8 +4,7 @@ import { of } from 'rxjs';
 import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
 import { HyperionAssessmentCriteriaGenerationApi } from 'app/openapi/api/hyperion-assessment-criteria-generation-api';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 describe('AssessmentCriteriaGenerationService', () => {
     let service: AssessmentCriteriaGenerationService;
@@ -26,21 +25,32 @@ describe('AssessmentCriteriaGenerationService', () => {
         examExercise.problemStatement = 'Exam problem';
         examExercise.maxPoints = 10;
 
-        expect(service.buildGenerationCall(regularExercise)).toMatchObject({ courseId: 11, request: { exerciseType: 'TEXT', bonusPoints: 0 } });
-        expect(service.buildGenerationCall(examExercise)).toMatchObject({ courseId: 22, request: { exerciseType: 'TEXT' } });
+        expect(service.buildGenerationCall(regularExercise)).toEqual({ courseId: 11, request: { problemStatement: 'Problem', maxPoints: 5, bonusPoints: 0 } });
+        expect(service.buildGenerationCall(examExercise)).toEqual({ courseId: 22, request: { problemStatement: 'Exam problem', maxPoints: 10, bonusPoints: 0 } });
     });
 
-    it('should include the current modeling context', () => {
-        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, { id: 33 }, undefined);
-        exercise.problemStatement = 'Draw a model';
+    it('should include optional example solution and additional context for any exercise type', () => {
+        const exercise = new FileUploadExercise({ id: 33 }, undefined);
+        exercise.problemStatement = ' Upload a report ';
         exercise.maxPoints = 8;
-        exercise.exampleSolutionModel = '{"nodes":[{"id":"unsaved"}]}';
+        exercise.bonusPoints = 2;
+        exercise.gradingInstructions = ' Accept only valid PDF files. ';
 
-        const call = service.buildGenerationCall(exercise);
+        const call = service.buildGenerationCall(exercise, {
+            exampleSolution: ' Example report ',
+            additionalContext: ' Accepted format: PDF ',
+        });
 
-        expect(call.request).toMatchObject({
-            exerciseType: 'MODELING',
-            modelingContext: { diagramType: String(UMLDiagramType.ClassDiagram), exampleSolutionModel: exercise.exampleSolutionModel },
+        expect(call).toEqual({
+            courseId: 33,
+            request: {
+                problemStatement: 'Upload a report',
+                maxPoints: 8,
+                bonusPoints: 2,
+                gradingInstructions: 'Accept only valid PDF files.',
+                exampleSolution: 'Example report',
+                additionalContext: 'Accepted format: PDF',
+            },
         });
     });
 
@@ -59,12 +69,17 @@ describe('AssessmentCriteriaGenerationService', () => {
         exercise.problemStatement = 'Problem';
         exercise.maxPoints = 2;
 
-        service.generate(exercise).subscribe((criteria) => {
+        service.generate(exercise, { exampleSolution: 'Example' }).subscribe((criteria) => {
             expect(criteria[0].title).toBe('Correctness');
             expect(criteria[0].id).toBeUndefined();
             expect(criteria[0].structuredGradingInstructions[0]).toMatchObject({ credits: 2, usageCount: 1 });
             expect(criteria[0].structuredGradingInstructions[0].id).toBeUndefined();
         });
-        expect(api.generateAssessmentCriteria).toHaveBeenCalledWith(44, expect.objectContaining({ exerciseType: 'TEXT' }));
+        expect(api.generateAssessmentCriteria).toHaveBeenCalledWith(44, {
+            problemStatement: 'Problem',
+            maxPoints: 2,
+            bonusPoints: 0,
+            exampleSolution: 'Example',
+        });
     });
 });

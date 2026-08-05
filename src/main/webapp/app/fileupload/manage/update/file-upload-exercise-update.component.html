@@ -225,7 +225,13 @@
         <jhi-presentation-score-checkbox [exercise]="fileUploadExercise()" />
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise()" />
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="fileUploadExercise()"
+                [editable]="!isSaving()"
+                [exampleSolution]="fileUploadExercise().exampleSolution"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
         </div>
     </div>
     <!-- notificationText signal requires manual two-way binding unwrapping if component acts on prop -->

@@ -3,12 +3,8 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import { AssessmentCriteriaModelingContext } from './assessment-criteria-modeling-context';
-
 /** Context used to generate structured assessment criteria. */
 export interface AssessmentCriteriaGenerationRequest {
-    /** Supported exercise type. */
-    exerciseType: AssessmentCriteriaGenerationRequestExerciseTypeEnum;
     /** Current problem statement. */
     problemStatement: string;
     /** Maximum regular score. */
@@ -17,13 +13,8 @@ export interface AssessmentCriteriaGenerationRequest {
     bonusPoints: number;
     /** General assessment instructions. */
     gradingInstructions?: string;
-    /** Required context for modeling exercises. */
-    modelingContext?: AssessmentCriteriaModelingContext;
+    /** Current example solution, if available. */
+    exampleSolution?: string;
+    /** Optional exercise-specific context appended to the default prompt. */
+    additionalContext?: string;
 }
-
-export type AssessmentCriteriaGenerationRequestExerciseTypeEnum = 'TEXT' | 'MODELING';
-
-export const AssessmentCriteriaGenerationRequestExerciseTypeEnum = {
-    Text: 'TEXT' as const,
-    Modeling: 'MODELING' as const,
-} as const;

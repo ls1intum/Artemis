@@ -31,9 +31,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.hyperion.dto.AssessmentCriteriaExerciseType;
 import de.tum.cit.aet.artemis.hyperion.dto.AssessmentCriteriaGenerationRequestDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.AssessmentCriteriaModelingContextDTO;
 
 class HyperionAssessmentCriteriaGenerationServiceTest {
 
@@ -44,16 +42,23 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
                   "title": "Correctness",
                   "structuredGradingInstructions": [
                     {
-                      "credits": 2.0,
+                      "credits": 5.0,
                       "gradingScale": "Full credit",
                       "instructionDescription": "The answer is correct and complete.",
                       "feedback": "Your answer is correct and complete.",
                       "usageCount": 1
                     },
                     {
-                      "credits": -1.0,
-                      "gradingScale": "Major error",
-                      "instructionDescription": "The central concept is incorrect.",
+                      "credits": 2.5,
+                      "gradingScale": "Partial credit",
+                      "instructionDescription": "The answer is partly correct.",
+                      "feedback": "Complete the missing parts.",
+                      "usageCount": 1
+                    },
+                    {
+                      "credits": 0.0,
+                      "gradingScale": "No credit",
+                      "instructionDescription": "The answer is incorrect.",
                       "feedback": "Review the central concept.",
                       "usageCount": 1
                     }
@@ -97,26 +102,26 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
 
         assertThat(response.criteria()).hasSize(1);
         assertThat(response.criteria().getFirst().title()).isEqualTo("Correctness");
-        assertThat(response.criteria().getFirst().structuredGradingInstructions()).extracting("credits").containsExactly(2.0, -1.0);
+        assertThat(response.criteria().getFirst().structuredGradingInstructions()).extracting("credits").containsExactly(5.0, 2.5, 0.0);
         verify(chatModel, times(1)).call(any(Prompt.class));
         verify(llmTokenUsageService).trackChatResponseTokenUsage(any(), eq(LLMServiceType.HYPERION), eq(HyperionAssessmentCriteriaGenerationService.GENERATION_PIPELINE_ID), any());
     }
 
     @Test
-    void generateAssessmentCriteriaIncludesModelingContextAndScoringRulesButNoExistingCriteria() {
+    void generateAssessmentCriteriaIncludesScoringRulesAndAllProvidedContext() {
         mockResponse(VALID_RESPONSE);
         Course course = course(23L);
-        var request = new AssessmentCriteriaGenerationRequestDTO(AssessmentCriteriaExerciseType.MODELING, "Draw a class diagram", 10.0, 2.0, "Reward clear names",
-                new AssessmentCriteriaModelingContextDTO("ClassDiagram", "{\"nodes\":[{\"id\":\"unsaved-node\"}]}"));
+        var request = new AssessmentCriteriaGenerationRequestDTO("Draw a class diagram", 3.0, 2.0, "Reward correct relationships", "{\"nodes\":[{\"id\":\"example-node\"}]}",
+                "Diagram type: ClassDiagram\nExample explanation: Use inheritance\nCurrent example model: unsaved-node");
 
         service.generateAssessmentCriteria(course, request);
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(promptCaptor.capture());
         String promptText = promptCaptor.getValue().getInstructions().stream().map(message -> message.getText()).collect(Collectors.joining("\n"));
-        assertThat(promptText).contains("same language as the problem statement", "intended maximum normal score", "Bonus points: 2.0", "ClassDiagram", "unsaved-node",
-                "Reward clear names");
-        assertThat(promptText).doesNotContain("existing criteria", "Current structured criteria");
+        assertThat(promptText).contains("same language as the problem statement", "exactly three grading instructions", "Maximum regular points: 3.0", "Maximum bonus points: 2.0",
+                "Reward correct relationships", "example-node", "ClassDiagram", "Use inheritance", "unsaved-node");
+        assertThat(promptText).doesNotContain("Exercise type");
     }
 
     @Test
@@ -152,6 +157,28 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
     }
 
     @Test
+    void generateAssessmentCriteriaRejectsNegativeCreditsAndInvalidCreditLevels() {
+        mockResponse(VALID_RESPONSE.replace("\"credits\": 2.5", "\"credits\": -1"));
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), textRequest())).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("invalid");
+
+        mockResponse(VALID_RESPONSE.replace("\"credits\": 0.0", "\"credits\": 1.0"));
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), textRequest())).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("invalid");
+    }
+
+    @Test
+    void generateAssessmentCriteriaRejectsWrongInstructionCountAndFullCreditSum() {
+        mockResponse(VALID_RESPONSE.replaceFirst(",\\s*\\{\\s*\"credits\": 0\\.0[\\s\\S]*?\"usageCount\": 1\\s*}", ""));
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), textRequest())).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("invalid");
+
+        mockResponse(VALID_RESPONSE.replace("\"credits\": 5.0", "\"credits\": 4.0"));
+        assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), textRequest())).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("maximum points");
+    }
+
+    @Test
     void generateAssessmentCriteriaRejectsGeneratedIds() {
         mockResponse(VALID_RESPONSE.replace("\"title\": \"Correctness\"", "\"id\": 123, \"title\": \"Correctness\""));
 
@@ -171,7 +198,7 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
     }
 
     private AssessmentCriteriaGenerationRequestDTO textRequest() {
-        return new AssessmentCriteriaGenerationRequestDTO(AssessmentCriteriaExerciseType.TEXT, "Explain idempotency.", 5.0, 0.0, "Be precise", null);
+        return new AssessmentCriteriaGenerationRequestDTO("Explain idempotency.", 5.0, 0.0, "Be precise.", "An idempotent operation can be repeated.", null);
     }
 
     private Course course(long id) {

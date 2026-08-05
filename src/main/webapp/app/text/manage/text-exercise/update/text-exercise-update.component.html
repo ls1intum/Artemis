@@ -211,7 +211,13 @@
         <jhi-presentation-score-checkbox [exercise]="textExercise" />
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise" [editable]="!isSaving()" (criteriaGenerated)="editForm.form.markAsDirty()" />
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="textExercise"
+                [editable]="!isSaving()"
+                [exampleSolution]="textExercise.exampleSolution"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
         </div>
     </div>
     <jhi-form-footer
