@@ -45,6 +45,7 @@
     tum-ui-tooltip-content,
     .tum-ui-btn,
     .tum-ui-input,
+    .tum-ui-popover-panel,
     .tum-ui-table
 ) {
     font-family: var(--tumaet-ui-font-family);
