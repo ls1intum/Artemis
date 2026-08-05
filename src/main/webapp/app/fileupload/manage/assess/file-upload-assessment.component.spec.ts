@@ -686,7 +686,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.onCancelAssessment();
 
-            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id);
+            expect(cancelSpy).toHaveBeenCalledWith(component.submission()!.id, component.result()?.id);
         });
 
         it('should not cancel assessment when user declines confirmation', () => {
@@ -724,10 +724,16 @@ describe('FileUploadAssessmentComponent', () => {
             nextSubmission.participation = nextParticipation;
             vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(nextSubmission));
             const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+            component.correctionRound.set(1);
 
             component.assessNext();
 
-            expect(navigateSpy).toHaveBeenCalled();
+            // Assert the exact navigation contract: the correction round has to travel with the next submission, and it
+            // has to be merged rather than replace the query string, otherwise testRun is dropped on the way.
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', '123', 'file-upload-exercises', '20', 'submissions', '999', 'assessment'], {
+                queryParams: { 'correction-round': 1 },
+                queryParamsHandling: 'merge',
+            });
             expect(component.isLoading()).toBe(false);
         });
 

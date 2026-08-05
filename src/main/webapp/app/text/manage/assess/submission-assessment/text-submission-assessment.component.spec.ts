@@ -30,6 +30,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { Location } from '@angular/common';
+import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
@@ -234,6 +236,21 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should use jhi-assessment-layout', () => {
         const sharedLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(sharedLayout).not.toBeNull();
+    });
+
+    it('should keep the query parameters when rewriting the new-assessment url', () => {
+        // The correction round lives only in the URL. Rebuilding it without the query parameters turned a second-round
+        // assessment into a first-round one on the next reload, which is the core of issue #13396.
+        const router = TestBed.inject(Router);
+        const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as any);
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+        component['activatedRoute'] = { routeConfig: { path: NEW_ASSESSMENT_PATH } } as any;
+        component['route'] = { snapshot: { queryParams: { 'correction-round': '1', testRun: 'false' } } } as any;
+
+        component['updateUrlIfNeeded']();
+
+        expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(expect.anything(), { queryParams: { 'correction-round': '1', testRun: 'false' } });
+        expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
     });
 
     describe('when assessment is not possible yet', () => {
@@ -445,7 +462,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(windowConfirmStub).toHaveBeenCalledOnce();
         expect(navigateBackSpy).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
+        expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id, component.result()?.id);
     });
 
     it('should go to next submission', async () => {
@@ -469,7 +486,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             'new',
             'assessment',
         ];
-        const queryParams = { queryParams: { 'correction-round': 0 } };
+        const queryParams = { queryParams: { 'correction-round': 0 }, queryParamsHandling: 'merge' };
 
         component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
