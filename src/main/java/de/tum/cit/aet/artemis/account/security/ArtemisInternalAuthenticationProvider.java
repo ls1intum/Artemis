@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -61,7 +60,9 @@ public class ArtemisInternalAuthenticationProvider implements ArtemisAuthenticat
         }
         final var user = optionalUser.get();
         if (user.isBot()) {
-            throw new AuthenticationServiceException("Bot users cannot authenticate interactively");
+            // A refusal, not a system problem: AuthenticationServiceException means the request could not be processed, and
+            // the login endpoint answers that with a 500 on purpose.
+            throw new BadCredentialsException("Bot users cannot authenticate interactively");
         }
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User " + user.getLogin() + " was not activated");

@@ -320,7 +320,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var authentication = new UsernamePasswordAuthenticationToken(botUsername, USER_PASSWORD);
 
-        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("Bot users cannot authenticate interactively");
+        // The type carries the meaning: a bot is refused, which the login endpoint answers with 401. As an
+        // AuthenticationServiceException - "the request could not be processed" - it reached the caller as a 500 instead.
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Bot users cannot authenticate interactively");
     }
 
     @Test
