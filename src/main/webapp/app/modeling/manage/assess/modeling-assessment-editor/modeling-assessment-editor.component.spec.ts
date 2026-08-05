@@ -29,9 +29,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -46,6 +44,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -63,8 +62,6 @@ describe('ModelingAssessmentEditorComponent', () => {
     let paramMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
-        // jsdom's ApollonEditor fires modelChange with empty assessments on every model update under
-        // signal-driven rendering, which would wipe the parent's referencedFeedback mid-test.
         vi.spyOn(ApollonEditor.prototype, 'subscribeToModelChange').mockReturnValue(undefined as any);
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
@@ -73,7 +70,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 ModelingAssessmentEditorComponent,
                 MockComponent(AssessmentLayoutComponent),
                 MockComponent(ModelingAssessmentComponent),
-                MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
             ],
             providers: [
@@ -100,7 +96,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(TextAssessmentAnalytics),
-                MockProvider(DialogService),
+                MockProvider(DeleteDialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -189,7 +185,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 result: component.result(),
             });
             modelingSubmissionSpy.mockRestore();
-            // called twice, since the feedback is additionally verified during the component initialization
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
             expect(component.assessmentsAreValid()).toBe(true);
@@ -220,7 +215,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
             expect(component.submission()).toBeUndefined();
-            // the explanation stays on the page instead of fading with a toast and leaving the misleading state behind
             expect(errorSpy).not.toHaveBeenCalled();
         });
 
@@ -397,9 +391,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         });
 
         describe('when the exam is not over yet', () => {
-            // The exam can re-close while tutors are already correcting, e.g. when an instructor grants a student more
-            // working time. The server then rejects the write and says when assessment is possible; without this the
-            // tutor would only see a generic "could not save" or an untranslated key.
             const notPossibleYetResponse = () =>
                 new HttpErrorResponse({
                     status: 403,
@@ -509,7 +500,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
         } else {
-            // Handle all other errors
             expect(errorSpy).toHaveBeenCalledOnce();
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
         }

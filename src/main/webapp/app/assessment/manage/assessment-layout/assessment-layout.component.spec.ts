@@ -91,6 +91,15 @@ describe('AssessmentLayoutComponent', () => {
         expect(assessmentNoteComponent).toBeNull();
     });
 
+    it('should let a specialized workspace place the assessment note itself', () => {
+        fixture.componentRef.setInput('submission', { id: 1 } as Submission);
+        fixture.componentRef.setInput('showAssessmentNote', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const assessmentNoteComponent = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
+        expect(assessmentNoteComponent).toBeNull();
+    });
+
     it('should hide jhi-assessment-note when submission is cleared after navigating to next submission', () => {
         fixture.componentRef.setInput('submission', { id: 1 } as Submission);
         fixture.changeDetectorRef.detectChanges();

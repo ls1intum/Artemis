@@ -1,0 +1,55 @@
+:host {
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.unreferenced-feedback {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    &__header {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+
+        h3 {
+            margin: 0;
+            color: var(--tumaet-ui-text-color);
+            font-size: 1rem;
+            font-weight: 650;
+        }
+    }
+
+    &__empty {
+        width: 100%;
+        margin: 0;
+        padding: 0.75rem;
+        border: 1px solid var(--tumaet-ui-border-color);
+        border-radius: var(--tumaet-ui-radius-md);
+        background: var(--tumaet-ui-hover-background);
+        color: var(--tumaet-ui-muted-color);
+        line-height: 1.45;
+        text-align: left;
+        overflow-wrap: anywhere;
+    }
+
+    &__grid {
+        display: grid;
+        min-width: 0;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+    }
+
+    &__item,
+    &__item > jhi-unreferenced-feedback-detail {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+}

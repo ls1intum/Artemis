@@ -21,8 +21,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 class StubModelingEditorComponent {
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
+    problemStatement = input<string>();
     readOnly = input(false);
     withExplanation = input(false);
+    savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
     explanation = model<string>('');
 
     getCurrentModel(): UMLModel {
@@ -165,6 +167,7 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(modelingEditor.componentInstance.withExplanation()).toBe(true);
             expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
+            expect(modelingEditor.componentInstance.problemStatement()).toBe(mockExercise.problemStatement);
         });
 
         it('should show problem statement if there is any', () => {

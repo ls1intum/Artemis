@@ -18,7 +18,7 @@
             @if (leftPanel()) {
                 <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
                     <!-- cdkScrollable registers the panel with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
-                    <div class="flex-grow-1 overflow-y-auto p-2" cdkScrollable>
+                    <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
                         <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
                     </div>
                 </div>
@@ -97,7 +97,7 @@
                 </p-tablist>
             </p-tabs>
         }
-        <div class="flex-grow-1 overflow-y-auto p-2" cdkScrollable>
+        <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel() || activeSingleIndex() !== 0" cdkScrollable>
             @if (panels()[activeSingleIndex()]) {
                 <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
             }

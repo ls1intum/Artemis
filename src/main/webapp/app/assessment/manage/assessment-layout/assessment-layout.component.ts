@@ -44,6 +44,7 @@ export class AssessmentLayoutComponent {
     readonly complaint = input<Complaint>();
     readonly exercise = input<Exercise>();
     readonly submission = input<Submission>();
+    readonly showAssessmentNote = input(true);
     readonly hasAssessmentDueDatePassed = input.required<boolean>();
     readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises
     readonly highlightDifferences = model(false);

@@ -1,5 +1,6 @@
-<div class="d-flex flex-column">
+<main class="modeling-assessment-page">
     <jhi-assessment-layout
+        class="modeling-assessment-page__layout"
         (navigateBack)="navigateBack()"
         [isLoading]="isLoading()"
         [nextSubmissionBusy]="nextSubmissionBusy()"
@@ -13,6 +14,7 @@
         [complaint]="complaint()"
         [exercise]="modelingExercise()!"
         [submission]="submission()"
+        [showAssessmentNote]="false"
         [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
         (save)="onSaveAssessment()"
         (onSubmit)="onSubmitAssessment()"
@@ -32,13 +34,14 @@
             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
         />
         @if (submission()) {
-            <div class="editor-container flex-grow-1">
-                @if (submission()) {
+            <jhi-assessment-workspace
+                class="modeling-assessment-page__workspace"
+                storageKey="modeling-submission-assessment-split"
+                [detailsLabelKey]="'artemisApp.assessment.feedbackAndNotes'"
+            >
+                <div assessmentWorkspaceCanvas class="modeling-assessment-page__canvas">
                     <jhi-modeling-assessment
                         [diagramType]="modelingExercise()?.diagramType"
-                        [maxScore]="modelingExercise()?.maxPoints || 0"
-                        [maxBonusPoints]="modelingExercise()?.bonusPoints || 0"
-                        [totalScore]="totalScore()"
                         [umlModel]="model()!"
                         [readOnly]="readOnly"
                         [resultFeedbacks]="result()?.feedbacks || []"
@@ -47,57 +50,63 @@
                         [explanation]="submission()?.explanationText || ''"
                         [highlightDifferences]="highlightDifferences"
                         [elementCounts]="submission()?.similarElements"
-                        [resizeOptions]="resizeOptions"
-                        [course]="course()"
                     />
-                }
-                @if (modelingExercise()) {
-                    <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise()!" [collapsed]="false" />
-                }
-            </div>
-            <div class="row mt-3">
-                @if (result() && result()!.id) {
-                    <jhi-unreferenced-feedback
-                        [feedbacks]="unreferencedFeedback()"
-                        (feedbacksChange)="unreferencedFeedback.set($event)"
-                        [feedbackSuggestions]="unreferencedFeedbackSuggestions"
-                        (feedbacksChange)="validateFeedback()"
-                        [readOnly]="readOnly"
-                        [highlightDifferences]="highlightDifferences"
-                        (onAcceptSuggestion)="removeSuggestion($event)"
-                        (onDiscardSuggestion)="removeSuggestion($event)"
-                        [resultId]="result()!.id!"
-                    />
-                }
-                @if ((hasAutomaticFeedback() || highlightMissingFeedback()) && !result()?.completionDate) {
-                    <div class="col-md-6">
-                        <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
-                        @if (hasAutomaticFeedback()) {
-                            <div class="row">
-                                <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
-                                <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
-                            </div>
-                        }
-                        @if (highlightMissingFeedback()) {
-                            <div class="row">
-                                <div class="mx-3 mb-2 highlighting-item color-red"></div>
-                                <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
+                </div>
+
+                <div assessmentWorkspaceInstructions>
+                    @if (modelingExercise()) {
+                        <jhi-assessment-instructions [readOnly]="readOnly" [exercise]="modelingExercise()!" [showAssessmentInstructions]="true" [showExerciseTitle]="false" />
+                    }
+                </div>
+
+                <div assessmentWorkspaceDetails class="modeling-assessment-page__details">
+                    @if (result()?.id) {
+                        <jhi-unreferenced-feedback
+                            [feedbacks]="unreferencedFeedback()"
+                            (feedbacksChange)="unreferencedFeedback.set($event); validateFeedback()"
+                            [feedbackSuggestions]="unreferencedFeedbackSuggestions"
+                            [readOnly]="readOnly"
+                            [highlightDifferences]="highlightDifferences"
+                            (onAcceptSuggestion)="removeSuggestion($event)"
+                            (onDiscardSuggestion)="removeSuggestion($event)"
+                            [resultId]="result()!.id!"
+                        />
+                    }
+
+                    <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
+
+                    @if ((hasAutomaticFeedback() || highlightMissingFeedback()) && !result()?.completionDate) {
+                        <section class="modeling-assessment-highlights">
+                            <h3 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h3>
+                            @if (hasAutomaticFeedback()) {
+                                <div class="modeling-assessment-highlights__item">
+                                    <span class="modeling-assessment-highlights__swatch color-cyan" aria-hidden="true"></span>
+                                    <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
+                                </div>
+                            }
+                            @if (highlightMissingFeedback()) {
+                                <div class="modeling-assessment-highlights__item">
+                                    <span class="modeling-assessment-highlights__swatch color-red" aria-hidden="true"></span>
+                                    <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
+                                </div>
+                            }
+                        </section>
+                    }
+                </div>
+            </jhi-assessment-workspace>
         } @else {
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
                 <jhi-assessment-not-possible-yet [reason]="assessmentNotPossibleYetReason" />
             } @else if (!loadingInitialSubmission()) {
-                <div class="alert alert-warning text-center mt-4" role="alert">
-                    <p jhiTranslate="artemisApp.modelingAssessment.notFound"></p>
-                    <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                <div class="modeling-assessment-not-found mt-4">
+                    <tum-ui-message severity="warn">
+                        <span jhiTranslate="artemisApp.modelingAssessment.notFound"></span>
+                    </tum-ui-message>
+                    <a [routerLink]="exerciseDashboardLink()" tumUiButton severity="info" size="small" class="assessment-dashboard">
+                        <span jhiTranslate="entity.action.exerciseDashboard"></span>
                     </a>
                 </div>
             }
         }
     </jhi-assessment-layout>
-</div>
+</main>

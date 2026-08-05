@@ -1,0 +1,17 @@
+:host {
+    display: block;
+    min-width: 0;
+}
+
+.assessment-instructions__grading {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--apollon-chrome-border, var(--tumaet-ui-border-color));
+}
+
+.assessment-instructions__exercise-title {
+    margin: 1rem 0 0.35rem;
+    color: var(--apollon-foreground, var(--tumaet-ui-text-color));
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.35;
+}

@@ -41,7 +41,7 @@ describe('ExerciseSplitPanelComponent', () => {
             .overrideComponent(ExerciseSplitPanelComponent, {
                 set: {
                     template: `
-                        <jhi-resizable-panels>
+                        <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING">
                             @if (showEditorPanel()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
@@ -87,6 +87,15 @@ describe('ExerciseSplitPanelComponent', () => {
         accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
 
         expect(component.irisPanelStartsCollapsed()).toBe(false);
+    });
+
+    it('should make the modeling editor panel full bleed', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(panels.flushLeftPanel()).toBe(true);
     });
 
     it('navigates only when the target route identity changes, not when the participation object is replaced (prevents the navigate-thrash loop on incoming results, #12976)', () => {

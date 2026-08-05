@@ -15,14 +15,12 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -47,6 +45,7 @@ class StubModelingEditorComponent {
     scrollLock = input<boolean>(false);
     explanation = input<string>();
     withExplanation = input<boolean>(false);
+    tile = input<boolean>(false);
 
     getCurrentModel(): UMLModel {
         return {
@@ -63,19 +62,16 @@ class StubModelingEditorComponent {
 
 @Component({
     selector: 'jhi-modeling-assessment',
-    template: '',
+    template: ` <ng-content /> `,
 })
 class StubModelingAssessmentComponent {
     resultFeedbacks = input<Feedback[]>([]);
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     readOnly = input<boolean>(false);
-    maxScore = input<number>(0);
-    maxBonusPoints = input(0);
-    totalScore = input<number>(0);
     highlightedElements = input<Map<string, string>>();
-    course = input<any>();
     explanation = input<string>();
+    scrollLock = input(false);
 }
 
 describe('Example Modeling Submission Component', () => {
@@ -145,7 +141,6 @@ describe('Example Modeling Submission Component', () => {
                 ExampleModelingSubmissionComponent,
                 MockTranslateValuesDirective,
                 MockComponent(FaLayersComponent),
-                MockComponent(CollapsableAssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockComponent(ScoreDisplayComponent),
             ],
@@ -181,17 +176,23 @@ describe('Example Modeling Submission Component', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        // GIVEN
-        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
-        const exerciseService = TestBed.inject(ExerciseService);
-        vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+    it('places the assessment rationale in the support pane instead of overlaying the model or submission explanation', () => {
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.assessmentMode.set(true);
+        comp.selectedMode.set(ExampleSubmissionMode.READ_AND_CONFIRM);
+        comp.readOnly.set(false);
+        comp.toComplete.set(false);
+        comp.assessmentExplanation.set('Explain the assessment reasoning');
 
-        // WHEN
         fixture.detectChanges();
 
-        // THEN
-        expect(comp).toBe(comp);
+        const assessment = fixture.nativeElement.querySelector('jhi-modeling-assessment') as HTMLElement;
+        const details = fixture.nativeElement.querySelector('[assessmentworkspacedetails]') as HTMLElement;
+        const rationale = details.querySelector('.example-assessment-rationale');
+        expect(rationale).not.toBeNull();
+        expect(assessment.querySelector('.example-assessment-rationale')).toBeNull();
+        expect(rationale?.querySelector('textarea')).not.toBeNull();
     });
 
     it('should handle a new submission', () => {
@@ -200,25 +201,20 @@ describe('Example Modeling Submission Component', () => {
             paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: 'new' }),
         } as ActivatedRouteSnapshot;
 
-        // WHEN
         fixture.detectChanges();
 
-        // THEN
         expect(comp.isNewSubmission()).toBe(true);
         expect(comp.exampleSubmission()).toEqual(new ExampleSubmission());
     });
 
     it('should upsert a new modeling submission', () => {
-        // GIVEN
         const alertSpy = vi.spyOn(alertService, 'success');
         const serviceSpy = vi.spyOn(service, 'create').mockImplementation((newExampleSubmission) => of(new HttpResponse({ body: newExampleSubmission })));
         comp.isNewSubmission.set(true);
         comp.exercise.set(exercise);
-        // WHEN
-        fixture.detectChanges(); // Needed for viewChild signals to resolve.
+        fixture.detectChanges();
         comp.upsertExampleModelingSubmission();
 
-        // THEN
         expect(comp.isNewSubmission()).toBe(false);
         expect(serviceSpy).toHaveBeenCalledOnce();
 
@@ -227,7 +223,6 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should upsert an existing modeling submission', async () => {
-        // GIVEN
         vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
         const alertSpy = vi.spyOn(alertService, 'success');
         const serviceSpy = vi.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
@@ -239,14 +234,11 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
 
-        // WHEN
         fixture.detectChanges();
         comp.upsertExampleModelingSubmission();
 
-        // Wait for async operations to complete
         await fixture.whenStable();
 
-        // THEN
         expect(comp.isNewSubmission()).toBe(false);
         expect(serviceSpy).toHaveBeenCalledTimes(2);
         expect(modelingAssessmentServiceSpy).toHaveBeenCalledOnce();
@@ -255,38 +247,31 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should check assessment', () => {
-        // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const assessExampleSubmissionSpy = vi.spyOn(tutorParticipationService, 'assessExampleSubmission');
         const exerciseId = 5;
         comp.exampleSubmission.set(exampleSubmission);
         comp.exerciseId = exerciseId;
 
-        // WHEN
         comp.checkAssessment();
 
-        // THEN
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(exampleSubmission, exerciseId);
+        expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(expect.objectContaining({ submission: expect.objectContaining({ latestResult: expect.any(Result) }) }), exerciseId);
     });
 
     it('should check invalid assessment', () => {
-        // GIVEN
         const alertSpy = vi.spyOn(alertService, 'error');
         comp.exampleSubmission.set(exampleSubmission);
 
-        // WHEN
         comp.onReferencedFeedbackChanged([mockFeedbackInvalid]);
         comp.checkAssessment();
 
-        // THEN
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessment.invalidAssessments');
     });
 
     it('should read and understood', () => {
-        // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const dto: TutorParticipationDTO = {
             id: 1,
@@ -300,77 +285,62 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
 
-        // WHEN
         fixture.detectChanges();
         comp.readAndUnderstood();
 
-        // THEN
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.readSuccessfully');
         expect(routerSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle referenced feedback change', () => {
-        // GIVEN
         const feedbacks = [mockFeedbackWithReference];
         comp.exercise.set(exercise);
 
-        // WHEN
         comp.onReferencedFeedbackChanged(feedbacks);
 
-        // THEN
         expect(comp.feedbackChanged).toBe(true);
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(comp.referencedFeedback()).toEqual(feedbacks);
     });
 
     it('should handle unreferenced feedback change', () => {
-        // GIVEN
         const feedbacks = [mockFeedbackWithoutReference];
         comp.exercise.set(exercise);
 
-        // WHEN
         comp.onUnReferencedFeedbackChanged(feedbacks);
 
-        // THEN
         expect(comp.feedbackChanged).toBe(true);
         expect(comp.assessmentsAreValid()).toBe(true);
         expect(comp.unreferencedFeedback()).toEqual(feedbacks);
     });
 
     it('should show submission', () => {
-        // GIVEN
         const feedbacks = [mockFeedbackWithReference];
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
 
-        // WHEN
         comp.onReferencedFeedbackChanged(feedbacks);
         comp.showSubmission();
 
-        // THEN
         expect(comp.feedbackChanged).toBe(false);
         expect(comp.assessmentMode()).toBe(false);
         expect(comp.totalScore()).toBe(mockFeedbackWithReference.credits);
     });
 
     it('should create error alert if assessment is invalid', () => {
-        // GIVEN
         const alertSpy = vi.spyOn(alertService, 'error');
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.referencedFeedback.set([mockFeedbackInvalid]);
 
-        // WHEN
         comp.saveExampleAssessment();
 
-        // THEN
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessment.invalidAssessments');
     });
 
     it('should update assessment explanation and example assessment', () => {
-        // GIVEN
         comp.exercise.set(exercise);
         comp.exampleSubmission.set({ ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' });
         comp.referencedFeedback.set([mockFeedbackWithReference]);
@@ -382,17 +352,14 @@ describe('Example Modeling Submission Component', () => {
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         vi.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
 
-        // WHEN
         comp.saveExampleAssessment();
 
-        // THEN
         expect(comp.result()).toBe(result);
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
     });
 
     it('should update assessment explanation but create error message on example assessment update failure', () => {
-        // GIVEN
         comp.exercise.set(exercise);
         comp.exampleSubmission.set({ ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' });
         comp.referencedFeedback.set([mockFeedbackWithReference, mockFeedbackWithoutReference]);
@@ -402,94 +369,36 @@ describe('Example Modeling Submission Component', () => {
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         vi.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        // WHEN
         comp.saveExampleAssessment();
 
-        // THEN
         expect(comp.result()).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
     });
 
     it('should mark all feedback correct', () => {
-        // GIVEN
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.referencedFeedback.set([mockFeedbackInvalid]);
         comp.assessmentMode.set(true);
 
-        // WHEN
         comp.markAllFeedbackToCorrect();
 
-        // THEN
         expect(comp.referencedFeedback().every((feedback) => feedback.correctionStatus === 'CORRECT')).toBe(true);
     });
 
     it('should mark all feedback wrong', () => {
-        // GIVEN
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
         comp.referencedFeedback.set([mockFeedbackInvalid]);
         comp.assessmentMode.set(true);
 
-        // WHEN
         comp.markWrongFeedback([mockFeedbackCorrectionError]);
 
-        // THEN
         expect(comp.referencedFeedback()[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
     });
 
-    it('should create success alert on example assessment update', () => {
-        // GIVEN
-        const result = { id: 1 } as Result;
-        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
-        vi.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
-        const alertSpy = vi.spyOn(alertService, 'success');
-
-        comp.exercise.set(exercise);
-        comp.exampleSubmission.set(exampleSubmission);
-        comp.referencedFeedback.set([mockFeedbackWithReference]);
-
-        // WHEN
-        comp.saveExampleAssessment();
-
-        // THEN
-        comp.result.set(result);
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
-    });
-
-    it('should create error alert on example assessment update failure', () => {
-        // GIVEN
-        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
-        vi.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
-        const alertSpy = vi.spyOn(alertService, 'error');
-
-        comp.exercise.set(exercise);
-        comp.exampleSubmission.set(exampleSubmission);
-        comp.referencedFeedback.set([mockFeedbackWithReference]);
-
-        // WHEN
-        comp.saveExampleAssessment();
-
-        // THEN
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
-    });
-
-    it('should handle explanation change', () => {
-        // GIVEN
-        const explanation = 'New Explanation';
-
-        // WHEN
-        comp.explanationChanged(explanation);
-
-        // THEN
-        expect(comp.explanationText()).toBe(explanation);
-    });
-
     it('should show assessment', async () => {
-        // GIVEN
         const result = { id: 1, feedbacks: [] } as Result;
 
         vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
@@ -499,16 +408,11 @@ describe('Example Modeling Submission Component', () => {
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);
 
-        // WHEN
         fixture.detectChanges();
         await fixture.whenStable();
 
-        // showAssessment() checks if model changed using modelingEditor().getCurrentModel()
-        // Since the stub's getCurrentModel returns a default model and umlModel is undefined,
-        // modelChanged() returns false and no update is triggered
         comp.showAssessment();
 
-        // THEN
         expect(assessmentSpy).toHaveBeenCalledOnce();
         expect(comp.assessmentMode()).toBe(true);
         expect(result.feedbacks).toEqual(comp.assessments());
@@ -526,7 +430,6 @@ describe('Example Modeling Submission Component', () => {
         const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = vi.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 
-        // WHEN
         fixture.detectChanges();
 
         expect(assessmentSpy).toHaveBeenCalledOnce();

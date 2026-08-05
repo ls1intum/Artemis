@@ -2,6 +2,7 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
+            "feedbackAndNotes": "Feedback und Notizen",
             "assessmentNote": "Interne Notiz",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
@@ -57,7 +58,8 @@
             },
             "detail": {
                 "feedback": "Feedback",
-                "assessmentNote": "Interne Notizen nur für Tutor:innen",
+                "assessmentNote": "Private Notizen für Tutor:innen",
+                "assessmentNoteInfo": "Nur Tutor:innen können diese Notizen sehen. Sie werden Studierenden niemals angezeigt.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",

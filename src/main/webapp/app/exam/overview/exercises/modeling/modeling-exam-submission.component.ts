@@ -20,7 +20,6 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -34,7 +33,6 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
         IncludedInScoreBadgeComponent,
         ExerciseSaveButtonComponent,
         ResizeableContainerComponent,
-        FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,

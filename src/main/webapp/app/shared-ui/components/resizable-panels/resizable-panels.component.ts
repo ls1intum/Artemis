@@ -45,6 +45,8 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * migration dropped. Set to 0 to disable drag-to-collapse.
      */
     readonly collapseSnapPercent = input(12);
+    /** Removes the standard content gutter around the primary panel for full-bleed editors or canvases. */
+    readonly flushLeftPanel = input(false);
 
     /** Gutter size (px) of the splitter; kept in sync with the template's [gutterSize]. */
     private static readonly GUTTER_SIZE = 12;

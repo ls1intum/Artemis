@@ -21,6 +21,7 @@ import { ExpandableSectionComponent } from '../expandable-section/expandable-sec
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
+    styleUrl: './assessment-instructions.component.scss',
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
@@ -38,6 +39,7 @@ export class AssessmentInstructionsComponent {
 
     readonly isAssessmentTraining = input(false);
     readonly showAssessmentInstructions = input(true);
+    readonly showExerciseTitle = input(true);
     readonly readOnly = input<boolean>();
     // For programming exercises we hand over the participation or use the template participation
     readonly programmingParticipation = input<ProgrammingExerciseStudentParticipation>();

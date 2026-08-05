@@ -28,6 +28,17 @@
         background 0.2s;
 }
 
+html.modeling-exercise-editor-scroll-snap {
+    scroll-padding-block: calc(var(--header-height) + 1rem) 1rem;
+    scroll-snap-type: block proximity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.modeling-exercise-editor-scroll-snap {
+        scroll-snap-type: none;
+    }
+}
+
 /* ==============================================================
 Bootstrap tweaks
 ===============================================================*/

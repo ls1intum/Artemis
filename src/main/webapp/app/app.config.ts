@@ -2,6 +2,7 @@ import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { FullscreenOverlayContainer, OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
@@ -36,6 +37,7 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         provideArtemisTumUiTranslator(),
+        { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
         DialogService,
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably

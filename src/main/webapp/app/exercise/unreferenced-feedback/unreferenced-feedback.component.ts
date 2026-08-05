@@ -3,12 +3,13 @@ import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
     templateUrl: './unreferenced-feedback.component.html',
-    styleUrls: [],
-    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent],
+    styleUrl: './unreferenced-feedback.component.scss',
+    imports: [TranslateDirective, UnreferencedFeedbackDetailComponent, TumUiButtonDirective],
 })
 export class UnreferencedFeedbackComponent {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);

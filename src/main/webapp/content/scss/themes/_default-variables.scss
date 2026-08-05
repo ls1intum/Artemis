@@ -1,3 +1,5 @@
+@use '../artemis-variables' as artemis;
+
 // === BOOTSTRAP ===
 // Mostly default values, including them here for completeness and comparison
 
@@ -529,14 +531,63 @@ $close-circle-opacity: 0.7;
 
 // Apollon
 $apollon-primary: $primary;
-$apollon-primary-contrast: $gray-900;
-$apollon-secondary: $gray-600;
-$apollon-warning-yellow: $warning;
-$apollon-background: white;
+$apollon-primary-foreground: $white;
+$apollon-foreground: $body-color;
+$apollon-secondary: $secondary;
+$apollon-background: $module-bg;
 $apollon-background-variant: $gray-100;
 $apollon-gray: $gray-200;
 $apollon-gray-variant: $gray-700;
 $apollon-grid: rgba(36, 39, 36, 0.1);
+$apollon-scroll-overlay: $apollon-grid;
+$apollon-guide-vertical: $danger;
+$apollon-guide-horizontal: $primary;
+$apollon-danger: $danger;
+$apollon-surface: $card-bg;
+$apollon-surface-sunken: $gray-100;
+$apollon-border: $border-color;
+$apollon-border-subtle: $gray-200;
+$apollon-radius: artemis.$border-radius;
+$apollon-radius-sm: artemis.$border-radius-sm;
+$apollon-radius-md: artemis.$border-radius;
+$apollon-radius-lg: artemis.$border-radius-lg;
+$apollon-shadow: 0 0.25rem 0.75rem rgba($black, 0.18);
+$apollon-hover-neutral: rgba($body-color, 0.075);
+$apollon-interactive-selection: $warning;
+$apollon-dropzone-accent: $primary;
+$apollon-dropzone-accent-fill: rgba($primary, 0.4);
+$apollon-on-collaboration-cursor: $white;
+$apollon-assessment-positive-text: $artemis-alert-success-color;
+$apollon-assessment-positive-bg: $artemis-alert-success-background;
+$apollon-assessment-negative-text: $artemis-alert-danger-color;
+$apollon-assessment-negative-bg: $artemis-alert-danger-background;
+$apollon-assessment-zero-text: $artemis-alert-info-color;
+$apollon-assessment-zero-bg: $artemis-alert-info-background;
+$apollon-assessment-ungraded-text: $artemis-alert-neutral-color;
+$apollon-assessment-ungraded-bg: $artemis-alert-neutral-background;
+$apollon-collaboration-color-1: $yellow;
+$apollon-collaboration-color-2: $green;
+$apollon-collaboration-color-3: $blue;
+$apollon-collaboration-color-4: $red;
+$apollon-collaboration-color-5: $purple;
+$apollon-collaboration-color-6: $teal;
+$apollon-collaboration-color-7: $orange;
+$apollon-collaboration-color-8: $cyan;
+$apollon-swatch-slate: $gray-700;
+$apollon-swatch-red: $red;
+$apollon-swatch-orange: $orange;
+$apollon-swatch-amber: $yellow;
+$apollon-swatch-green: $green;
+$apollon-swatch-teal: $teal;
+$apollon-swatch-blue: $blue;
+$apollon-swatch-violet: $purple;
+$apollon-swatch-pink: $pink;
+$apollon-chrome-accent: $apollon-primary;
+$apollon-chrome-radius-sm: artemis.$border-radius;
+$apollon-chrome-radius-md: artemis.$border-radius-lg;
+$apollon-chrome-radius-lg: artemis.$border-radius-xl;
+$apollon-chrome-edge: 10px;
+$apollon-chrome-gap: 12px;
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);

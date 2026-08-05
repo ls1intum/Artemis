@@ -67,7 +67,6 @@ describe('ModelingExercise Management Component', () => {
     });
 
     it('should call loadExercises on init', () => {
-        // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         const findStub = vi.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
             of(
@@ -78,11 +77,9 @@ describe('ModelingExercise Management Component', () => {
             ),
         );
 
-        // WHEN
         fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
 
-        // THEN
         expect(findStub).toHaveBeenCalledOnce();
         expect(comp.modelingExercises()[0]).toEqual(modelingExercise);
     });
@@ -103,21 +100,17 @@ describe('ModelingExercise Management Component', () => {
 
     describe('ModelingExercise Search Exercises', () => {
         it('should show all exercises', () => {
-            // WHEN
             fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('UML', '', 'modeling'));
             fixture.detectChanges();
 
-            // THEN
             expect(comp.modelingExercises()).toHaveLength(1);
             expect(comp.filteredModelingExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
-            // WHEN
             fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Prog', '', 'all'));
             fixture.detectChanges();
 
-            // THEN
             expect(comp.modelingExercises()).toHaveLength(1);
             expect(comp.filteredModelingExercises()).toHaveLength(0);
         });
@@ -156,10 +149,8 @@ describe('ModelingExercise Management Component', () => {
     });
 
     it('should have working selection', () => {
-        // WHEN
         comp.toggleExercise(modelingExercise);
 
-        // THEN
         expect(comp.selectedExercises()[0]).toMatchObject({ id: modelingExercise.id });
         expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.modelingExercises().length);
     });

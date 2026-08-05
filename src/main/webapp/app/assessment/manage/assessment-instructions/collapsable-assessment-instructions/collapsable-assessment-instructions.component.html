@@ -1,34 +1,37 @@
 @if (!collapsed()) {
-    <div
-        class="expanded-instructions instructions-container"
-        jhiResizable
-        [resizableEdges]="{ left: '.draggable-left' }"
-        [resizableConstraints]="{ minWidth: 215, maxWidth: 1000 }"
-    >
-        <div class="draggable-left"><fa-icon [icon]="faGripLinesVertical" /></div>
-        <div class="card">
-            <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
-                <h3 class="card-title">
-                    <fa-icon [icon]="farListAlt" />&nbsp;
+    <div class="expanded-instructions instructions-container" jhiResizable [resizableEdges]="{ left: '.draggable-left' }" [resizableConstraints]="{ minWidth: 288, maxWidth: 640 }">
+        <div
+            class="draggable-left"
+            [attr.aria-label]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
+            [title]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
+        >
+            <fa-icon [icon]="faGripLinesVertical" aria-hidden="true" />
+        </div>
+        <section class="instructions-panel apollon-glass">
+            <header class="instructions-header">
+                <button type="button" class="apollon-chrome-actionbtn instructions-disclosure" (click)="collapsed.set(true)" [attr.aria-expanded]="true">
+                    <fa-icon [icon]="farListAlt" />
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
-                </h3>
-                <fa-icon [icon]="faChevronRight" />
-            </div>
-            <div class="wrapper-scroll-y scrollbar vh-100">
+                    <fa-icon class="instructions-disclosure__chevron" [icon]="faChevronRight" aria-hidden="true" />
+                </button>
+            </header>
+            <div class="instructions-content scroll-container">
                 <jhi-assessment-instructions
                     [readOnly]="readOnly()"
-                    class="card-body markdown-preview"
+                    class="markdown-preview"
                     [exercise]="exercise()"
                     [isAssessmentTraining]="isAssessmentTraining()"
                     [showAssessmentInstructions]="showAssessmentInstructions()"
                 />
             </div>
-        </div>
+        </section>
     </div>
 } @else {
-    <div class="collapsed-instructions instructions-container text-white bg-primary" (click)="collapsed.set(!collapsed())">
-        <fa-icon [icon]="faChevronLeft" />
-        <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
-        <fa-icon [icon]="faChevronLeft" />
+    <div class="collapsed-instructions instructions-container apollon-glass apollon-chrome-cluster">
+        <button type="button" class="apollon-chrome-actionbtn instructions-disclosure" (click)="collapsed.set(false)" [attr.aria-expanded]="false">
+            <fa-icon [icon]="farListAlt" />
+            <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
+            <fa-icon [icon]="faChevronLeft" aria-hidden="true" />
+        </button>
     </div>
 }

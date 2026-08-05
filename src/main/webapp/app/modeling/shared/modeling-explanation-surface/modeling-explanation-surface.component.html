@@ -1,0 +1,31 @@
+<section
+    #surface
+    class="modeling-explanation-surface__surface"
+    [class.modeling-explanation-surface__surface--manually-sized]="manuallySized()"
+    jhiResizable
+    [resizableEdges]="{ top: '.modeling-explanation-surface__resize-handle' }"
+    [resizableConstraints]="{ minHeight: minHeight(), maxHeight: maxHeight() }"
+    (resizeMove)="startManualResize($event)"
+>
+    <svg class="modeling-explanation-surface__backdrop" width="100%" height="100%" aria-hidden="true" focusable="false">
+        <rect class="modeling-explanation-surface__shape modeling-explanation-surface__body-shape" />
+        <rect class="modeling-explanation-surface__shape-fill modeling-explanation-surface__corner-fill" />
+        <rect class="modeling-explanation-surface__shape-fill modeling-explanation-surface__seam-fill" [attr.width]="effectiveNotchWidth()" />
+        <path class="modeling-explanation-surface__shape modeling-explanation-surface__corner-edge" d="M 0.5 8 V 0.5" />
+        <path class="modeling-explanation-surface__shape modeling-explanation-surface__notch-shape" [attr.d]="notchPath()" />
+    </svg>
+    <div
+        class="modeling-explanation-surface__resizer modeling-explanation-surface__resize-handle"
+        [attr.aria-label]="'artemisApp.modelingSubmission.resizeExplanation' | artemisTranslate"
+        [title]="'artemisApp.modelingSubmission.resizeExplanation' | artemisTranslate"
+        (dblclick)="resetManualSize()"
+    >
+        <div #notch class="modeling-explanation-surface__notch" [style.width.px]="effectiveNotchWidth()">
+            <fa-icon [icon]="icon()" aria-hidden="true" />
+            <span [id]="labelId()" [jhiTranslate]="labelKey()"></span>
+        </div>
+    </div>
+    <div class="modeling-explanation-surface__content">
+        <ng-content />
+    </div>
+</section>

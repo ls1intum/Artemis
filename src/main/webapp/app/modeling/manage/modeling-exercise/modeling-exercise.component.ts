@@ -50,7 +50,6 @@ export class ModelingExerciseComponent extends ExerciseComponent {
 
     readonly modelingExercises = signal<ModelingExercise[]>([]);
     readonly filteredModelingExercises = signal<ModelingExercise[]>([]);
-    // Icons
     faPlus = faPlus;
     faSort = faSort;
     faTable = faTable;

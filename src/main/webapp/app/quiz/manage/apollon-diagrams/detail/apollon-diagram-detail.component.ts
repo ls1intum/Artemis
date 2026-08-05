@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon';
+import { ApollonEditor, ApollonMode, ApollonView, UMLModel } from '@tumaet/apollon';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -9,8 +9,6 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundat
 import { TranslateService } from '@ngx-translate/core';
 import { faArrowLeft, faDownload, faQuestionCircle, faX } from '@fortawesome/free-solid-svg-icons';
 import { generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { Course } from 'app/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
@@ -18,9 +16,12 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
+import { ApollonModelData, hasQuizRelevantElements, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { parseJson } from 'app/foundation/util/json.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 /** Host DOM element augmented with the ApollonEditor instance exposed for E2E test access. */
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
@@ -33,7 +34,6 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private apollonDiagramService = inject(ApollonDiagramService);
-    private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private dialogService = inject(DialogService);
@@ -48,11 +48,15 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     closeEdit = output<DragAndDropQuestion | undefined>();
     closeModal = output<void>();
 
-    course = signal<Course | undefined>(undefined);
-
     apollonDiagram = signal<ApollonDiagram | undefined>(undefined);
     apollonEditor?: ApollonEditor;
     private lastSavedModelJson = '';
+
+    constructor() {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+            this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
+        });
+    }
 
     readonly isSaved = signal(true);
 
@@ -87,23 +91,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * Initializes Apollon Editor and sets auto save timer
      */
     ngOnInit() {
-        this.courseService.find(this.courseId()).subscribe({
-            next: (response) => {
-                this.course.set(response.body!);
-            },
-            error: () => {
-                this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
-            },
-        });
-
         this.apollonDiagramService.find(this.apollonDiagramId(), this.courseId()).subscribe({
             next: (response) => {
                 const diagram = response.body!;
 
                 this.apollonDiagram.set(diagram);
 
-                const model: UMLModel | undefined = diagram.jsonRepresentation ? importDiagram(parseJson(diagram.jsonRepresentation)) : undefined;
-                this.lastSavedModelJson = model ? JSON.stringify(model) : '';
+                const model = diagram.jsonRepresentation ? parseJson<ApollonModelData>(diagram.jsonRepresentation) : undefined;
                 this.initializeApollonEditor(model);
                 this.setAutoSaveTimer();
             },
@@ -119,30 +113,28 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = undefined;
         }
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
-        }
-        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
+        this.destroyApollonEditor();
     }
 
     /**
      * Initializes Apollon Editor with UML Model
      * @param initialModel
      */
-    initializeApollonEditor(initialModel?: UMLModel) {
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
-        }
+    initializeApollonEditor(initialModel?: UMLModel | ApollonModelData) {
+        this.destroyApollonEditor();
 
         const diagram = this.apollonDiagram();
+        const normalizedModel = initialModel ? normalizeApollonModel(initialModel) : undefined;
+        this.lastSavedModelJson = normalizedModel ? JSON.stringify(normalizedModel) : '';
         const editorOptions: ConstructorParameters<typeof ApollonEditor>[1] = {
             mode: ApollonMode.Modelling,
             view: ApollonView.Modelling,
             readonly: false,
-            model: initialModel,
+            model: normalizedModel,
             type: diagram?.diagramType,
-            locale: this.translateService.getCurrentLang() as Locale,
+            labels: createApollonLabels(this.translateService),
             availableViews: [ApollonView.Modelling, ApollonView.Highlight],
         };
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
@@ -155,6 +147,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
     }
 
+    private destroyApollonEditor(): void {
+        const editor = this.apollonEditor;
+        this.apollonEditor = undefined;
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
+        editor?.destroy();
+    }
+
     /**
      * Saves the diagram
      */
@@ -163,9 +162,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return false;
         }
         const umlModel = this.apollonEditor.model;
-        const updatedDiagram = Object.assign({}, this.apollonDiagram(), {
-            jsonRepresentation: JSON.stringify(umlModel),
-        }) as ApollonDiagram;
+        const updatedDiagram = deepClone(this.apollonDiagram()!);
+        updatedDiagram.jsonRepresentation = JSON.stringify(umlModel);
 
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {
@@ -241,11 +239,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         const diagram = this.apollonDiagram();
-        const course = this.course();
-        if (this.apollonEditor && diagram && course) {
+        if (this.apollonEditor && diagram) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
-                const question = await generateDragAndDropQuizExercise(course, diagram.title!, this.apollonEditor.model);
+                const question = await generateDragAndDropQuizExercise(diagram.title!, this.apollonEditor.model);
                 this.closeEdit.emit(question);
             }
         }

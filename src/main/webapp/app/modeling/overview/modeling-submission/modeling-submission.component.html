@@ -1,4 +1,4 @@
-<div [id]="'exercise-' + modelingExercise()?.id">
+<div class="modeling-submission" [id]="'exercise-' + modelingExercise()?.id">
     @if (modelingExercise()) {
         <jhi-resizeable-container
             [isExerciseParticipation]="true"
@@ -7,69 +7,55 @@
             [collapsed]="isFeedbackView()"
             [showRightPanel]="showProblemStatement() && examMode()"
         >
-            <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission() || submission().submitted || !isExamSummary()) {
-                    <div class="w-100">
+                    <div class="modeling-submission-content w-100">
                         <div class="submission-container d-flex flex-column w-100">
-                            <jhi-fullscreen>
-                                <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
-                                    <div class="row" style="flex-grow: 1; display: flex">
-                                        @if (
-                                            submission() &&
-                                            (isActive || isLate()) &&
-                                            !(result() && !isAutomaticResult) &&
-                                            (!isLate() || !submission().submitted) &&
-                                            !isFeedbackView()
-                                        ) {
-                                            <div class="col-12 editor-large">
-                                                <jhi-modeling-editor
-                                                    [readOnly]="!isOwnerOfParticipation()"
-                                                    [umlModel]="umlModel()"
-                                                    [diagramType]="modelingExercise().diagramType!"
-                                                    [withExplanation]="true"
-                                                    [collaborationEnabled]="modelingExercise().teamMode ?? false"
-                                                    [collaborationUser]="apollonCollaborationUser()"
-                                                    [(explanation)]="explanation"
-                                                    [resizeOptions]="resizeOptions"
-                                                    [savedStatus]="{ isChanged: isChanged(), isSaving: isSaving() }"
-                                                    (onModelPatch)="onModelPatch($event)"
-                                                />
-                                                <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
-                                                <!-- Gate team sync on the resolved collaboration user so it does not start the Yjs/awareness handshake
-                                                     before the (user-gated) Apollon editor exists — otherwise early peer replies would be dropped. -->
-                                                @if (modelingExercise().teamMode && apollonCollaborationUser()) {
-                                                    <jhi-team-submission-sync
-                                                        [exerciseType]="modelingExercise().type!"
-                                                        [submissionObservable]="submissionObservable"
-                                                        [submissionPatchObservable]="submissionPatchObservable"
-                                                        [participation]="participation()"
-                                                        (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
-                                                        (reconnected)="onTeamSyncReconnected()"
-                                                    />
-                                                }
-                                            </div>
+                            <jhi-fullscreen [showButton]="!shouldShowLiveEditor()">
+                                @if (shouldShowLiveEditor()) {
+                                    <div class="modeling-submission-editor-tile">
+                                        <jhi-modeling-editor
+                                            [readOnly]="!isOwnerOfParticipation()"
+                                            [umlModel]="umlModel()"
+                                            [diagramType]="modelingExercise().diagramType!"
+                                            [tile]="true"
+                                            [withExplanation]="true"
+                                            [problemStatement]="modelingExercise().problemStatement"
+                                            [collaborationEnabled]="modelingExercise().teamMode ?? false"
+                                            [collaborationUser]="apollonCollaborationUser()"
+                                            [(explanation)]="explanation"
+                                            [savedStatus]="modelingExercise().teamMode ? undefined : { isChanged: isChanged(), isSaving: isSaving() }"
+                                            (onModelPatch)="onModelPatch($event)"
+                                        />
+                                        @if (modelingExercise().teamMode && apollonCollaborationUser()) {
+                                            <jhi-team-submission-sync
+                                                [exerciseType]="modelingExercise().type!"
+                                                [submissionObservable]="submissionObservable"
+                                                [submissionPatchObservable]="submissionPatchObservable"
+                                                [participation]="participation()"
+                                                (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
+                                                (reconnected)="onTeamSyncReconnected()"
+                                            />
                                         }
+                                    </div>
+                                } @else {
+                                    <div class="modeling-submission-assessment-layout">
                                         @if (((!isActive || (result() && !isAutomaticResult)) && (!isLate() || submission().submitted)) || isFeedbackView()) {
-                                            <div class="col-8 editor-assessment">
+                                            <div class="modeling-submission-assessment-layout__canvas">
                                                 <jhi-modeling-assessment
                                                     [umlModel]="umlModel()"
                                                     [resultFeedbacks]="assessmentResult()?.feedbacks || []"
                                                     [diagramType]="modelingExercise().diagramType!"
-                                                    [maxScore]="modelingExercise().maxPoints || 0"
-                                                    [maxBonusPoints]="modelingExercise().bonusPoints || 0"
                                                     [readOnly]="true"
                                                     [enablePopups]="false"
-                                                    [displayPoints]="false"
-                                                    [course]="course()"
                                                     (selectedElementIdsChanged)="onSelectedElementIdsChanged($event)"
                                                     [explanation]="explanation"
                                                 />
                                             </div>
                                         }
                                         @if ((submission()?.submitted && (!isActive || result())) || isFeedbackView()) {
-                                            <div class="col-4 pt-5 editor-assessment overflow-auto">
-                                                <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
+                                            <section class="modeling-submission-assessment-layout__feedback" aria-labelledby="modeling-submission-assessment-title">
+                                                <h4 id="modeling-submission-assessment-title" jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
                                                 @if (!assessmentResult() || !assessmentResult()!.feedbacks || assessmentResult()!.feedbacks!.length === 0) {
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.noAssessment"></p>
                                                 }
@@ -102,10 +88,10 @@
                                                         </div>
                                                     </div>
                                                 }
-                                            </div>
+                                            </section>
                                         }
                                     </div>
-                                </div>
+                                }
                             </jhi-fullscreen>
                         </div>
 
@@ -124,8 +110,6 @@
                     </div>
                 }
             </ng-container>
-            <!--endregion-->
-            <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt" />&nbsp;
             <span right-header id="problem-statement" jhiTranslate="artemisApp.modelingSubmission.problemStatement"></span>
             <p right-body class="mb-3 markdown-preview">
@@ -133,7 +117,6 @@
                     <span [jhiMarkdown]="modelingExercise()!.problemStatement!"></span>
                 }
             </p>
-            <!--endregion-->
         </jhi-resizeable-container>
     }
 </div>

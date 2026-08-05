@@ -45,7 +45,6 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
-// Stub component that provides all needed functionality for ModelingEditorComponent
 @Component({
     selector: 'jhi-modeling-editor',
     template: '',
@@ -54,9 +53,10 @@ class StubModelingEditorComponent {
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     readOnly = input<boolean>(false);
-    resizeOptions = input<{ verticalResize?: boolean }>({});
+    tile = input(false);
     showHelpButton = input<boolean>(true);
     withExplanation = input<boolean>(false);
+    problemStatement = input<string>();
     collaborationEnabled = input(false);
     collaborationUser = input<CollaborationUser | undefined>(undefined);
     savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
@@ -87,7 +87,6 @@ describe('ModelingSubmissionComponent', () => {
     participation.id = 1;
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
 
-    // Valid Apollon v3 model format for tests
     const validMockModel = JSON.stringify({
         version: '3.0.0',
         type: 'ClassDiagram',
@@ -100,7 +99,6 @@ describe('ModelingSubmissionComponent', () => {
 
     const originalConsoleError = console.error;
 
-    // Create a mock modeling editor component for use in tests
     let mockModelingEditor: Partial<ModelingEditorComponent>;
 
     function createModelingSubmissionComponent(routeOverride?: ActivatedRoute) {
@@ -108,7 +106,6 @@ describe('ModelingSubmissionComponent', () => {
             TestBed.overrideProvider(ActivatedRoute, { useValue: routeOverride });
         }
 
-        // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
                 imports: [ModelingEditorComponent, RatingComponent, ComplaintsStudentViewComponent],
@@ -123,8 +120,6 @@ describe('ModelingSubmissionComponent', () => {
         service = TestBed.inject(ModelingSubmissionService);
         alertService = TestBed.inject(AlertService);
 
-        // Create a mock for the modeling editor viewChild signal
-        // Return a model with elements so that submit validation passes
         mockModelingEditor = {
             getCurrentModel: vi.fn().mockReturnValue({
                 elements: { element1: { id: 'element1', type: 'Class' } },
@@ -140,7 +135,6 @@ describe('ModelingSubmissionComponent', () => {
             importPatch: vi.fn(),
         };
 
-        // Mock the viewChild signal to return our mock editor
         vi.spyOn(comp, 'modelingEditor').mockReturnValue(mockModelingEditor as ModelingEditorComponent);
     }
 
@@ -186,20 +180,14 @@ describe('ModelingSubmissionComponent', () => {
         vi.restoreAllMocks();
         console.error = originalConsoleError;
 
-        // Reset shared submission state to prevent test pollution
         submission.submitted = true;
         submission.model = undefined;
         submission.participation!.initializationDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.dueDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.exerciseGroup = undefined;
 
-        // Ensure all subscriptions are cleaned up
         if (comp) {
-            try {
-                comp.ngOnDestroy();
-            } catch (_) {
-                // Ignore errors during cleanup
-            }
+            comp.ngOnDestroy();
         }
         TestBed.resetTestingModule();
     });
@@ -207,7 +195,6 @@ describe('ModelingSubmissionComponent', () => {
     it('should initialize without submissionId (Standard Mode)', () => {
         createModelingSubmissionComponent();
 
-        // Mock data
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         modelingExercise.teamMode = false;
         const participation = new StudentParticipation();
@@ -218,14 +205,11 @@ describe('ModelingSubmissionComponent', () => {
         submission.submitted = true;
         submission.participation = participation;
 
-        // Mock service calls
         const getLatestSubmissionSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const getSubmissionsWithResultsSpy = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation');
 
-        // Initialize component
         comp.ngOnInit();
 
-        // Assertions
         expect(comp.isFeedbackView()).toBe(false);
         expect(getLatestSubmissionSpy).toHaveBeenCalledOnce();
         expect(getSubmissionsWithResultsSpy).not.toHaveBeenCalled();
@@ -235,14 +219,12 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should initialize with submissionId (Feedback View Mode)', () => {
-        // Mock route parameters with submissionId
         const route = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId: 20 }),
         } as any as ActivatedRoute;
 
         createModelingSubmissionComponent(route);
 
-        // Mock data
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         modelingExercise.dueDate = dayjs().add(1, 'days');
         modelingExercise.maxPoints = 20;
@@ -264,14 +246,11 @@ describe('ModelingSubmissionComponent', () => {
         submission.results = [result];
         submission.latestResult = result;
 
-        // Mock service calls
         const getSubmissionsWithResultsSpy = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submission]));
         const getLatestSubmissionSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // Initialize component
         comp.ngOnInit();
 
-        // Assertions
         expect(comp.isFeedbackView()).toBe(true);
         expect(comp.submissionId).toBe(20);
         expect(getSubmissionsWithResultsSpy).toHaveBeenCalledOnce();
@@ -282,14 +261,12 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should initialize with submissionId and resultId (Feedback View with specific result)', () => {
-        // Mock route parameters with both submissionId and resultId
         const route = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId: 20, resultId: 99 }),
         } as any as ActivatedRoute;
 
         createModelingSubmissionComponent(route);
 
-        // Mock data with multiple results (manual and Athena)
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         modelingExercise.dueDate = dayjs().add(1, 'days');
         modelingExercise.maxPoints = 20;
@@ -321,20 +298,15 @@ describe('ModelingSubmissionComponent', () => {
         submission.results = [manualResult, athenaResult];
         submission.latestResult = athenaResult;
 
-        // Mock service calls
         vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submission]));
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // Initialize component
         comp.ngOnInit();
 
-        // Assertions
         expect(comp.isFeedbackView()).toBe(true);
         expect(comp.submissionId).toBe(20);
         expect(comp.resultId).toBe(99);
-        // When resultId is present, results should NOT be filtered to single result
         expect(comp.submission()?.results).toHaveLength(2);
-        // The specific result should be found and used
         expect(comp.result()?.id).toBe(99);
         expect(comp.result()?.assessmentType).toBe(AssessmentType.MANUAL);
     });
@@ -430,17 +402,14 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should handle failed Athena assessment appropriately', async () => {
-        // Set up route with participationId
         const routeOverride = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
         } as any as ActivatedRoute;
         createModelingSubmissionComponent(routeOverride);
 
-        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceSpy = vi.spyOn(alertService, 'error');
 
-        // Create initial manual result
         const manualResult = new Result();
         manualResult.score = 50.0;
         manualResult.assessmentType = AssessmentType.MANUAL;
@@ -448,7 +417,6 @@ describe('ModelingSubmissionComponent', () => {
         manualResult.completionDate = dayjs();
         manualResult.feedbacks = [];
 
-        // Create a failed Athena result
         const failedAthenaResult = new Result();
         failedAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
         failedAthenaResult.submission = submission;
@@ -459,36 +427,29 @@ describe('ModelingSubmissionComponent', () => {
         const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
         const subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-        // Set up the model data and mock service call
         submission.model = validMockModel;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // Initialize component (ngOnInit is called here)
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
 
-        // Clear any previous calls
         alertServiceSpy.mockClear();
 
-        // Emit failed Athena result
         resultSubject.next(failedAthenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        // Verify error was shown
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
     });
 
     it('should handle Athena assessment results separately from manual assessments', async () => {
         createModelingSubmissionComponent();
 
-        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceInfoSpy = vi.spyOn(alertService, 'info');
         const alterServiceSuccessSpy = vi.spyOn(alertService, 'success');
 
-        // Create an Athena result
         const athenaResult = new Result();
         athenaResult.score = 75.0;
         athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
@@ -497,7 +458,6 @@ describe('ModelingSubmissionComponent', () => {
         athenaResult.successful = true;
         athenaResult.feedbacks = [];
 
-        // Create manual result
         const manualResult = new Result();
         manualResult.score = 50.0;
         manualResult.assessmentType = AssessmentType.MANUAL;
@@ -505,15 +465,12 @@ describe('ModelingSubmissionComponent', () => {
         manualResult.completionDate = dayjs();
         manualResult.feedbacks = [];
 
-        // Setup initial manual result in subject
         const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
         const subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-        // Set up model and mock service call
         submission.model = validMockModel;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // Initialize component and verify manual result
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -521,11 +478,9 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(manualResult);
         expect(alertServiceInfoSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
 
-        // Emit Athena result
         resultSubject.next(athenaResult);
         fixture.changeDetectorRef.detectChanges();
 
-        // Verify Athena result handling
         expect(comp.assessmentResult()).toEqual(athenaResult);
         expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise()?.title ?? '' });
     });
@@ -533,7 +488,6 @@ describe('ModelingSubmissionComponent', () => {
     it('should set result when new result comes in from websocket', async () => {
         createModelingSubmissionComponent();
 
-        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         const unreferencedFeedback = new Feedback();
@@ -552,7 +506,6 @@ describe('ModelingSubmissionComponent', () => {
             .spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
-        // Set up model and mock service call
         submission.model = validMockModel;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
@@ -563,23 +516,24 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(newResult);
     });
 
-    it('should update submission when new submission comes in from websocket', () => {
+    it('refreshes a non-collaborative editor from an automatic-submission snapshot', () => {
         createModelingSubmissionComponent();
 
         submission.submitted = false;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        // @ts-ignore
-        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
+        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         vi.spyOn(websocketService, 'subscribe');
+        const persistedModel = JSON.stringify({ ...JSON.parse(validMockModel), title: 'Persisted snapshot' });
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: submission.id,
-            model: validMockModel,
+            model: persistedModel,
             submitted: true,
             participation,
         });
         fixture.detectChanges();
         websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission()).toEqual(modelSubmission);
+        expect(comp.umlModel().title).toBe('Persisted snapshot');
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {
@@ -589,7 +543,6 @@ describe('ModelingSubmissionComponent', () => {
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
-        // Create an incomplete result
         const incompleteResult = new Result();
         incompleteResult.assessmentType = AssessmentType.MANUAL;
         incompleteResult.submission = submission;
@@ -598,10 +551,8 @@ describe('ModelingSubmissionComponent', () => {
         const resultSubject = new BehaviorSubject<Result | undefined>(incompleteResult);
         vi.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
 
-        // Initialize component
         fixture.detectChanges();
 
-        // Verify incomplete result is not processed
         expect(comp.assessmentResult()).toBeUndefined();
     });
 
@@ -801,11 +752,8 @@ describe('ModelingSubmissionComponent', () => {
     it('should be set up with input values if present instead of loading new values from server', () => {
         createModelingSubmissionComponent();
 
-        // @ts-ignore method is private
-        const setUpComponentWithInputValuesSpy = vi.spyOn(comp, 'setupComponentWithInputValues');
         const getDataForFileUploadEditorSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor');
         const modelingSubmission = submission;
-        // Use a valid v3 format model that importDiagram can parse
         modelingSubmission.model = JSON.stringify({
             version: '3.0.0',
             type: 'ClassDiagram',
@@ -829,25 +777,21 @@ describe('ModelingSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
         expect(comp.modelingExercise()).toEqual(participation.exercise);
         expect(comp.submission()).toEqual(modelingSubmission);
         expect(comp.participation()).toEqual(participation);
         expect(comp.umlModel()).toBeTruthy();
         expect(comp.hasElements()).toBe(true);
 
-        // should not fetch additional information from server, reason for input values!
         expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
     });
 
     it('should fetch and sort submission history correctly', () => {
-        // Create route with participationId
         const route = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123, submissionId: 20 }),
         } as any as ActivatedRoute;
         createModelingSubmissionComponent(route);
 
-        // Helper function to create a Result
         const createResult = (id: number, dateStr: string): Result => {
             const result = new Result();
             result.id = id;
@@ -855,7 +799,6 @@ describe('ModelingSubmissionComponent', () => {
             return result;
         };
 
-        // Helper function to create a Submission
         const createSubmission = (id: number, results: Result[]): ModelingSubmission => {
             const submission = new ModelingSubmission();
             submission.id = id;
@@ -864,7 +807,6 @@ describe('ModelingSubmissionComponent', () => {
             return submission;
         };
 
-        // Test data for dates and results
         const resultData = [
             { id: 1, date: '2024-01-01T10:00:00' }, // Monday 10 AM
             { id: 2, date: '2024-01-03T09:15:00' }, // Wednesday 9:15 AM
@@ -873,7 +815,6 @@ describe('ModelingSubmissionComponent', () => {
             { id: 5, date: '2024-01-05T11:20:00' }, // Friday 11:20 AM
         ];
 
-        // Create results
         const results = resultData.reduce(
             (acc, { id, date }) => {
                 acc[id] = createResult(id, date);
@@ -882,7 +823,6 @@ describe('ModelingSubmissionComponent', () => {
             {} as Record<number, Result>,
         );
 
-        // Create submissions with their results
         const submissions = [
             createSubmission(0, [results[1], results[2]]), // Latest is date3 (Wed 9:15 AM)
             createSubmission(1, [results[3], results[4]]), // Latest is date4 (Thu 4:45 PM)
@@ -892,15 +832,11 @@ describe('ModelingSubmissionComponent', () => {
         const expectedSortedSubmissions = [submissions[0], submissions[1], submissions[2]];
         const expectedSortedResults = [results[2], results[3], results[5]];
 
-        // Mock the service call
         const submissionsWithResultsSpy = vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submissions[2], submissions[1], submissions[0]]));
 
-        // Initialize the component
         comp.ngOnInit();
 
-        // Verify service call
         expect(submissionsWithResultsSpy).toHaveBeenCalledWith(123);
-        // Verify sorted submission and result history
         expect(comp.sortedSubmissionHistory()).toEqual(expectedSortedSubmissions);
         comp.sortedResultHistory().forEach((result, index) => {
             expect(result?.id).toBe(expectedSortedResults[index].id);

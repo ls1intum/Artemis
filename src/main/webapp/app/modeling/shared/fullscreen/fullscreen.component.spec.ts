@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
-// Mock the fullscreen utility before importing the component
 vi.mock('app/foundation/util/fullscreen.util', () => ({
     enterFullscreen: vi.fn(),
     exitFullscreen: vi.fn(),
@@ -34,10 +33,6 @@ describe('FullscreenComponent', () => {
         vi.clearAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     describe('toggleFullscreen', () => {
         it('should call exitFullscreen when already in fullscreen', () => {
             vi.mocked(fullscreenUtil.isFullScreen).mockReturnValue(true);
@@ -59,55 +54,14 @@ describe('FullscreenComponent', () => {
         });
     });
 
-    describe('isFullScreen', () => {
-        it('should return true when in fullscreen mode', () => {
-            vi.mocked(fullscreenUtil.isFullScreen).mockReturnValue(true);
-
-            expect(component.isFullScreen()).toBe(true);
-        });
-
-        it('should return false when not in fullscreen mode', () => {
-            vi.mocked(fullscreenUtil.isFullScreen).mockReturnValue(false);
-
-            expect(component.isFullScreen()).toBe(false);
-        });
-    });
-
     describe('input bindings', () => {
-        it('should have default position of top-right', () => {
-            expect(component.position()).toBe('top-right');
-        });
+        it('should show the fullscreen button by default and allow callers to hide it', () => {
+            expect(fixture.debugElement.query(By.css('button'))).not.toBeNull();
 
-        it('should have default mode of extended', () => {
-            expect(component.mode()).toBe('extended');
-        });
-
-        it('should accept top-left position', () => {
-            fixture.componentRef.setInput('position', 'top-left');
+            fixture.componentRef.setInput('showButton', false);
             fixture.detectChanges();
 
-            expect(component.position()).toBe('top-left');
-        });
-
-        it('should accept bottom-left position', () => {
-            fixture.componentRef.setInput('position', 'bottom-left');
-            fixture.detectChanges();
-
-            expect(component.position()).toBe('bottom-left');
-        });
-
-        it('should accept bottom-right position', () => {
-            fixture.componentRef.setInput('position', 'bottom-right');
-            fixture.detectChanges();
-
-            expect(component.position()).toBe('bottom-right');
-        });
-
-        it('should accept compact mode', () => {
-            fixture.componentRef.setInput('mode', 'compact');
-            fixture.detectChanges();
-
-            expect(component.mode()).toBe('compact');
+            expect(fixture.debugElement.query(By.css('button'))).toBeNull();
         });
     });
 
@@ -120,36 +74,26 @@ describe('FullscreenComponent', () => {
             expect(button.nativeElement.classList.contains('top-left')).toBe(true);
         });
 
-        it('should render button with btn-primary class in extended mode', () => {
+        it('should use the primary TUM UI button treatment in extended mode', () => {
             fixture.componentRef.setInput('mode', 'extended');
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('button'));
-            expect(button.nativeElement.classList.contains('btn-primary')).toBe(true);
+            const buttonDirective = button.injector.get(TumUiButtonDirective);
+            expect(buttonDirective.severity()).toBe('primary');
+            expect(buttonDirective.variant()).toBe('solid');
         });
 
-        it('should render button with btn-sm class in compact mode', () => {
+        it('should use the compact secondary TUM UI button treatment in compact mode', () => {
             fixture.componentRef.setInput('mode', 'compact');
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('button'));
-            expect(button.nativeElement.classList.contains('btn-sm')).toBe(true);
-        });
-
-        it('should render fa-icon in compact mode', () => {
-            fixture.componentRef.setInput('mode', 'compact');
-            fixture.detectChanges();
-
-            const icon = fixture.debugElement.query(By.css('fa-icon'));
-            expect(icon).not.toBeNull();
-        });
-
-        it('should render span with text in extended mode', () => {
-            fixture.componentRef.setInput('mode', 'extended');
-            fixture.detectChanges();
-
-            const span = fixture.debugElement.query(By.css('button span'));
-            expect(span).not.toBeNull();
+            const buttonDirective = button.injector.get(TumUiButtonDirective);
+            expect(buttonDirective.severity()).toBe('secondary');
+            expect(buttonDirective.variant()).toBe('text');
+            expect(buttonDirective.size()).toBe('small');
+            expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
         });
 
         it('should call toggleFullscreen when button is clicked', () => {
@@ -159,21 +103,6 @@ describe('FullscreenComponent', () => {
             button.nativeElement.click();
 
             expect(toggleSpy).toHaveBeenCalledOnce();
-        });
-
-        it('should have ngbTooltip directive on button', () => {
-            const button = fixture.debugElement.query(By.css('button'));
-            // NgbTooltip directive is applied via [ngbTooltip] binding in template
-            // Check that the directive instance exists on the debug element
-            const ngbTooltipDirective = button.injector.get(NgbTooltip, null);
-            expect(ngbTooltipDirective).not.toBeNull();
-        });
-    });
-
-    describe('faCompress icon', () => {
-        it('should have faCompress icon defined', () => {
-            expect(component.faCompress).toBeDefined();
-            expect(component.faCompress.iconName).toBe('compress');
         });
     });
 });

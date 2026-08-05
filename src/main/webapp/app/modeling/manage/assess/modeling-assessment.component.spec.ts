@@ -1,14 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
-// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+// Hoisting prevents Apollon's React scheduler from starting in jsdom.
 const { MockApollonEditor } = vi.hoisted(() => {
     const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
 
     class MockApollonEditorClass {
         _model: any;
+        _options: any;
         _subscriptions = new Map<number, (model: any) => void>();
         _assessmentSelectionSubscriptions = new Map<number, (selections: string[]) => void>();
+        _regionElements = new Map<string, HTMLElement>();
         _subscriptionCounter = 0;
 
         subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
@@ -32,6 +33,17 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         setElementHighlights = vi.fn();
 
+        getRegionElement = vi.fn((region: string) => {
+            if (!this._regionElements.has(region)) {
+                this._regionElements.set(region, document.createElement('div'));
+            }
+            return this._regionElements.get(region)!;
+        });
+
+        releaseRegionElement = vi.fn((region: string) => {
+            this._regionElements.delete(region);
+        });
+
         addOrUpdateAssessment = vi.fn((assessment: any) => {
             if (this._model) {
                 if (!this._model.assessments) {
@@ -44,9 +56,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
         nextRender = Promise.resolve();
 
         constructor(_container: HTMLElement, options?: { model?: any }) {
+            this._options = options;
             this._model = options?.model ? deepClone(options.model) : {};
-            // Ensure v4-compatible structure with nodes/edges arrays,
-            // since the real ApollonEditor converts v2/v3 models to v4 internally.
             if (!this._model.nodes) this._model.nodes = [];
             if (!this._model.edges) this._model.edges = [];
             if (!this._model.assessments) this._model.assessments = {};
@@ -64,9 +75,6 @@ const { MockApollonEditor } = vi.hoisted(() => {
     return { MockApollonEditor: MockApollonEditorClass };
 });
 
-// Mock the entire ApollonEditor class to prevent React initialization,
-// which causes unhandled errors from async React scheduler callbacks
-// ("Should not already be working", "document global was defined") in jsdom.
 vi.mock('@tumaet/apollon', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@tumaet/apollon')>();
     return {
@@ -82,7 +90,6 @@ import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -92,12 +99,6 @@ import { TranslateService } from '@ngx-translate/core';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { cloneDeep } from 'lodash-es';
 
-/**
- * Creates a v4 format UMLModel with populated nodes and edges from the v3 test model.
- * In the test environment, Apollon's model getter returns empty nodes/edges because
- * React doesn't fully render. This helper creates a properly populated v4 model
- * that can be used to mock apollonEditor.model for testing highlight and element count features.
- */
 function createV4ModelWithNodes(): UMLModel {
     const v3Model = cloneDeep(testClassDiagram as any);
     const nodes: any[] = [];
@@ -121,17 +122,10 @@ function createV4ModelWithNodes(): UMLModel {
     } as unknown as UMLModel;
 }
 
-/** Helper to find a node or edge by ID in a v4 array-based model */
 function findElementById(elements: any[], id: string): any {
     return elements.find((el: any) => el.id === id);
 }
 
-/**
- * Mocks the apollonEditor.model getter/setter to use the provided model.
- * This is necessary because in the test environment, Apollon doesn't fully render
- * and returns empty nodes/edges. By mocking the getter, we can test the component's
- * logic for updating highlights and element counts.
- */
 function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): { getCapturedModel: () => UMLModel } {
     let capturedModel = model;
     Object.defineProperty(apollonEditor, 'model', {
@@ -149,10 +143,9 @@ describe('ModelingAssessmentComponent', () => {
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
 
-    // Element IDs from test class diagram
-    const ELEMENT_ID_1 = 'b234e5cb-33e3-4957-ae04-f7990ce8571a'; // Package
-    const ELEMENT_ID_2 = '2f67120e-b491-4222-beb1-79e87c2cf54d'; // Connected Class
-    const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd'; // First relationship
+    const PACKAGE_ID = 'b234e5cb-33e3-4957-ae04-f7990ce8571a';
+    const CONNECTED_CLASS_ID = '2f67120e-b491-4222-beb1-79e87c2cf54d';
+    const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd';
 
     const makeMockModel = () => cloneDeep(testClassDiagram as unknown as UMLModel);
 
@@ -194,12 +187,13 @@ describe('ModelingAssessmentComponent', () => {
 
     const waitForApollonInitialization = async () => {
         await fixture.whenStable();
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await (comp.apollonEditor as unknown as { nextRender: Promise<void> } | undefined)?.nextRender;
+        await fixture.whenStable();
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockModule(FormsModule), ModelingAssessmentComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(ArtemisTranslatePipe),
                 {
@@ -215,9 +209,6 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     afterEach(() => {
-        // Properly clean up the Apollon editor (React-based) before test environment teardown.
-        // Prevents "Should not already be working" React scheduler errors firing from setImmediate
-        // after the test ends. Mirrors the pattern in modeling-editor.component.spec.ts.
         if (comp) {
             comp.ngOnDestroy();
         }
@@ -225,38 +216,10 @@ describe('ModelingAssessmentComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should show title if any', () => {
-        const title = 'Test Title';
-        fixture.componentRef.setInput('title', title);
+    it('should scope the Artemis theme bridge to the Apollon host', () => {
         fixture.detectChanges();
-        const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
-        expect(el).not.toBeNull();
-    });
 
-    describe('score display', () => {
-        let totalScore: number;
-        let maxScore: number;
-        beforeEach(() => {
-            totalScore = 40;
-            fixture.componentRef.setInput('totalScore', totalScore);
-            maxScore = 66;
-            fixture.componentRef.setInput('maxScore', maxScore);
-        });
-        it('should display score display with right values', () => {
-            fixture.componentRef.setInput('displayPoints', true);
-            fixture.detectChanges();
-            const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-            expect(scoreDisplay).not.toBeNull();
-            expect(scoreDisplay.componentInstance.score()).toEqual(totalScore);
-            expect(scoreDisplay.componentInstance.maxPoints()).toEqual(maxScore);
-        });
-
-        it('should not display score if displayPoints wrong', () => {
-            fixture.componentRef.setInput('displayPoints', false);
-            fixture.detectChanges();
-            const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
-            expect(scoreDisplay).toBeNull();
-        });
+        expect(fixture.debugElement.query(By.css('.apollon-container.artemis-apollon-theme'))).not.toBeNull();
     });
 
     it('should display explanation editor if there is an explanation', () => {
@@ -269,12 +232,29 @@ describe('ModelingAssessmentComponent', () => {
         expect(explanationEditor.componentInstance.readOnly()).toBe(true);
     });
 
-    it('should initialize apollon editor', () => {
+    it('should mount an explanation that arrives after Apollon initialization', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+
+        const editor = comp.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        const bottomCenter = fixture.nativeElement.querySelector('.modeling-assessment__region--bottom-center') as HTMLElement;
+        fixture.componentRef.setInput('explanation', 'Late explanation');
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        expect(editor._regionElements.get('bottom-center')?.contains(bottomCenter)).toBe(true);
+        expect(bottomCenter.querySelector('jhi-modeling-explanation-editor')).not.toBeNull();
+    });
+
+    it('initializes Apollon with translated labels and scroll lock disabled', () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('diagramType', UMLDiagramType.ClassDiagram);
 
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
+        const editor = comp.apollonEditor as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(editor._options.scrollLock).toBe(false);
+        expect(editor._options.labels).toBeDefined();
     });
 
     it('should filter references', () => {
@@ -297,55 +277,47 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
         fixture.detectChanges();
 
-        // The effect filters by reference != undefined (not by validating referenceId exists in model)
-        // mockFeedbackWithReference has reference: 'reference' - included
-        // mockFeedbackInvalid has reference: 'reference' - included (even though referenceId='4' does not exist in model)
-        // mockFeedbackWithoutReference has no reference property - excluded
-        expect(comp.referencedFeedbacks).toHaveLength(2);
-
-        // Verify mockFeedbackWithReference is present by referenceId
-        expect(comp.referencedFeedbacks.some((f) => f.referenceId === mockFeedbackWithReference.referenceId)).toBe(true);
-
-        // Verify mockFeedbackInvalid is present by referenceId (has reference property, so included by effect)
-        expect(comp.referencedFeedbacks.some((f) => f.referenceId === mockFeedbackInvalid.referenceId)).toBe(true);
-
-        // Verify unreferenced feedback is NOT present (has no reference property)
-        expect(comp.referencedFeedbacks.some((f) => f.text === mockFeedbackWithoutReference.text)).toBe(false);
-
+        expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
         expect(comp.resultFeedbacks()).toEqual(mockFeedbacks);
     });
 
+    it('should remove assessments and feedback mappings that disappear from the server result', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReference]);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        expect(comp.apollonEditor!.model.assessments[RELATIONSHIP_ID]).toBeDefined();
+        expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(true);
+
+        fixture.componentRef.setInput('resultFeedbacks', []);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.apollonEditor!.model.assessments).toEqual({});
+        expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(false);
+    });
+
     it('should calculate drop info', () => {
-        const spy = vi.spyOn(translatePipe, 'transform');
         const mockModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', mockModel);
         fixture.detectChanges();
         fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
         fixture.detectChanges();
 
-        // In v2, calculateDropInfo returns the GradingInstruction directly as dropInfo
-        // (Apollon stores dropInfo flat, not nested under dropInfo.instruction)
-        expect((Object.values(mockModel.assessments)[0] as any).dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
-
-        // calculateLabel() always calls translate twice (first/second correction round text)
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffFirst');
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffSecond');
-        expect(spy).toHaveBeenCalledTimes(2);
+        const assessment = Object.values(comp.apollonEditor!.model.assessments)[0];
+        expect(assessment.dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
     });
 
     it('should update element counts', async () => {
-        vi.spyOn(console, 'error').mockImplementation(() => {}); // prevent: findDOMNode is deprecated and will be removed in the next major release
-
         const mockModel = makeMockModel();
         const v4Model = createV4ModelWithNodes();
 
-        // Create element counts for specific elements
         const elementCounts: ModelElementCount[] = [
-            { elementId: ELEMENT_ID_1, numberOfOtherElements: 5 },
-            { elementId: ELEMENT_ID_2, numberOfOtherElements: 3 },
+            { elementId: PACKAGE_ID, numberOfOtherElements: 5 },
+            { elementId: CONNECTED_CLASS_ID, numberOfOtherElements: 3 },
         ];
 
-        // Mock translatePipe to return a meaningful value so assessmentNote gets set
         const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string | undefined | null, params?: object) => {
             const affectedSubmissionsCount = (params as { affectedSubmissionsCount?: number } | undefined)?.affectedSubmissionsCount;
             if (key === 'artemisApp.modelingAssessment.impactWarning' && affectedSubmissionsCount) {
@@ -362,23 +334,18 @@ describe('ModelingAssessmentComponent', () => {
 
         expect(comp.apollonEditor).toBeDefined();
 
-        // Mock the apollonEditor.model to return our v4 model with populated nodes
         const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
 
-        // Now call updateElementCounts which will iterate over model.nodes
         await (comp as any).updateElementCounts(elementCounts);
 
-        // Verify the translate pipe was called with the correct translation key and parameters
         expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: 5 });
         expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: 3 });
 
-        // Verify the assessmentNote was actually set on the nodes with the translated text
         const updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).data.assessmentNote).toBe('Warning: 5 other submissions');
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).data.assessmentNote).toBe('Warning: 3 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], PACKAGE_ID).data.assessmentNote).toBe('Warning: 5 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], CONNECTED_CLASS_ID).data.assessmentNote).toBe('Warning: 3 other submissions');
 
-        // Verify nodes not in elementCounts don't have assessmentNote set
-        const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6'; // Class In Package
+        const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6';
         expect(findElementById(updatedModel.nodes as any[], otherNodeId).data.assessmentNote).toBeUndefined();
     });
 
@@ -389,7 +356,7 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
 
-        comp.generateFeedbackFromAssessment(Object.values(mockModel.assessments));
+        comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
@@ -402,7 +369,7 @@ describe('ModelingAssessmentComponent', () => {
         setHighlights.mockClear();
 
         const highlights = new Map<string, string>([
-            [ELEMENT_ID_1, 'red'],
+            [PACKAGE_ID, 'red'],
             [RELATIONSHIP_ID, 'blue'],
         ]);
         fixture.componentRef.setInput('highlightedElements', highlights);
@@ -414,7 +381,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('clears stale overlays when highlightedElements is reset to undefined (no lingering highlights)', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[ELEMENT_ID_1, 'red']]));
+        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[PACKAGE_ID, 'red']]));
         fixture.detectChanges();
         await waitForApollonInitialization();
 
@@ -425,36 +392,24 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
         await waitForApollonInitialization();
 
-        // undefined must reach Apollon as null (clear), not be swallowed as a no-op.
         expect(setHighlights).toHaveBeenCalledWith(null);
     });
 
-    it('should update model', async () => {
-        // Test that model can be updated with a new model
+    it('applies a replacement input model to the mounted editor', async () => {
         const initialModel = makeMockModel();
         fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
         await waitForApollonInitialization();
         expect(comp.apollonEditor).not.toBeNull();
 
-        // Verify initial model was set
-        expect(comp.umlModel()).toBe(initialModel);
-
-        // Create a modified model (same structure, different content)
         const newModel = makeMockModel();
-        newModel.type = 'ClassDiagram';
+        newModel.title = 'Replacement model';
         fixture.componentRef.setInput('umlModel', newModel);
         fixture.detectChanges();
-        await fixture.whenStable();
-        await new Promise((r) => setTimeout(r, 0));
+        await waitForApollonInitialization();
 
-        // Verify the component's input was updated
-        expect(comp.umlModel()).toBe(newModel);
-        expect(comp.umlModel()?.type).toBe('ClassDiagram');
-
-        // Verify the apollon editor is still valid and has the correct diagram type
         const apollonModel = comp.apollonEditor!.model;
-        expect(apollonModel.type).toBe(newModel.type);
+        expect(apollonModel.title).toBe('Replacement model');
     });
 
     it('should update highlighted assessments first round', async () => {
@@ -486,8 +441,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('highlightDifferences', true);
         fixture.detectChanges();
 
-        await fixture.whenStable();
-        await new Promise((r) => setTimeout(r, 0));
+        await waitForApollonInitialization();
 
         expect(comp.apollonEditor).not.toBeNull();
 

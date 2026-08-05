@@ -1,30 +1,28 @@
-import { Component, ElementRef, inject, input } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, input, signal } from '@angular/core';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/foundation/util/fullscreen.util';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-fullscreen',
     templateUrl: './fullscreen.component.html',
     styleUrls: ['./fullscreen.scss'],
-    imports: [NgbTooltip, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TumUiButtonDirective, TumUiTooltipDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class FullscreenComponent {
-    private fullScreenWrapper = inject(ElementRef);
+    private readonly fullScreenWrapper = inject(ElementRef);
 
-    position = input<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>('top-right');
+    readonly position = input<'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'>('top-right');
 
-    mode = input<'compact' | 'extended'>('extended');
+    readonly mode = input<'compact' | 'extended'>('extended');
+    readonly showButton = input(true);
+    protected readonly fullscreenActive = signal(isFullScreen());
 
-    // Icons
-    faCompress = faCompress;
+    protected readonly faCompress = faCompress;
 
-    /**
-     * check current state and toggle fullscreen
-     */
-    toggleFullscreen() {
+    toggleFullscreen(): void {
         if (this.isFullScreen()) {
             exitFullscreen();
         } else {
@@ -33,7 +31,12 @@ export class FullscreenComponent {
         }
     }
 
-    isFullScreen() {
+    isFullScreen(): boolean {
         return isFullScreen();
+    }
+
+    @HostListener('document:fullscreenchange')
+    protected updateFullscreenState(): void {
+        this.fullscreenActive.set(isFullScreen());
     }
 }

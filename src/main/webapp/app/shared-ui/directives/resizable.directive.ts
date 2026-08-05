@@ -1,11 +1,6 @@
 import { DestroyRef, Directive, ElementRef, Renderer2, afterNextRender, effect, inject, input, output } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
-/**
- * Which edges of the host element can be resized. Each edge maps to a CSS selector for the
- * drag handle that initiates the resize (the handle must be a descendant of the host element),
- * mirroring interact.js's `edges: { left: '.handle' }` configuration.
- */
 export interface ResizableEdges {
     left?: string;
     right?: string;
@@ -13,7 +8,6 @@ export interface ResizableEdges {
     bottom?: string;
 }
 
-/** Min/max size constraints in pixels. Any field may be omitted (treated as unconstrained). */
 export interface ResizableConstraints {
     minWidth?: number;
     maxWidth?: number;
@@ -21,36 +15,31 @@ export interface ResizableConstraints {
     maxHeight?: number;
 }
 
-/** Snapshot of the host element size (px) reported with resize events. */
 export interface ResizableSizeEvent {
     width: number;
     height: number;
 }
 
 type ActiveEdge = keyof ResizableEdges;
+const HANDLE_ATTRIBUTES = ['role', 'tabindex', 'aria-disabled', 'aria-orientation', 'aria-controls', 'aria-valuenow', 'aria-valuemin', 'aria-valuemax'] as const;
+
+interface HandleState {
+    cursor: string;
+    touchAction: string;
+    attributes: Map<(typeof HANDLE_ATTRIBUTES)[number], string | null>;
+}
+
+let nextResizableId = 0;
 
 /**
- * In-house replacement for interact.js `.resizable(...)`, implemented with Pointer Events
- * (so mouse, touch and pen are handled uniformly). Place it on the element to resize and point
- * each resizable edge at a handle selector:
- *
- * ```html
- * <div jhiResizable [resizableEdges]="{ left: '.draggable-left' }"
- *      [resizableConstraints]="{ minWidth: 215, maxWidth: 1500 }" (resizeEnd)="onResized($event)">
- *     <div class="draggable-left"></div>
- * </div>
- * ```
- *
- * A pointerdown on a configured handle starts a resize; the directive writes the clamped size to
- * the host's inline `width`/`height` during the drag (matching the previous interact.js behaviour)
- * and toggles the `card-resizable` class while resizing. Consumers that track the size in a signal
- * can read it from `(resizeMove)`/`(resizeEnd)` and set `[resizableApplyInlineSize]="false"` to own the
- * styling themselves. Handle lookup uses event delegation, so projected/late handles work too.
+ * Resizes the host through selector-matched handles, optionally located in its parent.
+ * Handles with an accessible name become keyboard-operable separators; inline sizing can be delegated to the consumer.
  */
 @Directive({
     selector: '[jhiResizable]',
     host: {
         '(pointerdown)': 'onPointerDown($event)',
+        '(keydown)': 'onKeyDown($event)',
     },
 })
 export class ResizableDirective {
@@ -59,21 +48,10 @@ export class ResizableDirective {
     private readonly destroyRef = inject(DestroyRef);
     private readonly document = inject<Document>(DOCUMENT);
 
-    /** Map of resizable edge -> handle selector (a descendant of the host, unless {@link resizableHandleOutsideHost}). */
     readonly resizableEdges = input<ResizableEdges>({});
-    /** Min/max width/height in pixels. */
     readonly resizableConstraints = input<ResizableConstraints>({});
-    /** When false, the handles are inert (used to toggle resizing on collapse). */
     readonly resizableEnabled = input<boolean>(true);
-    /** When false, the directive emits sizes but does not write inline width/height itself. */
     readonly resizableApplyInlineSize = input<boolean>(true);
-    /**
-     * When true, the handle selector is also resolved against the host's sibling subtree (the host's parent),
-     * so the drag handle can live next to the host instead of inside it - mirroring interact.js, whose handle
-     * selector matched any element. This lets a divider sit between two flex columns (e.g. video | transcript)
-     * rather than overlapping one of them. Defaults to false (handle must be a descendant), preserving the
-     * behaviour of every existing consumer.
-     */
     readonly resizableHandleOutsideHost = input<boolean>(false);
 
     readonly resizeStart = output<ResizableSizeEvent>();
@@ -88,77 +66,187 @@ export class ResizableDirective {
     private startHeight = 0;
     private moveCleanup?: () => void;
     private externalHandleCleanup?: () => void;
+    private handleMutationObserver?: MutationObserver;
+    private readonly managedHandles = new Map<HTMLElement, HandleState>();
 
     constructor() {
-        // Keep `touch-action: none` on the handles so the browser does not hijack touch gestures.
-        // Applied after the first render, when projected handles are present in the DOM.
         afterNextRender(() => {
             this.applyHandleStyles(this.resizableEdges());
             this.attachExternalHandleListener();
+            this.observeHandleChanges();
         });
-        // Re-apply the handle affordance styles (touch-action: none + resize cursor) and re-attach the external
-        // (sibling) handle delegation whenever their inputs change: the edge map (e.g. modeling-assessment toggling
-        // horizontal/vertical resize) or resizableHandleOutsideHost. Both operations are idempotent
-        // (attachExternalHandleListener cleans up the prior listener), so running them here plus once in
-        // afterNextRender is safe and keeps handles affordance-correct without waiting for the first pointerdown.
         effect(() => {
             this.attachExternalHandleListener();
             this.applyHandleStyles(this.resizableEdges());
+            this.observeHandleChanges();
         });
         this.destroyRef.onDestroy(() => {
-            // Release a still-held pointer capture and reset state if the host is destroyed mid-drag.
             this.releaseCaptureSafely();
             this.activeEdge = undefined;
             this.activePointerId = undefined;
             this.teardownActiveDrag();
             this.renderer.removeStyle(this.document.body, 'user-select');
             this.externalHandleCleanup?.();
+            this.handleMutationObserver?.disconnect();
+            this.restoreManagedHandles();
         });
     }
 
-    /** Root to search for handle elements: the host's parent when handles live outside the host, else the host. */
     private handleSearchRoot(): HTMLElement | undefined {
         return this.resizableHandleOutsideHost() ? (this.host.nativeElement.parentElement ?? undefined) : this.host.nativeElement;
     }
 
-    /**
-     * When handles live outside the host, a pointerdown on the handle does not bubble through the host, so the
-     * host `(pointerdown)` listener never sees it. Delegate from the host's parent instead; `onPointerDown` then
-     * resolves the edge from the event target. No-op (and no double handling) when handles are inside the host.
-     */
     private attachExternalHandleListener(): void {
+        this.externalHandleCleanup?.();
         const parent = this.resizableHandleOutsideHost() ? this.host.nativeElement.parentElement : undefined;
         if (!parent) {
             return;
         }
-        this.externalHandleCleanup?.();
-        this.externalHandleCleanup = this.renderer.listen(parent, 'pointerdown', (event: PointerEvent) => this.onPointerDown(event));
+        const removePointerListener = this.renderer.listen(parent, 'pointerdown', (event: PointerEvent) => this.onPointerDown(event));
+        const removeKeyboardListener = this.renderer.listen(parent, 'keydown', (event: KeyboardEvent) => this.onKeyDown(event));
+        this.externalHandleCleanup = () => {
+            removePointerListener();
+            removeKeyboardListener();
+            this.externalHandleCleanup = undefined;
+        };
     }
 
-    /**
-     * Prepares each handle: `touch-action: none` so the browser does not hijack touch gestures, and a resize
-     * cursor so the handle visibly signals it is draggable (interact.js set this automatically; the testers
-     * reported the affordance was missing on the directive-driven resizers). Left/right edges resize width
-     * (col-resize), top/bottom edges resize height (row-resize).
-     */
+    private observeHandleChanges(): void {
+        this.handleMutationObserver?.disconnect();
+        const root = this.handleSearchRoot();
+        if (!root || typeof MutationObserver === 'undefined' || !Object.values(this.resizableEdges()).some(Boolean)) {
+            this.handleMutationObserver = undefined;
+            return;
+        }
+        this.handleMutationObserver = new MutationObserver(() => this.applyHandleStyles(this.resizableEdges()));
+        this.handleMutationObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-label', 'aria-labelledby'] });
+    }
+
     private applyHandleStyles(edges: ResizableEdges): void {
         const root = this.handleSearchRoot();
         if (!root) {
+            this.restoreManagedHandles();
             return;
         }
+        const activeHandles = new Map<HTMLElement, ActiveEdge>();
         (Object.entries(edges) as [ActiveEdge, string | undefined][]).forEach(([edge, selector]) => {
             if (!selector) {
                 return;
             }
+            root.querySelectorAll<HTMLElement>(selector).forEach((handle) => activeHandles.set(handle, edge));
+        });
+
+        for (const handle of this.managedHandles.keys()) {
+            if (!activeHandles.has(handle)) {
+                this.restoreHandle(handle);
+            }
+        }
+
+        activeHandles.forEach((edge, handle) => {
+            this.captureHandleState(handle);
             const cursor = edge === 'left' || edge === 'right' ? 'col-resize' : 'row-resize';
-            root.querySelectorAll<HTMLElement>(selector).forEach((handle) => {
-                this.renderer.setStyle(handle, 'touch-action', 'none');
-                this.renderer.setStyle(handle, 'cursor', cursor);
-            });
+            const enabled = this.resizableEnabled();
+            this.renderer.setStyle(handle, 'touch-action', enabled ? 'none' : 'auto');
+            this.renderer.setStyle(handle, 'cursor', enabled ? cursor : 'default');
+            const hasAccessibleName = handle.hasAttribute('aria-label') || handle.hasAttribute('aria-labelledby');
+            if (!hasAccessibleName) {
+                this.restoreHandleAttributes(handle);
+                return;
+            }
+            this.renderer.setAttribute(handle, 'role', 'separator');
+            this.renderer.setAttribute(handle, 'tabindex', enabled ? '0' : '-1');
+            if (enabled) {
+                this.renderer.removeAttribute(handle, 'aria-disabled');
+            } else {
+                this.renderer.setAttribute(handle, 'aria-disabled', 'true');
+            }
+            this.renderer.setAttribute(handle, 'aria-orientation', edge === 'left' || edge === 'right' ? 'vertical' : 'horizontal');
+            this.renderer.setAttribute(handle, 'aria-controls', this.ensureHostId());
+            this.updateHandleAria(handle, edge);
         });
     }
 
-    /** Resolves which configured edge (if any) the pointerdown originated from, via event delegation. */
+    private captureHandleState(handle: HTMLElement): void {
+        if (this.managedHandles.has(handle)) {
+            return;
+        }
+        this.managedHandles.set(handle, {
+            cursor: handle.style.cursor,
+            touchAction: handle.style.touchAction,
+            attributes: new Map(HANDLE_ATTRIBUTES.map((attribute) => [attribute, handle.getAttribute(attribute)])),
+        });
+    }
+
+    private restoreManagedHandles(): void {
+        for (const handle of this.managedHandles.keys()) {
+            this.restoreHandle(handle);
+        }
+    }
+
+    private restoreHandle(handle: HTMLElement): void {
+        const state = this.managedHandles.get(handle);
+        if (!state) {
+            return;
+        }
+        this.restoreStyle(handle, 'cursor', state.cursor);
+        this.restoreStyle(handle, 'touch-action', state.touchAction);
+        this.restoreHandleAttributes(handle);
+        this.managedHandles.delete(handle);
+    }
+
+    private restoreHandleAttributes(handle: HTMLElement): void {
+        const attributes = this.managedHandles.get(handle)?.attributes;
+        if (!attributes) {
+            return;
+        }
+        attributes.forEach((value, attribute) => {
+            if (value === null) {
+                this.renderer.removeAttribute(handle, attribute);
+            } else {
+                this.renderer.setAttribute(handle, attribute, value);
+            }
+        });
+    }
+
+    private restoreStyle(handle: HTMLElement, property: string, value: string): void {
+        if (value) {
+            this.renderer.setStyle(handle, property, value);
+        } else {
+            this.renderer.removeStyle(handle, property);
+        }
+    }
+
+    private ensureHostId(): string {
+        const host = this.host.nativeElement;
+        if (!host.id) {
+            this.renderer.setAttribute(host, 'id', `resizable-region-${++nextResizableId}`);
+        }
+        return host.id;
+    }
+
+    private updateHandleAria(handle: HTMLElement, edge: ActiveEdge, size?: ResizableSizeEvent): void {
+        const horizontal = edge === 'left' || edge === 'right';
+        const constraints = this.resizableConstraints();
+        const current = size ?? {
+            width: this.host.nativeElement.getBoundingClientRect().width,
+            height: this.host.nativeElement.getBoundingClientRect().height,
+        };
+        const value = Math.round(horizontal ? current.width : current.height);
+        const min = horizontal ? constraints.minWidth : constraints.minHeight;
+        const max = horizontal ? constraints.maxWidth : constraints.maxHeight;
+        this.renderer.setAttribute(handle, 'aria-valuenow', `${value}`);
+        if (min !== undefined) {
+            this.renderer.setAttribute(handle, 'aria-valuemin', `${min}`);
+        } else {
+            this.renderer.removeAttribute(handle, 'aria-valuemin');
+        }
+        if (max !== undefined) {
+            this.renderer.setAttribute(handle, 'aria-valuemax', `${max}`);
+        } else {
+            this.renderer.removeAttribute(handle, 'aria-valuemax');
+        }
+    }
+
     private resolveEdge(target: EventTarget | null): ActiveEdge | undefined {
         if (!(target instanceof Element)) {
             return undefined;
@@ -177,8 +265,6 @@ export class ResizableDirective {
     }
 
     protected onPointerDown(event: PointerEvent): void {
-        // Ignore a second pointerdown while a resize is already in progress (prevents leaking
-        // listeners and mixing pointer streams).
         if (this.activeEdge) {
             return;
         }
@@ -193,7 +279,6 @@ export class ResizableDirective {
             return;
         }
         event.preventDefault();
-        // Re-apply handle styles in case the handle was rendered after the initial afterNextRender pass.
         this.applyHandleStyles(this.resizableEdges());
 
         const rect = this.host.nativeElement.getBoundingClientRect();
@@ -207,15 +292,9 @@ export class ResizableDirective {
         const hostEl = this.host.nativeElement;
         hostEl.setPointerCapture?.(event.pointerId);
         this.renderer.addClass(hostEl, 'card-resizable');
-        // Suppress text selection for the whole drag; otherwise dragging across content selects text (the blue
-        // selection flicker testers reported). Restored in onPointerUp / teardown.
         this.renderer.setStyle(this.document.body, 'user-select', 'none');
 
         const move = (e: PointerEvent) => this.onPointerMove(e);
-        // Same handler for pointerup and pointercancel. Releasing the capture is done inside onPointerUp via
-        // releaseCaptureSafely(); we must NOT call releasePointerCapture() here unconditionally, because on
-        // pointercancel the browser has already released the capture and the call would throw InvalidPointerId,
-        // aborting the teardown and leaving the directive wedged (stuck card-resizable + leaked listeners).
         const up = (e: PointerEvent) => {
             if (e.pointerId !== this.activePointerId) {
                 return;
@@ -225,22 +304,72 @@ export class ResizableDirective {
         const unMove = this.renderer.listen(hostEl, 'pointermove', move);
         const unUp = this.renderer.listen(hostEl, 'pointerup', up);
         const unCancel = this.renderer.listen(hostEl, 'pointercancel', up);
+        const unLostCapture = this.renderer.listen(hostEl, 'lostpointercapture', (e: PointerEvent) => {
+            if (e.pointerId === this.activePointerId) {
+                this.finishResize();
+            }
+        });
         this.moveCleanup = () => {
             unMove();
             unUp();
             unCancel();
+            unLostCapture();
             this.moveCleanup = undefined;
         };
 
         this.resizeStart.emit({ width: this.startWidth, height: this.startHeight });
     }
 
+    protected onKeyDown(event: KeyboardEvent): void {
+        if (!this.resizableEnabled()) {
+            return;
+        }
+        const edge = this.resolveEdge(event.target);
+        if (!edge) {
+            return;
+        }
+
+        const horizontal = edge === 'left' || edge === 'right';
+        const decrementKey = horizontal ? 'ArrowLeft' : 'ArrowUp';
+        const incrementKey = horizontal ? 'ArrowRight' : 'ArrowDown';
+        const constraints = this.resizableConstraints();
+        const min = horizontal ? constraints.minWidth : constraints.minHeight;
+        const max = horizontal ? constraints.maxWidth : constraints.maxHeight;
+        const rect = this.host.nativeElement.getBoundingClientRect();
+        const current = horizontal ? rect.width : rect.height;
+        let next: number | undefined;
+
+        if (event.key === 'Home' && min !== undefined) {
+            next = min;
+        } else if (event.key === 'End' && max !== undefined) {
+            next = max;
+        } else if (event.key === decrementKey || event.key === incrementKey) {
+            const direction = event.key === incrementKey ? 1 : -1;
+            const edgeDirection = edge === 'left' || edge === 'top' ? -1 : 1;
+            next = current + direction * edgeDirection * 16;
+        }
+
+        if (next === undefined) {
+            return;
+        }
+
+        event.preventDefault();
+        const width = horizontal ? this.clamp(next, constraints.minWidth, constraints.maxWidth) : rect.width;
+        const height = horizontal ? rect.height : this.clamp(next, constraints.minHeight, constraints.maxHeight);
+        const size = { width, height };
+        this.resizeStart.emit({ width: rect.width, height: rect.height });
+        if (this.resizableApplyInlineSize()) {
+            this.renderer.setStyle(this.host.nativeElement, horizontal ? 'width' : 'height', `${horizontal ? width : height}px`);
+        }
+        this.updateHandleAria(event.target as HTMLElement, edge, size);
+        this.resizeMove.emit(size);
+        this.resizeEnd.emit(size);
+    }
+
     private onPointerMove(event: PointerEvent): void {
         if (!this.activeEdge || event.pointerId !== this.activePointerId) {
             return;
         }
-        // Honor a mid-drag disable (the "inert when false" contract): if the consumer toggles resizableEnabled off
-        // during a drag, stop writing/emitting sizes. The gesture is still torn down normally on pointerup/cancel.
         if (!this.resizableEnabled()) {
             return;
         }
@@ -273,6 +402,10 @@ export class ResizableDirective {
                 this.renderer.setStyle(this.host.nativeElement, 'height', `${height}px`);
             }
         }
+        const handle = this.handleSearchRoot()?.querySelector<HTMLElement>(this.resizableEdges()[this.activeEdge]!);
+        if (handle) {
+            this.updateHandleAria(handle, this.activeEdge, { width, height });
+        }
         this.resizeMove.emit({ width, height });
     }
 
@@ -280,7 +413,14 @@ export class ResizableDirective {
         if (!this.activeEdge) {
             return;
         }
-        this.releaseCaptureSafely();
+        const pointerId = this.activePointerId;
+        this.activeEdge = undefined;
+        this.activePointerId = undefined;
+        this.releaseCaptureSafely(pointerId);
+        this.finishResize();
+    }
+
+    private finishResize(): void {
         this.activeEdge = undefined;
         this.activePointerId = undefined;
         this.teardownActiveDrag();
@@ -290,13 +430,7 @@ export class ResizableDirective {
         this.resizeEnd.emit({ width: rect.width, height: rect.height });
     }
 
-    /**
-     * Releases the active pointer capture if (and only if) the host still holds it. On `pointercancel` the
-     * browser has already released it, so calling releasePointerCapture() would throw `InvalidPointerId`; the
-     * hasPointerCapture guard and the try/catch make this safe to call from pointerup, pointercancel and destroy.
-     */
-    private releaseCaptureSafely(): void {
-        const pointerId = this.activePointerId;
+    private releaseCaptureSafely(pointerId = this.activePointerId): void {
         if (pointerId === undefined) {
             return;
         }
@@ -305,8 +439,10 @@ export class ResizableDirective {
             if (hostEl.hasPointerCapture?.(pointerId)) {
                 hostEl.releasePointerCapture(pointerId);
             }
-        } catch {
-            // The capture was already released (e.g. on pointercancel); nothing to do.
+        } catch (error) {
+            if (!(error instanceof DOMException && error.name === 'NotFoundError')) {
+                throw error;
+            }
         }
     }
 
@@ -316,8 +452,6 @@ export class ResizableDirective {
 
     private clamp(value: number, min?: number, max?: number): number {
         let result = value;
-        // Apply max first, then min, so the minimum always wins if a caller ever passes max < min: a panel must
-        // never be forced below its configured minimum (a maximum below the minimum is treated as "at least min").
         if (max !== undefined) {
             result = Math.min(max, result);
         }

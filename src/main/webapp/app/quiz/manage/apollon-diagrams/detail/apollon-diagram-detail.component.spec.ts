@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Course } from 'app/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -14,10 +13,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
-import * as testClassDiagramV3 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
-import * as testClassDiagramV4 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram-v4.json';
+import testClassDiagramV3 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
+import testClassDiagramV4 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram-v4.json';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
@@ -88,8 +86,6 @@ function setupCanvasAndImageMocks() {
 }
 
 /**
- * RUTHLESS TEST SUITE: ApollonDiagramDetailComponent
- *
  * Tests cover:
  * 1. Component initialization (ngOnInit)
  * 2. hasInteractive for v3 AND v4 formats
@@ -103,14 +99,13 @@ function setupCanvasAndImageMocks() {
  */
 describe('ApollonDiagramDetail Component', () => {
     let apollonDiagramService: ApollonDiagramService;
-    let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
     let alertService: AlertService;
     let cleanupCanvasAndImageMocks: (() => void) | undefined;
     let dialogClose: Subject<any>;
 
-    const course: Course = { id: 123 } as Course;
-    const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
+    const courseId = 123;
+    const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
     const v3Model = testClassDiagramV3 as unknown as UMLModel;
     const v4Model = testClassDiagramV4 as unknown as UMLModel;
 
@@ -121,7 +116,7 @@ describe('ApollonDiagramDetail Component', () => {
     beforeEach(async () => {
         const route = {
             params: of({ id: 1, courseId: 123 }),
-            snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
+            snapshot: { paramMap: convertToParamMap({ courseId }) },
         } as any as ActivatedRoute;
 
         diagram.id = 1;
@@ -142,12 +137,6 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
-                {
-                    provide: CourseManagementService,
-                    useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: course }))),
-                    },
-                },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
         })
@@ -156,11 +145,10 @@ describe('ApollonDiagramDetail Component', () => {
 
         fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
         // Set required inputs before any change detection
-        fixture.componentRef.setInput('courseId', course.id);
+        fixture.componentRef.setInput('courseId', courseId);
         fixture.componentRef.setInput('apollonDiagramId', diagram.id);
 
         apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
         alertService = fixture.debugElement.injector.get(AlertService);
 
         // Mock ApollonEditor static and prototype methods
@@ -183,14 +171,13 @@ describe('ApollonDiagramDetail Component', () => {
     // INITIALIZATION TESTS
     // ===========================================
     describe('ngOnInit', () => {
-        it('should load diagram and course on initialization', () => {
+        it('should load the diagram on initialization', () => {
             const response = new HttpResponse({ body: diagram });
             vi.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
 
             fixture.detectChanges();
 
             expect(fixture.componentInstance.apollonDiagram()).toEqual(diagram);
-            expect(fixture.componentInstance.course()).toEqual(course);
             fixture.componentInstance.ngOnDestroy();
         });
 
@@ -201,18 +188,6 @@ describe('ApollonDiagramDetail Component', () => {
             fixture.detectChanges();
 
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.apollonDiagram.detail.error.loading');
-        });
-
-        it('should show error alert when course loading fails', () => {
-            const diagramResponse = new HttpResponse({ body: diagram });
-            vi.spyOn(apollonDiagramService, 'find').mockReturnValue(of(diagramResponse));
-            vi.spyOn(courseService, 'find').mockReturnValue(throwError(() => new Error('Course load failed')));
-            const errorSpy = vi.spyOn(alertService, 'error');
-
-            fixture.detectChanges();
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.apollonDiagram.detail.error.loading');
-            fixture.componentInstance.ngOnDestroy();
         });
     });
 
@@ -433,7 +408,6 @@ describe('ApollonDiagramDetail Component', () => {
         it('should generate exercise and emit closeEdit when successful', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
             fixture.componentInstance.apollonDiagram.set(diagram);
-            fixture.componentInstance.course.set(course);
 
             const response = new HttpResponse({ body: diagram, status: 200 });
             vi.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
@@ -456,7 +430,6 @@ describe('ApollonDiagramDetail Component', () => {
         it('should not emit when save fails', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
             fixture.componentInstance.apollonDiagram.set(diagram);
-            fixture.componentInstance.course.set(course);
 
             // Mock save to fail
             const response = new HttpResponse({ body: diagram, status: 500 });

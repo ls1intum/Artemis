@@ -17,7 +17,11 @@
             "view": "Bewertung ansehen",
             "model": "Modell",
             "explanationText": "Erklärung",
+            "resizeEditor": "Editorgröße ändern",
+            "resizeExplanation": "Erklärung in der Größe ändern",
+            "explanationPlaceholder": "Füge Kontext hinzu, der dein Modell erklärt …",
             "problemStatement": "Problemstellung",
+            "resizeProblemStatement": "Größe der Problemstellung ändern",
             "maxScore": "<strong>Max. Punktzahl: {{maxScore}}</strong>",
             "assessment": {
                 "title": "Bewertung",

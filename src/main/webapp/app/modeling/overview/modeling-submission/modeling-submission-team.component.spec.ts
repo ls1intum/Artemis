@@ -39,14 +39,13 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
-// Stub component that provides all needed functionality for ModelingEditorComponent
 @Component({
     selector: 'jhi-modeling-editor',
     template: '',
@@ -55,9 +54,10 @@ class StubModelingEditorComponent {
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     readOnly = input<boolean>(false);
-    resizeOptions = input<{ verticalResize?: boolean }>({});
+    tile = input(false);
     showHelpButton = input<boolean>(true);
     withExplanation = input<boolean>(false);
+    problemStatement = input<string>();
     savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
 
     savedStatusOutput = output<boolean>();
@@ -73,7 +73,7 @@ class StubModelingEditorComponent {
 
     importPatch = vi.fn();
 
-    broadcastFullState = vi.fn();
+    resynchronizeCollaborationAfterReconnect = vi.fn();
 }
 
 describe('ModelingSubmissionComponent', () => {
@@ -90,7 +90,6 @@ describe('ModelingSubmissionComponent', () => {
     participation.id = 1;
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
 
-    // Valid Apollon v3 model format for tests
     const validMockModel = JSON.stringify({
         version: '3.0.0',
         type: 'ClassDiagram',
@@ -103,11 +102,9 @@ describe('ModelingSubmissionComponent', () => {
 
     const originalConsoleError = console.error;
 
-    // Create a mock modeling editor component for use in tests
     let mockModelingEditor: Partial<ModelingEditorComponent>;
 
     function createComponent() {
-        // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
                 imports: [ModelingEditorComponent, RatingComponent],
@@ -122,8 +119,6 @@ describe('ModelingSubmissionComponent', () => {
         service = TestBed.inject(ModelingSubmissionService);
         alertService = TestBed.inject(AlertService);
 
-        // Create a mock for the modeling editor viewChild signal
-        // Return a model with elements so that submit validation passes
         mockModelingEditor = {
             getCurrentModel: vi.fn().mockReturnValue({
                 elements: { element1: { id: 'element1', type: 'Class' } },
@@ -137,14 +132,17 @@ describe('ModelingSubmissionComponent', () => {
             isApollonEditorMounted: false,
             onModelPatch: new EventEmitter() as any,
             importPatch: vi.fn(),
-            broadcastFullState: vi.fn(),
+            resynchronizeCollaborationAfterReconnect: vi.fn(),
         };
 
-        // Mock the viewChild signal to return our mock editor
         vi.spyOn(comp, 'modelingEditor').mockReturnValue(mockModelingEditor as ModelingEditorComponent);
     }
 
     beforeEach(() => {
+        participation.exercise ??= new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        participation.exercise.teamMode = true;
+        participation.exercise.mode = ExerciseMode.TEAM;
+        submission.participation = participation;
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([routes[0]]),
@@ -185,33 +183,24 @@ describe('ModelingSubmissionComponent', () => {
         vi.restoreAllMocks();
         console.error = originalConsoleError;
 
-        // Reset shared submission state to prevent test pollution
         submission.submitted = true;
         submission.model = undefined;
         submission.participation!.initializationDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.dueDate = undefined;
         (<StudentParticipation>submission.participation).exercise!.exerciseGroup = undefined;
 
-        // Cleanup the component if it exists
         if (comp) {
-            try {
-                comp.ngOnDestroy();
-            } catch (_) {
-                // Ignore errors during cleanup
-            }
+            comp.ngOnDestroy();
         }
     });
 
     it('should call load getDataForModelingEditor on init', () => {
         createComponent();
 
-        // GIVEN
         const getLatestSubmissionForModelingEditorStub = vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // WHEN
         comp.ngOnInit();
 
-        // THEN
         expect(getLatestSubmissionForModelingEditorStub).toHaveBeenCalledOnce();
         expect(comp.submission().id).toBe(20);
     });
@@ -219,34 +208,25 @@ describe('ModelingSubmissionComponent', () => {
     it('should subscribe to modeling editor patches.', async () => {
         createComponent();
 
-        // Mock the submission
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // Initialize the component
         comp.ngOnInit();
         fixture.detectChanges();
         await fixture.whenStable();
 
-        // Subscribe to patches
         const receiverMock = vi.fn();
-        // @ts-ignore
-        comp.submissionPatchObservable.subscribe(receiverMock);
+        const submissionPatches = (comp as unknown as { submissionPatchObservable: Observable<SubmissionPatch> }).submissionPatchObservable;
+        submissionPatches.subscribe(receiverMock);
 
-        // Call onModelPatch directly (this simulates the template output binding)
-        // The component's onModelPatch method emits to submissionPatchObservable when teamMode is true
-        // In Apollon v4, patch is now a base64 encoded string
         comp.onModelPatch(btoa(JSON.stringify({ test: 'value' })));
 
-        // We have got it?
         expect(receiverMock).toHaveBeenCalled();
-        // The patch is now a base64 encoded string
         expect(receiverMock.mock.lastCall![0].patch).toBe(btoa(JSON.stringify({ test: 'value' })));
     });
 
     it('should update the submission when a patch is received.', () => {
         createComponent();
 
-        // Initialize submission
         submission.model = JSON.stringify({
             version: '3.0.0',
             type: 'ClassDiagram',
@@ -258,16 +238,13 @@ describe('ModelingSubmissionComponent', () => {
         });
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
-        // Initialize the component
         comp.ngOnInit();
 
         const editorImportSpy = vi.spyOn(mockModelingEditor, 'importPatch');
-        // SubmissionPatch now contains a base64 encoded string of the whole diagram
         const patchData = btoa(JSON.stringify({ elements: { '1': { id: 1, name: 'john' } } }));
         const submissionPatch = new SubmissionPatch(patchData);
         comp.onReceiveSubmissionPatchFromTeam(submissionPatch);
 
-        // We have got it?
         expect(editorImportSpy).toHaveBeenCalledWith(patchData);
     });
 
@@ -356,7 +333,6 @@ describe('ModelingSubmissionComponent', () => {
     it('should set result when new result comes in from websocket', async () => {
         createComponent();
 
-        // IMPORTANT: Set up mocks BEFORE ngOnInit is triggered
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         const unreferencedFeedback = new Feedback();
@@ -375,7 +351,6 @@ describe('ModelingSubmissionComponent', () => {
             .spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
-        // Set up model and mock service call
         submission.model = validMockModel;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
@@ -386,23 +361,28 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(newResult);
     });
 
-    it('should update submission when new submission comes in from websocket', () => {
+    it('preserves the live collaborative model when an automatic-submission snapshot arrives', async () => {
         createComponent();
 
         submission.submitted = false;
+        submission.model = validMockModel;
         vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        // @ts-ignore
-        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
+        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         vi.spyOn(websocketService, 'subscribe');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const liveModel = comp.umlModel();
+        expect(liveModel).toBeDefined();
+        expect(comp.modelingExercise().teamMode).toBe(true);
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: submission.id,
-            model: validMockModel,
+            model: JSON.stringify({ ...JSON.parse(validMockModel), title: 'Persisted snapshot' }),
             submitted: true,
             participation,
         });
-        fixture.detectChanges();
         websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission()).toEqual(modelSubmission);
+        expect(comp.umlModel()).toBe(liveModel);
     });
 
     it('should set correct properties on modeling exercise update when submitting', () => {
@@ -601,11 +581,8 @@ describe('ModelingSubmissionComponent', () => {
     it('should be set up with input values if present instead of loading new values from server', () => {
         createComponent();
 
-        // @ts-ignore method is private
-        const setUpComponentWithInputValuesSpy = vi.spyOn(comp, 'setupComponentWithInputValues');
         const getDataForFileUploadEditorSpy = vi.spyOn(service, 'getLatestSubmissionForModelingEditor');
         const modelingSubmission = submission;
-        // Use a valid v3 format model that importDiagram can parse
         modelingSubmission.model = JSON.stringify({
             version: '3.0.0',
             type: 'ClassDiagram',
@@ -628,14 +605,12 @@ describe('ModelingSubmissionComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
 
-        expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
         expect(comp.modelingExercise()).toEqual(participation.exercise);
         expect(comp.submission()).toEqual(modelingSubmission);
         expect(comp.participation()).toEqual(participation);
         expect(comp.umlModel()).toBeTruthy();
         expect(comp.hasElements()).toBe(true);
 
-        // should not fetch additional information from server, reason for input values!
         expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
     });
 });
