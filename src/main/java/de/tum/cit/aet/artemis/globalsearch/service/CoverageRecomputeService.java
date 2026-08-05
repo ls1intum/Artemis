@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +43,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
+import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.PresentMetadata;
@@ -261,9 +265,74 @@ public class CoverageRecomputeService {
         return new PresentSets(metadata.presentIdsByCourseAndType(), metadata.lastIngestedAtByCourse(), slides, transcript, segmentSummaries, unitSummaries);
     }
 
+    /**
+     * Computes coverage for a set of courses live (reading the DB + Weaviate and diffing) and returns it as DTOs WITHOUT
+     * persisting, for the default matrix page view. The visible page selects its courses by DB-native sort/search, so this
+     * is called with only the ~25 courses on screen; the (heavier) content aggregations are read only for the ones that
+     * have lecture units.
+     *
+     * @param courses the courses to compute coverage for (typically one page)
+     * @return one coverage DTO per course, in the given order, computed at the request time
+     */
+    public List<IngestionCoverageDTO> computeCoverageLive(List<Course> courses) {
+        if (courses.isEmpty()) {
+            return List.of();
+        }
+        List<Long> courseIds = courses.stream().map(Course::getId).toList();
+        ExpectedSets expected = loadExpectedSets(courseIds);
+        Set<Long> contentCourseIds = expected.lectureUnits().keySet();
+        PresentSets present = loadPresentSets(courseIds, contentCourseIds);
+        ZonedDateTime computedAt = ZonedDateTime.now();
+
+        List<IngestionCoverageDTO> result = new ArrayList<>();
+        for (Course course : courses) {
+            CoverageComputation computation = computeTypeCounts(course, expected, present);
+            result.add(new IngestionCoverageDTO(course.getId(), course.getTitle(), course.getStartDate(), isActive(course), course.getSemester(), computation.status(),
+                    computation.gapScore(), computedAt, computation.lastIngestedAt(), computation.counts()));
+        }
+        return result;
+    }
+
+    /**
+     * Reads the stored coverage projection for the cross-course matrix views (worst-first, release-date,
+     * most-recent-ingestion, status filter), paginated and sorted on the projection's indexed columns. Pure table read,
+     * no Weaviate access. The caller triggers the stale-while-revalidate recompute separately (a sibling {@code @Async}
+     * call would not cross the proxy).
+     *
+     * @param status   an optional status to filter by, or {@code null} for all courses
+     * @param pageable the page and sort (on the projection columns)
+     * @return the requested page of stored coverage rows as DTOs
+     */
+    public Page<IngestionCoverageDTO> readStoredCoverage(IngestionCoverageStatus status, Pageable pageable) {
+        Page<IngestionCoverageEntry> page = status == null ? coverageRepository.findAll(pageable) : coverageRepository.findAllByStatus(status, pageable);
+        return page.map(this::toDto);
+    }
+
+    /**
+     * Selects a page of courses by DB-native sort/search and computes their coverage LIVE, for the default matrix view.
+     * Always fresh; never reads the stored projection.
+     *
+     * @param search   an optional case-insensitive course-title search, or {@code null}/blank for all courses
+     * @param pageable the page and sort (on {@code Course} columns, e.g. title / startDate)
+     * @return the requested page of live-computed coverage DTOs
+     */
+    public Page<IngestionCoverageDTO> computeLiveCoveragePage(String search, Pageable pageable) {
+        Page<Course> courses = search == null || search.isBlank() ? courseRepository.findAll(pageable) : courseRepository.findByTitleIgnoreCaseContaining(search, pageable);
+        return new PageImpl<>(computeCoverageLive(courses.getContent()), pageable, courses.getTotalElements());
+    }
+
+    private IngestionCoverageDTO toDto(IngestionCoverageEntry entry) {
+        return new IngestionCoverageDTO(entry.getCourseId(), entry.getCourseTitle(), entry.getReleaseDate(), entry.isActive(), entry.getSemester(), entry.getStatus(),
+                entry.getCoverageGapScore(), entry.getComputedAt(), entry.getLastIngestedAt(), entry.getTypeCounts());
+    }
+
     // ----- Diff + assemble -----
 
-    private IngestionCoverageEntry buildEntry(Course course, ExpectedSets expected, PresentSets present, Map<Long, IngestionCoverageEntry> existingByCourseId, Instant computedAt) {
+    /** The DB/Weaviate-derived part of one course's coverage, shared by the stored recompute and the live page view. */
+    private record CoverageComputation(List<IngestionTypeCountDTO> counts, IngestionCoverageStatus status, int gapScore, ZonedDateTime lastIngestedAt) {
+    }
+
+    private CoverageComputation computeTypeCounts(Course course, ExpectedSets expected, PresentSets present) {
         long courseId = course.getId();
         Map<String, Set<Long>> presentMetadata = present.metadataByCourse().getOrDefault(courseId, Map.of());
 
@@ -285,21 +354,28 @@ public class CoverageRecomputeService {
 
         long totalMissing = counts.stream().mapToLong(IngestionTypeCountDTO::missing).sum();
         long totalExpected = counts.stream().mapToLong(IngestionTypeCountDTO::expected).sum();
+        return new CoverageComputation(counts, deriveStatus(totalExpected, totalMissing), (int) Math.min(Integer.MAX_VALUE, totalMissing),
+                toZonedDateTime(present.lastIngestedAt().get(courseId)));
+    }
+
+    private IngestionCoverageEntry buildEntry(Course course, ExpectedSets expected, PresentSets present, Map<Long, IngestionCoverageEntry> existingByCourseId, Instant computedAt) {
+        long courseId = course.getId();
+        CoverageComputation computation = computeTypeCounts(course, expected, present);
 
         IngestionCoverageEntry entry = existingByCourseId.get(courseId);
         if (entry == null) {
             entry = new IngestionCoverageEntry();
         }
         entry.setCourseId(courseId);
-        entry.setTypeCounts(counts);
-        entry.setCoverageGapScore((int) Math.min(Integer.MAX_VALUE, totalMissing));
-        entry.setStatus(deriveStatus(totalExpected, totalMissing));
+        entry.setTypeCounts(computation.counts());
+        entry.setCoverageGapScore(computation.gapScore());
+        entry.setStatus(computation.status());
         entry.setCourseTitle(course.getTitle());
         entry.setReleaseDate(course.getStartDate());
         entry.setActive(isActive(course));
         entry.setSemester(course.getSemester());
         entry.setComputedAt(computedAt.atZone(java.time.ZoneOffset.UTC));
-        entry.setLastIngestedAt(toZonedDateTime(present.lastIngestedAt().get(courseId)));
+        entry.setLastIngestedAt(computation.lastIngestedAt());
         return entry;
     }
 
