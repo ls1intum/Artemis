@@ -46,6 +46,13 @@ describe('TumUiPanelComponent', () => {
         expect(button.getAttribute('aria-labelledby')).toBe(title.id);
     });
 
+    it('prefers toggleAriaLabel over header for the toggle button name', () => {
+        fixture.componentRef.setInput('toggleable', true);
+        fixture.componentRef.setInput('toggleAriaLabel', 'Programming exercises (3)');
+        fixture.detectChanges();
+        expect(toggler()!.getAttribute('aria-label')).toBe('Programming exercises (3)');
+    });
+
     it('provides a state-aware accessible name without a visible header', () => {
         fixture.componentRef.setInput('header', '');
         fixture.componentRef.setInput('toggleable', true);
@@ -95,6 +102,15 @@ describe('TumUiPanelComponent', () => {
 })
 class PanelHostComponent {}
 
+@Component({
+    template: `<tum-ui-panel [toggleable]="true" toggleAriaLabel="Quiz exercises">
+        <span tumUiPanelHeader class="projected-header">Quiz exercises (2)</span>
+        <pre>body</pre>
+    </tum-ui-panel>`,
+    imports: [TumUiPanelComponent],
+})
+class PanelHeaderSlotHostComponent {}
+
 describe('TumUiPanelComponent (projection)', () => {
     it('keeps projected content under the inert collapsed region', async () => {
         await TestBed.configureTestingModule({
@@ -108,5 +124,17 @@ describe('TumUiPanelComponent (projection)', () => {
         const content = fixture.debugElement.query(By.css('.tum-ui-panel-content-container')).nativeElement as HTMLElement;
         expect(content.contains(projected.nativeElement)).toBe(true);
         expect(content.hasAttribute('inert')).toBe(true);
+    });
+
+    it('projects [tumUiPanelHeader] markup into the header and keeps the toggle labelled', async () => {
+        await TestBed.configureTestingModule({
+            imports: [PanelHeaderSlotHostComponent, FontAwesomeTestingModule],
+        }).compileComponents();
+        const fixture = TestBed.createComponent(PanelHeaderSlotHostComponent);
+        fixture.detectChanges();
+        const projected = fixture.debugElement.query(By.css('.tum-ui-panel-title .projected-header'));
+        expect(projected).not.toBeNull();
+        expect(projected.nativeElement.textContent.trim()).toBe('Quiz exercises (2)');
+        expect(fixture.debugElement.query(By.css('.tum-ui-panel-toggler')).nativeElement.getAttribute('aria-label')).toBe('Quiz exercises');
     });
 });

@@ -10,10 +10,11 @@ interface LocaleNumberSyntax {
     digitBySymbol: ReadonlyMap<string, string>;
     digitSymbols: readonly string[];
     groupSeparators: readonly string[];
+    decimalSeparators: readonly string[];
     minusSigns: readonly string[];
 }
 
-/** Integer input with locale grouping, optional affixes and step controls. */
+/** Numeric input with locale grouping, optional affixes, optional decimals and step controls. */
 @Component({
     selector: 'tum-ui-input-number',
     templateUrl: './tum-ui-input-number.component.html',
@@ -48,6 +49,11 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     readonly fluid = input(false, { transform: booleanAttribute });
     /** Enables locale-specific digit grouping. */
     readonly useGrouping = input(true, { transform: booleanAttribute });
+    /**
+     * Maximum fraction digits. `0` (the default) keeps the field integer-only; a positive value lets the user
+     * type the locale's decimal separator, and the fraction is truncated — not rounded — to this many digits.
+     */
+    readonly maxFractionDigits = input(0, { transform: numberAttribute });
     /** Locale used for formatting; omit it to use the browser locale. */
     readonly locale = input<string>();
     /** `id` of the inner `<input>`, so an external `<label for>` associates. Defaults to a unique per-instance id. */
@@ -68,7 +74,7 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
     protected readonly faChevronUp = faChevronUp;
     protected readonly faChevronDown = faChevronDown;
 
-    private readonly numberFormatter = computed(() => new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: 0 }));
+    private readonly numberFormatter = computed(() => new Intl.NumberFormat(this.locale(), { useGrouping: this.useGrouping(), maximumFractionDigits: this.maxFractionDigits() }));
     private readonly localeNumberSyntax = computed(() => this.createLocaleNumberSyntax());
     private readonly formattedValue = computed(() => this.format(this.cvaValue()));
     protected readonly displayText = linkedSignal(() => this.formattedValue());
@@ -117,10 +123,20 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
                     .map((part) => part.value),
             ]),
         ].sort((left, right) => right.length - left.length);
-        return { digitBySymbol, digitSymbols, groupSeparators, minusSigns };
+        // Only the locale's own decimal symbol counts, never a hardcoded `.`: German uses `.` to group
+        // thousands, so accepting it would read `1.234` as a fraction instead of a grouped integer.
+        const decimalSeparators = [
+            ...new Set(
+                new Intl.NumberFormat(this.locale(), { minimumFractionDigits: 1 })
+                    .formatToParts(1.1)
+                    .filter((part) => part.type === 'decimal')
+                    .map((part) => part.value),
+            ),
+        ].sort((left, right) => right.length - left.length);
+        return { digitBySymbol, digitSymbols, groupSeparators, decimalSeparators, minusSigns };
     }
 
-    private parse(text: string): number | undefined {
+    private stripAffixes(text: string): string {
         let body = text;
         const prefix = this.prefix();
         const suffix = this.suffix();
@@ -130,31 +146,77 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
         if (suffix && body.endsWith(suffix)) {
             body = body.slice(0, body.length - suffix.length);
         }
+        return body;
+    }
+
+    private parse(text: string): number | undefined {
+        const body = this.stripAffixes(text);
         const syntax = this.localeNumberSyntax();
-        let digits = '';
+        const maxFractionDigits = this.maxFractionDigits();
+        let integerDigits = '';
+        let fractionDigits = '';
         let negative = false;
+        let inFraction = false;
         for (let index = 0; index < body.length;) {
             const digit = this.matchAt(body, index, syntax.digitSymbols);
             if (digit) {
-                digits += syntax.digitBySymbol.get(digit)!;
+                if (inFraction) {
+                    // Truncate rather than round: the user is still typing, and rounding here would fight the caret.
+                    if (fractionDigits.length < maxFractionDigits) {
+                        fractionDigits += syntax.digitBySymbol.get(digit)!;
+                    }
+                } else {
+                    integerDigits += syntax.digitBySymbol.get(digit)!;
+                }
                 index += digit.length;
                 continue;
             }
             const minusSign = this.matchAt(body, index, syntax.minusSigns);
             if (minusSign) {
-                negative ||= digits.length === 0;
+                negative ||= integerDigits.length === 0;
                 index += minusSign.length;
                 continue;
+            }
+            if (maxFractionDigits > 0 && !inFraction) {
+                const decimalSeparator = this.matchAt(body, index, syntax.decimalSeparators);
+                if (decimalSeparator) {
+                    inFraction = true;
+                    index += decimalSeparator.length;
+                    continue;
+                }
             }
             const groupSeparator = this.matchAt(body, index, syntax.groupSeparators);
             index += groupSeparator?.length ?? (body.codePointAt(index)! > 0xffff ? 2 : 1);
         }
-        const normalized = `${negative ? '-' : ''}${digits}`;
-        if (normalized === '' || normalized === '-') {
+        if (integerDigits === '' && fractionDigits === '') {
             return undefined;
         }
-        const parsed = Number.parseInt(normalized, 10);
+        // Always assembled with an ASCII `.`, which is what Number.parseFloat understands regardless of locale.
+        const parsed = Number.parseFloat(`${negative ? '-' : ''}${integerDigits || '0'}.${fractionDigits || '0'}`);
         return Number.isNaN(parsed) ? undefined : parsed;
+    }
+
+    /**
+     * True while the text holds a fraction the user is still entering that reformatting would swallow — a
+     * trailing decimal separator (`12.`) or trailing fraction zeros (`12.50`). The raw text is kept until the
+     * entry settles on blur, mirroring the lone-minus-sign guard in {@link onInput}.
+     */
+    private fractionEntryInProgress(text: string): boolean {
+        if (this.maxFractionDigits() === 0) {
+            return false;
+        }
+        const body = this.stripAffixes(text);
+        const syntax = this.localeNumberSyntax();
+        for (let index = 0; index < body.length;) {
+            const decimalSeparator = this.matchAt(body, index, syntax.decimalSeparators);
+            if (decimalSeparator) {
+                // Compared as ASCII so locales with their own digit symbols are handled like any other.
+                const fraction = this.toAsciiDigits(body.slice(index + decimalSeparator.length));
+                return fraction === '' || fraction.endsWith('0');
+            }
+            index += body.codePointAt(index)! > 0xffff ? 2 : 1;
+        }
+        return false;
     }
 
     private clamp(value: number): number {
@@ -172,6 +234,21 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
 
     private matchAt(text: string, index: number, candidates: readonly string[]): string | undefined {
         return candidates.find((candidate) => candidate.length > 0 && text.startsWith(candidate, index));
+    }
+
+    private toAsciiDigits(text: string): string {
+        const syntax = this.localeNumberSyntax();
+        let digits = '';
+        for (let index = 0; index < text.length;) {
+            const digit = this.matchAt(text, index, syntax.digitSymbols);
+            if (digit) {
+                digits += syntax.digitBySymbol.get(digit)!;
+                index += digit.length;
+                continue;
+            }
+            index += text.codePointAt(index)! > 0xffff ? 2 : 1;
+        }
+        return digits;
     }
 
     private digitCount(text: string): number {
@@ -223,6 +300,10 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             this.displayText.set(el.value);
             return;
         }
+        if (this.fractionEntryInProgress(el.value)) {
+            this.displayText.set(el.value);
+            return;
+        }
         const formatted = this.format(parsed);
         this.displayText.set(formatted);
         el.value = formatted;
@@ -235,7 +316,10 @@ export class TumUiInputNumberComponent implements ControlValueAccessor {
             return;
         }
         const base = this.cvaValue() ?? 0;
-        const next = this.clamp(base + delta);
+        // Round to the field's precision so a fractional step does not leak binary float error into the model
+        // (0.2 + 0.1 is 0.30000000000000004). Harmless in integer mode, where the step is a whole number.
+        const stepped = Number((base + delta).toFixed(this.maxFractionDigits()));
+        const next = this.clamp(stepped);
         this.cvaValue.set(next);
         this.displayText.set(this.format(next));
         this.onModelChange(next);

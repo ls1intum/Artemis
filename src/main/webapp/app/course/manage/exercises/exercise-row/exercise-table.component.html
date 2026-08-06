@@ -1,0 +1,175 @@
+<div
+    cdkDropList
+    [id]="dropListId()"
+    [cdkDropListData]="sortedExercises()"
+    [cdkDropListConnectedTo]="connectedDropLists()"
+    [cdkDropListDisabled]="!showDragHandle()"
+    cdkDropListSortingDisabled
+    (cdkDropListDropped)="onDrop($event)"
+>
+    <!-- The scroll container sits inside the drop list so cdkDropList/cdkDrag containment is unaffected. -->
+    <div class="table-scroll">
+        <table tumUiTable size="small" [sortField]="sortColumn()" [sortOrder]="sortAsc() ? 1 : -1" (sortChange)="onSortChange($event)">
+            <thead>
+                <tr>
+                    @if (showCheckbox()) {
+                        <th class="col-icon">
+                            <tum-ui-checkbox [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
+                        </th>
+                    }
+                    @if (showDragHandle()) {
+                        <th class="col-icon"></th>
+                    }
+                    <th tumUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th tumUiSortableColumn="dueDate" class="col-dates"><span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span></th>
+                    <th tumUiSortableColumn="points"><span jhiTranslate="artemisApp.exercise.points"></span></th>
+                    @if (!showGroupSelector()) {
+                        <th tumUiSortableColumn="difficulty"><span jhiTranslate="artemisApp.exercise.difficulty"></span></th>
+                    }
+                    @if (showGroupSelector()) {
+                        <th jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
+                    }
+                    <th jhiTranslate="artemisApp.exercise.categories"></th>
+                    <th class="text-end col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of rows(); track exerciseTrackKey(row.exercise)) {
+                    <tr [attr.id]="'exercise-card-' + row.exercise.id" cdkDrag [cdkDragData]="row.exercise" [cdkDragDisabled]="!showDragHandle()">
+                        <div *cdkDragPreview class="exercise-drag-preview">
+                            @if (showTypeIcon()) {
+                                <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
+                            }
+                            <span class="fw-semibold">{{ row.exercise.title }}</span>
+                        </div>
+                        @if (showCheckbox()) {
+                            <td>
+                                <tum-ui-checkbox
+                                    [ngModel]="row.exercise.id !== undefined && selectedIds().has(row.exercise.id)"
+                                    (ngModelChange)="row.exercise.id !== undefined && selectionToggle.emit(row.exercise.id)"
+                                />
+                            </td>
+                        }
+                        @if (showDragHandle()) {
+                            <td>
+                                <fa-icon
+                                    cdkDragHandle
+                                    [cdkDragHandleDisabled]="row.isQuizNonIndividual"
+                                    [icon]="faBars"
+                                    class="drag-handle"
+                                    [class.disabled]="row.isQuizNonIndividual"
+                                    [title]="row.nonIndividualQuizTooltip ?? ('artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate)"
+                                />
+                            </td>
+                        }
+                        <td class="col-title">
+                            @if (showTypeIcon()) {
+                                <fa-icon [icon]="row.icon" [fixedWidth]="true" class="text-muted me-1" />
+                            }
+                            <a class="fw-semibold" [routerLink]="row.titleLink">{{ row.exercise.title }}</a>
+                        </td>
+                        <td class="col-dates">
+                            <div class="d-flex flex-column small">
+                                @if (row.releaseDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                        {{ row.releaseDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (row.dueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                        {{ row.dueDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (row.assessmentDueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
+                                        {{ row.assessmentDueDate | artemisDate }}
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td class="text-nowrap col-points">
+                            <div class="d-flex flex-column">
+                                <span>
+                                    {{ row.exercise.maxPoints }}pts
+                                    @if (row.exercise.bonusPoints) {
+                                        <span class="text-muted small">(+{{ row.exercise.bonusPoints }})</span>
+                                    }
+                                </span>
+                                @switch (row.exercise.includedInOverallScore) {
+                                    @case (IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                        <span class="small text-success fw-semibold" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                                    }
+                                    @case (IncludedInOverallScore.INCLUDED_AS_BONUS) {
+                                        <span class="small text-warning-emphasis fw-semibold" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                                    }
+                                    @case (IncludedInOverallScore.NOT_INCLUDED) {
+                                        <span class="small text-secondary fw-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                                    }
+                                }
+                            </div>
+                        </td>
+                        @if (!showGroupSelector()) {
+                            <td>
+                                @if (row.exercise.difficulty) {
+                                    <tum-ui-tag [severity]="row.difficultySeverity" [value]="row.exercise.difficulty" />
+                                } @else {
+                                    <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
+                                }
+                            </td>
+                        }
+                        @if (showGroupSelector()) {
+                            <td>
+                                <span [tumUiTooltip]="row.nonIndividualQuizTooltip ?? ''" tumUiTooltipPlacement="top">
+                                    <tum-ui-select
+                                        [options]="groupOptions()"
+                                        [ngModel]="row.owningGroupId ?? NO_GROUP_OPTION_VALUE"
+                                        (ngModelChange)="onGroupSelect(row.exercise, $event)"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        size="small"
+                                        class="col-group-select"
+                                        [disabled]="row.isQuizNonIndividual"
+                                    />
+                                </span>
+                            </td>
+                        }
+                        <td>
+                            @if (row.quizStatusLabel) {
+                                <tum-ui-tag class="me-1" [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
+                            }
+                            @if (row.quizModeKey) {
+                                <tum-ui-tag class="me-1" severity="secondary" [value]="row.quizModeKey | artemisTranslate" />
+                            }
+                            @if (row.hasCategories) {
+                                <jhi-exercise-categories [exercise]="row.exercise" />
+                            } @else if (row.showNoCategoriesPlaceholder) {
+                                <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
+                            }
+                        </td>
+                        <td class="col-actions">
+                            <jhi-exercise-actions
+                                [exercise]="row.exercise"
+                                [courseId]="courseId()"
+                                [course]="course()"
+                                (exerciseUpdated)="exerciseUpdated.emit($event)"
+                                (exerciseDeleted)="exerciseDeleted.emit($event)"
+                                (quizActionsMinWidth)="onQuizActionsMinWidth($event)"
+                            />
+                        </td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td
+                            [attr.colspan]="6 + (showDragHandle() ? 1 : 0) + (showCheckbox() ? 1 : 0)"
+                            class="text-center text-muted py-3"
+                            jhiTranslate="artemisApp.exerciseManagement.table.empty"
+                        ></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
