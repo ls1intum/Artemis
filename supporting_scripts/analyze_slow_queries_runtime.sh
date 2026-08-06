@@ -43,11 +43,18 @@ fi
 cp "${REPORT_SOURCE}" "${REPORT_JSON}"
 echo "✅ Report found. Analyzing..."
 
+# Link the "more not shown" note straight to this run's Artifacts section, so readers don't
+# have to guess where the full JSON lives. Only set when running under GitHub Actions.
+RUN_URL=""
+if [ -n "${GITHUB_RUN_ID:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
+    RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+fi
+
 # ------------------------------------------------------------------
 # Delegate formatting to the Python script
 # ------------------------------------------------------------------
 python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_JSON}" > "${REPORT_MD}"
+    "${REPORT_JSON}" "${RUN_URL}" > "${REPORT_MD}"
 
 echo ""
 echo "=== Summary preview ==="

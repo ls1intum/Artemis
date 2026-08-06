@@ -59,7 +59,15 @@ def iso_to_human(iso: str) -> str:
 # Markdown sections
 # ---------------------------------------------------------------------------
 
-def build_slow_queries_section(slow_queries: list, threshold_ms: int) -> str:
+def artifact_link(run_url: str) -> str:
+    """Markdown for 'the uploaded slow-query report artifact (JSON)', linked to the run's
+    Artifacts section when a run URL is available, plain text otherwise (e.g. local runs)."""
+    if run_url:
+        return f"[uploaded slow-query report artifact (JSON)]({run_url})"
+    return "uploaded slow-query report artifact (JSON)"
+
+
+def build_slow_queries_section(slow_queries: list, threshold_ms: int, run_url: str = "") -> str:
     if not slow_queries:
         return f"✅ **No slow queries** detected (threshold: {threshold_ms} ms)\n"
 
@@ -79,11 +87,11 @@ def build_slow_queries_section(slow_queries: list, threshold_ms: int) -> str:
         lines.append(f"| {i} | **{q['executionTimeMs']} ms** | {endpoint} | {test} | `{sql}` |")
     if hidden_count > 0:
         lines.append("")
-        lines.append(f"_Showing the {len(shown)} slowest. {hidden_count} more not shown — see the uploaded slow-query report artifact (JSON) for the full list._")
+        lines.append(f"_Showing the {len(shown)} slowest. {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
     return "\n".join(lines) + "\n"
 
 
-def build_n1_section(n1_suspects: list, n1_threshold: int) -> str:
+def build_n1_section(n1_suspects: list, n1_threshold: int, run_url: str = "") -> str:
     if not n1_suspects:
         return f"✅ **No N+1 patterns** detected (threshold: >{n1_threshold} occurrences per request)\n"
 
@@ -103,11 +111,11 @@ def build_n1_section(n1_suspects: list, n1_threshold: int) -> str:
         lines.append(f"| {i} | **{s['occurrences']}×** | {endpoint} | {test} | `{sql}` |")
     if hidden_count > 0:
         lines.append("")
-        lines.append(f"_Showing the {len(shown)} worst. {hidden_count} more not shown — see the uploaded slow-query report artifact (JSON) for the full list._")
+        lines.append(f"_Showing the {len(shown)} worst. {hidden_count} more not shown — see the {artifact_link(run_url)} for the full list._")
     return "\n".join(lines) + "\n"
 
 
-def build_report(report: dict) -> str:
+def build_report(report: dict, run_url: str = "") -> str:
     threshold_ms = report.get("thresholdMs", "?")
     n1_threshold = report.get("n1Threshold", "?")
     slow_count = report.get("slowQueryCount", 0)
@@ -140,8 +148,8 @@ def build_report(report: dict) -> str:
         f"> Generated at: {generated_at}  ",
         f"> Slow-query threshold: **{threshold_ms} ms** · N+1 detection: **>{n1_threshold}×/request**",
         "",
-        build_slow_queries_section(slow_queries, threshold_ms),
-        build_n1_section(n1_suspects, n1_threshold),
+        build_slow_queries_section(slow_queries, threshold_ms, run_url),
+        build_n1_section(n1_suspects, n1_threshold, run_url),
         "",
         "<details>",
         "<summary>How to investigate</summary>",
@@ -173,10 +181,11 @@ if __name__ == "__main__":
         sys.exit(1)
 
     report_path = sys.argv[1]
+    run_url = sys.argv[2] if len(sys.argv) > 2 else ""
     try:
         report = load_report(report_path)
     except (json.JSONDecodeError, FileNotFoundError) as exc:
         print(f"## ⚠️ Slow Query Report Parse Error\n\n{exc}", file=sys.stderr)
         sys.exit(1)
 
-    print(build_report(report))
+    print(build_report(report, run_url))
