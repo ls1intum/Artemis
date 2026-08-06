@@ -1,6 +1,7 @@
 import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
+import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
@@ -37,6 +38,8 @@ export const appConfig: ApplicationConfig = {
         ArtemisTranslatePipe,
         provideArtemisTumUiTranslator(),
         DialogService,
+        // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.
+        { provide: OVERLAY_DEFAULT_CONFIG, useValue: { usePopover: false } },
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
         // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.

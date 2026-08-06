@@ -269,6 +269,22 @@ jhi-date-time-picker .date-time-picker-warning-border {
     border-color: var(--color-state-warning) !important;
 }
 
+// Host-side compensation for the TUM UI package while Artemis still loads Bootstrap; drop both once it is gone.
+
+// Bootstrap Reboot's unlayered `border-width: 0` beats the package's layered `tum:border-b` utility.
+.tum-ui-table {
+    thead th,
+    tbody td {
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+    }
+}
+
+// `tum:disabled:opacity-60` compiles to `:disabled`, which never matches an `<a>`.
+a[tumUiButton].disabled {
+    opacity: 0.6;
+}
+
 .pad {
     padding: 10px;
 }

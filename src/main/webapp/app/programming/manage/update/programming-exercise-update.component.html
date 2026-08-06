@@ -11,6 +11,7 @@
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
+        <jhi-exercise-group-timeline-lock #variantLock [exercise]="programmingExercise" [courseId]="courseId()" (exerciseChange)="programmingExercise = $event" />
         <div class="update-programming-exercise">
             <jhi-programming-exercise-info
                 [programmingExercise]="programmingExercise"
@@ -59,6 +60,8 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [lockedToGroup]="variantLock.locked()"
+                (lockedClick)="variantLock.openModal()"
             />
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">

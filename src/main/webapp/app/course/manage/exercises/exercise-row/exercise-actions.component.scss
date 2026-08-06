@@ -1,0 +1,38 @@
+// Overlay the (overflow-hidden) actions cell rather than sitting in its flow
+:host {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.inline-item {
+    display: inline-flex;
+}
+
+// Labels stay on one line: the overflow calculation measures each button's single-line width
+button,
+a {
+    white-space: nowrap;
+}
+
+// Fixed width so the overflow calculation can reserve ELLIPSIS_WIDTH_PX. Element-qualified to outrank the kit
+// button's padding utilities.
+button.action-more {
+    flex: none;
+    justify-content: center;
+    width: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    padding-inline: 0;
+}
+
+// Renders into the overlay container, so the inline host must not claim a flex `gap-1` the overflow maths misses.
+tum-ui-popover {
+    display: none;
+}
+
+.action-menu {
+    min-width: 11rem;
+}
