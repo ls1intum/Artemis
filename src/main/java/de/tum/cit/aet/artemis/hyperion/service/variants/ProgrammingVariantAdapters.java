@@ -73,7 +73,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
     private static final Pattern TESTID_REFERENCE = Pattern.compile("<testid>(\\d+)</testid>");
 
     /** Suffix-retry budget for short-name/project-key collisions. */
-    private static final int MAX_NAME_ATTEMPTS = 10;
+    private static final int MAX_NAME_ATTEMPTS = 300;
 
     /**
      * Bounds Gate 3's (LLM consistency check) concurrent wait — comfortably shorter than Gate 1's own build
