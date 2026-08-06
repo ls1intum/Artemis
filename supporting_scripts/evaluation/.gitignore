@@ -2,3 +2,7 @@ config.ini
 __pycache__/
 .ipynb_checkpoints/
 venv/
+
+# The root .gitignore excludes *.log*; the per-run log slices are a deliverable and must be tracked.
+!results/logs/*.log
+!results-pilot/logs/*.log

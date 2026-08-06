@@ -1,0 +1,132 @@
+[
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2991,
+    "testName": "testUseMergeSortForBigList",
+    "type": "BEHAVIORAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2992,
+    "testName": "testAttributes[Policy]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2993,
+    "testName": "testMergeSort",
+    "type": "BEHAVIORAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2994,
+    "testName": "testClass[MergeSort]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2995,
+    "testName": "testBubbleSort",
+    "type": "BEHAVIORAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2996,
+    "testName": "testAttributes[Context]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2997,
+    "testName": "testClass[SortStrategy]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2998,
+    "testName": "testClass[BubbleSort]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 2999,
+    "testName": "testConstructors[Policy]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 3000,
+    "testName": "testMethods[Context]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 3001,
+    "testName": "testMethods[SortStrategy]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 3002,
+    "testName": "testMethods[Policy]",
+    "type": "STRUCTURAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  },
+  {
+    "active": true,
+    "bonusMultiplier": 1.0,
+    "bonusPoints": 0.0,
+    "id": 3003,
+    "testName": "testUseBubbleSortForSmallList",
+    "type": "BEHAVIORAL",
+    "visibility": "ALWAYS",
+    "weight": 1.0
+  }
+]

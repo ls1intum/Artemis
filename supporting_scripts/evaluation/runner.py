@@ -11,6 +11,7 @@ Storage is append-only and resumable by ``run_id``: on start the ledger is read,
 skipped, and new lines are appended. Resuming and extending are therefore the same operation.
 """
 
+import collections
 import json
 import os
 import random
@@ -36,6 +37,11 @@ PHASES_WITH_VARIANT = {"COMPLETED", "DRAFT_WITH_WARNINGS"}
 # INVALID_ENVIRONMENT means the 429 detector quarantined it. Both are properties of the machine, so
 # resume re-queues them instead of treating the run_id as done.
 RETRYABLE_PHASES = {"LOST", "INVALID_ENVIRONMENT"}
+
+# The server's stale-job reaper marks a job FAILED when the node running it goes away mid-generation
+# (ExerciseVariantJobService). That is the same machine-level loss as a 404'd job record, so it is recorded
+# as LOST and re-queued — an LLM provider outage must not be counted against the pipeline's failure rate.
+NODE_LOSS_FAILURE_MARKER = "stopped responding"
 
 _ledger_lock = threading.Lock()
 
@@ -224,6 +230,15 @@ class Harness:
         if rate_limit["detected"] and terminal_phase not in ("COMPLETED",):
             logging.warning("[%s] Maven Central rate limit detected (%s) — quarantining as INVALID_ENVIRONMENT", run_id, rate_limit["attribution"])
             recorded_phase = "INVALID_ENVIRONMENT"
+        # Short-name exhaustion is deliberately NOT quarantined. It is a real pipeline limit, and auto-retrying it
+        # would hide a persistent failure: the run would drop out of every rate and be re-attempted on each
+        # resume with nobody the wiser. It is loud instead — MAX_NAME_ATTEMPTS is the thing to raise.
+        failure_text = str((detail or {}).get("job", {}).get("failureDetail") or "")
+        if terminal_phase == "FAILED" and NODE_LOSS_FAILURE_MARKER in failure_text:
+            logging.warning("[%s] job was reaped after the node running it went away — recording as LOST so resume re-queues it", run_id)
+            recorded_phase = "LOST"
+        if "free short name" in failure_text:
+            logging.error("[%s] SHORT-NAME EXHAUSTION — recorded as a real failure. Raise MAX_NAME_ATTEMPTS and re-run this run deliberately.", run_id)
 
         artifact_summary: Dict[str, Any] = {}
         if terminal_phase in PHASES_WITH_VARIANT and variant_exercise_id:
@@ -298,27 +313,46 @@ class Harness:
         logging.info("Round %s: %s runs at concurrency %s", round_number, total, self.concurrency)
         records: List[Dict[str, Any]] = []
         started = time.time()
+        # Deliberately not a `with` block: its __exit__ shuts the pool down with wait=True, so an interrupt would
+        # block until every in-flight run finished and the cancellation below would arrive with nothing left to
+        # cancel. Owning the shutdown lets the jobs be cancelled first, which is the point of handling the signal.
+        pool = ThreadPoolExecutor(max_workers=self.concurrency)
         try:
-            with ThreadPoolExecutor(max_workers=self.concurrency) as pool:
-                futures = [pool.submit(self.run_one, exercise_type, config_id, round_number) for exercise_type, config_id in queue]
-                for future in futures:
-                    try:
-                        records.append(future.result())
-                    except Exception as error:  # noqa: BLE001 — one bad run must not abort the round
-                        logging.error("Run failed with an unhandled error: %s", error)
-                    # Progress on its own line, with a remaining-time estimate: these rounds are left running
-                    # unattended for hours, and "is it stuck or just slow?" is otherwise unanswerable without
-                    # reading the instance log.
-                    done = len(records)
-                    elapsed = time.time() - started
-                    remaining = (elapsed / done) * (total - done) if done else 0
-                    logging.info("  progress: round %s — %s/%s runs done, %.0f min elapsed, ~%.0f min left", round_number, done, total, elapsed / 60, remaining / 60)
+            futures = [pool.submit(self.run_one, exercise_type, config_id, round_number) for exercise_type, config_id in queue]
+            for future in futures:
+                try:
+                    records.append(future.result())
+                except Exception as error:  # noqa: BLE001 — one bad run must not abort the round
+                    logging.error("Run failed with an unhandled error: %s", error)
+                # Progress on its own line, with outcome counts and a remaining-time estimate: these rounds are
+                # left running unattended for hours, and "is it stuck, or just slow, or quietly failing
+                # everything?" is otherwise unanswerable without reading the instance log.
+                done = len(records)
+                elapsed = time.time() - started
+                remaining = (elapsed / done) * (total - done) if done else 0
+                outcomes = collections.Counter(record["terminal_phase"] for record in records)
+                succeeded = outcomes["COMPLETED"]
+                logging.info(
+                    "  progress: round %s — %s/%s done | %s ok, %s draft, %s failed, %s other | %.0f min elapsed, ~%.0f min left",
+                    round_number,
+                    done,
+                    total,
+                    succeeded,
+                    outcomes["DRAFT_WITH_WARNINGS"],
+                    outcomes["FAILED"],
+                    done - succeeded - outcomes["DRAFT_WITH_WARNINGS"] - outcomes["FAILED"],
+                    elapsed / 60,
+                    remaining / 60,
+                )
         except KeyboardInterrupt:
             # Without this the server keeps generating every in-flight run after the client is gone, and the
             # next round then runs against a machine already at concurrency — corrupting its timings.
             logging.warning("interrupted; cancelling in-flight jobs so they do not outlive this process")
+            pool.shutdown(wait=False, cancel_futures=True)
             self.cancel_in_flight()
             raise
+        finally:
+            pool.shutdown(wait=False)
         return records
 
 

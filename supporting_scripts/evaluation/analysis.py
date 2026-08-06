@@ -82,8 +82,14 @@ def _median(values: List[float]) -> Optional[float]:
 
 def _write_csv(path: str, rows: List[Dict[str, Any]], columns: Iterable[str]) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    # Programming and quiz rows carry different keys, so the first row's columns are not the full set.
+    fieldnames = list(columns)
+    for row in rows:
+        for key in row:
+            if key not in fieldnames:
+                fieldnames.append(key)
     with open(path, "w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(columns))
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for row in rows:
             writer.writerow(row)

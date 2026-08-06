@@ -82,9 +82,12 @@ The whole measured matrix, unattended — this is the intended way to run Stage 
 ./venv/bin/python run_evaluation.py matrix --rounds 1-6 --out results --concurrency 3
 ```
 
-Re-running the identical command after any interruption resumes it: completed `run_id`s are skipped, and
-runs that ended as `LOST` (a server restart — job records live in Hazelcast, not the database) or
-`INVALID_ENVIRONMENT` are re-queued rather than reported. Between rounds it waits for the server to come
+`--rounds 1-6` is the whole matrix: six replicates including the first, partially-run one. Re-running the
+identical command after any interruption resumes it: completed `run_id`s are skipped, and runs that ended
+as `LOST` or `INVALID_ENVIRONMENT` are re-queued rather than reported. `LOST` covers both a 404'd job
+record (a server restart — job records live in Hazelcast, not the database) and a job the server's
+stale-job reaper marked `FAILED` because the node running it went away, which is what an LLM-provider
+outage looks like from here. Between rounds it waits for the server to come
 back rather than failing every remaining run against a dead one.
 
 **Do not restart the server while a round is running.** In-flight jobs are lost with it. They are re-queued

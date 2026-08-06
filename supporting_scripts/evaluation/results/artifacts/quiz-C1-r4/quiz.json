@@ -1,0 +1,1308 @@
+{
+  "allowedNumberOfAttempts": 1,
+  "bonusPoints": 0.0,
+  "channelName": "exercise-design-patterns-quiz-",
+  "course": {
+    "accuracyOfScores": 1,
+    "complaintsEnabled": true,
+    "courseInformationSharingConfiguration": "COMMUNICATION_AND_MESSAGING",
+    "editorGroupName": "editors",
+    "id": 7,
+    "instructorGroupName": "instructors",
+    "maxComplaintResponseTextLimit": 2000,
+    "maxComplaintTextLimit": 2000,
+    "maxComplaintTimeDays": 7,
+    "maxComplaints": 3,
+    "maxRequestMoreFeedbackTimeDays": 7,
+    "maxTeamComplaints": 3,
+    "onlineCourse": false,
+    "requestMoreFeedbackEnabled": true,
+    "shortName": "varianteval",
+    "studentGroupName": "students",
+    "teachingAssistantGroupName": "tutors",
+    "testCourse": true,
+    "title": "Variant Evaluation Course"
+  },
+  "difficulty": "EASY",
+  "duration": 900,
+  "exerciseVariantGroup": {
+    "id": 26,
+    "title": "Design Patterns Quiz Variants"
+  },
+  "id": 438,
+  "includedInOverallScore": "INCLUDED_COMPLETELY",
+  "isEditable": true,
+  "maxPoints": 14.0,
+  "mode": "INDIVIDUAL",
+  "quizEnded": false,
+  "quizMode": "INDIVIDUAL",
+  "quizPointStatistic": {
+    "id": 1005,
+    "participantsRated": 0,
+    "participantsUnrated": 0,
+    "pointCounters": [
+      {
+        "id": 4298,
+        "points": 7.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4291,
+        "points": 1.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4295,
+        "points": 5.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4297,
+        "points": 6.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4289,
+        "points": 4.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4301,
+        "points": 9.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4299,
+        "points": 11.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4293,
+        "points": 3.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4300,
+        "points": 8.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4294,
+        "points": 14.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4303,
+        "points": 10.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4292,
+        "points": 2.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4302,
+        "points": 13.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4290,
+        "points": 0.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 4296,
+        "points": 12.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      }
+    ]
+  },
+  "quizQuestions": [
+    {
+      "answerOptions": [
+        {
+          "explanation": "This is the Strategy pattern: the algorithm varies independently of the client.",
+          "id": 2430,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Define a `TaxCalculator` interface, one implementation per country, and inject the chosen one."
+        },
+        {
+          "explanation": "Every new country modifies the billing service, violating the open/closed principle.",
+          "id": 2431,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Hardcode tax rates in a constants file."
+        },
+        {
+          "explanation": "The variation is one algorithm, not the whole service; this multiplies subclasses.",
+          "id": 2432,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Use a global singleton to hold tax data."
+        },
+        {
+          "explanation": "Decorator adds behaviour around an object; it does not select between alternatives.",
+          "id": 2433,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Log each calculation to a file for auditing."
+        }
+      ],
+      "hint": "Ask which part of the design varies, and how often a new case is added.",
+      "id": 843,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "Decorator adds behaviour around an object; it does not select between alternatives.",
+              "id": 2433,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Log each calculation to a file for auditing."
+            },
+            "id": 4307,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The variation is one algorithm, not the whole service; this multiplies subclasses.",
+              "id": 2432,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Use a global singleton to hold tax data."
+            },
+            "id": 4306,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Every new country modifies the billing service, violating the open/closed principle.",
+              "id": 2431,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Hardcode tax rates in a constants file."
+            },
+            "id": 4305,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "This is the Strategy pattern: the algorithm varies independently of the client.",
+              "id": 2430,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Define a `TaxCalculator` interface, one implementation per country, and inject the chosen one."
+            },
+            "id": 4304,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1006,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "A billing service must pick between three tax-calculation algorithms at runtime, depending on the customer's country. The set of algorithms grows every year. Which design is the best fit?",
+      "title": "Choosing a pattern for interchangeable algorithms",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "Listeners are known only through the `PriceListener` interface.",
+          "id": 2434,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "The ticker needs no compile-time knowledge of the concrete widget classes."
+        },
+        {
+          "explanation": "The loop has no isolation, so the exception propagates out of `publish`.",
+          "id": 2435,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "A widget that throws inside `onPrice` prevents the remaining widgets from being notified."
+        },
+        {
+          "explanation": "The updates are delivered synchronously on the publishing thread, not on a separate thread.",
+          "id": 2436,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Widgets receive price updates synchronously on a separate thread."
+        },
+        {
+          "explanation": "The pattern makes no such guarantee; here it is an accident of the list implementation.",
+          "id": 2437,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The ticker automatically persists price history for each widget."
+        }
+      ],
+      "hint": "Two claims follow from the loop as written, not from the pattern in the abstract.",
+      "id": 844,
+      "invalid": false,
+      "points": 2.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "The pattern makes no such guarantee; here it is an accident of the list implementation.",
+              "id": 2437,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The ticker automatically persists price history for each widget."
+            },
+            "id": 4311,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The updates are delivered synchronously on the publishing thread, not on a separate thread.",
+              "id": 2436,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Widgets receive price updates synchronously on a separate thread."
+            },
+            "id": 4310,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Listeners are known only through the `PriceListener` interface.",
+              "id": 2434,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "The ticker needs no compile-time knowledge of the concrete widget classes."
+            },
+            "id": 4308,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The loop has no isolation, so the exception propagates out of `publish`.",
+              "id": 2435,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "A widget that throws inside `onPrice` prevents the remaining widgets from being notified."
+            },
+            "id": 4309,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1007,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": false,
+      "text": "A stock ticker publishes price updates to many independent dashboard widgets. The ticker keeps a list of registered listeners and calls them in a loop:\n\n```java\npublic void publish(Price price) {\n    for (PriceListener listener : listeners) {\n        listener.onPrice(price);\n    }\n}\n```\n\nWhich statements about this design are correct?",
+      "title": "Consequences of the Observer pattern",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "Adapter converts one existing interface into another the client expects.",
+          "id": 2438,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Adapter"
+        },
+        {
+          "explanation": "Facade simplifies a whole subsystem; here a single interface is being converted.",
+          "id": 2439,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Singleton"
+        },
+        {
+          "explanation": "Observer defines a one\u2011to\u2011many dependency so that when the subject changes, its observers are automatically notified.",
+          "id": 2440,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Observer"
+        },
+        {
+          "explanation": "Mediator encapsulates how a set of objects interact, promoting loose coupling by centralising communication.",
+          "id": 2441,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Mediator"
+        }
+      ],
+      "hint": "How many classes are behind the new interface, and does the interface stay the same?",
+      "id": 845,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "Adapter converts one existing interface into another the client expects.",
+              "id": 2438,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Adapter"
+            },
+            "id": 4312,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Mediator encapsulates how a set of objects interact, promoting loose coupling by centralising communication.",
+              "id": 2441,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Mediator"
+            },
+            "id": 4315,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Facade simplifies a whole subsystem; here a single interface is being converted.",
+              "id": 2439,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Singleton"
+            },
+            "id": 4313,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Observer defines a one\u2011to\u2011many dependency so that when the subject changes, its observers are automatically notified.",
+              "id": 2440,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Observer"
+            },
+            "id": 4314,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1008,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "A team integrates a third-party payment SDK whose method names and data types do not match the application's `PaymentGateway` interface. Only one SDK class is involved, and the application must keep calling `PaymentGateway`. Which pattern applies?",
+      "title": "Adapter versus Facade",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The lazy check is a classic unsynchronised race.",
+          "id": 2442,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Two request threads can both observe `instance == null` and create two configurations."
+        },
+        {
+          "explanation": "The handler reaches for global state instead of receiving a collaborator.",
+          "id": 2443,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Tests of a request handler cannot easily substitute a different configuration."
+        },
+        {
+          "explanation": "The method returns the same instance after the first call; it does not create a new object each time.",
+          "id": 2444,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The static method `getInstance` returns a new object each call."
+        },
+        {
+          "explanation": "One instance exists either way; memory is not the issue.",
+          "id": 2445,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The class cannot be serialized for distributed caching."
+        }
+      ],
+      "hint": "Consider what happens under concurrent requests, and what a unit test can control.",
+      "id": 846,
+      "invalid": false,
+      "points": 2.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "The handler reaches for global state instead of receiving a collaborator.",
+              "id": 2443,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Tests of a request handler cannot easily substitute a different configuration."
+            },
+            "id": 4317,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The method returns the same instance after the first call; it does not create a new object each time.",
+              "id": 2444,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The static method `getInstance` returns a new object each call."
+            },
+            "id": 4318,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The lazy check is a classic unsynchronised race.",
+              "id": 2442,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Two request threads can both observe `instance == null` and create two configurations."
+            },
+            "id": 4316,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "One instance exists either way; memory is not the issue.",
+              "id": 2445,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The class cannot be serialized for distributed caching."
+            },
+            "id": 4319,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1009,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": false,
+      "text": "A configuration class in a web application is written like this and is read from every request handler:\n\n```java\npublic class AppConfig {\n    private static AppConfig instance;\n    private AppConfig() { }\n    public static AppConfig getInstance() {\n        if (instance == null) {\n            instance = new AppConfig();\n        }\n        return instance;\n    }\n}\n```\n\nWhich criticisms of this code are justified?",
+      "title": "Reviewing a shared-configuration class",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The editor depends only on the factory and product interfaces.",
+          "id": 2446,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "An abstract factory the plug-in implements and registers with the editor."
+        },
+        {
+          "explanation": "Singleton ensures a single shared instance, but does not address the need to avoid compile\u2011time dependencies on plug\u2011in classes.",
+          "id": 2447,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "A singleton pattern that the editor accesses directly."
+        },
+        {
+          "explanation": "This reintroduces the compile-time dependency the requirement forbids.",
+          "id": 2448,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "A factory method that returns a hardcoded concrete shape class."
+        },
+        {
+          "explanation": "The editor would still have to construct the originals.",
+          "id": 2449,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "A service locator that looks up shape creators at runtime."
+        }
+      ],
+      "hint": "The constraint is about compile-time dependencies, not about construction complexity.",
+      "id": 847,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "The editor depends only on the factory and product interfaces.",
+              "id": 2446,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "An abstract factory the plug-in implements and registers with the editor."
+            },
+            "id": 4320,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Singleton ensures a single shared instance, but does not address the need to avoid compile\u2011time dependencies on plug\u2011in classes.",
+              "id": 2447,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "A singleton pattern that the editor accesses directly."
+            },
+            "id": 4321,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "This reintroduces the compile-time dependency the requirement forbids.",
+              "id": 2448,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "A factory method that returns a hardcoded concrete shape class."
+            },
+            "id": 4322,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The editor would still have to construct the originals.",
+              "id": 2449,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "A service locator that looks up shape creators at runtime."
+            },
+            "id": 4323,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1010,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "A document editor must create shapes whose concrete classes are decided by a plug-in loaded at startup. The editor itself must not reference the plug-in's classes. Which approach fits best?",
+      "title": "Picking a creational pattern",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The skeleton, not the steps, is the fixed part.",
+          "id": 2450,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Declaring `generate()` final is what protects the invariant the pattern exists to protect."
+        },
+        {
+          "explanation": "They are the abstract, varying steps.",
+          "id": 2451,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "`transform` and `render` are the hook methods a subclass must supply."
+        },
+        {
+          "explanation": "Template Method is inheritance-based; Strategy is the composition-based alternative.",
+          "id": 2452,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The pattern enforces immutability of the report data."
+        },
+        {
+          "explanation": "A step with a sensible default may stay concrete, as `load()` is.",
+          "id": 2453,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "All steps must be declared final to prevent overrides."
+        }
+      ],
+      "hint": "Look at which member is final and which are abstract.",
+      "id": 848,
+      "invalid": false,
+      "points": 2.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "They are the abstract, varying steps.",
+              "id": 2451,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "`transform` and `render` are the hook methods a subclass must supply."
+            },
+            "id": 4325,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Template Method is inheritance-based; Strategy is the composition-based alternative.",
+              "id": 2452,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The pattern enforces immutability of the report data."
+            },
+            "id": 4326,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "A step with a sensible default may stay concrete, as `load()` is.",
+              "id": 2453,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "All steps must be declared final to prevent overrides."
+            },
+            "id": 4327,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The skeleton, not the steps, is the fixed part.",
+              "id": 2450,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Declaring `generate()` final is what protects the invariant the pattern exists to protect."
+            },
+            "id": 4324,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1011,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": false,
+      "text": "A report generator fixes the order of the steps and lets subclasses vary two of them:\n\n```java\npublic abstract class ReportGenerator {\n    public final Report generate() {\n        Data data = load();\n        Data shaped = transform(data);\n        return write(render(shaped));\n    }\n    protected Data load() { return Data.fromDefaultSource(); }\n    protected abstract Data transform(Data data);\n    protected abstract String render(Data data);\n}\n```\n\nWhich statements about this design are correct?",
+      "title": "Template Method in practice",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The class violates the single-responsibility principle: two unrelated reasons to change.",
+          "id": 2454,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Split it into two classes along the two responsibilities."
+        },
+        {
+          "explanation": "An interface over all forty methods preserves the coupling.",
+          "id": 2455,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Introduce a decorator that adds logging to all methods."
+        },
+        {
+          "explanation": "Static methods do not reduce the responsibility overload.",
+          "id": 2456,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Apply the Builder pattern to construct the report."
+        },
+        {
+          "explanation": "This adds global state without addressing cohesion.",
+          "id": 2457,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Use the Visitor pattern to separate operations."
+        }
+      ],
+      "hint": "Two fields, two disjoint groups of methods \u2014 count the reasons this class would have to change.",
+      "id": 849,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "An interface over all forty methods preserves the coupling.",
+              "id": 2455,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Introduce a decorator that adds logging to all methods."
+            },
+            "id": 4329,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "This adds global state without addressing cohesion.",
+              "id": 2457,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Use the Visitor pattern to separate operations."
+            },
+            "id": 4331,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The class violates the single-responsibility principle: two unrelated reasons to change.",
+              "id": 2454,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Split it into two classes along the two responsibilities."
+            },
+            "id": 4328,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Static methods do not reduce the responsibility overload.",
+              "id": 2456,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Apply the Builder pattern to construct the report."
+            },
+            "id": 4330,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 1012,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "During review, a `Report` class is found to look like this, with about forty methods in total and no field shared between the two halves:\n\n```java\nclass Report {\n    private Connection connection;   // used only by the query methods\n    private StringBuilder output;    // used only by the formatting methods\n    List<Row> queryRows(...)  { ... }        // ~20 methods\n    String formatAsHtml(...)  { ... }        // ~20 methods\n}\n```\n\nWhich refactoring addresses the underlying problem?",
+      "title": "Diagnosing a smell in a report class",
+      "type": "multiple-choice"
+    },
+    {
+      "correctMappings": [
+        {
+          "id": 1487,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 1,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 765,
+            "invalid": false,
+            "text": "Decorator"
+          },
+          "spot": {
+            "id": 556,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1488,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 2,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 766,
+            "invalid": false,
+            "text": "Proxy"
+          },
+          "spot": {
+            "id": 557,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        },
+        {
+          "id": 1489,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 0,
+          "shortAnswerSpotIndex": 2,
+          "solution": {
+            "id": 764,
+            "invalid": false,
+            "text": "State"
+          },
+          "spot": {
+            "id": 558,
+            "invalid": false,
+            "spotNr": 3,
+            "width": 20
+          }
+        }
+      ],
+      "hint": "All three keep the client's interface unchanged; they differ in why.",
+      "id": 850,
+      "invalid": false,
+      "matchLetterCase": false,
+      "points": 1.5,
+      "quizQuestionStatistic": {
+        "id": 1013,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "shortAnswerSpotCounters": [
+          {
+            "id": 4334,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 558,
+              "invalid": false,
+              "spotNr": 3,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 4332,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 556,
+              "invalid": false,
+              "spotNr": 1,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 4333,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 557,
+              "invalid": false,
+              "spotNr": 2,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          }
+        ],
+        "type": "short-answer",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
+      "similarityValue": 85,
+      "solutions": [
+        {
+          "id": 764,
+          "invalid": false,
+          "text": "State"
+        },
+        {
+          "id": 765,
+          "invalid": false,
+          "text": "Decorator"
+        },
+        {
+          "id": 766,
+          "invalid": false,
+          "text": "Proxy"
+        }
+      ],
+      "spots": [
+        {
+          "id": 556,
+          "invalid": false,
+          "spotNr": 1,
+          "width": 20
+        },
+        {
+          "id": 557,
+          "invalid": false,
+          "spotNr": 2,
+          "width": 20
+        },
+        {
+          "id": 558,
+          "invalid": false,
+          "spotNr": 3,
+          "width": 20
+        }
+      ],
+      "text": "A media-streaming client is being extended. For each requirement, name the pattern that fits.\n\nSubtitles, audio normalisation, and bandwidth logging must be switchable per stream and combinable in any order, each wrapping the stream and keeping the same `Stream` interface. That calls for the [-spot 1] pattern.\n\nPremium content must be fetched only when it is first played, and access rights must be checked before the real stream object is touched, without the player noticing a difference. That calls for the [-spot 2] pattern.\n\nA playback session behaves differently while buffering, playing, and paused, and the client should not be a growing `switch` over a status field. That calls for the [-spot 3] pattern.",
+      "title": "Choosing patterns for a media-streaming client",
+      "type": "short-answer"
+    },
+    {
+      "correctMappings": [
+        {
+          "id": 1490,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 0,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 767,
+            "invalid": false,
+            "text": "Context"
+          },
+          "spot": {
+            "id": 559,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1491,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 1,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 768,
+            "invalid": false,
+            "text": "SortStrategy"
+          },
+          "spot": {
+            "id": 560,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        },
+        {
+          "id": 1492,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 2,
+          "shortAnswerSpotIndex": 2,
+          "solution": {
+            "id": 769,
+            "invalid": false,
+            "text": "Policy"
+          },
+          "spot": {
+            "id": 561,
+            "invalid": false,
+            "spotNr": 3,
+            "width": 20
+          }
+        }
+      ],
+      "hint": "Answer with the identifiers shown in the listing.",
+      "id": 851,
+      "invalid": false,
+      "matchLetterCase": false,
+      "points": 1.5,
+      "quizQuestionStatistic": {
+        "id": 1014,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "shortAnswerSpotCounters": [
+          {
+            "id": 4336,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 560,
+              "invalid": false,
+              "spotNr": 2,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 4335,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 559,
+              "invalid": false,
+              "spotNr": 1,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 4337,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 561,
+              "invalid": false,
+              "spotNr": 3,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          }
+        ],
+        "type": "short-answer",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
+      "similarityValue": 85,
+      "solutions": [
+        {
+          "id": 767,
+          "invalid": false,
+          "text": "Context"
+        },
+        {
+          "id": 768,
+          "invalid": false,
+          "text": "SortStrategy"
+        },
+        {
+          "id": 769,
+          "invalid": false,
+          "text": "Policy"
+        }
+      ],
+      "spots": [
+        {
+          "id": 559,
+          "invalid": false,
+          "spotNr": 1,
+          "width": 20
+        },
+        {
+          "id": 560,
+          "invalid": false,
+          "spotNr": 2,
+          "width": 20
+        },
+        {
+          "id": 561,
+          "invalid": false,
+          "spotNr": 3,
+          "width": 20
+        }
+      ],
+      "text": "A scheduling tool sorts appointment dates with interchangeable algorithms:\n\n```java\npublic interface SortStrategy { void performSort(List<Date> input); }\npublic class BubbleSort implements SortStrategy { ... }\npublic class MergeSort  implements SortStrategy { ... }\npublic class Context { private List<Date> dates; private SortStrategy sortAlgorithm; ... }\npublic class Policy  { private Context context; public void configure() { ... } }\n```\n\nUsing the class names from this listing: the class that holds the dates and a reference to the currently selected algorithm is [-spot 1]. The type that both `BubbleSort` and `MergeSort` implement is [-spot 2]. The class whose `configure()` method decides which algorithm to select is [-spot 3].",
+      "title": "Roles in a strategy-based sorting application",
+      "type": "short-answer"
+    },
+    {
+      "correctMappings": [
+        {
+          "id": 1493,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 0,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 770,
+            "invalid": false,
+            "text": "DIP"
+          },
+          "spot": {
+            "id": 563,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1494,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 1,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 771,
+            "invalid": false,
+            "text": "D.I.P."
+          },
+          "spot": {
+            "id": 563,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1495,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 2,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 772,
+            "invalid": false,
+            "text": "DIP."
+          },
+          "spot": {
+            "id": 563,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1496,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 3,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 773,
+            "invalid": false,
+            "text": "dependency injection"
+          },
+          "spot": {
+            "id": 562,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        },
+        {
+          "id": 1497,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 4,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 774,
+            "invalid": false,
+            "text": "constructor injection"
+          },
+          "spot": {
+            "id": 562,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        }
+      ],
+      "hint": "The first answer is a three-letter abbreviation from the SOLID set.",
+      "id": 852,
+      "invalid": false,
+      "matchLetterCase": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "id": 1015,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "shortAnswerSpotCounters": [
+          {
+            "id": 4338,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 562,
+              "invalid": false,
+              "spotNr": 2,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 4339,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 563,
+              "invalid": false,
+              "spotNr": 1,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          }
+        ],
+        "type": "short-answer",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
+      "similarityValue": 85,
+      "solutions": [
+        {
+          "id": 770,
+          "invalid": false,
+          "text": "DIP"
+        },
+        {
+          "id": 771,
+          "invalid": false,
+          "text": "D.I.P."
+        },
+        {
+          "id": 772,
+          "invalid": false,
+          "text": "DIP."
+        },
+        {
+          "id": 773,
+          "invalid": false,
+          "text": "dependency injection"
+        },
+        {
+          "id": 774,
+          "invalid": false,
+          "text": "constructor injection"
+        }
+      ],
+      "spots": [
+        {
+          "id": 562,
+          "invalid": false,
+          "spotNr": 2,
+          "width": 20
+        },
+        {
+          "id": 563,
+          "invalid": false,
+          "spotNr": 1,
+          "width": 20
+        }
+      ],
+      "text": "A reviewer rejects the following class:\n\n```java\npublic class OrderService {\n    private final SmtpMailer mailer = new SmtpMailer(\"mail.internal\", 25);\n    public void placeOrder(Order order) { /* ... */ mailer.send(order.customerEmail(), \"...\"); }\n}\n```\n\nThe reviewer's first objection is that `OrderService` names a concrete low-level class instead of an abstraction such as a `Notifier` interface; the principle being violated is abbreviated [-spot 1] (three letters). The reviewer's fix is to stop constructing the collaborator inside the class and supply it from outside instead \u2014 the general two-word name for that technique is [-spot 2].",
+      "title": "Reviewing a notification service",
+      "type": "short-answer"
+    }
+  ],
+  "quizStarted": true,
+  "randomizeQuestionOrder": false,
+  "title": "Design Patterns Quiz \u2013 Easy Variant",
+  "type": "quiz",
+  "visibleToStudents": true
+}

@@ -1,0 +1,1308 @@
+{
+  "allowedNumberOfAttempts": 1,
+  "bonusPoints": 0.0,
+  "channelName": "exercise-painter-s-colour-pale",
+  "course": {
+    "accuracyOfScores": 1,
+    "complaintsEnabled": true,
+    "courseInformationSharingConfiguration": "COMMUNICATION_AND_MESSAGING",
+    "editorGroupName": "editors",
+    "id": 7,
+    "instructorGroupName": "instructors",
+    "maxComplaintResponseTextLimit": 2000,
+    "maxComplaintTextLimit": 2000,
+    "maxComplaintTimeDays": 7,
+    "maxComplaints": 3,
+    "maxRequestMoreFeedbackTimeDays": 7,
+    "maxTeamComplaints": 3,
+    "onlineCourse": false,
+    "requestMoreFeedbackEnabled": true,
+    "shortName": "varianteval",
+    "studentGroupName": "students",
+    "teachingAssistantGroupName": "tutors",
+    "testCourse": true,
+    "title": "Variant Evaluation Course"
+  },
+  "difficulty": "HARD",
+  "duration": 900,
+  "exerciseVariantGroup": {
+    "id": 26,
+    "title": "Design Patterns Quiz Variants"
+  },
+  "id": 420,
+  "includedInOverallScore": "INCLUDED_COMPLETELY",
+  "isEditable": true,
+  "maxPoints": 14.0,
+  "mode": "INDIVIDUAL",
+  "quizEnded": false,
+  "quizMode": "INDIVIDUAL",
+  "quizPointStatistic": {
+    "id": 895,
+    "participantsRated": 0,
+    "participantsUnrated": 0,
+    "pointCounters": [
+      {
+        "id": 3783,
+        "points": 1.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3793,
+        "points": 10.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3785,
+        "points": 3.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3787,
+        "points": 5.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3781,
+        "points": 12.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3782,
+        "points": 13.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3786,
+        "points": 4.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3789,
+        "points": 6.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3780,
+        "points": 0.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3779,
+        "points": 7.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3790,
+        "points": 8.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3791,
+        "points": 9.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3792,
+        "points": 14.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3788,
+        "points": 11.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      },
+      {
+        "id": 3784,
+        "points": 2.0,
+        "ratedCounter": 0,
+        "unRatedCounter": 0
+      }
+    ]
+  },
+  "quizQuestions": [
+    {
+      "answerOptions": [
+        {
+          "explanation": "This is the Strategy pattern: the algorithm varies independently of the client.",
+          "id": 2150,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Define a `ColorMixer` interface, one implementation per painting style, and inject the chosen mixer."
+        },
+        {
+          "explanation": "Every new style modifies the manager, violating the open/closed principle.",
+          "id": 2151,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Use a large `if\u2011else` chain checking the painting style inside the palette manager."
+        },
+        {
+          "explanation": "The variation is one algorithm, not the whole manager; this multiplies subclasses.",
+          "id": 2152,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Create a subclass of the palette manager for each painting style."
+        },
+        {
+          "explanation": "Decorator adds behaviour around an object; it does not select between alternatives.",
+          "id": 2153,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Wrap the palette manager in a decorator per painting style."
+        }
+      ],
+      "hint": "Ask which part of the design varies, and how often a new case is added.",
+      "id": 743,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "This is the Strategy pattern: the algorithm varies independently of the client.",
+              "id": 2150,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Define a `ColorMixer` interface, one implementation per painting style, and inject the chosen mixer."
+            },
+            "id": 3794,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Every new style modifies the manager, violating the open/closed principle.",
+              "id": 2151,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Use a large `if\u2011else` chain checking the painting style inside the palette manager."
+            },
+            "id": 3795,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Decorator adds behaviour around an object; it does not select between alternatives.",
+              "id": 2153,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Wrap the palette manager in a decorator per painting style."
+            },
+            "id": 3797,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The variation is one algorithm, not the whole manager; this multiplies subclasses.",
+              "id": 2152,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Create a subclass of the palette manager for each painting style."
+            },
+            "id": 3796,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 896,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "A painter needs to select a colour\u2011mixing algorithm appropriate for each painting style at runtime. The set of algorithms expands each year. Which design is the best fit?",
+      "title": "Choosing a pattern for interchangeable algorithms",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "Listeners are known only through the `BrushListener` interface.",
+          "id": 2154,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "The colour broadcaster needs no compile\u2011time knowledge of the concrete brush classes."
+        },
+        {
+          "explanation": "The loop has no isolation, so the exception propagates out of `publish`.",
+          "id": 2155,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "A brush that throws an exception during `onColorUpdate` prevents remaining brushes from being notified."
+        },
+        {
+          "explanation": "Registration is a runtime operation; that is the point of the pattern.",
+          "id": 2156,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Brushes cannot be added or removed after the broadcaster is created."
+        },
+        {
+          "explanation": "The pattern makes no such guarantee; here it is an accident of the list implementation.",
+          "id": 2157,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The order in which brushes receive updates is guaranteed to match the order they were registered."
+        }
+      ],
+      "hint": "Two claims follow from the loop as written, not from the pattern in the abstract.",
+      "id": 744,
+      "invalid": false,
+      "points": 2.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "Listeners are known only through the `BrushListener` interface.",
+              "id": 2154,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "The colour broadcaster needs no compile\u2011time knowledge of the concrete brush classes."
+            },
+            "id": 3798,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Registration is a runtime operation; that is the point of the pattern.",
+              "id": 2156,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Brushes cannot be added or removed after the broadcaster is created."
+            },
+            "id": 3800,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The loop has no isolation, so the exception propagates out of `publish`.",
+              "id": 2155,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "A brush that throws an exception during `onColorUpdate` prevents remaining brushes from being notified."
+            },
+            "id": 3799,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The pattern makes no such guarantee; here it is an accident of the list implementation.",
+              "id": 2157,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The order in which brushes receive updates is guaranteed to match the order they were registered."
+            },
+            "id": 3801,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 897,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": false,
+      "text": "A colour\u2011update broadcaster notifies many brush tools. The broadcaster keeps a list of registered listeners and calls them in a loop:\n\n```java\npublic void publish(ColorUpdate update) {\n    for (BrushListener listener : listeners) {\n        listener.onColorUpdate(update);\n    }\n}\n```\n\nWhich statements about this design are correct?",
+      "title": "Consequences of the Observer pattern",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "Adapter converts one existing interface into another the client expects.",
+          "id": 2158,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Adapter \u2013 create a `ColorPaletteAdapter` that translates the third\u2011party pigment SDK to the `Palette` interface used by the app."
+        },
+        {
+          "explanation": "Facade simplifies a whole subsystem; here a single interface is being converted.",
+          "id": 2159,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Facade \u2013 build a simplified `PaletteFacade` that hides the entire pigment subsystem behind a single method."
+        },
+        {
+          "explanation": "Proxy keeps the same interface and controls access to the subject.",
+          "id": 2160,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Proxy \u2013 provide a `PaletteProxy` that controls access to the pigment SDK while keeping the same interface."
+        },
+        {
+          "explanation": "Bridge separates abstraction and implementation up front; it is not a retrofit.",
+          "id": 2161,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Bridge \u2013 separate the abstraction of colour selection from its implementation using separate hierarchies."
+        }
+      ],
+      "hint": "How many classes are behind the new interface, and does the interface stay the same?",
+      "id": 745,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "Facade simplifies a whole subsystem; here a single interface is being converted.",
+              "id": 2159,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Facade \u2013 build a simplified `PaletteFacade` that hides the entire pigment subsystem behind a single method."
+            },
+            "id": 3803,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Adapter converts one existing interface into another the client expects.",
+              "id": 2158,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Adapter \u2013 create a `ColorPaletteAdapter` that translates the third\u2011party pigment SDK to the `Palette` interface used by the app."
+            },
+            "id": 3802,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Proxy keeps the same interface and controls access to the subject.",
+              "id": 2160,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Proxy \u2013 provide a `PaletteProxy` that controls access to the pigment SDK while keeping the same interface."
+            },
+            "id": 3804,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Bridge separates abstraction and implementation up front; it is not a retrofit.",
+              "id": 2161,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Bridge \u2013 separate the abstraction of colour selection from its implementation using separate hierarchies."
+            },
+            "id": 3805,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 898,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "A team integrates a third\u2011party pigment SDK whose method names and data types do not match the application's `Palette` interface. Only one SDK class is involved, and the application must keep calling `Palette`. Which pattern applies?",
+      "title": "Adapter versus Facade",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The lazy check is a classic unsynchronised race.",
+          "id": 2162,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Two brush threads can both see `instance == null` and create separate `PaletteConfig` objects."
+        },
+        {
+          "explanation": "The handler reaches for global state instead of receiving a collaborator.",
+          "id": 2163,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Tests of a brush cannot easily replace the global `PaletteConfig` with a mock."
+        },
+        {
+          "explanation": "Constructor visibility and inheritance are unrelated.",
+          "id": 2164,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The private constructor prevents `PaletteConfig` from extending a base configuration class."
+        },
+        {
+          "explanation": "One instance exists either way; memory is not the issue.",
+          "id": 2165,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Using a singleton necessarily consumes more memory than passing a configuration object around."
+        }
+      ],
+      "hint": "Consider what happens under concurrent brushes, and what a unit test can control.",
+      "id": 746,
+      "invalid": false,
+      "points": 2.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "The lazy check is a classic unsynchronised race.",
+              "id": 2162,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Two brush threads can both see `instance == null` and create separate `PaletteConfig` objects."
+            },
+            "id": 3806,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Constructor visibility and inheritance are unrelated.",
+              "id": 2164,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The private constructor prevents `PaletteConfig` from extending a base configuration class."
+            },
+            "id": 3808,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The handler reaches for global state instead of receiving a collaborator.",
+              "id": 2163,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Tests of a brush cannot easily replace the global `PaletteConfig` with a mock."
+            },
+            "id": 3807,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "One instance exists either way; memory is not the issue.",
+              "id": 2165,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Using a singleton necessarily consumes more memory than passing a configuration object around."
+            },
+            "id": 3809,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 899,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": false,
+      "text": "A configuration class in a painting application is written like this and is read from every brush handler:\n\n```java\npublic class PaletteConfig {\n    private static PaletteConfig instance;\n    private PaletteConfig() { }\n    public static PaletteConfig getInstance() {\n        if (instance == null) {\n            instance = new PaletteConfig();\n        }\n        return instance;\n    }\n}\n```\n\nWhich criticisms of this code are justified?",
+      "title": "Reviewing a shared-configuration class",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The editor depends only on the factory and product interfaces.",
+          "id": 2166,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "An abstract factory that the plug\u2011in implements to supply new brush shape objects to the editor."
+        },
+        {
+          "explanation": "Builder assembles a complex object step by step; it does not decouple from concrete classes.",
+          "id": 2167,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "A builder pattern with a fluent API inside the editor to construct brush shapes."
+        },
+        {
+          "explanation": "This reintroduces the compile\u2011time dependency the requirement forbids.",
+          "id": 2168,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Direct `new` calls guarded by an `if` checking the plug\u2011in name."
+        },
+        {
+          "explanation": "The editor would still have to construct the originals.",
+          "id": 2169,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "A prototype registry that clones brush shapes the editor creates itself."
+        }
+      ],
+      "hint": "The constraint is about compile-time dependencies, not about construction complexity.",
+      "id": 747,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "The editor would still have to construct the originals.",
+              "id": 2169,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "A prototype registry that clones brush shapes the editor creates itself."
+            },
+            "id": 3813,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "This reintroduces the compile\u2011time dependency the requirement forbids.",
+              "id": 2168,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Direct `new` calls guarded by an `if` checking the plug\u2011in name."
+            },
+            "id": 3812,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The editor depends only on the factory and product interfaces.",
+              "id": 2166,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "An abstract factory that the plug\u2011in implements to supply new brush shape objects to the editor."
+            },
+            "id": 3810,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Builder assembles a complex object step by step; it does not decouple from concrete classes.",
+              "id": 2167,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "A builder pattern with a fluent API inside the editor to construct brush shapes."
+            },
+            "id": 3811,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 900,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "A painting editor must create brush shapes whose concrete classes are decided by a plug\u2011in loaded at startup. The editor itself must not reference the plug\u2011in's classes. Which approach fits best?",
+      "title": "Picking a creational pattern",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The skeleton, not the steps, is the fixed part.",
+          "id": 2170,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Declaring `render()` final is what protects the invariant the pattern exists to protect."
+        },
+        {
+          "explanation": "They are the abstract, varying steps.",
+          "id": 2171,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "`applyFilters` and `renderCanvas` are the hook methods a subclass must supply."
+        },
+        {
+          "explanation": "Template Method is inheritance\u2011based; Strategy is the composition\u2011based alternative.",
+          "id": 2172,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "The pattern here relies on composition rather than inheritance."
+        },
+        {
+          "explanation": "A step with a sensible default may stay concrete, as `loadCanvas()` is.",
+          "id": 2173,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "`loadCanvas()` would have to be abstract for the pattern to apply."
+        }
+      ],
+      "hint": "Look at which member is final and which are abstract.",
+      "id": 748,
+      "invalid": false,
+      "points": 2.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "They are the abstract, varying steps.",
+              "id": 2171,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "`applyFilters` and `renderCanvas` are the hook methods a subclass must supply."
+            },
+            "id": 3815,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Template Method is inheritance\u2011based; Strategy is the composition\u2011based alternative.",
+              "id": 2172,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "The pattern here relies on composition rather than inheritance."
+            },
+            "id": 3816,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "A step with a sensible default may stay concrete, as `loadCanvas()` is.",
+              "id": 2173,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "`loadCanvas()` would have to be abstract for the pattern to apply."
+            },
+            "id": 3817,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The skeleton, not the steps, is the fixed part.",
+              "id": 2170,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Declaring `render()` final is what protects the invariant the pattern exists to protect."
+            },
+            "id": 3814,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 901,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": false,
+      "text": "A painting process template fixes the order of steps and lets subclasses vary two of them:\n\n```java\npublic abstract class PaintProcess {\n    public final Canvas render() {\n        Canvas base = loadCanvas();\n        Canvas painted = applyFilters(base);\n        return exportImage(renderCanvas(painted));\n    }\n    protected Canvas loadCanvas() { return Canvas.fromDefault(); }\n    protected abstract Canvas applyFilters(Canvas canvas);\n    protected abstract Image renderCanvas(Canvas canvas);\n}\n```\n\nWhich statements about this design are correct?",
+      "title": "Template Method in practice",
+      "type": "multiple-choice"
+    },
+    {
+      "answerOptions": [
+        {
+          "explanation": "The class violates the single\u2011responsibility principle: two unrelated reasons to change.",
+          "id": 2174,
+          "invalid": false,
+          "isCorrect": true,
+          "text": "Split it into two classes along the two responsibilities."
+        },
+        {
+          "explanation": "An interface over both responsibilities preserves the coupling.",
+          "id": 2175,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Extract one interface covering all forty methods."
+        },
+        {
+          "explanation": "Static methods do not reduce the responsibility overload.",
+          "id": 2176,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Make the formatting methods static."
+        },
+        {
+          "explanation": "This adds global state without addressing cohesion.",
+          "id": 2177,
+          "invalid": false,
+          "isCorrect": false,
+          "text": "Introduce a singleton accessor for the Canvas class."
+        }
+      ],
+      "hint": "Two fields, two disjoint groups of methods \u2014 count the reasons this class would have to change.",
+      "id": 749,
+      "invalid": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "answerCounters": [
+          {
+            "answer": {
+              "explanation": "This adds global state without addressing cohesion.",
+              "id": 2177,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Introduce a singleton accessor for the Canvas class."
+            },
+            "id": 3821,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "Static methods do not reduce the responsibility overload.",
+              "id": 2176,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Make the formatting methods static."
+            },
+            "id": 3820,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "The class violates the single\u2011responsibility principle: two unrelated reasons to change.",
+              "id": 2174,
+              "invalid": false,
+              "isCorrect": true,
+              "text": "Split it into two classes along the two responsibilities."
+            },
+            "id": 3818,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          },
+          {
+            "answer": {
+              "explanation": "An interface over both responsibilities preserves the coupling.",
+              "id": 2175,
+              "invalid": false,
+              "isCorrect": false,
+              "text": "Extract one interface covering all forty methods."
+            },
+            "id": 3819,
+            "ratedCounter": 0,
+            "unRatedCounter": 0
+          }
+        ],
+        "id": 902,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "type": "multiple-choice",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "ALL_OR_NOTHING",
+      "singleChoice": true,
+      "text": "During review, a `Canvas` class is found to look like this, with about forty methods in total and no field shared between the two halves:\n\n```java\nclass Canvas {\n    private Connection connection;   // used only by the query methods\n    private StringBuilder output;    // used only by the formatting methods\n    List<Row> queryRows(...)  { ... }        // ~20 methods\n    String formatAsHtml(...)  { ... }        // ~20 methods\n}\n```\n\nWhich refactoring addresses the underlying problem?",
+      "title": "Diagnosing a smell in a report class",
+      "type": "multiple-choice"
+    },
+    {
+      "correctMappings": [
+        {
+          "id": 1277,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 1,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 655,
+            "invalid": false,
+            "text": "Decorator"
+          },
+          "spot": {
+            "id": 476,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1278,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 2,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 656,
+            "invalid": false,
+            "text": "Proxy"
+          },
+          "spot": {
+            "id": 477,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        },
+        {
+          "id": 1279,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 0,
+          "shortAnswerSpotIndex": 2,
+          "solution": {
+            "id": 654,
+            "invalid": false,
+            "text": "State"
+          },
+          "spot": {
+            "id": 478,
+            "invalid": false,
+            "spotNr": 3,
+            "width": 20
+          }
+        }
+      ],
+      "hint": "All three keep the client's interface unchanged; they differ in why.",
+      "id": 750,
+      "invalid": false,
+      "matchLetterCase": false,
+      "points": 1.5,
+      "quizQuestionStatistic": {
+        "id": 903,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "shortAnswerSpotCounters": [
+          {
+            "id": 3824,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 478,
+              "invalid": false,
+              "spotNr": 3,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 3823,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 477,
+              "invalid": false,
+              "spotNr": 2,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 3822,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 476,
+              "invalid": false,
+              "spotNr": 1,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          }
+        ],
+        "type": "short-answer",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
+      "similarityValue": 85,
+      "solutions": [
+        {
+          "id": 654,
+          "invalid": false,
+          "text": "State"
+        },
+        {
+          "id": 655,
+          "invalid": false,
+          "text": "Decorator"
+        },
+        {
+          "id": 656,
+          "invalid": false,
+          "text": "Proxy"
+        }
+      ],
+      "spots": [
+        {
+          "id": 476,
+          "invalid": false,
+          "spotNr": 1,
+          "width": 20
+        },
+        {
+          "id": 477,
+          "invalid": false,
+          "spotNr": 2,
+          "width": 20
+        },
+        {
+          "id": 478,
+          "invalid": false,
+          "spotNr": 3,
+          "width": 20
+        }
+      ],
+      "text": "A painting application is being extended. For each requirement, name the pattern that fits.\n\nColour\u2011effects, colour\u2011normalisation, and bandwidth\u2011aware rendering must be switchable per canvas and combinable in any order, each wrapping the canvas and keeping the same `Canvas` interface. That calls for the [-spot 1] pattern.\n\nPremium pigments must be fetched only when first used, and access rights must be checked before the real pigment object is touched, without the artist noticing a difference. That calls for the [-spot 2] pattern.\n\nA painting session behaves differently while preparing, painting, and paused, and the application should not be a growing `switch` over a status field. That calls for the [-spot 3] pattern.",
+      "title": "Choosing patterns for a media-streaming client",
+      "type": "short-answer"
+    },
+    {
+      "correctMappings": [
+        {
+          "id": 1280,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 0,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 657,
+            "invalid": false,
+            "text": "Context"
+          },
+          "spot": {
+            "id": 479,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1281,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 1,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 658,
+            "invalid": false,
+            "text": "SortStrategy"
+          },
+          "spot": {
+            "id": 480,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        },
+        {
+          "id": 1282,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 2,
+          "shortAnswerSpotIndex": 2,
+          "solution": {
+            "id": 659,
+            "invalid": false,
+            "text": "Policy"
+          },
+          "spot": {
+            "id": 481,
+            "invalid": false,
+            "spotNr": 3,
+            "width": 20
+          }
+        }
+      ],
+      "hint": "Answer with the identifiers shown in the listing.",
+      "id": 751,
+      "invalid": false,
+      "matchLetterCase": false,
+      "points": 1.5,
+      "quizQuestionStatistic": {
+        "id": 904,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "shortAnswerSpotCounters": [
+          {
+            "id": 3827,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 481,
+              "invalid": false,
+              "spotNr": 3,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 3825,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 479,
+              "invalid": false,
+              "spotNr": 1,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 3826,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 480,
+              "invalid": false,
+              "spotNr": 2,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          }
+        ],
+        "type": "short-answer",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
+      "similarityValue": 85,
+      "solutions": [
+        {
+          "id": 657,
+          "invalid": false,
+          "text": "Context"
+        },
+        {
+          "id": 658,
+          "invalid": false,
+          "text": "SortStrategy"
+        },
+        {
+          "id": 659,
+          "invalid": false,
+          "text": "Policy"
+        }
+      ],
+      "spots": [
+        {
+          "id": 479,
+          "invalid": false,
+          "spotNr": 1,
+          "width": 20
+        },
+        {
+          "id": 480,
+          "invalid": false,
+          "spotNr": 2,
+          "width": 20
+        },
+        {
+          "id": 481,
+          "invalid": false,
+          "spotNr": 3,
+          "width": 20
+        }
+      ],
+      "text": "A brush\u2011sorting tool arranges brush objects with interchangeable algorithms:\n\n```java\npublic interface SortStrategy { void performSort(List<Brush> input); }\npublic class BubbleSort implements SortStrategy { ... }\npublic class MergeSort  implements SortStrategy { ... }\npublic class Context { private List<Brush> brushes; private SortStrategy sortAlgorithm; ... }\npublic class Policy  { private Context context; public void configure() { ... } }\n```\n\nUsing the class names from this listing: the class that holds the brushes and a reference to the currently selected algorithm is [-spot 1]. The type that both `BubbleSort` and `MergeSort` implement is [-spot 2]. The class whose `configure()` method decides which algorithm to select is [-spot 3].",
+      "title": "Roles in a strategy-based sorting application",
+      "type": "short-answer"
+    },
+    {
+      "correctMappings": [
+        {
+          "id": 1283,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 0,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 660,
+            "invalid": false,
+            "text": "DIP"
+          },
+          "spot": {
+            "id": 483,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1284,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 1,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 661,
+            "invalid": false,
+            "text": "D.I.P."
+          },
+          "spot": {
+            "id": 483,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1285,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 2,
+          "shortAnswerSpotIndex": 1,
+          "solution": {
+            "id": 662,
+            "invalid": false,
+            "text": "DIP."
+          },
+          "spot": {
+            "id": 483,
+            "invalid": false,
+            "spotNr": 1,
+            "width": 20
+          }
+        },
+        {
+          "id": 1286,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 3,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 663,
+            "invalid": false,
+            "text": "dependency injection"
+          },
+          "spot": {
+            "id": 482,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        },
+        {
+          "id": 1287,
+          "invalid": false,
+          "shortAnswerSolutionIndex": 4,
+          "shortAnswerSpotIndex": 0,
+          "solution": {
+            "id": 664,
+            "invalid": false,
+            "text": "constructor injection"
+          },
+          "spot": {
+            "id": 482,
+            "invalid": false,
+            "spotNr": 2,
+            "width": 20
+          }
+        }
+      ],
+      "hint": "The first answer is a three\u2011letter abbreviation from the SOLID set.",
+      "id": 752,
+      "invalid": false,
+      "matchLetterCase": false,
+      "points": 1.0,
+      "quizQuestionStatistic": {
+        "id": 905,
+        "participantsRated": 0,
+        "participantsUnrated": 0,
+        "ratedCorrectCounter": 0,
+        "shortAnswerSpotCounters": [
+          {
+            "id": 3828,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 482,
+              "invalid": false,
+              "spotNr": 2,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          },
+          {
+            "id": 3829,
+            "ratedCounter": 0,
+            "spot": {
+              "id": 483,
+              "invalid": false,
+              "spotNr": 1,
+              "width": 20
+            },
+            "unRatedCounter": 0
+          }
+        ],
+        "type": "short-answer",
+        "unRatedCorrectCounter": 0
+      },
+      "randomizeOrder": false,
+      "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
+      "similarityValue": 85,
+      "solutions": [
+        {
+          "id": 660,
+          "invalid": false,
+          "text": "DIP"
+        },
+        {
+          "id": 661,
+          "invalid": false,
+          "text": "D.I.P."
+        },
+        {
+          "id": 662,
+          "invalid": false,
+          "text": "DIP."
+        },
+        {
+          "id": 663,
+          "invalid": false,
+          "text": "dependency injection"
+        },
+        {
+          "id": 664,
+          "invalid": false,
+          "text": "constructor injection"
+        }
+      ],
+      "spots": [
+        {
+          "id": 482,
+          "invalid": false,
+          "spotNr": 2,
+          "width": 20
+        },
+        {
+          "id": 483,
+          "invalid": false,
+          "spotNr": 1,
+          "width": 20
+        }
+      ],
+      "text": "A reviewer rejects the following class:\n\n```java\npublic class PaintingOrderService {\n    private final SmtpMailer mailer = new SmtpMailer(\"mail.internal\", 25);\n    public void placeOrder(Order order) { /* ... */ mailer.send(order.customerEmail(), \"...\"); }\n}\n```\n\nThe reviewer's first objection is that `PaintingOrderService` names a concrete low\u2011level class instead of an abstraction such as a `Notifier` interface; the principle being violated is abbreviated [-spot 1] (three letters). The reviewer's fix is to stop constructing the collaborator inside the class and supply it from outside instead \u2014 the general two\u2011word name for that technique is [-spot 2].",
+      "title": "Reviewing a notification service",
+      "type": "short-answer"
+    }
+  ],
+  "quizStarted": true,
+  "randomizeQuestionOrder": false,
+  "title": "Painter's Colour Palette Design Patterns Quiz (Hard)",
+  "type": "quiz",
+  "visibleToStudents": true
+}
