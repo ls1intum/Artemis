@@ -36,8 +36,11 @@ workflow artifact (`chunk-eager-report`). The `chunk-eager-quality` job (PR runs
 2. Resolves `develop`'s latest commit via the GitHub API, then resolves *that commit's* CI run
    using the shared `.github/actions/resolve-artifact-run` composite action (the same one deploy
    paths use to find a `.war`/Docker artifact for an exact SHA).
-3. Downloads that run's `chunk-eager-report` — this is the baseline, always current as of
-   `develop`'s last successful build, never more than one push stale.
+3. Downloads that run's `chunk-eager-report` — this is the baseline, current as of `develop`'s
+   last successful build. Usually that's the most recent push, but if one or more pushes in a row
+   had a failed, cancelled, or skipped `build-war` job, `resolve-artifact-run` falls back to the
+   nearest earlier run that actually published an artifact — so the baseline can occasionally be
+   more than one push behind, not a strict "never more than one push stale" guarantee.
 4. Diffs and posts/updates a PR comment.
 
 No build runs twice: the PR side reuses `build-war`'s own build, and `develop`'s side is whatever

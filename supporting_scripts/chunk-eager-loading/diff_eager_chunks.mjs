@@ -25,17 +25,20 @@ const BYTES_THRESHOLD_PCT = 0.1; // relative: classify as changed if eager bytes
 
 function parseArgs(argv) {
     const args = argv.slice(2);
-    const reportPathArg = args.find((a) => !a.startsWith('--'));
-    const baselineIndex = args.indexOf('--baseline');
-    const outIndex = args.indexOf('--out');
-    if (baselineIndex < 0) {
+    let reportPathArg, baselinePathArg, outPathArg;
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--baseline') baselinePathArg = args[++i];
+        else if (args[i] === '--out') outPathArg = args[++i];
+        else if (!args[i].startsWith('--') && !reportPathArg) reportPathArg = args[i];
+    }
+    if (!baselinePathArg) {
         console.error('Missing required --baseline <baseline-report.json>. There is no default baseline file -- see README.md.');
         process.exit(1);
     }
     return {
         reportPath: reportPathArg ? resolve(reportPathArg) : null,
-        baselinePath: resolve(args[baselineIndex + 1]),
-        outPath: outIndex >= 0 ? resolve(args[outIndex + 1]) : null,
+        baselinePath: resolve(baselinePathArg),
+        outPath: outPathArg ? resolve(outPathArg) : null,
     };
 }
 
@@ -43,9 +46,9 @@ function loadJson(path) {
     return JSON.parse(readFileSync(path, 'utf8'));
 }
 
-function diffRoute(baselineRoute, freshRoute) {
-    if (!baselineRoute || baselineRoute.error) return { route: freshRoute.route, skipped: 'no baseline data' };
-    if (!freshRoute || freshRoute.error) return { route: baselineRoute.route, skipped: freshRoute?.error ?? 'no fresh data' };
+function diffRoute(routeName, baselineRoute, freshRoute) {
+    if (!baselineRoute || baselineRoute.error) return { route: routeName, skipped: baselineRoute?.error ? `baseline error: ${baselineRoute.error}` : 'no baseline data' };
+    if (!freshRoute || freshRoute.error) return { route: routeName, skipped: freshRoute?.error ? `fresh error: ${freshRoute.error}` : 'no fresh data' };
 
     const chunkCountDelta = freshRoute.eagerChunkCount - baselineRoute.eagerChunkCount;
     const bytesDelta = freshRoute.eagerBytes - baselineRoute.eagerBytes;
@@ -113,6 +116,7 @@ function toMarkdown(diffs, meta) {
     }
 
     for (const d of regressed) {
+        if (d.newChunks.length === 0) continue; // size-only regression, nothing new to list
         lines.push('');
         lines.push(`**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable:`);
         for (const c of d.newChunks.slice(0, 15)) {
@@ -124,6 +128,7 @@ function toMarkdown(diffs, meta) {
     }
 
     for (const d of improved) {
+        if (d.removedChunks.length === 0) continue; // size-only improvement, nothing removed to list
         lines.push('');
         lines.push(`**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable:`);
         for (const c of d.removedChunks.slice(0, 15)) {
@@ -151,7 +156,7 @@ function main() {
     const baselineByRoute = Object.fromEntries(baseline.routes.map((r) => [r.route, r]));
     const allRoutes = [...new Set([...Object.keys(freshByRoute), ...Object.keys(baselineByRoute)])];
 
-    const diffs = allRoutes.map((route) => diffRoute(baselineByRoute[route], freshByRoute[route]));
+    const diffs = allRoutes.map((route) => diffRoute(route, baselineByRoute[route], freshByRoute[route]));
     const markdown = toMarkdown(diffs, baseline.meta);
 
     if (outPath) {

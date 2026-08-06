@@ -31,11 +31,14 @@ const EAGER_KIND = 'import-statement';
 
 function parseArgs(argv) {
     const args = argv.slice(2);
-    const statsPathArg = args.find((a) => !a.startsWith('--'));
-    const outIndex = args.indexOf('--out');
+    let statsPathArg, outPathArg;
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] === '--out') outPathArg = args[++i];
+        else if (!args[i].startsWith('--') && !statsPathArg) statsPathArg = args[i];
+    }
     return {
         statsPath: statsPathArg ? resolve(statsPathArg) : null,
-        outPath: outIndex >= 0 ? resolve(args[outIndex + 1]) : null,
+        outPath: outPathArg ? resolve(outPathArg) : null,
     };
 }
 
