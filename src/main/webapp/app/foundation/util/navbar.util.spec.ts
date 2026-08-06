@@ -184,7 +184,39 @@ describe('navbar util shell metrics', () => {
 
         vi.runAllTimers();
         expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('44px');
-        // The observer must never touch --header-height: the exam navigation bar repurposes it during conduction.
+        // updateHeaderHeight owns --header-height alone and must not write the observer's variable.
         expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('');
+    });
+
+    /**
+     * The other half of the ownership contract, and the regression this fix is for: the observer used to write the
+     * global navbar's height into `--header-height`, which exam mode repurposes for the exam navigation bar during
+     * conduction. Writing it — or removing it while the navbar is hidden during an exam — broke the exam layout
+     * after a reload.
+     */
+    it('never writes or clears --header-height, which exam mode owns during conduction', () => {
+        const navbar = addElement('jhi-navbar', 60);
+        addElement('jhi-footer', 30);
+        // Stand-in for the value the exam navigation bar publishes while an exam is being conducted.
+        document.documentElement.style.setProperty('--header-height', '123px');
+
+        startObserving();
+        vi.runAllTimers();
+
+        // A resize (breadcrumbs wrapping) makes the observer write — to --navbar-height only.
+        navbar.getBoundingClientRect = () => ({ height: 88 }) as DOMRect;
+        lastCallback!();
+
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('88px');
+        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('123px');
+
+        // Exam conduction hides the global navbar, so the observer drops --navbar-height. The exam's own
+        // --header-height must survive that cleanup.
+        navbar.remove();
+        reattachShellMetricsObserver();
+        vi.runAllTimers();
+
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('');
+        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('123px');
     });
 });
