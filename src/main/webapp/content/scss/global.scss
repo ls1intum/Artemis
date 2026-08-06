@@ -1279,8 +1279,16 @@ body.transparent-background {
  * Restricted to `:not(.scrollable-content)`, which is exactly the sidebar-bearing pages — the sidebar-less pages keep
  * that class and their arbitrary content must retain its natural block layout. Exam conduction is excluded because it
  * drives its own full-viewport layout.
+ *
+ * The `:has(… > *:only-child)` gate means "the routed page renders exactly one root element". Some pages render
+ * several at once: exam participation shows a test-run banner beside the exam content, and lecture details shows its
+ * spinner while the previously loaded lecture is still on screen. Filling would give each of those `flex: 1 1 auto`,
+ * so they would share the height rather than one filling it — the banner would balloon and squeeze the content. Those
+ * pages keep their intrinsic height and stay byte-identical to before, since the gate also withholds the container's
+ * `display: flex`. Note exam participation is only excluded by `.exam-wrapper` once the exam has *started*; its
+ * intro, summary and test-run states are reached through this selector, which is why the gate matters.
  */
-.layout-content:not(.exam-wrapper) > .course-body-container:not(.scrollable-content) {
+.layout-content:not(.exam-wrapper) > .course-body-container:not(.scrollable-content):has(> *:not(router-outlet):not(.refresh-overlay) > *:only-child) {
     display: flex;
     flex-direction: column;
 
