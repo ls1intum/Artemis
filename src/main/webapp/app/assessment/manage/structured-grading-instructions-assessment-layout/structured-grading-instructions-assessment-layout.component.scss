@@ -1,5 +1,5 @@
-/* Info hint above the criteria list. `sgi-hint` is forwarded onto the tum-ui-message host via its styleClass. */
-:host ::ng-deep .sgi-hint {
+/* Info hint above the criteria list; `sgi-hint` sits on the tum-ui-message host element. */
+.sgi-hint {
     display: block;
     margin-bottom: 0.75rem;
 }
@@ -38,6 +38,7 @@
 
     &__top {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
@@ -77,5 +78,22 @@
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
+    }
+
+    &__usage-progress {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    &__usage-counter {
+        color: var(--secondary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    &__usage-bar {
+        width: 5rem;
     }
 }

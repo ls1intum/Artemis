@@ -7,10 +7,16 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
-import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import {
+    TumUiButtonComponent,
+    TumUiCheckboxComponent,
+    TumUiMessageComponent,
+    TumUiProgressBarComponent,
+    TumUiProgressBarSeverity,
+    TumUiTagComponent,
+    TumUiTagSeverity,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -36,6 +42,8 @@ export interface SortedGradingCriterion {
         TumUiTagComponent,
         TumUiButtonComponent,
         TumUiMessageComponent,
+        TumUiProgressBarComponent,
+        TumUiTooltipDirective,
         ArtemisTranslatePipe,
     ],
 })
@@ -127,6 +135,24 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     pointsLabel(credits: number): string {
         return pointsLabel(credits);
     }
+
+    /** Number of feedback entries currently linked to this instruction in the open assessment. */
+    instructionUseCount(instruction: GradingInstruction): number {
+        return instruction.id === undefined ? 0 : (this.selectionService.appliedInstructionCounts().get(instruction.id) ?? 0);
+    }
+
+    /** Percentage of the configured usage limit consumed by this assessment. */
+    instructionUsageProgress(instruction: GradingInstruction): number {
+        const limit = instruction.usageCount ?? 0;
+        return limit > 0 ? (this.instructionUseCount(instruction) / limit) * 100 : 0;
+    }
+
+    /** Reaching the configured limit is called out without making normal progress feel like an error. */
+    instructionUsageSeverity(instruction: GradingInstruction): TumUiProgressBarSeverity {
+        const limit = instruction.usageCount ?? 0;
+        return limit > 0 && this.instructionUseCount(instruction) >= limit ? 'danger' : 'primary';
+    }
+
     /**
      * Connects the SGI with the Feedback of a Submission Element in assessment detail
      * @param {Event} event - The drag event

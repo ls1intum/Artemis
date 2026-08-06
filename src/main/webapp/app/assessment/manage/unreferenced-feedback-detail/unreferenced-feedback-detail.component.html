@@ -1,7 +1,7 @@
 <tum-ui-card
     (drop)="updateFeedbackOnDrop($event)"
     (dragover)="$event.preventDefault()"
-    styleClass="unreferenced-feedback-detail"
+    class="unreferenced-feedback-detail"
     [class.is-suggestion]="isSuggestion()"
     [attr.data-tone]="tone()"
 >

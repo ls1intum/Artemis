@@ -6,9 +6,7 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonDirective, TumUiMessageComponent, TumUiTagComponent, TumUiTagSeverity } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 //One rendered block of the feedback list: the feedback belonging to a single grading criterion.
@@ -55,17 +53,20 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
 
-    /** Ids of the grading instructions that are currently applied. */
-    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => {
-        const ids = new Set<number>();
+    /** Number of feedback entries currently linked to each grading instruction. */
+    readonly appliedInstructionCounts = computed<ReadonlyMap<number, number>>(() => {
+        const counts = new Map<number, number>();
         for (const feedback of this.feedbacks()) {
             const instructionId = feedback.gradingInstruction?.id;
             if (instructionId !== undefined) {
-                ids.add(instructionId);
+                counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
             }
         }
-        return ids;
+        return counts;
     });
+
+    /** Ids of the grading instructions that are currently applied. */
+    readonly appliedInstructionIds = computed<ReadonlySet<number>>(() => new Set(this.appliedInstructionCounts().keys()));
 
     /**
      * The feedback cards split into one block per grading criterion (criteria in alphabetical order), with every

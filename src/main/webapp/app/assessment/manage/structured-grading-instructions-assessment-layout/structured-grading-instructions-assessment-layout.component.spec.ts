@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiCheckboxComponent } from 'app/shared-ui/tum-ui/checkbox/tum-ui-checkbox.component';
+import { TumUiCheckboxComponent, TumUiProgressBarComponent } from '@tumaet/ui-angular';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -115,15 +115,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     });
 
     describe('with an editable feedback list registered', () => {
-        const instruction = { id: 7, instructionDescription: 'description', feedback: 'feedback', credits: 4 } as GradingInstruction;
+        const instruction = { id: 7, instructionDescription: 'description', feedback: 'feedback', credits: 4, usageCount: 4 } as GradingInstruction;
         const criterion = { id: 1, title: 'Documentation', structuredGradingInstructions: [instruction] } as GradingCriterion;
         let host: GradingInstructionSelectionHost;
         let appliedIds: ReturnType<typeof signal<ReadonlySet<number>>>;
+        let appliedCounts: ReturnType<typeof signal<ReadonlyMap<number, number>>>;
 
         beforeEach(() => {
             appliedIds = signal<ReadonlySet<number>>(new Set());
+            appliedCounts = signal<ReadonlyMap<number, number>>(new Map());
             host = {
                 appliedInstructionIds: appliedIds,
+                appliedInstructionCounts: appliedCounts,
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
@@ -144,9 +147,24 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
         }
 
-        it('should render a checkbox instead of the usage count', () => {
+        it('should render a checkbox and usage progress', () => {
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.directive(TumUiProgressBarComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('.sgi-item__usage-counter')).nativeElement.textContent.trim()).toBe('0 / 4');
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
+        });
+
+        it('should update the usage counter, progress, and severity from linked feedback', () => {
+            appliedCounts.set(new Map([[instruction.id!, 2]]));
+            fixture.detectChanges();
+
+            expect(comp.instructionUseCount(instruction)).toBe(2);
+            expect(comp.instructionUsageProgress(instruction)).toBe(50);
+            expect(comp.instructionUsageSeverity(instruction)).toBe('primary');
+            expect(fixture.debugElement.query(By.css('.sgi-item__usage-counter')).nativeElement.textContent.trim()).toBe('2 / 4');
+
+            appliedCounts.set(new Map([[instruction.id!, 4]]));
+            expect(comp.instructionUsageSeverity(instruction)).toBe('danger');
         });
 
         it('should count the applied instructions of the criterion', () => {

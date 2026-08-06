@@ -77,7 +77,11 @@
                 "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
                 "criteria": "Kriterien",
                 "decreasePoints": "Punkte verringern",
-                "increasePoints": "Punkte erhöhen"
+                "increasePoints": "Punkte erhöhen",
+                "feedbackUsage": {
+                    "limited": "Du hast dieses Feedback {{used}} von {{limit}} erlaubten Malen verwendet.",
+                    "unlimited": "Du hast dieses Feedback {{used}} Mal verwendet. Dieses Feedback hat keine Nutzungsbegrenzung."
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {

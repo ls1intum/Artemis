@@ -194,6 +194,7 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.unreferencedFeedback[0].credits).toBe(4);
             expect(comp.unreferencedFeedback[0].type).toBe(FeedbackType.MANUAL_UNREFERENCED);
             expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
+            expect(comp.appliedInstructionCounts()).toEqual(new Map([[1, 1]]));
         });
 
         it('should remove every feedback of the instruction when it is un-applied', () => {
@@ -206,6 +207,7 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.unreferencedFeedback).toHaveLength(1);
             expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(cameraInstruction);
             expect(comp.appliedInstructionIds()).toEqual(new Set([2]));
+            expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
         it('should group the feedback by criterion, with uncategorized feedback last', () => {

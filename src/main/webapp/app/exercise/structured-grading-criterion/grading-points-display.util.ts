@@ -1,4 +1,4 @@
-import { TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
+import { TumUiTagSeverity } from '@tumaet/ui-angular';
 
 /**
  * Presentation helpers shared by the structured grading instruction panel and the feedback cards, so a point

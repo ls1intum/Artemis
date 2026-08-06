@@ -14,13 +14,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { TumUiCardComponent } from 'app/shared-ui/tum-ui/card/tum-ui-card.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiInputGroupComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group.component';
-import { TumUiInputGroupAddonComponent } from 'app/shared-ui/tum-ui/input-group/tum-ui-input-group-addon.component';
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiCardComponent,
+    TumUiInputDirective,
+    TumUiInputGroupAddonComponent,
+    TumUiInputGroupComponent,
+    TumUiTagComponent,
+    TumUiTagSeverity,
+} from '@tumaet/ui-angular';
 import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 
 /** Awarded / deducted / neutral — drives the card's left accent stripe. */

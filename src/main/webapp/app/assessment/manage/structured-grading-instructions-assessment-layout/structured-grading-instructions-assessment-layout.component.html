@@ -1,7 +1,7 @@
 @if (allowDrop()) {
     <tum-ui-message
         severity="info"
-        styleClass="sgi-hint"
+        class="sgi-hint"
         [icon]="faInfoCircle"
         [text]="(selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction') | artemisTranslate"
     />
@@ -24,7 +24,7 @@
                 @if (selectable()) {
                     <tum-ui-tag
                         severity="secondary"
-                        styleClass="font-normal!"
+                        class="font-normal!"
                         [value]="
                             'artemisApp.assessmentInstructions.appliedCount'
                                 | artemisTranslate: { applied: appliedCountPerCriterion()[criterionIndex], total: criterion.instructions.length }
@@ -34,6 +34,11 @@
             </ng-container>
             <div class="sgi-items">
                 @for (instruction of criterion.instructions; track instruction; let instructionIndex = $index) {
+                    @let useCount = instructionUseCount(instruction);
+                    @let usageLimit = instruction.usageCount ?? 0;
+                    @let usageTooltip =
+                        (usageLimit > 0 ? 'artemisApp.assessment.detail.feedbackUsage.limited' : 'artemisApp.assessment.detail.feedbackUsage.unlimited')
+                            | artemisTranslate: { used: useCount, limit: usageLimit };
                     <div
                         class="sgi-item"
                         draggable="{{ allowDrop() }}"
@@ -45,6 +50,17 @@
                             <tum-ui-tag class="sgi-item__points" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
                             <div class="sgi-item__control">
                                 @if (selectable()) {
+                                    <div class="sgi-item__usage-progress">
+                                        <span class="sgi-item__usage-counter">{{ useCount }} / {{ usageLimit > 0 ? usageLimit : '∞' }}</span>
+                                        <tum-ui-progress-bar
+                                            class="sgi-item__usage-bar"
+                                            [value]="instructionUsageProgress(instruction)"
+                                            [severity]="instructionUsageSeverity(instruction)"
+                                            [showValue]="false"
+                                            [ariaLabel]="usageTooltip"
+                                            [tumUiTooltip]="usageTooltip"
+                                        />
+                                    </div>
                                     <tum-ui-checkbox
                                         [checked]="isApplied(instruction)"
                                         [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"

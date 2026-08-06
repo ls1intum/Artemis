@@ -77,7 +77,11 @@
                 "pointsOfShort": "{{points}} / {{maxPoints}} pts",
                 "criteria": "Criteria",
                 "decreasePoints": "Decrease points",
-                "increasePoints": "Increase points"
+                "increasePoints": "Increase points",
+                "feedbackUsage": {
+                    "limited": "You have used this feedback {{used}} out of {{limit}} allowed times.",
+                    "unlimited": "You have used this feedback {{used}} times. This feedback has no usage limit."
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {

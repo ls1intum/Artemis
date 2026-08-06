@@ -36,7 +36,7 @@
     </div>
 
     @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
-        <tum-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
+        <tum-ui-message severity="secondary" class="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
     @for (group of feedbackGroups(); track $index) {

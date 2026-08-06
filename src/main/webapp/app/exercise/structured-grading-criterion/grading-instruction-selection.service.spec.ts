@@ -13,6 +13,7 @@ describe('GradingInstructionSelectionService', () => {
         service = TestBed.inject(GradingInstructionSelectionService);
         host = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
+            appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 1]])),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
@@ -21,6 +22,7 @@ describe('GradingInstructionSelectionService', () => {
     it('should report nothing as selectable or applied without a registered host', () => {
         expect(service.isSelectable()).toBe(false);
         expect(service.appliedInstructionIds().size).toBe(0);
+        expect(service.appliedInstructionCounts().size).toBe(0);
         expect(service.isApplied(instruction)).toBe(false);
     });
 
@@ -29,6 +31,7 @@ describe('GradingInstructionSelectionService', () => {
 
         expect(service.isSelectable()).toBe(true);
         expect(service.isApplied(instruction)).toBe(true);
+        expect(service.appliedInstructionCounts().get(instruction.id!)).toBe(1);
         expect(service.isApplied({ id: 2, credits: 0 } as GradingInstruction)).toBe(false);
     });
 
@@ -57,6 +60,7 @@ describe('GradingInstructionSelectionService', () => {
     it('should only clear the registration for the host that is currently active', () => {
         const otherHost: GradingInstructionSelectionHost = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set()),
+            appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map()),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
