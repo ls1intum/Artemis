@@ -56,12 +56,27 @@ class AssessmentUploadTemplateGenerationTest {
 
         final Map<String, String> entries = readZipEntries(service.generateTemplateArchive(exerciseWithId(EXERCISE_ID)));
 
-        // The comma-containing identifier must survive as a single CSV field, and the feedback file must be named after that exact identifier so the importer matches it.
+        // The comma-containing identifier and login must survive as single CSV fields; the feedback file is named after the path-safe participation id.
         final String expectedIdentifier = participationId + "-" + teamShortName;
-        assertThat(entries).containsKey(expectedIdentifier + ".txt");
+        assertThat(entries).containsKey(participationId + ".txt");
         final CSVRecord firstRow = parseFirstDataRow(entries.get(CSV_FILE_NAME));
         assertThat(firstRow.get("Identifier")).isEqualTo(expectedIdentifier);
         assertThat(firstRow.get("Login")).isEqualTo(teamShortName);
+    }
+
+    @Test
+    void shouldNameTemplateFeedbackFilesPathSafelyForSlashIdentifiers() throws IOException {
+        // TeamResource persists raw short names containing '/', so a team such as "team/1" would otherwise produce a nested entry (42-team/1.txt) whose prefix the importer strips,
+        // leaving the wrong base name. The feedback file must be the flat, path-safe participation id so the generated template round-trips.
+        final long participationId = 42L;
+        final AssessmentUploadService service = templateServiceReturning(List.of(new AssessmentUploadParticipationDTO(participationId, "team/1")));
+
+        final Map<String, String> entries = readZipEntries(service.generateTemplateArchive(exerciseWithId(EXERCISE_ID)));
+
+        // The feedback entry is the flat participation id with no nested path, while the CSV still carries the full identifier for row resolution.
+        assertThat(entries).containsKey(participationId + ".txt");
+        assertThat(entries.keySet()).noneMatch(name -> name.contains("/"));
+        assertThat(parseFirstDataRow(entries.get(CSV_FILE_NAME)).get("Identifier")).isEqualTo(participationId + "-team/1");
     }
 
     @Test

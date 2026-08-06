@@ -120,8 +120,11 @@ public class AssessmentUploadService {
 
     /**
      * Builds a template zip an instructor can fill in and re-upload: an {@code assessment-scores.csv} with a row (participant identifier, login, empty points) for every
-     * participation of the exercise, plus one empty {@code <identifier>.txt} feedback file per participation. The generated identifiers and file names are exactly what
-     * {@link #importAssessments} expects, so the downloaded archive round-trips once the points and feedback have been filled in.
+     * participation of the exercise, plus one empty {@code <participationId>.txt} feedback file per participation. The feedback files are named after the path-safe participation
+     * id
+     * (not the identifier, whose login/team-short-name part may contain a {@code /}) so the archive round-trips through {@link #importAssessments} once the points and feedback
+     * have
+     * been filled in.
      * <p>
      * <b>Precondition:</b> {@code exercise} is a persisted programming exercise.
      * <p>
@@ -150,8 +153,10 @@ public class AssessmentUploadService {
             zipStream.write(csvBytes);
             zipStream.closeEntry();
             for (final AssessmentUploadParticipationDTO participation : participations) {
-                // One empty feedback file per participant, named so its base name equals the identifier and importAssessments matches it exactly.
-                zipStream.putNextEntry(new ZipEntry(templateIdentifier(participation) + TEXT_FILE_EXTENSION));
+                // One empty feedback file per participant, named after the numeric — and therefore path-safe — participation id rather than the identifier: the identifier's
+                // login/team-short-name part may contain a '/' (TeamResource persists raw short names), which a zip reader would treat as a directory prefix and strip, leaving a
+                // wrong base name. importAssessments matches this flat name back to the row by participation id.
+                zipStream.putNextEntry(new ZipEntry(templateFeedbackFileName(participation)));
                 zipStream.closeEntry();
             }
             zipStream.finish();
@@ -165,6 +170,18 @@ public class AssessmentUploadService {
 
     private static String templateIdentifier(final AssessmentUploadParticipationDTO participation) {
         return participation.participationId() + "-" + participation.participantIdentifier();
+    }
+
+    /**
+     * The name of the generated feedback file for one participation: the numeric participation id plus the {@code .txt} extension. The participation id is always path-safe, so the
+     * entry never becomes a nested zip path a reader would reduce to a wrong base name; {@link #findMatchingTextKeys} resolves this flat name back to its CSV row by participation
+     * id.
+     *
+     * @param participation the participation the feedback file belongs to
+     * @return the flat, path-safe feedback file name
+     */
+    private static String templateFeedbackFileName(final AssessmentUploadParticipationDTO participation) {
+        return participation.participationId() + TEXT_FILE_EXTENSION;
     }
 
     /**
@@ -654,11 +671,15 @@ public class AssessmentUploadService {
     }
 
     /**
-     * Finds the text-file base names that can belong to a CSV identifier. An exact match takes precedence over exported-folder suffix matches.
+     * Finds the text-file base names that can belong to a CSV identifier, in decreasing precedence: an exact identifier match, then the flat participation-id name the generated
+     * template uses, then exported-folder suffix matches. The participation-id rule only ever matches a bare-numeric key (the participation id has no {@code -}, so such a key can
+     * never be an exact identifier or an exported-folder suffix), which keeps it from colliding with an instructor's exported-repository upload.
      * <p>
      * <b>Precondition:</b> {@code textKeys} and {@code identifier} are non-{@code null}.
      * <p>
-     * <b>Postcondition:</b> pure function (no side effects); returns only the exact key when it exists, otherwise all keys ending with {@code "-" + identifier} in sorted order.
+     * <b>Postcondition:</b> pure function (no side effects); returns the single exact key if present, otherwise the single participation-id key if present, otherwise all keys
+     * ending
+     * with {@code "-" + identifier} in sorted order.
      *
      * @param textKeys   the available text-file base names
      * @param identifier the student identifier to match
@@ -668,6 +689,15 @@ public class AssessmentUploadService {
         assert textKeys != null && identifier != null : "textKeys and identifier must not be null";
         if (textKeys.contains(identifier)) {
             return List.of(identifier);
+        }
+        // The generated template names each feedback file after the path-safe participation id (see templateFeedbackFileName), because the identifier's login/team-short-name part
+        // may contain a '/' that a zip reader strips. Match that flat name back to the row here.
+        final Optional<Long> participationId = parseParticipationId(identifier);
+        if (participationId.isPresent()) {
+            final String participationIdKey = Long.toString(participationId.get());
+            if (textKeys.contains(participationIdKey)) {
+                return List.of(participationIdKey);
+            }
         }
         return textKeys.stream().filter(key -> key.endsWith("-" + identifier)).sorted().toList();
     }

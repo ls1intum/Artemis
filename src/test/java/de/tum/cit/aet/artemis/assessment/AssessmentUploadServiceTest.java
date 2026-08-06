@@ -130,15 +130,15 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     void shouldGenerateATemplateThatRoundTripsThroughTheUpload() throws IOException {
         final Map<String, String> templateEntries = readZipEntries(assessmentUploadService.generateTemplateArchive(programmingExercise));
 
-        // The template contains the CSV the parser expects (identifier in the first column, an "Overall points" column) and one feedback file per participation, named so the
-        // upload
-        // matches it exactly.
+        // The template contains the CSV the parser expects (identifier in the first column, an "Overall points" column) and one feedback file per participation, each named after
+        // the
+        // path-safe participation id so the upload matches it back by id.
         final String templateCsv = templateEntries.get(CSV_FILE_NAME);
         assertThat(templateCsv).isNotNull();
         assertThat(templateCsv.lines().findFirst().orElseThrow()).contains("Overall points");
         assertThat(templateCsv).contains(identifier1).contains(identifier2);
         final List<String> textFileNames = templateEntries.keySet().stream().filter(name -> name.endsWith(".txt")).toList();
-        assertThat(textFileNames).hasSize(identifiers.size()).contains(identifier1 + ".txt", identifier2 + ".txt");
+        assertThat(textFileNames).hasSize(identifiers.size()).contains(participation1.getId() + ".txt", participation2.getId() + ".txt");
 
         // Fill in points for every row and non-empty feedback for every text file, then upload the generated archive; a valid template must be accepted unchanged otherwise.
         final Map<String, String> feedbackFiles = new LinkedHashMap<>();
@@ -150,6 +150,22 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThat(result.errors()).isEmpty();
         assertThat(result.numberOfCreatedAssessments()).isEqualTo(identifiers.size());
         assertManualAssessment(participation1.getId(), 75.0, "feedback");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMatchFeedbackFileNamedAfterParticipationId() {
+        // The generated template names each feedback file after the path-safe participation id (the identifier's login/team-short-name part may contain a '/'); the importer must
+        // resolve such a flat name back to its CSV row.
+        final String csv = "Identifier,Overall points\n%s,80\n".formatted(identifier1);
+        final Map<String, String> textFiles = new LinkedHashMap<>();
+        textFiles.put(participation1.getId() + ".txt", "Great work!");
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise, buildZip(csv, textFiles));
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.numberOfCreatedAssessments()).isEqualTo(1);
+        assertManualAssessment(participation1.getId(), 80.0, "Great work!");
     }
 
     @Test
