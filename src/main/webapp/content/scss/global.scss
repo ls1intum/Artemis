@@ -1294,6 +1294,24 @@ body.transparent-background {
 }
 
 /*
+ * Header card of a detail page: a row with the title and the page's actions, the information boxes below it, and one
+ * grey divider to the content card. Shared by the exercise and the lecture page so the two read alike — the rows are
+ * separated by a gap rather than by a rule, and the title row keeps a constant height so a page without actions ends
+ * up exactly as tall as one with them.
+ */
+.detail-header-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    > .detail-header-title-row {
+        display: flex;
+        align-items: center;
+        min-height: var(--detail-header-title-row-height);
+    }
+}
+
+/*
  * Opt-in for a label that gives way before the bar does. A page projecting several labelled controls into a title bar
  * runs out of room long before the bar reaches a phone width, because the sidebar takes its share: on course
  * management the search field was squeezed from 236px to 82px while every label still rendered in full. Marking the
