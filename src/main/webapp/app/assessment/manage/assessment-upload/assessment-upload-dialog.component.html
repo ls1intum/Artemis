@@ -10,20 +10,6 @@
     <div class="assessment-upload">
         <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
 
-        <div class="mb-3">
-            <tum-ui-button
-                data-testid="download-template"
-                severity="secondary"
-                size="small"
-                [disabled]="isUploading() || isDownloadingTemplate()"
-                [loading]="isDownloadingTemplate()"
-                (clicked)="downloadTemplate()"
-            >
-                <fa-icon [icon]="faDownload" />
-                <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.downloadTemplateButton"></span>
-            </tum-ui-button>
-        </div>
-
         <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
         <div
             class="upload-drop-zone"
@@ -84,12 +70,34 @@
     </div>
 
     <ng-template #footer>
-        <tum-ui-button severity="secondary" size="small" [disabled]="isUploading()" (clicked)="close()">
-            <span jhiTranslate="entity.action.cancel"></span>
-        </tum-ui-button>
-        <tum-ui-button data-testid="upload-button" severity="primary" size="small" [disabled]="!selectedFile() || isUploading()" [loading]="isUploading()" (clicked)="upload()">
-            <fa-icon [icon]="faCloudUploadAlt" />
-            <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.uploadButton"></span>
-        </tum-ui-button>
+        <div class="flex w-full items-center justify-between gap-2">
+            <tum-ui-button
+                data-testid="download-template"
+                severity="secondary"
+                size="small"
+                [disabled]="isUploading() || isDownloadingTemplate()"
+                [loading]="isDownloadingTemplate()"
+                (clicked)="downloadTemplate()"
+            >
+                <fa-icon [icon]="faDownload" />
+                <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.downloadTemplateButton"></span>
+            </tum-ui-button>
+            <div class="flex items-center gap-2">
+                <tum-ui-button severity="secondary" size="small" [disabled]="isUploading()" (clicked)="close()">
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </tum-ui-button>
+                <tum-ui-button
+                    data-testid="upload-button"
+                    severity="primary"
+                    size="small"
+                    [disabled]="!selectedFile() || isUploading()"
+                    [loading]="isUploading()"
+                    (clicked)="upload()"
+                >
+                    <fa-icon [icon]="faCloudUploadAlt" />
+                    <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.uploadButton"></span>
+                </tum-ui-button>
+            </div>
+        </div>
     </ng-template>
 </tum-ui-dialog>
