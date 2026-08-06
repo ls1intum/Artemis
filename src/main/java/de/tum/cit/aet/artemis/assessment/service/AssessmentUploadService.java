@@ -20,6 +20,8 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,17 +136,18 @@ public class AssessmentUploadService {
             throw new IllegalArgumentException("The exercise must be a persisted programming exercise");
         }
         final List<AssessmentUploadParticipationDTO> participations = assessmentUploadParticipationRepository.findAllForAssessmentUploadTemplate(exercise.getId());
-
-        final StringBuilder csv = new StringBuilder("Identifier,Login,Overall points\n");
-        for (final AssessmentUploadParticipationDTO participation : participations) {
-            // The first column is the repository-export identifier <participationId>-<login> that importAssessments resolves; the login column is informational and ignored on
-            // upload.
-            csv.append(templateIdentifier(participation)).append(',').append(participation.participantIdentifier()).append(",\n");
+        // A generated template carries one CSV row plus one text entry per participant, so it must respect the same participant budget the importer enforces
+        // (AssessmentUploadArchiveParsingService.MAX_PARTICIPANT_COUNT reserves one archive entry for the CSV). Rejecting up front avoids emitting a template that could never be
+        // re-uploaded.
+        if (participations.size() > AssessmentUploadArchiveParsingService.MAX_PARTICIPANT_COUNT) {
+            throw new BadRequestAlertException("The exercise has more participants (" + participations.size() + ") than a single manual-assessment upload supports ("
+                    + AssessmentUploadArchiveParsingService.MAX_PARTICIPANT_COUNT + ")", ENTITY_NAME, "assessmentUpload.tooManyParticipantsForTemplate");
         }
 
+        final byte[] csvBytes = buildTemplateCsv(participations);
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); ZipOutputStream zipStream = new ZipOutputStream(byteStream, StandardCharsets.UTF_8)) {
             zipStream.putNextEntry(new ZipEntry("assessment-scores.csv"));
-            zipStream.write(csv.toString().getBytes(StandardCharsets.UTF_8));
+            zipStream.write(csvBytes);
             zipStream.closeEntry();
             for (final AssessmentUploadParticipationDTO participation : participations) {
                 // One empty feedback file per participant, named so its base name equals the identifier and importAssessments matches it exactly.
@@ -162,6 +165,38 @@ public class AssessmentUploadService {
 
     private static String templateIdentifier(final AssessmentUploadParticipationDTO participation) {
         return participation.participationId() + "-" + participation.participantIdentifier();
+    }
+
+    /**
+     * Serializes the template's {@code assessment-scores.csv} with Apache Commons CSV so that an identifier or login containing the CSV delimiter — most notably a team short name
+     * with a comma, which {@code TeamResource} persists without escaping — is quoted and therefore round-trips through {@link #importAssessments} instead of shifting into extra
+     * columns and breaking the generated template's own re-upload.
+     * <p>
+     * <b>Precondition:</b> {@code participations} is non-{@code null}.
+     * <p>
+     * <b>Postcondition:</b> pure function; returns the UTF-8 bytes of a CSV with the {@code Identifier,Login,Overall points} header and one row per participation, the points cell
+     * left empty for the instructor to fill in.
+     *
+     * @param participations the participations exported into the template
+     * @return the UTF-8 encoded CSV content
+     */
+    private static byte[] buildTemplateCsv(final List<AssessmentUploadParticipationDTO> participations) {
+        assert participations != null : "participations must not be null";
+        final StringBuilder csv = new StringBuilder();
+        // The parser reads the CSV back with CSVFormat.DEFAULT; a plain '\n' record separator keeps the generated template the Unix-newline CSV it has always been.
+        final CSVFormat format = CSVFormat.DEFAULT.builder().setRecordSeparator('\n').get();
+        try (CSVPrinter printer = new CSVPrinter(csv, format)) {
+            printer.printRecord("Identifier", "Login", "Overall points");
+            for (final AssessmentUploadParticipationDTO participation : participations) {
+                // The first column is the repository-export identifier <participationId>-<login> that importAssessments resolves; the login column is informational and ignored on
+                // upload; the empty third column is the "Overall points" the instructor fills in.
+                printer.printRecord(templateIdentifier(participation), participation.participantIdentifier(), "");
+            }
+        }
+        catch (final IOException exception) {
+            throw new UncheckedIOException("Failed to build the assessment-upload template CSV", exception);
+        }
+        return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     /**

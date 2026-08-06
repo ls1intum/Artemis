@@ -59,8 +59,16 @@ public class AssessmentUploadArchiveParsingService {
     /** The extension (including the leading dot) of the per-participant feedback files inside the zip. */
     private static final String TEXT_FILE_EXTENSION = ".txt";
 
-    /** Maximum number of entries processed from one archive, including ignored metadata entries. */
-    private static final int MAX_ARCHIVE_ENTRY_COUNT = 10_000;
+    /**
+     * Maximum number of participants a single manual-assessment upload — and therefore a {@link AssessmentUploadService#generateTemplateArchive generated template} — can carry. A
+     * valid archive holds one {@code assessment-scores.csv} row and one {@code .txt} feedback entry per participant, so this value bounds both the CSV row count and, together with
+     * the one reserved CSV entry, the archive entry count. It is shared with {@link AssessmentUploadService} so a downloaded template always fits within the importer's limits and
+     * round-trips.
+     */
+    public static final int MAX_PARTICIPANT_COUNT = 10_000;
+
+    /** Maximum number of entries processed from one archive, including ignored metadata entries. One entry on top of the per-participant text files is reserved for the CSV. */
+    private static final int MAX_ARCHIVE_ENTRY_COUNT = MAX_PARTICIPANT_COUNT + 1;
 
     /** Maximum uncompressed size of one archive entry. */
     private static final long MAX_ENTRY_UNCOMPRESSED_SIZE = 10L * 1024 * 1024;
@@ -69,10 +77,11 @@ public class AssessmentUploadArchiveParsingService {
     private static final long MAX_ARCHIVE_UNCOMPRESSED_SIZE = 100L * 1024 * 1024;
 
     /**
-     * Maximum number of data rows read from the CSV file. Bounds the in-memory record list and the size of the derived id sets and {@code IN} queries, so a CSV with millions of
-     * tiny rows cannot exhaust the heap or exceed database parameter limits.
+     * Maximum number of data rows read from the CSV file: one per participant ({@link #MAX_PARTICIPANT_COUNT}). Bounds the in-memory record list and the size of the derived id
+     * sets
+     * and {@code IN} queries, so a CSV with millions of tiny rows cannot exhaust the heap or exceed database parameter limits.
      */
-    private static final int MAX_CSV_ROW_COUNT = 10_000;
+    private static final int MAX_CSV_ROW_COUNT = MAX_PARTICIPANT_COUNT;
 
     /**
      * Reads the uploaded zip file into memory, collecting the bytes of every {@code assessment-scores.csv} file and the content of every {@code .txt} file keyed by its base name
