@@ -11,11 +11,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SlicePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { TableModule } from 'primeng/table';
-import { InputTextModule } from 'primeng/inputtext';
-
+import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiInputDirective, TumUiTableVirtualScrollComponent } from '@tumaet/ui-angular';
 /**
  * Component for managing application log levels.
  * Allows viewing and changing log levels for different loggers.
@@ -32,10 +28,10 @@ import { InputTextModule } from 'primeng/inputtext';
         FaIconComponent,
         SlicePipe,
         AdminTitleBarTitleDirective,
-        ButtonModule,
-        ButtonGroupModule,
-        TableModule,
-        InputTextModule,
+        TumUiButtonComponent,
+        TumUiButtonGroupComponent,
+        TumUiTableVirtualScrollComponent,
+        TumUiInputDirective,
     ],
 })
 export class LogsComponent implements OnInit {

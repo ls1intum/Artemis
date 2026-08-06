@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
@@ -29,7 +28,12 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
+import {
+    APP_NAME_PATTERN_FOR_SWIFT,
+    MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
+} from 'app/foundation/constants/input.constants';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -76,8 +80,6 @@ type ProgrammingExerciseUpdateInternals = ProgrammingExerciseUpdateComponent & {
 const internals = (c: ProgrammingExerciseUpdateComponent): ProgrammingExerciseUpdateInternals => c as ProgrammingExerciseUpdateInternals;
 
 describe('ProgrammingExerciseUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const courseId = 1;
     const course = { id: courseId } as Course;
     const route = {
@@ -171,10 +173,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('initializeEditMode', () => {
+        function recreateComponent() {
+            fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+        }
+
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBeTruthy();
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(true);
@@ -182,8 +188,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should set isSimpleMode to false if localStorage has value "false"', () => {
             localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, false);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBe(false);
             expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
@@ -191,8 +196,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should set isSimpleMode to true if not present in local storage', () => {
             localStorageService.remove(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-
-            fixture.detectChanges();
+            recreateComponent();
 
             expect(comp.isSimpleMode()).toBe(true);
         });
@@ -200,8 +204,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     it('switchEditMode should toggle isSimpleMode and update local storage', () => {
         localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
         fixture.detectChanges();
-        expect(comp.isSimpleMode()).toBeTruthy(); // ensure the assumed initial state isSimpleMode = true holds
+        expect(comp.isSimpleMode()).toBeTruthy();
 
         comp.switchEditMode();
 
@@ -1479,6 +1485,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.getInvalidReasons()).not.toContainEqual({
                 translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
                 translateValues: {},
+            });
+        });
+
+        it('should add validation error when title exceeds max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
+            });
+        });
+
+        it('should not add validation error when title is within max length', () => {
+            comp.programmingExercise.title = 'a'.repeat(PROGRAMMING_EXERCISE_NAME_MAX_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.exercise.form.title.maxlength',
+                translateValues: { max: PROGRAMMING_EXERCISE_NAME_MAX_LENGTH },
             });
         });
 

@@ -9,6 +9,8 @@ import { CourseNotificationCategory } from 'app/notification/shared/entities/cou
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { firstValueFrom, from, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
@@ -49,6 +51,8 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
 
     private elementRef = inject(ElementRef);
     private courseNotificationService = inject(CourseNotificationService);
+    private accountService = inject(AccountService);
+    private courseStorageService = inject(CourseStorageService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
     private destroyRef = inject(DestroyRef);
 
@@ -85,6 +89,18 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
 
         this.subscribeToSettingAndInfoChanges();
         this.subscribeToNotificationChanges();
+    }
+
+    /**
+     * Whether the IRIS_REVIEW tab should be shown. Hidden for students because they have nothing to
+     * review. The decision is made when ngOnInit runs (the courseId input is required, so it is set).
+     */
+    protected isCategoryVisible(categoryString: string): boolean {
+        if (categoryString !== 'IRIS_REVIEW') {
+            return true;
+        }
+        const course = this.courseStorageService.getCourse(this.courseId());
+        return !!course && this.accountService.isAtLeastTutorInCourse(course);
     }
 
     ngAfterViewInit(): void {
@@ -186,6 +202,15 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * @param notifications - The up-to-date list of notifications for the current course
      */
     private handleNotificationsUpdate(notifications: CourseNotification[]): void {
+        // Decide which scroll position to restore after the list re-renders:
+        // - Pagination update (`isLoading` was set by queryCurrentCategory): the list is currently replaced by the
+        //   loading spinner, which clamps the container's scrollTop to 0, so the live value is unusable. Restore
+        //   `savedScrollPosition` (captured when pagination was triggered) so infinite scroll stays in place.
+        // - Non-pagination update (e.g. closing/removing a single notification): `savedScrollPosition` is stale (it
+        //   only tracks the bottom), so keep the live position - otherwise the list would jump to the bottom.
+        const isPaginationUpdate = this.isLoading();
+        const currentScrollTop = this.scrollContainer()?.nativeElement.scrollTop ?? 0;
+
         this.notifications = notifications;
 
         this.filterNotificationsIntoCurrentCategory();
@@ -203,8 +228,9 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
             this.queryCount = 1;
 
             if (this.isShown()) {
+                const targetScrollTop = isPaginationUpdate ? this.savedScrollPosition : currentScrollTop;
                 setTimeout(() => {
-                    this.scrollContainer()!.nativeElement.scrollTop = this.savedScrollPosition;
+                    this.scrollContainer()!.nativeElement.scrollTop = targetScrollTop;
                 });
                 this.updateCurrentCategoryNotificationsToSeenOnServer();
             }

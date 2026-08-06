@@ -25,6 +25,7 @@ import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
@@ -49,6 +50,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private quizService = inject(ArtemisQuizService);
+    private examParticipationService = inject(ExamParticipationService);
 
     exerciseType = ExerciseType.QUIZ;
 
@@ -250,6 +252,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     onSelectionChanged() {
         this.studentSubmission().isSynced = false;
+        // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate reactively.
+        this.examParticipationService.notifySubmissionSyncStateChanged();
     }
 
     /**

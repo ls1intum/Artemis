@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, TrackByFunction, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, map, of } from 'rxjs';
@@ -7,20 +7,17 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faUserPlus, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { CellTemplateRef, ColumnDef, TumUiButtonDirective, TumUiTableComponent, TumUiTableQueryEvent } from '@tumaet/ui-angular';
+import { buildDbQueryFromTableEvent } from 'app/shared-ui/tum-ui-integration/tum-ui-table-request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
-import { ButtonDirective } from 'primeng/button';
-
 /**
  * Admin component for viewing and managing organization details.
  * Allows adding and removing users from organizations and browsing their courses.
@@ -35,17 +32,15 @@ import { ButtonDirective } from 'primeng/button';
         FaIconComponent,
         DeleteButtonDirective,
         AdminTitleBarTitleDirective,
-        TableViewComponent,
+        TumUiTableComponent,
         UserRegistrationModalComponent,
-        ButtonDirective,
+        TumUiButtonDirective,
     ],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly alertService = inject(AlertService);
     private readonly route = inject(ActivatedRoute);
-
-    readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: '60vh' };
 
     /** The organization being viewed (metadata only) */
     readonly organization = signal<Organization>(new Organization());
@@ -68,6 +63,11 @@ export class OrganizationManagementDetailComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     protected readonly faUserSlash = faUserSlash;
+    protected readonly faUserPlus = faUserPlus;
+
+    // Row identity so the tables reuse row DOM across reloads instead of rebuilding every row.
+    protected readonly trackByUserId: TrackByFunction<User> = (_, user) => user.id;
+    protected readonly trackByCourseId: TrackByFunction<Course> = (_, course) => course.id;
 
     /** Template ref for custom user-id cell rendering */
     readonly userIdTemplate = viewChild<CellTemplateRef<User>>('userIdTemplate');
@@ -91,7 +91,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
     ]);
 
     /** Last load event for users table, used to refresh after add/remove */
-    private lastUsersLoadEvent: TableLazyLoadEvent | undefined;
+    private lastUsersLoadEvent: TumUiTableQueryEvent | undefined;
 
     private usersLoadId = 0;
     private coursesLoadId = 0;
@@ -143,7 +143,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
         }
     }
 
-    loadUsers(event: TableLazyLoadEvent): void {
+    loadUsers(event: TumUiTableQueryEvent): void {
         const id = this.organizationId();
         if (id === undefined) {
             return;
@@ -151,7 +151,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
         this.lastUsersLoadEvent = event;
         this.usersLoading.set(true);
         const requestId = ++this.usersLoadId;
-        const query = buildDbQueryFromLazyEvent(event);
+        const query = buildDbQueryFromTableEvent(event);
         this.organizationService.getOrganizationUsers(id, query).subscribe({
             next: (res) => {
                 if (requestId !== this.usersLoadId) return;
@@ -169,14 +169,14 @@ export class OrganizationManagementDetailComponent implements OnInit {
         });
     }
 
-    loadCourses(event: TableLazyLoadEvent): void {
+    loadCourses(event: TumUiTableQueryEvent): void {
         const id = this.organizationId();
         if (id === undefined) {
             return;
         }
         this.coursesLoading.set(true);
         const requestId = ++this.coursesLoadId;
-        const query = buildDbQueryFromLazyEvent(event);
+        const query = buildDbQueryFromTableEvent(event);
         this.organizationService.getOrganizationCourses(id, query).subscribe({
             next: (res) => {
                 if (requestId !== this.coursesLoadId) return;

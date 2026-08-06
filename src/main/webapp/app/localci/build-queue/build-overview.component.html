@@ -3,20 +3,20 @@
         <h5 *adminTitleBarTitle id="build-overview-heading" class="mb-0" jhiTranslate="artemisApp.buildQueue.title"></h5>
         <div *adminTitleBarActions class="flex items-center gap-2">
             <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.jumpTo"></span>
-            <p-buttongroup>
-                <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-running-heading')">
+            <tum-ui-button-group>
+                <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
                     <span jhiTranslate="artemisApp.buildQueue.running"></span>
-                    <p-tag severity="info" styleClass="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
-                </p-button>
-                <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-queued-heading')">
+                    <tum-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
+                </tum-ui-button>
+                <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
                     <span jhiTranslate="artemisApp.buildQueue.queued"></span>
-                    <p-tag severity="info" styleClass="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
-                </p-button>
-                <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-finished-heading')">
+                    <tum-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
+                </tum-ui-button>
+                <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
                     <span jhiTranslate="artemisApp.buildQueue.finished"></span>
-                    <p-tag severity="info" styleClass="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
-                </p-button>
-            </p-buttongroup>
+                    <tum-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
+                </tum-ui-button>
+            </tum-ui-button-group>
             <span
                 class="text-muted-color text-sm"
                 jhiTranslate="artemisApp.buildQueue.buildCapacityInfo"
@@ -30,20 +30,20 @@
         <div class="build-queue-nav-bar">
             <div class="flex justify-end items-center gap-2">
                 <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.jumpTo"></span>
-                <p-buttongroup>
-                    <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-running-heading')">
+                <tum-ui-button-group>
+                    <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-running-heading')">
                         <span jhiTranslate="artemisApp.buildQueue.running"></span>
-                        <p-tag severity="info" styleClass="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
-                    </p-button>
-                    <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-queued-heading')">
+                        <tum-ui-tag severity="info" class="ms-1" [value]="(runningBuildJobs()?.length || 0).toString()" />
+                    </tum-ui-button>
+                    <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-queued-heading')">
                         <span jhiTranslate="artemisApp.buildQueue.queued"></span>
-                        <p-tag severity="info" styleClass="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
-                    </p-button>
-                    <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('build-queue-finished-heading')">
+                        <tum-ui-tag severity="info" class="ms-1" [value]="(queuedBuildJobs()?.length || 0).toString()" />
+                    </tum-ui-button>
+                    <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('build-queue-finished-heading')">
                         <span jhiTranslate="artemisApp.buildQueue.finished"></span>
-                        <p-tag severity="info" styleClass="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
-                    </p-button>
-                </p-buttongroup>
+                        <tum-ui-tag severity="info" class="ms-1" [value]="(finishedBuildJobs()?.length || 0).toString()" />
+                    </tum-ui-button>
+                </tum-ui-button-group>
                 <span
                     class="text-muted-color text-sm"
                     jhiTranslate="artemisApp.buildQueue.buildCapacityInfo"
@@ -60,13 +60,13 @@
             <div class="flex items-center gap-3 mb-3">
                 <h5 id="build-queue-running-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></span>
-                    <p-tag severity="info" [value]="(runningBuildJobs()?.length ?? 0).toString()" />
+                    <tum-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
                 </h5>
                 @if (runningBuildJobs()?.length) {
-                    <p-button severity="danger" size="small" (onClick)="cancelAllRunningBuildJobs()">
+                    <tum-ui-button severity="danger" size="small" (clicked)="cancelAllRunningBuildJobs()">
                         <fa-icon [icon]="faTimes" />
                         <span jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
-                    </p-button>
+                    </tum-ui-button>
                 }
             </div>
             <jhi-running-jobs-table
@@ -82,13 +82,13 @@
             <div class="flex items-center gap-3 mb-3">
                 <h5 id="build-queue-queued-heading" class="mb-0 flex items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.queuedBuildJobs"></span>
-                    <p-tag severity="secondary" [value]="(queuedBuildJobs()?.length ?? 0).toString()" />
+                    <tum-ui-tag severity="secondary" [value]="queuedBuildJobs().length.toString()" />
                 </h5>
                 @if (queuedBuildJobs()?.length) {
-                    <p-button severity="danger" size="small" (onClick)="cancelAllQueuedBuildJobs()">
+                    <tum-ui-button severity="danger" size="small" (clicked)="cancelAllQueuedBuildJobs()">
                         <fa-icon [icon]="faTimes" />
                         <span jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
-                    </p-button>
+                    </tum-ui-button>
                 }
             </div>
             <jhi-queued-jobs-table
@@ -104,30 +104,30 @@
                 <div class="flex items-center gap-2">
                     <h5 id="build-queue-finished-heading" class="mb-0 flex items-center gap-2">
                         <span jhiTranslate="artemisApp.buildQueue.finishedBuildJobs"></span>
-                        <p-tag severity="info" [value]="(finishedBuildJobs()?.length ?? 0).toString()" />
+                        <tum-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h5>
                     <div class="flex items-center gap-2">
-                        <input pInputText type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
+                        <input tumUiInput type="text" name="searchTerm" id="field_searchTerm" [(ngModel)]="searchTerm" (focusout)="triggerLoadFinishedJobs()" />
                         <jhi-help-icon text="artemisApp.buildQueue.filter.search.tooltip" />
-                        <p-button size="small" (onClick)="triggerLoadFinishedJobs()">
+                        <tum-ui-button size="small" (clicked)="triggerLoadFinishedJobs()">
                             <span jhiTranslate="artemisApp.buildQueue.filter.search.title"></span>
-                        </p-button>
+                        </tum-ui-button>
                     </div>
-                    <p-button size="small" (onClick)="loadFinishedBuildJobs()">
+                    <tum-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
                         <fa-icon [icon]="faSync" />
                         <span jhiTranslate="metrics.refresh.button"></span>
-                    </p-button>
+                    </tum-ui-button>
                     @if (isLoading()) {
                         <span class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
                     }
                 </div>
                 <div>
-                    <p-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (onClick)="this.openFilterModal()">
+                    <tum-ui-button size="small" [severity]="finishedBuildJobFilter()?.numberOfAppliedFilters ? 'success' : 'secondary'" (clicked)="this.openFilterModal()">
                         <fa-icon [icon]="faFilter" />
                         <span class="hidden md:inline">
-                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: finishedBuildJobFilter()?.numberOfAppliedFilters ?? 0 }"></span>
+                            <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
                         </span>
-                    </p-button>
+                    </tum-ui-button>
                 </div>
             </div>
             <jhi-finished-jobs-table
@@ -153,16 +153,8 @@
     </div>
 
     <!-- Modal -->
-    <p-dialog
-        [modal]="true"
-        [visible]="buildLogsModalVisible()"
-        (visibleChange)="buildLogsModalVisible.set($event)"
-        [style]="{ width: '90dvw', height: '90dvh' }"
-        [contentStyle]="{ overflow: 'auto' }"
-        [draggable]="false"
-        [dismissableMask]="true"
-    >
-        <ng-template pTemplate="header">
+    <tum-ui-dialog [(visible)]="buildLogsModalVisible" size="full" [dismissableMask]="true">
+        <ng-template #header>
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId() }}</span>
         </ng-template>
@@ -173,13 +165,21 @@
                 <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
             }
         </div>
-        <ng-template pTemplate="footer">
-            <p-button type="button" severity="secondary" size="small" (onClick)="buildLogsModalVisible.set(false)">
+        <ng-template #footer>
+            <tum-ui-button type="button" severity="secondary" size="small" (clicked)="buildLogsModalVisible.set(false)">
                 <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
-            </p-button>
-            <p-button size="small" (onClick)="downloadBuildLogs()">
+            </tum-ui-button>
+            <tum-ui-button size="small" (clicked)="downloadBuildLogs()">
                 <span jhiTranslate="artemisApp.buildQueue.logs.download"></span>
-            </p-button>
+            </tum-ui-button>
         </ng-template>
-    </p-dialog>
+    </tum-ui-dialog>
+
+    <jhi-finished-builds-filter-modal
+        [(visible)]="filterModalVisible"
+        [finishedBuildJobFilterInput]="finishedBuildJobFilter()"
+        [buildAgentFilterable]="true"
+        [finishedBuildJobsInput]="finishedBuildJobs()"
+        (confirmed)="onFilterConfirmed($event)"
+    />
 </div>

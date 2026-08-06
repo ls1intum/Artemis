@@ -49,6 +49,16 @@
     gap: 0.35rem;
 }
 
+.quiz-ai-generation-modal .label-with-help label {
+    margin-bottom: 0;
+}
+
+.quiz-ai-generation-modal .label-with-help-icon {
+    align-items: center;
+    color: var(--text-muted-color);
+    display: inline-flex;
+}
+
 .quiz-ai-generation-modal .selection-list {
     display: flex;
     flex-wrap: wrap;
@@ -149,6 +159,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -167,6 +178,7 @@
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -178,6 +190,7 @@
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

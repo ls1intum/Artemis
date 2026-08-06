@@ -18,15 +18,17 @@
                 "noUsersFound": "Es wurden keine Benutzer zum Importieren gefunden"
             },
             "numberOfUsers": "Anzahl an Nutzern:",
-            "numberOfUsersImported": "Importierte Studierende:",
-            "numberOfUsersNotImported": "Nicht gefundene Studierende:",
+            "numberOfUsersImported": "Importiert:",
+            "numberOfUsersNotFound": "Nicht gefunden:",
+            "numberOfStaffRejected": "Abgelehnte Mitarbeiter:",
             "genericErrorMessage": "Der Import von Nutzern in den Kurs oder die Klausur ist fehlgeschlagen!",
             "firstName": "Vorname",
             "lastName": "Nachname",
             "registrationNumber": "Matrikelnummer",
             "room": "Raum",
             "seat": "Sitz",
-            "email": "E-Mail"
+            "email": "E-Mail",
+            "testUser": "Testkonto"
         }
     }
 }

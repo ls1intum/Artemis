@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import type { MockInstance } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -9,7 +8,7 @@ import { of } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
-import { AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from '../../../shared/entities/attachment.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -24,8 +23,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let router: Router;
@@ -35,6 +32,11 @@ describe('EditAttachmentVideoUnitComponent', () => {
     let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
     let fakeFile: File;
+
+    const getAttachmentVideoUnitPayload = async (formData: FormData) => {
+        const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
+        return JSON.parse(await attachmentVideoUnitPart.text());
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -100,7 +102,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnit.releaseDate = dayjs().year(2010).month(3).date(5);
         attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de';
 
-        fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        fakeFile = new File(['content'], 'Test-File.pdf', { type: 'application/pdf' });
 
         baseFormData = new FormData();
         baseFormData.append('file', fakeFile, 'updated file');
@@ -168,6 +170,8 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -227,6 +231,33 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
         expect(navigateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should treat a zero-byte file as no file change', async () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: 1,
+            },
+            fileProperties: {
+                file: new File([], 'empty.pdf', { type: 'application/pdf' }),
+                fileName: 'empty.pdf',
+            },
+        };
+        updateAttachmentVideoUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
+
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
+        expect(updateFormData.has('file')).toBe(false);
     });
 });

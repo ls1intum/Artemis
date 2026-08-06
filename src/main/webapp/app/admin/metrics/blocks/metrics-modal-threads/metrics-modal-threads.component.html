@@ -1,8 +1,8 @@
-<p-dialog [(visible)]="visible" [modal]="true" [closable]="true" [dismissableMask]="true" [draggable]="false" [appendTo]="'body'" [style]="{ width: '70dvw' }" header="">
+<tum-ui-dialog [(visible)]="visible" [closable]="true" [dismissableMask]="true" size="large" header="">
     <ng-template #header>
         <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
     </ng-template>
-    <p-selectButton
+    <tum-ui-select-button
         class="block mb-3"
         [options]="filterOptions"
         [(ngModel)]="selectedThreadState"
@@ -10,20 +10,20 @@
         size="small"
         [allowEmpty]="false"
         aria-label="Filter threads by state"
-    >
-        <ng-template let-option #item>
-            <span class="flex items-center gap-2" [attr.data-testid]="option.testId">
-                <p-tag [severity]="option.severity" [value]="option.label" />
-                <span>{{ option.count() }}</span>
-            </span>
-        </ng-template>
-    </p-selectButton>
+        [itemTemplate]="itemTpl"
+    />
+    <ng-template #itemTpl let-option>
+        <span class="flex items-center gap-2" [attr.data-testid]="option.testId">
+            <tum-ui-tag [severity]="option.severity" [value]="option.label" />
+            <span>{{ option.count() }}</span>
+        </span>
+    </ng-template>
     <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
-    <input type="text" [(ngModel)]="threadFilter" pInputText class="w-full mb-3" />
+    <input type="text" [(ngModel)]="threadFilter" tumUiInput class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {
         <div class="py-2 border-b border-surface-200 dark:border-surface-700">
             <h6 class="flex items-center gap-2 flex-wrap">
-                <p-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
+                <tum-ui-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
                 {{ thread.threadName }} (ID {{ thread.threadId }})
                 <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);" class="text-primary">
                     <span [hidden]="thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.show"></span>
@@ -40,9 +40,14 @@
                     </div>
                 }
             </div>
-            <p-table [value]="[thread]" [tableStyle]="{ 'min-width': '30rem' }">
-                <ng-template #caption>Threads dump: {{ thread.threadName }}</ng-template>
-                <ng-template #header>
+            <table tumUiTable style="min-width: 30rem">
+                <caption>
+                    Threads dump:
+                    {{
+                        thread.threadName
+                    }}
+                </caption>
+                <thead>
                     <tr>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedtime"></th>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedcount"></th>
@@ -50,24 +55,24 @@
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.waitedcount"></th>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.lockname"></th>
                     </tr>
-                </ng-template>
-                <ng-template #body let-t>
+                </thead>
+                <tbody>
                     <tr>
-                        <td>{{ t.blockedTime }}</td>
-                        <td>{{ t.blockedCount }}</td>
-                        <td>{{ t.waitedTime }}</td>
-                        <td>{{ t.waitedCount }}</td>
-                        <td class="max-w-xs truncate" [title]="t.lockName">
-                            <code>{{ t.lockName }}</code>
+                        <td>{{ thread.blockedTime }}</td>
+                        <td>{{ thread.blockedCount }}</td>
+                        <td>{{ thread.waitedTime }}</td>
+                        <td>{{ thread.waitedCount }}</td>
+                        <td class="max-w-xs truncate" [title]="thread.lockName">
+                            <code>{{ thread.lockName }}</code>
                         </td>
                     </tr>
-                </ng-template>
-            </p-table>
+                </tbody>
+            </table>
         </div>
     }
     <ng-template #footer>
-        <p-button severity="secondary" size="small" (onClick)="dismiss()" data-testid="dismiss-button">
+        <tum-ui-button severity="secondary" size="small" (clicked)="dismiss()" data-testid="dismiss-button">
             <span jhiTranslate="entity.action.done"></span>
-        </p-button>
+        </tum-ui-button>
     </ng-template>
-</p-dialog>
+</tum-ui-dialog>

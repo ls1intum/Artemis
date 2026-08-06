@@ -1,17 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Confirmation, ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumUiConfirmDialogComponent, TumUiConfirmationRequest, TumUiConfirmationService } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ValidationStatus } from 'app/foundation/util/validation';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import {
     CreateTutorialGroupEvent,
@@ -20,13 +18,10 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupDetailData, TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
+import { TutorialGroupSchedule } from 'app/openapi/model/tutorial-group-schedule';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
 
 describe('TutorialCreateOrEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialCreateOrEditComponent;
     let fixture: ComponentFixture<TutorialCreateOrEditComponent>;
 
@@ -51,14 +46,14 @@ describe('TutorialCreateOrEditComponent', () => {
             imports: [TutorialCreateOrEditComponent, MockDirective(TranslateDirective), MockDirective(RouterLink)],
             providers: [
                 { provide: TranslateService, useValue: mockTranslateService },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: AlertService, useValue: alertService },
                 { provide: ActivatedRoute, useValue: {} },
             ],
         })
             .overrideComponent(TutorialCreateOrEditComponent, {
-                remove: { imports: [ConfirmDialogModule, TutorialEditLanguagesInputComponent] },
-                add: { imports: [PrimeNgConfirmDialogStubComponent, MockComponent(TutorialEditLanguagesInputComponent)] },
+                remove: { imports: [TumUiConfirmDialogComponent, TutorialEditLanguagesInputComponent] },
+                add: { imports: [MockComponent(TumUiConfirmDialogComponent), MockComponent(TutorialEditLanguagesInputComponent)] },
             })
             .compileComponents();
     });
@@ -179,14 +174,14 @@ describe('TutorialCreateOrEditComponent', () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 
         expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledWith(1, 'body');
+        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledWith(1);
         expect(component.alreadyUsedLanguages()).toEqual(['English', 'German']);
     });
 
     it('should show error alert if fetching already used languages fails', async () => {
         await createComponentWithLanguageValues(throwError(() => new Error('network error')));
 
-        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledWith(1, 'body');
+        expect(tutorialGroupApiService.getUniqueLanguageValues).toHaveBeenCalledWith(1);
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchLanguages');
     });
 
@@ -464,10 +459,9 @@ describe('TutorialCreateOrEditComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
-            confirmation.accept?.();
-            return confirmationService;
+        const confirmationService = fixture.debugElement.injector.get(TumUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((request: TumUiConfirmationRequest) => {
+            request.accept();
         });
 
         component.location.set('Room 202');

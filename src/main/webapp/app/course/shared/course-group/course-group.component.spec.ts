@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { UserService } from 'app/account/user/shared/user.service';
-import { CourseGroup } from 'app/course/shared/entities/course.model';
+import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -22,12 +21,10 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('CourseGroupComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let userService: UserService;
-    const courseGroup = CourseGroup.STUDENTS;
+    const courseGroup = CourseRoleSlug.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const parentRoute = {
         data: of({ course }),
@@ -54,7 +51,7 @@ describe('CourseGroupComponent', () => {
         userService = TestBed.inject(UserService);
         // Set required inputs using ComponentRef
         fixture.componentRef.setInput('course', course);
-        fixture.componentRef.setInput('courseGroup', courseGroup);
+        fixture.componentRef.setInput('courseRoleSlug', courseGroup);
         fixture.componentRef.setInput('exportFileName', 'test-export');
         fixture.componentRef.setInput('userSearch', (searchTerm: string) => userService.search(searchTerm));
     });

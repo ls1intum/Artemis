@@ -8,12 +8,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTableDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TableModule } from 'primeng/table';
-import { Tag } from 'primeng/tag';
-
 /**
  * Admin component for viewing upcoming exams and exercises across all courses.
  */
@@ -21,7 +18,17 @@ import { Tag } from 'primeng/tag';
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective, TableModule, Tag],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        ArtemisDatePipe,
+        FaIconComponent,
+        TumUiTooltipDirective,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        TumUiTableDirective,
+        TumUiTagComponent,
+    ],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     private readonly exerciseService = inject(ExerciseService);

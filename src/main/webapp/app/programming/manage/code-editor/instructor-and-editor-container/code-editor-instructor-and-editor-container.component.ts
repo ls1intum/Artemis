@@ -35,8 +35,8 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
-import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
+import { CodeGenerationJobStartRepositoryTypeEnum } from 'app/openapi/model/code-generation-job-start';
+import { CodeGenerationRequest } from 'app/openapi/model/code-generation-request';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -50,9 +50,9 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { HyperionCodeGenerationApi } from 'app/openapi/api/hyperion-code-generation-api';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -72,10 +72,10 @@ import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
-const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
-    [ConsistencyIssue.SeverityEnum.High]: 0,
-    [ConsistencyIssue.SeverityEnum.Medium]: 1,
-    [ConsistencyIssue.SeverityEnum.Low]: 2,
+const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
+    ['HIGH']: 0,
+    ['MEDIUM']: 1,
+    ['LOW']: 2,
 };
 
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
@@ -165,8 +165,8 @@ interface ConsistencyIssueNavigationIssue {
     filePath?: string;
     lineNumber?: number;
     auxiliaryRepositoryId?: number;
-    severity: ConsistencyIssue.SeverityEnum;
-    category: ConsistencyIssue.CategoryEnum;
+    severity: ConsistencyIssueSeverityEnum;
+    category: ConsistencyIssueCategoryEnum;
 }
 
 @Component({
@@ -217,11 +217,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .filter((thread) => thread.resolved !== true)
             .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
             .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
-            .sort(
-                (a, b) =>
-                    (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) -
-                        (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) || a.threadId - b.threadId,
-            ),
+            .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER['MEDIUM']) - (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER['MEDIUM']) || a.threadId - b.threadId),
     );
 
     /** Shared helper that encapsulates all AI-powered problem statement operations. */
@@ -290,7 +286,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private dialogService = inject(DialogService);
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
-    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
+    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApi);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
@@ -608,18 +604,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType currently selected repository in the editor or the repository type returned by the API
      * @returns the matching supported generation repository, or `undefined` for unsupported tabs
      */
-    private mapRepositoryTypeToCodeGenerationRequest(
-        repositoryType: RepositoryType | CodeGenerationJobStart.RepositoryTypeEnum,
-    ): SupportedCodeGenerationRepositoryType | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType | CodeGenerationJobStartRepositoryTypeEnum): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
-            case CodeGenerationJobStart.RepositoryTypeEnum.Exercise:
+            case 'exercise':
                 return RepositoryType.TEMPLATE;
             case RepositoryType.SOLUTION:
-            case CodeGenerationJobStart.RepositoryTypeEnum.Solution:
+            case 'solution':
                 return RepositoryType.SOLUTION;
             case RepositoryType.TESTS:
-            case CodeGenerationJobStart.RepositoryTypeEnum.Tests:
+            case 'tests':
                 return RepositoryType.TESTS;
             default:
                 return undefined;
@@ -1397,6 +1391,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private scheduleCodeGenerationStatusPopoverRealign() {
         const popover = this.codeGenerationStatusPopover();
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
         if (!popover?.overlayVisible) {
             return;
         }
@@ -1586,19 +1581,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Returns the appropriate FontAwesome icon for the given severity.
      *
-     * @param {ConsistencyIssue.SeverityEnum} severity
+     * @param {ConsistencyIssueSeverityEnum} severity
      *        The severity that determines the returned icon.
      *
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum | undefined) {
+    getSeverityIcon(severity: ConsistencyIssueSeverityEnum | undefined) {
         switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
+            case 'HIGH':
                 return this.faCircleExclamation;
-            case ConsistencyIssue.SeverityEnum.Medium:
+            case 'MEDIUM':
                 return this.faTriangleExclamation;
-            case ConsistencyIssue.SeverityEnum.Low:
+            case 'LOW':
                 return this.faCircleInfo;
             default:
                 return this.faCircleInfo;
@@ -1657,19 +1652,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Returns a Bootstrap text color class based on an issue's severity.
      *
-     * @param {ConsistencyIssue.SeverityEnum} severity
+     * @param {ConsistencyIssueSeverityEnum} severity
      *        The severity that determines the color.
      *
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity: ConsistencyIssue.SeverityEnum | undefined) {
+    getSeverityColor(severity: ConsistencyIssueSeverityEnum | undefined) {
         switch (severity) {
-            case ConsistencyIssue.SeverityEnum.High:
+            case 'HIGH':
                 return 'text-danger';
-            case ConsistencyIssue.SeverityEnum.Medium:
+            case 'MEDIUM':
                 return 'text-warning';
-            case ConsistencyIssue.SeverityEnum.Low:
+            case 'LOW':
                 return 'text-info';
             default:
                 return 'text-secondary';

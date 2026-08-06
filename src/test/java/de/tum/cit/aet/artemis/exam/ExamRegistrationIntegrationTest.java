@@ -17,17 +17,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -46,6 +46,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private static final String TEST_PREFIX = "examregistrationtest";
 
+    /** Student not enrolled in the test course; exercises the not-in-course branches. */
+    private static final String OTHER_PREFIX = "examregistrationother";
+
     public static final String STUDENT_111 = TEST_PREFIX + "student111";
 
     @Autowired
@@ -58,9 +61,6 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private ExamRegistrationService examRegistrationService;
 
     @Autowired
-    private PasswordService passwordService;
-
-    @Autowired
     private ChannelRepository channelRepository;
 
     @Autowired
@@ -70,7 +70,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private MockMvc mockMvc;
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     private Course course1;
 
@@ -91,10 +91,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
-        // Add a student that is not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.addUsers(OTHER_PREFIX, 1, 0, 0, 0); // outsider student — never enrolled in course
 
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         exam1 = examUtilService.addExam(course1);
@@ -114,14 +113,37 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
-        User student42 = userUtilService.getUserByLogin(TEST_PREFIX + "student42");
-
-        Set<User> studentsInCourseBefore = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
-        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        int studentCountBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(student), HttpStatus.OK, null);
-        Set<User> studentsInCourseAfter = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName());
-        studentsInCourseBefore.add(student42);
-        assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
+        assertThat(userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT)).as("student was enrolled in course as STUDENT via UCR")
+                .hasSize(studentCountBefore + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterUsersInExam_duplicateRowsForSameUserCreateSingleExamUser() throws Exception {
+        // exam_user has no unique constraint on (exam_id, student_id), so a request (or an imported CSV) listing the same
+        // user twice must be deduplicated in the service: two rows would both be persisted and then break
+        // findByExamIdAndUserId, which returns an Optional.
+        Exam exam = examUtilService.addExam(course1);
+        examUtilService.addExamChannel(exam, "duplicate-rows-channel");
+        String login = OTHER_PREFIX + "student1";
+        User student = userUtilService.getUserByLogin(login);
+
+        var firstRow = new ExamUserDTO(login, "", "", "", "", "", "101", "11", false, false, false, false, "", null, null, null, null, null, null, null);
+        // Second row repeats the user with a new room but a blank seat: the last non-blank value wins per field.
+        var secondRow = new ExamUserDTO(login, "", "", "", "", "", "202", "", false, false, false, false, "", null, null, null, null, null, null, null);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(firstRow, secondRow), HttpStatus.OK, null);
+
+        Exam storedExam = examRepository.findWithExamUsersById(exam.getId()).orElseThrow();
+        assertThat(storedExam.getExamUsers()).as("the duplicated user is registered exactly once").hasSize(1);
+        // Would throw IncorrectResultSizeDataAccessException if duplicates had been persisted.
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId()).orElseThrow();
+        assertThat(examUser.getPlannedRoom()).as("last non-blank room wins").isEqualTo("202");
+        assertThat(examUser.getPlannedSeat()).as("blank seat in the later row does not clear the earlier one").isEqualTo("11");
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
     }
 
     @Test
@@ -135,7 +157,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Set<StudentExam> studentExamsBefore = studentExamRepository.findByExamId(exam.getId());
         assertThat(studentExamsBefore).isEmpty();
 
-        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
 
         Set<StudentExam> studentExamsAfter = studentExamRepository.findByExamId(exam.getId());
@@ -145,14 +167,14 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentToExam_testExam() throws Exception {
-        var student = new StudentDTO(TEST_PREFIX + "student42", "", "", "", "");
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", List.of(student), HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveStudentToExam_testExam() throws Exception {
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + TEST_PREFIX + "student42", HttpStatus.BAD_REQUEST);
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + OTHER_PREFIX + "student1", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -185,8 +207,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         userUtilService.createAndSaveUser("student99"); // not registered for the course
         userUtilService.setRegistrationNumberOfUserAndSave("student99", registrationNumber99);
 
-        User student99 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin("student99").orElseThrow();
-        assertThat(student99.getGroups()).doesNotContain(course1.getStudentGroupName());
+        User student99 = userTestRepository.findOneWithAuthoritiesByLogin("student99").orElseThrow();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isFalse();
 
         var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
         request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students", List.of(examUserDtoStudent1),
@@ -240,8 +262,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         for (var examUser : storedExam.getExamUsers()) {
             // all registered users must have access to the course
-            var user = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(examUser.getUser().getLogin()).orElseThrow();
-            assertThat(user.getGroups()).contains(course1.getStudentGroupName());
+            assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(examUser.getUser().getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
         }
 
         // Make sure delete also works if so many objects have been created before
@@ -309,12 +330,20 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel channel = examUtilService.addExamChannel(exam, "testchannel");
-        int numberOfStudentsInCourse = userTestRepository.findAllByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
 
-        User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
-        student99.setGroups(Set.of("tumuser"));
+        // Remove student99 if they were accidentally enrolled by the prefix-based enrollment from a
+        // previous @BeforeEach run (2nd-run persistence bug), so the baseline count is predictable.
+        // Use addStudent (not createAndSaveUser) so student99 gets ROLE_USER authority — the
+        // findAllByCourseIdAndCourseRolesInWithAuthorities query requires a LEFT JOIN FETCH on authorities.
+        userUtilService.addStudent(TEST_PREFIX + "student99"); // not registered for the course
+        User student99 = userUtilService.getUserByLogin(TEST_PREFIX + "student99");
+        userUtilService.unenrollUserFromCourse(student99, course1);
+
+        int numberOfStudentsInCourse = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
+
+        userUtilService.enrollUserInCourse(student99, course1, CourseRole.STUDENT);
         userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
-        assertThat(student99.getGroups()).contains(course1.getStudentGroupName());
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student99.getId(), course1.getId(), CourseRole.STUDENT)).isTrue();
 
         var examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
         assertThat(examUser99).isEmpty();
@@ -379,10 +408,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_studentNotPartOfCourse() {
         assertThatThrownBy(
-                () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student42")))
+                () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(OTHER_PREFIX + "student1")))
                 .isInstanceOf(BadRequestAlertException.class);
     }
 
@@ -436,10 +465,10 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Exam exam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(exam, "staff-filter-channel");
 
-        // user in BOTH student group and editor group, so getStudents(course) returns them but they must be rejected as staff
+        // user holding BOTH the STUDENT and the EDITOR course role, so the student lookup returns them but they must be rejected as staff
         User dualRole = userUtilService.createAndSaveUser(TEST_PREFIX + "dualrole");
-        dualRole.setGroups(Set.of(course1.getStudentGroupName(), course1.getEditorGroupName()));
-        userTestRepository.save(dualRole);
+        userUtilService.enrollUserInCourse(dualRole, course1, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(dualRole, course1, CourseRole.EDITOR);
 
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
 

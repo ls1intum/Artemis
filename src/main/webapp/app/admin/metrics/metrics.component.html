@@ -2,19 +2,29 @@
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
     <div *adminTitleBarActions class="flex flex-wrap gap-2 items-center">
         <span class="font-medium text-muted-color text-sm" jhiTranslate="metrics.jumpTo"></span>
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</p-button>
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</p-button>
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</p-button>
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints">Endpoints</p-button>
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</p-button>
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="scrollToSection('datasource-metrics')" data-testid="nav-datasource">Datasource</p-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints">Endpoints</tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</tum-ui-button>
+        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('datasource-metrics')" data-testid="nav-datasource"
+            >Datasource</tum-ui-button
+        >
         @if (nodeOptions().length > 1) {
-            <p-select [(ngModel)]="selectedNodeId" [options]="nodeOptions()" optionLabel="label" optionValue="value" (onChange)="onNodeChange()" size="small" styleClass="w-auto" />
+            <tum-ui-select
+                [ariaLabel]="'metrics.filter' | artemisTranslate"
+                [(ngModel)]="selectedNodeId"
+                [options]="nodeOptions()"
+                optionLabel="label"
+                optionValue="value"
+                (selectionChange)="onNodeChange()"
+                size="small"
+                class="w-auto"
+            />
         }
-        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="refresh()" data-testid="refresh-button">
-            <fa-icon [icon]="faSync" />
+        <tum-ui-button severity="secondary" size="small" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="metrics.refresh.button"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
 
     @if (!metrics() && updatingMetrics()) {

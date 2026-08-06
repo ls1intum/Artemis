@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HttpServerRequests } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { TableModule } from 'primeng/table';
+import { TumUiProgressBarComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { filterNaN, toPercentage } from 'app/admin/metrics/filterNaN-util';
 
@@ -10,7 +9,7 @@ import { filterNaN, toPercentage } from 'app/admin/metrics/filterNaN-util';
     selector: 'jhi-metrics-request',
     templateUrl: './metrics-request.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, ProgressBarModule, TableModule, DecimalPipe, KeyValuePipe],
+    imports: [TranslateDirective, TumUiProgressBarComponent, TumUiTableDirective, DecimalPipe, KeyValuePipe],
 })
 export class MetricsRequestComponent {
     /**

@@ -6,71 +6,74 @@
             <input
                 id="configuration-filter"
                 type="text"
-                pInputText
+                tumUiInput
                 [ngModel]="beansFilter()"
                 (ngModelChange)="updateBeansFilter($event)"
                 data-testid="configuration-filter-input"
             />
         </div>
         <h3 id="spring-configuration">Spring configuration</h3>
-        <p-table
-            [value]="beans()"
-            [size]="'small'"
-            [stripedRows]="true"
-            [customSort]="true"
+        <table
+            tumUiTable
+            size="small"
+            [striped]="true"
             [sortField]="'prefix'"
             [sortOrder]="beansAscending() ? 1 : -1"
-            (onSort)="onTableSort($event)"
+            (sortChange)="onTableSort($event)"
             aria-describedby="spring-configuration"
             data-testid="spring-configuration-table"
         >
-            <ng-template #header>
+            <thead>
                 <tr>
-                    <th pSortableColumn="prefix" scope="col" class="w-2/5"><span jhiTranslate="configuration.table.prefix"></span> <p-sortIcon field="prefix" /></th>
+                    <th [tumUiSortableColumn]="'prefix'" scope="col" class="w-2/5"><span jhiTranslate="configuration.table.prefix"></span></th>
                     <th scope="col" class="w-3/5"><span jhiTranslate="configuration.table.properties"></span></th>
                 </tr>
-            </ng-template>
-            <ng-template #body let-bean>
-                <tr>
-                    <td class="break">
-                        <span>{{ bean.prefix }}</span>
-                    </td>
-                    <td>
-                        @for (property of bean.properties | keyvalue; track property) {
-                            <div class="flex items-start gap-2 py-1">
-                                <div class="w-2/5">{{ property.key }}</div>
-                                <div class="w-3/5 flex justify-end">
-                                    <p-tag severity="secondary" [value]="property.value | json" styleClass="break" data-testid="bean-property-value" />
+            </thead>
+            <tbody>
+                @for (bean of beans(); track bean) {
+                    <tr>
+                        <td class="break">
+                            <span>{{ bean.prefix }}</span>
+                        </td>
+                        <td>
+                            @for (property of bean.properties | keyvalue; track property) {
+                                <div class="flex items-start gap-2 py-1">
+                                    <div class="w-2/5">{{ property.key }}</div>
+                                    <div class="w-3/5 flex justify-end">
+                                        <tum-ui-tag severity="secondary" [value]="property.value | json" class="break" data-testid="bean-property-value" />
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
         @for (propertySource of propertySources(); track propertySource; let i = $index) {
             <div class="mt-4" data-testid="property-source-section">
                 <h4 [id]="'property-source-' + i">
                     <span>{{ propertySource.name }}</span>
                 </h4>
-                <p-table [value]="propertySource.properties | keyvalue" [size]="'small'" [stripedRows]="true" [attr.aria-describedby]="'property-source-' + i">
-                    <ng-template #header>
+                <table tumUiTable size="small" [striped]="true" [attr.aria-describedby]="'property-source-' + i">
+                    <thead>
                         <tr>
                             <th scope="col" class="w-2/5">Property</th>
                             <th scope="col" class="w-3/5">Value</th>
                         </tr>
-                    </ng-template>
-                    <ng-template #body let-property>
-                        <tr>
-                            <td class="break">{{ property.key }}</td>
-                            <td class="break">
-                                <div class="flex justify-end">
-                                    <p-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+                    </thead>
+                    <tbody>
+                        @for (property of propertySource.properties | keyvalue; track property) {
+                            <tr>
+                                <td class="break">{{ property.key }}</td>
+                                <td class="break">
+                                    <div class="flex justify-end">
+                                        <tum-ui-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         }
     </div>

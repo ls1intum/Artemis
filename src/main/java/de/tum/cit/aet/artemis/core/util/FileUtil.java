@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.util;
 import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,8 +33,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -92,7 +89,7 @@ public class FileUtil {
      * </ul>
      *
      * @param filename the original filename string to sanitize
-     * @return the sanitized filename, with invalid characters replaced and multiple dots reduced
+     * @return the sanitized filename, with invalid characters replaced
      */
     public static String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");
@@ -824,33 +821,7 @@ public class FileUtil {
      * @return byte array of the merged file
      */
     public static Optional<byte[]> mergePdfFiles(List<Path> paths, String mergedPdfFilename) {
-        if (paths == null || paths.isEmpty()) {
-            return Optional.empty();
-        }
-        PDFMergerUtility pdfMerger = new PDFMergerUtility();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        try {
-            for (Path path : paths) {
-                if (Files.exists(path)) {
-                    pdfMerger.addSource(path.toFile());
-                }
-            }
-
-            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
-            pdDocumentInformation.setTitle(mergedPdfFilename);
-            pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
-
-            pdfMerger.setDestinationStream(outputStream);
-            pdfMerger.mergeDocuments(null);
-
-        }
-        catch (IOException e) {
-            log.warn("Could not merge files");
-            return Optional.empty();
-        }
-
-        return Optional.of(outputStream.toByteArray());
+        return PdfMergeUtil.mergePdfFiles(paths, mergedPdfFilename);
     }
 
     /**

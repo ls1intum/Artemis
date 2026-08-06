@@ -44,6 +44,14 @@ export const courseManagementRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainerComponent),
+        // The container renders a full-bleed layout (its own sidebar, title bar, and module-bg content box), so it must
+        // NOT be wrapped in the app-level module-background card (see app.component.html). Declare this explicitly so it
+        // overrides the parent `course-management` route's `usesModuleBackground: true` (which is meant for the course
+        // list). Angular 22 inherits parent route data down to the deepest activated child, so relying on the flag's
+        // absence — as this did before — no longer keeps the container full-bleed and left it shifted/cropped (#13189).
+        data: {
+            usesModuleBackground: false,
+        },
         children: [
             {
                 path: ':courseId',
@@ -227,7 +235,13 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
+                        // Legacy redirect: keep old "groups/..." bookmarks working
                         path: 'groups/:courseGroup',
+                        redirectTo: 'members/:courseGroup',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'members/:courseRoleSlug',
                         loadComponent: () => import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,

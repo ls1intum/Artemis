@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockLinkPreviewService } from 'test/helpers/mocks/service/mock-link-preview.service';
 import { of } from 'rxjs';
@@ -8,8 +7,6 @@ import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/
 import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 describe('LinkPreviewContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LinkPreviewContainerComponent;
     let fixture: ComponentFixture<LinkPreviewContainerComponent>;
 

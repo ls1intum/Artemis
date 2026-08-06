@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradeEditMode, GradingComponent, GradingViewMode } from 'app/assessment/manage/grading/grading.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -40,7 +39,6 @@ vi.mock('app/foundation/util/csv-download.util', () => {
 });
 
 describe('GradingComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingComponent>;
     let comp: GradingComponent;
     let gradingService: GradingService;
@@ -551,6 +549,72 @@ describe('GradingComponent', () => {
             expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
             expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
             expect(comp.existingGradingScale()).toBe(true);
+        });
+
+        it('should not save when the max points exceed the limit', () => {
+            comp.existingGradingScale.set(false);
+            comp.isExam.set(false);
+            comp.course.set(course);
+            comp.maxPoints.set(10000);
+            const createSpy = vi.spyOn(gradingService, 'createGradingScaleForCourse');
+
+            comp.save();
+
+            expect(comp.maxPointsErrorMessage()).toBeDefined();
+            expect(createSpy).not.toHaveBeenCalled();
+        });
+
+        it('should allow saving when the max points are exactly at the limit', () => {
+            comp.existingGradingScale.set(false);
+            comp.isExam.set(false);
+            comp.course.set(course);
+            comp.maxPoints.set(9999);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
+            const createSpy = vi
+                .spyOn(gradingService, 'createGradingScaleForCourse')
+                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+
+            comp.save();
+
+            expect(comp.maxPointsErrorMessage()).toBeUndefined();
+            expect(createSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should reject presentation values above the limit and accept the boundary', () => {
+            comp.course.set(course);
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 101, presentationsWeight: 50 });
+            expect(comp.validPresentationsConfig()).toBe(false);
+            expect(comp.presentationsConfigErrorMessage()).toBeDefined();
+
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 100, presentationsWeight: 50 });
+            expect(comp.validPresentationsConfig()).toBe(true);
+
+            const basicCourse = new Course();
+            basicCourse.presentationScore = 101;
+            comp.course.set(basicCourse);
+            comp.presentationsConfig.set({ presentationType: PresentationType.BASIC });
+            expect(comp.validPresentationsConfig()).toBe(false);
+        });
+
+        it('should reject a decimal max points value', () => {
+            comp.course.set(course);
+            comp.maxPoints.set(10.5);
+            expect(comp.maxPointsErrorMessage()).toBeDefined();
+        });
+
+        it('should reject a max points value below 1 with the too-low message', () => {
+            comp.course.set(course);
+            comp.maxPoints.set(0);
+            expect(comp.maxPointsErrorMessage()).toBe('artemisApp.gradingSystem.error.maxPointsTooLow');
+        });
+
+        it('should reject a decimal basic presentation score', () => {
+            const basicCourse = new Course();
+            basicCourse.presentationScore = 2.5;
+            comp.course.set(basicCourse);
+            comp.presentationsConfig.set({ presentationType: PresentationType.BASIC });
+            expect(comp.validPresentationsConfig()).toBe(false);
+            expect(comp.presentationsConfigErrorMessage()).toBeDefined();
         });
 
         it('should create grading scale correctly for exam', () => {

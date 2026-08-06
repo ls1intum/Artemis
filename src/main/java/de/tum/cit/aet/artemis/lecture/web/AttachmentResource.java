@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture.web;
 import static de.tum.cit.aet.artemis.core.util.FilePathConverter.fileSystemPathForExternalUri;
 
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,14 +33,15 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.service.AttachmentService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 
 /**
@@ -70,13 +70,16 @@ public class AttachmentResource {
 
     private final FileService fileService;
 
+    private final AttachmentService attachmentService;
+
     public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, FileService fileService) {
+            UserRepository userRepository, FileService fileService, AttachmentService attachmentService) {
         this.attachmentRepository = attachmentRepository;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -91,38 +94,35 @@ public class AttachmentResource {
      */
     @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
+    public ResponseEntity<AttachmentDTO> updateAttachment(@PathVariable Long attachmentId, @RequestPart AttachmentDTO attachment, @RequestPart(required = false) MultipartFile file,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
 
-        // Load existing attachment from DB to preserve relationships and avoid detached entity issues
-        Attachment existingAttachment = attachmentRepository.findByIdOrElseThrow(attachmentId);
-
-        // Update only the fields that should be changed from client data
-        existingAttachment.setName(attachment.getName());
-        existingAttachment.setReleaseDate(attachment.getReleaseDate());
-        existingAttachment.setUploadDate(attachment.getUploadDate());
-        existingAttachment.setVersion(attachment.getVersion());
-        existingAttachment.setAttachmentType(attachment.getAttachmentType());
-        existingAttachment.setStudentVersion(attachment.getStudentVersion());
-
-        if (file != null) {
-            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(existingAttachment.getLecture().getId().toString());
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
-            // Delete the old file
-            URI oldPath = URI.create(existingAttachment.getLink());
-            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
-            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
-            // Set the new link
-            existingAttachment
-                    .setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, existingAttachment.getLecture().getId()).toString());
-        }
-
-        Attachment result = attachmentRepository.save(existingAttachment);
+        // Build a transient attachment carrying only the client-provided fields; the service copies them onto the managed attachment
+        // and derives server-controlled state (cache-busting version, student version) itself instead of trusting the client payload.
+        Attachment attachmentUpdate = toTransientAttachment(attachment);
+        Attachment result = attachmentService.updateLectureAttachment(attachmentId, attachmentUpdate, file);
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result);
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(AttachmentDTO.of(result));
+    }
+
+    /**
+     * Builds a transient {@link Attachment} carrying only the fields the client may set via the {@link AttachmentDTO} part.
+     * {@link AttachmentService#updateLectureAttachment} copies these onto the managed attachment; the client never deserializes
+     * an entity directly, and server-controlled fields (id, link, version, studentVersion, lecture) are never taken from the client.
+     *
+     * @param attachmentDTO the attachment part from the request
+     * @return a new transient attachment
+     */
+    private static Attachment toTransientAttachment(AttachmentDTO attachmentDTO) {
+        Attachment attachment = new Attachment();
+        attachment.setName(attachmentDTO.name());
+        attachment.setReleaseDate(attachmentDTO.releaseDate());
+        attachment.setUploadDate(attachmentDTO.uploadDate());
+        attachment.setAttachmentType(attachmentDTO.attachmentType());
+        return attachment;
     }
 
     /**
@@ -133,9 +133,9 @@ public class AttachmentResource {
      */
     @GetMapping("attachments/{id}")
     @EnforceAtLeastEditor
-    public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
+    public ResponseEntity<AttachmentDTO> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
-        Optional<Attachment> attachment = attachmentRepository.findById(id);
+        Optional<AttachmentDTO> attachment = attachmentRepository.findById(id).map(AttachmentDTO::of);
         return ResponseUtil.wrapOrNotFound(attachment);
     }
 
@@ -147,9 +147,9 @@ public class AttachmentResource {
      */
     @GetMapping("lectures/{lectureId}/attachments")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Attachment>> getAttachmentsForLecture(@PathVariable Long lectureId) {
+    public ResponseEntity<List<AttachmentDTO>> getAttachmentsForLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return ResponseEntity.ok(attachmentRepository.findAllByLectureId(lectureId));
+        return ResponseEntity.ok(attachmentRepository.findAllByLectureId(lectureId).stream().map(AttachmentDTO::of).toList());
     }
 
     /**
@@ -161,7 +161,7 @@ public class AttachmentResource {
     @DeleteMapping("attachments/{attachmentId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long attachmentId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Optional<Attachment> optionalAttachment = attachmentRepository.findById(attachmentId);
         if (optionalAttachment.isEmpty()) {
             return ResponseEntity.notFound().build();

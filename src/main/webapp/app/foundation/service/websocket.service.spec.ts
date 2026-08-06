@@ -5,10 +5,9 @@ import { COMPRESSION_HEADER, COMPRESSION_HEADER_KEY, ConnectionState, WebsocketS
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { RxStompState } from '@stomp/rx-stomp';
-import { BehaviorSubject, EMPTY, filter, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, filter, firstValueFrom, of } from 'rxjs';
 import { IMessage } from '@stomp/stompjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // vi.mock is hoisted above imports, so any value its factory references must be created via vi.hoisted().
 const { constructedRxStompClients, watchMock, captureExceptionMock } = vi.hoisted(() => ({
@@ -61,8 +60,6 @@ const baseMessage: IMessage = {
 };
 
 describe('WebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let websocketService: WebsocketService;
 
     beforeEach(() => {
@@ -153,6 +150,131 @@ describe('WebsocketService', () => {
         );
     });
 
+    it('creates only one STOMP subscription when several callers watch the same destination', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        const first = websocketService.subscribe('/topic/shared').subscribe();
+        const second = websocketService.subscribe('/topic/shared').subscribe();
+
+        // The broker rejects a second subscription to a destination already subscribed on the same session,
+        // so both callers have to share one underlying watch.
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        first.unsubscribe();
+        second.unsubscribe();
+    });
+
+    it('delivers messages of a shared destination to every caller', async () => {
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
+
+        const received: unknown[] = [];
+        const first = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
+        const second = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
+
+        messages.next({ ...baseMessage, body: JSON.stringify({ data: 'test' }) });
+
+        expect(received).toEqual([{ data: 'test' }, { data: 'test' }]);
+
+        first.unsubscribe();
+        second.unsubscribe();
+    });
+
+    it('drops an undecodable message and keeps the shared stream alive for all callers', () => {
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
+
+        const firstReceived: unknown[] = [];
+        const secondReceived: unknown[] = [];
+        let errored = false;
+        const first = websocketService.subscribe('/topic/shared').subscribe({ next: (value) => firstReceived.push(value), error: () => (errored = true) });
+        const second = websocketService.subscribe('/topic/shared').subscribe({ next: (value) => secondReceived.push(value), error: () => (errored = true) });
+
+        // Claims to be compressed but is not, so decoding throws. Since every consumer of a destination shares one
+        // subscription, this must not tear the stream down for any of them.
+        messages.next({ ...baseMessage, body: 'not actually compressed', headers: { [COMPRESSION_HEADER_KEY]: 'true' } });
+        messages.next({ ...baseMessage, body: JSON.stringify({ data: 'after the bad frame' }) });
+
+        expect(errored).toBe(false);
+        expect(captureExceptionMock).toHaveBeenCalled();
+        expect(firstReceived).toEqual([{ data: 'after the bad frame' }]);
+        expect(secondReceived).toEqual([{ data: 'after the bad frame' }]);
+        expect(first.closed).toBe(false);
+        expect(second.closed).toBe(false);
+
+        first.unsubscribe();
+        second.unsubscribe();
+    });
+
+    it('does not reuse a cached destination stream after the client was replaced by a reconnect', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        const beforeReconnect = websocketService.subscribe('/topic/shared').subscribe();
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        // connect() deactivates and replaces rxStomp. A cached stream belongs to the old client, so handing it out
+        // again would leave the caller watching a dead client and receiving nothing.
+        websocketService.connect();
+        const afterReconnect = websocketService.subscribe('/topic/shared').subscribe();
+
+        expect(watchMock).toHaveBeenCalledTimes(2);
+
+        beforeReconnect.unsubscribe();
+        afterReconnect.unsubscribe();
+    });
+
+    it('does not let a stale stream evict the cache entry of its replacement', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        const stale = websocketService.subscribe('/topic/shared').subscribe();
+        websocketService.connect();
+        const current = websocketService.subscribe('/topic/shared').subscribe();
+        expect(watchMock).toHaveBeenCalledTimes(2);
+
+        // Tearing the old stream down must not remove the entry that now belongs to the new one, otherwise the next
+        // caller opens a second subscription to a destination that is already subscribed.
+        stale.unsubscribe();
+        const later = websocketService.subscribe('/topic/shared').subscribe();
+
+        expect(watchMock).toHaveBeenCalledTimes(2);
+
+        current.unsubscribe();
+        later.unsubscribe();
+    });
+
+    it('keeps serving one destination stream after the last caller unsubscribed', () => {
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
+
+        websocketService.subscribe('/topic/shared').subscribe().unsubscribe();
+
+        // The entry survives an idle period. A caller that retained the observable (IrisSearchAnswerService does)
+        // can resubscribe, and a concurrent fresh subscribe() must not open a second watch for the destination.
+        const received: unknown[] = [];
+        const later = websocketService.subscribe('/topic/shared').subscribe((value) => received.push(value));
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        messages.next({ ...baseMessage, body: JSON.stringify({ data: 'still flowing' }) });
+        expect(received).toEqual([{ data: 'still flowing' }]);
+
+        later.unsubscribe();
+    });
+
+    it('does not open a second watch when a retained observable is resubscribed', () => {
+        watchMock.mockReturnValue(new Subject<IMessage>());
+
+        // A service holding the observable as a field, resubscribing after its refcount dropped to zero.
+        const retained = websocketService.subscribe('/topic/shared');
+        retained.subscribe().unsubscribe();
+        const viaRetained = retained.subscribe();
+        const viaFresh = websocketService.subscribe('/topic/shared').subscribe();
+
+        expect(watchMock).toHaveBeenCalledOnce();
+
+        viaRetained.unsubscribe();
+        viaFresh.unsubscribe();
+    });
+
     it('subscribes and parses compressed messages', async () => {
         // @ts-ignore
         const payload = (WebsocketService as any).compressAndEncode(JSON.stringify({ data: 'test' }));
@@ -163,19 +285,30 @@ describe('WebsocketService', () => {
         expect(result).toEqual({ data: 'test' });
     });
 
-    it('reports decompression errors and propagates them', async () => {
+    it('reports decompression errors and drops the offending message without erroring the stream', () => {
         const decodeSpy = vi.spyOn(WebsocketService as any, 'decodeAndDecompress').mockImplementation(() => {
             throw new Error('boom');
         });
-        const message: IMessage = { ...baseMessage, body: '"raw"', headers: { [COMPRESSION_HEADER_KEY]: 'true' } };
-        watchMock.mockReturnValue(of(message));
+        const messages = new Subject<IMessage>();
+        watchMock.mockReturnValue(messages);
 
-        const resultPromise = firstValueFrom(websocketService.subscribe('/topic/test')!);
-        await expect(resultPromise).rejects.toThrow('boom');
+        const received: unknown[] = [];
+        let errored: unknown;
+        const subscription = websocketService.subscribe('/topic/test').subscribe({ next: (value) => received.push(value), error: (error) => (errored = error) });
+
+        messages.next({ ...baseMessage, body: '"raw"', headers: { [COMPRESSION_HEADER_KEY]: 'true' } });
+
+        // The error used to be propagated to the subscriber, which terminated the stream. Consumers of a destination
+        // now share a single subscription, so one bad frame would disconnect all of them. It is reported and dropped.
         expect(decodeSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
             mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } },
         });
+        expect(errored).toBeUndefined();
+        expect(received).toHaveLength(0);
+        expect(subscription.closed).toBe(false);
+
+        subscription.unsubscribe();
     });
 
     it('send does nothing when disconnected', () => {

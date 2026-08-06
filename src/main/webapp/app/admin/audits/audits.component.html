@@ -3,8 +3,8 @@
     <div class="mb-4">
         <h4 jhiTranslate="audits.filter.title"></h4>
         <div class="flex flex-wrap gap-2 items-center" data-testid="audits-date-filter">
-            <p-inputgroup class="w-auto">
-                <p-inputgroup-addon jhiTranslate="audits.filter.from" />
+            <tum-ui-input-group class="w-auto">
+                <tum-ui-input-group-addon jhiTranslate="audits.filter.from" />
                 <jhi-date-time-picker
                     #fromPicker
                     name="start"
@@ -13,13 +13,14 @@
                     [hideValidationMessage]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
-                    [value]="fromDateValue()"
+                    [ngModel]="fromDateValue()"
+                    [ngModelOptions]="{ standalone: true }"
                     (valueChange)="updateFromDate(fromPicker.isValid() ? fromPicker.value() : undefined); transition()"
                     data-testid="audits-from-date"
                 />
-            </p-inputgroup>
-            <p-inputgroup class="w-auto">
-                <p-inputgroup-addon jhiTranslate="audits.filter.to" />
+            </tum-ui-input-group>
+            <tum-ui-input-group class="w-auto">
+                <tum-ui-input-group-addon jhiTranslate="audits.filter.to" />
                 <jhi-date-time-picker
                     #toPicker
                     name="end"
@@ -28,11 +29,12 @@
                     [hideValidationMessage]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
-                    [value]="toDateValue()"
+                    [ngModel]="toDateValue()"
+                    [ngModelOptions]="{ standalone: true }"
                     (valueChange)="updateToDate(toPicker.isValid() ? toPicker.value() : undefined); transition()"
                     data-testid="audits-to-date"
                 />
-            </p-inputgroup>
+            </tum-ui-input-group>
         </div>
     </div>
     @if (audits().length) {
@@ -104,12 +106,19 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="flex justify-center">
-                <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
+                <tum-ui-paginator
+                    [page]="page() - 1"
+                    [pageSize]="itemsPerPage"
+                    [totalRecords]="totalItems()"
+                    [showCurrentPageReport]="false"
+                    [showRowsPerPage]="false"
+                    (pageChange)="onPageChange($event)"
+                />
             </div>
         </div>
     } @else {
-        <p-message severity="warn" data-testid="audits-not-found">
+        <tum-ui-message severity="warn" data-testid="audits-not-found">
             <span jhiTranslate="audits.notFound"></span>
-        </p-message>
+        </tum-ui-message>
     }
 </div>

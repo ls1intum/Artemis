@@ -94,9 +94,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
-    readonly isGeneratingFeedback = input<boolean>(false);
 
-    readonly generatingFeedback = output<void>();
     readonly newParticipation = output<StudentParticipation>();
 
     private readonly _uninitializedQuiz = signal(false);
@@ -122,6 +120,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly numberOfGradedParticipationResults = this._numberOfGradedParticipationResults.asReadonly();
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
+    readonly hasGradedSubmission = computed(() => !!this._gradedParticipation()?.submissions?.some((submission) => submission.submitted));
 
     readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 

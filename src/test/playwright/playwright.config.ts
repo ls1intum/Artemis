@@ -69,6 +69,15 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        /* Block the Angular service worker (ngsw-worker.js) in every test context. The production WAR
+         * registers it unconditionally, and once it controls a page it handles the app's /api fetches.
+         * That breaks E2E in two ways: Chromium's DevTools protocol frequently cannot return bodies of
+         * SW-served responses (`Network.getResponseBody: No data found for resource` — the source of the
+         * deferred `response.json()` flake), and Playwright's `page.route()` never sees SW-handled
+         * requests, so route-based interception (e.g. injecting a failed save) is silently bypassed.
+         * The SW only adds caching/update checks the tests don't exercise, so blocking it makes runs
+         * deterministic without changing what is tested. */
+        serviceWorkers: 'block',
         launchOptions: {
             args: [
                 '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',

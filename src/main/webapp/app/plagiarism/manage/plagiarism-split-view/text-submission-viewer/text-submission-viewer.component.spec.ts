@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -24,8 +22,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { PlagiarismFileElement } from '../../../shared/entities/PlagiarismFileElement';
 
 describe('Text Submission Viewer Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TextSubmissionViewerComponent;
     let fixture: ComponentFixture<TextSubmissionViewerComponent>;
     let repositoryService: CodeEditorRepositoryFileService;
@@ -75,9 +71,9 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
         vi.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
         expect(comp.isProgrammingExercise()).toBe(false);
     });
@@ -86,9 +82,9 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise()).toBe(true);
@@ -99,9 +95,9 @@ describe('Text Submission Viewer Component', () => {
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of({}));
         fixture.componentRef.setInput('hideContent', true);
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).not.toHaveBeenCalled();
     });
@@ -110,9 +106,9 @@ describe('Text Submission Viewer Component', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError(() => {}));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.cannotLoadFiles()).toBe(true);
@@ -136,9 +132,9 @@ describe('Text Submission Viewer Component', () => {
 
         vi.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(of(filesUnordered));
 
-        comp.ngOnChanges({
-            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
-        });
+        // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
 
         expect(repositoryService.getRepositoryContentForPlagiarismView).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise()).toBe(true);

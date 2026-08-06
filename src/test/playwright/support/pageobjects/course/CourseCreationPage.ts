@@ -2,7 +2,7 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { enterDate } from '../../utils';
+import { enterDate, readResponseJson } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.
@@ -87,51 +87,6 @@ export class CourseCreationPage {
      */
     async setProgrammingLanguage(programmingLanguage: string) {
         await this.page.locator('#programmingLanguage').selectOption(programmingLanguage);
-    }
-
-    /**
-     * Sets if the course group names should be customized
-     * @param customizeGroupNames customize the group names
-     */
-    async setCustomizeGroupNames(customizeGroupNames: boolean) {
-        const selector = this.page.locator('#field_customizeGroupNamesEnabled');
-        if (customizeGroupNames) {
-            await selector.check();
-        } else {
-            await selector.uncheck();
-        }
-    }
-
-    /**
-     * Sets the customized group name for students
-     * @param groupName the group name
-     */
-    async setStudentGroup(groupName: string) {
-        await this.page.locator('#field_studentGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for tutors
-     * @param groupName the group name
-     */
-    async setTutorGroup(groupName: string) {
-        await this.page.locator('#field_teachingAssistantGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for editors
-     * @param groupName the group name
-     */
-    async setEditorGroup(groupName: string) {
-        await this.page.locator('#field_editorGroupName').fill(groupName);
-    }
-
-    /**
-     * Sets the customized group name for instructors
-     * @param groupName the group name
-     */
-    async setInstructorGroup(groupName: string) {
-        await this.page.locator('#field_instructorGroupName').fill(groupName);
     }
 
     /**
@@ -242,7 +197,7 @@ export class CourseCreationPage {
         const responsePromise = this.page.waitForResponse(COURSE_ADMIN_BASE);
         await this.page.click('#save-entity');
         const response = await responsePromise;
-        return await response.json();
+        return await readResponseJson(response);
     }
 
     /**
@@ -263,6 +218,6 @@ export class CourseCreationPage {
         );
         await this.page.click('#save-entity');
         const response = await responsePromise;
-        return response.json();
+        return readResponseJson(response);
     }
 }

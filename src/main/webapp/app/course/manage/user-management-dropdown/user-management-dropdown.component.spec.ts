@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { UserManagementDropdownComponent } from './user-management-dropdown.component';
 import { faGraduationCap, faListAlt, faPersonChalkboard, faSchool } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -12,8 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('UserManagementDropdownComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementDropdownComponent;
     let fixture: ComponentFixture<UserManagementDropdownComponent>;
 
@@ -45,25 +42,25 @@ describe('UserManagementDropdownComponent', () => {
         expect(component.userAddActions()).toEqual([
             {
                 icon: faSchool,
-                routerLink: ['/course-management/123/groups/students'],
+                routerLink: ['/course-management/123/members/students'],
                 label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
-                routerLink: ['/course-management/123/groups/tutors'],
+                routerLink: ['/course-management/123/members/tutors'],
                 label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
-                routerLink: ['/course-management/123/groups/editors'],
+                routerLink: ['/course-management/123/members/editors'],
                 label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
-                routerLink: ['/course-management/123/groups/instructors'],
+                routerLink: ['/course-management/123/members/instructors'],
                 label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },

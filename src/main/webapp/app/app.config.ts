@@ -27,14 +27,15 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 import { AuraArtemis } from './primeng-artemis-theme';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
+        provideArtemisTumUiTranslator(),
         DialogService,
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
@@ -162,7 +163,6 @@ export const appConfig: ApplicationConfig = {
             useClass: ArtemisVersionInterceptor,
             multi: true,
         },
-        { provide: Configuration, useFactory: () => new Configuration({ withCredentials: true, basePath: '' }) },
         providePrimeNG({
             theme: {
                 preset: AuraArtemis,

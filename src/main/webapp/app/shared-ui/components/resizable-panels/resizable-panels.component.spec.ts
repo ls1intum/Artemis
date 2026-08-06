@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { faAlignLeft, faComment } from '@fortawesome/free-solid-svg-icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -40,8 +40,6 @@ class ResizablePanelsTestComponent {
 }
 
 describe('ResizablePanelsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ResizablePanelsTestComponent>;
 
     beforeEach(async () => {
@@ -292,5 +290,34 @@ describe('ResizablePanelsComponent', () => {
         createFixture(false, true);
 
         expect(ResizeObserverMock.instances.some((instance) => instance.observe.mock.calls.some(([target]) => target === document.documentElement))).toBe(true);
+    });
+
+    // Regression coverage for #13187: CDK drag-and-drop only auto-scrolls containers registered with the ScrollDispatcher.
+    // The panel content areas scroll inside plain overflow containers, so they must be registered as cdkScrollable.
+    describe('drag-and-drop auto-scroll registration', () => {
+        it('registers its scrollable panel content areas with the CDK ScrollDispatcher', () => {
+            const scrollDispatcher = TestBed.inject(ScrollDispatcher);
+            createFixture();
+
+            const renderedScrollables = fixture.debugElement.queryAll(By.directive(CdkScrollable));
+            expect(renderedScrollables.length).toBeGreaterThan(0);
+
+            const registered = Array.from(scrollDispatcher.scrollContainers.keys());
+            renderedScrollables.forEach((scrollable) => {
+                expect(registered).toContain(scrollable.injector.get(CdkScrollable));
+            });
+        });
+
+        it('wraps the projected panel content in a registered scroll container so a dragged item finds an ancestor to auto-scroll', () => {
+            const scrollDispatcher = TestBed.inject(ScrollDispatcher);
+            createFixture();
+
+            const projectedContent = fixture.nativeElement.querySelector('#left-marker') as HTMLElement;
+            expect(projectedContent).not.toBeNull();
+
+            const registeredContainers = Array.from(scrollDispatcher.scrollContainers.keys()).map((scrollable) => scrollable.getElementRef().nativeElement as HTMLElement);
+            const ancestorScrollContainer = registeredContainers.find((element) => element.contains(projectedContent));
+            expect(ancestorScrollContainer).toBeTruthy();
+        });
     });
 });

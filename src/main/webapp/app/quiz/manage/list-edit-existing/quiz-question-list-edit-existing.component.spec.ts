@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
@@ -104,8 +103,6 @@ const createValidSAQuestion = () => {
 };
 
 describe('QuizQuestionListEditExistingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizQuestionListEditExistingComponent>;
     let component: QuizQuestionListEditExistingComponent;
     let courseService: CourseManagementService;
@@ -495,6 +492,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(onQuestionsAddedSpy).toHaveBeenCalledOnce();
             expect(onFilesAddedSpy).toHaveBeenCalledOnce();
             expect(getFileMock).toHaveBeenCalledTimes(3);
+            expect(getFileMock).toHaveBeenNthCalledWith(2, 'drag-and-drop/questions/3/drag-items/14/item1.jpg', undefined);
+            expect(getFileMock).toHaveBeenNthCalledWith(3, 'drag-and-drop/questions/3/drag-items/15/item2.jpg', undefined);
         });
 
         it('should correctly differentiate between JSON and ZIP files', async () => {

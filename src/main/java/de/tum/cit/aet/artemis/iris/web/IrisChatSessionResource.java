@@ -108,28 +108,27 @@ public class IrisChatSessionResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@RequestParam IrisChatMode mode, @RequestParam long entityId) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(mode, entityId, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
         return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
     }
 
     /**
-     * POST api/iris/chat/sessions: Create a new Iris chat session.
+     * POST api/iris/chat/sessions: Create a new (empty) course chat session ("New Chat").
      * <p>
      * Authorization is enforced per mode in {@link IrisChatSessionService}: the entity referenced by {@code entityId}
      * is loaded based on {@code mode}, and the corresponding role check (exercise / lecture / course) is performed there.
      *
-     * @param mode     the chat mode (e.g. COURSE_CHAT, PROGRAMMING_EXERCISE_CHAT)
-     * @param entityId exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
-     * @return the newly created session
+     * @param courseId the course the new session belongs to
+     * @return the newly created course session
      */
     @PostMapping("sessions")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisChatSessionResponseDTO> createSession(@RequestParam IrisChatMode mode, @RequestParam long entityId) throws URISyntaxException {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        var session = irisChatSessionService.createSession(mode, entityId, user);
+    public ResponseEntity<IrisChatSessionResponseDTO> createCourseSession(@RequestParam long courseId) throws URISyntaxException {
+        var user = userRepository.getUserWithAuthorities();
+        var session = irisChatSessionService.findOrCreateEmptySession(courseId, user);
         var uriString = "/api/iris/chat/courses/" + session.getCourseId() + "/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
@@ -161,7 +160,7 @@ public class IrisChatSessionResource {
             throw new BadRequestException("Session does not belong to the specified course");
         }
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         irisSessionService.checkHasAccessToIrisSession(irisSession, user);
 
         if (!irisSettingsService.isEnabledForCourse(courseId)) {
@@ -182,7 +181,7 @@ public class IrisChatSessionResource {
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Course course = courseRepository.findById(courseId).orElseThrow();
         if (user.hasOptedIntoLLMUsage()) {
             List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
@@ -205,7 +204,7 @@ public class IrisChatSessionResource {
     @GetMapping("sessions/count")
     @EnforceAtLeastStudent
     public ResponseEntity<IrisChatSessionCountDTO> getSessionAndMessageCount() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         long sessionCount = irisSessionRepository.countByUserId(user.getId());
         long messageCount = irisSessionRepository.countMessagesByUserId(user.getId());
         return ResponseEntity.ok(new IrisChatSessionCountDTO(sessionCount, messageCount));
@@ -220,7 +219,7 @@ public class IrisChatSessionResource {
     @DeleteMapping("sessions")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteAllSessionsForCurrentUser() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         long sessionCount = irisSessionRepository.countByUserId(user.getId());
         long messageCount = irisSessionRepository.countMessagesByUserId(user.getId());
         log.info("REST request to delete all Iris sessions for user id {} (sessions={}, messages={})", user.getId(), sessionCount, messageCount);
@@ -240,7 +239,7 @@ public class IrisChatSessionResource {
     @DeleteMapping("sessions/{sessionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));
         if (user.getId() == null || session.getUserId() != user.getId().longValue()) {
             throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");

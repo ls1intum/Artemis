@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
@@ -9,7 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
@@ -24,9 +23,20 @@ import { ActivatedRoute } from '@angular/router';
  * text block display, feedback editor integration, and assessment event tracking.
  */
 describe('TextblockAssessmentCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextBlockAssessmentCardComponent;
     let fixture: ComponentFixture<TextBlockAssessmentCardComponent>;
+
+    /**
+     * Re-applies a (possibly mutated) TextBlockRef to the required signal input under a fresh object
+     * identity and runs change detection. Mutating the object held by a signal input in place does not
+     * notify the signal in Angular's zoneless reactivity model, so dependent template bindings would
+     * otherwise not re-render. Cloning preserves the mutated state while changing the reference.
+     */
+    function reapplyTextBlockRef(textBlockRef: TextBlockRef): void {
+        const clone: TextBlockRef = Object.assign(Object.create(Object.getPrototypeOf(textBlockRef)), textBlockRef);
+        fixture.componentRef.setInput('textBlockRef', clone);
+        fixture.changeDetectorRef.detectChanges();
+    }
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -78,8 +88,11 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should show text block', () => {
         const loremIpsum = 'Lorem Ipsum';
-        component.textBlockRef().block!.text = loremIpsum;
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.block!.text = loremIpsum;
+        // Re-apply the mutated ref under a fresh identity: mutating the object held by the signal
+        // input in place no longer triggers change detection in Angular's zoneless reactivity model.
+        reapplyTextBlockRef(textBlockRef);
 
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('span').textContent).toEqual(loremIpsum);
@@ -89,18 +102,20 @@ describe('TextblockAssessmentCardComponent', () => {
         let element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         expect(element).toBeFalsy();
 
-        component.textBlockRef().initFeedback();
-        component.textBlockRef().feedback!.gradingInstruction = new GradingInstruction();
-        component.textBlockRef().feedback!.gradingInstruction!.usageCount = 0;
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        textBlockRef.feedback!.gradingInstruction = new GradingInstruction();
+        textBlockRef.feedback!.gradingInstruction!.usageCount = 0;
+        reapplyTextBlockRef(textBlockRef);
 
-        fixture.changeDetectorRef.detectChanges();
         element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         expect(element).toBeTruthy();
     });
 
     it('should delete feedback', () => {
-        component.textBlockRef().initFeedback();
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        reapplyTextBlockRef(textBlockRef);
 
         vi.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
@@ -113,9 +128,10 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should delete feedback but not emit delete event when textblock is undeletable', () => {
-        component.textBlockRef().initFeedback();
-        component.textBlockRef().deletable = false;
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        textBlockRef.deletable = false;
+        reapplyTextBlockRef(textBlockRef);
 
         vi.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
@@ -136,6 +152,34 @@ describe('TextblockAssessmentCardComponent', () => {
         component.select();
         fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+    });
+
+    /**
+     * Deleting feedback from an automatic text block, i.e. a line of the submission, used to be impossible: the click on the
+     * close control bubbled to the editor host, whose `(click)="select(false)"` calls `TextBlockRef.initFeedback()` and
+     * re-created the feedback that `unselect()` had just removed. A manual block hid the problem, because it is additionally
+     * removed from the list via `didDelete`.
+     *
+     * The click has to go through the DOM: calling `dismiss()` on the editor directly never bubbles, which is why the
+     * existing tests above did not catch this.
+     */
+    it('should delete the feedback of an automatic text block when the close control is clicked', () => {
+        const block = new TextBlock();
+        block.type = TextBlockType.AUTOMATIC;
+        block.text = 'a line of the submission';
+        const textBlockRef = new TextBlockRef(block, { type: FeedbackType.MANUAL, credits: 0, detailText: '' });
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.changeDetectorRef.detectChanges();
+
+        const dismissIcon = fixture.debugElement.query(By.css('#dismiss-icon'));
+        expect(dismissIcon).toBeTruthy();
+
+        // No change detection afterwards on purpose: the click handlers run synchronously, and in the real page the parent
+        // destroys this editor in response to didSelect(undefined). Re-rendering it here instead would only exercise the
+        // test's own missing parent wiring.
+        dismissIcon.nativeElement.click();
+
+        expect(textBlockRef.feedback).toBeUndefined();
     });
 
     it('should not send assessment event when selecting text block that is unselectable', () => {

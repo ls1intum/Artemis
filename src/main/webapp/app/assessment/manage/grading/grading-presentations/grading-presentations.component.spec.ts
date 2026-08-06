@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -9,7 +8,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 
 describe('GradingPresentationsComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: GradingPresentationsComponent;
     let fixture: ComponentFixture<GradingPresentationsComponent>;
 

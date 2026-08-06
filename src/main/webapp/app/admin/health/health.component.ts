@@ -13,10 +13,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-
+import { TumUiButtonComponent, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 /**
  * Component for displaying system health status.
  * Shows health of various system components like database, mail, etc.
@@ -33,9 +30,9 @@ import { TooltipModule } from 'primeng/tooltip';
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         HealthModalComponent,
-        TagModule,
-        ButtonModule,
-        TooltipModule,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class HealthComponent implements OnInit, OnDestroy {
@@ -50,6 +47,8 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     /** Health modal visibility and data */
     showHealthModal = signal(false);
+    /** Drives the refresh button's loading spinner while a health check is in flight. */
+    readonly isRefreshing = signal(false);
     selectedHealth = signal<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
     /** Icons */
@@ -82,14 +81,17 @@ export class HealthComponent implements OnInit, OnDestroy {
      * Refreshes the health status by fetching from the server.
      */
     refresh(): void {
+        this.isRefreshing.set(true);
         this.healthService.checkHealth().subscribe({
             next: (health) => {
                 this.health.set(health);
+                this.isRefreshing.set(false);
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 503) {
                     this.health.set(error.error);
                 }
+                this.isRefreshing.set(false);
             },
         });
     }

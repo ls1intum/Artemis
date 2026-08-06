@@ -125,7 +125,7 @@
                                     (onDragOver)="preventDefault($event)"
                                     (onDragLeave)="preventDefault($event)"
                                     cdkDropList
-                                    [cdkDropListAutoScrollStep]="60"
+                                    [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                                 >
                                     @if (dragItemForDropLocation(dropLocation)) {
                                         <jhi-drag-item
@@ -135,6 +135,7 @@
                                             [clickDisabled]="clickDisabled()"
                                             [minWidth]="100 + '%'"
                                             [filePreviewPaths]="filePreviewPaths()"
+                                            [questionId]="dragAndDropQuestion().id"
                                         />
                                     }
                                 </div>
@@ -195,6 +196,7 @@
                                                 [clickDisabled]="true"
                                                 [minWidth]="100 + '%'"
                                                 [filePreviewPaths]="filePreviewPaths()"
+                                                [questionId]="dragAndDropQuestion().id"
                                             />
                                         }
                                         @if (!dragItemForDropLocation(dropLocation)) {
@@ -259,6 +261,7 @@
                                                 [clickDisabled]="true"
                                                 [minWidth]="100 + '%'"
                                                 [filePreviewPaths]="filePreviewPaths()"
+                                                [questionId]="dragAndDropQuestion().id"
                                             />
                                         }
                                         @if (!dropLocation || !correctDragItemForDropLocation(dropLocation)) {
@@ -292,7 +295,7 @@
                         (onDragOver)="preventDefault($event)"
                         (onDragLeave)="preventDefault($event)"
                         cdkDropList
-                        [cdkDropListAutoScrollStep]="60"
+                        [cdkDropListAutoScrollStep]="dragAutoScrollStep"
                     >
                         @for (dragItem of getUnassignedDragItems(); track dragItem; let i = $index) {
                             <jhi-drag-item
@@ -303,6 +306,7 @@
                                 [clickDisabled]="clickDisabled()"
                                 [minWidth]="'160'"
                                 [filePreviewPaths]="filePreviewPaths()"
+                                [questionId]="dragAndDropQuestion().id"
                             />
                         }
                     </div>

@@ -23,7 +23,6 @@ export class CourseManagementAPIRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param options An object containing the options for creating the course
-     *   - customizeGroups: whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      *   - courseName: the title of the course (will generate default name if not provided)
      *   - courseShortName: the short name (will generate default name if not provided)
      *   - start: the start date of the course (default: now() - 2 hours)
@@ -36,7 +35,6 @@ export class CourseManagementAPIRequests {
      */
     async createCourse(
         options: {
-            customizeGroups?: boolean;
             courseName?: string;
             courseShortName?: string;
             start?: dayjs.Dayjs;
@@ -48,7 +46,6 @@ export class CourseManagementAPIRequests {
         } = {},
     ): Promise<Course> {
         const {
-            customizeGroups = false,
             courseName = 'Course ' + generateUUID(),
             courseShortName = 'playwright' + generateUUID(),
             start = dayjs().subtract(2, 'hours'),
@@ -73,14 +70,6 @@ export class CourseManagementAPIRequests {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-        }
-
-        const allowGroupCustomization: boolean = process.env.ALLOW_GROUP_CUSTOMIZATION === 'true';
-        if (customizeGroups && allowGroupCustomization) {
-            course.studentGroupName = process.env.STUDENT_GROUP_NAME;
-            course.teachingAssistantGroupName = process.env.TUTOR_GROUP_NAME;
-            course.editorGroupName = process.env.EDITOR_GROUP_NAME;
-            course.instructorGroupName = process.env.INSTRUCTOR_GROUP_NAME;
         }
 
         const iconBuffer = await new Response(iconFile).arrayBuffer();
@@ -253,14 +242,16 @@ export class CourseManagementAPIRequests {
      * @param course - The course to which the competency belongs.
      * @param title - The title of the competency.
      * @param description - The description of the competency (optional).
+     * @param taxonomy - The Bloom's taxonomy level of the competency (optional).
      * @returns Promise with the created competency.
      */
-    async createCompetency(course: Course, title: string, description?: string) {
+    async createCompetency(course: Course, title: string, description?: string, taxonomy?: 'REMEMBER' | 'UNDERSTAND' | 'APPLY' | 'ANALYZE' | 'EVALUATE' | 'CREATE') {
         const data = {
             type: 'competency',
             title,
             description: description || `Description for ${title}`,
             masteryThreshold: 100,
+            taxonomy,
         };
         const response = await this.page.request.post(`api/atlas/courses/${course.id}/competencies`, { data });
         if (!response.ok()) {
@@ -268,6 +259,20 @@ export class CourseManagementAPIRequests {
             throw new Error(`Failed to create competency: ${response.status()} ${response.statusText()} - ${errorBody}`);
         }
         return response.json();
+    }
+
+    /**
+     * Deletes a competency from the specified course via API.
+     *
+     * @param course - The course to which the competency belongs.
+     * @param competencyId - The id of the competency to delete.
+     */
+    async deleteCompetency(course: Course, competencyId: number) {
+        const response = await this.page.request.delete(`api/atlas/courses/${course.id}/competencies/${competencyId}`);
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to delete competency: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
     }
 
     /**

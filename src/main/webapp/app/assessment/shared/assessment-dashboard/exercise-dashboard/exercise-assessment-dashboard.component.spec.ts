@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -70,9 +69,10 @@ import { LanguageTableCellComponent } from 'app/assessment/shared/assessment-das
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import dayjs from 'dayjs/esm';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ExerciseAssessmentDashboardComponent;
     let fixture: ComponentFixture<ExerciseAssessmentDashboardComponent>;
 
@@ -801,5 +801,155 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         };
         expect(comp.language(textSubmissionWithoutLanguage)).toBe(unkownLanguage);
         expect(comp.language(programmingSubmission)).toBe(unkownLanguage);
+    });
+
+    describe('assessment not possible yet', () => {
+        const exerciseWithRunningExam = {
+            ...modelingExercise,
+            latestExamEndDate: dayjs().add(1, 'hour'),
+            assessmentPossibleFrom: dayjs().add(1, 'hour'),
+        } as ModelingExercise;
+
+        it('should explain why assessment is not possible yet while the exam is still running', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toEqual({
+                translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`,
+                date: exerciseWithRunningExam.latestExamEndDate,
+                assessmentPossibleFrom: exerciseWithRunningExam.assessmentPossibleFrom,
+            });
+        });
+
+        it('should keep test runs assessable, because they happen before the exam starts', () => {
+            comp.exercise.set(exerciseWithRunningExam);
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+
+            comp.isTestRun.set(true);
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
+        });
+
+        it('should re-enable assessment once the moment it becomes possible has passed, without a page reload', () => {
+            vi.useFakeTimers();
+            try {
+                const assessmentPossibleFrom = dayjs().add(5, 'minutes');
+                exerciseServiceGetForTutorsStub.mockReturnValue(
+                    of(new HttpResponse({ body: { ...modelingExercise, latestExamEndDate: assessmentPossibleFrom, assessmentPossibleFrom } as ModelingExercise })),
+                );
+
+                comp.loadAll();
+                expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+                expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+
+                vi.advanceTimersByTime(5 * 60 * 1000 + 2000);
+
+                expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+                // the submissions that could not be fetched while assessment was blocked are fetched now
+                expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should not ask the server for submissions to assess while the exam is still running', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(modelingSubmissionStubWithoutAssessment).not.toHaveBeenCalled();
+        });
+
+        const notPossibleYetError = () =>
+            new HttpErrorResponse({
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: dayjs().add(1, 'hour').toISOString() } },
+            });
+
+        it('should not show a toast for the "assessment is not possible yet" error while the banner explains it', () => {
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => notPossibleYetError()));
+            modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeDefined();
+            expect(alertServiceSpy).not.toHaveBeenCalled();
+        });
+
+        it('should still explain the error in a toast when no banner is shown, e.g. when the browser clock runs ahead', () => {
+            // the banner is computed from the browser clock while the gate uses the server clock, so the two can
+            // disagree; without a toast the tutor would get no feedback at all
+            const alertService = TestBed.inject(AlertService);
+            const alertServiceSpy = vi.spyOn(alertService, 'error');
+            vi.spyOn(TestBed.inject(ArtemisDatePipe), 'transform').mockReturnValue('1 Aug 2026, 10:00');
+            modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => notPossibleYetError()));
+            modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            // the date the server sent, rendered in the browser's locale
+            expect(alertServiceSpy).toHaveBeenCalledWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, { date: '1 Aug 2026, 10:00' });
+        });
+
+        it('should render the explanation and make the assessment actions unreachable, also via the keyboard', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseWithRunningExam, headers: new HttpHeaders() })));
+
+            fixture.detectChanges();
+
+            const banner = fixture.nativeElement.querySelector('#assessment-not-possible-yet');
+            expect(banner).not.toBeNull();
+
+            const continueAssessment = fixture.nativeElement.querySelector('#continue-assessment');
+            expect(continueAssessment).not.toBeNull();
+            expect(continueAssessment.classList).toContain('disabled');
+            // the disabled class only stops mouse clicks, so the route must be gone and the link out of the tab order
+            expect(continueAssessment.getAttribute('href')).toBeNull();
+            expect(continueAssessment.getAttribute('aria-disabled')).toBe('true');
+            expect(continueAssessment.getAttribute('tabindex')).toBe('-1');
+        });
+
+        it('should not overflow the timer delay for an exam that is still more than 24 days away', () => {
+            vi.useFakeTimers();
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            try {
+                const assessmentPossibleFrom = dayjs().add(60, 'days');
+                exerciseServiceGetForTutorsStub.mockReturnValue(
+                    of(new HttpResponse({ body: { ...modelingExercise, latestExamEndDate: assessmentPossibleFrom, assessmentPossibleFrom } as ModelingExercise })),
+                );
+
+                comp.loadAll();
+
+                // a larger delay would overflow setTimeout's signed 32-bit delay and fire immediately, spinning the loop
+                const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
+                expect(delays).toContain(2_147_483_647);
+                expect(Math.max(...(delays as number[]))).toBeLessThanOrEqual(2_147_483_647);
+            } finally {
+                setTimeoutSpy.mockRestore();
+                vi.useRealTimers();
+            }
+        });
+
+        it('should offer no explanation once assessment is possible', () => {
+            exerciseServiceGetForTutorsStub.mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: { ...modelingExercise, latestExamEndDate: dayjs().subtract(1, 'hour'), assessmentPossibleFrom: dayjs().subtract(1, 'hour') } as ModelingExercise,
+                        headers: new HttpHeaders(),
+                    }),
+                ),
+            );
+
+            comp.loadAll();
+
+            expect(comp.assessmentNotPossibleYetReason()).toBeUndefined();
+            expect(comp.assessmentNotPossibleYetTooltip()).toBe('');
+            expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+        });
     });
 });

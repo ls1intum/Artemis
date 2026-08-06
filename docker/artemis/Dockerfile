@@ -22,7 +22,7 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25-jdk AS builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.3_9-jdk AS builder
 
 # python3/build-essential were previously installed defensively for npm deps that
 # trigger node-gyp; no current Artemis dep needs that. If a future dep does, the
@@ -39,6 +39,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # be present at install time (pnpm applies patches during resolution, not via a
 # postinstall hook like patch-package did).
 COPY patches patches/
+# pnpm resolves the `workspace:*` dependencies while installing, so every workspace member's
+# manifest has to exist by then. Manifests only: copying sources here would invalidate the cached
+# install layer on every package edit. A new member without its own COPY aborts the install.
+COPY packages/tum-ui/package.json packages/tum-ui/
 
 # One Gradle invocation does both the cache config and the pnpm install. The
 # BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
@@ -58,7 +62,7 @@ COPY . .
 #
 # `-Psbom` includes the server + client Software Bill of Materials inside the WAR.
 # This Dockerfile is the production image build path (used by the `docker-release`
-# job in .github/workflows/build.yml, which only fires on push to develop / main /
+# job in .github/workflows/ci-build.yml, which only fires on push to develop / main /
 # release/* / version tags and on release events). Always emitting the SBOM here
 # guarantees that deployed images expose the dependency inventory via
 # AdminSbomResource and the weekly vulnerability scan finds something to scan.
@@ -85,12 +89,15 @@ COPY ./build/libs/*.war Artemis.war
 #-----------------------------------------------------------------------------------------------------------------------
 # war file stage (decides whether an external .war file will be used or the Docker built .war file)
 #-----------------------------------------------------------------------------------------------------------------------
+# WAR_FILE_STAGE resolves to a build stage defined above (builder / external_builder), not an
+# external image, so there is no version tag to pin (DL3006 is a false positive here).
+# hadolint ignore=DL3006
 FROM ${WAR_FILE_STAGE} AS war_file
 
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:25-jdk AS runtime
+FROM docker.io/library/eclipse-temurin:25.0.3_9-jdk AS runtime
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -100,6 +107,9 @@ ARG GID=1337
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
+# Not pinning apt versions (DL3008): these are base-image system packages whose pinned versions age
+# out of the Debian repos and would break the image build over time.
+# hadolint ignore=DL3008
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
@@ -127,6 +137,10 @@ WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 
+# The directive list is a denylist: revisit it whenever Tailwind gains one. The same invariant is
+# asserted for the package stylesheet in packages/tum-ui/check-styles.mjs.
+# `jar` prefix-matches entry names, so every stylesheet arrives together with its .css.map, and that
+# map embeds the original source, directives and all. Only the .css files are scanned.
 RUN set -eu; \
   war_entries="$(jar tf Artemis.war)"; \
   if ! printf '%s\n' "$war_entries" | grep -qx 'WEB-INF/classes/static/index.html'; then \
@@ -136,13 +150,39 @@ RUN set -eu; \
   if ! printf '%s\n' "$war_entries" | grep -Eq '^WEB-INF/classes/static/main-.*\.js$'; then \
     echo "Artemis.war does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."; \
     exit 1; \
+  fi; \
+  stylesheets="$(printf '%s\n' "$war_entries" | grep -E '^WEB-INF/classes/static/[^/]+\.css$' || true)"; \
+  if [ -z "$stylesheets" ]; then \
+    echo "Artemis.war contains no WEB-INF/classes/static/*.css bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi; \
+  extracted="$(mktemp -d)"; \
+  printf '%s\n' "$stylesheets" | while read -r stylesheet; do jar xf Artemis.war -C "$extracted" "$stylesheet"; done; \
+  if [ "$(find "$extracted" -name '*.css' | wc -l)" -ne "$(printf '%s\n' "$stylesheets" | wc -l)" ]; then \
+    echo "Could not extract the stylesheet bundles from Artemis.war; the Tailwind check did not run."; \
+    rm -rf "$extracted"; \
+    exit 1; \
+  fi; \
+  uncompiled="$(find "$extracted" -name '*.css' -exec grep -hoE '@(tailwind|source|theme|plugin|custom-variant|utility|variant|apply|reference|config)[[:space:]("{]' {} + | sed 's/.$//' | sort -u | paste -sd' ' - || true)"; \
+  rm -rf "$extracted"; \
+  if [ -n "$uncompiled" ]; then \
+    echo "Artemis.war ships a client stylesheet that still contains Tailwind source directives: ${uncompiled}."; \
+    echo "The Tailwind PostCSS plugin did not transform it, so no utility class in the templates resolves to a rule and the application renders unstyled."; \
+    echo "Check that a PostCSS config at the repository root names the plugin and that the build which produced this WAR could read it; for an in-Docker build that means .dockerignore."; \
+    exit 1; \
   fi
 
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
 
-EXPOSE 8080
+EXPOSE 8080 5701 7921
+
+# Mirrors docker/artemis.yml's compose-level healthcheck so `docker run`/`docker ps` report
+# health even for anyone running the raw image directly, outside the provided compose files.
+# When run via compose, the service's own `healthcheck:` block there takes precedence over this.
+HEALTHCHECK --interval=1s --timeout=5s --start-period=600s --retries=3 \
+  CMD wget -q -t1 -T5 -O - http://localhost:8080/management/health/readiness | grep -xq '{"status":"UP"}' || exit 1
 
 # use exec format (square brackets) as otherwise the shell fromat will not forward signals
 CMD [ "java", \

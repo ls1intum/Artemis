@@ -4,16 +4,21 @@
         "types": ["node"],
         "allowJs": true,
         "outDir": "build/www/app",
-        "baseUrl": ".",
+        // Explicit rootDir: the spec compilation spans both src/test and src/main/webapp, whose common
+        // source directory is ./src. Without it (previously implied by the removed baseUrl), tsc cannot
+        // determine the emit layout for outDir and fails with TS5011.
+        "rootDir": ".",
         "paths": {
-            "@angular/*": ["node_modules/@angular/*"],
-            "app/*": ["src/main/webapp/app/*"],
-            "test/*": ["src/test/javascript/spec/*"]
+            "@angular/*": ["./node_modules/@angular/*"],
+            "@tumaet/ui-angular": ["./packages/tum-ui/dist"],
+            "app/*": ["./src/main/webapp/app/*"],
+            "test/*": ["./src/test/javascript/spec/*"],
+            "src/*": ["./src/*"]
         },
         "emitDecoratorMetadata": false,
         "isolatedModules": true
     },
     "files": ["src/test/javascript/spec/vitest-test-setup.ts"],
-    "include": ["src/test/javascript", "src/main/webapp/app/**/*.spec.ts"],
+    "include": ["src/test/javascript", "src/main/webapp/app/**/*.spec.ts", "packages/tum-ui/src/**/*.spec.ts"],
     "exclude": ["node_modules"]
 }

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -28,15 +27,13 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
-const answerCounter = { answer: answerOption1 } as AnswerCounter;
+const answerCounter = { answerId: answerOption1.id } as AnswerCounter;
 const questionStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
 const question = { id: 1, answerOptions: [answerOption1], quizQuestionStatistic: questionStatistic } as MultipleChoiceQuestion;
 const course = { id: 3 } as Course;
 let quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
 
 describe('QuizExercise Multiple Choice Question Statistic Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: MultipleChoiceQuestionStatisticComponent;
     let fixture: ComponentFixture<MultipleChoiceQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
@@ -202,6 +199,31 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 'test3',
                 'test4',
             ]);
+        });
+    });
+
+    describe('tooltip labels', () => {
+        function labelFor(item: { dataIndex: number; parsed: { y: number } }): string {
+            return (comp.chartOptions().plugins as any).tooltip.callbacks.label(item);
+        }
+
+        it('uses the participant-share tooltip for answer-option bars, including the last one while the solution is hidden', () => {
+            comp.showSolution = false;
+            // four answer-option counters, no appended correct-solutions bar in the default view
+            comp.data = [2, 1, 1, 1];
+
+            expect(labelFor({ dataIndex: 0, parsed: { y: 2 } })).toContain('tooltip.participantShare');
+            expect(labelFor({ dataIndex: 3, parsed: { y: 1 } })).toContain('tooltip.participantShare');
+            expect(labelFor({ dataIndex: 3, parsed: { y: 1 } })).not.toContain('tooltip.correctOverall');
+        });
+
+        it('uses the correct-overall tooltip only for the appended summary bar in the solution view', () => {
+            comp.showSolution = true;
+            // four answer options + the appended "correct solutions" summary bar
+            comp.data = [2, 1, 1, 1, 3];
+
+            expect(labelFor({ dataIndex: 4, parsed: { y: 3 } })).toContain('tooltip.correctOverall');
+            expect(labelFor({ dataIndex: 0, parsed: { y: 2 } })).toContain('tooltip.participantShare');
         });
     });
 });

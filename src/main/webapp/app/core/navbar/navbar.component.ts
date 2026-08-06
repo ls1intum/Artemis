@@ -393,7 +393,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
-        dashboard: 'artemisApp.courseOverview.menu.dashboard',
         competencies: 'artemisApp.courseOverview.menu.competencies',
         learning_path: 'artemisApp.courseOverview.menu.learningPath',
         lecture_unit: 'artemisApp.learningPath.breadcrumbs.lectureUnit',
@@ -845,6 +844,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
+
         const courseId = course?.id?.toString();
 
         const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
@@ -871,10 +872,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
+        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
+
         const courseId = course?.id?.toString();
-        const isAtLeastEditor = !!course?.isAtLeastEditor;
-        const isAtLeastInstructor = !!course?.isAtLeastInstructor;
-        const courseHasTutorialGroupConfiguration = !!course?.tutorialGroupsConfiguration;
+        const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
+        const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
+        const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
+
+        if (!isAtLeastTutorInCourse) return ['/course-management'];
 
         const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
         const routeMappings = [
@@ -886,7 +891,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
-            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups-checklist'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
         ];
 
         const matchedRoute = routeMappings.find((route) => {
@@ -897,12 +902,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return baseManagementPath;
         }
 
-        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
-        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
-        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
-        const targetIsTutorialsButUserNotAllowed = matchedRoute.urlParts.includes('tutorial-groups') && !isAtLeastInstructor && !courseHasTutorialGroupConfiguration;
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditorInCourse;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructorInCourse;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructorInCourse;
 
-        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed || targetIsTutorialsButUserNotAllowed) {
+        if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed) {
             return baseManagementPath;
         }
 

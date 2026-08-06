@@ -4,8 +4,7 @@ import { faPencil } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
+import { TumUiButtonDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
@@ -25,8 +24,8 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         RouterLink,
         FaIconComponent,
         RouterOutlet,
-        TagModule,
-        ButtonModule,
+        TumUiTagComponent,
+        TumUiButtonDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ProfilePictureComponent,

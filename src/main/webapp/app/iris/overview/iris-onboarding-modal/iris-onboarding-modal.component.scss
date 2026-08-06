@@ -7,6 +7,7 @@
     height: 100vh;
     z-index: 1050;
     pointer-events: none; // Allow clicks to pass through the container
+
     --onboarding-tooltip-enter-duration: 500ms;
     --onboarding-tooltip-enter-ease: cubic-bezier(0.2, 0.9, 0.2, 1);
     --onboarding-tooltip-enter-distance: 16px;
@@ -282,7 +283,6 @@
     width: 280px;
     pointer-events: auto; // Enable clicks on tooltips
     z-index: 1051;
-
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

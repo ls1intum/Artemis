@@ -27,14 +27,17 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "ootest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @BeforeEach
     @Override
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
-        if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "student42"));
+        if (userRepository.findOneByLogin(OTHER_PREFIX + "student42").isEmpty()) {
+            userRepository.save(UserFactory.generateActivatedUser(OTHER_PREFIX + "student42"));
         }
+        userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
     }
 
     @AfterEach
@@ -119,7 +122,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void shouldReturnBadRequestWhenStudentIsNotAllowedInCourse() throws Exception {
         request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
                 HttpStatus.FORBIDDEN);
@@ -230,7 +233,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void shouldReturnForbiddenWhenStudentIsNotInCourse() throws Exception {
         Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
 

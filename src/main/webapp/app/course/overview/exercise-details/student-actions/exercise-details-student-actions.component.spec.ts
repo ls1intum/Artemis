@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -38,10 +37,9 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ExerciseDetailsStudentActionsComponent;
     let fixture: ComponentFixture<ExerciseDetailsStudentActionsComponent>;
     let debugElement: DebugElement;
@@ -105,8 +103,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             ],
         })
             .overrideComponent(ExerciseDetailsStudentActionsComponent, {
-                remove: { imports: [CodeButtonComponent] },
-                add: { imports: [MockComponent(CodeButtonComponent)] },
+                remove: { imports: [CodeButtonComponent, RequestFeedbackButtonComponent] },
+                add: { imports: [MockComponent(CodeButtonComponent), MockComponent(RequestFeedbackButtonComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
@@ -320,6 +318,33 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.resumeProgrammingExercise(false);
 
         expect(comp.studentParticipations()).toEqual([activeParticipation, practiceParticipation]);
+    });
+
+    it('should pass the graded participation and any submitted submission to the programming feedback button', async () => {
+        const gradedParticipation = {
+            id: 7,
+            testRun: false,
+            initializationState: InitializationState.INITIALIZED,
+            repositoryUri: 'https://clone-me.git',
+            submissions: [{ submitted: true }, { submitted: false }],
+        } as ProgrammingExerciseStudentParticipation;
+        const exerciseData = {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            allowFeedbackRequests: true,
+            allowOfflineIde: true,
+            studentParticipations: [gradedParticipation],
+        } as ProgrammingExercise;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', exerciseData);
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const feedbackButton = debugElement.query(By.css('jhi-request-feedback-button'));
+        expect(feedbackButton).not.toBeNull();
+        expect(feedbackButton.componentInstance.isSubmitted).toBe(true);
+        expect(feedbackButton.componentInstance.participationId).toBe(gradedParticipation.id);
     });
 
     it('should show correct buttons in exam mode', async () => {

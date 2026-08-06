@@ -1,17 +1,19 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, model, output, signal, untracked } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { AutoCompleteCompleteEvent, AutoCompleteModule } from 'primeng/autocomplete';
-import { InputTextModule } from 'primeng/inputtext';
-import { RadioButtonModule } from 'primeng/radiobutton';
-
+import {
+    TumUiAutoCompleteComponent,
+    TumUiAutoCompleteSearchEvent,
+    TumUiButtonComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiRadioButtonComponent,
+} from '@tumaet/ui-angular';
 export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;
@@ -116,14 +118,36 @@ export enum FinishedBuildJobFilterKey {
  */
 @Component({
     selector: 'jhi-finished-builds-filter-modal',
-    imports: [ArtemisTranslatePipe, TranslateDirective, FormDateTimePickerComponent, FormsModule, ButtonModule, AutoCompleteModule, InputTextModule, RadioButtonModule],
+    imports: [
+        ArtemisTranslatePipe,
+        TranslateDirective,
+        FormDateTimePickerComponent,
+        FormsModule,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiInputDirective,
+        TumUiRadioButtonComponent,
+        TumUiAutoCompleteComponent,
+    ],
     templateUrl: './finished-builds-filter-modal.component.html',
     styleUrl: './finished-builds-filter-modal.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FinishedBuildsFilterModalComponent implements OnInit {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+export class FinishedBuildsFilterModalComponent {
+    /** Two-way visibility of the dialog, driven by the parent. */
+    readonly visible = model<boolean>(false);
+
+    /** The filter the parent currently applies; cloned into the local working copy whenever the dialog opens. */
+    readonly finishedBuildJobFilterInput = input<FinishedBuildJobFilter>();
+
+    /** Whether the build agent filter should be shown and editable */
+    readonly buildAgentFilterable = input(false);
+
+    /** List of finished build jobs used to extract unique build agent addresses */
+    readonly finishedBuildJobsInput = input<FinishedBuildJob[]>([]);
+
+    /** Emitted with the edited filter when the user applies the filter. */
+    readonly confirmed = output<FinishedBuildJobFilter>();
 
     /**
      * The filter configuration being edited in this modal.
@@ -131,7 +155,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
      * getter/setter property because the template uses deep two-way bindings ([(ngModel)]="finishedBuildJobFilter.prop")
      * that a bare signal cannot back. After deep mutations the reference is rebuilt via commitFinishedBuildJobFilter().
      */
-    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(undefined!);
+    private readonly finishedBuildJobFilterSignal = signal<FinishedBuildJobFilter>(new FinishedBuildJobFilter());
     get finishedBuildJobFilter(): FinishedBuildJobFilter {
         return this.finishedBuildJobFilterSignal();
     }
@@ -147,51 +171,49 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     }
 
     /** Available status values for the status filter dropdown */
-    buildStatusFilterValues?: string[];
+    readonly buildStatusFilterValues: string[] = Object.values(BuildJobStatusFilter);
 
     /** Suggestions shown in the build agent address autocomplete dropdown */
     readonly buildAgentAddressSuggestions = signal<string[]>([]);
 
-    /** List of finished build jobs used to extract unique build agent addresses */
-    finishedBuildJobs: FinishedBuildJob[] = [];
-
-    /** Whether the build agent filter should be shown and editable */
-    readonly buildAgentFilterable = signal(false);
-
-    /**
-     * Initializes the component, reading the inputs provided via the dialog configuration data.
-     */
-    ngOnInit() {
-        const data = this.dialogConfig?.data;
-        if (data?.finishedBuildJobFilter) {
-            // Clone the incoming filter so that edits made in the dialog are isolated from the parent until the user confirms.
-            // On cancel the parent keeps its original filter; on confirm the cloned (edited) filter is returned via dialogRef.close().
-            const source: FinishedBuildJobFilter = data.finishedBuildJobFilter;
-            this.finishedBuildJobFilter = Object.assign(new FinishedBuildJobFilter(source.buildAgentAddress), source, { appliedFilters: new Map(source.appliedFilters) });
-        } else {
-            this.finishedBuildJobFilter = new FinishedBuildJobFilter();
-        }
-        if (data?.buildAgentFilterable !== undefined) {
-            this.buildAgentFilterable.set(data.buildAgentFilterable);
-        }
-        if (data?.finishedBuildJobs) {
-            this.finishedBuildJobs = data.finishedBuildJobs;
-        }
-        this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
+    constructor() {
+        // The modal instance persists across opens (its host is always in the parent's DOM). Clone the incoming
+        // filter into the local working copy whenever the dialog opens, so edits made in the dialog are isolated
+        // from the parent until the user applies them (on cancel the parent keeps its original filter).
+        effect(() => {
+            if (this.visible()) {
+                untracked(() => {
+                    const source = this.finishedBuildJobFilterInput();
+                    if (source) {
+                        this.finishedBuildJobFilter = Object.assign(new FinishedBuildJobFilter(source.buildAgentAddress), source, {
+                            appliedFilters: new Map(source.appliedFilters),
+                        });
+                    } else {
+                        this.finishedBuildJobFilter = new FinishedBuildJobFilter();
+                    }
+                });
+            }
+        });
     }
 
     /**
      * Get all build agents' addresses from the finished build jobs.
      */
     get buildAgentAddresses(): string[] {
-        return Array.from(new Set(this.finishedBuildJobs.map((buildJob) => buildJob.buildAgentAddress ?? '').filter((address) => address !== '')));
+        return Array.from(
+            new Set(
+                this.finishedBuildJobsInput()
+                    .map((buildJob) => buildJob.buildAgentAddress ?? '')
+                    .filter((address) => address !== ''),
+            ),
+        );
     }
 
     /**
-     * Called by p-autoComplete on each keystroke/focus to populate the build agent address suggestions.
+     * Called by the autocomplete on each keystroke to populate the build agent address suggestions.
      * @param event the autocomplete complete event carrying the current query
      */
-    searchBuildAgentAddresses(event: AutoCompleteCompleteEvent): void {
+    searchBuildAgentAddresses(event: TumUiAutoCompleteSearchEvent): void {
         const term = event.query;
         const buildAgentAddresses = this.buildAgentAddresses;
         const filtered = (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10);
@@ -275,10 +297,11 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
      * Closes the modal without applying any filter changes.
      */
     cancel() {
-        this.dialogRef.close();
+        this.visible.set(false);
     }
 
     confirm() {
-        this.dialogRef.close(this.finishedBuildJobFilter);
+        this.confirmed.emit(this.finishedBuildJobFilter);
+        this.visible.set(false);
     }
 }

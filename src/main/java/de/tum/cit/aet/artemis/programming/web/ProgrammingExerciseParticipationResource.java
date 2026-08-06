@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -14,6 +15,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.CorruptObjectException;
+import org.eclipse.jgit.lib.ObjectChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +26,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +52,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -62,6 +66,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -81,6 +86,8 @@ public class ProgrammingExerciseParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private static final String ENTITY_NAME = "programmingExerciseParticipation";
+
+    private static final int MAX_SELECTED_FILE_PATHS = 100;
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
@@ -322,30 +329,21 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * For every student participation of a programming exercise, try to find a pending submission.
+     * For every student participation of a programming exercise, return its latest pending submission (if any).
      *
      * @param exerciseId for which to search pending submissions.
-     * @return a Map of {[participationId]: ProgrammingSubmission | null}. Will contain an entry for every student participation of the exercise and a submission object if a
-     *         pending submission exists or null if not.
+     * @return a list with one {@link PendingProgrammingSubmissionDTO} per student participation of the exercise; the
+     *         {@code submission} is populated if a pending submission exists and {@code null} otherwise.
      */
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<Long, Optional<Submission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<PendingProgrammingSubmissionDTO>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             throw new AccessForbiddenException("exercise", exerciseId);
         }
-        // TODO: use a different data structure than map here
-        Map<Long, Optional<Submission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
-        // Remove unnecessary data to make response smaller (exercise, student of participation).
-        pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-            Optional<Submission> submissionOpt = entry.getValue();
-            // Remove participation, is not needed in the response.
-            submissionOpt.ifPresent(submission -> submission.setParticipation(null));
-            return submissionOpt;
-        }));
-        return ResponseEntity.ok(pendingSubmissions);
+        return ResponseEntity.ok(submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId));
     }
 
     /**
@@ -504,7 +502,7 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         try {
-            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation));
+            return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(exercise, commitId, null, participation, null));
         }
         catch (IOException e) {
             log.error("Could not read files at commit {} for participation {}", commitId, participationId, e);
@@ -542,13 +540,13 @@ public class ProgrammingExerciseParticipationResource {
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
                 // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation));
+                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation, null));
             }
             else if (repositoryType != null) {
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
                 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
                 var participation = repositoryType == RepositoryType.TEMPLATE ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
-                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation));
+                return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null));
             }
             else {
                 throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
@@ -557,6 +555,54 @@ public class ProgrammingExerciseParticipationResource {
         catch (IOException e) {
             log.error("Could not read files at commit {} for exercise {}", commitId, exerciseId, e);
             throw new InternalServerErrorAlertException("Could not read files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
+        }
+    }
+
+    /**
+     * POST /programming-exercises/{exerciseId}/files-content-commit-details/selected : Get selected files at a commit for the commit details view.
+     *
+     * @param exerciseId      the id of the programming exercise
+     * @param commitId        the commit from which to retrieve the files
+     * @param participationId the id of the participation owning the repository
+     * @param filePaths       the repository-relative file paths to retrieve
+     * @return the requested text files that exist at the commit
+     */
+    @PostMapping("programming-exercises/{exerciseId}/files-content-commit-details/selected")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Map<String, String>> getSelectedParticipationRepositoryFilesAtCommit(@PathVariable long exerciseId, @RequestParam String commitId,
+            @RequestParam long participationId, @RequestBody Set<String> filePaths) {
+        if (filePaths != null && filePaths.size() > MAX_SELECTED_FILE_PATHS) {
+            throw new BadRequestAlertException("Too many selected file paths", ENTITY_NAME, "tooManySelectedFilePaths");
+        }
+
+        Set<String> validFilePaths = new HashSet<>();
+        if (filePaths != null) {
+            ObjectChecker objectChecker = new ObjectChecker();
+            for (String filePath : filePaths) {
+                if (filePath == null || filePath.isBlank() || filePath.length() > 1024) {
+                    continue;
+                }
+                try {
+                    objectChecker.checkPath(filePath);
+                    validFilePaths.add(filePath);
+                }
+                catch (CorruptObjectException ignored) {
+                    // AI-generated references can contain malformed paths. Skip only the invalid entry so other references in the batch still work.
+                }
+            }
+        }
+
+        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
+                ENTITY_NAME);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        try {
+            return ResponseEntity
+                    .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
+        }
+        catch (IOException e) {
+            log.error("Could not read selected files at commit {} for exercise {}", commitId, exerciseId, e);
+            throw new InternalServerErrorAlertException("Could not read selected files at commit " + commitId + " for exercise " + exerciseId, ENTITY_NAME, "fileReadError");
         }
     }
 
@@ -613,6 +659,11 @@ public class ProgrammingExerciseParticipationResource {
      * @return true if the results should be hidden, false otherwise
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
+        // Test-run results are never hidden: the conductor is the instructor who created the test run. The lookup below cannot resolve a test run either, because a test run has no
+        // regular (non-test-run) student exam.
+        if (participation.isTestRun()) {
+            return false;
+        }
         if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));

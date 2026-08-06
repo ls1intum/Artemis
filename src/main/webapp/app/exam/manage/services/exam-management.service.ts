@@ -516,8 +516,11 @@ export class ExamManagementService {
      * @param examId The exam id.
      * @param exerciseGroups List of exercise groups.
      */
-    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.put<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, exerciseGroups, { observe: 'response' });
+    updateOrder(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<void>> {
+        // Only the group ids in the desired order are sent. The server persists the order and returns no body — the
+        // caller already holds the fully-detailed groups in exactly this order.
+        const orderedGroupIds = exerciseGroups.map((group) => group.id!);
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exercise-groups-order`, orderedGroupIds, { observe: 'response' });
     }
 
     /**
@@ -561,6 +564,7 @@ export class ExamManagementService {
             moduleNumber: exam.moduleNumber,
             courseName: exam.courseName,
             exampleSolutionPublicationDate: convertDateFromClient(exam.exampleSolutionPublicationDate),
+            examSummaryPublicationDate: convertDateFromClient(exam.examSummaryPublicationDate),
             channelName: exam.channelName,
             courseId: courseId,
             exerciseGroups: exam.exerciseGroups?.map((group) => ({
@@ -599,6 +603,7 @@ export class ExamManagementService {
         exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
         exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
         exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+        exam.examSummaryPublicationDate = convertDateFromServer(exam.examSummaryPublicationDate);
 
         if (exam.course) {
             this.accountService.setAccessRightsForCourse(exam.course);
@@ -710,6 +715,7 @@ interface ExamImportDTO {
     moduleNumber?: string;
     courseName?: string;
     exampleSolutionPublicationDate?: string;
+    examSummaryPublicationDate?: string;
     channelName?: string;
     courseId: number;
     exerciseGroups?: ExerciseGroupImportDTO[];

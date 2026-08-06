@@ -54,7 +54,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
         modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         exerciseVersionService.createExerciseVersion(modelingExercise);
     }
@@ -118,7 +118,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportModelingExercise_createsExerciseVersion() throws Exception {
         // Arrange: Create target course
-        Course targetCourse = courseUtilService.addEmptyCourse();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // Get original version
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(modelingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.MODELING);

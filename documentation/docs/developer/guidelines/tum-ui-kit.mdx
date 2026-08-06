@@ -1,0 +1,168 @@
+---
+description: Architecture, integration, contribution, and testing rules for the TUM UI design system and component reference.
+---
+
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+
+# TUM UI package
+
+`@tumaet/ui-angular` is the reusable component package for the in-house TUM UI design system.
+Artemis production builds consume its compiled public entry point and stylesheet.
+
+<Callout variant={CalloutVariant.info}>
+    TUM UI is the target component system for Artemis. Bootstrap, ng-bootstrap, and PrimeNG are migration-only dependencies. Use an existing TUM UI component whenever it covers the
+    requirement. A new package contract needs a reusable design-system responsibility and a concrete Artemis consumer; adoption by another application is not an entry requirement.
+</Callout>
+
+Use the [TUM UI component reference](/developer/tum-ui-reference) to inspect
+supported states, controls, accessibility results, and APIs. This guide covers package architecture
+and contribution rules.
+
+## Ownership boundary
+
+Package code:
+
+- imports only its declared dependencies;
+- exposes supported contracts through `src/public-api.ts`;
+- uses package-owned translation keys and `--tumaet-ui-*` theme properties;
+- contains no Artemis routes, services, Artemis-owned theme properties or translation keys, or
+  request models.
+
+Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-ui-integration`. Artemis
+imports package symbols from `@tumaet/ui-angular`; deep imports and imports from the former
+in-application path are rejected by ESLint.
+
+The package is private. Removing `private: true` requires release ownership, a versioning policy,
+and compatibility testing against supported consumers.
+
+## Adding or changing a component
+
+Follow the [component decision order](/developer/guidelines/client-development#ui-components). A
+new package API needs a reusable design-system responsibility and a concrete Artemis consumer;
+generic-looking application policy is not sufficient. Keep feature translations, requests, routes,
+authorization, and domain models in Artemis. Build reusable behavior on native HTML or stable
+Angular CDK primitives, and state intentionally unsupported behavior in the pull request.
+
+Package components use standalone declarations, signal APIs, `ChangeDetectionStrategy.OnPush`,
+native input coercion, and semantic Tailwind utilities. Prefer stable native controls and CDK
+behavior over custom keyboard, focus, overlay, or selection machinery.
+
+Tests should assert public behavior: accessible role and name, keyboard interaction, focus changes,
+disabled behavior, emitted values, and forms integration. Avoid tests that restate implementation
+details or static class maps.
+
+### Stories
+
+Colocate each top-level consumer story with its component or directive. Document supporting pieces
+of a composite API, such as tab panels or sortable columns, as subcomponents of that story. Use the
+package's [CSF3 format](https://storybook.js.org/docs/api/csf) with `Meta`, `StoryObj`, and
+TypeScript's `satisfies` operator. Type component stories with the component or explicit story args.
+Keep configuration in `packages/tum-ui/.storybook`; do not add root Storybook configuration or
+import Artemis into a story.
+
+Prefer an args-driven default story and only the additional states that expose a meaningful visual
+or behavioral contract. Let Storybook render the component directly when inputs and outputs are
+enough. Use an Angular template only when the public contract requires projection, a directive host,
+forms, a `TemplateRef`, or compound components. Use args for initial state and Controls. Keep
+interaction state in Angular bindings when a transition depends on preserving the rendered element;
+updating Storybook args rerenders an inline AutoDocs story.
+
+Stories should provide the minimum realistic context needed to understand the contract. A
+presentation wrapper may arrange an example but must not repair or restyle the component. Expose
+meaningful serializable controls; keep callbacks, templates, and framework objects read-only.
+Source JSDoc is the canonical description for non-obvious inputs and outputs. Test compact, narrow,
+dark, reduced-motion, or right-to-left conditions only when they affect the contract.
+
+Add a `play` function for browser-only behavior such as focus, keyboard navigation, overlays, or
+dismissal. Hide a tested story from the sidebar and AutoDocs only when the interaction is valuable
+but its final state is not a useful reference; do not create hidden duplicates of unit tests. Query
+by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
+or disable accessibility rules to make a story pass.
+
+## Consuming the package
+
+Import only from the package root:
+
+```ts
+import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+```
+
+Storybook AutoDocs derives the component API from those declarations and their source JSDoc.
+Document non-obvious public behavior beside the declaration; do not maintain separate input and
+output tables.
+
+Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
+tests consume `packages/tum-ui/dist`; their root commands build the package first. Development serve
+mode maps the package entry point to its source so changes participate in Angular's normal watch and
+reload cycle.
+
+### Theme contract
+
+The [package README](https://github.com/ls1intum/Artemis/blob/develop/packages/tum-ui/README.md)
+documents stylesheet loading, token semantics, dark mode, and host styling.
+
+The package build emits and validates `styles.css` as its only global stylesheet. Consumers do not
+compile package sources or need Tailwind. The stylesheet includes complete light and dark defaults
+in a low-priority cascade layer, so unlayered host declarations can override intentional semantic
+roles without duplicating the complete contract.
+
+Artemis loads the package stylesheet after application styles. It inherits the package's type
+scale, spacing, shape, elevation, and surface hierarchy while its unlayered Tailwind stylesheet
+overrides the Artemis font family, brand, application surfaces, and status roles.
+Artemis does not import the package's internal Tailwind build theme, so its unprefixed utilities
+remain owned by the Artemis Tailwind configuration. Artemis sets `data-theme="dark"` on the
+document element when dark mode is active and advertises the corresponding CSS `color-scheme` so
+browser-owned controls use the same light or dark appearance.
+
+Treat package token names and the fixed responsive thresholds at 40rem, 48rem, 64rem, 80rem, and
+96rem as public styling contracts. Add a token only when a host needs a supported customization
+axis; do not expose Tailwind's full primitive theme.
+
+Apply application layout classes directly to the component host with the native `class` attribute.
+Do not add `styleClass`-style compatibility inputs or expose internal element classes. Add a
+semantic input or theme token only when the customization is a supported component contract.
+
+### Translation contract
+
+Package-owned text uses `tumUi.*` keys and has English defaults. A host can implement
+`TumUiTranslator` and register it once:
+
+```ts
+providers: [provideTumUiTranslator(ApplicationTranslator)];
+```
+
+The adapter's `translationChanges` signal invalidates translated views, and its `locale` signal
+controls locale-sensitive formatting. Artemis registers `provideArtemisTumUiTranslator()` in
+`app.config.ts`; its key mapping belongs in `app/shared-ui/tum-ui-integration`, not in the package.
+
+## Local workflow
+
+Run focused commands while developing:
+
+| Command                                         | Purpose                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------- |
+| `pnpm run tum-ui:test`                          | Run package unit tests with Angular's Vitest runner                       |
+| `pnpm run tum-ui:test:coverage`                 | Run package specs with the CI coverage thresholds                         |
+| `pnpm run tum-ui:pack:check`                    | Build and validate an isolated artifact with publint and AreTheTypesWrong |
+| `pnpm run tum-ui:source:check`                  | Build Artemis against the package source entry point                      |
+| `pnpm --dir packages/tum-ui run storybook`      | Build package styles and start its isolated Storybook                     |
+| `pnpm --dir packages/tum-ui run storybook:test` | Run stories and accessibility checks in Chromium                          |
+| `pnpm run docs:test`                            | Build the combined documentation and test its navigation and themes       |
+
+Before submitting a package change, run the complete validation from the repository root:
+
+```bash
+pnpm run tum-ui:validate
+```
+
+`pnpm start` and the shared IntelliJ client configuration first build `packages/tum-ui/dist` for
+editor resolution, then serve package sources. Restart the client after changing the package
+manifest or build configuration. Production builds consume `packages/tum-ui/dist`; package
+validation writes to `packages/tum-ui/dist-pack`.
+
+The workspace catalog pins the exact versions installed and supported by this private package.
+Package and peer dependencies match those versions; `pnpm run test:rules` prevents drift. Widen a
+peer range only after another application provides a concrete compatibility target and CI verifies
+it. The same rule verifies that development and production package configurations remain equivalent
+apart from incremental-output cleanup.

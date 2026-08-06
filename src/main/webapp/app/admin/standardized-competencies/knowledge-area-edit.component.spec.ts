@@ -4,28 +4,21 @@
  * validation, save, cancel, and circular dependency prevention.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { MessageModule } from 'primeng/message';
-
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 describe('KnowledgeAreaEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
     let component: KnowledgeAreaEditComponent;
 
@@ -62,15 +55,16 @@ describe('KnowledgeAreaEditComponent', () => {
                     ReactiveFormsModule,
                     FaIconComponent,
                     MockComponent(ButtonComponent),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockDirective(MarkdownDirective),
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),
-                    MockModule(ButtonModule),
-                    MockModule(InputTextModule),
-                    MockModule(SelectModule),
-                    MockModule(MessageModule),
+                    MockComponent(TumUiButtonComponent),
+                    MockComponent(TumUiButtonDirective),
+                    MockDirective(TumUiInputDirective),
+                    MockComponent(TumUiSelectComponent),
+                    MockComponent(TumUiMessageComponent),
                 ],
             },
         });

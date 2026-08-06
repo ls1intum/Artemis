@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -16,10 +15,14 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 /**
  * Test suite for TextAssessment Service.
@@ -27,7 +30,6 @@ import { NewStudentParticipationResolver, StudentParticipationResolver } from 'a
  * feedback data retrieval, and student participation resolvers.
  */
 describe('TextAssessment Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TextAssessmentService;
     let httpMock: HttpTestingController;
     const textSubmission = new TextSubmission();
@@ -73,7 +75,12 @@ describe('TextAssessment Service', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
         service = TestBed.inject(TextAssessmentService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -301,6 +308,44 @@ describe('TextAssessment Service', () => {
 
         expect(studentParticipationSpy).toHaveBeenCalledOnce();
         expect(studentParticipationSpy).toHaveBeenCalledWith(2, undefined, 1);
+    });
+
+    it.each([
+        [
+            'NewStudentParticipationResolver',
+            () => TestBed.inject(NewStudentParticipationResolver),
+            () => vi.spyOn(TestBed.inject(TextSubmissionService), 'getSubmissionWithoutAssessment'),
+        ],
+        ['StudentParticipationResolver', () => TestBed.inject(StudentParticipationResolver), () => vi.spyOn(service, 'getFeedbackDataForExerciseSubmission')],
+    ])('should hand the "assessment is not possible yet" reason to the assessment page instead of swallowing it (%s)', async (_name, injectResolver, spyOnLoad) => {
+        // Without the reason the page cannot tell an empty exercise apart from a still-running exam and would claim
+        // that the submission was not found, contradicting the explanation the server sent.
+        const error = new HttpErrorResponse({
+            status: 403,
+            error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+        });
+        spyOnLoad().mockReturnValue(throwError(() => error));
+        const snapshot = {
+            paramMap: convertToParamMap({ exerciseId: 1, submissionId: 2 }),
+            queryParamMap: convertToParamMap({ 'correction-round': 0 }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        const routeData = await firstValueFrom(injectResolver().resolve(snapshot));
+
+        expect(routeData.participation).toBeUndefined();
+        expect(routeData.assessmentNotPossibleYet).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+    });
+
+    it('should not report any reason for an ordinary load failure', async () => {
+        vi.spyOn(service, 'getFeedbackDataForExerciseSubmission').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+        const snapshot = {
+            paramMap: convertToParamMap({ submissionId: 2 }),
+            queryParamMap: convertToParamMap({ 'correction-round': 0 }),
+        } as unknown as ActivatedRouteSnapshot;
+
+        const routeData = await firstValueFrom(TestBed.inject(StudentParticipationResolver).resolve(snapshot));
+
+        expect(routeData).toEqual({ assessmentNotPossibleYet: undefined });
     });
 
     afterEach(() => {

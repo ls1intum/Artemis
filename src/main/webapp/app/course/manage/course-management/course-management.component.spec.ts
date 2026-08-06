@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -24,8 +23,6 @@ import { MockProvider } from 'ng-mocks';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 
 describe('CourseManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseManagementComponent>;
     let component: CourseManagementComponent;
     let service: CourseManagementService;

@@ -37,12 +37,13 @@ public class FileUploadImportApi extends AbstractFileModuleApi {
         return fileUploadExerciseRepository.findWithGradingCriteriaByIdElseThrow(exerciseId);
     }
 
-    public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
-        return fileUploadExerciseImportService.importFileUploadExercise(templateExercise, importedExercise);
+    public FileUploadExercise importFileUploadExercise(final FileUploadExercise newExercise, FileUploadExercise sourceExercise) {
+        return fileUploadExerciseImportService.importFileUploadExercise(newExercise, sourceExercise);
     }
 
-    public Optional<FileUploadExercise> importFileUploadExercise(final long exerciseToCopyId, final FileUploadExercise importedExercise) {
-        final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopyId);
-        return optionalFileUploadExercise.map(templateExercise -> fileUploadExerciseImportService.importFileUploadExercise(templateExercise, importedExercise));
+    public Optional<FileUploadExercise> importFileUploadExercise(final long sourceExerciseId, final FileUploadExercise newExercise) {
+        final Optional<FileUploadExercise> optionalSourceExercise = fileUploadExerciseRepository
+                .findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(sourceExerciseId);
+        return optionalSourceExercise.map(sourceExercise -> fileUploadExerciseImportService.importFileUploadExercise(newExercise, sourceExercise));
     }
 }

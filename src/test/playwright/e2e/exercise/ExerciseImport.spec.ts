@@ -8,7 +8,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../support/users';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, readResponseJson } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
@@ -49,7 +49,7 @@ test.describe('Import exercises', () => {
             await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
 
             const importResponse = await textExerciseCreation.import();
-            const exercise = await importResponse.json();
+            const exercise = await readResponseJson(importResponse);
             await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
             await courseOverview.startExercise(exercise.id!);
             const submissionText = await Fixtures.get('loremIpsum-short.txt');
@@ -59,7 +59,7 @@ test.describe('Import exercises', () => {
             await textExerciseEditor.shouldShowNumberOfWords(16);
             await textExerciseEditor.shouldShowNumberOfCharacters(83);
             const submissionResponse = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
-            const submission: TextSubmission = await submissionResponse.json();
+            const submission: TextSubmission = await readResponseJson(submissionResponse);
             expect(submission.text).toBe(submissionText);
             expect(submission.submitted).toBe(true);
             expect(submissionResponse.status()).toBe(200);
@@ -80,13 +80,13 @@ test.describe('Import exercises', () => {
                 await quizExerciseCreation.setReleaseDate(dayjs());
 
                 const importResponse = await quizExerciseCreation.import();
-                const exercise: QuizExercise = await importResponse.json();
+                const exercise: QuizExercise = await readResponseJson(importResponse);
                 await courseManagementExercises.startQuiz(exercise.id!);
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
                 await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
                 const submitResponse = await quizExerciseMultipleChoice.submit();
-                const submission: QuizSubmission = await submitResponse.json();
+                const submission: QuizSubmission = await readResponseJson(submitResponse);
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
             },
@@ -122,7 +122,7 @@ test.describe('Import exercises', () => {
                 await quizExerciseCreation.setReleaseDate(dayjs());
 
                 const importResponse = await quizExerciseCreation.import();
-                const exercise: QuizExercise = await importResponse.json();
+                const exercise: QuizExercise = await readResponseJson(importResponse);
                 const questionId = exercise.quizQuestions![0].id!;
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await quizExerciseParticipation.startIndividualQuizBatch();
@@ -134,7 +134,7 @@ test.describe('Import exercises', () => {
                 await quizExerciseShortAnswerQuiz.typeAnswer(3, 1, questionId, 'cry');
                 await quizExerciseShortAnswerQuiz.typeAnswer(4, 1, questionId, 'goodbye');
                 const submitResponse = await quizExerciseShortAnswerQuiz.submit();
-                const submission: QuizSubmission = await submitResponse.json();
+                const submission: QuizSubmission = await readResponseJson(submitResponse);
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
 
@@ -164,14 +164,14 @@ test.describe('Import exercises', () => {
                 await modelingExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
 
                 const importResponse = await modelingExerciseCreation.import();
-                const exercise: ModelingExercise = await importResponse.json();
+                const exercise: ModelingExercise = await readResponseJson(importResponse);
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await courseOverview.startExercise(exercise.id!);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 1);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 2);
                 await modelingExerciseEditor.addComponentToModel(exercise.id!, 3);
                 const submitResponse = await courseOverview.submitExercise('api/modeling/exercises/*/modeling-submissions');
-                const submission: ModelingSubmission = await submitResponse.json();
+                const submission: ModelingSubmission = await readResponseJson(submitResponse);
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
             },
@@ -201,7 +201,7 @@ test.describe('Import exercises', () => {
 
             const importResponse = await programmingExerciseCreation.import();
             expect(importResponse.status()).toBe(200);
-            const exercise: ProgrammingExercise = await importResponse.json();
+            const exercise: ProgrammingExercise = await readResponseJson(importResponse);
             expect(exercise.id).toBeDefined();
             expect(exercise.title).toBe('Import Test ' + uuid);
             // Student participation is tested by ProgrammingExerciseParticipation tests

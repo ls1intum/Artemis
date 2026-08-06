@@ -13,7 +13,9 @@
             "edit": "Edit",
             "copy": "Copy",
             "copied": "Copied",
-            "new": "New"
+            "new": "New",
+            "expand": "Expand",
+            "collapse": "Collapse"
         },
         "weekdays": {
             "monday": "Monday",
@@ -38,6 +40,7 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",
             "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
             "searching": "Searching...",
@@ -178,6 +181,7 @@
                 "sessions": "Sessions",
                 "login": "Sign in",
                 "loginWithPasskey": "Sign in with a passkey",
+                "loginWithOidc": "Sign in with University Account",
                 "logout": "Sign out",
                 "register": "Register"
             },
@@ -325,7 +329,32 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items",
+        "paginator": {
+            "ariaLabel": "Pagination",
+            "first": "First page",
+            "previous": "Previous page",
+            "next": "Next page",
+            "last": "Last page",
+            "rowsPerPage": "Rows per page"
+        },
+        "datePicker": {
+            "placeholder": "DD.MM.YYYY HH:mm",
+            "open": "Open calendar",
+            "dialog": "Choose date and time",
+            "previousMonth": "Previous month: {{ month }}",
+            "nextMonth": "Next month: {{ month }}",
+            "clear": "Clear",
+            "done": "Done",
+            "time": "Time",
+            "hour": "Hour",
+            "minute": "Minute",
+            "incrementHour": "Increment hour",
+            "decrementHour": "Decrement hour",
+            "incrementMinute": "Increment minute",
+            "decrementMinute": "Decrement minute",
+            "invalid": "Please enter a valid date and time."
+        }
     },
     "entity": {
         "actions": "Actions",
@@ -337,6 +366,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "clear": "Clear",
             "continue": "Continue",
             "units": "Content",
             "dashboard": "Dashboard",
@@ -493,7 +523,6 @@
         "competencies": "Competencies",
         "learningPath": "Learning Path",
         "tutorialGroups": "Tutorial Groups",
-        "dashboard": "Dashboard",
         "iris": "Iris",
         "exercise": "Exercise details",
         "exercises": "Exercises",

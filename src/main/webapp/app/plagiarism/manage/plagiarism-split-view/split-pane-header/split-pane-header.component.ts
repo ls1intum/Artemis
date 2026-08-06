@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, input, output, signal, untracked } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
@@ -22,7 +22,7 @@ export type FileWithHasMatch = {
     styleUrls: ['./split-pane-header.component.scss'],
     imports: [NgbDropdown, NgClass, FaIconComponent, NgbDropdownItem, TranslateDirective, ArtemisTranslatePipe],
 })
-export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
+export class SplitPaneHeaderComponent implements OnInit, OnDestroy {
     readonly files = input<FileWithHasMatch[]>([]);
     readonly studentLogin = input.required<string>();
     fileSelectedSubject = input<Subject<PlagiarismFileElement>>();
@@ -42,6 +42,20 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     // Icons
     faChevronDown = faChevronDown;
     readonly hoveredFileIndex = signal<number>(undefined!);
+
+    constructor() {
+        // Replaces ngOnChanges: whenever the file list changes, reset the active index and auto-select the first
+        // file. The reset/emit run untracked so only files() retriggers the effect.
+        effect(() => {
+            const files = this.files();
+            untracked(() => {
+                this.activeFileIndex = 0;
+                if (this.hasFiles()) {
+                    this.selectFile.emit(files[0].file);
+                }
+            });
+        });
+    }
 
     ngOnInit(): void {
         this.subscribeToFileSelection();
@@ -99,18 +113,6 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         const index = this.files()[idx]?.file === file.file ? idx : this.getIndexOf(file);
 
         this.hoveredFileIndex.set(index >= 0 ? index : -1);
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.files) {
-            const fileWithHasMatch: FileWithHasMatch[] = changes.files.currentValue;
-
-            this.activeFileIndex = 0;
-
-            if (this.hasFiles()) {
-                this.selectFile.emit(fileWithHasMatch[0].file);
-            }
-        }
     }
 
     ngOnDestroy(): void {

@@ -10,9 +10,12 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
@@ -40,9 +43,6 @@ public record CourseUpdateDTO(
         // Basic info
         @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
 
-        // Group names
-        String studentGroupName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName,
-
         // Dates
         ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
 
@@ -58,8 +58,17 @@ public record CourseUpdateDTO(
         String courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean learningPathsEnabled, @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer presentationScore,
+        @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores, boolean restrictedAthenaModulesAccess,
+        String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+
+        // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained).
+        // Boxed so an omitted value fails safe to grade-relevant (the longer retention), not to earlier deletion.
+        Boolean gradeRelevant,
+
+        // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course.
+        // Boxed so an omitted value fails safe to keeping an existing hold rather than silently lifting it.
+        Boolean dataRetentionHold) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -76,12 +85,6 @@ public record CourseUpdateDTO(
         course.setShortName(shortName);
         course.setDescription(description);
         course.setSemester(semester);
-
-        // Group names
-        course.setStudentGroupName(studentGroupName);
-        course.setTeachingAssistantGroupName(teachingAssistantGroupName);
-        course.setEditorGroupName(editorGroupName);
-        course.setInstructorGroupName(instructorGroupName);
 
         // Dates
         course.setStartDate(startDate);
@@ -114,7 +117,6 @@ public record CourseUpdateDTO(
 
         // Course features
         course.setLearningPathsEnabled(learningPathsEnabled);
-        course.setStudentCourseAnalyticsDashboardEnabled(studentCourseAnalyticsDashboardEnabled);
         course.setPresentationScore(presentationScore);
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
@@ -127,6 +129,20 @@ public record CourseUpdateDTO(
             course.setOnboardingDone(true);
         }
 
+        // Data-privacy / retention: update the grade-relevance flag on the course's configuration, creating it if absent.
+        // The course must be loaded with its (lazy) configuration for this to update in place instead of creating a duplicate.
+        CourseConfiguration configuration = course.getCourseConfiguration();
+        if (configuration == null) {
+            configuration = new CourseConfiguration();
+            configuration.setCourse(course);
+            course.setCourseConfiguration(configuration);
+        }
+        // Fail safe to grade-relevant (longer retention) when the client omits the flag.
+        configuration.setGradeRelevant(gradeRelevant == null || gradeRelevant);
+        // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
+        // the cleanup again.
+        configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+
         return course;
     }
 
@@ -137,14 +153,13 @@ public record CourseUpdateDTO(
      * @return a new CourseUpdateDTO with values from the course
      */
     public static CourseUpdateDTO of(Course course) {
-        return new CourseUpdateDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStudentGroupName(),
-                course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
-                course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.isOnlineCourse(),
-                course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(), course.getCourseIcon(),
-                course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
-                course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
+        return new CourseUpdateDTO(course.getId(), course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(),
+                course.getEndDate(), course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(),
+                course.isOnlineCourse(), course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(),
+                course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(),
+                course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
+                course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
                 course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone());
+                course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold());
     }
 }

@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { RadioButtonModule } from 'primeng/radiobutton';
+import { TumUiButtonDirective, TumUiDialogComponent, TumUiRadioButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -20,43 +18,41 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
  * - Loading state during submission
  * - Success/error feedback via alerts
  *
- * This component uses PrimeNG Dialog and is controlled via the open() method.
+ * This component uses the tum-ui dialog and is controlled via the open() method.
  * The parent component should use viewChild() to get a reference and call open().
  */
 @Component({
     selector: 'jhi-admin-data-export-create-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
-        <p-dialog
+        <tum-ui-dialog
             [header]="'artemisApp.dataExport.admin.createExport' | artemisTranslate"
-            [modal]="true"
             [visible]="visible()"
             (visibleChange)="visible.set($event)"
             [closable]="true"
-            [style]="{ width: '500px' }"
-            appendTo="body"
+            size="small"
         >
             <div class="mb-3">
                 <jhi-type-ahead-user-search-field [(loginOrName)]="selectedUserLogin" />
             </div>
             <div class="mb-3">
                 <div class="flex items-center gap-2">
-                    <p-radiobutton inputId="executeScheduled" name="executeOption" [value]="false" [(ngModel)]="executeNow" data-testid="schedule-radio" />
+                    <tum-ui-radio-button inputId="executeScheduled" name="executeOption" [value]="false" [(ngModel)]="executeNow" data-testid="schedule-radio" />
                     <label for="executeScheduled" jhiTranslate="artemisApp.dataExport.admin.schedule"></label>
                 </div>
                 <small class="text-muted-color" jhiTranslate="artemisApp.dataExport.admin.scheduleDescription"></small>
             </div>
             <div class="mb-3">
                 <div class="flex items-center gap-2">
-                    <p-radiobutton inputId="executeNow" name="executeOption" [value]="true" [(ngModel)]="executeNow" data-testid="execute-now-radio" />
+                    <tum-ui-radio-button inputId="executeNow" name="executeOption" [value]="true" [(ngModel)]="executeNow" data-testid="execute-now-radio" />
                     <label for="executeNow" jhiTranslate="artemisApp.dataExport.admin.executeNow"></label>
                 </div>
                 <small class="text-muted-color" jhiTranslate="artemisApp.dataExport.admin.executeNowDescription"></small>
             </div>
-            <ng-template pTemplate="footer">
+            <ng-template #footer>
                 <div class="flex justify-end gap-2">
-                    <button pButton size="small" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
-                    <button pButton size="small" [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">
+                    <button tumUiButton size="small" severity="secondary" (click)="cancel()" jhiTranslate="entity.action.cancel" data-testid="cancel-btn"></button>
+                    <button tumUiButton size="small" [disabled]="!selectedUserLogin() || isSubmitting()" (click)="submit()" data-testid="submit-btn">
                         @if (isSubmitting()) {
                             <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
                         }
@@ -64,9 +60,18 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                     </button>
                 </div>
             </ng-template>
-        </p-dialog>
+        </tum-ui-dialog>
     `,
-    imports: [DialogModule, ButtonModule, RadioButtonModule, TranslateDirective, FormsModule, FaIconComponent, TypeAheadUserSearchFieldComponent, ArtemisTranslatePipe],
+    imports: [
+        TumUiDialogComponent,
+        TumUiButtonDirective,
+        TumUiRadioButtonComponent,
+        TranslateDirective,
+        FormsModule,
+        FaIconComponent,
+        TypeAheadUserSearchFieldComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class AdminDataExportCreateModalComponent {
     private readonly adminDataExportsService = inject(AdminDataExportsService);

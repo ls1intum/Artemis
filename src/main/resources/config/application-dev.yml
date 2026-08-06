@@ -129,6 +129,11 @@ theia:
             C: "c-latest"
 
 artemis:
+    audit-events:
+        # The audit table is pruned on two schedules: the login record is high-volume and short-lived, while deliberate
+        # actions on courses, exercises, exams and accounts may still be needed years later (e.g. an exam dispute).
+        general-retention-period: 365 # Days before login/logout audit events are deleted (one year).
+        application-retention-period: 1825 # Days before all other audit events are deleted (five years).
     push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     # Telemetry service: disabled for development
     telemetry:
@@ -157,9 +162,10 @@ artemis:
         # The Weaviate server must have API key authentication enabled (see docker/weaviate/*.env).
         # api-key: admin-key                                         # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
         # The following properties are only required when using vectorizer-module: text2vec-openai
-        # open-ai-embedding-model: qwen3-embedding:8b                # Embedding model name served by the OpenAI-compatible API
-        # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://gpu.aet.cit.tum.de/ for the GPU server
-        # gpu-api-key: yourApiKey                                    # API key for GPU server (use any non-empty value for Ollama)
+        # See docs: admin/global-search-weaviate
+        # open-ai-embedding-model: your-embedding-model              # Embedding model name served by the OpenAI-compatible API
+        # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://your-openai-compatible-endpoint for a remote GPU server
+        # gpu-api-key: yourApiKey                                    # API key for the remote server (use any non-empty value for Ollama)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:

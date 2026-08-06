@@ -21,7 +21,6 @@ import { MockProvider } from 'ng-mocks';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
  * Test component that simulates an exercise creation form
@@ -83,7 +82,6 @@ class TestExerciseFormComponent {
  * 6. Saves the exercise
  */
 describe('Exercise Creation with Competency Suggestions - E2E', () => {
-    setupTestBed({ zoneless: true });
     let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
     let fixture: ComponentFixture<TestExerciseFormComponent>;
     let component: TestExerciseFormComponent;

@@ -36,9 +36,11 @@
 
         <div class="course-notification-overview-category-wrap pb-1">
             @for (category of courseCategories(); track category) {
-                <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
-                    <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
-                </div>
+                @if (isCategoryVisible(category)) {
+                    <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
+                        <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
+                    </div>
+                }
             }
             <button
                 id="mark-all-as-read-button"
@@ -63,6 +65,7 @@
                                         [isUnseen]="notification.status === CourseNotificationViewingStatus.UNSEEN"
                                         [isShowClose]="true"
                                         [isRedirectToUrl]="true"
+                                        [fluid]="true"
                                         (onCloseClicked)="closeClicked(notification)"
                                     />
                                 </div>

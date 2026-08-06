@@ -1,8 +1,8 @@
-@if (quizExercise) {
+@if (quizExercise()) {
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
-            @if (quizExercise.title !== question.title) {
-                <h3>{{ quizExercise.title }}</h3>
+            @if (quizExercise().title !== question.title) {
+                <h3>{{ quizExercise().title }}</h3>
             }
             <div class="row">
                 @if (question) {
@@ -115,7 +115,12 @@
                                                         </div>
                                                     }
                                                     @if (correctDragItemForDropLocation(dropLocation)) {
-                                                        <jhi-drag-item [dragItem]="correctDragItemForDropLocation(dropLocation)!" [clickDisabled]="true" [minWidth]="'100%'" />
+                                                        <jhi-drag-item
+                                                            [dragItem]="correctDragItemForDropLocation(dropLocation)!"
+                                                            [clickDisabled]="true"
+                                                            [minWidth]="'100%'"
+                                                            [questionId]="question.id"
+                                                        />
                                                     }
                                                 </div>
                                             }
@@ -129,7 +134,13 @@
                                     @if (question.dragItems && question.dragItems.length) {
                                         <div class="drag-items">
                                             @for (dragItem of question.dragItems; track dragItem) {
-                                                <jhi-drag-item [dragItem]="dragItem" [invalid]="!!dragItem.invalid" [clickDisabled]="true" [minWidth]="'100%'" />
+                                                <jhi-drag-item
+                                                    [dragItem]="dragItem"
+                                                    [invalid]="!!dragItem.invalid"
+                                                    [clickDisabled]="true"
+                                                    [minWidth]="'100%'"
+                                                    [questionId]="question.id"
+                                                />
                                             }
                                         </div>
                                     }

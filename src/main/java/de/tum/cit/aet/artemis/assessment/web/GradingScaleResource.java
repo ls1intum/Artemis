@@ -125,7 +125,7 @@ public class GradingScaleResource {
     @GetMapping("grading-scales")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<GradingScaleDTO>> getAllGradingScalesInInstructorGroupOnPage(SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
 

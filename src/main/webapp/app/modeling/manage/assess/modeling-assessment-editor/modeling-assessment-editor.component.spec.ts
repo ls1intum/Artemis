@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
@@ -39,6 +38,7 @@ import { ExampleSubmission } from 'app/assessment/shared/entities/example-submis
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -48,8 +48,6 @@ import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-a
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ModelingAssessmentEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ModelingAssessmentEditorComponent;
     let fixture: ComponentFixture<ModelingAssessmentEditorComponent>;
     let service: ModelingAssessmentService;
@@ -207,6 +205,44 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
         });
+
+        it('should explain the wait on the page when the exam is not over yet, instead of claiming the submission was not found', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const response = new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(throwError(() => response));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toEqual({ translationKey: `error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, date: '2026-08-01T10:00:00Z' });
+            expect(component.submission()).toBeUndefined();
+            // the explanation stays on the page instead of fading with a toast and leaving the misleading state behind
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear the explanation when the next submission is loaded into the reused component', async () => {
+            const response = new HttpErrorResponse({
+                status: 403,
+                error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+            });
+            vi.spyOn(modelingSubmissionService, 'getSubmission')
+                .mockReturnValueOnce(throwError(() => response))
+                .mockReturnValue(of(getSubmissionWithData()));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.assessmentNotPossibleYet()).toBeDefined();
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.assessmentNotPossibleYet()).toBeUndefined();
+            expect(component.submission()).toBeDefined();
+        });
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
@@ -359,6 +395,44 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             expect(submitMock).toHaveBeenCalledOnce();
         });
+
+        describe('when the exam is not over yet', () => {
+            // The exam can re-close while tutors are already correcting, e.g. when an instructor grants a student more
+            // working time. The server then rejects the write and says when assessment is possible; without this the
+            // tutor would only see a generic "could not save" or an untranslated key.
+            const notPossibleYetResponse = () =>
+                new HttpErrorResponse({
+                    status: 403,
+                    error: { errorKey: ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING, params: { date: '2026-08-01T10:00:00Z' } },
+                });
+
+            it('should explain when assessment is possible instead of reporting a failed save', async () => {
+                const alertService = TestBed.inject(AlertService);
+                const errorSpy = vi.spyOn(alertService, 'error');
+                vi.spyOn(service, 'saveAssessment').mockReturnValue(throwError(() => notPossibleYetResponse()));
+
+                component.ngOnInit();
+                await fixture.whenStable();
+                component.onSaveAssessment();
+
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+                expect(errorSpy).not.toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
+            });
+
+            it('should explain when assessment is possible instead of reporting a failed submit', async () => {
+                const alertService = TestBed.inject(AlertService);
+                const errorSpy = vi.spyOn(alertService, 'error');
+                vi.spyOn(service, 'saveAssessment').mockReturnValue(throwError(() => notPossibleYetResponse()));
+                vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+                component.validateFeedback();
+                component.onSubmitAssessment();
+                await fixture.whenStable();
+
+                expect(errorSpy).toHaveBeenCalledExactlyOnceWith(`error.${ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING}`, expect.anything());
+                expect(errorSpy).not.toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.submitFailed');
+            });
+        });
     });
 
     const createTestFeedback = (): Feedback => {
@@ -510,7 +584,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise.set({ id: exerciseId } as Exercise);
             component.exerciseId = exerciseId;
             const url = ['/course-management', courseId.toString(), 'modeling-exercises', exerciseId.toString(), 'submissions', modelingSubmission.id!.toString(), 'assessment'];
-            const queryParams = { queryParams: { 'correction-round': correctionRound } };
+            const queryParams = { queryParams: { 'correction-round': correctionRound }, queryParamsHandling: 'merge' };
 
             await fixture.whenStable();
             component.assessNext();

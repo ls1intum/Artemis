@@ -5,15 +5,25 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+import { Tooltip } from 'primeng/tooltip';
+import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
-import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
+import {
+    MissingResultInformation,
+    ResultTemplateStatus,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAIResultAndFailed,
+    isAIResultAndTimedOut,
+    isAthenaAIResult,
+} from 'app/exercise/result/result.utils';
 import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +40,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
     styleUrls: ['./result-history-dropdown.component.scss'],
-    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
+    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, Tooltip],
 })
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
@@ -42,7 +52,9 @@ export class ResultHistoryDropdownComponent {
 
     readonly faAngleDown = faAngleDown;
     readonly faClock = faClock;
+    readonly faRobot = faRobot;
     readonly ExerciseType = ExerciseType;
+    readonly isAthenaAIResult = isAthenaAIResult;
 
     exercise = input.required<Exercise>();
     sortedHistoryResults = input.required<Result[]>();
@@ -140,6 +152,8 @@ export class ResultHistoryDropdownComponent {
 
     toggleResultsPopover(event: Event) {
         const popover = this.resultsPopover();
+        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
+        // When the popover is already open, close it; otherwise open it anchored to the dropdown arrow.
         if (popover?.overlayVisible) {
             popover.hide();
         } else {
@@ -147,22 +161,46 @@ export class ResultHistoryDropdownComponent {
         }
     }
 
-    getResultIcon(result: Result): IconProp {
+    private getResultTemplateStatus(result: Result): ResultTemplateStatus | undefined {
         const participation = result.submission?.participation;
         if (!participation) {
+            return undefined;
+        }
+        return evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
+    }
+
+    getResultIcon(result: Result): IconProp {
+        const participation = result.submission?.participation;
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
             return faQuestionCircle;
         }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
         return getResultIconClass(result, participation, templateStatus);
+    }
+
+    getResultIconAnimation(result: Result): AnimationProp | undefined {
+        return this.getResultTemplateStatus(result) === ResultTemplateStatus.IS_GENERATING_FEEDBACK ? 'spin' : undefined;
     }
 
     getResultColorClass(result: Result): string {
         const participation = result.submission?.participation;
-        if (!participation) {
+        const templateStatus = this.getResultTemplateStatus(result);
+        if (!templateStatus || !participation) {
             return 'text-muted-color';
         }
-        const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
         return getTextColorClass(result, participation, templateStatus);
+    }
+
+    private isUnfinishedAthenaFeedback(result: Result): boolean {
+        return isAthenaAIResult(result) && result.successful !== true;
+    }
+
+    shouldShowResultScore(result: Result): boolean {
+        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result);
+    }
+
+    shouldShowResultMetadata(result: Result): boolean {
+        return !this.isUnfinishedAthenaFeedback(result);
     }
 
     getResultText(result: Result): string {
@@ -173,7 +211,32 @@ export class ResultHistoryDropdownComponent {
         return this.resultService.getResultString(result, this.exercise(), participation, false);
     }
 
+    getAthenaFeedbackTooltip(result: Result): string {
+        if (isAIResultAndFailed(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';
+        }
+        if (isAIResultAndTimedOut(result)) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
+        }
+        if (result.successful === undefined) {
+            return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
+        }
+        return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
+    }
+
     getResultFeedbackMessage(result: Result): string {
+        if (isAthenaAIResult(result)) {
+            if (isAIResultAndFailed(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
+            }
+            if (isAIResultAndTimedOut(result)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            }
+            if (result.successful === undefined) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            }
+        }
+
         const submission = result.submission;
         if (submission && (submission as ProgrammingSubmission).buildFailed) {
             return this.translateService.instant('artemisApp.result.progressString.buildFailed');
@@ -208,9 +271,18 @@ export class ResultHistoryDropdownComponent {
         return ResultService.evaluateBadge(participation, result);
     }
 
-    isRowClickable(): boolean {
+    isRowClickable(result?: Result): boolean {
         const type = this.exercise().type;
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
+    }
+
+    handleRowSpaceKeydown(result: Result, event: Event) {
+        if (!this.isRowClickable(result)) {
+            return;
+        }
+        event.preventDefault();
+        this.navigateToSubmission(result, event);
     }
 
     navigateToSubmission(result: Result, event: Event) {
@@ -258,8 +330,6 @@ export class ResultHistoryDropdownComponent {
         if (!participation) {
             return;
         }
-        this.selectedResultId.set(result.id);
-
         const exercise = this.exercise();
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;

@@ -8,12 +8,10 @@ import { ProgrammingExamSubmissionComponent } from 'app/exam/overview/exercises/
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ProgrammingExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExamSubmissionComponent>;
     let component: ProgrammingExamSubmissionComponent;
 
@@ -114,5 +112,23 @@ describe('ProgrammingExamSubmissionComponent', () => {
         // Change detection must be reattached (super.onActivate) BEFORE the re-render, so the diagram injection runs
         // against a live, attached component rather than the detached DOM that caused the original bug.
         expect(reattachSpy.mock.invocationCallOrder[0]).toBeLessThan(forceReRenderProblemStatement.mock.invocationCallOrder[0]);
+    });
+
+    it('should notify the sync-state version on every isSynced transition', () => {
+        // `isSynced` is mutated in place, so under zoneless change detection the exam navigation sidebar and
+        // exercise overview only re-evaluate their saved/unsaved icons if the service-wide version signal is
+        // bumped. Without these notifications those indicators stay stale for programming exam exercises.
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const notify = vi.spyOn(examParticipationService, 'notifySubmissionSyncStateChanged');
+        fixture.componentRef.setInput('studentParticipation', newParticipation());
+
+        component.onFileChanged();
+        expect(component.studentParticipation().submissions![0].isSynced).toBe(false);
+        expect(notify).toHaveBeenCalledOnce();
+
+        component.hasSubmittedOnce = true;
+        component.onCommitStateChange(CommitState.CLEAN);
+        expect(component.studentParticipation().submissions![0].isSynced).toBe(true);
+        expect(notify).toHaveBeenCalledTimes(2);
     });
 });

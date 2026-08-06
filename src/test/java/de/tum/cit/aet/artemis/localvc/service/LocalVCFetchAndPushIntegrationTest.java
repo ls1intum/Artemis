@@ -112,8 +112,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         instructor1 = users.stream().filter(u -> u.getLogin().equals(TEST_PREFIX + "instructor1")).findFirst().orElseThrow();
 
         // Setup course without programming exercise (we'll create exercises via REST API)
-        // Use default groups ("tumuser", "tutor", "editor", "instructor") which match the groups created by addUsers
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         // Mock LDAP authentication
         mockLdapUserAuthentication();
@@ -1072,13 +1071,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         @BeforeEach
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void setupExam() throws Exception {
-            // Update course groups to match the user groups created by addUsers(TEST_PREFIX, ...)
-            // This is required for exam tests where students must be in the course's student group
-            course.setStudentGroupName(TEST_PREFIX + "tumuser");
-            course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-            course.setEditorGroupName(TEST_PREFIX + "editor");
-            course.setInstructorGroupName(TEST_PREFIX + "instructor");
-            courseRepository.save(course);
+            // Enroll TEST_PREFIX users into the course via UCR (addEmptyCourse enrolls "" prefix users only)
+            userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
 
             // Create exam with exercise group
             exam = examUtilService.addExamWithExerciseGroup(course, true);
@@ -1395,15 +1389,16 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             exam.setTestExam(true);
             examRepository.save(exam);
 
-            // Create an instructor exam test run (not a student exam)
-            StudentExam instructorTestRunExam = examUtilService.addStudentExam(exam);
-            instructorTestRunExam.setUser(instructor1);
-            instructorTestRunExam.setExercises(List.of(examProgrammingExercise));
-            instructorTestRunExam.setTestRun(true);
-            // Don't set startedAndStartDate - let the conduction endpoint handle it
-            studentExamRepository.save(instructorTestRunExam);
+            // Create an instructor exam test run, including its participation and repository.
+            StudentExam testRunConfiguration = new StudentExam();
+            testRunConfiguration.setExam(exam);
+            testRunConfiguration.setExercises(List.of(examProgrammingExercise));
+            testRunConfiguration.setWorkingTime(3600);
+            StudentExam instructorTestRunExam = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs", testRunConfiguration,
+                    StudentExam.class, HttpStatus.OK);
 
-            // Start the test run via conduction endpoint - this creates the participation and repository
+            // Start the test run via conduction endpoint.
+            userUtilService.changeUser(instructor1.getLogin());
             request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs/" + instructorTestRunExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class);
 

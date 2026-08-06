@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -16,7 +15,7 @@ import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/qu
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
+import { ExamNavigationBarComponent } from 'app/exam/manage/student-exams/student-exam-timeline/exam-navigation-bar/exam-navigation-bar.component';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -41,8 +40,6 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 describe('Student Exam Timeline Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
     let component: StudentExamTimelineComponent;
     let submissionService: SubmissionService;
