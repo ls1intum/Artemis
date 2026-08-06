@@ -39,28 +39,20 @@
         <div class="overflow-x-auto" data-testid="audits-table-container">
             <table tumUiTable size="small" [striped]="true" aria-describedby="audits-page-heading" data-testid="audits-table">
                 <thead>
-                    @if (canLoad()) {
-                        <tr
-                            jhiSort
-                            [predicate]="predicate()"
-                            [ascending]="ascending()"
-                            (predicateChange)="predicate.set($event!)"
-                            (ascendingChange)="ascending.set($event)"
-                            (sortChange)="transition()"
-                        >
-                            <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
-                        </tr>
-                    } @else {
-                        <tr>
-                            <th scope="col"><span jhiTranslate="audits.table.header.date"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.principal"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.status"></span></th>
-                            <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
-                        </tr>
-                    }
+                    <!-- Sorting works whether or not a date range is set, so the header is not conditional. -->
+                    <tr
+                        jhiSort
+                        [predicate]="predicate()"
+                        [ascending]="ascending()"
+                        (predicateChange)="predicate.set($event!)"
+                        (ascendingChange)="ascending.set($event)"
+                        (sortChange)="transition()"
+                    >
+                        <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
+                        <th scope="col"><span jhiTranslate="audits.table.header.data"></span></th>
+                    </tr>
                 </thead>
                 <tbody>
                     @for (audit of audits(); track audit) {

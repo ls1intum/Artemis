@@ -73,8 +73,12 @@ export class AuditsComponent implements OnInit {
     /** Items per page */
     readonly itemsPerPage = ITEMS_PER_PAGE;
 
-    /** Whether data can be loaded (date range is valid) */
-    readonly canLoad = computed(() => this.fromDate() !== '' && this.toDate() !== '');
+    /**
+     * Whether a complete date range is set. Filtering is applied only then; with one or both dates cleared the page
+     * shows every audit, which is what clearing a filter is expected to mean. The server matches that shape: its
+     * filtered endpoint requires both dates, and the plain one returns all of them.
+     */
+    readonly hasDateRange = computed(() => this.fromDate() !== '' && this.toDate() !== '');
 
     /** From date exposed to the shared date picker as a native Date (the wrapper's value contract). */
     readonly fromDateValue = computed(() => this.toPickerDate(this.fromDate()));
@@ -94,22 +98,16 @@ export class AuditsComponent implements OnInit {
     }
 
     transition(): void {
-        if (this.canLoad()) {
-            void this.router.navigate(['/admin/audits'], {
-                queryParams: {
-                    page: this.page(),
-                    sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
-                    from: this.fromDate(),
-                    to: this.toDate(),
-                },
-            });
-        } else {
-            // Incomplete date range (e.g. a date was just deselected): drop the previously loaded results so the
-            // table and paginator don't linger with stale, un-clickable pages — the paginator's page change is a
-            // no-op while the range is incomplete, which otherwise stranded the user on a dead multi-page view.
-            this.audits.set([]);
-            this.totalItems.set(0);
-        }
+        void this.router.navigate(['/admin/audits'], {
+            queryParams: {
+                page: this.page(),
+                sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
+                // Left out rather than sent empty, so the URL reads as "no date filter" and `handleNavigation` does
+                // not try to parse a blank value back into a date.
+                from: this.fromDate() || undefined,
+                to: this.toDate() || undefined,
+            },
+        });
     }
 
     /**
@@ -155,12 +153,9 @@ export class AuditsComponent implements OnInit {
 
     /**
      * Handles a paginator page change. The emitted page is 0-indexed, so it is converted to the
-     * component's 1-indexed page. No-op while the date range is incomplete (mirrors the former disabled paginator).
+     * component's 1-indexed page.
      */
     onPageChange(page: number): void {
-        if (!this.canLoad()) {
-            return;
-        }
         this.updatePage(page + 1);
         this.transition();
     }
@@ -205,8 +200,9 @@ export class AuditsComponent implements OnInit {
                 page: this.page() - 1,
                 size: this.itemsPerPage,
                 sort: this.sort(),
-                fromDate: this.fromDate(),
-                toDate: this.toDate(),
+                // Both dates or neither: the filtered endpoint is only matched when both parameters are present, and
+                // sending a blank one would reach it with a value that cannot be parsed as a date.
+                ...(this.hasDateRange() ? { fromDate: this.fromDate(), toDate: this.toDate() } : {}),
             })
             .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
     }
