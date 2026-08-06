@@ -3,6 +3,9 @@
  * rather than nested under the page wrapper — projected content is no longer inside `.frame`.
  */
 .calendar-bar-controls {
+    /* Passes the bar's shrinking on to the filter below; without it this group keeps the row at its content width. */
+    min-width: 0;
+
     /*
      * The filter is the control that gives way when the bar runs out of room: it may grow to show the chips but must
      * be free to shrink, otherwise the neighbouring buttons are squeezed until their labels are cut off.

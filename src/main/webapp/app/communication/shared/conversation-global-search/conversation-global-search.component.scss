@@ -13,8 +13,9 @@
      * is `--title-bar-content-height` tall, with the bar itself adding the padding above and below.
      */
     padding: 0 0.5rem;
+
+    /* A minimum only: the badges wrap, and a fixed height would push the wrapped rows out of the bar. */
     min-height: var(--title-bar-content-height);
-    height: var(--title-bar-content-height);
     cursor: text;
     transition:
         border-color 0.15s ease-in-out,

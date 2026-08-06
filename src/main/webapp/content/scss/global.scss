@@ -1280,9 +1280,14 @@ body.transparent-background {
     @include title-bar-compact-controls;
     @include title-bar-size-container;
 
-    /* Unlike the shell bars these hold text inputs, which carry their own padding and would otherwise stay taller. */
+    /*
+     * Unlike the shell bars these hold text inputs, which carry their own padding and would otherwise stay taller.
+     *
+     * A minimum rather than a fixed height: the communication search is a `.form-control` that wraps a badge per
+     * selected conversation and author, and pinning it would leave the wrapped rows overflowing the bar. A single-row
+     * control still lands on the contract height, so the bar is 40px in the state it is in almost all of the time.
+     */
     .form-control {
-        height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);
         padding-block: 0;
     }

@@ -19,6 +19,16 @@
         @include title-bar-frame;
         @include title-bar-size-container;
     }
+
+    /*
+     * A flex item refuses to shrink below its content unless told to, and that automatic minimum is what made a
+     * crowded action row overflow the bar rather than squeeze: the pages whose controls can give way (the calendar
+     * filter and its chips) could not, because this wrapper held the row open. Both children may shrink; each decides
+     * for itself what happens then, by ellipsis, by clipping, or by collapsing a label.
+     */
+    .title-bar-actions {
+        min-width: 0;
+    }
 }
 
 /*

@@ -10,7 +10,7 @@
         }
     </div>
 
-    <div class="flex items-center gap-2" data-testid="admin-title-bar-actions">
+    <div class="flex min-w-0 items-center gap-2" data-testid="admin-title-bar-actions">
         @if (customActionsTemplate()) {
             <ng-container *ngTemplateOutlet="customActionsTemplate()!" />
         }
