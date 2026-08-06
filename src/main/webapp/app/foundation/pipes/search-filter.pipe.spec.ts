@@ -74,6 +74,43 @@ describe('SearchFilterPipe', () => {
         expect(filtered).toEqual(expect.arrayContaining([{ name: 'Banana Split', category: 'Dessert' }]));
     });
 
+    it('should keep an item whose nested entry matches on any search field', () => {
+        const items = [
+            {
+                title: 'Variant group',
+                groupedItems: [
+                    { title: 'Sorting algorithms', type: 'programming' },
+                    { title: 'Binary trees', type: 'modeling' },
+                ],
+            },
+            { title: 'Standalone exercise', type: 'text' },
+        ];
+
+        // matches a nested title
+        expect(pipe.transform(items, ['title', 'type'], 'Binary', 'groupedItems')).toEqual([items[0]]);
+        // matches a nested type, which the group card itself does not have
+        expect(pipe.transform(items, ['title', 'type'], 'programming', 'groupedItems')).toEqual([items[0]]);
+        // matching the group's own title still works
+        expect(pipe.transform(items, ['title', 'type'], 'Variant', 'groupedItems')).toEqual([items[0]]);
+        // no match anywhere drops the group
+        expect(pipe.transform(items, ['title', 'type'], 'quiz', 'groupedItems')).toHaveLength(0);
+    });
+
+    it('should ignore nested entries when no nested field is given', () => {
+        const items = [{ title: 'Variant group', groupedItems: [{ title: 'Sorting algorithms', type: 'programming' }] }];
+        expect(pipe.transform(items, ['title', 'type'], 'Sorting')).toHaveLength(0);
+    });
+
+    it('should handle items without usable nested entries', () => {
+        const items = [
+            { title: 'Empty group', groupedItems: [] },
+            { title: 'No group', type: 'text' },
+            { title: 'Not an array', groupedItems: 'nope' },
+        ];
+        expect(pipe.transform(items, ['title', 'type'], 'Sorting', 'groupedItems')).toHaveLength(0);
+        expect(pipe.transform(items, ['title', 'type'], 'group', 'groupedItems')).toHaveLength(2);
+    });
+
     it('should filter array of objects based on multiple search fields', () => {
         const items = [
             { name: 'Apple', category: 'Fruit', color: 'Red' },
