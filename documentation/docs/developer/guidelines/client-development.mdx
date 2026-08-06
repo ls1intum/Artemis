@@ -746,20 +746,15 @@ Charts and diagrams are instantiated with PrimeNG's [`p-chart`](https://primeng.
 [Chart.js](https://www.chartjs.org/docs/latest/). Persistent value labels on top of the marks come from
 [`chartjs-plugin-datalabels`](https://chartjs-plugin-datalabels.netlify.app/).
 
-<Callout variant={CalloutVariant.info}>
-    Artemis used to render charts with `ngx-charts` (SVG). Those components are gone — if you find a
-    `<ngx-charts-*>` element or an `ngxData`/`[scheme]`/`[view]` binding, it is dead code.
-</Callout>
-
 Do not hand-write Chart.js option objects. `app/shared-ui/chart` holds the shared layer that keeps every chart
 consistent, and you should build on it:
 
-| Helper                                                                                       | Purpose                                                                       |
-| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `barChartOptions`, `lineChartOptions`, `doughnutChartOptions` (`chart-options.ts`)            | Option factories: axes, legend, tooltips, data labels, percent scales         |
+| Helper                                                                                                | Purpose                                                                                |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `barChartOptions`, `lineChartOptions`, `doughnutChartOptions` (`chart-options.ts`)                    | Option factories: axes, legend, tooltips, data labels, percent scales                  |
 | `singleSeriesChartData`, `multiSeriesToStackedBarData`, `multiSeriesToLineData` (`chart-adapters.ts`) | Turn Artemis' `ChartSeriesEntry` / `ChartMultiSeriesEntry` models into Chart.js `data` |
-| `ChartColorService.resolvedColors` (`chart-color.service.ts`)                                 | Resolves CSS custom properties to concrete colors and re-resolves on theme switch |
-| `toChartSelectEvent` (`chart-options.ts`)                                                     | Maps a `(onDataSelect)` payload back to the entry that was clicked            |
+| `ChartColorService.resolvedColors` (`chart-color.service.ts`)                                         | Resolves CSS custom properties to concrete colors and re-resolves on theme switch      |
+| `toChartSelectEvent` (`chart-options.ts`)                                                             | Maps a `(onDataSelect)` payload back to the entry that was clicked                     |
 
 A typical component looks like this — a signal for the data, `computed` option and data objects, and an explicit
 height on the chart's container:
@@ -826,7 +821,7 @@ Here are the rules to follow when adding a chart:
     `template:` strings alike. When one page renders several instances of the same chart component, pass the name
     in per instance (see `ParticipantScoresDistributionComponent`'s `ariaLabel` input) so they can be told apart.
 
-    Note that `aria-label` is a *name*, not a *description*: it says what the chart is, not what it shows. Chart.js
+    Note that `aria-label` is a _name_, not a _description_: it says what the chart is, not what it shows. Chart.js
     has no SVG renderer, so exposing the actual figures still requires a DOM text alternative — prefer rendering the
     key numbers as text next to the chart.
 
@@ -850,7 +845,6 @@ Here are the rules to follow when adding a chart:
 5. **Do not override library internals with `::ng-deep`.** Use the documented `p-chart` inputs, the shared option
    factories, or CSS custom properties. If there is no supported customization point, reconsider the requirement or
    contribute one upstream instead of coupling Artemis to private markup.
-
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 

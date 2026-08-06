@@ -9,13 +9,31 @@
 @plugin 'tailwindcss-primeui';
 
 /*
- * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Defined
- * here rather than in the per-theme SCSS variables because it is theme-independent, and under the `--spacing-*`
- * namespace so it is usable both as Tailwind utilities (`pr-divider`, `ms-divider`) and, because this `@theme`
- * block is not `inline`, as `var(--spacing-divider)` from SCSS (see the `shell-content-height` mixin).
+ * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Under the
+ * `--spacing-*` namespace so it is usable both as Tailwind utilities (`pr-divider`, `ms-divider`) and, because this
+ * `@theme` block is not `inline`, as `var(--spacing-divider)` from SCSS (see the `shell-content-height` mixin).
  */
 @theme {
     --spacing-divider: 6px;
+}
+
+/*
+ * The remaining shell metrics. They live here, next to the divider, because they are theme-independent: the per-theme
+ * SCSS files carry colours, and a metric placed there would have to be repeated in both to be emitted for both themes.
+ *
+ * `--navbar-height` and `--footer-height` are fallbacks for the first paint; `observeShellMetrics()` keeps them in
+ * sync with the rendered elements from then on. `--header-height` is deliberately not among them — exam mode owns that
+ * variable for the exam navigation bar.
+ *
+ * The title bar renders `--title-bar-content-height` of content plus `--title-bar-padding-block` above and below,
+ * i.e. `--title-bar-height` in total, identically across the student overview, course management and admin shells.
+ */
+:root {
+    --title-bar-height: 40px;
+    --title-bar-content-height: 28px;
+    --title-bar-padding-block: 6px;
+    --navbar-height: 68px;
+    --footer-height: 32px;
 }
 
 @theme inline {

@@ -239,8 +239,7 @@ export default tseslint.config(
             'localRules/no-navigation-in-effect': 'error',
             'localRules/no-as-unknown-cast': 'error',
             'localRules/no-as-any-cast': 'error',
-            // Also enforced on .ts so inline `template:` strings cannot smuggle in an unlabelled chart canvas;
-            // the same rule is registered for .html templates further down.
+            // Registered here as well as for .html, so inline `template:` strings are covered too.
             'localRules/require-chart-accessible-name': 'error',
         },
     },
@@ -580,8 +579,6 @@ export default tseslint.config(
         rules: {
             'localRules/no-raw-tailwind-color-palette': 'error',
             'localRules/no-primeng-component-classes': 'error',
-            // Chart.js draws into a <canvas role="img">, so a chart without an accessible name is announced as an
-            // unlabelled image and its content is unreachable for assistive technology (canvas text is pixels).
             'localRules/require-chart-accessible-name': 'error',
         },
     },

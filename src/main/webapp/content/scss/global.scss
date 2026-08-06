@@ -1242,15 +1242,12 @@ body.transparent-background {
 /*
  * The content card of the pages that are not inside a shell (course list, course management list, about, legal pages).
  *
- * The footer is `position: fixed; bottom: 0`, so these pages need a bottom margin to keep their last content clear of
- * it. This used to be `m-3 mb-5 mt-0`, a flat 48px, of which the footer covered ~31px — so the divider that actually
- * showed was ~17px rather than 6px. Deriving the margin from `--footer-height` keeps the visible divider at exactly
- * one `--spacing-divider` and follows the footer when it grows: it wraps on narrow viewports and carries an extra git
- * line in dev. The shells reach the same result by subtracting both values in `shell-content-height`.
+ * The footer is `position: fixed; bottom: 0`, so the bottom margin has to clear it and leave one divider visible. It
+ * therefore tracks `--footer-height`, which follows the footer as it grows — it wraps on narrow viewports and carries
+ * an extra git line in dev. The shells reach the same result by subtracting both values in `shell-content-height`.
  *
- * All three margins live here rather than alongside Bootstrap's spacing utilities, because those are declared
- * `!important` and would otherwise win — the earlier attempt to override just `mb-5` silently kept 16px and tucked the
- * card behind the footer.
+ * Keep all three margins here rather than mixing in Bootstrap's spacing utilities: those are declared `!important`, so
+ * a partial override loses and leaves the card tucked behind the footer.
  */
 .page-content-card {
     margin: 0 1rem calc(var(--footer-height) + var(--spacing-divider));
@@ -1268,25 +1265,23 @@ body.transparent-background {
 
 /*
  * Makes a page that brings its own sidebar (exercises, lectures, exams, communication, …) fill the shell's content
- * region. Those pages size themselves — from their content, or from `dynamic-content-height`, whose hardcoded
- * navbar+footer estimate does not match what the shell computes — so they stopped short of the region and the visible
- * gap above the footer became the divider *plus* that shortfall (9px on the exercises page, 55px on communication).
+ * region, so the gap above the footer is one divider rather than a divider plus whatever height the page settles on.
  *
- * Deliberately unscoped rather than living in `course-base-container.component.scss`: the page component is inserted
- * by the router, so it is outside the shell's template and carries no `_ngcontent` attribute for Angular's emulated
- * encapsulation to match. A scoped rule reaches `.course-body-container` but never its routed child.
+ * Unscoped by necessity: the page component is inserted by the router, so it sits outside the shell's template and
+ * carries no `_ngcontent` attribute for Angular's emulated encapsulation to match. A scoped rule in
+ * `course-base-container.component.scss` reaches `.course-body-container` but never its routed child.
  *
- * Restricted to `:not(.scrollable-content)`, which is exactly the sidebar-bearing pages — the sidebar-less pages keep
- * that class and their arbitrary content must retain its natural block layout. Exam conduction is excluded because it
- * drives its own full-viewport layout.
+ * `:not(.scrollable-content)` selects exactly the sidebar-bearing pages; the sidebar-less pages keep that class and
+ * their arbitrary content its natural block layout. Exam conduction drives its own full-viewport layout via
+ * `.exam-wrapper`, and is excluded.
  *
- * The `:has(… > *:only-child)` gate means "the routed page renders exactly one root element". Some pages render
- * several at once: exam participation shows a test-run banner beside the exam content, and lecture details shows its
- * spinner while the previously loaded lecture is still on screen. Filling would give each of those `flex: 1 1 auto`,
- * so they would share the height rather than one filling it — the banner would balloon and squeeze the content. Those
- * pages keep their intrinsic height and stay byte-identical to before, since the gate also withholds the container's
- * `display: flex`. Note exam participation is only excluded by `.exam-wrapper` once the exam has *started*; its
- * intro, summary and test-run states are reached through this selector, which is why the gate matters.
+ * The `:has(… > *:only-child)` gate means "the routed page renders exactly one root element", which is the case the
+ * fill is safe for. Pages that render several at once — exam participation with its test-run banner beside the exam
+ * content, lecture details with its spinner over the previously loaded lecture — would otherwise give each root
+ * `flex: 1 1 auto` and have them share the region, ballooning a banner or spinner to half of it. Those pages keep
+ * their intrinsic height, since the gate withholds the container's `display: flex` as well. Note `.exam-wrapper`
+ * only covers exam conduction once the exam has *started*: the intro, summary and test-run states arrive here, which
+ * is why the gate is load-bearing rather than defensive.
  */
 .layout-content:not(.exam-wrapper) > .course-body-container:not(.scrollable-content):has(> *:not(router-outlet):not(.refresh-overlay) > *:only-child) {
     display: flex;
@@ -1306,10 +1301,7 @@ body.transparent-background {
         }
     }
 
-    /*
-     * The sidebar column needs the same treatment: its wrapper is an inline custom element, so without this the
-     * card stopped at its content height and ended lower than the content pane beside it.
-     */
+    /* The sidebar column fills too, so its card ends level with the content pane beside it. */
     jhi-sidebar {
         display: flex;
         height: 100%;
@@ -1319,15 +1311,9 @@ body.transparent-background {
             display: flex;
             min-height: 0;
 
+            /* The wrapper's margin is the divider; the card must not add a second one on top of it. */
             > .sidebar {
                 min-height: 0;
-
-                /*
-                 * The card carries its own `margin-right` which used to be clipped, because it filled the wrapper's
-                 * width and the wrapper hides its overflow. Making the wrapper a flex container above would make that
-                 * margin real and stack it on top of the wrapper's divider, giving 14px instead of 6px. The wrapper's
-                 * margin is the divider, so the card must not add a second one.
-                 */
                 margin-right: 0;
             }
         }
@@ -1356,11 +1342,7 @@ $transition-in-between-delay: 0.05s;
     overflow: hidden;
     max-width: $sidebar-width;
 
-    /*
-     * This margin is the grey divider between a page's own sidebar (exercises, lectures, communication, …) and the
-     * content next to it, so it uses the shared divider token rather than its own 0.5rem. Left at 8px it was the one
-     * shell gap that did not match the 6px used everywhere else.
-     */
+    /* The grey divider between a page's own sidebar (exercises, lectures, communication, …) and the content beside it. */
     margin-right: var(--spacing-divider);
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
