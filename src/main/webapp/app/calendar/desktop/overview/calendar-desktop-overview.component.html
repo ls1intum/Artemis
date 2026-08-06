@@ -1,7 +1,7 @@
 <div class="frame">
-    <div class="header">
-        <h3>{{ monthDescription() }}</h3>
-        <div class="spacer"></div>
+    <!-- The month and the calendar controls live in the shell title bar, so this page has no header of its own. -->
+    <h5 *titleBarTitle class="mb-0">{{ monthDescription() }}</h5>
+    <div *titleBarActions class="calendar-bar-controls d-flex align-items-center gap-2">
         <p-multiselect
             [options]="filterOptions()"
             [ngModel]="selectedFilterOptions()"

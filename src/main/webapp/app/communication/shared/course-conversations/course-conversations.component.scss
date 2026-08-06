@@ -79,6 +79,12 @@
         z-index: 2;
         pointer-events: none;
 
+        /*
+         * The drawer is anchored where the sidebar would sit in flow, which is the top of the search bar beside it, so
+         * it covered that bar. Offset it by the bar and its divider to open level with the message list instead.
+         */
+        margin-top: calc(var(--title-bar-height) + var(--spacing-divider));
+
         & .sidebar-wrap,
         .communication-content-sidebar .sidebar-width {
             max-width: 0;

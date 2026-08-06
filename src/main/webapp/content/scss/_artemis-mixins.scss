@@ -52,10 +52,9 @@
  * and administration shells: `--title-bar-content-height` of content plus `--title-bar-padding-block` above and
  * below, i.e. `--title-bar-height` in total. Applied to the bar element itself.
  *
- * It is a FLOOR, not a fixed height, so a long action row can still wrap on a narrow viewport instead of being
- * clipped. That means the bar only renders at exactly `--title-bar-height` while its content fits within
- * `--title-bar-content-height` — which holds because every projected title is a single-line heading and
- * `title-bar-compact-controls` pins every action control to that height.
+ * The row does not wrap: the bar must stay at `--title-bar-height` on every viewport, so a crowded action row
+ * shrinks its controls rather than growing the bar. Pages that project many controls therefore have to let them
+ * shrink — the calendar filter caps its reserved width for exactly this reason.
  */
 @mixin title-bar-frame {
     box-sizing: border-box;
@@ -65,6 +64,7 @@
     gap: 0.75rem;
     min-height: var(--title-bar-height);
     padding-block: var(--title-bar-padding-block);
+    flex-wrap: nowrap;
 }
 
 /*
@@ -82,6 +82,7 @@
     .p-button,
     .p-togglebutton,
     .p-select,
+    .p-multiselect,
     /* Search fields are projected into these bars too (FAQ, both shells); PrimeNG sizes its inputs taller. */
     .p-inputtext,
     .p-iconfield,

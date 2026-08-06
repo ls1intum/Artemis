@@ -2,7 +2,7 @@
      `title-bar-frame` / `title-bar-compact-controls` in the component stylesheet, so this bar stays identical
      to the admin title bar. -->
 <div id="course-title-bar" class="module-bg px-3 rounded rounded-3 sticky-top" [style.display]="displayStyle()">
-    <div class="align-self-center d-flex">
+    <div class="title-bar-title align-self-center d-flex">
         <div class="align-self-center">
             @if (customTitleTemplate()) {
                 <ng-container *ngTemplateOutlet="customTitleTemplate()!" />

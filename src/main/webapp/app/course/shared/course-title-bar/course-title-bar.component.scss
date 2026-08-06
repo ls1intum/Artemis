@@ -10,6 +10,24 @@
     margin: 0 var(--spacing-divider) var(--spacing-divider);
 }
 
+/*
+ * A crowded action row squeezes the title; without this the text wraps to a second line and the bar grows past its
+ * 40px. Keep it on one line and ellipsis instead — the full title is still in the breadcrumb above.
+ */
+.title-bar-title {
+    min-width: 0;
+
+    > div {
+        min-width: 0;
+    }
+
+    :where(h1, h2, h3, h4, h5, h6, span, div) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
 /* The action controls are projected from page templates, so their styling requires piercing encapsulation. */
 :host ::ng-deep {
     @include title-bar-compact-controls;

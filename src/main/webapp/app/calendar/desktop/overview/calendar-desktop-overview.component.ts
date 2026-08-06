@@ -14,6 +14,8 @@ import { ButtonModule } from 'primeng/button';
 import { ButtonGroupModule } from 'primeng/buttongroup';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 type Presentation = 'week' | 'month';
 
@@ -26,6 +28,8 @@ interface FilterOptionAndMetadata {
 @Component({
     selector: 'jhi-calendar-desktop-overview',
     imports: [
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
         CalendarDesktopMonthPresentationComponent,
         CalendarDesktopWeekPresentationComponent,
         FaIconComponent,

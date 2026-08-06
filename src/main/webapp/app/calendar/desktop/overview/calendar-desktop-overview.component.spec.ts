@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { DebugElement, EmbeddedViewRef, getDebugNode, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -18,10 +18,24 @@ import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 describe('CalendarDesktopOverviewComponent', () => {
     let component: CalendarDesktopOverviewComponent;
     let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
+    // The month and the controls are projected into the shell title bar, so they are not part of this component's own
+    // view. Render the registered templates to query them, and destroy the views afterwards.
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderProjected(which: 'title' | 'actions'): { element: DebugElement; view: EmbeddedViewRef<unknown> } {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = which === 'title' ? service.titleTemplate() : service.actionsTemplate();
+        expect(template, `the calendar does not project a title bar ${which} template`).toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        return { element: getDebugNode(view.rootNodes[0]) as DebugElement, view };
+    }
 
     const calendarServiceMock = {
         eventMap: signal(new Map<string, IdentifiableCalendarEvent[]>()),
@@ -71,6 +85,10 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        projectedViews.splice(0).forEach((view) => view.destroy());
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -78,9 +96,10 @@ describe('CalendarDesktopOverviewComponent', () => {
     it('should update weeks and months correctly', () => {
         const initialFirstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
 
-        const previousButton = fixture.debugElement.query(By.css('#previous-button')).nativeElement;
-        const nextButton = fixture.debugElement.query(By.css('#next-button')).nativeElement;
-        const selectButton = fixture.debugElement.query(By.css('#presentation-select-button'));
+        const { element: actions } = renderProjected('actions');
+        const previousButton = actions.query(By.css('#previous-button')).nativeElement;
+        const nextButton = actions.query(By.css('#next-button')).nativeElement;
+        const selectButton = actions.query(By.css('#presentation-select-button'));
         expect(previousButton).toBeTruthy();
         expect(nextButton).toBeTruthy();
         expect(selectButton).toBeTruthy();
@@ -137,8 +156,9 @@ describe('CalendarDesktopOverviewComponent', () => {
     it('should go to today', () => {
         expect(component).toBeTruthy();
 
-        const todayButton = fixture.debugElement.query(By.css('#today-button')).nativeElement;
-        const previousButton = fixture.debugElement.query(By.css('#previous-button')).nativeElement;
+        const { element: actions } = renderProjected('actions');
+        const todayButton = actions.query(By.css('#today-button')).nativeElement;
+        const previousButton = actions.query(By.css('#previous-button')).nativeElement;
 
         expect(todayButton).toBeTruthy();
         expect(previousButton).toBeTruthy();
@@ -169,16 +189,22 @@ describe('CalendarDesktopOverviewComponent', () => {
         component.presentation.set('month');
         fixture.detectChanges();
 
-        const heading = () => fixture.debugElement.query(By.css('h3')).nativeElement.textContent.trim();
+        const title = renderProjected('title');
+        const { element: actions } = renderProjected('actions');
+        // A manually created embedded view is not refreshed by `fixture.detectChanges()`, so refresh it explicitly.
+        const heading = () => {
+            title.view.detectChanges();
+            return (title.element.nativeElement as HTMLElement).textContent!.trim();
+        };
 
         expect(heading()).toBe('October 2025');
 
-        const previousButton = fixture.debugElement.query(By.css('#previous-button')).nativeElement;
+        const previousButton = actions.query(By.css('#previous-button')).nativeElement;
         previousButton.click();
         fixture.detectChanges();
         expect(heading()).toBe('September 2025');
 
-        const nextButton = fixture.debugElement.query(By.css('#next-button')).nativeElement;
+        const nextButton = actions.query(By.css('#next-button')).nativeElement;
         nextButton.click();
         fixture.detectChanges();
         expect(heading()).toBe('October 2025');
@@ -199,13 +225,14 @@ describe('CalendarDesktopOverviewComponent', () => {
     });
 
     it('should open subscription popover when the subscribe button is clicked', () => {
-        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarSubscriptionPopoverComponent));
+        const { element: actions } = renderProjected('actions');
+        const popoverDebugElement = actions.query(By.directive(CalendarSubscriptionPopoverComponent));
         expect(popoverDebugElement).toBeTruthy();
 
         const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
         const openSpy = vi.spyOn(popover, 'open');
 
-        const subscribeButton = fixture.debugElement.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
+        const subscribeButton = actions.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
         expect(subscribeButton).toBeTruthy();
 
         subscribeButton.click();
