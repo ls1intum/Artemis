@@ -119,7 +119,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
+    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false, invalidItems: [] });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;

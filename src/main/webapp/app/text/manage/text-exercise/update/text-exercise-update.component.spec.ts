@@ -468,11 +468,11 @@ describe('TextExercise Management Update Component', () => {
             await fixture.whenStable();
             vi.mocked(exerciseService.validateDate).mockClear();
 
-            component.timelineStatus.set({ valid: false, empty: true });
+            component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
             await fixture.whenStable();
 
             expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
-            expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+            expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
         });
     });
 

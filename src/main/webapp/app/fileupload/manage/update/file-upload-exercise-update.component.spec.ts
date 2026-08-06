@@ -336,11 +336,11 @@ describe('FileUploadExerciseUpdateComponent', () => {
             await fixture.whenStable();
             vi.mocked(exerciseService.validateDate).mockClear();
 
-            component.timelineStatus.set({ valid: false, empty: true });
+            component.timelineStatus.set({ valid: false, empty: true, invalidItems: [] });
             await fixture.whenStable();
 
             expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
-            expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+            expect(component.timelineStatus()).toEqual({ valid: false, empty: true, invalidItems: [] });
         });
 
         it('should set isExamMode to true for exam exercises', async () => {

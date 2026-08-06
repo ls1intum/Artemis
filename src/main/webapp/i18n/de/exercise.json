@@ -361,6 +361,12 @@
                     "min": "Die maximale Teamgröße darf nicht weniger als eine Person betragen.",
                     "max": "Die maximale Teamgröße darf nicht mehr als 99 Personen betragen."
                 },
+                "timeline": {
+                    "required": "'{{ dateName }}' ist erforderlich.",
+                    "order": "'{{ dateName }}' muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+                    "invalidInput": "'{{ dateName }}' ist kein gültiges Datum. Bitte nutze das Format DD.MM.YYYY HH:mm.",
+                    "otherRequired": "'{{ dateName }}' kann erst gesetzt werden, wenn das vorausgesetzte Datum gesetzt ist."
+                },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
                 },

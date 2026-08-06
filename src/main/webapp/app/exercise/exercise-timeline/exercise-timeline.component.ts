@@ -14,9 +14,16 @@ export interface TimelineItem {
     otherRequiredItem?: TimelineItem;
 }
 
+export interface InvalidTimelineItem {
+    labelStringKey: string;
+    reasonKey: string;
+    dateName: string;
+}
+
 export interface ExerciseTimelineStatus {
     valid: boolean;
     empty: boolean;
+    invalidItems: InvalidTimelineItem[];
 }
 
 type InternalTimelineItem = TimelineItem & {
@@ -162,9 +169,34 @@ export class ExerciseTimelineComponent {
 
     private computeExerciseTimelineStatus(): ExerciseTimelineStatus {
         const items = this.internalTimelineItems();
+        const invalidItems = items.flatMap((item) => {
+            const reasonKey = this.determineInvalidReasonKey(item);
+            if (!reasonKey) {
+                return [];
+            }
+            return [{ labelStringKey: item.labelStringKey, reasonKey, dateName: this.translateService.instant(item.labelStringKey) }];
+        });
         return {
-            valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
+            valid: invalidItems.length === 0,
             empty: items.some((item) => item.date() === undefined),
+            invalidItems,
         };
+    }
+
+    /** Mirrors the tooltip precedence in {@link computeInternalTimelineItems}. */
+    private determineInvalidReasonKey(item: InternalTimelineItem): string | undefined {
+        if (item.isInvalidInput) {
+            return 'artemisApp.exercise.form.timeline.invalidInput';
+        }
+        if (item.isBeforePreviousDate) {
+            return 'artemisApp.exercise.form.timeline.order';
+        }
+        if (item.isInputRequiredButUndefined) {
+            return 'artemisApp.exercise.form.timeline.required';
+        }
+        if (item.isOtherRequiredItemDateUndefined) {
+            return 'artemisApp.exercise.form.timeline.otherRequired';
+        }
+        return undefined;
     }
 }

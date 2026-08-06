@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 
-import { ExerciseTimelineComponent, TimelineItem } from './exercise-timeline.component';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from './exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -67,20 +67,88 @@ describe('ExerciseTimeline', () => {
             { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T10:00:00Z')) },
             { kind: 'required', labelStringKey: 'due', date: signal(dayjs('2026-01-10T10:00:00Z')) },
         ];
-        const emittedStatuses: Array<{ valid: boolean; empty: boolean }> = [];
+        const emittedStatuses: ExerciseTimelineStatus[] = [];
         component.timelineStatusChange.subscribe((status) => emittedStatuses.push(status));
 
         fixture.componentRef.setInput('timelineItems', timelineItems);
         fixture.detectChanges();
 
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
-        expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false, invalidItems: [] });
+        expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false, invalidItems: [] });
 
         timelineItems[1].date.set(undefined);
         fixture.detectChanges();
 
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
-        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
+        expect(component.timelineStatus()).toMatchObject({ valid: false, empty: true });
+        expect(emittedStatuses.at(-1)).toMatchObject({ valid: false, empty: true });
+    });
+
+    it('should report which timeline items are invalid and why', () => {
+        const dueDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: signal(undefined) };
+        const timelineItems: TimelineItem[] = [
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            { kind: 'required', labelStringKey: 'artemisApp.exercise.startDate', date: signal(undefined) },
+            dueDateItem,
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+                date: signal(dayjs('2026-01-05T10:00:00Z')),
+                otherRequiredItem: dueDateItem,
+            },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+
+        const status = component.timelineStatus();
+
+        expect(status.valid).toBe(false);
+        // The release date is fine; start date is required-but-empty; the assessment due date is both
+        // before the release date and depends on an unset due date — order wins by precedence.
+        expect(status.invalidItems).toEqual([
+            {
+                labelStringKey: 'artemisApp.exercise.startDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.required',
+                dateName: 'artemisApp.exercise.startDate',
+            },
+            {
+                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.order',
+                dateName: 'artemisApp.exercise.assessmentDueDate',
+            },
+        ]);
+    });
+
+    it('should report a malformed manual date entry as an invalid item', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: signal(dayjs('2026-06-06T16:23:00')) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleBlur(item, { target: { value: '00.06.2026 16:23' } } as unknown as Event);
+
+        expect(component.timelineStatus().invalidItems).toEqual([
+            {
+                labelStringKey: 'artemisApp.exercise.releaseDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.invalidInput',
+                dateName: 'artemisApp.exercise.releaseDate',
+            },
+        ]);
+    });
+
+    it('should report a dependent date whose prerequisite is unset', () => {
+        const dueDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: signal(undefined) };
+        const assessmentDateItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+            date: signal(dayjs('2026-01-10T10:00:00Z')),
+            otherRequiredItem: dueDateItem,
+        };
+        fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
+
+        expect(component.timelineStatus().invalidItems).toEqual([
+            {
+                labelStringKey: 'artemisApp.exercise.assessmentDueDate',
+                reasonKey: 'artemisApp.exercise.form.timeline.otherRequired',
+                dateName: 'artemisApp.exercise.assessmentDueDate',
+            },
+        ]);
     });
 
     it('should require another timeline item only when the dependent date is set', () => {
@@ -97,7 +165,7 @@ describe('ExerciseTimeline', () => {
             isOtherRequiredItemDateUndefined: false,
             tooltip: undefined,
         });
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: true, invalidItems: [] });
 
         assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
 
@@ -105,7 +173,7 @@ describe('ExerciseTimeline', () => {
             isOtherRequiredItemDateUndefined: true,
             tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
         });
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+        expect(component.timelineStatus()).toMatchObject({ valid: false, empty: true });
     });
 
     it('should update timeline item date', () => {

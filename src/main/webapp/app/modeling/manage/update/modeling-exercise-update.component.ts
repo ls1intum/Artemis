@@ -84,7 +84,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
-    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);

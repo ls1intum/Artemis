@@ -38,7 +38,7 @@ describe('FileUploadExerciseTimeline', () => {
 
     it('should forward timeline status changes from the exercise timeline', () => {
         fixture.detectChanges();
-        const timelineStatus = { valid: false, empty: true };
+        const timelineStatus = { valid: false, empty: true, invalidItems: [] };
         const emitSpy = vi.spyOn(component.timelineStatus, 'emit');
         const exerciseTimeline = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;
 

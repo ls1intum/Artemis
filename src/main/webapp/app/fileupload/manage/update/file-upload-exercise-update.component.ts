@@ -103,7 +103,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     notificationText = signal<string | undefined>(undefined);
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
-    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     examCourseId = signal<number | undefined>(undefined);
     formStatusSections = signal<FormSectionStatus[]>([]);
