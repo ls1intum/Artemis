@@ -17,7 +17,8 @@
         }
 
         @if (lectureSelected()) {
-            <div [class.content-sidebar-width]="!isCollapsed()" class="content-width module-bg rounded-3">
+            <!-- Transparent like the exercises pane: the lecture detail supplies its own header and content cards. -->
+            <div [class.content-sidebar-width]="!isCollapsed()" class="content-width scrollable-content no-header-bar-height">
                 <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {

@@ -30,6 +30,7 @@ import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -86,7 +87,26 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
 
     lectureId?: number;
+    private readonly courseStorageService = inject(CourseStorageService);
+
     readonly courseId = signal<number | undefined>(undefined);
+
+    /**
+     * Whether to show the communication section beside the lecture, mirroring the exercise detail page.
+     *
+     * The course must come from the shell's store rather than `lecture.course`: the lecture details payload nests only
+     * a stub of the course, without `courseInformationSharingConfiguration`, so reading the flag from there always
+     * reported communication as disabled and the section never rendered.
+     */
+    readonly showDiscussion = computed(() => {
+        const lecture = this.lecture();
+        if (!lecture || lecture.isTutorialLecture) {
+            return false;
+        }
+        const courseId = this.courseId();
+        const course = (courseId !== undefined ? this.courseStorageService.getCourse(courseId) : undefined) ?? lecture.course;
+        return !!course && (isCommunicationEnabled(course) || isMessagingEnabled(course));
+    });
     readonly isLoading = signal(false);
     readonly lecture = signal<Lecture | undefined>(undefined);
     readonly isDownloadingLink = signal<string | undefined>(undefined);

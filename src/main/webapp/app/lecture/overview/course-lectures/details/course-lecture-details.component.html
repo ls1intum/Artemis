@@ -6,13 +6,14 @@
     </div>
 }
 @if (lecture(); as lecture) {
-    <div>
-        <div class="px-3 pb-3 pt-2 scrollable-content">
-            <!--
-                Top bar for the lecture: title on the left, start and end date on the right, mirroring the exercise
-                header. Taller than the 40px shell bars because it carries the date boxes.
-            -->
-            <div class="lecture-header d-flex align-items-center gap-3 py-2">
+    <div class="d-flex flex-column h-100 overflow-hidden">
+        <!--
+            Header card, laid out like the exercise header: the title on its own line with the start and end date
+            beneath it, then the grey divider to the content card. Unlike the exercise header there is no rule between
+            the two lines.
+        -->
+        <div class="lecture-header module-bg rounded-3 p-2 shell-divider-b d-flex flex-column gap-2">
+            <div class="d-flex align-items-center gap-3">
                 @if (isSidebarCollapsed()) {
                     <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
                 }
@@ -20,18 +21,21 @@
                     <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
                     {{ lecture.title }}
                 </h5>
-                <div class="d-flex flex-row gap-2 ms-auto">
-                    @for (informationBoxData of informationBoxData(); track informationBoxData.title) {
-                        <jhi-information-box [informationBoxData]="informationBoxData">
-                            <ng-container contentComponent>
-                                @if (informationBoxData.content.type === 'dateTime') {
-                                    <span contentComponent>{{ informationBoxData.content.value | artemisDate }}</span>
-                                }
-                            </ng-container>
-                        </jhi-information-box>
-                    }
-                </div>
             </div>
+            <div class="d-flex flex-row gap-2">
+                @for (informationBoxData of informationBoxData(); track informationBoxData.title) {
+                    <jhi-information-box [informationBoxData]="informationBoxData">
+                        <ng-container contentComponent>
+                            @if (informationBoxData.content.type === 'dateTime') {
+                                <span contentComponent>{{ informationBoxData.content.value | artemisDate }}</span>
+                            }
+                        </ng-container>
+                    </jhi-information-box>
+                }
+            </div>
+        </div>
+
+        <div class="module-bg rounded-3 px-3 pb-3 pt-2 flex-fill overflow-auto">
             <!-- LECTURE START -->
             <div class="row">
                 <div class="col pe-0 pb-3 flex-grow-1">
@@ -143,11 +147,11 @@
                     }
                 </div>
                 <!-- LECTURE END -->
-                <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-                    @if (lecture && !lecture.isTutorialLecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
+                @if (showDiscussion()) {
+                    <div class="col d-flex flex-grow-1 justify-end">
                         <jhi-discussion-section [lecture]="lecture" />
-                    }
-                </div>
+                    </div>
+                }
             </div>
         </div>
         @if (irisSettings()?.settings?.enabled && !lecture.isTutorialLecture) {
