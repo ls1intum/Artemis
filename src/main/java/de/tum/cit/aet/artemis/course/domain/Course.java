@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.course.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_GRADING_POINTS;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PRESENTATION_SCORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -67,18 +69,6 @@ public class Course extends DomainObject {
 
     @Column(name = "short_name", unique = true)
     private String shortName;
-
-    @Column(name = "student_group_name")
-    private String studentGroupName;
-
-    @Column(name = "teaching_assistant_group_name")
-    private String teachingAssistantGroupName;
-
-    @Column(name = "editor_group_name")
-    private String editorGroupName;
-
-    @Column(name = "instructor_group_name")
-    private String instructorGroupName;
 
     @Column(name = "start_date")
     private ZonedDateTime startDate;
@@ -115,6 +105,16 @@ public class Course extends DomainObject {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
+
+    // Lazy on purpose: the course table is already wide and these values are only needed in specific flows. Note that
+    // getCourseConfiguration() returns null while the association is uninitialized, so every flow that needs it must
+    // fetch it deliberately. The ones that do: the instructor course-settings read path
+    // (findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById), the course update path (which attaches
+    // it via CourseConfigurationRepository.findByCourseId so applyTo updates it in place) and the data-retention cleanup
+    // queries. Do NOT add it to any other course query or entity graph.
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_configuration_id")
+    private CourseConfiguration courseConfiguration;
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
@@ -199,9 +199,6 @@ public class Course extends DomainObject {
     @Column(name = "learning_paths_enabled", nullable = false)
     private boolean learningPathsEnabled = false;
 
-    @Column(name = "student_course_analytics_dashboard_enabled", nullable = false)
-    private boolean studentCourseAnalyticsDashboardEnabled = false;
-
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     private Set<LearningPath> learningPaths = new HashSet<>();
@@ -221,6 +218,10 @@ public class Course extends DomainObject {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<UserCourseRole> courseRoles = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
@@ -322,58 +323,6 @@ public class Course extends DomainObject {
 
     public void setShortName(String shortName) {
         this.shortName = shortName;
-    }
-
-    public String getStudentGroupName() {
-        return studentGroupName;
-    }
-
-    public void setStudentGroupName(String studentGroupName) {
-        this.studentGroupName = studentGroupName;
-    }
-
-    public String getTeachingAssistantGroupName() {
-        return teachingAssistantGroupName;
-    }
-
-    public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
-        this.teachingAssistantGroupName = teachingAssistantGroupName;
-    }
-
-    public String getEditorGroupName() {
-        return editorGroupName;
-    }
-
-    public void setEditorGroupName(String editorGroupName) {
-        this.editorGroupName = editorGroupName;
-    }
-
-    public String getInstructorGroupName() {
-        return instructorGroupName;
-    }
-
-    public void setInstructorGroupName(String instructorGroupName) {
-        this.instructorGroupName = instructorGroupName;
-    }
-
-    @JsonIgnore
-    public String getDefaultStudentGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-students";
-    }
-
-    @JsonIgnore
-    public String getDefaultTeachingAssistantGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-tutors";
-    }
-
-    @JsonIgnore
-    public String getDefaultEditorGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-editors";
-    }
-
-    @JsonIgnore
-    public String getDefaultInstructorGroupName() {
-        return ARTEMIS_GROUP_DEFAULT_PREFIX + getShortName() + "-instructors";
     }
 
     public ZonedDateTime getStartDate() {
@@ -490,6 +439,41 @@ public class Course extends DomainObject {
 
     public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
         this.onlineCourseConfiguration = onlineCourseConfiguration;
+    }
+
+    public CourseConfiguration getCourseConfiguration() {
+        return Hibernate.isInitialized(courseConfiguration) ? courseConfiguration : null;
+    }
+
+    public void setCourseConfiguration(CourseConfiguration courseConfiguration) {
+        this.courseConfiguration = courseConfiguration;
+    }
+
+    /**
+     * Whether the course is grade-relevant, driving how long its student data is retained before the GDPR cleanup resets
+     * it. A course without an explicit {@link CourseConfiguration} (i.e. one that was never edited) is treated as
+     * grade-relevant, matching the safe default. This is null-safe with respect to the lazy association: it only reflects
+     * the flag when the configuration has been initialized.
+     *
+     * @return {@code true} if the course is grade-relevant or has no explicit configuration, {@code false} if an
+     *         instructor opted out
+     */
+    public boolean isGradeRelevant() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null || configuration.isGradeRelevant();
+    }
+
+    /**
+     * Whether the course is under a data-retention hold, which suspends the GDPR cleanup of its student data for as long
+     * as it lasts (e.g. a pending objection or legal proceeding). A course without an explicit
+     * {@link CourseConfiguration} is not held. This is null-safe with respect to the lazy association: it only reflects
+     * the flag when the configuration has been initialized.
+     *
+     * @return {@code true} if an administrator or instructor placed the course under a retention hold
+     */
+    public boolean isDataRetentionHold() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isDataRetentionHold();
     }
 
     public Integer getMaxComplaints() {
@@ -673,6 +657,14 @@ public class Course extends DomainObject {
         this.organizations = organizations;
     }
 
+    public Set<UserCourseRole> getCourseRoles() {
+        return courseRoles;
+    }
+
+    public void setCourseRoles(Set<UserCourseRole> courseRoles) {
+        this.courseRoles = courseRoles;
+    }
+
     public Set<Prerequisite> getPrerequisites() {
         return prerequisites;
     }
@@ -683,13 +675,11 @@ public class Course extends DomainObject {
 
     @Override
     public String toString() {
-        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
-                + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
-                + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
-                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
-                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + "}";
+        return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'" + ", startDate='"
+                + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='"
+                + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='" + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='"
+                + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'"
+                + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'" + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -738,14 +728,6 @@ public class Course extends DomainObject {
 
     public void setLearningPathsEnabled(boolean learningPathsEnabled) {
         this.learningPathsEnabled = learningPathsEnabled;
-    }
-
-    public boolean getStudentCourseAnalyticsDashboardEnabled() {
-        return studentCourseAnalyticsDashboardEnabled;
-    }
-
-    public void setStudentCourseAnalyticsDashboardEnabled(boolean studentCourseAnalyticsDashboardEnabled) {
-        this.studentCourseAnalyticsDashboardEnabled = studentCourseAnalyticsDashboardEnabled;
     }
 
     public Set<LearningPath> getLearningPaths() {
@@ -827,6 +809,22 @@ public class Course extends DomainObject {
         if (getAccuracyOfScores() < 0 || getAccuracyOfScores() > 5) {
             throw new BadRequestAlertException("The accuracy of scores defined for the course is either negative or uses too many decimal places (more than five)", ENTITY_NAME,
                     "accuracyOfScoresInvalid", true);
+        }
+    }
+
+    /**
+     * Validates that the configurable point values of the course stay within the allowed range. Both {@code maxPoints}
+     * and {@code presentationScore} are optional; when set, {@code maxPoints} must be between 1 and
+     * {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_GRADING_POINTS} and {@code presentationScore} must be
+     * between 0 (disabled) and {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_PRESENTATION_SCORE}.
+     */
+    public void validatePointBounds() {
+        if (getMaxPoints() != null && (getMaxPoints() < 1 || getMaxPoints() > MAX_GRADING_POINTS)) {
+            throw new BadRequestAlertException("The maximum number of points for the course must be between 1 and " + MAX_GRADING_POINTS, ENTITY_NAME, "maxPointsInvalid", true);
+        }
+        if (getPresentationScore() != null && (getPresentationScore() < 0 || getPresentationScore() > MAX_PRESENTATION_SCORE)) {
+            throw new BadRequestAlertException("The presentation score for the course must be between 0 and " + MAX_PRESENTATION_SCORE, ENTITY_NAME, "presentationScoreInvalid",
+                    true);
         }
     }
 
@@ -975,23 +973,6 @@ public class Course extends DomainObject {
         if (getUnenrollmentEndDate().isAfter(getEndDate())) {
             throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }
-    }
-
-    /**
-     * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
-     * use this method to return the customized courseGroup name
-     *
-     * @param courseGroup the courseGroup we want to add the user to
-     * @return the customized userGroupName
-     */
-    public String defineCourseGroupName(String courseGroup) {
-        return switch (courseGroup) {
-            case "students" -> getStudentGroupName();
-            case "tutors" -> getTeachingAssistantGroupName();
-            case "instructors" -> getInstructorGroupName();
-            case "editors" -> getEditorGroupName();
-            default -> throw new IllegalArgumentException("The course group does not exist");
-        };
     }
 
     public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {

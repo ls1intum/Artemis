@@ -6,11 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
-import { TableModule } from 'primeng/table';
-import { SortEvent } from 'primeng/api';
-
+import { TumUiInputDirective, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Component for viewing application configuration.
  * Displays beans and property sources with filtering and sorting.
@@ -19,7 +15,17 @@ import { SortEvent } from 'primeng/api';
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, JsonPipe, KeyValuePipe, AdminTitleBarTitleDirective, InputTextModule, TagModule, TableModule],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        JsonPipe,
+        KeyValuePipe,
+        AdminTitleBarTitleDirective,
+        TumUiInputDirective,
+        TumUiTagComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+    ],
 })
 export class ConfigurationComponent implements OnInit {
     private readonly configurationService = inject(ConfigurationService);
@@ -71,11 +77,11 @@ export class ConfigurationComponent implements OnInit {
     }
 
     /**
-     * Handles a PrimeNG table sort event. The table runs in `[customSort]` mode and only sorts by
+     * Handles a table sort event. The table runs in controlled-sort mode and only sorts by
      * the single `prefix` field, so the handler just mirrors the resolved order onto the
      * `beansAscending` signal that drives the client-side sort in `beans()`.
      */
-    onTableSort(event: SortEvent): void {
-        this.beansAscending.set((event.order ?? 1) === 1);
+    onTableSort(event: TumUiTableSortEvent): void {
+        this.beansAscending.set(event.order === 1);
     }
 }

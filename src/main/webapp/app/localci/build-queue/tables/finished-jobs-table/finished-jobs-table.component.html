@@ -1,125 +1,113 @@
 @if (buildJobs()?.length) {
-    <p-table
-        [value]="buildJobs()"
-        [size]="'small'"
-        [stripedRows]="true"
-        [customSort]="true"
-        [sortField]="predicate()"
-        [sortOrder]="ascending() ? 1 : -1"
-        (onSort)="onTableSort($event)"
-        styleClass="w-max"
-    >
-        <ng-template #header>
+    <table tumUiTable [size]="'small'" [striped]="true" [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onTableSort($event)" style="width: max-content">
+        <thead>
             <tr>
                 <th class="finish-jobs-column-tiny">
                     <span></span>
                 </th>
-                <th pSortableColumn="name" class="finish-jobs-column-strings">
+                <th [tumUiSortableColumn]="'name'" class="finish-jobs-column-strings">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.name"></span>
-                    <p-sortIcon field="name" />
                 </th>
-                <th pSortableColumn="buildStatus" class="finish-jobs-column-status">
+                <th [tumUiSortableColumn]="'buildStatus'" class="finish-jobs-column-status">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.status"></span>
-                    <p-sortIcon field="buildStatus" />
                 </th>
-                <th pSortableColumn="buildAgentAddress" class="finish-jobs-column-strings">
+                <th [tumUiSortableColumn]="'buildAgentAddress'" class="finish-jobs-column-strings">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
-                    <p-sortIcon field="buildAgentAddress" />
                 </th>
                 @if (showCourseId()) {
-                    <th pSortableColumn="courseId" class="finish-jobs-column">
+                    <th [tumUiSortableColumn]="'courseId'" class="finish-jobs-column">
                         <span jhiTranslate="artemisApp.buildQueue.buildJob.courseId"></span>
-                        <p-sortIcon field="courseId" />
                     </th>
                 }
                 <th class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.duration"></span>
                 </th>
-                <th pSortableColumn="buildCompletionDate" class="finish-jobs-column">
+                <th [tumUiSortableColumn]="'buildCompletionDate'" class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.completion"></span>
-                    <p-sortIcon field="buildCompletionDate" />
                 </th>
                 <th class="finish-jobs-column">
                     <span jhiTranslate="artemisApp.buildQueue.buildJob.buildLogs"></span>
                 </th>
             </tr>
-        </ng-template>
-        <ng-template #body let-finishedBuildJob>
-            <tr
-                class="clickable-row"
-                tabindex="0"
-                (click)="onJobClick(finishedBuildJob.id)"
-                (keydown.enter)="$event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
-                (keydown.space)="$event.preventDefault(); $event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
-            >
-                <td class="finish-jobs-column-tiny">
-                    <!-- Stretched link enables Cmd+Click to open in new tab -->
-                    <a class="stretched-row-link" [routerLink]="getJobDetailRoute(finishedBuildJob.id)" aria-hidden="true" tabindex="-1"></a>
-                    <span
-                        [ngClass]="{
-                            'text-state-success': finishedBuildJob.status === 'SUCCESSFUL',
-                            'text-state-warning': finishedBuildJob.status === 'CANCELLED',
-                            'text-state-danger': finishedBuildJob.status === 'FAILED' || finishedBuildJob.status === 'ERROR',
-                        }"
-                    >
-                        <fa-icon
-                            [icon]="
-                                finishedBuildJob.status === 'SUCCESSFUL' ? faCircleCheck : finishedBuildJob.status === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle
-                            "
-                        />
-                    </span>
-                </td>
-                <td class="finish-jobs-column-strings">
-                    <span [pTooltip]="finishedBuildJob.name ?? ''"
-                        >{{ finishedBuildJob.name ?? '' | slice: 0 : 25 }}{{ (finishedBuildJob.name ?? '').length > 25 ? '...' : '' }}</span
-                    >
-                </td>
-                <td class="finish-jobs-column-status">
-                    @if (finishedBuildJob.status === 'SUCCESSFUL') {
-                        <span (click)="$event.stopPropagation()">
-                            <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
-                        </span>
-                    } @else {
-                        <p-tag
-                            [severity]="finishedBuildJob.status === 'CANCELLED' ? 'warn' : 'danger'"
-                            [value]="finishedBuildJob.status"
-                            [rounded]="true"
-                            data-testid="finished-job-status"
-                        />
-                    }
-                </td>
-                <td class="finish-jobs-column-strings">
-                    @if (isAdminView()) {
-                        <a
-                            [routerLink]="['/admin/build-agents/details']"
-                            [queryParams]="{ agentName: getAgentLinkParam(finishedBuildJob.buildAgentAddress) }"
-                            (click)="$event.stopPropagation()"
+        </thead>
+        <tbody>
+            @for (finishedBuildJob of buildJobs(); track finishedBuildJob.id ?? $index) {
+                <tr
+                    class="clickable-row"
+                    tabindex="0"
+                    (click)="onJobClick(finishedBuildJob.id)"
+                    (keydown.enter)="$event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
+                    (keydown.space)="$event.preventDefault(); $event.target === $event.currentTarget && onJobClick(finishedBuildJob.id)"
+                >
+                    <td class="finish-jobs-column-tiny">
+                        <!-- Stretched link enables Cmd+Click to open in new tab -->
+                        <a class="stretched-row-link" [routerLink]="getJobDetailRoute(finishedBuildJob.id)" aria-hidden="true" tabindex="-1"></a>
+                        <span
+                            [ngClass]="{
+                                'text-state-success': finishedBuildJob.status === 'SUCCESSFUL',
+                                'text-state-warning': finishedBuildJob.status === 'CANCELLED',
+                                'text-state-danger': finishedBuildJob.status === 'FAILED' || finishedBuildJob.status === 'ERROR',
+                            }"
                         >
-                            {{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}
-                        </a>
-                    } @else {
-                        <span>{{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}</span>
-                    }
-                </td>
-                @if (showCourseId()) {
-                    <td class="finish-jobs-column">
-                        <a [routerLink]="['/course-management', finishedBuildJob.courseId]" (click)="$event.stopPropagation()">{{ finishedBuildJob.courseId }}</a>
+                            <fa-icon
+                                [icon]="
+                                    finishedBuildJob.status === 'SUCCESSFUL' ? faCircleCheck : finishedBuildJob.status === 'CANCELLED' ? faExclamationTriangle : faExclamationCircle
+                                "
+                            />
+                        </span>
                     </td>
-                }
-                <td class="finish-jobs-column">
-                    {{ finishedBuildJob.buildDuration }}
-                </td>
-                <td class="finish-jobs-column">
-                    <span class="text-muted-color">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
-                </td>
-                <td class="finish-jobs-column-strings">
-                    <p-button [text]="true" size="small" styleClass="detail-link" (onClick)="onViewLogs($event, finishedBuildJob.id)">
-                        <span jhiTranslate="artemisApp.result.buildLogs.viewLogs"></span>
-                    </p-button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+                    <td class="finish-jobs-column-strings">
+                        <span [tumUiTooltip]="finishedBuildJob.name ?? ''"
+                            >{{ finishedBuildJob.name ?? '' | slice: 0 : 25 }}{{ (finishedBuildJob.name ?? '').length > 25 ? '...' : '' }}</span
+                        >
+                    </td>
+                    <td class="finish-jobs-column-status">
+                        @if (finishedBuildJob.status === 'SUCCESSFUL') {
+                            <span (click)="$event.stopPropagation()">
+                                <jhi-result [result]="finishedBuildJob.submissionResult" [showUngradedResults]="true" [showBadge]="true" />
+                            </span>
+                        } @else {
+                            <tum-ui-tag
+                                [severity]="finishedBuildJob.status === 'CANCELLED' ? 'warn' : 'danger'"
+                                [value]="finishedBuildJob.status"
+                                [rounded]="true"
+                                data-testid="finished-job-status"
+                            />
+                        }
+                    </td>
+                    <td class="finish-jobs-column-strings">
+                        @if (isAdminView()) {
+                            <a
+                                [routerLink]="['/admin/build-agents/details']"
+                                [queryParams]="{ agentName: getAgentLinkParam(finishedBuildJob.buildAgentAddress) }"
+                                (click)="$event.stopPropagation()"
+                            >
+                                {{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}
+                            </a>
+                        } @else {
+                            <span>{{ getAgentDisplayName(finishedBuildJob.buildAgentAddress) }}</span>
+                        }
+                    </td>
+                    @if (showCourseId()) {
+                        <td class="finish-jobs-column">
+                            <a [routerLink]="['/course-management', finishedBuildJob.courseId]" (click)="$event.stopPropagation()">{{ finishedBuildJob.courseId }}</a>
+                        </td>
+                    }
+                    <td class="finish-jobs-column">
+                        {{ finishedBuildJob.buildDuration }}
+                    </td>
+                    <td class="finish-jobs-column">
+                        <span class="text-muted-color">{{ finishedBuildJob.buildCompletionDate | artemisDate: 'short' : true }}</span>
+                    </td>
+                    <td class="finish-jobs-column-strings">
+                        <tum-ui-button variant="text" size="small" class="detail-link" (clicked)="onViewLogs($event, finishedBuildJob.id)">
+                            <span jhiTranslate="artemisApp.result.buildLogs.viewLogs"></span>
+                        </tum-ui-button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 } @else {
     <p class="text-muted-color" jhiTranslate="artemisApp.buildQueue.noFinishedBuilds"></p>
 }

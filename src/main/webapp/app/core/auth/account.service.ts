@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/ex
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -93,16 +94,6 @@ export class AccountService implements IAccountService {
         this.userIdentity.set(identity);
     }
 
-    syncGroups(groups: string[]) {
-        this.userIdentity.update((currentUserIdentity) => {
-            if (!currentUserIdentity) {
-                return currentUserIdentity;
-            }
-            currentUserIdentity.groups = groups;
-            return currentUserIdentity;
-        });
-    }
-
     hasAnyAuthority(authorities: readonly Authority[]): Promise<boolean> {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
@@ -135,14 +126,6 @@ export class AccountService implements IAccountService {
                 return Promise.resolve(false);
             },
         );
-    }
-
-    hasGroup(group?: string): boolean {
-        if (!this.authenticated() || !this.userIdentity()?.authorities || !this.userIdentity()?.groups || !group) {
-            return false;
-        }
-
-        return this.userIdentity()?.groups?.some((userGroup: string) => userGroup === group) ?? false;
     }
 
     identity(force?: boolean): Promise<User | undefined> {
@@ -191,12 +174,10 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
-        return (
-            this.hasGroup(course?.instructorGroupName) ||
-            this.hasGroup(course?.editorGroupName) ||
-            this.hasGroup(course?.teachingAssistantGroupName) ||
-            this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)
-        );
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(course?.id, 'TEACHING_ASSISTANT');
     }
 
     /**
@@ -204,7 +185,10 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastEditorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasGroup(course?.editorGroupName) || this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(course?.id, 'EDITOR');
     }
 
     /**
@@ -212,7 +196,27 @@ export class AccountService implements IAccountService {
      * @param course
      */
     isAtLeastInstructorInCourse(course?: Course): boolean {
-        return this.hasGroup(course?.instructorGroupName) || this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+        if (this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN)) {
+            return true;
+        }
+        return this.hasCourseRoleAtLeast(course?.id, 'INSTRUCTOR');
+    }
+
+    private hasCourseRoleAtLeast(courseId: number | undefined, minimumRole: string): boolean {
+        if (!courseId || !this.authenticated()) {
+            return false;
+        }
+        const courseRoles = this.userIdentity()?.courseRoles;
+        if (!courseRoles) {
+            return false;
+        }
+        const entry = courseRoles.find((r) => r.courseId === courseId);
+        if (!entry) {
+            return false;
+        }
+        const roleHierarchy: Record<string, number> = { STUDENT: 0, TEACHING_ASSISTANT: 1, EDITOR: 2, INSTRUCTOR: 3 };
+        const minLevel = roleHierarchy[minimumRole] ?? 0;
+        return entry.roles.some((role) => (roleHierarchy[role] ?? -1) >= minLevel);
     }
 
     /**
@@ -318,8 +322,12 @@ export class AccountService implements IAccountService {
                 return currentUserIdentity;
             }
 
-            currentUserIdentity.imageUrl = url;
-            return currentUserIdentity;
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification and (under zoneless change detection) nothing re-renders — the
+            // account picture would not refresh after upload / edit / delete.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.imageUrl = url;
+            return updatedUserIdentity;
         });
     }
 
@@ -404,12 +412,32 @@ export class AccountService implements IAccountService {
      * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
      */
     setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
+        this.applyLLMSelectionDecision(accepted, dayjs());
+    }
+
+    /**
+     * Restores a previously captured decision verbatim, including "no decision made yet" ({@code undefined}) and an
+     * absent timestamp. Used to roll back an optimistic update whose persistence failed; unlike
+     * {@link setUserLLMSelectionDecision} it must never stamp the current time, because that would claim the user
+     * decided just now.
+     */
+    restoreUserLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
+        this.applyLLMSelectionDecision(accepted, timestamp);
+    }
+
+    private applyLLMSelectionDecision(accepted: LLMSelectionDecision | undefined, timestamp: dayjs.Dayjs | undefined): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
                 return currentUserIdentity;
             }
 
-            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: dayjs() });
+            // Return a NEW object rather than mutating in place: a signal compares with Object.is, so returning the
+            // same reference emits no notification. deepClone (not Object.assign) because User carries a Day.js
+            // date — see deep-clone.util.ts. Mirrors setImageUrl.
+            const updatedUserIdentity = deepClone(currentUserIdentity);
+            updatedUserIdentity.selectedLLMUsage = accepted;
+            updatedUserIdentity.selectedLLMUsageTimestamp = timestamp;
+            return updatedUserIdentity;
         });
     }
 
@@ -421,8 +449,12 @@ export class AccountService implements IAccountService {
                         return currentUserIdentity;
                     }
 
-                    currentUserIdentity.memirisEnabled = memirisEnabled;
-                    return currentUserIdentity;
+                    // Return a NEW object rather than mutating in place: a signal compares with Object.is, so
+                    // returning the same reference emits no notification and (under zoneless change detection) any
+                    // dependent view would not react to the toggled setting. Mirrors setImageUrl.
+                    const updatedUserIdentity = deepClone(currentUserIdentity);
+                    updatedUserIdentity.memirisEnabled = memirisEnabled;
+                    return updatedUserIdentity;
                 });
             },
             error: (_) => {},

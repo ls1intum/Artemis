@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
@@ -123,7 +124,7 @@ public class UserResource {
     @PutMapping("users/initialize")
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }

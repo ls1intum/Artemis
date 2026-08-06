@@ -10,8 +10,9 @@ import { admin, studentOne } from '../../support/users';
  */
 test.describe('Course overview navigation', { tag: '@fast' }, () => {
     test('sends exactly one for-dashboard request when entering a course', async ({ page, login, courseManagementAPIRequests }) => {
-        // Create a course and enroll the student (a fresh course has the analytics dashboard disabled, so the guard
-        // redirects to the exercises tab, exactly the flow that triggered the duplicate request).
+        // Create a course and enroll the student. Entering the course redirects to the exercises tab, and the
+        // course container issues a single for-dashboard request to load the course, exactly the flow that
+        // triggered the duplicate request.
         await login(admin);
         const course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);

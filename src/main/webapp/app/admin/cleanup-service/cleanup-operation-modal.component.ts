@@ -10,10 +10,7 @@ import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-ico
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-
+import { TumUiButtonDirective, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
 /**
  * Modal component for executing and monitoring cleanup operations.
  * Shows counts of entities to be cleaned up and allows executing the operation.
@@ -21,7 +18,7 @@ import { MessageModule } from 'primeng/message';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule, MessageModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, TumUiDialogComponent, TumUiButtonDirective, TumUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {
@@ -135,9 +132,30 @@ export class CleanupOperationModalComponent {
             case 'deleteOldSubmissionVersions':
                 executionRequest = this.dataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo);
                 break;
+            case 'warnOldCoursesReset':
+                executionRequest = this.dataCleanupService.warnOldCoursesReset();
+                break;
+            case 'resetOldCourses':
+                executionRequest = this.dataCleanupService.resetOldCourses();
+                break;
+            case 'deleteOldFeedback':
+                executionRequest = this.dataCleanupService.deleteOldFeedback();
+                break;
+            case 'deleteOldCourseSubmissionVersions':
+                executionRequest = this.dataCleanupService.deleteOldCourseSubmissionVersions();
+                break;
+            case 'warnNotEnrolledUsers':
+                executionRequest = this.dataCleanupService.warnNotEnrolledUsers();
+                break;
+            case 'deleteNotEnrolledUsers':
+                executionRequest = this.dataCleanupService.deleteNotEnrolledUsers();
+                break;
+            case 'deletePlagiarismCases':
+                executionRequest = this.dataCleanupService.deletePlagiarismCases();
+                break;
             default:
                 this.operationExecuting.set(false);
-                throw new Error(`Unsupported operation: ${operation.name}`);
+                throw new Error(`Unsupported operation: ${String(operation.name)}`);
         }
         // Keep the request pending when the dialog closes. Unsubscribing cannot stop server-side deletion once it has
         // started, and clearing the guard would allow a second destructive request after an immediate reopen.
@@ -168,8 +186,22 @@ export class CleanupOperationModalComponent {
                 return this.dataCleanupService.countOldRatedResults(deleteFrom, deleteTo);
             case 'deleteOldSubmissionVersions':
                 return this.dataCleanupService.countOldSubmissionVersions(deleteFrom, deleteTo);
+            case 'warnOldCoursesReset':
+                return this.dataCleanupService.countOldCoursesResetWarning();
+            case 'resetOldCourses':
+                return this.dataCleanupService.countOldCoursesReset();
+            case 'deleteOldFeedback':
+                return this.dataCleanupService.countOldFeedback();
+            case 'deleteOldCourseSubmissionVersions':
+                return this.dataCleanupService.countOldCourseSubmissionVersions();
+            case 'warnNotEnrolledUsers':
+                return this.dataCleanupService.countNotEnrolledUsersWarning();
+            case 'deleteNotEnrolledUsers':
+                return this.dataCleanupService.countNotEnrolledUsers();
+            case 'deletePlagiarismCases':
+                return this.dataCleanupService.countPlagiarismCases();
             default:
-                throw new Error(`Unsupported operation: ${operation.name}`);
+                throw new Error(`Unsupported operation: ${String(operation.name)}`);
         }
     }
 

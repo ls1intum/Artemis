@@ -14,7 +14,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiProgressSpinnerComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -32,9 +32,6 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/stan
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
@@ -54,15 +51,16 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
         FaIconComponent,
         StandardizedCompetencyFilterComponent,
         KnowledgeAreaTreeComponent,
-        TooltipModule,
+        TumUiTooltipDirective,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        DialogModule,
-        ButtonModule,
-        ProgressSpinnerModule,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
+        TumUiProgressSpinnerComponent,
         ResizableDirective,
     ],
 })

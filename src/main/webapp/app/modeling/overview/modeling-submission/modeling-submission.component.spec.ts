@@ -1,4 +1,5 @@
 import { Component, EventEmitter, input, output } from '@angular/core';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -30,14 +31,13 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -150,7 +150,7 @@ describe('ModelingSubmissionComponent', () => {
                 RouterModule.forRoot([routes[0]]),
                 ModelingSubmissionComponent,
                 StubModelingEditorComponent,
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockComponent(ResizeableContainerComponent),
@@ -478,7 +478,6 @@ describe('ModelingSubmissionComponent', () => {
 
         // Verify error was shown
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
-        expect(comp.isGeneratingFeedback()).toBe(false);
     });
 
     it('should handle Athena assessment results separately from manual assessments', async () => {

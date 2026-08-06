@@ -49,6 +49,7 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_tum_ui: ${{ steps.decide.outputs.has_tum_ui }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -103,6 +104,29 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-docs.yml'
               - 'documentation/**'
+              - 'packages/tum-ui/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'supporting_scripts/generate-tum-ui-reference-page.mjs'
+            has_tum_ui:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-quality.yml'
+              - 'angular.json'
+              - 'build.gradle'
+              - 'gradle/profile_dev.gradle'
+              - 'gradle/profile_prod.gradle'
+              - 'package.json'
+              - 'packages/tum-ui/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'prebuild.mjs'
+              - 'rules/tum-ui-package.spec.mjs'
+              - 'src/main/webapp/app/shared-ui/tum-ui-integration/**'
+              - 'src/main/webapp/tailwind.css'
+              - 'tsconfig.json'
+              - 'tsconfig.app.json'
+              - 'tsconfig.serve.json'
             has_i18n:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-translation.yml'
@@ -142,10 +166,11 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_TUM_UI: ${{ steps.area.outputs.has_tum_ui }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_tum_ui; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -158,6 +183,7 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
+              echo "has_tum_ui=${F_TUM_UI:-false}"
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -311,6 +337,7 @@ jobs:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
+      has_tum_ui: ${{ needs.detect-changes.outputs.has_tum_ui == 'true' }}
 
   gradle-wrapper:
     name: Validate Gradle Wrapper

@@ -2,9 +2,12 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -29,6 +32,8 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @Lazy
 @Service
 public class RepositoryParticipationService {
+
+    private static final Logger log = LoggerFactory.getLogger(RepositoryParticipationService.class);
 
     private final ParticipationRepository participationRepository;
 
@@ -90,6 +95,32 @@ public class RepositoryParticipationService {
     }
 
     /**
+     * Returns the files of the participation's repository as they are in its latest commit, read directly from the bare
+     * repository.
+     * <p>
+     * Prefer this over {@link #getFilesContentFromWorkingCopy(ProgrammingExerciseParticipation, ProgrammingExercise, boolean)}
+     * whenever the caller only needs the committed state. The working copy variant checks the repository out on the
+     * server and pulls it on every single request, which costs a clone, a pull and disk space, while this one reads the
+     * bare repository in place. Only use the working copy when uncommitted changes made through the online editor have
+     * to be visible.
+     * <p>
+     * Binary files are never included, because the content is returned as a {@link String}.
+     *
+     * @param participation the participation whose repository files are requested
+     * @return a map of file path to file content, empty if the repository has no commit yet
+     */
+    public Map<String, String> getFilesContentFromLastCommit(ProgrammingExerciseParticipation participation) {
+        try {
+            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(participation.getVcsRepositoryUri());
+        }
+        catch (IOException e) {
+            // Log the cause before it is replaced by a generic 500, otherwise the JGit or filesystem stack trace is lost.
+            log.error("Could not read the repository files of participation {} from the bare repository", participation.getId(), e);
+            throw new InternalServerErrorException("Could not retrieve the repository files content for participation " + participation.getId());
+        }
+    }
+
+    /**
      * Get the repository for the plagiarism view of the given participation.
      *
      * @param participationId the id of the participation to retrieve the repository for
@@ -104,7 +135,7 @@ public class RepositoryParticipationService {
             throw new IllegalArgumentException("Participation is not a programming exercise participation");
         }
 
-        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), RepositoryActionType.READ);
+        repositoryAccessService.checkHasAccessToPlagiarismSubmission(programmingParticipation, userRepository.getUserWithAuthorities(), RepositoryActionType.READ);
 
         return getRepositoryFromGitService(true, programmingParticipation);
     }

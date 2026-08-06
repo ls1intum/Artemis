@@ -12,11 +12,11 @@
 
 <ng-template #approvedCellTemplate let-cell>
     <div class="flex items-center gap-2">
-        <p-toggleswitch
+        <tum-ui-toggle-switch
             [ngModel]="cell.data.isSuperAdminApproved"
             [inputId]="'approval-' + cell.data.credentialId"
-            (onChange)="onApprovalToggle(cell.data)"
-            [attr.aria-label]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
+            (changed)="onApprovalToggle(cell.data)"
+            [ariaLabel]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
             data-testid="passkey-approval-toggle"
         />
         @if (cell.data.isSuperAdminApproved) {

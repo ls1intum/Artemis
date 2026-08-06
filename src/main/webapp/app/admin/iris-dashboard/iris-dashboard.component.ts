@@ -1,12 +1,16 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
-import { TableModule } from 'primeng/table';
-import { TabsModule } from 'primeng/tabs';
-import { PanelModule } from 'primeng/panel';
-import { SelectModule } from 'primeng/select';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import {
+    TumUiButtonComponent,
+    TumUiMessageComponent,
+    TumUiPanelComponent,
+    TumUiSelectComponent,
+    TumUiTabComponent,
+    TumUiTabListComponent,
+    TumUiTableDirective,
+    TumUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,12 +30,14 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
     imports: [
         DecimalPipe,
         JsonPipe,
-        TableModule,
-        TabsModule,
-        PanelModule,
-        SelectModule,
-        ButtonModule,
-        MessageModule,
+        TumUiTableDirective,
+        TumUiTabsComponent,
+        TumUiTabListComponent,
+        TumUiTabComponent,
+        TumUiPanelComponent,
+        TumUiSelectComponent,
+        TumUiButtonComponent,
+        TumUiMessageComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,

@@ -9,10 +9,7 @@ import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
-
+import { TumUiButtonComponent, TumUiTableDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 /**
  * Component that displays a table of running build jobs.
  * Supports both admin and course-specific views with optional course ID column.
@@ -33,9 +30,9 @@ import { TooltipModule } from 'primeng/tooltip';
         ArtemisDurationFromSecondsPipe,
         ArtemisTranslatePipe,
         SlicePipe,
-        TableModule,
-        ButtonModule,
-        TooltipModule,
+        TumUiTableDirective,
+        TumUiButtonComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class RunningJobsTableComponent {

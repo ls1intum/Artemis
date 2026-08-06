@@ -171,12 +171,10 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String shortName, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-                String instructorGroupName) {
+        public record CourseDTO(Long id, String title, String shortName, String semester) {
 
             public static CourseDTO from(@NonNull Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                        course.getEditorGroupName(), course.getInstructorGroupName());
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getSemester());
             }
         }
     }
@@ -267,9 +265,12 @@ public class LectureResource {
      */
     @GetMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
+    public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithAuthorities();
+        final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
+        // The import search table only displays the lecture title and its course's title/semester; channel name is not needed here
+        final List<SimpleLectureDTO> lectureDtos = lecturePage.getResultsOnPage().stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).toList();
+        return ResponseEntity.ok(new SearchResultPageDTO<>(lectureDtos, lecturePage.getNumberOfPages()));
     }
 
     /**
@@ -298,7 +299,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
-    @EnforceAtLeastEditorInCourse
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
@@ -447,7 +448,7 @@ public class LectureResource {
     public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam(name = "sourceLectureId", required = false) Long sourceLectureIdQuery,
             @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
         long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
 
@@ -477,7 +478,7 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));
     }
 

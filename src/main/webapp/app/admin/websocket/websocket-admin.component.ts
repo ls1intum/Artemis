@@ -10,12 +10,7 @@ import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { TagModule } from 'primeng/tag';
-import { MessageModule } from 'primeng/message';
-import { TableModule } from 'primeng/table';
-
+import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiMessageComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 /**
  * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
  * <p>
@@ -34,11 +29,11 @@ import { TableModule } from 'primeng/table';
         FaIconComponent,
         DatePipe,
         AdminTitleBarTitleDirective,
-        ButtonModule,
-        ButtonGroupModule,
-        TagModule,
-        MessageModule,
-        TableModule,
+        TumUiButtonComponent,
+        TumUiButtonGroupComponent,
+        TumUiTagComponent,
+        TumUiMessageComponent,
+        TumUiTableDirective,
     ],
 })
 export class WebsocketAdminComponent implements OnInit, OnDestroy {

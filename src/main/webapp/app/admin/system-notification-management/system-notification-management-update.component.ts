@@ -10,12 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
-
+import { TumUiButtonDirective, TumUiCheckboxComponent, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 /**
  * Form structure for system notification editing.
  * Note: FormControl values can be null when initialized with undefined.
@@ -44,11 +39,11 @@ interface SystemNotificationForm {
         FaIconComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
-        CheckboxModule,
-        InputTextModule,
-        SelectModule,
-        ButtonModule,
-        MessageModule,
+        TumUiCheckboxComponent,
+        TumUiInputDirective,
+        TumUiSelectComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

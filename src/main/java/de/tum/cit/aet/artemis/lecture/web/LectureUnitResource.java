@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -110,9 +111,10 @@ public class LectureUnitResource {
      */
     @PutMapping("lectures/{lectureId}/lecture-units-order")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
+    public ResponseEntity<List<LectureUnitDTO>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        // Fetch competency links and their competencies eagerly: the polymorphic LectureUnitDTO mapping below reads them and there is no open-session-in-view to load them lazily.
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
 
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
@@ -131,9 +133,10 @@ public class LectureUnitResource {
         }
 
         lecture.reorderLectureUnits(orderedLectureUnitIds);
+        lectureRepository.save(lecture);
 
-        lecture = lectureRepository.save(lecture);
-        return ResponseEntity.ok(lecture.getLectureUnits());
+        // reorderLectureUnits already re-sorted the in-memory units, whose competency links were eagerly fetched above, so map them directly without another round trip.
+        return ResponseEntity.ok(lecture.getLectureUnits().stream().map(LectureUnitDTO::of).toList());
     }
 
     /**
@@ -162,7 +165,7 @@ public class LectureUnitResource {
             throw new BadRequestAlertException("Requested lecture unit is not yet visible for students", ENTITY_NAME, "lectureUnitNotReleased");
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectForParticipantAsync(lectureUnit, user));

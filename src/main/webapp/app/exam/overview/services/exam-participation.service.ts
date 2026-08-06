@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -39,6 +39,18 @@ export class ExamParticipationService {
     private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
     shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
+    // Version counter bumped whenever a submission's `isSynced` flag is mutated in place (on an answer/model/text
+    // change, or when a save succeeds/fails). Submissions are plain mutable objects, so under zoneless change
+    // detection those in-place mutations are invisible to signal-based bindings. UI that reflects the sync state
+    // (e.g. the in-exercise save button's `disabled`/icon) reads this version to re-evaluate reactively.
+    private readonly submissionSyncVersionSignal = signal(0);
+    readonly submissionSyncVersion = this.submissionSyncVersionSignal.asReadonly();
+
+    /** Notify sync-state-dependent UI that a submission's `isSynced` flag changed (see {@link submissionSyncVersion}). */
+    notifySubmissionSyncStateChanged(): void {
+        this.submissionSyncVersionSignal.update((version) => version + 1);
+    }
+
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;
     }
@@ -57,7 +69,11 @@ export class ExamParticipationService {
      */
     public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
-        return this.getStudentExamFromServer(url, courseId, examId);
+        return this.getStudentExamFromServer(url).pipe(
+            // During the conduction, blocking the student on a failed request would be worse than letting them work on
+            // the copy cached on this device, which is a faithful snapshot of the exam they were handed.
+            catchError(() => of(this.getStudentExamFromLocalStorage(courseId, examId))),
+        );
     }
 
     /**
@@ -67,26 +83,30 @@ export class ExamParticipationService {
      * @param examId the id of the exam
      */
     public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam | undefined> {
-        const localStoredExam = this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
-        return of(localStoredExam);
+        return of(this.getStudentExamFromLocalStorage(courseId, examId));
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
+     * Retrieves a {@link StudentExam} from the server for display of the summary.
+     *
+     * Deliberately without a localstorage fallback: the cached exam is the conduction-era copy, i.e. it carries neither
+     * results nor scores. Substituting it would present stale data as the current summary once the error toast is gone,
+     * so the error is propagated and the caller surfaces a retryable error state instead.
+     *
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the studentExam
      * @returns a studentExam with Exercises for the summary-phase
      */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
-        return this.getStudentExamFromServer(url, courseId, examId);
+        return this.getStudentExamFromServer(url);
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage.
+     * Retrieves a {@link StudentExam} from the server.
      */
-    private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam | undefined> {
+    private getStudentExamFromServer(url: string): Observable<StudentExam> {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
@@ -97,11 +117,14 @@ export class ExamParticipationService {
             tap((studentExam: StudentExam) => {
                 this.currentlyLoadedStudentExam.next(studentExam);
             }),
-            catchError(() => {
-                const localStoredExam = this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
-                return of(localStoredExam);
-            }),
         );
+    }
+
+    /**
+     * Retrieves the {@link StudentExam} cached on this device during the conduction, if any.
+     */
+    private getStudentExamFromLocalStorage(courseId: number, examId: number): StudentExam | undefined {
+        return this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
     }
 
     /**
@@ -322,6 +345,7 @@ export class ExamParticipationService {
             exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
             exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
             exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
+            exam.examSummaryPublicationDate = exam.examSummaryPublicationDate ? dayjs(exam.examSummaryPublicationDate) : undefined;
         }
         return exam;
     }

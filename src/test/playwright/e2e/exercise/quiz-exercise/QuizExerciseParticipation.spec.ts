@@ -7,7 +7,7 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { QuizMode } from '../../../support/constants';
 import { SEED_COURSES } from '../../../support/seedData';
-import { readResponseJson } from '../../../support/utils';
+import { generateUUID, readResponseJson } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.quizParticipation.id } as any;
 
@@ -207,7 +207,10 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
     test.describe('Quiz exercise scheduled participation', () => {
         let quizExercise: QuizExercise;
-        const timeUntilQuizStartInSeconds = 15;
+        // 15s was too tight: beforeEach API call + login + navigation can consume 10–15s,
+        // leaving zero margin before startOfWorkingTime arrives and the overlay disappears.
+        // 45s gives ~30s of headroom for the "cannot participate" assertion.
+        const timeUntilQuizStartInSeconds = 45;
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
@@ -231,10 +234,15 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
+            // timeUntilQuizStartInSeconds is 45s — lift the per-test budget so the fixed
+            // wait below doesn't hit the 60s @fast default.
+            test.slow();
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            // The quiz page does not push a live update when startOfWorkingTime arrives;
+            // wait for the time to pass, then assert the overlay is gone and the question shows.
             await page.waitForTimeout(timeUntilQuizStartInSeconds * 1000 + 3000);
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).not.toBeVisible({ timeout: 10000 });
-            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible();
+            await expect(quizExerciseParticipation.getQuizQuestion(0)).toBeVisible({ timeout: 10000 });
         });
     });
 
@@ -433,10 +441,16 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
         test.beforeEach('Create DND quiz', async ({ login, courseManagementExercises, exerciseAPIRequests, quizExerciseCreation }) => {
             await login(admin, '/course-management/' + course.id + '/exercises');
             await courseManagementExercises.createQuizExercise();
-            await quizExerciseCreation.setTitle('Cypress Quiz');
+            // Unique per test: three tests in this block each create a quiz and nothing deletes them, so a
+            // fixed title would make the by-title recovery lookup below ambiguous.
+            const quizTitle = 'Cypress Quiz ' + generateUUID();
+            await quizExerciseCreation.setTitle(quizTitle);
             await quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
             const response = await quizExerciseCreation.saveQuiz();
-            quizExercise = await readResponseJson(response);
+            // The drag-and-drop background image is a disk-backed file, so this create response cannot be held
+            // in Node and Chrome discards it when the editor navigates away on save. Fall back to an idempotent
+            // lookup instead of failing the whole describe block on a body that no longer exists.
+            quizExercise = await readResponseJson<QuizExercise>(response, () => exerciseAPIRequests.getQuizExerciseByTitle(course.id!, quizTitle));
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
         });

@@ -17,7 +17,7 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import type { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -361,6 +361,8 @@ export class ExerciseService {
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
             res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
             res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
+            res.body.latestExamEndDate = convertDateFromServer(res.body.latestExamEndDate);
+            res.body.assessmentPossibleFrom = convertDateFromServer(res.body.assessmentPossibleFrom);
             res.body.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(res.body.studentParticipations);
         }
         return res;

@@ -519,7 +519,7 @@ class Lti13ServiceTest {
 
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
         Optional<User> user = Optional.of(new User());
-        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doReturn(user).when(userRepository).findOneWithAuthoritiesByLogin(any());
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
@@ -603,6 +603,16 @@ class Lti13ServiceTest {
 
     @Test
     void getTargetLinkType_irisPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/iris";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.IRIS);
+    }
+
+    @Test
+    void getTargetLinkType_legacyIrisDashboardPath() {
+        // Deep links issued before the dashboard removal still point to /dashboard and must keep resolving to IRIS
         String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
 
         DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
@@ -694,12 +704,55 @@ class Lti13ServiceTest {
 
     @Test
     void hasTargetLinkWithoutExercise_irisPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/iris";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_legacyIrisDashboardPath() {
         String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
         Optional<Lecture> targetLecture = Optional.empty();
 
         boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_rewritesLegacyDashboardToIris() {
+        String legacyTargetLink = "https://some-artemis-domain.org/courses/123/dashboard";
+
+        String normalized = lti13Service.normalizeLegacyIrisTargetLink(legacyTargetLink);
+
+        assertThat(normalized).isEqualTo("https://some-artemis-domain.org/courses/123/iris");
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_leavesCurrentIrisLinkUnchanged() {
+        String currentTargetLink = "https://some-artemis-domain.org/courses/123/iris";
+
+        String normalized = lti13Service.normalizeLegacyIrisTargetLink(currentTargetLink);
+
+        assertThat(normalized).isEqualTo(currentTargetLink);
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_leavesUnrelatedLinkUnchanged() {
+        String unrelatedTargetLink = "https://some-artemis-domain.org/courses/123/exercises/42";
+
+        String normalized = lti13Service.normalizeLegacyIrisTargetLink(unrelatedTargetLink);
+
+        assertThat(normalized).isEqualTo(unrelatedTargetLink);
+    }
+
+    @Test
+    void normalizeLegacyIrisTargetLink_handlesNullTargetLink() {
+        // the target_link_uri claim can be absent (e.g. deep-linking requests), so null must not throw
+        assertThat(lti13Service.normalizeLegacyIrisTargetLink(null)).isNull();
     }
 
     private State getValidStateForNewResult(Result result) {
@@ -779,7 +832,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn(targetLinkUri);
 
         Optional<User> user = Optional.of(new User());
-        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doReturn(user).when(userRepository).findOneWithAuthoritiesByLogin(any());
 
         if (isOnlineCourse) {
             doReturn(Optional.of(getMockCourse(courseId))).when(courseRepository).findById(courseId);

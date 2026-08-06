@@ -19,7 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { PrimeTemplate } from 'primeng/api';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
@@ -28,7 +27,7 @@ import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ButtonModule, TableModule, ArtemisTranslatePipe],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -42,7 +41,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     readonly importCompleted = output<void>();
 
     courseId = input<number>();
-    courseGroup = input<string>();
+    courseRoleSlug = input<string>();
     exam = input<Exam | undefined>();
     tutorialGroup = input<TutorialGroup | undefined>();
     examUserMode = input<boolean>(false);
@@ -138,7 +137,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     importUsers() {
         this.isImporting.set(true);
         const tutorialGroup = this.tutorialGroup();
-        const courseGroup = this.courseGroup();
+        const courseGroup = this.courseRoleSlug();
         const exam = this.exam();
         const courseId = this.courseId();
 
@@ -151,7 +150,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else if (courseGroup && !exam) {
-            this.courseManagementService.addUsersToGroupInCourse(courseId!, this.usersToImport(), courseGroup).subscribe({
+            this.courseManagementService.addUsersToCourseRole(courseId!, this.usersToImport(), courseGroup).subscribe({
                 next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });

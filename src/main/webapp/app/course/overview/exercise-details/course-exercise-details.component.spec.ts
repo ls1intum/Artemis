@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -32,7 +33,6 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -164,7 +164,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),
@@ -692,6 +692,31 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next(changedParticipation);
 
         const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    it('should keep submission history while applying a live transition to finished', () => {
+        comp.exercise = { ...exercise } as Exercise;
+        const existingParticipation = {
+            id: 555,
+            exercise: comp.exercise,
+            initializationState: InitializationState.INITIALIZED,
+            submissions: [{ id: 1 } as Submission, { id: 2 } as Submission],
+        } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        comp.subscribeForNewResults();
+
+        const changedParticipation = {
+            id: 555,
+            exercise: { id: comp.exercise!.id },
+            initializationState: InitializationState.FINISHED,
+            submissions: [{ id: 3 } as Submission],
+        } as StudentParticipation;
+        participationWebsocketBehaviorSubject.next(changedParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.initializationState).toBe(InitializationState.FINISHED);
         expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
     });
 });

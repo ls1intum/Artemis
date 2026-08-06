@@ -12,7 +12,7 @@
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text1"></p>
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text2"></p>
                 <p jhiTranslate="artemisApp.standardizedCompetency.manage.import.format.text3"></p>
-                <div [innerHTML]="importExample | htmlForMarkdown"></div>
+                <div [jhiMarkdown]="importExample"></div>
             </div>
         }
     </div>
@@ -32,7 +32,7 @@
                             <fa-icon
                                 class="me-2"
                                 [icon]="getIcon(competency.taxonomy)"
-                                [pTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                [tumUiTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
                                 [fixedWidth]="true"
                             />
                             <h6 class="mb-0">{{ competency.title }}</h6>
@@ -55,7 +55,7 @@
         <span jhiTranslate="artemisApp.standardizedCompetency.manage.import.preview.empty"></span>
     }
     @if (validationErrors().length) {
-        <p-message severity="error" styleClass="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
+        <tum-ui-message severity="error" class="mt-2 w-full" aria-live="assertive" data-testid="validation-errors">
             <div class="flex flex-col">
                 <strong jhiTranslate="artemisApp.standardizedCompetency.manage.import.error.fileValidation" [translateValues]="{ count: validationErrors().length }"></strong>
                 <ul class="mb-0 mt-1">
@@ -70,16 +70,16 @@
                     ></span>
                 }
             </div>
-        </p-message>
+        </tum-ui-message>
     }
     <div class="mt-3 flex items-center justify-end gap-2">
-        <p-button severity="secondary" size="small" (onClick)="cancel()">
+        <tum-ui-button severity="secondary" size="small" (clicked)="cancel()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel"></span>
-        </p-button>
-        <p-button size="small" [disabled]="!importData()" [loading]="isLoading()" (onClick)="importCompetencies()">
+        </tum-ui-button>
+        <tum-ui-button size="small" [disabled]="!importData()" [loading]="isLoading()" (clicked)="importCompetencies()">
             <fa-icon [icon]="faFileImport" />
             <span jhiTranslate="entity.action.to-import"></span>
-        </p-button>
+        </tum-ui-button>
     </div>
 </div>

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -7,7 +8,6 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -43,9 +43,6 @@ describe('LectureAttachmentsComponent', () => {
             description:
                 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.',
             shortName: 'RCSS',
-            studentGroupName: 'artemis-dev',
-            teachingAssistantGroupName: 'tumuser',
-            instructorGroupName: 'tumuser',
             startDate: dayjs('2018-12-15T16:11:00+01:00'),
             endDate: dayjs('2019-06-15T16:11:14+02:00'),
             onlineCourse: false,
@@ -100,7 +97,7 @@ describe('LectureAttachmentsComponent', () => {
                 FormDateTimePickerComponent,
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [

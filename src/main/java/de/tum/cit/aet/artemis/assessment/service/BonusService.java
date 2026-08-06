@@ -31,6 +31,25 @@ public class BonusService {
     }
 
     /**
+     * Validates that the source and bonusTo grading scales of the given bonus have the required grade types.
+     * <p>
+     * Exposed separately from {@link #saveBonus} so callers can validate before persisting unrelated state (e.g. the
+     * bonusTo grading-scale strategy), avoiding a partial update when the bonus is rejected.
+     *
+     * @param bonus                     the bonus to validate
+     * @param isSourceGradeScaleUpdated used to skip source grading scale validation if it is not updated
+     * @throws BadRequestAlertException if the (updated) source is not {@link GradeType#BONUS} or the bonusTo is not {@link GradeType#GRADE}
+     */
+    public void validateBonusGradeTypes(Bonus bonus, boolean isSourceGradeScaleUpdated) {
+        if (isSourceGradeScaleUpdated && !bonus.getSourceGradingScale().getGradeType().equals(GradeType.BONUS)) {
+            throw new BadRequestAlertException("Source grade scale should have bonus type.", "bonus", "invalidSourceGradingScale");
+        }
+        if (!bonus.getBonusToGradingScale().getGradeType().equals(GradeType.GRADE)) {
+            throw new BadRequestAlertException("BonusTo grade scale should have grade type.", "bonus", "invalidBonusToGradingScale");
+        }
+    }
+
+    /**
      * Saves a bonus source to the database if it is valid
      *
      * @param bonus                     the bonus source to be saved
@@ -38,12 +57,7 @@ public class BonusService {
      * @return the saved bonus source
      */
     public Bonus saveBonus(Bonus bonus, boolean isSourceGradeScaleUpdated) {
-        if (isSourceGradeScaleUpdated && !bonus.getSourceGradingScale().getGradeType().equals(GradeType.BONUS)) {
-            throw new BadRequestAlertException("Source grade scale should have bonus type.", "bonus", "invalidSourceGradingScale");
-        }
-        if (!bonus.getBonusToGradingScale().getGradeType().equals(GradeType.GRADE)) {
-            throw new BadRequestAlertException("BonusTo grade scale should have grade type.", "bonus", "invalidBonusToGradingScale");
-        }
+        validateBonusGradeTypes(bonus, isSourceGradeScaleUpdated);
         return bonusRepository.save(bonus);
     }
 
