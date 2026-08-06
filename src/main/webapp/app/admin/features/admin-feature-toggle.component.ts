@@ -99,14 +99,16 @@ export class AdminFeatureToggleComponent implements OnInit {
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
 
     /**
-     * Tint and border for a feature card: light green when the feature is active, light red when it is not.
+     * Tint and border for a feature card: light green when the feature is active, muted grey when it is not.
      *
-     * The neutral surface shades this replaces (`bg-surface-50` vs `bg-surface-100`) were indistinguishable at a
-     * glance. Red for "inactive" is deliberate: on this page the colour answers "is this switched on?" rather than
-     * "is something broken?". The state tokens carry their own light/dark values, so no `dark:` variants are needed.
+     * The contrast comes from the active state being tinted at all — the shades this replaces (`bg-surface-50` vs
+     * `bg-surface-100`) were one step apart and indistinguishable at a glance. Red is reserved for states that need
+     * attention, so a switched-off feature stays neutral rather than reading as a failure.
+     *
+     * The success token carries its own light/dark values; the surface shades need explicit `dark:` variants.
      */
     protected featureCardClasses(isActive: boolean): string {
-        return isActive ? 'bg-state-success/10 border-state-success/40' : 'bg-state-danger/10 border-state-danger/40';
+        return isActive ? 'bg-state-success/10 border-state-success/40' : 'bg-surface-100 border-surface-300 dark:bg-surface-800 dark:border-surface-600';
     }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */

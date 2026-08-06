@@ -1240,6 +1240,15 @@ body.transparent-background {
 }
 
 /*
+ * Vertical counterpart, for a divider between stacked regions such as an exercise header and the content below it.
+ * Plain CSS rather than a `mb-divider` Tailwind utility, because utilities are only generated for the paths listed
+ * as `@source` in tailwind.css and most consumers of this sit outside them — the utility would silently be absent.
+ */
+.shell-divider-b {
+    margin-bottom: var(--spacing-divider);
+}
+
+/*
  * The content card of the pages that are not inside a shell (course list, course management list, about, legal pages).
  *
  * The footer is `position: fixed; bottom: 0`, so the bottom margin has to clear it and leave one divider visible. It
@@ -1299,6 +1308,16 @@ body.transparent-background {
             flex: 1 1 auto;
             min-height: 0;
         }
+    }
+
+    /*
+     * A scroll region that is a flex item of the filled page must take its height from that parent rather than
+     * re-derive one from the viewport. `dynamic-content-height` subtracts a hardcoded navbar+footer estimate that is a
+     * few pixels short of what the shell computes, and the difference shows up as extra space above the footer. Only
+     * direct flex children are touched, so a scroll region nested deeper keeps whatever height it sets for itself.
+     */
+    .horizontal-scroll > .scrollable-content {
+        height: auto;
     }
 
     /* The sidebar column fills too, so its card ends level with the content pane beside it. */

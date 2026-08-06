@@ -47,7 +47,7 @@
                             @if (profileInfo.isActive) {
                                 <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="profile-status-active" />
                             } @else {
-                                <tum-ui-tag severity="danger" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
+                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="profile-status-inactive" />
                             }
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                             @if (moduleInfo.isActive) {
                                 <tum-ui-tag severity="success" [value]="'artemisApp.features.active' | artemisTranslate" data-testid="module-status-active" />
                             } @else {
-                                <tum-ui-tag severity="danger" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
+                                <tum-ui-tag severity="secondary" [value]="'artemisApp.features.inactive' | artemisTranslate" data-testid="module-status-inactive" />
                             }
                         </div>
                     </div>
