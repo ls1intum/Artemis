@@ -12,7 +12,6 @@ import jakarta.validation.Valid;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -55,11 +53,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 public class ProgrammingExerciseBuildConfigResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfigResource.class);
-
-    private static final String ENTITY_NAME = "programmingExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -121,12 +114,11 @@ public class ProgrammingExerciseBuildConfigResource {
 
         programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
 
-        // record the change like the full update path does, so it appears in the exercise version history and the audit log,
-        // and warn a colleague who has the exercise form open via the entity-update alert header
+        // record the change like the full update path does, so it appears in the exercise version history and the audit log;
+        // the version entry is also what warns a colleague who has the exercise form open (the page shows its own success message)
         exerciseService.logUpdate(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseVersionService.createExerciseVersion(programmingExercise, user);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle()))
-                .body(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
+        return ResponseEntity.ok(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
     }
 
     /**
