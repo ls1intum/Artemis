@@ -34,26 +34,22 @@
 
         @include shell-content-height;
 
-        /*
-         * Column flex so the scroll region below the title bar fills exactly the space that is left. It used to
-         * compute its own `100vh - …` height, which ignored the title bar and therefore left a gap above the
-         * footer that varied with the navbar height and from page to page.
-         */
-        display: flex;
-        flex-direction: column;
         overflow: hidden;
         transition: width 0.2s ease-in-out;
 
         /*
-         * Student exam conduction (`.exam-wrapper`, set only by the course-overview shell) drives its own
-         * full-viewport layout, so it stays on the previous auto-height flow.
+         * Column flex so the scroll region below the title bar fills exactly the space that is left. It used to
+         * compute its own `100vh - …` height, which ignored the title bar and therefore left a gap above the
+         * footer that varied with the navbar height and from page to page.
          *
-         * Instructor test-run conduction routes through the course-management shell, which never sets
-         * `.exam-wrapper`, so it DOES get the rules below. That is safe because the conduction view sets its own
-         * explicit height (`exam-participation.scss`), which stays smaller than the box these rules produce — but
-         * it is the one path worth re-checking on a test server.
+         * Exam conduction (`.exam-wrapper`) is excluded entirely — including the `display: flex` itself, so its
+         * formatting context is byte-identical to before. It drives its own full-viewport layout and its inner
+         * views size themselves from `--header-height`, which the exam navigation bar owns during conduction.
          */
         &:not(.exam-wrapper) {
+            display: flex;
+            flex-direction: column;
+
             > .course-body-container {
                 flex: 1 1 auto;
                 min-height: 0;

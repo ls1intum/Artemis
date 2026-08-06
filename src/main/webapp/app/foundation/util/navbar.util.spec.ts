@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { observeShellMetrics, reattachShellMetricsObserver, updateHeaderHeight } from 'app/foundation/util/navbar.util';
 
 /**
- * The shells size their content region from `--header-height` / `--footer-height`, so these variables must track
+ * The shells size their content region from `--navbar-height` / `--footer-height`, so these variables must track
  * the rendered navbar and footer exactly — a stale or missing value silently mis-sizes every page.
  */
 describe('navbar util shell metrics', () => {
@@ -24,6 +24,7 @@ describe('navbar util shell metrics', () => {
         observed.clear();
         disconnectCount = 0;
         teardowns = [];
+        document.documentElement.style.removeProperty('--navbar-height');
         document.documentElement.style.removeProperty('--header-height');
         document.documentElement.style.removeProperty('--footer-height');
         document.body.replaceChildren();
@@ -67,7 +68,7 @@ describe('navbar util shell metrics', () => {
         startObserving();
         vi.runAllTimers();
 
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('63.75px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.75px');
         expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
     });
 
@@ -85,7 +86,7 @@ describe('navbar util shell metrics', () => {
         vi.runAllTimers();
 
         expect(observed.has(replacement)).toBe(true);
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('90px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('90px');
     });
 
     it('clears the variable when the element is gone so the theme fallback applies again', () => {
@@ -93,14 +94,14 @@ describe('navbar util shell metrics', () => {
         addElement('jhi-footer', 30);
         startObserving();
         vi.runAllTimers();
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('60px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('60px');
 
         // The skeleton-less routes (LTI embedding, standalone problem statement) remove the navbar entirely.
         navbar.remove();
         reattachShellMetricsObserver();
         vi.runAllTimers();
 
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('');
         expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('30px');
     });
 
@@ -108,13 +109,13 @@ describe('navbar util shell metrics', () => {
         const navbar = addElement('jhi-navbar', 60);
         startObserving();
         vi.runAllTimers();
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('60px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('60px');
 
         // Breadcrumbs wrapping makes the navbar taller without any navigation.
         navbar.getBoundingClientRect = () => ({ height: 88 }) as DOMRect;
         lastCallback!();
 
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('88px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('88px');
     });
 
     it('does not rewrite an unchanged value', () => {
@@ -161,7 +162,7 @@ describe('navbar util shell metrics', () => {
         expect(() => reattachShellMetricsObserver()).not.toThrow();
         vi.runAllTimers();
 
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('');
         expect(observed.size).toBe(0);
     });
 
@@ -171,11 +172,11 @@ describe('navbar util shell metrics', () => {
 
         const teardown = observeShellMetrics();
 
-        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('72px');
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('72px');
         expect(() => teardown()).not.toThrow();
     });
 
-    it('updateHeaderHeight measures the navbar after the current task', () => {
+    it('updateHeaderHeight writes --header-height, which exam mode owns, not --navbar-height', () => {
         addElement('jhi-navbar', 44);
 
         updateHeaderHeight();
@@ -183,5 +184,7 @@ describe('navbar util shell metrics', () => {
 
         vi.runAllTimers();
         expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('44px');
+        // The observer must never touch --header-height: the exam navigation bar repurposes it during conduction.
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('');
     });
 });

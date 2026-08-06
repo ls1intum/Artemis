@@ -15,8 +15,15 @@ export function updateHeaderHeight() {
     });
 }
 
+/*
+ * Deliberately NOT `--header-height`. That variable means "height of whatever header is currently on top" and is
+ * owned by exam mode: `ExamNavigationBarComponent` sets it to the exam navigation bar's height during conduction
+ * and `ExamParticipationService.resetExamLayout()` restores it afterwards. Writing the global navbar's height
+ * there — or removing it while the navbar is hidden during an exam — fought with that and broke the exam layout
+ * after a reload. `--navbar-height` is owned solely by the observer below and always means the global navbar.
+ */
 const SHELL_METRICS: { selector: string; cssVariable: string }[] = [
-    { selector: 'jhi-navbar', cssVariable: '--header-height' },
+    { selector: 'jhi-navbar', cssVariable: '--navbar-height' },
     { selector: 'jhi-footer', cssVariable: '--footer-height' },
 ];
 
@@ -24,10 +31,10 @@ const SHELL_METRICS: { selector: string; cssVariable: string }[] = [
 let activeObserver: ResizeObserver | undefined;
 
 /**
- * Keeps `--header-height` and `--footer-height` in sync with the navbar and footer as actually rendered.
+ * Keeps `--navbar-height` and `--footer-height` in sync with the navbar and footer as actually rendered.
  *
  * The shells (student overview, course management, administration) size their content region as
- * `100vh - var(--header-height) - var(--footer-height) - var(--spacing-divider)`. That only lands on an exact
+ * `100vh - var(--navbar-height) - var(--footer-height) - var(--spacing-divider)`. That only lands on an exact
  * one-divider gap above the footer while both variables reflect reality — the previous hardcoded
  * `--sidebar-header-footer-combined-height: 88px` under-stated the real ~95px, which is why the gap between
  * the content and the footer drifted from page to page. Both elements resize (breadcrumbs wrap, the footer's

@@ -71,7 +71,9 @@ $title-bar-padding-block: 6px;
 // Module and Navigationbar
 $module-bg: $white;
 $header-height: 68px;
-// Fallback only: kept in sync with the rendered footer by observeShellMetrics().
+// Fallbacks only: kept in sync with the rendered elements by observeShellMetrics(). `$navbar-height` is the
+// global navbar; `$header-height` above is separate because exam mode repurposes it for the exam nav bar.
+$navbar-height: 68px;
 $footer-height: 32px;
 $course-image-bg: $body-bg;
 $link-item-color: $primary;

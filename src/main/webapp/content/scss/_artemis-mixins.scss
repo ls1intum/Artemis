@@ -104,11 +104,12 @@
 /*
  * Height of a shell's content region (student overview, course management, administration): everything between
  * the sticky navbar and the footer, minus one grey divider, so the shell ends exactly one divider above the
- * footer. `--header-height` / `--footer-height` are kept in sync with the rendered elements by
- * `observeShellMetrics()`; the theme values are only fallbacks for the first paint.
+ * footer. `--navbar-height` / `--footer-height` are kept in sync with the rendered elements by
+ * `observeShellMetrics()`; the theme values are only fallbacks for the first paint. Note this uses
+ * `--navbar-height`, not `--header-height`: the latter is repurposed by exam mode for the exam navigation bar.
  *
  * Do NOT also subtract `--system-notification-height`: the notification banner renders INSIDE `jhi-navbar`, so
- * the measured `--header-height` already covers it (SystemNotificationComponent re-measures the navbar whenever
+ * the measured `--navbar-height` already covers it (SystemNotificationComponent re-measures the navbar whenever
  * the banner's height changes). Subtracting it again shortened both shells by the banner height.
  *
  * Prefer this over `dynamic-content-height` for shell-level regions: the latter's
@@ -118,7 +119,7 @@
  * mis-sized (pre-existing; see the follow-up note in the PR description).
  */
 @mixin shell-content-height {
-    height: calc(100vh - var(--header-height) - var(--footer-height) - var(--spacing-divider));
+    height: calc(100vh - var(--navbar-height) - var(--footer-height) - var(--spacing-divider));
 }
 
 @mixin dynamic-content-height($extra-height-to-subtract...) {
