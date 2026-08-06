@@ -1,5 +1,6 @@
 <div>
-    <div class="input-group page-top-bar shell-divider-b rounded-3 px-2 me-2 module-bg d-flex justify-content-between">
+    <!-- Projected into the shell title bar, like the management FAQ page, so this page does not render a second bar. -->
+    <div *titleBarActions class="d-flex justify-content-between gap-2">
         <jhi-search-filter class="flex-grow-1" (newSearchEvent)="setSearchValue($event)" />
         <div class="ms-2 me-2" aria-label="Filter Dropdown" ngbDropdown>
             <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters().size === 0, 'btn-success': activeFilters().size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
@@ -26,7 +27,6 @@
             }
         </div>
     </div>
-    <hr />
     @if (faqs().length === 0) {
         <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noExisting"></h2>
     }
