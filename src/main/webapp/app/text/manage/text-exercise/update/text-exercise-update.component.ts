@@ -9,7 +9,7 @@ import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
@@ -47,6 +47,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'app/exercise/util/exercise-validation.util';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -273,6 +274,28 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 },
             ]);
         }
+    }
+
+    /**
+     * Every reason the exercise cannot be saved. Drives both the invalid-input badge and the
+     * disabled state of the save button in the form footer.
+     */
+    getInvalidReasons(): ValidationReason[] {
+        if (!this.textExercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return [
+            ...getCommonExerciseInvalidReasons(this.textExercise, {
+                isExamMode: this.isExamMode(),
+                minTitleLength: 3,
+                isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+                isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+                timelineStatus: this.timelineStatus(),
+                isExampleSolutionPublicationDateInputValid: this.solutionPublicationDateField()?.dateInput?.valid ?? true,
+            }),
+            ...getPlagiarismInvalidReasons(this.exerciseUpdatePlagiarismComponent()),
+        ];
     }
 
     /**

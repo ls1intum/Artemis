@@ -169,7 +169,7 @@
         [isCreation]="!textExercise.id"
         [isImport]="isImport()"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || textExercise.exampleSolutionPublicationDateError)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"

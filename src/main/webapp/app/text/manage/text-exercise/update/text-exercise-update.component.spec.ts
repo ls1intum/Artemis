@@ -51,6 +51,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -98,6 +99,7 @@ class MockExerciseFeedbackSuggestionOptionsComponent {
 // Mock for TitleChannelNameComponent interface
 class MockTitleChannelNameComponent {
     isValid = signal(true);
+    isChannelFieldDisplayed = () => true;
 }
 
 // Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly
@@ -623,5 +625,61 @@ describe('TextExercise Management Update Component', () => {
 
         expect(component.textExercise.categories).toEqual(newCategories);
         expect(component.exerciseCategories()).toEqual(newCategories);
+    });
+
+    describe('getInvalidReasons', () => {
+        let course: Course;
+
+        const filledInExercise = () => {
+            const exercise = new TextExercise(course, undefined);
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            return exercise;
+        };
+
+        beforeEach(async () => {
+            course = createCourse();
+            routeData$.next({ textExercise: createExercise(course) });
+            routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should report the mandatory fields of an untouched creation form', () => {
+            component.textExercise = new TextExercise(course, undefined);
+            component.isExamMode.set(false);
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
+            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
+        });
+
+        it('should report no reason for a completely filled in exercise', () => {
+            component.textExercise = filledInExercise();
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            expect(component.getInvalidReasons()).toEqual([]);
+        });
+
+        it('should forward the timeline reasons', () => {
+            component.textExercise = filledInExercise();
+            component.isExamMode.set(false);
+            component.timelineStatus.set({
+                valid: false,
+                empty: true,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.order', dateName: 'Due Date' }],
+            });
+
+            expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+        });
     });
 });
