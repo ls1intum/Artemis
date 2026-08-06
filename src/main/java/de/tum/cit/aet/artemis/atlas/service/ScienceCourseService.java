@@ -155,7 +155,7 @@ public class ScienceCourseService {
      * @return the current user's course consent states
      */
     public List<ScienceCourseConsentDTO> getConsentsForCurrentUser() {
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         List<ScienceEnabledCourse> enabledCourses = scienceEnabledCourseRepository.findAllByOrderByLastModifiedDateDesc();
         Set<Long> courseIds = enabledCourses.stream().map(enabledCourse -> enabledCourse.getCourse().getId()).collect(Collectors.toSet());
         if (courseIds.isEmpty()) {
