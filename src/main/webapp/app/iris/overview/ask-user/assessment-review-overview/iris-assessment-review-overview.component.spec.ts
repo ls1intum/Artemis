@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -10,6 +9,8 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -20,8 +21,6 @@ import { IrisAssessmentReviewHttpService, IrisAssessmentReviewParticipation } fr
 import { FilterProp, IrisAssessmentReviewOverviewComponent } from 'app/iris/overview/ask-user/assessment-review-overview/iris-assessment-review-overview.component';
 
 describe('IrisAssessmentReviewOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisAssessmentReviewOverviewComponent>;
     let component: IrisAssessmentReviewOverviewComponent;
     let searchParticipationsStub: ReturnType<typeof vi.fn>;
@@ -57,6 +56,7 @@ describe('IrisAssessmentReviewOverviewComponent', () => {
                 { provide: IrisAssessmentReviewHttpService, useValue: { searchAssessmentReviewParticipations: searchParticipationsStub } },
                 { provide: IrisSettingsService, useValue: { getCourseSettingsWithRateLimit: getCourseSettingsStub } },
                 { provide: AlertService, useValue: { error: vi.fn(), addAlert: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .overrideComponent(IrisAssessmentReviewOverviewComponent, {
@@ -103,7 +103,7 @@ describe('IrisAssessmentReviewOverviewComponent', () => {
         expect((component as any).exercises()[0].participations).toEqual([participation]);
         expect((component as any).totalRows()).toBe(1);
         expect((component as any).participationsPerFilter().get(FilterProp.SUSPICIOUS)).toBe(1);
-        expect((component as any).isLoading()).toBeFalse();
+        expect((component as any).isLoading()).toBe(false);
     });
 
     it('should reload from the first page when filters change', () => {
@@ -167,7 +167,7 @@ describe('IrisAssessmentReviewOverviewComponent', () => {
         await fixture.whenStable();
 
         expect(searchParticipationsStub).not.toHaveBeenCalled();
-        expect((component as any).isLoading()).toBeFalse();
+        expect((component as any).isLoading()).toBe(false);
     });
 
     it('should report an error when loading Iris settings fails', async () => {
@@ -183,7 +183,7 @@ describe('IrisAssessmentReviewOverviewComponent', () => {
 
         expect(searchParticipationsStub).not.toHaveBeenCalled();
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect((component as any).isLoading()).toBeFalse();
+        expect((component as any).isLoading()).toBe(false);
     });
 
     it('should report an error when participation loading fails', () => {
@@ -193,6 +193,6 @@ describe('IrisAssessmentReviewOverviewComponent', () => {
         component.refresh();
 
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect((component as any).isLoading()).toBeFalse();
+        expect((component as any).isLoading()).toBe(false);
     });
 });

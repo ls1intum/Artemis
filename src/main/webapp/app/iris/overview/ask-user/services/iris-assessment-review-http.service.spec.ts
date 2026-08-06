@@ -70,7 +70,7 @@ describe('IrisAssessmentReviewHttpService', () => {
         service.getAssessmentChat(7).subscribe((response) => expect(response.body).toEqual([]));
 
         const request = httpMock.expectOne((req) => req.method === 'GET' && req.url === 'api/iris/assessments/7/chat');
-        expect(request.request.params.has('inClass')).toBeFalse();
+        expect(request.request.params.has('inClass')).toBe(false);
         request.flush([]);
     });
 
@@ -142,8 +142,8 @@ describe('IrisAssessmentReviewHttpService', () => {
             });
 
         const request = httpMock.expectOne((req) => req.method === 'GET' && req.url === 'api/iris/courses/5/assessment-review/participations');
-        expect(request.request.params.has('filterProps')).toBeFalse();
-        expect(request.request.params.has('inClass')).toBeFalse();
+        expect(request.request.params.has('filterProps')).toBe(false);
+        expect(request.request.params.has('inClass')).toBe(false);
         request.flush({});
     });
 
@@ -151,7 +151,7 @@ describe('IrisAssessmentReviewHttpService', () => {
         const expiresAt = dayjs().add(2, 'minutes');
 
         service.makeInClassQuizAvailable(exerciseId).subscribe((response) => {
-            expect(response.body?.timerExpiresAt.isSame(expiresAt)).toBeTrue();
+            expect(response.body?.timerExpiresAt.isSame(expiresAt)).toBe(true);
             expect(response.body?.timeLimit).toBeGreaterThan(0);
         });
 
@@ -162,7 +162,7 @@ describe('IrisAssessmentReviewHttpService', () => {
         service
             .availableInClassQuizForExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((activeInClassQuiz) => expect(activeInClassQuiz?.timerExpiresAt.isSame(expiresAt)).toBeTrue());
+            .subscribe((activeInClassQuiz) => expect(activeInClassQuiz?.timerExpiresAt.isSame(expiresAt)).toBe(true));
     });
 
     it('should get the active in-class quiz window from the server', () => {
@@ -170,7 +170,7 @@ describe('IrisAssessmentReviewHttpService', () => {
         const timeLimit = 90;
 
         service.getAvailableInClassQuiz(exerciseId).subscribe((response) => {
-            expect(response.body?.timerExpiresAt.isSame(expiresAt)).toBeTrue();
+            expect(response.body?.timerExpiresAt.isSame(expiresAt)).toBe(true);
             expect(response.body?.timeLimit).toBe(timeLimit);
         });
 
@@ -200,7 +200,7 @@ describe('IrisAssessmentReviewHttpService', () => {
         const expiresAt = dayjs().subtract(1, 'minute');
 
         service.getAvailableInClassQuiz(exerciseId).subscribe((response) => {
-            expect(response.body?.timerExpiresAt.isSame(expiresAt)).toBeTrue();
+            expect(response.body?.timerExpiresAt.isSame(expiresAt)).toBe(true);
             expect(response.body?.timeLimit).toBe(0);
         });
 

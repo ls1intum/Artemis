@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -21,8 +20,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('IrisAssessmentReviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisAssessmentReviewComponent>;
     let component: IrisAssessmentReviewComponent;
     let routeData: BehaviorSubject<Record<string, IrisAssessmentReviewResolvedData>>;
@@ -32,7 +29,7 @@ describe('IrisAssessmentReviewComponent', () => {
     };
     let alertService: AlertService;
 
-    const course = { id: 1, title: 'Course' } as Course;
+    const course = { id: 1, title: 'Course', isAtLeastEditor: true } as Course;
     const exercise = { id: 2, title: 'Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
     const student = { login: 'student1', name: 'Student One' } as User;
     const rows = [{ id: 1, question: 'Question', answer: 'Answer', reasoning: 'Reasoning' }];

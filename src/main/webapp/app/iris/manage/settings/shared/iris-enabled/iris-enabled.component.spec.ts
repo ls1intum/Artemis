@@ -63,8 +63,8 @@ describe('IrisEnabledComponent', () => {
         fixture.detectChanges();
 
         expect(comp.settings()).toEqual(mockSettings);
-        expect(comp.isEnabled()).toBeTrue();
-        expect(comp.isDisabled()).toBeFalse();
+        expect(comp.isEnabled()).toBe(true);
+        expect(comp.isDisabled()).toBe(false);
     });
 
     describe('ngOnInit', () => {

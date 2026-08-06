@@ -41,6 +41,7 @@ import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mo
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
@@ -194,6 +195,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(PlagiarismCasesService),
                 MockProvider(AlertService),
                 MockProvider(IrisSettingsService),
+                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(true), getFeatureTogglesActive: () => of(true) } },
                 MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],

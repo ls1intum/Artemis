@@ -19,6 +19,7 @@ describe('CourseManagementResolve', () => {
         resolver = TestBed.inject(CourseManagementResolve);
         service = TestBed.inject(CourseManagementService);
         route = new ActivatedRouteSnapshot();
+        route.data = {};
     });
 
     afterEach(() => {
@@ -94,13 +95,13 @@ describe('CourseManagementResolve', () => {
         mockCourse.id = 99;
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
 
-        // Route params are typically strings in Angular
+        // Route params are typically strings in Angular, but the resolver normalizes them to a number before calling the service.
         route.params = { courseId: '99' };
         let result: Course | undefined;
 
         resolver.resolve(route).subscribe((res) => (result = res));
 
-        expect(service.find).toHaveBeenCalledWith('99');
+        expect(service.find).toHaveBeenCalledWith(99);
         expect(result).toBe(mockCourse);
     });
 

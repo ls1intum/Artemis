@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Subject, firstValueFrom, of, take, throwError } from 'rxjs';
@@ -16,8 +15,6 @@ import { IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 
 describe('IrisAskUserService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: IrisAskUserService;
     let runInfoSubject: BehaviorSubject<IrisRunInfo | undefined>;
     let latestEventSubject: Subject<IrisPipeEvent | undefined>;
@@ -86,15 +83,15 @@ describe('IrisAskUserService', () => {
         service.setActiveQuizTypeForExercise(exerciseId, 'regular');
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
-        expect(service.quizActive()).toBeTrue();
-        expect(service.quizStarted()).toBeTrue();
-        expect(service.timerExpiresAt()?.isValid()).toBeTrue();
+        expect(service.quizActive()).toBe(true);
+        expect(service.quizStarted()).toBe(true);
+        expect(service.timerExpiresAt()?.isValid()).toBe(true);
         expect(service.timeLimit()).toBe(120);
 
         runInfoSubject.next({ runId: 'run-1', state: IrisRunState.FAILED });
 
-        expect(service.quizActive()).toBeFalse();
-        expect(service.quizStarted()).toBeFalse();
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
         expect(service.timerExpiresAt()).toBeUndefined();
         expect(service.timeLimit()).toBe(0);
         await expect(firstValueFrom(service.activeQuizTypeForExercise(exerciseId).pipe(take(1)))).resolves.toBeUndefined();
@@ -106,15 +103,15 @@ describe('IrisAskUserService', () => {
 
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
-        expect(service.quizActive()).toBeTrue();
-        expect(service.quizStarted()).toBeTrue();
+        expect(service.quizActive()).toBe(true);
+        expect(service.quizStarted()).toBe(true);
         expect(service.timerExpiresAt()).toBeUndefined();
         expect(service.timeLimit()).toBe(0);
     });
 
     it('should keep local timer state cleared when stopping the timer fails', () => {
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
-        expect(service.timerExpiresAt()?.isValid()).toBeTrue();
+        expect(service.timerExpiresAt()?.isValid()).toBe(true);
         askUserHttpService.stopTimer.mockReturnValue(throwError(() => new Error('stop failed')));
 
         stopTimerSubject.next();
@@ -132,8 +129,8 @@ describe('IrisAskUserService', () => {
 
         expect(awaitingAnswerStub).toHaveBeenCalledOnce();
         expect(askUserHttpService.registerDefocusForCurrentSession).toHaveBeenCalledExactlyOnceWith(exerciseId);
-        expect(service.quizActive()).toBeFalse();
-        expect(service.quizStarted()).toBeFalse();
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
         expect(service.timerExpiresAt()).toBeUndefined();
         expect(service.timeLimit()).toBe(0);
     });
@@ -143,8 +140,8 @@ describe('IrisAskUserService', () => {
 
         runInfoSubject.next({ runId: 'run-1', state: IrisRunState.FAILED });
 
-        expect(service.quizActive()).toBeFalse();
-        expect(service.quizStarted()).toBeFalse();
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
         expect(service.timerExpiresAt()).toBeUndefined();
         expect(service.timeLimit()).toBe(0);
         await expect(firstValueFrom(service.activeQuizTypeForExercise(exerciseId).pipe(take(1)))).resolves.toBeUndefined();
@@ -156,7 +153,7 @@ describe('IrisAskUserService', () => {
 
         latestEventSubject.next(IrisPipeEvent.USER_STARTS_QUIZ);
 
-        expect(service.quizStarted()).toBeTrue();
+        expect(service.quizStarted()).toBe(true);
         expect(service.irisPanelActivationRequest()).toEqual({ sequence: 1, exerciseId });
 
         latestEventSubject.next(IrisPipeEvent.USER_STARTS_QUIZ);
@@ -168,14 +165,14 @@ describe('IrisAskUserService', () => {
         service.setActiveQuizTypeForExercise(exerciseId, 'regular');
         latestEventSubject.next(IrisPipeEvent.FIRST_QUESTION);
 
-        expect(service.quizActive()).toBeTrue();
-        expect(service.quizStarted()).toBeTrue();
-        expect(service.timerExpiresAt()?.isValid()).toBeTrue();
+        expect(service.quizActive()).toBe(true);
+        expect(service.quizStarted()).toBe(true);
+        expect(service.timerExpiresAt()?.isValid()).toBe(true);
 
         latestEventSubject.next(IrisPipeEvent.BUILD_WITH_POINTS);
 
-        expect(service.quizActive()).toBeFalse();
-        expect(service.quizStarted()).toBeFalse();
+        expect(service.quizActive()).toBe(false);
+        expect(service.quizStarted()).toBe(false);
         expect(service.timerExpiresAt()).toBeUndefined();
         expect(service.timeLimit()).toBe(0);
         await expect(firstValueFrom(service.activeQuizTypeForExercise(exerciseId).pipe(take(1)))).resolves.toBeUndefined();
@@ -187,9 +184,9 @@ describe('IrisAskUserService', () => {
 
         latestEventSubject.next(IrisPipeEvent.BUILD_WITH_POINTS);
 
-        expect(service.quizActive()).toBeTrue();
-        expect(service.quizStarted()).toBeTrue();
-        expect(service.timerExpiresAt()?.isValid()).toBeTrue();
+        expect(service.quizActive()).toBe(true);
+        expect(service.quizStarted()).toBe(true);
+        expect(service.timerExpiresAt()?.isValid()).toBe(true);
         await expect(firstValueFrom(service.activeQuizTypeForExercise(exerciseId).pipe(take(1)))).resolves.toBe('inClass');
     });
 

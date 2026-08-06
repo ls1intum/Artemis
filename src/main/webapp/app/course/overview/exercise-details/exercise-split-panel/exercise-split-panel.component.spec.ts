@@ -114,7 +114,7 @@ describe('ExerciseSplitPanelComponent', () => {
                                 <ng-template jhiPanel [label]="'problemStatement'">Problem Statement</ng-template>
                             }
                             @if (showIris()) {
-                                <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
+                                <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
                             }
                         </jhi-resizable-panels>
                     `,

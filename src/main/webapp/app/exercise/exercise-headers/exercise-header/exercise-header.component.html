@@ -52,7 +52,7 @@
             [hasPractice]="showPracticeMode()"
             [hasGraded]="showGradedMode()"
         />
-        @if (exercise().type === ExerciseType.PROGRAMMING && !exercise().teamMode && irisAskUserModeEnabled()) {
+        @if (exercise().type === ExerciseType.PROGRAMMING && !exercise().teamMode && !exercise().exerciseGroup && irisAskUserModeEnabled()) {
             <jhi-start-quiz-button [exercise]="exercise()" [smallButtons]="false" [participation]="studentParticipation()" />
             <jhi-start-in-class-quiz-button [exercise]="exercise()" [smallButtons]="false" [participation]="studentParticipation()" />
         }

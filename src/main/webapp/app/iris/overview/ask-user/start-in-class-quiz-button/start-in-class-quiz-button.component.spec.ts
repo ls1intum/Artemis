@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Signal, WritableSignal, computed, signal } from '@angular/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -22,8 +21,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 
 describe('IrisStartInClassQuizButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisStartInClassQuizButtonComponent>;
     let component: IrisStartInClassQuizButtonComponent;
     let latestEventSubject: Subject<IrisPipeEvent | undefined>;

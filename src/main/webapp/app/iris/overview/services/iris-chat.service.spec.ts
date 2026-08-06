@@ -1458,7 +1458,7 @@ describe('IrisChatService', () => {
             // startFreshChat only spins up a new session-loading subscription when the current session is non-empty.
             scopedService.messages.next([mockServerMessage]);
             scopedService.startFreshChat();
-            expect(scopedService['sessionLoadingSubscription']?.closed).toBeFalse();
+            expect(scopedService['sessionLoadingSubscription']?.closed).toBe(false);
 
             authState.next(undefined);
 
@@ -1478,7 +1478,7 @@ describe('IrisChatService', () => {
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
 
             scopedService.switchToSession({ id: 7, mode: ChatServiceMode.COURSE, entityId: 1, creationDate: new Date() } as IrisSessionDTO);
-            expect(scopedService['chatSessionByIdSubscription']?.closed).toBeFalse();
+            expect(scopedService['chatSessionByIdSubscription']?.closed).toBe(false);
 
             authState.next(undefined);
 
@@ -1496,7 +1496,7 @@ describe('IrisChatService', () => {
             vi.spyOn(httpServiceMock, 'getChatSessions').mockReturnValue(inFlight.asObservable());
 
             scopedService['loadChatSessions']();
-            expect(scopedService['chatSessionSubscription']?.closed).toBeFalse();
+            expect(scopedService['chatSessionSubscription']?.closed).toBe(false);
 
             authState.next(undefined);
 

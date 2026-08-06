@@ -81,8 +81,8 @@ describe('IrisSettingsUpdateComponent', () => {
 
     it('should initialize with default tab and idle state', () => {
         expect(component.activeTab()).toBe('general');
-        expect(component.isLoading()).toBeFalse();
-        expect(component.isSaving()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
+        expect(component.isSaving()).toBe(false);
         expect(component.settings()).toBeUndefined();
     });
 

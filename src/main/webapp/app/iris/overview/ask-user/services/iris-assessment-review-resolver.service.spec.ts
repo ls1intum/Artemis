@@ -17,7 +17,7 @@ describe('IrisAssessmentReviewResolver', () => {
     let resolver: IrisAssessmentReviewResolver;
     let courseManagementService: { find: ReturnType<typeof vi.fn> };
     let assessmentReviewService: {
-        findWithPoints: ReturnType<typeof vi.fn>;
+        findWithStudent: ReturnType<typeof vi.fn>;
         getAssessmentChat: ReturnType<typeof vi.fn>;
     };
 
@@ -37,7 +37,7 @@ describe('IrisAssessmentReviewResolver', () => {
             find: vi.fn(() => of(new HttpResponse({ body: course }))),
         };
         assessmentReviewService = {
-            findWithPoints: vi.fn(() => of(new HttpResponse({ body: assessment }))),
+            findWithStudent: vi.fn(() => of(new HttpResponse({ body: assessment }))),
             getAssessmentChat: vi.fn(() => of(new HttpResponse({ body: rows }))),
         };
 
@@ -61,7 +61,7 @@ describe('IrisAssessmentReviewResolver', () => {
 
         expect(resolvedData).toEqual({ course, exercise, assessment, rows });
         expect(courseManagementService.find).toHaveBeenCalledExactlyOnceWith(7);
-        expect(assessmentReviewService.findWithPoints).toHaveBeenCalledExactlyOnceWith(3);
+        expect(assessmentReviewService.findWithStudent).toHaveBeenCalledExactlyOnceWith(3);
         expect(assessmentReviewService.getAssessmentChat).toHaveBeenCalledExactlyOnceWith(3, true);
     });
 
@@ -76,7 +76,7 @@ describe('IrisAssessmentReviewResolver', () => {
     });
 
     it('should reject missing assessment response body', async () => {
-        assessmentReviewService.findWithPoints.mockReturnValue(of(new HttpResponse({ body: null })));
+        assessmentReviewService.findWithStudent.mockReturnValue(of(new HttpResponse({ body: null })));
 
         await expect(firstValueFrom(resolver.resolve(route({ courseId: '7', assessmentId: '3' })))).rejects.toThrow('Iris assessment could not be loaded');
     });
@@ -88,7 +88,7 @@ describe('IrisAssessmentReviewResolver', () => {
     });
 
     it('should reject assessments without a programming exercise', async () => {
-        assessmentReviewService.findWithPoints.mockReturnValue(of(new HttpResponse({ body: { id: 3, exercise: { id: 12, type: ExerciseType.QUIZ } } })));
+        assessmentReviewService.findWithStudent.mockReturnValue(of(new HttpResponse({ body: { id: 3, exercise: { id: 12, type: ExerciseType.QUIZ } } })));
 
         await expect(firstValueFrom(resolver.resolve(route({ courseId: '7', assessmentId: '3' })))).rejects.toThrow('Iris assessment 3 is not linked to a programming exercise');
     });

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -10,8 +9,6 @@ import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('IrisInClassQuizStartWarningComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisInClassQuizStartWarningComponent>;
     let dialogRef: { close: ReturnType<typeof vi.fn> };
 

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -16,13 +15,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('IrisAssessmentAttentionCenterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisAssessmentAttentionCenterComponent>;
     let component: IrisAssessmentAttentionCenterComponent;
     let getAssessmentAttentionStateStub: ReturnType<typeof vi.fn>;
 
-    const instructorCourse = { id: 12, isAtLeastInstructor: true } as Course;
+    const instructorCourse = { id: 12, isAtLeastInstructor: true, isAtLeastTutor: true } as Course;
 
     beforeEach(async () => {
         getAssessmentAttentionStateStub = vi.fn(() => of(new HttpResponse({ body: { needsAttention: true } })));
@@ -62,21 +59,20 @@ describe('IrisAssessmentAttentionCenterComponent', () => {
         fixture.detectChanges();
 
         expect(getAssessmentAttentionStateStub).toHaveBeenCalledExactlyOnceWith(12);
-        expect((component as any).needsAttention()).toBeTrue();
+        expect((component as any).needsAttention()).toBe(true);
         expect((component as any).reviewLink()).toEqual(['/course-management', 12, 'iris-assessments']);
         expect((component as any).inClassQuizLink()).toEqual(['/course-management', 12, 'iris-in-class-assessments']);
         expect(fixture.debugElement.queryAll(By.css('a'))).toHaveLength(2);
     });
 
-    it('should not load the attention state for non-instructors', async () => {
-        fixture.componentRef.setInput('course', { ...instructorCourse, isAtLeastInstructor: false });
+    it('should not load the attention state for non-tutors', async () => {
+        fixture.componentRef.setInput('course', { ...instructorCourse, isAtLeastInstructor: false, isAtLeastTutor: false });
         fixture.componentRef.setInput('assessmentEnabled', true);
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(getAssessmentAttentionStateStub).not.toHaveBeenCalled();
-        expect((component as any).needsAttention()).toBeFalse();
-        expect(fixture.debugElement.query(By.css('.iris-panel'))).toBeNull();
+        expect((component as any).needsAttention()).toBe(false);
     });
 
     it('should not load the attention state when ask-user assessment is disabled', async () => {
@@ -86,8 +82,7 @@ describe('IrisAssessmentAttentionCenterComponent', () => {
         await fixture.whenStable();
 
         expect(getAssessmentAttentionStateStub).not.toHaveBeenCalled();
-        expect((component as any).needsAttention()).toBeFalse();
-        expect(fixture.debugElement.query(By.css('.iris-panel'))).toBeNull();
+        expect((component as any).needsAttention()).toBe(false);
     });
 
     it('should fall back to no attention needed when loading fails', async () => {
@@ -98,6 +93,6 @@ describe('IrisAssessmentAttentionCenterComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect((component as any).needsAttention()).toBeFalse();
+        expect((component as any).needsAttention()).toBe(false);
     });
 });

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -9,8 +8,6 @@ import { QuizTimerBarComponent } from 'app/iris/overview/ask-user/quiz-timer-bar
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('QuizTimerBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizTimerBarComponent>;
     let component: QuizTimerBarComponent;
 
@@ -50,8 +47,8 @@ describe('QuizTimerBarComponent', () => {
         fixture.detectChanges();
 
         const timerBar = fixture.nativeElement.querySelector('.quiz-timer-bar') as HTMLElement;
-        expect(timerBar.classList.contains('open')).toBeTrue();
-        expect(timerBar.classList.contains('compact')).toBeTrue();
+        expect(timerBar.classList.contains('open')).toBe(true);
+        expect(timerBar.classList.contains('compact')).toBe(true);
         expect(fixture.nativeElement.querySelector('.quiz-timer-progress')).toBeNull();
     });
 
