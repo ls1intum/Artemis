@@ -6,11 +6,10 @@ import { cloneDeep } from 'lodash-es';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faMinus, faPencilAlt, faPlus, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FormsModule } from '@angular/forms';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -18,15 +17,27 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/u
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
+import {
+    TumUiButtonDirective,
+    TumUiCardComponent,
+    TumUiInputDirective,
+    TumUiInputGroupAddonComponent,
+    TumUiInputGroupComponent,
+    TumUiTagComponent,
+    TumUiTagSeverity,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { CREDITS_STEP, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
+import { FeedbackTone } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
+    styleUrls: ['./code-editor-tutor-assessment-inline-feedback.component.scss'],
     imports: [
         FeedbackSuggestionBadgeComponent,
         TranslateDirective,
         FaIconComponent,
-        NgbTooltip,
         GradingInstructionLinkIconComponent,
         FormsModule,
         DeleteButtonDirective,
@@ -34,20 +45,30 @@ import { QuotePipe } from 'app/foundation/pipes/quote.pipe';
         ArtemisTranslatePipe,
         FeedbackContentPipe,
         QuotePipe,
+        TumUiCardComponent,
+        TumUiButtonDirective,
+        TumUiTagComponent,
+        TumUiInputDirective,
+        TumUiInputGroupComponent,
+        TumUiInputGroupAddonComponent,
+        TumUiTooltipDirective,
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
-    protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
     protected readonly Feedback = Feedback;
     protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
+    protected readonly CREDITS_STEP = CREDITS_STEP;
 
-    // Expose the function to the template
+    // Expose the function to the template. The feedback of this widget is edited in place (see currentFeedback), so
+    // its presentation is derived per change detection run instead of through computed signals.
     protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
@@ -121,6 +142,41 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.oldFeedback.set(cloneDeep(restored));
         this.viewOnly.set(restored.type === this.MANUAL);
         this.onCancelFeedback.emit(this.codeLine());
+    }
+
+    /** Whether the feedback awards, deducts or changes nothing — the widget's left accent stripe follows it. */
+    protected tone(feedback: Feedback): FeedbackTone {
+        if (this.isExcludedFromScore(feedback)) {
+            return 'neutral';
+        }
+        const credits = feedback.credits ?? 0;
+        if (credits > 0) {
+            return 'positive';
+        }
+        return credits < 0 ? 'negative' : 'neutral';
+    }
+
+    /** Severity of the point pill (green awarded / red deducted / neutral). */
+    protected pointsSeverity(feedback: Feedback): TumUiTagSeverity {
+        return this.isExcludedFromScore(feedback) ? 'secondary' : pointsSeverity(feedback.credits);
+    }
+
+    /** Subsequent feedback of an earlier correction round is shown for context only and adds nothing to the score. */
+    private isExcludedFromScore(feedback: Feedback): boolean {
+        return this.readOnly() && !!feedback.isSubsequent;
+    }
+
+    /**
+     * Increments or decrements the points by one half-point step, mirroring what typing into the field does.
+     * @param delta the signed step to apply
+     */
+    protected stepCredits(delta: number): void {
+        const feedback = this.currentFeedback();
+        // Points of a feedback linked to a grading instruction are owned by that instruction.
+        if (feedback.gradingInstruction) {
+            return;
+        }
+        feedback.credits = steppedCredits(feedback.credits, delta);
     }
 
     /**

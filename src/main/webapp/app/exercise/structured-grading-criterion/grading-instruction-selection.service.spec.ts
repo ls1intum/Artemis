@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 describe('GradingInstructionSelectionService', () => {
     let service: GradingInstructionSelectionService;
@@ -55,6 +56,36 @@ describe('GradingInstructionSelectionService', () => {
         service.setApplied(instruction, true);
 
         expect(host.applyInstruction).not.toHaveBeenCalled();
+    });
+
+    it('should count feedback of a usage source on top of the host feedback', () => {
+        const inlineFeedback = signal<Feedback[]>([{ gradingInstruction: instruction } as Feedback, { gradingInstruction: { id: 2 } as GradingInstruction } as Feedback]);
+        service.register(host);
+        service.registerUsageSource(inlineFeedback);
+
+        expect(service.appliedInstructionCounts().get(1)).toBe(2);
+        expect(service.appliedInstructionCounts().get(2)).toBe(1);
+
+        inlineFeedback.set([]);
+        expect(service.appliedInstructionCounts().get(1)).toBe(1);
+        expect(service.appliedInstructionCounts().has(2)).toBe(false);
+    });
+
+    it('should count feedback of a usage source without a registered host', () => {
+        service.registerUsageSource(signal<Feedback[]>([{ gradingInstruction: instruction } as Feedback]));
+
+        expect(service.appliedInstructionCounts().get(1)).toBe(1);
+        // The checkbox may only add to and remove from the host list, so its state does not follow a usage source.
+        expect(service.isApplied(instruction)).toBe(false);
+    });
+
+    it('should stop counting a usage source once it is unregistered', () => {
+        const inlineFeedback = signal<Feedback[]>([{ gradingInstruction: instruction } as Feedback]);
+        service.registerUsageSource(inlineFeedback);
+
+        service.unregisterUsageSource(inlineFeedback);
+
+        expect(service.appliedInstructionCounts().size).toBe(0);
     });
 
     it('should only clear the registration for the host that is currently active', () => {

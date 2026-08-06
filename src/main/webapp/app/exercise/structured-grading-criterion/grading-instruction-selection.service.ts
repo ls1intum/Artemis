@@ -1,5 +1,6 @@
 import { Injectable, Signal, computed, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 /**
  * Contract fulfilled by the feedback list of an assessment editor.
@@ -29,14 +30,36 @@ const NO_APPLIED_INSTRUCTION_COUNTS: ReadonlyMap<number, number> = new Map<numbe
 export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
 
+    /**
+     * Feedback that uses up instruction usages without being part of the host list, e.g. the inline feedback placed
+     * directly in the code. It only adds to the usage counts: the checkbox may add to and remove from the host list
+     * alone, so its state keeps following the host.
+     */
+    private readonly usageSources = signal<readonly Signal<readonly Feedback[]>[]>([]);
+
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
 
     /** Ids of the instructions currently applied in the registered feedback list. */
     readonly appliedInstructionIds = computed(() => this.host()?.appliedInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
-    /** Number of times each instruction is used in the registered feedback list. */
-    readonly appliedInstructionCounts = computed(() => this.host()?.appliedInstructionCounts() ?? NO_APPLIED_INSTRUCTION_COUNTS);
+    /** Number of times each instruction is used, across the registered feedback list and all usage sources. */
+    readonly appliedInstructionCounts = computed<ReadonlyMap<number, number>>(() => {
+        const sources = this.usageSources();
+        if (sources.length === 0) {
+            return this.host()?.appliedInstructionCounts() ?? NO_APPLIED_INSTRUCTION_COUNTS;
+        }
+        const counts = new Map(this.host()?.appliedInstructionCounts() ?? []);
+        for (const source of sources) {
+            for (const feedback of source()) {
+                const instructionId = feedback.gradingInstruction?.id;
+                if (instructionId !== undefined) {
+                    counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
+                }
+            }
+        }
+        return counts;
+    });
 
     register(host: GradingInstructionSelectionHost): void {
         this.host.set(host);
@@ -45,6 +68,13 @@ export class GradingInstructionSelectionService {
         if (this.host() === host) {
             this.host.set(undefined);
         }
+    }
+
+    registerUsageSource(source: Signal<readonly Feedback[]>): void {
+        this.usageSources.update((sources) => [...sources, source]);
+    }
+    unregisterUsageSource(source: Signal<readonly Feedback[]>): void {
+        this.usageSources.update((sources) => sources.filter((registered) => registered !== source));
     }
 
     isApplied(instruction: GradingInstruction): boolean {

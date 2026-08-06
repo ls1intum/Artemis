@@ -22,3 +22,18 @@ export function pointsLabel(credits: number | undefined): string {
     const value = credits ?? 0;
     return value > 0 ? `+${value}` : `${value}`;
 }
+
+/** Points are graded in half steps throughout Artemis, so every point stepper uses the same one. */
+export const CREDITS_STEP = 0.5;
+
+/**
+ * Applies one step of the point stepper. A hand-typed value is snapped onto the half-point grid in the direction of
+ * travel first, so stepping up from 1.3 lands on 1.5 (the next grid point) rather than skipping to 2.
+ * @param credits the current point value
+ * @param delta the signed step to apply
+ */
+export function steppedCredits(credits: number | undefined, delta: number): number {
+    const base = credits ?? 0;
+    const snapped = (delta > 0 ? Math.floor(base / CREDITS_STEP) : Math.ceil(base / CREDITS_STEP)) * CREDITS_STEP;
+    return snapped + delta;
+}

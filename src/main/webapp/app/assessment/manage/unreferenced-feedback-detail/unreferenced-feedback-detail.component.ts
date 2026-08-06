@@ -24,13 +24,10 @@ import {
     TumUiTagComponent,
     TumUiTagSeverity,
 } from '@tumaet/ui-angular';
-import { pointsLabel, pointsSeverity } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
+import { CREDITS_STEP, pointsLabel, pointsSeverity, steppedCredits } from 'app/exercise/structured-grading-criterion/grading-points-display.util';
 
 /** Awarded / deducted / neutral — drives the card's left accent stripe. */
 export type FeedbackTone = 'positive' | 'negative' | 'neutral';
-
-/** Points are graded in half steps throughout Artemis, so the stepper and the native input use the same one. */
-const CREDITS_STEP = 0.5;
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
@@ -148,11 +145,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
             return;
         }
         const feedback = this.feedback();
-        const base = feedback.credits ?? 0;
-        // Snap a hand-typed value onto the half-point grid in the direction of travel first, so stepping up from
-        // 1.3 lands on 1.5 (the next grid point) rather than skipping to 2.
-        const snapped = (delta > 0 ? Math.floor(base / CREDITS_STEP) : Math.ceil(base / CREDITS_STEP)) * CREDITS_STEP;
-        feedback.credits = snapped + delta;
+        feedback.credits = steppedCredits(feedback.credits, delta);
         this.emitChanges();
     }
 

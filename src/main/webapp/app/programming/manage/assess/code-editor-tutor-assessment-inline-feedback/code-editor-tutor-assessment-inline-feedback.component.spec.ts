@@ -141,8 +141,8 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback);
         fixture.detectChanges();
 
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).toBeNull();
+        const pointsElement = fixture.debugElement.query(By.css('.inline-feedback__points-pill'));
+        expect(pointsElement).toBeNull();
     });
 
     it('should display credits and icons for graded feedback', () => {
@@ -153,9 +153,9 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback);
         fixture.detectChanges();
 
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).not.toBeNull();
-        expect(badgeElement.nativeElement.textContent).toContain('1P');
+        const pointsElement = fixture.debugElement.query(By.css('.inline-feedback__points-pill'));
+        expect(pointsElement).not.toBeNull();
+        expect(pointsElement.nativeElement.textContent).toContain('1P');
     });
 
     it('should use the correct translation key for non-graded feedback', () => {
@@ -165,9 +165,9 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback);
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
-        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
-        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
+        const labelElement = fixture.debugElement.query(By.css('.inline-feedback__label')).nativeElement;
+        expect(labelElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
+        const paragraphElement = fixture.debugElement.query(By.css('.inline-feedback__text')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
     });
 
@@ -178,9 +178,33 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback);
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
-        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
-        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
+        const labelElement = fixture.debugElement.query(By.css('.inline-feedback__label')).nativeElement;
+        expect(labelElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorCommentLabel');
+        const paragraphElement = fixture.debugElement.query(By.css('.inline-feedback__text')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
+    });
+
+    it('should step the points in half-point increments while editing', () => {
+        const feedback = new Feedback();
+        feedback.credits = 1;
+        fixture.componentRef.setInput('feedback', feedback);
+        comp.editFeedback(codeLine);
+
+        comp['stepCredits'](0.5);
+        expect(comp.currentFeedback().credits).toBe(1.5);
+
+        comp['stepCredits'](-0.5);
+        expect(comp.currentFeedback().credits).toBe(1);
+    });
+
+    it('should not step the points of a feedback linked to a grading instruction', () => {
+        const feedback = new Feedback();
+        feedback.credits = 2;
+        feedback.gradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description', usageCount: 0 };
+        fixture.componentRef.setInput('feedback', feedback);
+
+        comp['stepCredits'](0.5);
+
+        expect(comp.currentFeedback().credits).toBe(2);
     });
 });
