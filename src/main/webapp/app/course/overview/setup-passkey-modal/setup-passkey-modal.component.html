@@ -50,35 +50,37 @@
     </div>
 
     <ng-template #footer>
-        <tum-ui-button
-            severity="secondary"
-            variant="outlined"
-            size="small"
-            (clicked)="remindMeIn30Days()"
-            [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days' | translate"
-        >
-            <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
-        </tum-ui-button>
-
-        <div class="ms-auto flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between w-full gap-2">
             <tum-ui-button
                 severity="secondary"
-                variant="text"
+                variant="outlined"
                 size="small"
-                (clicked)="closeModal()"
-                [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupLater' | translate"
+                (clicked)="remindMeIn30Days()"
+                [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days' | translate"
             >
-                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"></span>
+                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
             </tum-ui-button>
-            <tum-ui-button
-                severity="primary"
-                size="small"
-                [icon]="faKey"
-                (clicked)="setupPasskey()"
-                [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupPasskey' | translate"
-            >
-                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
-            </tum-ui-button>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ms-auto">
+                <tum-ui-button
+                    severity="secondary"
+                    variant="text"
+                    size="small"
+                    (clicked)="closeModal()"
+                    [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupLater' | translate"
+                >
+                    <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"></span>
+                </tum-ui-button>
+                <tum-ui-button
+                    severity="primary"
+                    size="small"
+                    [icon]="faKey"
+                    (clicked)="setupPasskey()"
+                    [ariaLabel]="'artemisApp.userSettings.setupPasskeyModal.setupPasskey' | translate"
+                >
+                    <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
+                </tum-ui-button>
+            </div>
         </div>
     </ng-template>
 </tum-ui-dialog>
