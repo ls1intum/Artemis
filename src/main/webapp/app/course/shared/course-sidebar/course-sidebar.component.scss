@@ -1,7 +1,3 @@
-// Navigation sidebar width; the single source is `--sidebar-nav-width` in tailwind.css (see the note there).
-$menu-width-closed: var(--sidebar-nav-width-collapsed);
-$menu-width-open: var(--sidebar-nav-width);
-
 // Sidebar Button Transition Variables
 $transition-delay: 0.3s;
 $transition-in-between-delay: 0.2s;
@@ -10,10 +6,10 @@ $transition-chevron-max-width-length: 0.2s;
 $transition-color-length: 0.2s;
 
 .sidebar-container {
-    width: $menu-width-open;
+    width: var(--sidebar-nav-width);
 
     &.collapsed {
-        width: $menu-width-closed !important;
+        width: var(--sidebar-nav-width-collapsed) !important;
     }
 }
 
@@ -85,7 +81,7 @@ $transition-color-length: 0.2s;
 
 @media screen and (max-width: 960px) {
     .sidebar-container {
-        width: $menu-width-closed !important;
+        width: var(--sidebar-nav-width-collapsed) !important;
     }
 
     .auto-collapse {

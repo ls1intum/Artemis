@@ -1,6 +1,3 @@
-// Navigation sidebar width; the single source is `--sidebar-nav-width` in tailwind.css (see the note there).
-$menu-width-closed: var(--sidebar-nav-width-collapsed);
-$menu-width-open: var(--sidebar-nav-width);
 $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
 // Sidebar Button Transition Variables

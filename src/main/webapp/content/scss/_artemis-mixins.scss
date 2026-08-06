@@ -82,6 +82,9 @@
     .p-button,
     .p-togglebutton,
     .p-select,
+    /* Search fields are projected into these bars too (FAQ, both shells); PrimeNG sizes its inputs taller. */
+    .p-inputtext,
+    .p-iconfield,
     .btn {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);

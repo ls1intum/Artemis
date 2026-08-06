@@ -20,7 +20,7 @@
     .sidebar {
         flex: 0 0 auto;
         box-sizing: content-box;
-        width: $menu-width-open;
+        width: var(--sidebar-nav-width);
         overflow: hidden;
         border: none;
         transition: width 0.2s ease-in-out;
@@ -74,7 +74,7 @@
 
     &.container-closed {
         .sidebar {
-            width: $menu-width-closed;
+            width: var(--sidebar-nav-width-collapsed);
         }
     }
 
@@ -87,7 +87,7 @@
 
     @media screen and (max-width: 960px) {
         .sidebar {
-            width: $menu-width-closed;
+            width: var(--sidebar-nav-width-collapsed);
         }
     }
 }

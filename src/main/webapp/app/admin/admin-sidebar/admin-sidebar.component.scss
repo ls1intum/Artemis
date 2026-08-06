@@ -1,22 +1,18 @@
-// Navigation sidebar width; the single source is `--sidebar-nav-width` in tailwind.css (see the note there).
-$menu-width-closed: var(--sidebar-nav-width-collapsed);
-$menu-width-open: var(--sidebar-nav-width);
-
 /*
  * Width is driven by the runtime `collapsed` class and a custom (960px) breakpoint that interact via
  * `!important`, so it stays in SCSS rather than as Tailwind utilities (stateful + custom breakpoint override).
  */
 .sidebar-container {
-    width: $menu-width-open;
+    width: var(--sidebar-nav-width);
 
     &.collapsed {
-        width: $menu-width-closed !important;
+        width: var(--sidebar-nav-width-collapsed) !important;
     }
 }
 
 @media screen and (max-width: 960px) {
     .sidebar-container {
-        width: $menu-width-closed !important;
+        width: var(--sidebar-nav-width-collapsed) !important;
     }
 
     .auto-collapse {
