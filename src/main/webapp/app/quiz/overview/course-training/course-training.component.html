@@ -12,7 +12,7 @@
         @if (!isFirstVisit() && isDataLoaded()) {
             <!-- Projected into the shell title bar so this page reads like the rest of the overview. -->
             <div *titleBarActions class="d-flex align-items-center">
-                <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.startTraining'" />
+                <jhi-button (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.startTraining'" />
             </div>
 
             <div class="main-body-section">
