@@ -56,6 +56,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
     let buildPlanConfigurationService: BuildPlanConfigurationService;
     let templateBuildPlan: WritableSignal<BuildPlanPhases | undefined>;
     let fetchTemplateStub: ReturnType<typeof vi.fn>;
+    let resetToDefaultStub: ReturnType<typeof vi.fn>;
 
     const phases: BuildPhase[] = [{ name: 'compile', script: 'echo compile', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
     const buildPlanConfiguration = JSON.stringify({ phases, dockerImage: 'some-image' });
@@ -63,6 +64,8 @@ describe('LocalCIBuildPlanEditorComponent', () => {
     beforeEach(() => {
         templateBuildPlan = signal<BuildPlanPhases | undefined>(undefined);
         fetchTemplateStub = vi.fn();
+        // reset clears the shared signal, mirroring the real service, so the effect cannot apply a stale image
+        resetToDefaultStub = vi.fn(() => templateBuildPlan.set(undefined));
         TestBed.configureTestingModule({
             imports: [LocalCIBuildPlanEditorComponent],
             providers: [
@@ -70,7 +73,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
                 { provide: AlertService, useValue: new MockAlertService() },
                 { provide: ProgrammingExerciseService, useValue: new MockProgrammingExerciseService() },
                 { provide: BuildPlanConfigurationService, useValue: { updateBuildPlanConfiguration: vi.fn() } },
-                { provide: BuildPhasesTemplateService, useValue: { fetchTemplate: fetchTemplateStub, buildPlan: templateBuildPlan } },
+                { provide: BuildPhasesTemplateService, useValue: { fetchTemplate: fetchTemplateStub, resetToDefault: resetToDefaultStub, buildPlan: templateBuildPlan } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -172,6 +175,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         );
 
         comp.ngOnInit();
+        TestBed.tick();
 
         // no image in the stored configuration, so the editor asks the template service for the language default
         expect(fetchTemplateStub).toHaveBeenCalledWith(false, ProgrammingLanguage.JAVA, undefined);
@@ -184,6 +188,32 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.dockerImage()).toBe('language-default-image');
         // an empty image alone never blocked submitting, so the button is enabled with a valid plan
         expect(comp.canSubmit()).toBe(true);
+    });
+
+    it('should not apply a docker image left over in the shared signal from a previously opened exercise', () => {
+        // a previously opened exercise left its image in the app-wide template signal
+        templateBuildPlan.set({ phases, dockerImage: 'stale-image-from-previous-exercise' });
+        const exercise = {
+            id: 7,
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            buildConfig: { buildPlanConfiguration: JSON.stringify({ phases }), timeoutSeconds: 60 },
+        } as unknown as ProgrammingExercise;
+        activatedRoute.data = of({ exercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        comp.ngOnInit();
+        TestBed.tick();
+
+        // the shared signal is reset before fetching, so the stale image is never applied to this exercise
+        expect(resetToDefaultStub).toHaveBeenCalled();
+        expect(comp.dockerImage()).toBe('');
+
+        // only the image resolved for this exercise's own template is applied
+        templateBuildPlan.set({ phases, dockerImage: 'language-default-image' });
+        TestBed.tick();
+        expect(comp.dockerImage()).toBe('language-default-image');
     });
 
     it('should not request a template when the exercise already has a docker image', () => {

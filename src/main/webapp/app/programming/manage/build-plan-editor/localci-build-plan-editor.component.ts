@@ -122,6 +122,9 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
             return;
         }
         this.awaitingTemplateDockerImage.set(true);
+        // the template service holds a shared signal, so reset it first: otherwise the effect would apply the image left
+        // over from a previously opened exercise before this request resolves. The default plan carries no image.
+        this.buildPhasesTemplateService.resetToDefault();
         this.buildPhasesTemplateService.fetchTemplate(!!exercise.exerciseGroup, programmingLanguage, exercise.projectType);
     }
 
