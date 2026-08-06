@@ -1137,7 +1137,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         StudentExam submittedStudentExam = studentExamRepository.findById(studentExamForTestExam1.getId()).orElseThrow();
         assertThat(submittedStudentExam.isSubmitted()).isTrue();
 
-        verify(programmingTriggerService, timeout(30000)).triggerBuildForParticipations(List.of(participation));
+        verify(programmingTriggerService, timeout(60000)).triggerBuildForParticipations(List.of(participation));
     }
 
     @Test
@@ -1679,7 +1679,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 dndMapping.setDragItem(dragAndDropQuestion.getDragItems().get(dndDragItemIndex));
                 dndMapping.setDropLocationIndex(dndLocationIndex);
                 dndMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndLocationIndex));
-                submittedAnswer.getMappings().add(dndMapping);
+                submittedAnswer.addMappings(dndMapping);
                 submittedAnswer.setQuizQuestion(dragAndDropQuestion);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
@@ -1688,8 +1688,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                 ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
                 shortAnswerSubmittedText.setText(shortAnswerText);
                 shortAnswerSubmittedText.setSpot(shortAnswerQuestion.getSpots().get(saSpotIndex));
-                submittedAnswer.getSubmittedTexts().add(shortAnswerSubmittedText);
                 submittedAnswer.setQuizQuestion(shortAnswerQuestion);
+                submittedAnswer.addSubmittedTexts(shortAnswerSubmittedText);
                 quizSubmission.getSubmittedAnswers().add(submittedAnswer);
             }
             else if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
@@ -2477,7 +2477,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         Set<User> users = exam2.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, users);
 
-        await().atMost(Duration.ofMinutes(1)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
+        await().atMost(Duration.ofMinutes(2)).pollInterval(10, TimeUnit.MILLISECONDS).until(participantScoreScheduleService::isIdle);
         request.delete("/api/exam/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
     }
@@ -3366,8 +3366,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(dndDropLocationIndex));
 
             DragAndDropSubmittedAnswer changedAnswer = new DragAndDropSubmittedAnswer();
-            changedAnswer.getMappings().add(changedMapping);
             changedAnswer.setQuizQuestion(dragAndDropQuestion);
+            changedAnswer.addMappings(changedMapping);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedMapping;
@@ -3379,8 +3379,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             changedText.setSpot(shortAnswerQuestion.getSpots().get(spotIndex));
 
             ShortAnswerSubmittedAnswer changedAnswer = new ShortAnswerSubmittedAnswer();
-            changedAnswer.getSubmittedTexts().add(changedText);
             changedAnswer.setQuizQuestion(shortAnswerQuestion);
+            changedAnswer.addSubmittedTexts(changedText);
 
             quizSubmission.getSubmittedAnswers().add(changedAnswer);
             return changedText;

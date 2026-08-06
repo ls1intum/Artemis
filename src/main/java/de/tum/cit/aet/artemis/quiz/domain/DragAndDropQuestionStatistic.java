@@ -1,59 +1,63 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * A DragAndDropQuestionStatistic.
+ * <p>
+ * Its per-drop-location counters are stored as a JSON list in the {@code quiz_statistic.counters} column (see {@link DropLocationCounter}) instead of separate
+ * {@code quiz_statistic_counter} rows, eliminating the eager {@code @OneToMany} counter fan-out. Counters are fully recomputed from the results on every statistics update, so no
+ * per-counter locking is required. {@link #getDropLocationCounters()} keeps its signature/shape so the REST/websocket wire format is preserved.
  */
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
 
-    // No @Cache: counters are incremented on every evaluation while instructors watch live statistics, same class of bug as #12574.
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dragAndDropQuestionStatistic")
-    private Set<DropLocationCounter> dropLocationCounters = new HashSet<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "counters")
+    private List<DropLocationCounter> dropLocationCounters = new ArrayList<>();
 
-    public Set<DropLocationCounter> getDropLocationCounters() {
+    public List<DropLocationCounter> getDropLocationCounters() {
         return dropLocationCounters;
     }
 
     public void addDropLocationCounters(DropLocationCounter dropLocationCounter) {
         this.dropLocationCounters.add(dropLocationCounter);
-        dropLocationCounter.setDragAndDropQuestionStatistic(this);
     }
 
-    public void setDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.dropLocationCounters = dropLocationCounters;
+    public void setDropLocationCounters(List<DropLocationCounter> dropLocationCounters) {
+        this.dropLocationCounters = dropLocationCounters != null ? dropLocationCounters : new ArrayList<>();
     }
 
     /**
-     * 1. creates the DropLocationCounter for the new DropLocation if where is already an DropLocationCounter with the given DropLocation -> nothing happens
+     * 1. creates the DropLocationCounter for the new DropLocation if there is already a DropLocationCounter with the given DropLocation -> nothing happens
      *
      * @param dropLocation the dropLocation-object which will be added to the DragAndDropQuestionStatistic
      */
     public void addDropLocation(DropLocation dropLocation) {
 
-        if (dropLocation == null) {
+        if (dropLocation == null || dropLocation.getId() == null) {
             return;
         }
 
         for (DropLocationCounter counter : dropLocationCounters) {
-            if (dropLocation.equals(counter.getDropLocation())) {
+            if (dropLocation.getId().equals(counter.getDropLocationId())) {
                 return;
             }
         }
         DropLocationCounter dropLocationCounter = new DropLocationCounter();
-        dropLocationCounter.setDropLocation(dropLocation);
+        dropLocationCounter.setDropLocationId(dropLocation.getId());
         addDropLocationCounters(dropLocationCounter);
     }
 
@@ -71,15 +75,17 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
         if (!(submittedAnswer instanceof DragAndDropSubmittedAnswer ddSubmittedAnswer)) {
             return;
         }
+        DragAndDropQuestion question = getQuizQuestion() instanceof DragAndDropQuestion dragAndDropQuestion ? dragAndDropQuestion : null;
 
         if (rated) {
             // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
 
-            if (ddSubmittedAnswer.getMappings() != null) {
+            if (question != null) {
                 // change rated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
+                    DropLocation dropLocation = question.findDropLocationById(dropLocationCounter.getDropLocationId());
+                    if (dropLocation != null && question.isDropLocationCorrect(dropLocation, ddSubmittedAnswer)) {
                         dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
                     }
                 }
@@ -94,10 +100,11 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
             // change the unrated participants
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
-            if (ddSubmittedAnswer.getMappings() != null) {
+            if (question != null) {
                 // change unrated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter : dropLocationCounters) {
-                    if (dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
+                    DropLocation dropLocation = question.findDropLocationById(dropLocationCounter.getDropLocationId());
+                    if (dropLocation != null && question.isDropLocationCorrect(dropLocation, ddSubmittedAnswer)) {
                         dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
                     }
                 }

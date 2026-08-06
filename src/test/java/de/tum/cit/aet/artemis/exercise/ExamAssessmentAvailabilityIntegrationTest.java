@@ -78,7 +78,9 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = courseUtilService.addEmptyCourse();
+        // addUsers clears every user_course_role, so the course has to be one that enrolls this test's users again:
+        // course access is a role now, and an empty course would leave the tutor without one (plain 403, no gate).
+        Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course);
         // the exam is still running: it started an hour ago and the last student can hand in in another hour
         setExamWorkingPeriod(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
@@ -251,7 +253,7 @@ class ExamAssessmentAvailabilityIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTheAssessmentDashboardSendsNoSuchDatesForCourseExercises() throws Exception {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(course.getExercises(), "Text");
         textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exerciseRepository.save(textExercise);

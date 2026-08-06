@@ -145,7 +145,8 @@ public class DragAndDropQuizAnswerConversionService {
         graphics.setColor(Color.WHITE);
         graphics.fillRect(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.width, dropLocationCoordinates.height);
 
-        if (dropLocation.isDropLocationCorrect(dragAndDropSubmittedAnswer)) {
+        if (dragAndDropSubmittedAnswer.getQuizQuestion() instanceof DragAndDropQuestion dndQuestion
+                && dndQuestion.isDropLocationCorrect(dropLocation, dragAndDropSubmittedAnswer)) {
             graphics.setColor(Color.GREEN);
         }
         else if (dropLocation.isInvalid()) {

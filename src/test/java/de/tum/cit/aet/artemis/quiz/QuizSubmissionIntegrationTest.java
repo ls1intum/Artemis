@@ -1181,7 +1181,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             AnswerOption staleOption = new AnswerOption();
             staleOption.setId(Long.MAX_VALUE);
             mcAnswer.addSelectedOptions(staleOption);
-            int validSelectionCount = mcAnswer.getSelectedOptions().size() - 1;
+            // getSelectedOptions() resolves ids against the question, so the stale (unresolvable) option is already excluded from the count here and from the serialized submission
+            int validSelectionCount = mcAnswer.getSelectedOptions().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);
@@ -1280,8 +1281,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             staleDragItem.setId(Long.MAX_VALUE);
             staleMapping.setDragItem(staleDragItem);
             staleMapping.setDropLocation(dndQuestion.getDropLocations().getFirst());
-            dndAnswer.getMappings().add(staleMapping);
-            int validMappingCount = dndAnswer.getMappings().size() - 1;
+            dndAnswer.addMappings(staleMapping);
+            // getMappings() resolves ids against the question, so the stale (unresolvable) mapping is already excluded from the count here and from the serialized submission
+            int validMappingCount = dndAnswer.getMappings().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);
@@ -1316,8 +1318,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             DropLocation staleDropLocation = new DropLocation();
             staleDropLocation.setId(Long.MAX_VALUE);
             staleMapping.setDropLocation(staleDropLocation);
-            dndAnswer.getMappings().add(staleMapping);
-            int validMappingCount = dndAnswer.getMappings().size() - 1;
+            dndAnswer.addMappings(staleMapping);
+            // getMappings() resolves ids against the question, so the stale (unresolvable) mapping is already excluded from the count here and from the serialized submission
+            int validMappingCount = dndAnswer.getMappings().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);
@@ -1351,8 +1354,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             staleSpot.setId(Long.MAX_VALUE);
             staleText.setSpot(staleSpot);
             staleText.setText("text-with-stale-spot-id");
-            saAnswer.getSubmittedTexts().add(staleText);
-            int validTextCount = saAnswer.getSubmittedTexts().size() - 1;
+            saAnswer.addSubmittedTexts(staleText);
+            // getSubmittedTexts() resolves spot ids against the question, so the stale (unresolvable) text is already excluded from the count here and from the serialized
+            // submission
+            int validTextCount = saAnswer.getSubmittedTexts().size();
 
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/live?submit=true", quizSubmission,
                     QuizSubmission.class, HttpStatus.OK);

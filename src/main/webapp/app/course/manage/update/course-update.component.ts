@@ -21,7 +21,7 @@ import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
+import { TumUiDialogComponent } from '@tumaet/ui-angular';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -220,6 +220,8 @@ export class CourseUpdateComponent implements OnInit {
                 endDate: new FormControl(this.course.endDate),
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
+                gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
+                dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
@@ -323,10 +325,18 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
 
-        const course = this.courseForm.getRawValue() as Course;
+        const rawValue = this.courseForm.getRawValue();
+        const course = rawValue as Course;
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
+
+        // Map the flat data-privacy form controls into the nested course configuration expected by the update DTO mapper.
+        course.courseConfiguration = {
+            id: this.course.courseConfiguration?.id,
+            gradeRelevant: rawValue.gradeRelevant ?? true,
+            dataRetentionHold: rawValue.dataRetentionHold ?? false,
+        };
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
