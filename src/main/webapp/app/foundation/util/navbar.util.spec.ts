@@ -168,11 +168,14 @@ describe('navbar util shell metrics', () => {
 
     it('still measures once when ResizeObserver is unavailable', () => {
         addElement('jhi-navbar', 72);
+        addElement('jhi-footer', 36);
         (globalThis as { ResizeObserver?: unknown }).ResizeObserver = undefined;
 
         const teardown = observeShellMetrics();
 
+        // The fallback runs the same measurement, so both shell boundaries have to be written, not just the navbar.
         expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('72px');
+        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('36px');
         expect(() => teardown()).not.toThrow();
     });
 
