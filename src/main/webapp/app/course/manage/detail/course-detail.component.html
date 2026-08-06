@@ -32,7 +32,7 @@
                 </div>
             </div>
         }
-        @defer (on viewport) {
+        @defer (on viewport(chartsViewport)) {
             <div class="col-12">
                 <div class="row">
                     <div class="col-xxl-4">
@@ -88,7 +88,7 @@
                 </div>
             </div>
         } @placeholder {
-            <div class="col-12" style="min-height: 350px"></div>
+            <div #chartsViewport class="col-12" style="min-height: 350px"></div>
         }
     }
     @if (courseDetailSections().length) {
