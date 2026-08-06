@@ -14,13 +14,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentUploadErrorType;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
-import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService;
@@ -71,9 +66,8 @@ class AssessmentUploadConstructorTest {
 
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
-        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), mock(AssessmentNoteRepository.class), Optional.<LtiApi>empty(),
-                mock(ResultWebsocketService.class), mock(ComplaintResponseRepository.class), mock(RatingRepository.class), mock(FeedbackRepository.class),
-                mock(ComplaintRepository.class), mock(ParticipantScoreRepository.class), mock(LongFeedbackTextRepository.class), mock(SubmissionRepository.class) };
+        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class),
+                mock(RatingRepository.class), mock(ParticipantScoreRepository.class), mock(SubmissionRepository.class) };
 
         for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
             final Object[] dependenciesWithNull = dependencies.clone();
@@ -84,10 +78,8 @@ class AssessmentUploadConstructorTest {
 
     @SuppressWarnings("unchecked")
     private AssessmentUploadResultService createAssessmentUploadResultService(final Object[] dependencies) {
-        return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (AssessmentNoteRepository) dependencies[2],
-                (Optional<LtiApi>) dependencies[3], (ResultWebsocketService) dependencies[4], (ComplaintResponseRepository) dependencies[5], (RatingRepository) dependencies[6],
-                (FeedbackRepository) dependencies[7], (ComplaintRepository) dependencies[8], (ParticipantScoreRepository) dependencies[9],
-                (LongFeedbackTextRepository) dependencies[10], (SubmissionRepository) dependencies[11]);
+        return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (Optional<LtiApi>) dependencies[2],
+                (ResultWebsocketService) dependencies[3], (RatingRepository) dependencies[4], (ParticipantScoreRepository) dependencies[5], (SubmissionRepository) dependencies[6]);
     }
 
     @Test

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,20 +65,6 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
             WHERE lft.feedback.result.id = :resultId
             """)
     void deleteByFeedbackResultId(@Param("resultId") long resultId);
-
-    /**
-     * Deletes long feedback texts associated with the supplied results.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
-     * <p>
-     * <b>Postcondition:</b> no long feedback text belongs to feedback for one of the supplied results.
-     *
-     * @param resultIds ids of the results whose long feedback texts are deleted
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("DELETE FROM LongFeedbackText longFeedback WHERE longFeedback.feedback.result.id IN :resultIds")
-    void deleteByFeedbackResultIds(@Param("resultIds") final Collection<Long> resultIds);
 
     default LongFeedbackText findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(final Long feedbackId) {
         return getValueElseThrow(findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId), feedbackId);

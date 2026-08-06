@@ -398,7 +398,7 @@ public class AssessmentUploadService {
             submission.addResult(manualResult);
             manualResults.add(manualResult);
         }
-        // Remove the references Hibernate cannot cascade-delete from a Result (complaints/responses, ratings, participant scores) before the orphan removal is flushed.
+        // Remove the references Hibernate cannot cascade-delete from a Result (ratings and participant scores) before the orphan removal is flushed.
         assessmentUploadResultService.deleteNonCascadedResultReferences(replacedResultIds);
         assessmentUploadResultService.createNewManualResults(manualResults, true);
 

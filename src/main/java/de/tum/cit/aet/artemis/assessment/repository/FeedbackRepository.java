@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -34,20 +33,6 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
     @Modifying
     @Transactional // ok because of delete
     void deleteByResult_Id(long resultId);
-
-    /**
-     * Deletes feedback associated with the supplied results.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and associated long feedback texts have been deleted.
-     * <p>
-     * <b>Postcondition:</b> no feedback references one of the supplied results.
-     *
-     * @param resultIds ids of the results whose feedback is deleted
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("DELETE FROM Feedback feedback WHERE feedback.result.id IN :resultIds")
-    void deleteByResultIds(@Param("resultIds") final Collection<Long> resultIds);
 
     @Query("""
             SELECT feedback

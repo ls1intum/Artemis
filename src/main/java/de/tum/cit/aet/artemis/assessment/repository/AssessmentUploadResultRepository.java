@@ -8,11 +8,9 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -24,42 +22,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Lazy
 @Repository
 public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<Result, Long> {
-
-    /**
-     * Bulk-deletes results after all referencing rows have been removed.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and all dependent rows have been deleted or cleared.
-     * <p>
-     * <b>Postcondition:</b> none of the supplied result ids exists.
-     *
-     * @param resultIds result ids to delete
-     */
-    @Modifying
-    @Transactional // ok because of delete
-    @Query("DELETE FROM Result r WHERE r.id IN :resultIds")
-    void deleteAllByIds(@Param("resultIds") final Collection<Long> resultIds);
-
-    /**
-     * Finds the manual results belonging to the imported participations. Manual results are those a human created, i.e. both {@code MANUAL} (e.g. uploaded) and
-     * {@code SEMI_AUTOMATIC} (e.g. created in the assessment editor, which combines automatic feedback with manual feedback) results, matching {@link Result#isManual()}.
-     * {@code AUTOMATIC} results are intentionally excluded so continuous-integration results are never replaced.
-     * <p>
-     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
-     * <p>
-     * <b>Postcondition:</b> every returned id identifies a manual (or semi-automatic) result belonging to the supplied exercise and one of the supplied participations.
-     *
-     * @param exerciseId       target exercise id
-     * @param participationIds participations included in the upload
-     * @return ids of existing manual results to replace
-     */
-    @Query("""
-            SELECT r.id
-            FROM Result r
-            WHERE r.exerciseId = :exerciseId
-                AND r.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
-                AND r.submission.participation.id IN :participationIds
-            """)
-    List<Long> findManualResultIds(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 
     /**
      * Write-locks the given result rows for the remainder of the caller's transaction. Used by the upload to lock the manual results it is about to replace before checking for

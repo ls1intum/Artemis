@@ -22,12 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
@@ -51,23 +46,13 @@ public class AssessmentUploadResultService {
 
     private final AssessmentUploadResultRepository assessmentUploadResultRepository;
 
-    private final AssessmentNoteRepository assessmentNoteRepository;
-
     private final Optional<LtiApi> ltiApi;
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final ComplaintResponseRepository complaintResponseRepository;
-
     private final RatingRepository ratingRepository;
 
-    private final FeedbackRepository feedbackRepository;
-
-    private final ComplaintRepository complaintRepository;
-
     private final ParticipantScoreRepository participantScoreRepository;
-
-    private final LongFeedbackTextRepository longFeedbackTextRepository;
 
     private final SubmissionRepository submissionRepository;
 
@@ -78,38 +63,26 @@ public class AssessmentUploadResultService {
      *
      * @param userRepository                   repository used to load the current assessor
      * @param assessmentUploadResultRepository repository used to store and load uploaded results
-     * @param assessmentNoteRepository         repository used to delete dependent assessment notes
      * @param ltiApi                           optional LTI integration notified about new results
      * @param resultWebsocketService           websocket service notified about new results
-     * @param complaintResponseRepository      repository used to delete dependent complaint responses
      * @param ratingRepository                 repository used to delete dependent ratings
-     * @param feedbackRepository               repository used to delete dependent feedback
-     * @param complaintRepository              repository used to delete dependent complaints
      * @param participantScoreRepository       repository used to clear dependent participant scores
-     * @param longFeedbackTextRepository       repository used to delete dependent long feedback text
      * @param submissionRepository             repository used to persist the ordered {@code Submission.results} collection so {@code results_order} stays unique and contiguous
      * @throws IllegalArgumentException if a parameter is {@code null}
      */
     public AssessmentUploadResultService(final UserRepository userRepository, final AssessmentUploadResultRepository assessmentUploadResultRepository,
-            final AssessmentNoteRepository assessmentNoteRepository, final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService,
-            final ComplaintResponseRepository complaintResponseRepository, final RatingRepository ratingRepository, final FeedbackRepository feedbackRepository,
-            final ComplaintRepository complaintRepository, final ParticipantScoreRepository participantScoreRepository, final LongFeedbackTextRepository longFeedbackTextRepository,
-            final SubmissionRepository submissionRepository) {
-        if (Stream.of(userRepository, assessmentUploadResultRepository, assessmentNoteRepository, ltiApi, resultWebsocketService, complaintResponseRepository, ratingRepository,
-                feedbackRepository, complaintRepository, participantScoreRepository, longFeedbackTextRepository, submissionRepository).anyMatch(Objects::isNull)) {
+            final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService, final RatingRepository ratingRepository,
+            final ParticipantScoreRepository participantScoreRepository, final SubmissionRepository submissionRepository) {
+        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService, ratingRepository, participantScoreRepository, submissionRepository)
+                .anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload result service dependencies must not be null");
         }
         this.userRepository = userRepository;
         this.assessmentUploadResultRepository = assessmentUploadResultRepository;
-        this.assessmentNoteRepository = assessmentNoteRepository;
         this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
-        this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
-        this.feedbackRepository = feedbackRepository;
-        this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.submissionRepository = submissionRepository;
     }
 
@@ -246,41 +219,16 @@ public class AssessmentUploadResultService {
     }
 
     /**
-     * Bulk-deletes results and every dependent database row in foreign-key order. This path deliberately bypasses entity loading and lifecycle callbacks. Callers that create
-     * replacement results immediately afterwards retain participant-score scheduling through the new results' lifecycle callbacks.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains only non-{@code null} persisted result ids.
-     * <p>
-     * <b>Postcondition:</b> the identified results and all rows that depend on them have been deleted.
-     *
-     * @param resultIds ids of the results to delete
-     * @throws IllegalArgumentException if a precondition is violated
-     */
-    public void deleteResultsByIds(final Collection<Long> resultIds) {
-        if (resultIds == null || resultIds.isEmpty()) {
-            throw new IllegalArgumentException("The result ids must not be null or empty");
-        }
-        if (resultIds.stream().anyMatch(resultId -> resultId == null || resultId <= 0)) {
-            throw new IllegalArgumentException("The result ids must identify persisted results");
-        }
-        deleteNonCascadedResultReferences(resultIds);
-        longFeedbackTextRepository.deleteByFeedbackResultIds(resultIds);
-        feedbackRepository.deleteByResultIds(resultIds);
-        assessmentNoteRepository.deleteByResultIds(resultIds);
-        assessmentUploadResultRepository.deleteAllByIds(resultIds);
-    }
-
-    /**
-     * Deletes the references to the given results that Hibernate cannot cascade-delete from a {@link Result} (complaint responses, complaints, ratings and participant scores).
+     * Deletes the references to the given results that Hibernate cannot cascade-delete from a {@link Result} (ratings and participant scores).
      * <p>
      * The assessment-upload replacement removes existing manual results via orphan removal on {@code Submission.results}, which cascades feedback, long feedback text and
-     * assessment
-     * notes but not these entities; they must be deleted first to avoid a foreign-key violation. Complaints are normally absent here because the upload rejects any participation
-     * whose current assessment has a complaint, but they are cleared defensively.
+     * assessment notes but not these entities; they must be deleted first to avoid a foreign-key violation. A complaint cannot reference one of these results: the caller rejects
+     * any participation whose current manual assessment has a complaint, under a write lock that serializes a concurrent complaint behind the upload, so the orphan-removal delete
+     * never encounters one and no defensive complaint cleanup is needed here.
      * <p>
      * <b>Precondition:</b> {@code resultIds} is non-{@code null} (an empty collection is a no-op) and contains only persisted result ids.
      * <p>
-     * <b>Postcondition:</b> no complaint response, complaint, rating or participant score references any of the supplied results.
+     * <b>Postcondition:</b> no rating or participant score references any of the supplied results.
      *
      * @param resultIds ids of the results whose non-cascaded references are removed
      */
@@ -288,18 +236,16 @@ public class AssessmentUploadResultService {
         if (resultIds == null || resultIds.isEmpty()) {
             return;
         }
-        complaintResponseRepository.deleteByResultIds(resultIds);
-        complaintRepository.deleteByResultIds(resultIds);
         ratingRepository.deleteByResultIds(resultIds);
         participantScoreRepository.clearAllByResultIds(resultIds);
     }
 
     /**
-     * Write-locks the manual results an upload is about to replace, so that a complaint being created concurrently for one of them serializes behind the upload rather than being
-     * silently deleted by the subsequent reference cleanup. Creating a complaint updates its result row (setting {@code hasComplaint}) and inserts the complaint, both of which
-     * then
-     * block on the {@code FOR UPDATE} lock until the upload's transaction commits. The caller must acquire this lock before checking for complaints and before mutating the ordered
-     * {@code Submission.results} collection.
+     * Write-locks the manual results an upload is about to replace, so that a complaint being created concurrently for one of them serializes behind the upload and the complaint
+     * check the caller runs next stays valid through commit. Creating a complaint updates its result row (setting {@code hasComplaint}) and inserts the complaint, both of which
+     * block on the {@code FOR UPDATE} lock until the upload's transaction commits — by then the locked result is gone, so a complaint cannot slip in between the check and the
+     * orphan-removal delete (which would otherwise fail with a foreign-key violation). The caller must acquire this lock before checking for complaints and before mutating the
+     * ordered {@code Submission.results} collection.
      * <p>
      * <b>Precondition:</b> {@code resultIds} is non-{@code null} (an empty collection is a no-op) and contains only persisted result ids; the caller has an active transaction.
      * <p>
@@ -316,33 +262,6 @@ public class AssessmentUploadResultService {
             throw new IllegalArgumentException("The result ids must identify persisted results");
         }
         assessmentUploadResultRepository.lockResultsForReplacement(resultIds);
-    }
-
-    /**
-     * Deletes all manual results for the requested participations of one exercise using a fixed number of bulk statements. Automatic results are not selected.
-     * <p>
-     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains only persisted ids.
-     * <p>
-     * <b>Postcondition:</b> all manual results associated with the supplied exercise and participations have been deleted; automatic results remain unchanged.
-     *
-     * @param exerciseId       target exercise id
-     * @param participationIds participations whose manual results are being replaced
-     * @throws IllegalArgumentException if a precondition is violated
-     */
-    public void deleteManualResults(final long exerciseId, final Collection<Long> participationIds) {
-        if (exerciseId <= 0) {
-            throw new IllegalArgumentException("The exercise id must identify a persisted exercise");
-        }
-        if (participationIds == null || participationIds.isEmpty()) {
-            throw new IllegalArgumentException("The participation ids must not be null or empty");
-        }
-        if (participationIds.stream().anyMatch(participationId -> participationId == null || participationId <= 0)) {
-            throw new IllegalArgumentException("The participation ids must identify persisted participations");
-        }
-        final List<Long> resultIds = assessmentUploadResultRepository.findManualResultIds(exerciseId, participationIds);
-        if (!resultIds.isEmpty()) {
-            deleteResultsByIds(resultIds);
-        }
     }
 
     /**
