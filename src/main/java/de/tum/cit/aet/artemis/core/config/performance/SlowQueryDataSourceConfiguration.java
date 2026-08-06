@@ -49,6 +49,8 @@ public class SlowQueryDataSourceConfiguration {
      * Registers the {@link DataSourceProxyBeanPostProcessor}.
      * Must be {@code static} so Spring can instantiate it before any {@code @Configuration}
      * class post-processing takes place.
+     *
+     * @return the bean post-processor that wraps the {@code DataSource} with a datasource-proxy.
      */
     @Bean
     public static DataSourceProxyBeanPostProcessor dataSourceProxyBeanPostProcessor() {
