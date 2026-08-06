@@ -1,13 +1,23 @@
 @import 'src/main/webapp/content/scss/artemis-mixins';
 
 #course-title-bar {
-    @include title-bar-frame;
+    display: flex;
+    flex-direction: column;
 
     // Must match or exceed the quiz participation bar's z-index (1030)
     z-index: 1030;
 
     /* Grey dividers: to the sidebar on the left, to the viewport edge on the right, to the content below. */
     margin: 0 var(--spacing-divider) var(--spacing-divider);
+
+    /*
+     * The frame sits on the row rather than the bar, because a page may also project a toolbar. That renders as a
+     * second row underneath, so the bar itself is intentionally taller than `--title-bar-height` in that case while
+     * the title row keeps its exact height.
+     */
+    .course-title-bar-row {
+        @include title-bar-frame;
+    }
 }
 
 /*
