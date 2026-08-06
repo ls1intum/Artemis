@@ -69,4 +69,18 @@ export class AssessmentUploadService {
         formData.append('file', zipFile);
         return this.http.post<AssessmentUploadResult>(`${this.resourceUrl}/${exerciseId}/manual-assessments`, formData, { observe: 'response' });
     }
+
+    /**
+     * Downloads a template zip for a programming exercise: an `assessment-scores.csv` pre-filled with every participant's identifier and an empty `Overall points` column, plus one
+     * empty `.txt` feedback file per participant. The instructor fills in the points and feedback and uploads the archive via {@link uploadManualAssessments}.
+     *
+     * Precondition: `exerciseId` refers to a programming exercise the current user may assess.
+     * Postcondition: issues a single GET and emits the zip file response once; performs no client-side state change.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return an observable emitting the template zip response
+     */
+    downloadTemplate(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/manual-assessments/template`, { observe: 'response', responseType: 'blob' });
+    }
 }

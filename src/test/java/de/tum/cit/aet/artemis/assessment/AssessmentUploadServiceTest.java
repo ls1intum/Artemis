@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -121,6 +123,33 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         assertManualAssessment(participation1.getId(), 80.0, "Great work, student one!");
         assertManualAssessment(participation2.getId(), 55.5, "Some issues, student two.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldGenerateATemplateThatRoundTripsThroughTheUpload() throws IOException {
+        final Map<String, String> templateEntries = readZipEntries(assessmentUploadService.generateTemplateArchive(programmingExercise));
+
+        // The template contains the CSV the parser expects (identifier in the first column, an "Overall points" column) and one feedback file per participation, named so the
+        // upload
+        // matches it exactly.
+        final String templateCsv = templateEntries.get(CSV_FILE_NAME);
+        assertThat(templateCsv).isNotNull();
+        assertThat(templateCsv.lines().findFirst().orElseThrow()).contains("Overall points");
+        assertThat(templateCsv).contains(identifier1).contains(identifier2);
+        final List<String> textFileNames = templateEntries.keySet().stream().filter(name -> name.endsWith(".txt")).toList();
+        assertThat(textFileNames).hasSize(identifiers.size()).contains(identifier1 + ".txt", identifier2 + ".txt");
+
+        // Fill in points for every row and non-empty feedback for every text file, then upload the generated archive; a valid template must be accepted unchanged otherwise.
+        final Map<String, String> feedbackFiles = new LinkedHashMap<>();
+        for (final String textFileName : textFileNames) {
+            feedbackFiles.put(textFileName, "feedback");
+        }
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise, buildZip(fillTemplatePoints(templateCsv, 75.0), feedbackFiles));
+
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.numberOfCreatedAssessments()).isEqualTo(identifiers.size());
+        assertManualAssessment(participation1.getId(), 75.0, "feedback");
     }
 
     @Test
@@ -577,6 +606,31 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
             throw new RuntimeException(e);
         }
         return new MockMultipartFile("file", "assessments.zip", "application/zip", byteArrayOutputStream.toByteArray());
+    }
+
+    /** Reads every entry of a zip archive into a name-to-content map (UTF-8), preserving the entry order. */
+    private Map<String, String> readZipEntries(final byte[] zipBytes) throws IOException {
+        final Map<String, String> entries = new LinkedHashMap<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipBytes), StandardCharsets.UTF_8)) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                entries.put(entry.getName(), new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8));
+            }
+        }
+        return entries;
+    }
+
+    /** Fills the empty "Overall points" field of every data row of a template CSV with the given value, leaving the header untouched. */
+    private String fillTemplatePoints(final String templateCsv, final double points) {
+        final String[] lines = templateCsv.split("\n", -1);
+        final StringBuilder filled = new StringBuilder(lines[0]).append("\n");
+        for (int lineIndex = 1; lineIndex < lines.length; lineIndex++) {
+            if (!lines[lineIndex].isBlank()) {
+                // Each data row ends with the empty "Overall points" field, so appending the value fills it in.
+                filled.append(lines[lineIndex]).append(points).append("\n");
+            }
+        }
+        return filled.toString();
     }
 
     private String buildCsvWithoutTextFiles(final List<String> participantIdentifiers) {

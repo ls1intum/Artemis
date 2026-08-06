@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, input, model, signal } from
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCloudUploadAlt, faFileZipper } from '@fortawesome/free-solid-svg-icons';
+import { faCloudUploadAlt, faDownload, faFileZipper } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
 import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
 
@@ -37,9 +38,11 @@ export class AssessmentUploadDialogComponent {
     protected readonly selectedFile = signal<File | undefined>(undefined);
     protected readonly isDragOver = signal(false);
     protected readonly isUploading = signal(false);
+    protected readonly isDownloadingTemplate = signal(false);
     protected readonly errors = signal<AssessmentUploadError[]>([]);
 
     protected readonly faCloudUploadAlt = faCloudUploadAlt;
+    protected readonly faDownload = faDownload;
     protected readonly faFileZipper = faFileZipper;
 
     /** Marks the drop zone as active while a file is dragged over it. */
@@ -131,6 +134,24 @@ export class AssessmentUploadDialogComponent {
         }
     }
 
+    /**
+     * Downloads a template zip (participant identifiers pre-filled, points and feedback empty) that the instructor can edit and re-upload.
+     * Postcondition: while in flight `isDownloadingTemplate()` is true; on success the browser saves the returned zip, on error the global alert interceptor surfaces the failure.
+     */
+    downloadTemplate(): void {
+        if (this.isDownloadingTemplate()) {
+            return;
+        }
+        this.isDownloadingTemplate.set(true);
+        this.assessmentUploadService.downloadTemplate(this.exerciseId()).subscribe({
+            next: (response) => {
+                downloadZipFileFromResponse(response);
+                this.isDownloadingTemplate.set(false);
+            },
+            error: (_error: HttpErrorResponse) => this.isDownloadingTemplate.set(false),
+        });
+    }
+
     /** Closes the dialog. */
     close(): void {
         if (this.isUploading()) {
@@ -144,5 +165,6 @@ export class AssessmentUploadDialogComponent {
         this.selectedFile.set(undefined);
         this.errors.set([]);
         this.isUploading.set(false);
+        this.isDownloadingTemplate.set(false);
     }
 }

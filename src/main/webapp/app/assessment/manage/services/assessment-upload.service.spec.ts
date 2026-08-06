@@ -31,4 +31,18 @@ describe('AssessmentUploadService', () => {
         request.flush(expected);
         expect(actual).toEqual(expected);
     });
+
+    it('should GET the template zip as a blob from the exercise-scoped endpoint', () => {
+        const expected = new Blob(['template']);
+        let actual: Blob | undefined;
+
+        service.downloadTemplate(7).subscribe((response) => (actual = response.body ?? undefined));
+
+        const request = httpMock.expectOne('api/assessment/exercises/7/manual-assessments/template');
+        expect(request.request.method).toBe('GET');
+        expect(request.request.responseType).toBe('blob');
+
+        request.flush(expected);
+        expect(actual).toEqual(expected);
+    });
 });

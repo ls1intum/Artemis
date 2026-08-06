@@ -8,6 +8,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 import { AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
+
+vi.mock('app/foundation/util/download.util', () => ({ downloadZipFileFromResponse: vi.fn() }));
 
 function fileInputEvent(file: File): Event {
     return { target: { files: [file], value: 'x' } } as unknown as Event;
@@ -21,6 +24,7 @@ describe('AssessmentUploadDialogComponent', () => {
     let component: AssessmentUploadDialogComponent;
     let fixture: ComponentFixture<AssessmentUploadDialogComponent>;
     let uploadSpy: ReturnType<typeof vi.fn>;
+    let downloadSpy: ReturnType<typeof vi.fn>;
     let alertError: ReturnType<typeof vi.spyOn>;
     let alertSuccess: ReturnType<typeof vi.spyOn>;
 
@@ -28,12 +32,14 @@ describe('AssessmentUploadDialogComponent', () => {
 
     beforeEach(async () => {
         uploadSpy = vi.fn();
+        downloadSpy = vi.fn();
+        vi.mocked(downloadZipFileFromResponse).mockClear();
 
         await TestBed.configureTestingModule({
             imports: [AssessmentUploadDialogComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AssessmentUploadService, useValue: { uploadManualAssessments: uploadSpy } },
+                { provide: AssessmentUploadService, useValue: { uploadManualAssessments: uploadSpy, downloadTemplate: downloadSpy } },
                 MockProvider(AlertService),
             ],
         }).compileComponents();
@@ -145,6 +151,39 @@ describe('AssessmentUploadDialogComponent', () => {
 
         expect(component.visible()).toBe(true);
         expect(uploadSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should download the template for the bound exercise and trigger the file download', () => {
+        const response = new HttpResponse<Blob>({ body: new Blob(['template']) });
+        downloadSpy.mockReturnValue(of(response));
+
+        component.downloadTemplate();
+
+        expect(downloadSpy).toHaveBeenCalledWith(7);
+        expect(downloadZipFileFromResponse).toHaveBeenCalledWith(response);
+        expect(component['isDownloadingTemplate']()).toBe(false);
+    });
+
+    it('should reset the template download state and not download on an HTTP error', () => {
+        const download = new Subject<HttpResponse<Blob>>();
+        downloadSpy.mockReturnValue(download);
+
+        component.downloadTemplate();
+        expect(component['isDownloadingTemplate']()).toBe(true);
+
+        download.error(new HttpErrorResponse({ status: 500 }));
+
+        expect(component['isDownloadingTemplate']()).toBe(false);
+        expect(downloadZipFileFromResponse).not.toHaveBeenCalled();
+    });
+
+    it('should not start a second template download while one is in flight', () => {
+        downloadSpy.mockReturnValue(new Subject<HttpResponse<Blob>>());
+
+        component.downloadTemplate();
+        component.downloadTemplate();
+
+        expect(downloadSpy).toHaveBeenCalledOnce();
     });
 
     it('should clear the selected file and previous errors when reset', () => {

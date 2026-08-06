@@ -4,6 +4,7 @@
             "title": "Upload manual assessments",
             "openButton": "Upload manual assessments",
             "description": "Upload a zip file containing an \"assessment-scores.csv\" file and one \".txt\" file per participant. The CSV must have the participant identifier (<participationId>-<login>, as produced by the repository export) in its first column and an \"Overall points\" column. Each \".txt\" file is named after the participant's exported repository folder and its content is stored as feedback. Existing manual assessments are overwritten.",
+            "downloadTemplateButton": "Download template",
             "dropZoneTitle": "Drop the zip file here or click to select",
             "dropZoneHint": "Only .zip files are supported",
             "uploadButton": "Upload",

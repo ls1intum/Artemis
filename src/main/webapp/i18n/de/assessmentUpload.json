@@ -4,6 +4,7 @@
             "title": "Manuelle Bewertungen hochladen",
             "openButton": "Manuelle Bewertungen hochladen",
             "description": "Lade eine ZIP-Datei hoch, die eine Datei \"assessment-scores.csv\" und pro Teilnehmer eine \".txt\"-Datei enthält. Die CSV-Datei muss in der ersten Spalte die Teilnehmerkennung (<participationId>-<login>, wie beim Repository-Export) und eine Spalte \"Overall points\" enthalten. Jede \".txt\"-Datei ist nach dem exportierten Repository-Ordner des Teilnehmers benannt und ihr Inhalt wird als Feedback gespeichert. Vorhandene manuelle Bewertungen werden überschrieben.",
+            "downloadTemplateButton": "Vorlage herunterladen",
             "dropZoneTitle": "ZIP-Datei hierher ziehen oder zum Auswählen klicken",
             "dropZoneHint": "Es werden nur .zip-Dateien unterstützt",
             "uploadButton": "Hochladen",

@@ -10,6 +10,20 @@
     <div class="assessment-upload">
         <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
 
+        <div class="mb-3">
+            <tum-ui-button
+                data-testid="download-template"
+                severity="secondary"
+                size="small"
+                [disabled]="isUploading() || isDownloadingTemplate()"
+                [loading]="isDownloadingTemplate()"
+                (clicked)="downloadTemplate()"
+            >
+                <fa-icon [icon]="faDownload" />
+                <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.downloadTemplateButton"></span>
+            </tum-ui-button>
+        </div>
+
         <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
         <div
             class="upload-drop-zone"

@@ -73,6 +73,30 @@ public interface AssessmentUploadParticipationRepository extends ArtemisJpaRepos
             @Param("participationIds") final Collection<Long> participationIds);
 
     /**
+     * Resolves every participation of one exercise for building a manual-assessment upload template, using the same identifier (login or team short name) as the upload validation.
+     * <p>
+     * <b>Precondition:</b> {@code exerciseId} identifies a persisted exercise.
+     * <p>
+     * <b>Postcondition:</b> returns one DTO per student or team participation of the exercise, ordered by participation id.
+     *
+     * @param exerciseId the exercise whose participations are exported into the template
+     * @return the participation id and login or team short name of every participation of the exercise
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadParticipationDTO(
+                p.id,
+                COALESCE(student.login, team.shortName)
+            )
+            FROM StudentParticipation p
+                LEFT JOIN p.student student
+                LEFT JOIN p.team team
+            WHERE p.exercise.id = :exerciseId
+                AND (student.id IS NOT NULL OR team.id IS NOT NULL)
+            ORDER BY p.id
+            """)
+    List<AssessmentUploadParticipationDTO> findAllForAssessmentUploadTemplate(@Param("exerciseId") final long exerciseId);
+
+    /**
      * Finds which requested participation ids exist outside the target exercise. This preserves the distinction between an unknown participation and one belonging to another
      * exercise without resolving rows individually.
      * <p>

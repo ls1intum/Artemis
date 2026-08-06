@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.unit.DataSize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -107,5 +108,29 @@ public class AssessmentUploadResource {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(exercise, zipFile);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET exercises/{exerciseId}/manual-assessments/template : Download a template zip that an instructor can fill in and upload again.
+     * <p>
+     * The archive contains an {@code assessment-scores.csv} pre-filled with the repository-export identifier {@code <participationId>-<login>} of every participation and an empty
+     * {@code Overall points} column, plus one empty {@code <identifier>.txt} feedback file per participation. The instructor fills in the points and feedback and uploads the
+     * archive
+     * via {@link #uploadManualAssessments}.
+     * <p>
+     * <b>Preconditions:</b> the caller is at least instructor in the exercise's course (enforced by {@link EnforceAtLeastInstructorInExercise}); {@code exerciseId} refers to an
+     * existing programming exercise.
+     *
+     * @param exerciseId the id of the programming exercise the template is generated for
+     * @return {@code 200 (OK)} with the generated template zip as an attachment
+     */
+    @GetMapping("exercises/{exerciseId}/manual-assessments/template")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<byte[]> downloadManualAssessmentTemplate(@PathVariable final long exerciseId) {
+        log.debug("REST request to download the manual-assessment template for programming exercise {}", exerciseId);
+        final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        final byte[] archive = assessmentUploadService.generateTemplateArchive(exercise);
+        final String filename = "assessment-template-" + exerciseId + ".zip";
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", filename).contentLength(archive.length).body(archive);
     }
 }

@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,6 +17,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
@@ -108,6 +114,54 @@ public class AssessmentUploadService {
         this.assessmentUploadResultService = assessmentUploadResultService;
         this.submissionService = submissionService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    /**
+     * Builds a template zip an instructor can fill in and re-upload: an {@code assessment-scores.csv} with a row (participant identifier, login, empty points) for every
+     * participation of the exercise, plus one empty {@code <identifier>.txt} feedback file per participation. The generated identifiers and file names are exactly what
+     * {@link #importAssessments} expects, so the downloaded archive round-trips once the points and feedback have been filled in.
+     * <p>
+     * <b>Precondition:</b> {@code exercise} is a persisted programming exercise.
+     * <p>
+     * <b>Postcondition:</b> read-only; returns the bytes of a zip containing one CSV file and one empty text file per participation of the exercise.
+     *
+     * @param exercise the programming exercise whose participants are exported into the template
+     * @return the bytes of the generated template zip
+     * @throws IllegalArgumentException if {@code exercise} is not persisted
+     */
+    public byte[] generateTemplateArchive(final ProgrammingExercise exercise) {
+        if (exercise == null || exercise.getId() == null) {
+            throw new IllegalArgumentException("The exercise must be a persisted programming exercise");
+        }
+        final List<AssessmentUploadParticipationDTO> participations = assessmentUploadParticipationRepository.findAllForAssessmentUploadTemplate(exercise.getId());
+
+        final StringBuilder csv = new StringBuilder("Identifier,Login,Overall points\n");
+        for (final AssessmentUploadParticipationDTO participation : participations) {
+            // The first column is the repository-export identifier <participationId>-<login> that importAssessments resolves; the login column is informational and ignored on
+            // upload.
+            csv.append(templateIdentifier(participation)).append(',').append(participation.participantIdentifier()).append(",\n");
+        }
+
+        try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); ZipOutputStream zipStream = new ZipOutputStream(byteStream, StandardCharsets.UTF_8)) {
+            zipStream.putNextEntry(new ZipEntry("assessment-scores.csv"));
+            zipStream.write(csv.toString().getBytes(StandardCharsets.UTF_8));
+            zipStream.closeEntry();
+            for (final AssessmentUploadParticipationDTO participation : participations) {
+                // One empty feedback file per participant, named so its base name equals the identifier and importAssessments matches it exactly.
+                zipStream.putNextEntry(new ZipEntry(templateIdentifier(participation) + TEXT_FILE_EXTENSION));
+                zipStream.closeEntry();
+            }
+            zipStream.finish();
+            log.debug("Generated an assessment-upload template with {} participation(s) for programming exercise {}", participations.size(), exercise.getId());
+            return byteStream.toByteArray();
+        }
+        catch (final IOException exception) {
+            throw new UncheckedIOException("Failed to generate the assessment-upload template for exercise " + exercise.getId(), exception);
+        }
+    }
+
+    private static String templateIdentifier(final AssessmentUploadParticipationDTO participation) {
+        return participation.participationId() + "-" + participation.participantIdentifier();
     }
 
     /**
