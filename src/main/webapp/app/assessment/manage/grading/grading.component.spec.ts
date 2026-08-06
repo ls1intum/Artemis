@@ -1091,6 +1091,19 @@ describe('GradingComponent', () => {
             validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
         });
 
+        it('should expand the sticky grade step to 100 percent when a percentage interval decreases', () => {
+            const maxPoints = 120;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPercentageInterval(11, 4);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            validateGradeStepBounds(stickyGradeStep, 94, 100, maxPoints);
+            expect(comp.getPercentageInterval(stickyGradeStep)).toBe(6);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
         it('should cascade points interval increase', () => {
             comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const multiplier = 2;
@@ -1129,6 +1142,19 @@ describe('GradingComponent', () => {
             validateGradeStepBounds(comp.gradingScale.gradeSteps[1], 40, 50, maxPoints);
             validateGradeStepBounds(comp.gradingScale.gradeSteps[2], 50, 85, maxPoints);
             validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
+        });
+
+        it('should expand the sticky grade step to the maximum points when a points interval decreases', () => {
+            const maxPoints = 120;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPointsInterval(11, 4.8);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            validateGradeStepBounds(stickyGradeStep, 94, 100, maxPoints);
+            expect(comp.getPointsInterval(stickyGradeStep)).toBe(7.2);
+            expect(comp.gradingForm().valid()).toBe(true);
         });
 
         it('should throw on points interval change when max points are not defined', () => {
