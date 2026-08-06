@@ -8,6 +8,16 @@
 
 @plugin 'tailwindcss-primeui';
 
+/*
+ * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Defined
+ * here rather than in the per-theme SCSS variables because it is theme-independent, and under the `--spacing-*`
+ * namespace so it is usable both as Tailwind utilities (`pr-divider`, `ms-divider`) and, because this `@theme`
+ * block is not `inline`, as `var(--spacing-divider)` from SCSS (see the `shell-content-height` mixin).
+ */
+@theme {
+    --spacing-divider: 6px;
+}
+
 @theme inline {
     --color-state-danger: var(--danger);
     --color-state-success: var(--success);

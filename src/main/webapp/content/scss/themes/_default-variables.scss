@@ -60,10 +60,8 @@ $sidebar-header-footer-combined-height: 88px;
 $sidebar-width: 255px;
 $spacing-modules: 1rem;
 
-// Shell layout: the grey gaps between sidebar, title bar, content and footer. One token so the student
-// overview, course management and administration shells cannot drift apart. Emitted as --spacing-divider.
-$spacing-divider: 6px;
-
+// Shell layout. The grey gap between sidebar, title bar, content and footer is theme-independent and is also
+// needed as a Tailwind utility (`pr-divider`), so it lives in tailwind.css as `--spacing-divider`.
 // Title bars below the breadcrumbs (course + admin). Content height plus twice the padding must equal the
 // total height; `title-bar-compact-controls` pins every projected action control to the content height.
 $title-bar-height: 40px;

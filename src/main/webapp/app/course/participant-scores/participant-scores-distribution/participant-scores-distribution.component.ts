@@ -8,6 +8,7 @@ import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-o
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -50,8 +51,20 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     readonly onSelect = output<ChartClickEvent>();
 
-    /** Falls back to the generic description when the page does not provide a more specific one. */
-    protected readonly chartAriaLabel = computed(() => this.ariaLabel() ?? this.translateService.instant('statistics.scoreDistributionChartAriaLabel'));
+    /**
+     * Falls back to the generic description when the page does not provide a more specific one. Reads
+     * `languageChange` so the fallback is re-translated on a language switch — `instant()` is not reactive.
+     */
+    protected readonly chartAriaLabel = computed(() => {
+        const provided = this.ariaLabel()?.trim();
+        if (provided) {
+            return provided;
+        }
+        this.languageChange();
+        return this.translateService.instant('statistics.scoreDistributionChartAriaLabel');
+    });
+
+    private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
 
     readonly gradingScaleExists = signal(false);
     readonly isBonus = signal<boolean | undefined>(undefined);

@@ -7,6 +7,7 @@ import { observeShellMetrics, reattachShellMetricsObserver, updateHeaderHeight }
  */
 describe('navbar util shell metrics', () => {
     const observed = new Set<Element>();
+    const originalResizeObserver = globalThis.ResizeObserver;
     let disconnectCount: number;
     let teardowns: (() => void)[];
 
@@ -46,6 +47,7 @@ describe('navbar util shell metrics', () => {
 
     afterEach(() => {
         teardowns.forEach((teardown) => teardown());
+        globalThis.ResizeObserver = originalResizeObserver;
         vi.useRealTimers();
     });
 
@@ -161,6 +163,16 @@ describe('navbar util shell metrics', () => {
 
         expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('');
         expect(observed.size).toBe(0);
+    });
+
+    it('still measures once when ResizeObserver is unavailable', () => {
+        addElement('jhi-navbar', 72);
+        (globalThis as { ResizeObserver?: unknown }).ResizeObserver = undefined;
+
+        const teardown = observeShellMetrics();
+
+        expect(document.documentElement.style.getPropertyValue('--header-height')).toBe('72px');
+        expect(() => teardown()).not.toThrow();
     });
 
     it('updateHeaderHeight measures the navbar after the current task', () => {

@@ -151,7 +151,7 @@ $sidebar-header-footer-combined-height: 88px;
 $spacing-modules: 1rem;
 
 // Shell layout — see _default-variables.scss for the rationale. Both themes must define the same metrics.
-$spacing-divider: 6px;
+// `--spacing-divider` is theme-independent and lives in tailwind.css.
 $title-bar-height: 40px;
 $title-bar-content-height: 28px;
 $title-bar-padding-block: 6px;

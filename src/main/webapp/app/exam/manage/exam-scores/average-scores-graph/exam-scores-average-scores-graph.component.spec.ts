@@ -13,6 +13,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -158,10 +159,9 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         });
 
         it('should shrink for a group with a single exercise', () => {
-            fixture.componentRef.setInput('averageScores', {
-                ...returnValue,
-                exerciseResults: [returnValue.exerciseResults[0]],
-            } as AggregatedExerciseGroupResult);
+            const singleExercise = deepClone(returnValue);
+            singleExercise.exerciseResults = [deepClone(returnValue.exerciseResults[0])];
+            fixture.componentRef.setInput('averageScores', singleExercise);
             component.ngOnInit();
 
             expect(component.chartEntries()).toHaveLength(2);
@@ -169,7 +169,9 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         });
 
         it('should stay readable for a group without exercises', () => {
-            fixture.componentRef.setInput('averageScores', { ...returnValue, exerciseResults: [] } as AggregatedExerciseGroupResult);
+            const withoutExercises = deepClone(returnValue);
+            withoutExercises.exerciseResults = [];
+            fixture.componentRef.setInput('averageScores', withoutExercises);
             component.ngOnInit();
 
             // Only the exercise-group bar remains, so the box must still be tall enough for one bar plus the axis.

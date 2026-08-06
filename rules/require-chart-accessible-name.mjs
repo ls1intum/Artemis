@@ -27,8 +27,9 @@ const HIDDEN_ATTRIBUTE = 'aria-hidden';
 /** True when the attribute name/value pair yields an accessible name, or explicitly hides the chart. */
 function isAccessibleTreatment(name, value) {
     if (name === HIDDEN_ATTRIBUTE) {
-        // Only `aria-hidden="true"` hides the chart; `false` (or a binding we cannot evaluate) does not.
-        return value === undefined || value.trim() === 'true';
+        // Require the explicit `aria-hidden="true"`. A bare or empty `aria-hidden` is invalid ARIA and behaves
+        // inconsistently across assistive technology, and `false` is the opposite of hiding the chart.
+        return (value ?? '').trim() === 'true';
     }
     if (!NAME_ATTRIBUTES.has(name)) {
         return false;
@@ -69,17 +70,29 @@ function extractChartTags(template) {
     return tags;
 }
 
+/**
+ * Splits a raw `<p-chart …>` start tag into its attributes. Scanning the tag text as a whole would accept a
+ * name-like string that merely sits inside ANOTHER attribute's value, e.g. `pTooltip='[ariaLabel]="Scores"'`.
+ */
+function parseTagAttributes(tag) {
+    const attributes = [];
+    // name (possibly wrapped in [] or () bindings) optionally followed by ="value" / ='value'.
+    const pattern = /([[(]?[\w:.$-]+[\])]?)(\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+    // Skip the element name itself.
+    pattern.lastIndex = tag.indexOf(CHART_ELEMENT) + CHART_ELEMENT.length;
+    let match;
+    while ((match = pattern.exec(tag)) !== null) {
+        const rawName = match[1];
+        // Strip the Angular binding brackets so `[ariaLabel]` and `ariaLabel` are treated alike.
+        const name = rawName.replace(/^[[(]|[\])]$/g, '');
+        attributes.push({ name, value: match[4] ?? match[5] ?? match[6] });
+    }
+    return attributes;
+}
+
 /** True when a raw `<p-chart …>` tag carries an accessible name or an explicit `aria-hidden="true"`. */
 function rawTagIsTreated(tag) {
-    for (const name of [...NAME_ATTRIBUTES, HIDDEN_ATTRIBUTE]) {
-        // Both the plain and the bound spelling, e.g. `ariaLabel="…"` and `[ariaLabel]="…"`.
-        const pattern = new RegExp(`(?<![\\w-])\\[?${name}\\]?\\s*=\\s*("([^"]*)"|'([^']*)')`);
-        const match = pattern.exec(tag);
-        if (match && isAccessibleTreatment(name, match[2] ?? match[3])) {
-            return true;
-        }
-    }
-    return false;
+    return parseTagAttributes(tag).some((attribute) => isAccessibleTreatment(attribute.name, attribute.value));
 }
 
 export default {

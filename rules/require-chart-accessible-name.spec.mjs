@@ -26,8 +26,9 @@ describe('require-chart-accessible-name', () => {
                 { code: '<p-chart type="bar" [data]="chartData()" [options]="chartOptions()" />', errors: [{ messageId: 'missingAccessibleName' }] },
                 // A title/tooltip is not an accessible name for role="img".
                 { code: '<p-chart type="doughnut" pTooltip="Score" />', errors: [{ messageId: 'missingAccessibleName' }] },
-                // aria-hidden="false" is the opposite of hiding the chart.
+                // aria-hidden="false" is the opposite of hiding the chart, and a bare aria-hidden is invalid ARIA.
                 { code: '<p-chart type="bar" aria-hidden="false" />', errors: [{ messageId: 'missingAccessibleName' }] },
+                { code: '<p-chart type="bar" aria-hidden="" />', errors: [{ messageId: 'missingAccessibleName' }] },
                 // An empty or nullish name yields no accessible name at all.
                 { code: '<p-chart type="bar" ariaLabel="" />', errors: [{ messageId: 'missingAccessibleName' }] },
                 { code: `<p-chart type="bar" [ariaLabel]="''" />`, errors: [{ messageId: 'missingAccessibleName' }] },
@@ -59,6 +60,11 @@ describe('require-chart-accessible-name', () => {
             invalid: [
                 { code: '@Component({ template: `<p-chart type="bar" [data]="chartData()" />` }) class C {}', errors: [{ messageId: 'missingAccessibleName' }] },
                 { code: '@Component({ template: `<p-chart aria-hidden="false" />` }) class C {}', errors: [{ messageId: 'missingAccessibleName' }] },
+                // A name-like string nested inside another attribute's value is not an accessible name.
+                {
+                    code: `@Component({ template: \`<p-chart pTooltip='[ariaLabel]=\"Scores\"' />\` }) class C {}`,
+                    errors: [{ messageId: 'missingAccessibleName' }],
+                },
                 // `>` inside a binding must not hide the missing label either.
                 { code: '@Component({ template: `<p-chart [options]="a > b" />` }) class C {}', errors: [{ messageId: 'missingAccessibleName' }] },
                 {
