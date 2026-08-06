@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.assessment.util.AssessmentUploadResultTestService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -55,6 +56,9 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Autowired
     private RatingRepository ratingRepository;
+
+    @Autowired
+    private AssessmentUploadResultTestService assessmentUploadResultTestService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -202,6 +206,29 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // Exactly one manual result remains with the new score, and the rating that referenced the replaced result was removed instead of violating its foreign key.
         assertManualAssessment(participation1.getId(), 90.0, "second");
         assertThat(ratingRepository.findRatingByResultId(ratedManualResult.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDeleteManualResultAndAllItsDependentRows() {
+        // Deleting a manual result must remove it together with every row that references it — feedback, rating, complaint and complaint response — in foreign-key-safe order; a
+        // wrong order would fail with a foreign-key violation.
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback to delete")));
+        final Result manualResult = getManualResults(participation1.getId()).getFirst();
+        participationUtilService.addRatingToResult(manualResult, 3);
+        final Complaint complaint = complaintRepo.save(new Complaint().result(manualResult).complaintType(ComplaintType.COMPLAINT));
+        complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "instructor1", complaint);
+        assertThat(ratingRepository.findRatingByResultId(manualResult.getId())).isPresent();
+        assertThat(complaintRepo.findByResultId(manualResult.getId())).isPresent();
+
+        assessmentUploadResultTestService.deleteManualResults(programmingExercise.getId(), List.of(participation1.getId()));
+
+        // The result and every row that referenced it are gone.
+        assertThat(resultRepository.findById(manualResult.getId())).isEmpty();
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+        assertThat(ratingRepository.findRatingByResultId(manualResult.getId())).isEmpty();
+        assertThat(complaintRepo.findByResultId(manualResult.getId())).isEmpty();
     }
 
     @Test
