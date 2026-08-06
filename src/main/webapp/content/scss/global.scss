@@ -1239,6 +1239,23 @@ body.transparent-background {
     margin-inline: var(--spacing-divider);
 }
 
+/*
+ * The content card of the pages that are not inside a shell (course list, course management list, about, legal pages).
+ *
+ * The footer is `position: fixed; bottom: 0`, so these pages need a bottom margin to keep their last content clear of
+ * it. This used to be `m-3 mb-5 mt-0`, a flat 48px, of which the footer covered ~31px — so the divider that actually
+ * showed was ~17px rather than 6px. Deriving the margin from `--footer-height` keeps the visible divider at exactly
+ * one `--spacing-divider` and follows the footer when it grows: it wraps on narrow viewports and carries an extra git
+ * line in dev. The shells reach the same result by subtracting both values in `shell-content-height`.
+ *
+ * All three margins live here rather than alongside Bootstrap's spacing utilities, because those are declared
+ * `!important` and would otherwise win — the earlier attempt to override just `mb-5` silently kept 16px and tucked the
+ * card behind the footer.
+ */
+.page-content-card {
+    margin: 0 1rem calc(var(--footer-height) + var(--spacing-divider));
+}
+
 .scrollable-content {
     &.no-header-bar-height {
         --header-height: 16px !important;
