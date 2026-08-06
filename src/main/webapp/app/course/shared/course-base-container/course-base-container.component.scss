@@ -59,6 +59,12 @@
             > .course-body-container.scrollable-content {
                 height: auto;
             }
+
+            /*
+             * The rule that makes a sidebar page fill this region lives in `global.scss`, not here: it has to style
+             * the page component the router inserts, which is outside this template and therefore carries no
+             * `_ngcontent` attribute for the emulated encapsulation to match. See `.layout-content` there.
+             */
         }
 
         &.exam-wrapper {

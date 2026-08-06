@@ -1249,6 +1249,66 @@ body.transparent-background {
     overflow-y: auto;
 }
 
+/*
+ * Makes a page that brings its own sidebar (exercises, lectures, exams, communication, …) fill the shell's content
+ * region. Those pages size themselves — from their content, or from `dynamic-content-height`, whose hardcoded
+ * navbar+footer estimate does not match what the shell computes — so they stopped short of the region and the visible
+ * gap above the footer became the divider *plus* that shortfall (9px on the exercises page, 55px on communication).
+ *
+ * Deliberately unscoped rather than living in `course-base-container.component.scss`: the page component is inserted
+ * by the router, so it is outside the shell's template and carries no `_ngcontent` attribute for Angular's emulated
+ * encapsulation to match. A scoped rule reaches `.course-body-container` but never its routed child.
+ *
+ * Restricted to `:not(.scrollable-content)`, which is exactly the sidebar-bearing pages — the sidebar-less pages keep
+ * that class and their arbitrary content must retain its natural block layout. Exam conduction is excluded because it
+ * drives its own full-viewport layout.
+ */
+.layout-content:not(.exam-wrapper) > .course-body-container:not(.scrollable-content) {
+    display: flex;
+    flex-direction: column;
+
+    /* `router-outlet` is an empty anchor and `.refresh-overlay` is absolutely positioned; neither may take height. */
+    > *:not(router-outlet):not(.refresh-overlay) {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+
+        /* The page's own root wrapper has to fill it as well, or the page keeps its intrinsic height. */
+        > * {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+    }
+
+    /*
+     * The sidebar column needs the same treatment: its wrapper is an inline custom element, so without this the
+     * card stopped at its content height and ended lower than the content pane beside it.
+     */
+    jhi-sidebar {
+        display: flex;
+        height: 100%;
+        min-height: 0;
+
+        > .sidebar-wrap {
+            display: flex;
+            min-height: 0;
+
+            > .sidebar {
+                min-height: 0;
+
+                /*
+                 * The card carries its own `margin-right` which used to be clipped, because it filled the wrapper's
+                 * width and the wrapper hides its overflow. Making the wrapper a flex container above would make that
+                 * margin real and stack it on top of the wrapper's divider, giving 14px instead of 6px. The wrapper's
+                 * margin is the divider, so the card must not add a second one.
+                 */
+                margin-right: 0;
+            }
+        }
+    }
+}
+
 .sidebar-collapsed-course-overview {
     display: none;
 }
@@ -1270,7 +1330,13 @@ $transition-in-between-delay: 0.05s;
 .sidebar-wrap {
     overflow: hidden;
     max-width: $sidebar-width;
-    margin-right: 0.5rem;
+
+    /*
+     * This margin is the grey divider between a page's own sidebar (exercises, lectures, communication, …) and the
+     * content next to it, so it uses the shared divider token rather than its own 0.5rem. Left at 8px it was the one
+     * shell gap that did not match the 6px used everywhere else.
+     */
+    margin-right: var(--spacing-divider);
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
         margin-right $transition-sidebar-width-length 0s ease-in-out;
