@@ -40,7 +40,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { Component, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
@@ -96,10 +96,16 @@ class MockExerciseFeedbackSuggestionOptionsComponent {
     dueDate = input<dayjs.Dayjs>();
 }
 
-// Mock for TitleChannelNameComponent interface
+// Mock for TitleChannelNameComponent interface. channelFieldDisplayed/titleErrors are plain settable
+// fields so tests can drive both branches of getInvalidReasons per-test.
 class MockTitleChannelNameComponent {
     isValid = signal(true);
-    isChannelFieldDisplayed = () => true;
+    channelFieldDisplayed = true;
+    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
+    titleErrors: ValidationErrors | undefined = undefined;
+    get field_title(): NgModel {
+        return { control: { errors: this.titleErrors } } as NgModel;
+    }
 }
 
 // Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild properly
@@ -641,6 +647,8 @@ describe('TextExercise Management Update Component', () => {
             return exercise;
         };
 
+        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
+
         beforeEach(async () => {
             course = createCourse();
             routeData$.next({ textExercise: createExercise(course) });
@@ -650,6 +658,15 @@ describe('TextExercise Management Update Component', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
+
+            // The real viewChild(ExerciseTitleChannelNameComponent) query never matches
+            // StubExerciseTitleChannelNameComponent (a different class registered under the same selector), so it
+            // always resolves to undefined here. Overriding the signal directly - scoped to this describe block's
+            // own component instance only - lets getInvalidReasons() exercise the title/channel-name branches.
+            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
+            component.exerciseTitleChannelNameComponent = (() => ({
+                titleChannelNameComponent: () => titleChannelNameComponentMock,
+            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
         });
 
         it('should report the mandatory fields of an untouched creation form', () => {
@@ -680,6 +697,43 @@ describe('TextExercise Management Update Component', () => {
             });
 
             expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
+        });
+
+        it('should report a disallowed title', () => {
+            component.textExercise = filledInExercise();
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+        });
+
+        it('should require a channel name when the channel field is displayed', () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            component.textExercise = exercise;
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = true;
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        it('should not require a channel name when the channel field is hidden', () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            component.textExercise = exercise;
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = false;
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
     });
 });
