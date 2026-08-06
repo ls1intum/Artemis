@@ -65,12 +65,8 @@ export function observeShellMetrics(): () => void {
     };
 }
 
-/** Re-targets the observer at the current navbar/footer elements and re-measures. */
-export function reattachShellMetricsObserver(): void {
-    const observer = activeObserver;
-    if (!observer) {
-        return;
-    }
+/** Points the observer at whichever navbar/footer elements are in the DOM at this moment. */
+function observeShellElements(observer: ResizeObserver): void {
     observer.disconnect();
     for (const { selector } of SHELL_METRICS) {
         const element = document.querySelector(selector);
@@ -78,10 +74,32 @@ export function reattachShellMetricsObserver(): void {
             observer.observe(element);
         }
     }
+}
+
+/** Re-targets the observer at the current navbar/footer elements and re-measures. */
+export function reattachShellMetricsObserver(): void {
+    const observer = activeObserver;
+    if (!observer) {
+        return;
+    }
+    observeShellElements(observer);
     // Deferred like `updateHeaderHeight`: at `NavigationEnd` the newly activated navbar view has not been
     // change-detected yet, so measuring synchronously can write a transient (possibly 0px) height and cause a
-    // one-frame layout jump. `observe()` above also delivers an initial callback, which corrects any drift.
-    setTimeout(() => measureShellMetrics());
+    // one-frame layout jump. `observe()` also delivers an initial callback, which corrects any drift.
+    //
+    // Discovery is repeated here rather than only the measurement. Returning from a skeleton-less route (LTI
+    // embedding, standalone problem statement, exam conduction) recreates the navbar and footer, and they are not in
+    // the DOM yet during the synchronous pass above — so it observes nothing. Measuring alone would then write the
+    // right values once and never update again: a wrapping breadcrumb, an appearing notification banner or a growing
+    // footer would leave the shells sized against a stale height until the next navigation.
+    setTimeout(() => {
+        // A later `observeShellMetrics()` call may have superseded this observer, or it may have been torn down.
+        if (activeObserver !== observer) {
+            return;
+        }
+        observeShellElements(observer);
+        measureShellMetrics();
+    });
 }
 
 function measureShellMetrics(): void {

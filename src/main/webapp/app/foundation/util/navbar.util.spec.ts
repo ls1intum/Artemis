@@ -155,6 +155,45 @@ describe('navbar util shell metrics', () => {
         }).not.toThrow();
     });
 
+    /**
+     * Returning from a skeleton-less route (LTI embedding, standalone problem statement, exam conduction) recreates
+     * the navbar and footer, so at `NavigationEnd` they are not in the DOM yet and the synchronous pass observes
+     * nothing. Measuring in the deferred pass without repeating discovery wrote the right values once and then went
+     * stale forever, because nothing was being observed — the shells kept a stale height until the next navigation.
+     */
+    it('observes elements that appear only after the deferred pass, rather than just measuring them', () => {
+        startObserving();
+        reattachShellMetricsObserver();
+        expect(observed.size).toBe(0);
+
+        // The navbar and footer are rendered between the reattach call and the timer firing.
+        const navbar = addElement('jhi-navbar', 60);
+        const footer = addElement('jhi-footer', 30);
+        vi.runAllTimers();
+
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('60px');
+        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('30px');
+        // The load-bearing part: both elements are observed, so later resizes still reach the shells.
+        expect(observed.has(navbar)).toBe(true);
+        expect(observed.has(footer)).toBe(true);
+
+        // A breadcrumb wrapping after that navigation must still update the variable.
+        navbar.getBoundingClientRect = () => ({ height: 88 }) as DOMRect;
+        lastCallback!();
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('88px');
+    });
+
+    it('does not re-observe once a superseded observer has been torn down', () => {
+        addElement('jhi-navbar', 60);
+        const teardown = startObserving();
+
+        // Teardown lands before the deferred pass runs; it must not resurrect the observer.
+        teardown();
+        vi.runAllTimers();
+
+        expect(observed.size).toBe(0);
+    });
+
     it('is a no-op while no observer is active', () => {
         addElement('jhi-navbar', 60);
 
