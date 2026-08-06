@@ -25,6 +25,14 @@
 }
 
 /*
+ * Collapsed an item is nothing but its icon, so centre it in the rail. The gap to the label sits on the label rather
+ * than on the icon for exactly this reason: with the label gone there is no margin left to push the icon off-centre.
+ */
+.collapsed .nav-link-sidebar {
+    justify-content: center;
+}
+
+/*
  * Base text color for nav links. A layered `text-color` template utility would lose to the unlayered global
  * `a { color: $link-color }` rule in global.scss (unlayered beats layered), so the color must be set here.
  */

@@ -36,15 +36,22 @@
     --footer-height: 32px;
 
     /*
+     * Title row of a detail page's header card (exercise, lecture). Held constant so both pages' headers are exactly
+     * as tall: the exercise page fills this row with its action buttons, the lecture page only with its title.
+     */
+    --detail-header-title-row-height: 36px;
+
+    /*
      * Navigation sidebar of the student overview, course management and administration shells. One token because the
      * three must match, and they previously repeated the value in two stylesheets.
      *
-     * The open width is the narrowest that still shows every item label in full in both English and German. Measured
-     * against the rendered labels: 175px is the exact boundary, and the extra headroom covers wide-glyph labels such
-     * as "Benachrichtigung", which needs more room than the longer but narrower "LTI Konfiguration". Keep it in step
-     * with MAX_SIDEBAR_ITEM_LABEL_LENGTH, which caps how long a new label may be.
+     * The open width is the narrowest that still shows every item label in full in both English and German. An item
+     * spends 44px of it on chrome (8px padding, the 20px fixed-width icon, 8px to the label, 8px padding), leaving
+     * 120px for the label itself — against a measured boundary of 99px, so wide-glyph labels such as
+     * "Benachrichtigung", which needs more room than the longer but narrower "LTI Konfiguration", still fit. Keep it
+     * in step with MAX_SIDEBAR_ITEM_LABEL_LENGTH, which caps how long a new label may be.
      */
-    --sidebar-nav-width: 190px;
+    --sidebar-nav-width: 164px;
     --sidebar-nav-width-collapsed: 64px;
 }
 

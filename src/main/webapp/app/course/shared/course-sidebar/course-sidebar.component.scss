@@ -100,6 +100,19 @@ $transition-color-length: 0.2s;
     color: var(--bs-body-color);
 }
 
+/*
+ * Collapsed an item is nothing but its icon, so centre it in the rail. The gap to the label sits on the label rather
+ * than on the icon for exactly this reason: with the label gone there is no margin left to push the icon off-centre.
+ */
+.nav-link-sidebar.collapsed {
+    display: flex;
+    justify-content: center;
+
+    > .d-flex {
+        justify-content: center;
+    }
+}
+
 .nav-link-sidebar:hover,
 .nav-link-sidebar.active {
     width: 100%;
