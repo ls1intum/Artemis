@@ -319,7 +319,8 @@
                     "undefined": "Du musst einen Titel angeben.",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!",
                     "disallowedValue": "Der Titel wird bereits für eine andere Aufgabe genutzt!",
-                    "maxlength": "Der Titel darf höchstens {{max}} Zeichen lang sein!"
+                    "maxlength": "Der Titel darf höchstens {{max}} Zeichen lang sein!",
+                    "minlength": "Der Titel muss mindestens {{ min }} Zeichen lang sein!"
                 },
                 "channelName": {
                     "empty": "Du musst einen Kanalnamen angeben."
@@ -355,17 +356,22 @@
                 },
                 "minTeamSize": {
                     "min": "Die minimale Teamgröße darf nicht weniger als eine Person betragen.",
-                    "max": "Die minimale Teamgröße darf nicht mehr als 99 Personen betragen."
+                    "max": "Die minimale Teamgröße darf nicht mehr als 99 Personen betragen.",
+                    "required": "Du musst die minimale Teamgröße angeben."
                 },
                 "maxTeamSize": {
                     "min": "Die maximale Teamgröße darf nicht weniger als eine Person betragen.",
-                    "max": "Die maximale Teamgröße darf nicht mehr als 99 Personen betragen."
+                    "max": "Die maximale Teamgröße darf nicht mehr als 99 Personen betragen.",
+                    "required": "Du musst die maximale Teamgröße angeben."
                 },
                 "timeline": {
                     "required": "'{{ dateName }}' ist erforderlich.",
                     "order": "'{{ dateName }}' muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
                     "invalidInput": "'{{ dateName }}' ist kein gültiges Datum. Bitte nutze das Format DD.MM.YYYY HH:mm.",
                     "otherRequired": "'{{ dateName }}' kann erst gesetzt werden, wenn das vorausgesetzte Datum gesetzt ist."
+                },
+                "exampleSolutionPublicationDate": {
+                    "invalidInput": "Das Veröffentlichungsdatum der Beispiellösung ist kein gültiges Datum. Bitte nutze das Format DD.MM.YYYY HH:mm."
                 },
                 "maxPenalty": {
                     "pattern": "Der maximale prozentuale Punktabzug muss zwischen 0 und 100 liegen!"
