@@ -34,6 +34,18 @@
     --title-bar-padding-block: 6px;
     --navbar-height: 68px;
     --footer-height: 32px;
+
+    /*
+     * Navigation sidebar of the student overview, course management and administration shells. One token because the
+     * three must match, and they previously repeated the value in two stylesheets.
+     *
+     * The open width is the narrowest that still shows every item label in full in both English and German. Measured
+     * against the rendered labels: 175px is the exact boundary, and the extra headroom covers wide-glyph labels such
+     * as "Benachrichtigung", which needs more room than the longer but narrower "LTI Konfiguration". Keep it in step
+     * with MAX_SIDEBAR_ITEM_LABEL_LENGTH, which caps how long a new label may be.
+     */
+    --sidebar-nav-width: 190px;
+    --sidebar-nav-width-collapsed: 64px;
 }
 
 @theme inline {

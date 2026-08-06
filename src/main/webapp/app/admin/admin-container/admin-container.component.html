@@ -2,8 +2,8 @@
      and the footer, minus one grey divider, so the content ends exactly one divider above the footer. -->
 <div class="admin-layout flex w-full items-stretch overflow-x-hidden pr-divider" data-testid="admin-layout">
     <aside
-        class="module-bg sticky top-0 h-full flex-none overflow-x-hidden overflow-y-auto rounded-lg transition-[width] duration-200 ease-in-out max-[960px]:w-[64px] print:hidden"
-        [class]="isNavbarCollapsed() ? 'w-[64px]' : 'w-[220px]'"
+        class="module-bg sticky top-0 h-full flex-none overflow-x-hidden overflow-y-auto rounded-lg transition-[width] duration-200 ease-in-out max-[960px]:w-(--sidebar-nav-width-collapsed) print:hidden"
+        [class]="isNavbarCollapsed() ? 'w-(--sidebar-nav-width-collapsed)' : 'w-(--sidebar-nav-width)'"
         data-testid="admin-sidebar-column"
     >
         <jhi-admin-sidebar

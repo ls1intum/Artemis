@@ -7,8 +7,14 @@
     align-items: center;
     flex-wrap: wrap;
     border-radius: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    min-height: 2rem;
+
+    /*
+     * Sized to the shared top bar contract so this search sits in a 40px bar like the shell title bars: the content
+     * is `--title-bar-content-height` tall, with the bar itself adding the padding above and below.
+     */
+    padding: 0 0.5rem;
+    min-height: var(--title-bar-content-height);
+    height: var(--title-bar-content-height);
     cursor: text;
     transition:
         border-color 0.15s ease-in-out,

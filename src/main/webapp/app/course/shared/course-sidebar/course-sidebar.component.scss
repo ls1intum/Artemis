@@ -1,5 +1,6 @@
-$menu-width-closed: 64px;
-$menu-width-open: 220px;
+// Navigation sidebar width; the single source is `--sidebar-nav-width` in tailwind.css (see the note there).
+$menu-width-closed: var(--sidebar-nav-width-collapsed);
+$menu-width-open: var(--sidebar-nav-width);
 
 // Sidebar Button Transition Variables
 $transition-delay: 0.3s;

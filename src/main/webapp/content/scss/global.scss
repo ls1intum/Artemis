@@ -1249,6 +1249,29 @@ body.transparent-background {
 }
 
 /*
+ * A top bar a page renders itself, as a card, in place of the shell's title bar — the communication search and the FAQ
+ * filters. Same frame as the shell title bars so all three shells read alike: `--title-bar-content-height` of content
+ * with `--title-bar-padding-block` above and below, i.e. `--title-bar-height` in total.
+ *
+ * Pair it with `px-*` for the horizontal padding rather than `p-*`, so Bootstrap's `!important` spacing utility does
+ * not overrule the vertical padding set here.
+ */
+.page-top-bar {
+    box-sizing: border-box;
+    min-height: var(--title-bar-height);
+    padding-block: var(--title-bar-padding-block);
+
+    @include title-bar-compact-controls;
+
+    /* Unlike the shell bars these hold text inputs, which carry their own padding and would otherwise stay taller. */
+    .form-control {
+        height: var(--title-bar-content-height);
+        min-height: var(--title-bar-content-height);
+        padding-block: 0;
+    }
+}
+
+/*
  * The content card of the pages that are not inside a shell (course list, course management list, about, legal pages).
  *
  * The footer is `position: fixed; bottom: 0`, so the bottom margin has to clear it and leave one divider visible. It
