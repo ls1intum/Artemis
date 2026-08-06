@@ -84,7 +84,7 @@ public class IrisAssessmentReviewResource {
     public ResponseEntity<List<IrisQAExchangeDTO>> getAssessmentChat(@PathVariable Long assessmentId, @RequestParam(defaultValue = "false") boolean inClass) {
         var assessment = irisAssessmentRepository.findWithReasoningAndExerciseAndStudentByIdElseThrow(assessmentId);
         var user = assessment.getStudent();
-        var exercise = validate(assessment.getExercise());
+        var exercise = validate(assessment.getExercise(), Role.TEACHING_ASSISTANT);
 
         return ResponseEntity.ok(irisAssessmentReviewService.getQAExchangeDTOList(assessment, exercise, user, inClass));
     }
@@ -99,7 +99,7 @@ public class IrisAssessmentReviewResource {
     @EnforceAtLeastEditor
     public ResponseEntity<Void> acceptAnswers(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
-        validate(assessment.getExercise());
+        validate(assessment.getExercise(), Role.EDITOR);
         irisAssessmentReviewService.acceptAnswers(assessment);
 
         return ResponseEntity.ok().build();
@@ -116,7 +116,7 @@ public class IrisAssessmentReviewResource {
     @EnforceAtLeastEditor
     public ResponseEntity<Void> rejectAnswers(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(assessmentId);
-        validate(assessment.getExercise());
+        validate(assessment.getExercise(), Role.EDITOR);
         irisAssessmentReviewService.rejectAnswers(assessment);
 
         return ResponseEntity.ok().build();
@@ -134,7 +134,7 @@ public class IrisAssessmentReviewResource {
     @EnforceAtLeastTutor
     public ResponseEntity<IrisAssessmentDTO> findWithStudent(@PathVariable Long assessmentId) {
         var assessment = irisAssessmentRepository.findWithStudentByIdElseThrow(assessmentId);
-        validate(assessment.getExercise());
+        validate(assessment.getExercise(), Role.TEACHING_ASSISTANT);
 
         return ResponseEntity.ok(IrisAssessmentDTO.of(assessment));
     }
@@ -192,7 +192,7 @@ public class IrisAssessmentReviewResource {
         return ResponseEntity.ok(irisAssessmentReviewService.getAvailableInClassQuiz(exercise));
     }
 
-    private Exercise validate(Exercise exercise) {
+    private Exercise validate(Exercise exercise, Role role) {
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
@@ -200,7 +200,7 @@ public class IrisAssessmentReviewResource {
             throw new ConflictException("Ask-user mode is not supported for team exercises", "Iris", "irisTeamExercise");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
+        authorizationCheckService.checkIsAtLeastRoleInCourseElseThrow(role, course.getId());
 
         return exercise;
     }

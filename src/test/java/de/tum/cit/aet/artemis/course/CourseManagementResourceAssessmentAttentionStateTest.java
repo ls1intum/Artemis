@@ -70,8 +70,8 @@ class CourseManagementResourceAssessmentAttentionStateTest extends AbstractIrisC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldReturnForbiddenWhenTutorRequestsAttentionState() throws Exception {
-        request.get(url(), HttpStatus.FORBIDDEN, IrisAssessmentAttentionDTO.class);
+    void shouldReturnOkWhenTutorRequestsAttentionState() throws Exception {
+        request.get(url(), HttpStatus.OK, IrisAssessmentAttentionDTO.class);
     }
 
     private void createAssessment(IrisVerdict verdict, IrisVerdictReview review) {

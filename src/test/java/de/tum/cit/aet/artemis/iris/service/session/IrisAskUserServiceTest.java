@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -54,9 +54,9 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 class IrisAskUserServiceTest {
 
@@ -72,13 +72,13 @@ class IrisAskUserServiceTest {
 
     private PyrisPipelineService pyrisPipelineService;
 
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private IrisAssessmentReviewService irisAssessmentReviewService;
 
@@ -94,10 +94,10 @@ class IrisAskUserServiceTest {
         irisChatSessionRepository = mock(IrisChatSessionRepository.class);
         irisChatSessionService = mock(IrisChatSessionService.class);
         pyrisPipelineService = mock(PyrisPipelineService.class);
-        programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
-        programmingExerciseStudentParticipationRepository = mock(ProgrammingExerciseStudentParticipationRepository.class);
-        programmingSubmissionRepository = mock(ProgrammingSubmissionRepository.class);
-        userRepository = mock(UserRepository.class);
+        programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
+        programmingExerciseStudentParticipationRepository = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
+        programmingSubmissionRepository = mock(ProgrammingSubmissionTestRepository.class);
+        userRepository = mock(UserTestRepository.class);
         irisAssessmentReviewService = mock(IrisAssessmentReviewService.class);
         taskScheduler = mock(TaskScheduler.class);
 

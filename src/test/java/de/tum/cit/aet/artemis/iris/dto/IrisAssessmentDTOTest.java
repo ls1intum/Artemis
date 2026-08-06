@@ -165,7 +165,7 @@ class IrisAssessmentDTOTest {
 
     @Test
     void projectionToDtoMapsFieldsAndCombinesStudentName() {
-        var projection = new IrisAssessmentProgrammingStudentParticipationProjection(5L, 1L, "https://example.org/repo.git", "BUILD-1", "student1", "Ada", "Lovelace", 10L,
+        var projection = new IrisAssessmentProgrammingStudentParticipationProjectionDTO(5L, 1L, "https://example.org/repo.git", "BUILD-1", "student1", "Ada", "Lovelace", 10L,
                 IrisVerdict.SUSPICIOUS, IrisVerdictReview.REJECTED);
 
         var dto = projection.toDto(3);
@@ -185,7 +185,7 @@ class IrisAssessmentDTOTest {
 
     @Test
     void projectionToDtoOmitsLastNameWhenBlank() {
-        var projection = new IrisAssessmentProgrammingStudentParticipationProjection(5L, 1L, null, null, "student1", "Ada", "", null, null, null);
+        var projection = new IrisAssessmentProgrammingStudentParticipationProjectionDTO(5L, 1L, null, null, "student1", "Ada", "", null, null, null);
 
         var dto = projection.toDto(null);
 

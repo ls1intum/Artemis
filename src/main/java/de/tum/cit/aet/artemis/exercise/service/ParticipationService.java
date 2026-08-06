@@ -55,8 +55,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -115,14 +115,14 @@ public class ParticipationService {
 
     private final ModuleFeatureService moduleFeatureService;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-                                ModuleFeatureService moduleFeatureService, Optional<IrisSettingsService> irisSettingsService) {
+                                ModuleFeatureService moduleFeatureService, Optional<IrisSettingsApi> irisSettingsApi) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -136,7 +136,7 @@ public class ParticipationService {
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.moduleFeatureService = moduleFeatureService;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -1022,7 +1022,7 @@ public class ParticipationService {
         }
         else if (exercise.getExerciseType() == ExerciseType.PROGRAMMING && moduleFeatureService.isIrisEnabled()) {
 
-            loadIrisAssessment = irisSettingsService.map(service -> service.isAskUserModeEnabledForExercise(exercise)).orElse(false);
+            loadIrisAssessment = irisSettingsApi.map(api -> api.isAskUserModeEnabledForExercise(exercise)).orElse(false);
 
             if (loadIrisAssessment) {
                 participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(ids));

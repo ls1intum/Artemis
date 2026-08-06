@@ -4,10 +4,13 @@ import java.io.Serializable;
 
 import jakarta.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 
-public record IrisAssessmentProgrammingStudentParticipationProjection(Long id, Long exerciseId, String repositoryUri, String buildPlanId, String studentLogin,
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record IrisAssessmentProgrammingStudentParticipationProjectionDTO(Long id, Long exerciseId, String repositoryUri, String buildPlanId, String studentLogin,
         String studentFirstName, String studentLastName, Long irisAssessmentId, IrisVerdict irisAssessmentVerdict, IrisVerdictReview irisAssessmentVerdictReview)
         implements Serializable {
 

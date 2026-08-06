@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -28,9 +28,9 @@ import { IrisAssessmentReviewHttpService } from 'app/iris/overview/ask-user/serv
 import { IrisAssessmentReviewExerciseComponent } from 'app/iris/overview/ask-user/assessment-review-overview/assessment-review-exercise/iris-assessment-review-exercise.component';
 import { IrisInClassQuizStartWarningComponent } from 'app/iris/overview/ask-user/assessment-review-overview/in-class-quiz-start-warning/iris-in-class-quiz-start-warning.component';
 
-describe('IrisAssessmentReviewExerciseComponent', () => {
-    setupTestBed({ zoneless: true });
+const MockIrisReviewAssessmentButtonComponent = MockComponent(IrisReviewAssessmentButtonComponent);
 
+describe('IrisAssessmentReviewExerciseComponent', () => {
     let fixture: ComponentFixture<IrisAssessmentReviewExerciseComponent>;
     let component: IrisAssessmentReviewExerciseComponent;
     let assessmentReviewService: {
@@ -95,7 +95,7 @@ describe('IrisAssessmentReviewExerciseComponent', () => {
                         MockComponent(FaIconComponent),
                         MockComponent(CodeButtonComponent),
                         MockDirective(FeatureToggleLinkDirective),
-                        MockComponent(IrisReviewAssessmentButtonComponent),
+                        MockIrisReviewAssessmentButtonComponent,
                         MockComponent(QuizTimerBarComponent),
                         MockComponent(HelpIconComponent),
                     ],
@@ -212,5 +212,27 @@ describe('IrisAssessmentReviewExerciseComponent', () => {
         component.handleInClassQuizTimerExpired();
 
         expect(assessmentReviewService.clearActiveInClassQuiz).toHaveBeenCalledExactlyOnceWith(9);
+    });
+
+    describe('Assessment review actions cell', () => {
+        function setCourseAndRender(courseOverrides: Partial<Course>) {
+            fixture.componentRef.setInput('course', { ...course, ...courseOverrides });
+            fixture.detectChanges();
+        }
+
+        it('should hide the actions cell for users below tutor level', () => {
+            setCourseAndRender({ isAtLeastTutor: false });
+
+            expect(fixture.nativeElement.querySelector('.assessment-review-actions-cell')).toBeNull();
+        });
+
+        it('should show the actions cell, including the Iris review button, for tutors', () => {
+            setCourseAndRender({ isAtLeastTutor: true });
+
+            const cell = fixture.nativeElement.querySelector('.assessment-review-actions-cell');
+
+            expect(cell).not.toBeNull();
+            expect(cell!.querySelector('jhi-iris-review-assessment-button')).not.toBeNull();
+        });
     });
 });

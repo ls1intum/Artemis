@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentReviewSearchDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
@@ -177,41 +177,18 @@ public class IrisAssessmentReviewService {
             return new IrisAssessmentReviewSearchResult(new PageImpl<>(List.of(), pageable, idPage.getTotalElements()), participationsPerFilter);
         }
 
-        Set<IrisAssessmentProgrammingStudentParticipationProjection> projections = inClass
+        Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> projections = inClass
                 ? programmingExerciseStudentParticipationRepository.findAllIrisAssessmentInClassParticipationProjectionsByIdIn(Set.copyOf(ids))
                 : programmingExerciseStudentParticipationRepository.findAllIrisAssessmentParticipationProjectionsByIdIn(Set.copyOf(ids));
 
-        Map<Long, IrisAssessmentProgrammingStudentParticipationProjection> projectionById = projections.stream()
-                .collect(Collectors.toMap(IrisAssessmentProgrammingStudentParticipationProjection::id, Function.identity()));
+        Map<Long, IrisAssessmentProgrammingStudentParticipationProjectionDTO> projectionById = projections.stream()
+                .collect(Collectors.toMap(IrisAssessmentProgrammingStudentParticipationProjectionDTO::id, Function.identity()));
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
 
         List<IrisAssessmentProgrammingStudentParticipationDTO> dtos = ids.stream().map(projectionById::get).filter(Objects::nonNull)
                 .map(projection -> projection.toDto(submissionCountMap.get(projection.id()))).toList();
 
         return new IrisAssessmentReviewSearchResult(new PageImpl<>(dtos, pageable, idPage.getTotalElements()), participationsPerFilter);
-    }
-
-    /**
-     * Finds all non-practice participations of one programming exercise whose latest result has a positive score.
-     *
-     * @param exerciseId the exercise id
-     * @param inClass    whether to use the in-class Iris assessment relation
-     * @return matching participation DTOs
-     */
-    public Set<IrisAssessmentProgrammingStudentParticipationDTO> findAllNonPracticeParticipationsNonZeroLatestScoreForExercise(long exerciseId, boolean inClass) {
-        Set<IrisAssessmentProgrammingStudentParticipationProjection> participationProjections = inClass
-                ? programmingExerciseStudentParticipationRepository
-                        .findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId)
-                : programmingExerciseStudentParticipationRepository
-                        .findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exerciseId);
-        if (participationProjections.isEmpty()) {
-            return Set.of();
-        }
-
-        List<Long> participationIds = participationProjections.stream().map(IrisAssessmentProgrammingStudentParticipationProjection::id).toList();
-        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(participationIds);
-
-        return participationProjections.stream().map(projection -> projection.toDto(submissionCountMap.get(projection.id()))).collect(Collectors.toSet());
     }
 
     /**

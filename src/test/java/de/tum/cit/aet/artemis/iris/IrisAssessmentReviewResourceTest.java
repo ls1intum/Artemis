@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentReviewPageDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQAExchangeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
@@ -58,10 +57,14 @@ class IrisAssessmentReviewResourceTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldReturnForbiddenWhenTutorRequestsAssessmentChat() throws Exception {
-        var assessment = createAssessment(programmingExercise, IrisVerdict.SUSPICIOUS, null, List.of("reason"));
+    void shouldReturnQAExchangesWhenTutorRequestsAssessmentChat() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        createFinishedAskUserSession(student, false, List.of("Explain quiz", "What does this method do?", "Quiz finished"), List.of("It sorts the list"));
+        var assessment = createAssessment(programmingExercise, IrisVerdict.SUSPICIOUS, null, List.of("Because the student could explain the sorting logic"));
 
-        request.getList(chatUrl(assessment), HttpStatus.FORBIDDEN, IrisQAExchangeDTO.class);
+        var result = request.getList(chatUrl(assessment), HttpStatus.OK, IrisQAExchangeDTO.class);
+
+        assertThat(result).hasSize(1);
     }
 
     @Test
@@ -198,10 +201,14 @@ class IrisAssessmentReviewResourceTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldReturnForbiddenWhenTutorRequestsAssessmentById() throws Exception {
-        var assessment = createAssessment(programmingExercise, IrisVerdict.SUSPICIOUS, null, List.of());
+    void shouldReturnAssessmentDtoWhenTutorRequestsAssessmentById() throws Exception {
+        var assessment = createAssessment(programmingExercise, IrisVerdict.SUSPICIOUS, IrisVerdictReview.ACCEPTED, List.of());
 
-        request.get("/api/iris/assessments/" + assessment.getId(), HttpStatus.FORBIDDEN, IrisAssessmentDTO.class);
+        var dto = request.get("/api/iris/assessments/" + assessment.getId(), HttpStatus.OK, IrisAssessmentDTO.class);
+
+        assertThat(dto.id()).isEqualTo(assessment.getId());
+        assertThat(dto.verdict()).isEqualTo(IrisVerdict.SUSPICIOUS);
+        assertThat(dto.verdictReview()).isEqualTo(IrisVerdictReview.ACCEPTED);
     }
 
     @Test
@@ -220,28 +227,6 @@ class IrisAssessmentReviewResourceTest extends AbstractIrisChatSessionTest {
         assertThat(dto.id()).isEqualTo(assessment.getId());
         assertThat(dto.verdict()).isEqualTo(IrisVerdict.SUSPICIOUS);
         assertThat(dto.verdictReview()).isEqualTo(IrisVerdictReview.ACCEPTED);
-    }
-
-    // =========================================================================
-    // GET programming-exercises/{exerciseId}/participations/non-zero-latest-score
-    // =========================================================================
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnForbiddenWhenStudentRequestsNonZeroLatestScoreParticipations() throws Exception {
-        request.getSet("/api/iris/programming-exercises/" + programmingExercise.getId() + "/participations/non-zero-latest-score", HttpStatus.FORBIDDEN,
-                IrisAssessmentProgrammingStudentParticipationDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldReturnParticipationsWithoutAssessmentWhenNoneHaveBeenAssessedYet() throws Exception {
-        // The shared test fixture already gives student1 a graded participation for the programming exercise, so the set is not
-        // empty; none of the returned participations has an Iris assessment yet though, since no ask-user quiz has run.
-        var result = request.getSet("/api/iris/programming-exercises/" + programmingExercise.getId() + "/participations/non-zero-latest-score", HttpStatus.OK,
-                IrisAssessmentProgrammingStudentParticipationDTO.class);
-
-        assertThat(result).isNotEmpty().allSatisfy(dto -> assertThat(dto.irisAssessment()).isNull());
     }
 
     // =========================================================================

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdictReview;
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentReviewSearchDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVerdictDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAssessmentRepository;
@@ -52,25 +52,25 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisAssessmentQuizWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class IrisAssessmentReviewServiceTest {
 
     private IrisAssessmentRepository irisAssessmentRepository;
 
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     private IrisChatSessionRepository irisChatSessionRepository;
 
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     private IrisAssessmentQuizWebsocketService irisAssessmentQuizWebsocketService;
 
     private IrisSettingsService irisSettingsService;
 
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private TaskScheduler taskScheduler;
 
@@ -79,12 +79,12 @@ class IrisAssessmentReviewServiceTest {
     @BeforeEach
     void setUp() {
         irisAssessmentRepository = mock(IrisAssessmentRepository.class);
-        programmingExerciseStudentParticipationRepository = mock(ProgrammingExerciseStudentParticipationRepository.class);
+        programmingExerciseStudentParticipationRepository = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
         irisChatSessionRepository = mock(IrisChatSessionRepository.class);
-        studentParticipationRepository = mock(StudentParticipationRepository.class);
+        studentParticipationRepository = mock(StudentParticipationTestRepository.class);
         irisAssessmentQuizWebsocketService = mock(IrisAssessmentQuizWebsocketService.class);
         irisSettingsService = mock(IrisSettingsService.class);
-        programmingExerciseRepository = mock(ProgrammingExerciseRepository.class);
+        programmingExerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         taskScheduler = mock(TaskScheduler.class);
 
         irisAssessmentReviewService = new IrisAssessmentReviewService(irisAssessmentRepository, programmingExerciseStudentParticipationRepository, irisChatSessionRepository,
@@ -221,8 +221,9 @@ class IrisAssessmentReviewServiceTest {
         when(programmingExerciseStudentParticipationRepository.findIrisAssessmentReviewParticipationIds(eq(5L), any(), eq(false), anyBoolean(), anyBoolean(), anyBoolean(),
                 anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(new PageImpl<>(List.of(2L, 1L), pageable, 2));
 
-        var projection1 = new IrisAssessmentProgrammingStudentParticipationProjection(1L, 9L, "uri1", "plan1", "student1", "First", "Student", null, null, null);
-        var projection2 = new IrisAssessmentProgrammingStudentParticipationProjection(2L, 9L, "uri2", "plan2", "student2", "Second", "Student", 20L, IrisVerdict.SUSPICIOUS, null);
+        var projection1 = new IrisAssessmentProgrammingStudentParticipationProjectionDTO(1L, 9L, "uri1", "plan1", "student1", "First", "Student", null, null, null);
+        var projection2 = new IrisAssessmentProgrammingStudentParticipationProjectionDTO(2L, 9L, "uri2", "plan2", "student2", "Second", "Student", 20L, IrisVerdict.SUSPICIOUS,
+                null);
         when(programmingExerciseStudentParticipationRepository.findAllIrisAssessmentParticipationProjectionsByIdIn(Set.of(1L, 2L))).thenReturn(Set.of(projection1, projection2));
         when(studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(List.of(2L, 1L))).thenReturn(Map.of(1L, 3, 2L, 1));
 
@@ -238,7 +239,7 @@ class IrisAssessmentReviewServiceTest {
         var pageable = PageRequest.of(0, 20);
         when(programmingExerciseStudentParticipationRepository.findIrisAssessmentReviewParticipationIds(eq(5L), any(), eq(true), anyBoolean(), anyBoolean(), anyBoolean(),
                 anyBoolean(), anyBoolean(), anyBoolean(), any())).thenReturn(new PageImpl<>(List.of(1L), pageable, 1));
-        var projection = new IrisAssessmentProgrammingStudentParticipationProjection(1L, 9L, "uri1", "plan1", "student1", "First", "Student", null, null, null);
+        var projection = new IrisAssessmentProgrammingStudentParticipationProjectionDTO(1L, 9L, "uri1", "plan1", "student1", "First", "Student", null, null, null);
         when(programmingExerciseStudentParticipationRepository.findAllIrisAssessmentInClassParticipationProjectionsByIdIn(Set.of(1L))).thenReturn(Set.of(projection));
         when(studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(List.of(1L))).thenReturn(Map.of(1L, 2));
 
@@ -284,34 +285,6 @@ class IrisAssessmentReviewServiceTest {
         // "50%_Match\Case" -> lowercased "50%_match\case" -> backslash, percent, and underscore escaped
         verify(programmingExerciseStudentParticipationRepository).findIrisAssessmentReviewParticipationIds(5L, "%50\\%\\_match\\\\case%", false, false, false, false, false, false,
                 false, PageRequest.of(0, 20));
-    }
-
-    // ---------------------------------------------------------------------
-    // findAllNonPracticeParticipationsNonZeroLatestScoreForExercise
-    // ---------------------------------------------------------------------
-
-    @Test
-    void findAllNonPracticeParticipationsNonZeroLatestScoreForExerciseReturnsEmptySetWhenNoneFound() {
-        when(programmingExerciseStudentParticipationRepository.findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(9L))
-                .thenReturn(Set.of());
-
-        var result = irisAssessmentReviewService.findAllNonPracticeParticipationsNonZeroLatestScoreForExercise(9L, false);
-
-        assertThat(result).isEmpty();
-        verify(studentParticipationRepository, never()).countSubmissionsPerParticipationByIdsAsMap(any());
-    }
-
-    @Test
-    void findAllNonPracticeParticipationsNonZeroLatestScoreForExerciseMapsProjectionsWhenPresent() {
-        var projection = new IrisAssessmentProgrammingStudentParticipationProjection(1L, 9L, "uri", "plan", "student1", "First", "Student", null, null, null);
-        when(programmingExerciseStudentParticipationRepository.findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(9L))
-                .thenReturn(Set.of(projection));
-        when(studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(List.of(1L))).thenReturn(Map.of(1L, 4));
-
-        var result = irisAssessmentReviewService.findAllNonPracticeParticipationsNonZeroLatestScoreForExercise(9L, true);
-
-        assertThat(result).extracting(IrisAssessmentProgrammingStudentParticipationDTO::id).containsExactly(1L);
-        assertThat(result).extracting(IrisAssessmentProgrammingStudentParticipationDTO::submissionCount).containsExactly(4);
     }
 
     // ---------------------------------------------------------------------

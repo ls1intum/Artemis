@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
-import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -165,7 +165,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         var participationProjections = participationRepository
                 .findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(exercise.getId());
-        assertThat(participationProjections.stream().map(IrisAssessmentProgrammingStudentParticipationProjection::id)).contains(newerSubmission.getParticipation().getId());
+        assertThat(participationProjections.stream().map(IrisAssessmentProgrammingStudentParticipationProjectionDTO::id)).contains(newerSubmission.getParticipation().getId());
     }
 
     @Test

@@ -48,7 +48,7 @@ public interface IrisAssessmentRepository extends ArtemisJpaRepository<IrisAsses
         return getValueElseThrow(findWithStudentById(assessmentId), assessmentId);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "student" })
+    @EntityGraph(type = LOAD, attributePaths = { "student", "exercise" })
     Optional<IrisAssessment> findWithStudentById(long assessmentId);
 
     @Query("""

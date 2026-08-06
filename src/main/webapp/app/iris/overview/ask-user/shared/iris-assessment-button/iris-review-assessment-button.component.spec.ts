@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { Course } from 'app/course/shared/entities/course.model';
@@ -14,8 +14,6 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('IrisReviewAssessmentButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisReviewAssessmentButtonComponent>;
     let component: IrisReviewAssessmentButtonComponent;
 
@@ -98,9 +96,9 @@ describe('IrisReviewAssessmentButtonComponent', () => {
         } as ProgrammingExerciseStudentParticipation);
         fixture.detectChanges();
 
-        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        const featureToggle = fixture.debugElement.query(By.directive(FeatureToggleDirective));
 
-        expect(button.disabled).toBeTrue();
+        expect(ngMocks.input(featureToggle, 'overwriteDisabled')).toBe(true);
         expect((component as any).label()).toBe('artemisApp.exerciseActions.reviewIrisAssessment.missing');
     });
 });

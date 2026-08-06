@@ -124,7 +124,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockAskUserResponse(Consumer<PyrisAskUserPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/prompt-user/run", PyrisAskUserPipelineExecutionDTO.class, responseConsumer);
+        mockPostRequest("/ask-user/run", PyrisAskUserPipelineExecutionDTO.class, responseConsumer);
     }
 
     public void mockProgrammingExerciseChatResponseExpectingSubmissionId(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer, long submissionId) {

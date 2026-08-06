@@ -1,6 +1,9 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TemplateRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent, ngMocks } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -16,6 +19,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Range } from 'app/foundation/util/utils';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { Subscription, of } from 'rxjs';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
@@ -29,6 +33,13 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { IrisVerdict } from 'app/iris/shared/entities/iris-verdict.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { TableViewComponent } from 'app/shared-ui/table-view/table-view';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { IrisReviewAssessmentButtonComponent } from 'app/iris/overview/ask-user/shared/iris-assessment-button/iris-review-assessment-button.component';
+import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
+
+const MockTableViewComponent = MockComponent(TableViewComponent);
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -95,6 +106,7 @@ describe('Exercise Scores Component', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ExerciseService, useClass: MockExerciseService },
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -105,21 +117,34 @@ describe('Exercise Scores Component', () => {
                 { provide: IrisSettingsService, useValue: { getCourseSettingsWithRateLimit: () => of({ settings: { askUserModeEnabled: false } }) } },
                 { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(true) } },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseScoresComponent);
-                component = fixture.componentInstance;
-                resultService = TestBed.inject(ResultService);
-                participationService = TestBed.inject(ParticipationService);
-                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-                courseService = TestBed.inject(CourseManagementService);
-                exerciseService = TestBed.inject(ExerciseService);
-                profileService = TestBed.inject(ProfileService);
-                component.exercise.set(exercise);
-                vi.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
-                component.paramSub = new Subscription();
-            });
+        });
+
+        // Mock the row actions column's heavy child components so the actionsTemplate can be rendered in isolation.
+        TestBed.overrideComponent(ExerciseScoresComponent, {
+            remove: { imports: [TableViewComponent, CodeButtonComponent, IrisReviewAssessmentButtonComponent, ManageAssessmentButtonsComponent] },
+            add: {
+                imports: [
+                    MockTableViewComponent,
+                    MockComponent(CodeButtonComponent),
+                    MockComponent(IrisReviewAssessmentButtonComponent),
+                    MockComponent(ManageAssessmentButtonsComponent),
+                ],
+            },
+        });
+
+        TestBed.compileComponents().then(() => {
+            fixture = TestBed.createComponent(ExerciseScoresComponent);
+            component = fixture.componentInstance;
+            resultService = TestBed.inject(ResultService);
+            participationService = TestBed.inject(ParticipationService);
+            programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+            courseService = TestBed.inject(CourseManagementService);
+            exerciseService = TestBed.inject(ExerciseService);
+            profileService = TestBed.inject(ProfileService);
+            component.exercise.set(exercise);
+            vi.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
+            component.paramSub = new Subscription();
+        });
     });
 
     afterEach(() => {
@@ -447,6 +472,78 @@ describe('Exercise Scores Component', () => {
             component.exportNames();
 
             expect(resultServiceStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Row actions visibility', () => {
+        function getRowActionsTemplateRef(): TemplateRef<{ $implicit: ParticipationScoreDTO }> | null {
+            const tableView = fixture.debugElement.query(By.directive(MockTableViewComponent));
+            return ngMocks.input(tableView, 'rowActions');
+        }
+
+        function renderRowActions(dto: ParticipationScoreDTO): HTMLElement {
+            const templateRef = getRowActionsTemplateRef();
+            expect(templateRef).not.toBeNull();
+            const view = templateRef!.createEmbeddedView({ $implicit: dto });
+            view.detectChanges();
+            return view.rootNodes[0] as HTMLElement;
+        }
+
+        beforeEach(() => {
+            // The first detectChanges() call runs ngOnInit(), which loads course/exercise via the
+            // mocked services and would otherwise clobber any exercise()/course() set beforehand.
+            // Run it once here so every test below can safely override those signals afterwards.
+            fixture.detectChanges();
+            component.course.set(course);
+        });
+
+        it('should not render a row actions column for users below tutor level', () => {
+            component.exercise.set({ ...exercise, isAtLeastTutor: false, isAtLeastInstructor: false });
+            fixture.detectChanges();
+
+            expect(getRowActionsTemplateRef()).toBeNull();
+        });
+
+        it('should show only the Iris assessment review button for tutors', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastInstructor: false });
+            fixture.detectChanges();
+
+            const root = renderRowActions(sampleDto);
+
+            expect(root.querySelector('jhi-iris-review-assessment-button')).not.toBeNull();
+            expect(root.querySelector('jhi-code-button')).toBeNull();
+            expect(root.querySelector('jhi-manage-assessment-buttons')).toBeNull();
+        });
+
+        it('should show all row actions for instructors', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastInstructor: true });
+            fixture.detectChanges();
+
+            const root = renderRowActions(sampleDto);
+
+            expect(root.querySelector('jhi-iris-review-assessment-button')).not.toBeNull();
+            expect(root.querySelector('jhi-code-button')).not.toBeNull();
+            expect(root.querySelector('jhi-manage-assessment-buttons')).not.toBeNull();
+        });
+
+        it('should hide the Iris assessment review button for test run (practice mode) participations', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastInstructor: true });
+            fixture.detectChanges();
+
+            const root = renderRowActions({ ...sampleDto, testRun: true });
+
+            expect(root.querySelector('jhi-iris-review-assessment-button')).toBeNull();
+            expect(root.querySelector('jhi-manage-assessment-buttons')).not.toBeNull();
+        });
+
+        it('should not show the Iris assessment review button for non-programming exercises even for instructors', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT, isAtLeastTutor: true, isAtLeastInstructor: true });
+            fixture.detectChanges();
+
+            const root = renderRowActions(sampleDto);
+
+            expect(root.querySelector('jhi-iris-review-assessment-button')).toBeNull();
+            expect(root.querySelector('jhi-manage-assessment-buttons')).not.toBeNull();
         });
     });
 });

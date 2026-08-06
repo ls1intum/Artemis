@@ -22,45 +22,45 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisAssessment;
 import de.tum.cit.aet.artemis.iris.domain.askuser.IrisVerdict;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Unit tests for the Iris-assessment branch of {@link ParticipationService#findParticipationScoresForExercise}.
  * Uses plain Mockito mocks (no Spring context) because the behaviour under test is gated by two independently
- * togglable collaborators ({@link ModuleFeatureService#isIrisEnabled()} and an optional {@link IrisSettingsService}),
+ * togglable collaborators ({@link ModuleFeatureService#isIrisEnabled()} and an optional {@link IrisSettingsApi}),
  * which is awkward to exercise through the Jenkins/LocalVC integration test stack used by {@link ParticipationServiceTest}.
  */
 class ParticipationServiceFindParticipationScoresTest {
 
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     private ModuleFeatureService moduleFeatureService;
 
-    private IrisSettingsService irisSettingsService;
+    private IrisSettingsApi irisSettingsApi;
 
     private ParticipationService participationService;
 
@@ -70,16 +70,16 @@ class ParticipationServiceFindParticipationScoresTest {
 
     @BeforeEach
     void setUp() {
-        studentParticipationRepository = mock(StudentParticipationRepository.class);
-        programmingExerciseStudentParticipationRepository = mock(ProgrammingExerciseStudentParticipationRepository.class);
-        resultRepository = mock(ResultRepository.class);
+        studentParticipationRepository = mock(StudentParticipationTestRepository.class);
+        programmingExerciseStudentParticipationRepository = mock(ProgrammingExerciseStudentParticipationTestRepository.class);
+        resultRepository = mock(ResultTestRepository.class);
         moduleFeatureService = mock(ModuleFeatureService.class);
-        irisSettingsService = mock(IrisSettingsService.class);
+        irisSettingsApi = mock(IrisSettingsApi.class);
 
         participationService = new ParticipationService(Optional.<ContinuousIntegrationService>empty(), Optional.<VersionControlService>empty(),
-                mock(ParticipationRepository.class), studentParticipationRepository, programmingExerciseStudentParticipationRepository, mock(ProgrammingExerciseRepository.class),
-                mock(SubmissionRepository.class), mock(TeamRepository.class), mock(UriService.class), mock(ParticipationVcsAccessTokenService.class), resultRepository,
-                moduleFeatureService, Optional.of(irisSettingsService));
+                mock(ParticipationTestRepository.class), studentParticipationRepository, programmingExerciseStudentParticipationRepository,
+                mock(ProgrammingExerciseTestRepository.class), mock(SubmissionTestRepository.class), mock(TeamRepository.class), mock(UriService.class),
+                mock(ParticipationVcsAccessTokenService.class), resultRepository, moduleFeatureService, Optional.of(irisSettingsApi));
 
         search = new ParticipationScoreSearchDTO(0, 20, null, null, null, null, null, null);
         pageable = PageRequest.of(0, 20);
@@ -101,7 +101,7 @@ class ParticipationServiceFindParticipationScoresTest {
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().irisAssessment()).isNull();
         verifyNoInteractions(moduleFeatureService);
-        verifyNoInteractions(irisSettingsService);
+        verifyNoInteractions(irisSettingsApi);
         verify(programmingExerciseStudentParticipationRepository, never()).findByIdsWithLatestSubmissionAndIrisAssessment(any());
     }
 
@@ -117,7 +117,7 @@ class ParticipationServiceFindParticipationScoresTest {
         participationService.findParticipationScoresForExercise(exercise, search);
 
         verifyNoInteractions(moduleFeatureService);
-        verifyNoInteractions(irisSettingsService);
+        verifyNoInteractions(irisSettingsApi);
         verify(programmingExerciseStudentParticipationRepository, never()).findByIdsWithLatestSubmissionAndIrisAssessment(any());
     }
 
@@ -133,7 +133,7 @@ class ParticipationServiceFindParticipationScoresTest {
         Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search);
 
         assertThat(page.getContent().getFirst().irisAssessment()).isNull();
-        verifyNoInteractions(irisSettingsService);
+        verifyNoInteractions(irisSettingsApi);
         verify(programmingExerciseStudentParticipationRepository, never()).findByIdsWithLatestSubmissionAndIrisAssessment(any());
     }
 
@@ -144,7 +144,7 @@ class ParticipationServiceFindParticipationScoresTest {
 
         stubIdPage(exercise, false, List.of(12L));
         when(moduleFeatureService.isIrisEnabled()).thenReturn(true);
-        when(irisSettingsService.isAskUserModeEnabledForExercise(exercise)).thenReturn(false);
+        when(irisSettingsApi.isAskUserModeEnabledForExercise(exercise)).thenReturn(false);
         when(studentParticipationRepository.findByIdsWithLatestSubmission(List.of(12L))).thenReturn(List.of(participation));
 
         Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search);
@@ -172,7 +172,7 @@ class ParticipationServiceFindParticipationScoresTest {
 
         stubIdPage(exercise, false, List.of(13L));
         when(moduleFeatureService.isIrisEnabled()).thenReturn(true);
-        when(irisSettingsService.isAskUserModeEnabledForExercise(exercise)).thenReturn(true);
+        when(irisSettingsApi.isAskUserModeEnabledForExercise(exercise)).thenReturn(true);
         when(programmingExerciseStudentParticipationRepository.findByIdsWithLatestSubmissionAndIrisAssessment(List.of(13L))).thenReturn(List.of(participation));
 
         Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search);

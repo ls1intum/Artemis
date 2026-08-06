@@ -70,7 +70,7 @@
                             {{ participation.submissionCount }}
                         }
                     </td>
-                    @if (exercise().isAtLeastInstructor) {
+                    @if (course().isAtLeastTutor) {
                         <td class="assessment-review-actions-cell">
                             <div class="assessment-review-action-buttons">
                                 @if (participation.repositoryUri) {

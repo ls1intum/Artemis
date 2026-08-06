@@ -81,19 +81,20 @@ class IrisAssessmentRepositoryTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    void findWithStudentByIdElseThrowReturnsAssessmentWithStudentLoaded() {
+    void findWithStudentByIdElseThrowReturnsAssessmentWithStudentAndExerciseLoaded() {
         var saved = saveAssessment(null, null, null);
 
         var loaded = irisAssessmentRepository.findWithStudentByIdElseThrow(saved.getId());
 
         assertThat(loaded.getStudent().getLogin()).isEqualTo(student.getLogin());
+        assertThat(loaded.getExercise().getId()).isEqualTo(programmingExercise.getId());
     }
 
     @Test
     void findWithReasoningAndExerciseAndStudentByIdElseThrowReturnsAssessmentWithExerciseAndStudentAndReasoningLoaded() {
         var saved = saveAssessment(IrisVerdict.UNSUSPICIOUS, null, List.of("first", "second"));
 
-        var loaded = irisAssessmentRepository.findWithExerciseAndCourseByIdElseThrow(saved.getId());
+        var loaded = irisAssessmentRepository.findWithReasoningAndExerciseAndStudentByIdElseThrow(saved.getId());
 
         assertThat(loaded.getExercise().getId()).isEqualTo(programmingExercise.getId());
         assertThat(loaded.getStudent().getLogin()).isEqualTo(student.getLogin());

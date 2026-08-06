@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -702,7 +704,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             String assignmentSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
             ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(reloaded,
                     TEST_PREFIX + "student1");
-            participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+            var submission = participationUtilService.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now(), submission);
             studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentSlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);

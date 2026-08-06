@@ -21,7 +21,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection;
+import de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
@@ -80,6 +80,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     @EntityGraph(type = LOAD, attributePaths = { "student", "exercise", "irisAssessment" })
@@ -262,7 +263,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @param exerciseId the exercise id
      * @return matching participation projections
      */
-    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+    default Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllNonPracticeIrisAssessmentParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
             long exerciseId) {
         var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(exerciseId);
         if (participationIds.isEmpty()) {
@@ -277,7 +278,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @param exerciseId the exercise id
      * @return matching participation projections
      */
-    default Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
+    default Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllNonPracticeIrisAssessmentInClassParticipationProjectionsByExerciseIdAndLatestResultScoreGreaterThanZero(
             long exerciseId) {
         var participationIds = findParticipationIdsWithLatestResultScoreGreaterThanZeroAndNotPractice(exerciseId);
         if (participationIds.isEmpty()) {
@@ -381,7 +382,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @return the projections for the matching participations
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO(
                 participation.id,
                 participation.exercise.id,
                 participation.repositoryUri,
@@ -398,7 +399,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN participation.irisAssessment assessment
             WHERE participation.id IN :participationIds
             """)
-    Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
+    Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllIrisAssessmentParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
 
     /**
      * Loads Iris assessment participation projections for the given participation ids, joined with their (optional) in-class Iris assessment.
@@ -407,7 +408,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @return the projections for the matching participations
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjection(
+            SELECT new de.tum.cit.aet.artemis.iris.dto.IrisAssessmentProgrammingStudentParticipationProjectionDTO(
                 participation.id,
                 participation.exercise.id,
                 participation.repositoryUri,
@@ -424,7 +425,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN participation.irisAssessmentInClass assessment
             WHERE participation.id IN :participationIds
             """)
-    Set<IrisAssessmentProgrammingStudentParticipationProjection> findAllIrisAssessmentInClassParticipationProjectionsByIdIn(@Param("participationIds") Set<Long> participationIds);
+    Set<IrisAssessmentProgrammingStudentParticipationProjectionDTO> findAllIrisAssessmentInClassParticipationProjectionsByIdIn(
+            @Param("participationIds") Set<Long> participationIds);
 
     /**
      * Searches, paginates and filters non-practice participation ids of a course's programming exercises for the Iris assessment review overview.
