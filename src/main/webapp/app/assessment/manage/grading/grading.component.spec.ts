@@ -1104,6 +1104,19 @@ describe('GradingComponent', () => {
             expect(comp.gradingForm().valid()).toBe(true);
         });
 
+        it('should preserve the sticky grade step interval above 100 percent', () => {
+            const maxPoints = 100;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPercentageInterval(11, 6);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            validateGradeStepBounds(stickyGradeStep, 96, 101, maxPoints);
+            expect(comp.getPercentageInterval(stickyGradeStep)).toBe(5);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
         it('should cascade points interval increase', () => {
             comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const multiplier = 2;
