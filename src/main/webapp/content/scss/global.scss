@@ -1320,6 +1320,18 @@ body.transparent-background {
         height: auto;
     }
 
+    /*
+     * `jhi-loading-indicator-container` wraps whatever it is given in an unclassed div. Left at its content height
+     * that wrapper breaks the chain, so a page nested inside it cannot fill and its cards end short of the divider.
+     * Pinning it passes the definite height through. The spinner branch keeps its natural height.
+     */
+    jhi-loading-indicator-container > div:not(.spinner) {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+    }
+
     /* The sidebar column fills too, so its card ends level with the content pane beside it. */
     jhi-sidebar {
         display: flex;

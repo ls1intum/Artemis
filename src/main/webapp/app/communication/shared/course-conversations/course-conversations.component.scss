@@ -15,6 +15,16 @@
     border-color: var(--bs-border-color);
 }
 
+/*
+ * The page fills the shell's content region, so these rows pass that height down instead of collapsing to their
+ * content. Without it the cards stop a couple of pixels short and the grey divider above the footer reads as 8px
+ * rather than the 6px used everywhere else.
+ */
+.communication-layout-row {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 // Content column beside the sidebar; holds the search above the message/thread row.
 .communication-content-main {
     --header-height: 16px;
@@ -23,10 +33,24 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
+
+    > .communication-message-row {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
 }
 
 .communication-message-wrap {
     min-width: 30%;
+
+    /*
+     * Take the height from the filled row rather than from `dynamic-content-height`'s viewport arithmetic, whose
+     * hardcoded navbar+footer estimate does not match what the shell computes. The row has a definite height, so the
+     * card still contains its own scrolling — it does not grow with the message list.
+     */
+    &.scrollable-communication-content {
+        height: auto;
+    }
 }
 
 .highlight-post {
