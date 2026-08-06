@@ -301,8 +301,20 @@ Non-negotiables:
 ## 6. Setup
 
 ```bash
+git clone https://github.com/ls1intum/Artemis.git
+cd Artemis
+git checkout feature/exercise-variants-ai-generation
+
 cd supporting_scripts/evaluation
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ```
 
-That is all. No `config.ini`, no database, no server.
+That is all. No `config.ini`, no database, no server, no LLM endpoint.
+
+The 168 generated exercises are **in the repository**, under `results/artifacts/{run_id}/`. They were
+captured as JSON file-sets through the REST API when each run finished, so they do not depend on the
+instance that produced them and cannot be lost by it. Each programming variant is six files — the problem
+statement plus the template, solution, and test file sets and the test-case list; each quiz variant is one
+`quiz.json`. The two source exercises they are diffed against are in `corpus/sources/`.
+
+`review.py` reads those files and nothing else, so every variant is readable on any machine, indefinitely.
