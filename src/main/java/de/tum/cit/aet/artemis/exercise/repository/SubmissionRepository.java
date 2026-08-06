@@ -612,19 +612,24 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
 
     /**
-     * Loads the latest submission for every requested participation in a single exercise-scoped query. Participations without a submission are intentionally absent.
+     * Loads the latest submission for every requested participation in a single exercise-scoped query, with each submission's {@code results} collection eagerly fetched.
+     * Participations without a submission are intentionally absent.
+     * <p>
+     * The assessment-upload storage path inspects {@code Submission.results} for every returned submission (to find the manual result it replaces); fetching the collection here
+     * keeps that a single query instead of one lazy load per participation, so a batch import scales independently of its size.
      * <p>
      * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
      * <p>
-     * <b>Postcondition:</b> at most one submission per requested participation is returned, and it is that participation's latest submission.
+     * <b>Postcondition:</b> at most one submission per requested participation is returned, it is that participation's latest submission, and its {@code results} are initialized.
      *
      * @param exerciseId       the target exercise id
      * @param participationIds the participations being imported
-     * @return at most one submission per participation
+     * @return at most one submission per participation, each with its results initialized
      */
     @Query("""
-            SELECT s
+            SELECT DISTINCT s
             FROM Submission s
+                LEFT JOIN FETCH s.results
             WHERE s.participation.exercise.id = :exerciseId
                 AND s.participation.id IN :participationIds
                 AND s.id = (

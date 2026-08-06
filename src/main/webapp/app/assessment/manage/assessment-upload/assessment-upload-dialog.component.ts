@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, model, output, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -34,6 +34,8 @@ export class AssessmentUploadDialogComponent {
     readonly visible = model(false);
     /** The id of the programming exercise whose participants are assessed. */
     readonly exerciseId = input.required<number>();
+    /** Emitted with the number of created assessments after a successful upload, so the parent can refresh its now-stale assessment data. */
+    readonly uploaded = output<number>();
 
     protected readonly selectedFile = signal<File | undefined>(undefined);
     protected readonly isDragOver = signal(false);
@@ -130,6 +132,8 @@ export class AssessmentUploadDialogComponent {
             this.errors.set(result.errors);
         } else {
             this.alertService.success('artemisApp.assessmentUpload.success', { count: result.numberOfCreatedAssessments });
+            // Notify the parent so it can refresh the assessment counts, chart and assessable-submission state that this import just changed.
+            this.uploaded.emit(result.numberOfCreatedAssessments);
             this.close();
         }
     }

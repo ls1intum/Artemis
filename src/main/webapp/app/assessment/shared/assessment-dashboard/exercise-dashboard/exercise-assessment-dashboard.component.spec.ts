@@ -335,6 +335,14 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp['uploadDialogVisible']()).toBe(true);
     });
 
+    it('should reload the dashboard data after manual assessments were uploaded', () => {
+        const loadAllSpy = vi.spyOn(comp, 'loadAll').mockImplementation(() => {});
+
+        comp.onAssessmentsUploaded();
+
+        expect(loadAllSpy).toHaveBeenCalledOnce();
+    });
+
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(tutor);

@@ -99,9 +99,11 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(component['isDragOver']()).toBe(false);
     });
 
-    it('should upload for the bound exercise id, show a success alert, and close the dialog', () => {
+    it('should upload for the bound exercise id, show a success alert, emit the completion event, and close the dialog', () => {
         const result: AssessmentUploadResult = { numberOfCreatedAssessments: 2, createdStudentIdentifiers: ['1-a', '2-b'] };
         uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
+        const uploadedSpy = vi.fn();
+        component.uploaded.subscribe(uploadedSpy);
 
         component.onFileInputChange(fileInputEvent(zipFile));
         component.upload();
@@ -109,18 +111,22 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(uploadSpy).toHaveBeenCalledWith(7, zipFile);
         expect(component['errors']()).toHaveLength(0);
         expect(alertSuccess).toHaveBeenCalledWith('artemisApp.assessmentUpload.success', { count: 2 });
+        expect(uploadedSpy).toHaveBeenCalledWith(2);
         expect(component.visible()).toBe(false);
     });
 
-    it('should show the validation errors and no success when the upload is rejected', () => {
+    it('should show the validation errors, emit no completion event, and stay open when the upload is rejected', () => {
         const result: AssessmentUploadResult = { numberOfCreatedAssessments: 0, errors: [{ identifier: '1-a', type: 'MISSING_TEXT_FILE' }] };
         uploadSpy.mockReturnValue(of(new HttpResponse({ body: result })));
+        const uploadedSpy = vi.fn();
+        component.uploaded.subscribe(uploadedSpy);
 
         component.onFileInputChange(fileInputEvent(zipFile));
         component.upload();
 
         expect(component['errors']()).toEqual(result.errors);
         expect(alertSuccess).not.toHaveBeenCalled();
+        expect(uploadedSpy).not.toHaveBeenCalled();
         expect(component.visible()).toBe(true);
     });
 

@@ -315,6 +315,14 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Refreshes the dashboard after an instructor uploaded manual assessments, so the assessment counts, chart and assessable-submission state reflect the newly stored results.
+     * Postcondition: reloads the exercise data for tutors; it does not itself change any persistent state.
+     */
+    onAssessmentsUploaded(): void {
+        this.loadAll();
+    }
+
+    /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
     ngOnInit(): void {

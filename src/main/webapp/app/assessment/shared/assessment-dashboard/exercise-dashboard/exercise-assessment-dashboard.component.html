@@ -53,7 +53,7 @@
                                 <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.openButton"></span>
                             </tum-ui-button>
                         </div>
-                        <jhi-assessment-upload-dialog [(visible)]="uploadDialogVisible" [exerciseId]="exerciseId()" />
+                        <jhi-assessment-upload-dialog [(visible)]="uploadDialogVisible" [exerciseId]="exerciseId()" (uploaded)="onAssessmentsUploaded()" />
                     }
                 </div>
 

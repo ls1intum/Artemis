@@ -510,6 +510,38 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldLoadExistingResultsInAConstantNumberOfQueriesRegardlessOfBatchSize() {
+        // Seed a stored manual result for every participant, then attach a complaint to one of them. A re-import is then rejected at the complaint gate — after every target
+        // submission's results have been loaded, but before anything is written. This isolates the read path (the previously per-submission lazy result load) from the storage
+        // path,
+        // whose per-row result and feedback inserts scale with the batch size regardless and would otherwise mask the read N+1.
+        final AssessmentUploadResultDTO seed = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip(buildCsvWithoutTextFiles(identifiers), buildFeedbackFiles(identifiers)));
+        assertThat(seed.errors()).isEmpty();
+        complaintRepo.save(new Complaint().result(getManualResults(participation1.getId()).getFirst()).complaintType(ComplaintType.COMPLAINT));
+
+        // Re-import three participants (one blocked by the complaint), then all six. Because each existing submission's results are fetched in one bulk query rather than lazily
+        // per
+        // submission, the read path runs the same number of queries regardless of the batch size — a regression guard against the per-participant N+1.
+        final List<String> threeIdentifiers = identifiers.subList(0, 3);
+        queryInterceptor.startQueryCount();
+        final AssessmentUploadResultDTO threeResult = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip(buildCsvWithoutTextFiles(threeIdentifiers), buildFeedbackFiles(threeIdentifiers)));
+        final long queriesForThree = queryInterceptor.getQueryCount();
+
+        queryInterceptor.startQueryCount();
+        final AssessmentUploadResultDTO sixResult = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip(buildCsvWithoutTextFiles(identifiers), buildFeedbackFiles(identifiers)));
+        final long queriesForSix = queryInterceptor.getQueryCount();
+
+        // Both re-imports are rejected by the complaint on participation1 (all-or-nothing), so neither writes anything and the query count reflects only the read path.
+        assertThat(threeResult.errors()).extracting(error -> error.type()).containsOnly(AssessmentUploadErrorType.EXISTING_COMPLAINT);
+        assertThat(sixResult.errors()).extracting(error -> error.type()).containsOnly(AssessmentUploadErrorType.EXISTING_COMPLAINT);
+        assertThat(queriesForSix).isEqualTo(queriesForThree);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectNullArguments() {
         final MockMultipartFile zip = buildZip("Identifier,Overall points\n", new LinkedHashMap<>());
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(null, zip));
@@ -651,5 +683,12 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     private String buildCsvWithoutTextFiles(final List<String> participantIdentifiers) {
         return "Identifier,Overall points\n" + participantIdentifiers.stream().map(identifier -> identifier + ",80").collect(java.util.stream.Collectors.joining("\n")) + "\n";
+    }
+
+    /** One {@code <identifier>.txt} feedback file per identifier, so every CSV row of {@link #buildCsvWithoutTextFiles} has an exact-match text file and the upload succeeds. */
+    private Map<String, String> buildFeedbackFiles(final List<String> participantIdentifiers) {
+        final Map<String, String> feedbackFiles = new LinkedHashMap<>();
+        participantIdentifiers.forEach(identifier -> feedbackFiles.put(identifier + ".txt", "feedback"));
+        return feedbackFiles;
     }
 }
