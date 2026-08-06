@@ -23,13 +23,26 @@ import { resolve } from 'node:path';
 const CHUNK_COUNT_THRESHOLD = 3; // absolute: allow small drift (e.g. a shared vendor chunk split differently)
 const BYTES_THRESHOLD_PCT = 0.1; // relative: classify as changed if eager bytes moved more than 10%
 
+function requireOptionValue(args, index, option) {
+    const value = args[index + 1];
+    if (!value || value.startsWith('--')) {
+        console.error(`Missing value for ${option}.`);
+        process.exit(1);
+    }
+    return value;
+}
+
 function parseArgs(argv) {
     const args = argv.slice(2);
     let reportPathArg, baselinePathArg, outPathArg;
     for (let i = 0; i < args.length; i++) {
-        if (args[i] === '--baseline') baselinePathArg = args[++i];
-        else if (args[i] === '--out') outPathArg = args[++i];
-        else if (!args[i].startsWith('--') && !reportPathArg) reportPathArg = args[i];
+        if (args[i] === '--baseline') {
+            baselinePathArg = requireOptionValue(args, i, '--baseline');
+            i++;
+        } else if (args[i] === '--out') {
+            outPathArg = requireOptionValue(args, i, '--out');
+            i++;
+        } else if (!args[i].startsWith('--') && !reportPathArg) reportPathArg = args[i];
     }
     if (!baselinePathArg) {
         console.error('Missing required --baseline <baseline-report.json>. There is no default baseline file -- see README.md.');

@@ -9,7 +9,7 @@ instead of loading it on demand.
 
 1. Build with `statsJson: true` (an `@angular/build:application` option) to get an esbuild
    metafile — a module → chunk map where every dependency edge is tagged `import-statement`
-   (static/eager) or `dynamic-import` (lazy).
+   (static/eager), `dynamic-import` (lazy), or `url-token` (asset reference).
 2. `analyze_eager_chunks.mjs` computes, for a curated list of route-entry components, the
    **eager set**: everything reachable from that route's own chunk by following only static
    edges. That's exactly what downloads the instant the route's chunk loads, regardless of
@@ -89,6 +89,6 @@ Currently covers `course-overview` and `course-management-container` (the two co
 - **The drill-down lists** (new chunks for regressions, removed chunks for improvements) match
   chunks by their stable module inputs (not the content-hashed filename), but are still noisiest
   when comparing builds from commits far apart in history — unrelated dependency/vendor-chunk
-  drift shows up as spurious entries on both sides. Not an issue for the real CI path (PR vs.
-  `develop`'s latest, always close together); the aggregate eager chunk count / byte size numbers
-  are the primary, unaffected signal either way.
+  drift shows up as spurious entries on both sides. Usually close together on the real CI path
+  (PR vs. `develop`'s latest), but a long-lived PR can still drift far from `develop`; the
+  aggregate eager chunk count / byte size numbers are the primary, unaffected signal either way.
