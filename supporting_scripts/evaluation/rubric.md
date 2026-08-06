@@ -6,51 +6,44 @@ reported; changing it mid-corpus would make earlier and later scores incomparabl
 
 ## Who is scoring, and what that costs
 
-The scores come from the same Claude Code session that ran the generations and tuned the prompts. The
-usual blinding is therefore **not available**, and the report says so plainly rather than implying an
-independence that does not exist.
+**Revised after the matrix finished, before the first score was recorded.** The original plan had the
+same Claude Code session that ran the generations and tuned the prompts do the scoring, with a quarter of
+the sample re-scored in a fresh subagent to produce an agreement statistic. Both parts changed:
 
-Three mitigations, none of which removes the problem:
+- Scoring is done by a **different session, on a different machine, that did not run the generations,
+  tune the prompts, or observe any run**. It sees only this file, the stored artifacts, and the
+  configuration table. That is a genuinely independent rater rather than a simulated one.
+- There is consequently **no second rater and no agreement statistic**. The re-score existed to test the
+  self-consistency of a non-independent judge; with an independent judge it would only measure one
+  session against itself. The report states plainly that the rubric carries no inter-rater reliability
+  number.
 
-1. A run's outcome, terminal phase, and configuration are **not looked up while scoring it**. Scoring
-   works from the stored artifacts only.
-2. A variant is **not scored straight after watching its run finish**.
-3. A quarter of the sampled variants is **re-scored in a fresh subagent** that receives only this file and
-   the artifact paths — no run history, no knowledge of which runs completed. Exact agreement and
-   agreement-within-one-point are reported per criterion.
+What remains uncontrolled, and what the report must say: the scoring is still done by an LLM rather than
+by an instructor, it is a single pass, and it is not blind to the requested intent.
 
-The requested intent *is* supplied to the judge, because intent fidelity cannot be judged without
-knowing what was asked for.
+A run's outcome, terminal phase, and warnings are **not looked up while scoring it** — scoring works from
+the stored artifacts only. The requested intent *is* supplied, because intent fidelity cannot be judged
+without knowing what was asked for.
 
-## Sampling rule
+## Coverage rule
 
-Scoring everything is the single largest cost in this evaluation and buys little: the rubric is a
-quality description, not a rate. Reading attention goes where no automated check can reach.
+**No sampling. Every run is scored** — all 168, single pass.
 
-**Layer 1 — floor, scored first and completely:** 1 surviving variant per configuration per exercise
-type (28 at a full matrix), drawn at random from that cell's survivors. Scored as a complete balanced
-layer before any second sample, so an interruption leaves a balanced, reportable set rather than a
-lopsided one.
+This replaces the original two-layer sample (1 per cell, plus a second for C9–C12, C4 and C13). Sampling
+existed to control cost on a budget that no longer binds, and it had a real analytical price: at one or
+two variants per cell, the narrative sweeps could not be read as sweeps, which is the contrast the matrix
+was built around. Full coverage removes the sampling rule from the method section entirely and lets the
+per-cell quality medians in `results/tables/quality.csv` rest on n=6 rather than n=1.
 
-**Layer 2 — depth, where reading is the only instrument:** a second variant for
+Full coverage does not make any rubric number a *rate*. Each cell is still six draws from a
+non-deterministic model, and the uncertainty is that non-determinism, not the sampling. The rubric
+remains a quality description.
 
-- **C9–C12**, the narrative sweep. Domain is held fixed at `D-supplied` across all four, so narrative
-  strength is the only variable; C5–C8 confounds its top step, because `IMAGINATIVE` with no domain
-  triggers the planner's mythology fallback and changes theme and strength at once. Whether `CREATIVE`
-  and `IMAGINATIVE` produced visibly different exercises or the same thing twice is not measurable by any
-  automated check.
-- **C4 and C13**, where the domain supplies no ordering key. Whether the variant commits to a key and
-  then stays coherent with that commitment across statement, `Comparable`, tests, and diagram is
-  likewise invisible to the automated checks.
-
-Contingency: if C9–C12 are dropped for schedule (see `matrix.py`, `DROP_FIRST`), the depth moves to
-C5–C8. Layer 2 is skipped entirely rather than partially if time runs short.
-
-If a configuration has fewer than the sampled number of survivors, whatever exists is scored and the
-shortfall is reported — that sparseness is itself a result.
-
-`FAILED`, `CANCELLED`, and `TIMEOUT` runs leave no variant, so **the rubric describes surviving variants,
-not all attempts**, and every rubric number is quoted with the survivor count it came from.
+Every run in this matrix left a variant behind — 160 `COMPLETED` and 8 `DRAFT_WITH_WARNINGS`, with no
+`FAILED`, `CANCELLED`, or `TIMEOUT` — so the survivor caveat in the original plan does not apply here:
+the rubric covers the whole matrix. `DRAFT_WITH_WARNINGS` variants are scored like any other; a variant
+that reached its budget without satisfying verification is exactly the case the readiness criterion
+exists to describe.
 
 ## Scoring procedure
 
@@ -136,4 +129,5 @@ One JSON object per scoring:
 }
 ```
 
-`scorer` is `"primary"` or `"fresh-subagent"`. The two are never averaged; they are compared.
+`scorer` is always `"primary"` — there is no second rater. The field is kept so `analysis.py`, which
+filters on it, keeps working, and so a future second pass can be added without a schema change.
