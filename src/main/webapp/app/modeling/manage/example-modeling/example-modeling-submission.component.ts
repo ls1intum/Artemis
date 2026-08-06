@@ -16,7 +16,7 @@ import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -35,6 +35,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -57,6 +58,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private tutorParticipationService = inject(TutorParticipationService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -417,9 +419,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return;
         }
 
-        const maxPoints = getTotalMaxPoints(this.exercise());
-        const creditsTotalScore = credits.reduce((a, b) => a! + b!, 0)!;
-        this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
+        // Same scoring path as the unreferenced-feedback summary: usageCount limits + positive/max-point capping.
+        this.totalScore.set(this.structuredGradingCriterionService.computeAssessmentScore(this.assessments(), getTotalMaxPoints(this.exercise())).total);
         this.assessmentsAreValid.set(true);
         this.invalidError = undefined;
     }
