@@ -1278,12 +1278,39 @@ body.transparent-background {
     padding-block: var(--title-bar-padding-block);
 
     @include title-bar-compact-controls;
+    @include title-bar-size-container;
 
     /* Unlike the shell bars these hold text inputs, which carry their own padding and would otherwise stay taller. */
     .form-control {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);
         padding-block: 0;
+    }
+}
+
+/*
+ * Opt-in for a label that gives way before the bar does. A page projecting several labelled controls into a title bar
+ * runs out of room long before the bar reaches a phone width, because the sidebar takes its share: on course
+ * management the search field was squeezed from 236px to 82px while every label still rendered in full. Marking the
+ * labels lets them collapse first, leaving icon-only controls and the remaining space to the input.
+ *
+ * The query is on the bar (see `title-bar-size-container`), not the viewport, so collapsing follows the space the bar
+ * actually has — a viewport query cannot know how wide the sidebar next to it currently is.
+ *
+ * The threshold is where the controls start to crowd, measured with every label at full length in both languages: the
+ * German labels are the wider ones and they need ~1050px next to a title, so the bar collapses them below 68rem.
+ *
+ * The label is hidden the accessible way rather than with `display: none`: an icon-only button whose label is removed
+ * from the accessibility tree has no name left for screen readers or for a test to query by role.
+ */
+.title-bar-collapsible-label {
+    @container title-bar (max-width: 68rem) {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
     }
 }
 

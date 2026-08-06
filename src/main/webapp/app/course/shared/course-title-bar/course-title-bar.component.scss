@@ -17,6 +17,7 @@
      */
     .course-title-bar-row {
         @include title-bar-frame;
+        @include title-bar-size-container;
     }
 }
 

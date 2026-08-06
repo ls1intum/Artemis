@@ -2,6 +2,7 @@
 
 #admin-title-bar {
     @include title-bar-frame;
+    @include title-bar-size-container;
 
     /* Grey divider between the title bar and the content below it. */
     margin-bottom: var(--spacing-divider);

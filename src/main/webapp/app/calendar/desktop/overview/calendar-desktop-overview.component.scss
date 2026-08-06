@@ -3,23 +3,36 @@
  * rather than nested under the page wrapper — projected content is no longer inside `.frame`.
  */
 .calendar-bar-controls {
-    /* Reserve enough width for all localized filter chips (German is the widest, ~29rem including the dropdown) so the
-       trigger keeps a constant width. Without this, removing a chip shrinks the trigger, moves its left edge and makes
-       the inline overlay panel jump. Capped to the bar so a narrow viewport cannot push the controls out of it. */
+    /*
+     * The filter is the control that gives way when the bar runs out of room: it may grow to show the chips but must
+     * be free to shrink, otherwise the neighbouring buttons are squeezed until their labels are cut off.
+     */
     p-multiselect {
-        /* `min()` so the reservation gives way on a narrow viewport instead of forcing the bar to grow. */
-        min-width: min(30rem, 100%);
-        max-width: 100%;
+        min-width: 0;
+        max-width: 30rem;
     }
 
+    /* The buttons keep their label width; only the filter above shrinks. */
+    p-selectbutton,
+    p-buttongroup,
+    > div,
+    > button {
+        flex: 0 0 auto;
+    }
+
+    /* The label itself is normalised by `title-bar-compact-controls`; a page stylesheet cannot reach into PrimeNG's view. */
     .chips-section {
         display: flex;
         gap: 0.375rem;
-        min-width: 6rem;
+        min-width: 0;
+        align-items: center;
 
         /* One line only. The chips wrap by default, which made the 40px title bar 128px tall. */
         flex-wrap: nowrap;
         overflow: hidden;
+
+        /* The bar pins its controls' line-height to the content height; chips need their own or they grow past it. */
+        line-height: normal;
 
         .chip {
             display: flex;
@@ -30,6 +43,8 @@
             border-radius: 0.25rem;
             background: var(--body-bg);
             font-size: 0.75rem;
+            line-height: normal;
+            flex: 0 0 auto;
 
             .remove-button {
                 all: unset;

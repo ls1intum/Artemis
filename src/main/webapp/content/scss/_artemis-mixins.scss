@@ -111,6 +111,29 @@
             padding-block: 0;
         }
     }
+
+    /*
+     * PrimeNG pads its multiselect label vertically. Once the control is pinned to the bar's content height that
+     * padding pushes the label's content (for the calendar filter: its chips) past the bottom of the visible box,
+     * where the label container clips it. This has to live in the bar's stylesheet rather than the page's: the label
+     * belongs to PrimeNG's own view, so a page-scoped selector never matches it.
+     */
+    .p-multiselect-label {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding-block: 0;
+    }
+}
+
+/*
+ * Turns a title bar into a size container so the controls projected into it can react to the width of the bar
+ * instead of the width of the viewport. The two differ by whatever the sidebar currently takes, so a viewport
+ * media query collapses labels far too late on a page that has one. Paired with `.title-bar-collapsible-label`
+ * in `global.scss`.
+ */
+@mixin title-bar-size-container {
+    container: title-bar / inline-size;
 }
 
 /*
