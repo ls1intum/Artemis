@@ -6,10 +6,10 @@ configurations x 2 exercise types — executed against a frozen prompt version, 
 scoring of every generated variant. All numbers come from the files under
 `supporting_scripts/evaluation/results/`; the data index in section 9 says where each one lives.
 
-A note on provenance: the original work order (`todo-evaluation-artemis.md`) is referenced by the
-follow-up work order but is not present in the repository or its history. This report follows the
-section structure and the reporting rules that `todo-evaluation-lara.md` specifies (setup, corpus,
-prompt work, method, results, qualitative findings, interpretation, threats, data index).
+Two work orders govern this evaluation: the original `todo-evaluation-artemis.md` (repository root),
+which specifies the report's shape in its section 6, and the follow-up
+`supporting_scripts/evaluation/todo-evaluation-lara.md`, which supersedes it on four method points
+(section 4 below). Where the two disagree, the follow-up wins by its own declaration.
 
 ## 1. Setup
 
@@ -42,16 +42,19 @@ prompt work, method, results, qualitative findings, interpretation, threats, dat
 Two source exercises, both created fresh for this evaluation by `corpus/create_corpus.py` and
 snapshotted under `corpus/sources/` so every judgement can be reproduced without a live instance.
 
-**Programming source** — Artemis's canonical Java strategy-pattern sorting exercise: a
-`SortStrategy` interface with `BubbleSort` and `MergeSort` implementations, a `Context` holding a
-`List<Date>`, and a `Policy` that selects MergeSort for lists of more than 10 dates. It has a
-structure oracle (`test.json`) driving structural tests, behaviour tests, task markers referencing
-the real test names, and a PlantUML diagram with `testsColor(...)` annotations. `Context`, `Policy`
+**Programming source** — Artemis's canonical Java strategy-pattern sorting exercise (Maven build,
+local VC + local CI): a `SortStrategy` interface with `BubbleSort` and `MergeSort` implementations,
+a `Context` holding a `List<Date>`, and a `Policy` that selects MergeSort for lists of more than 10
+dates. Difficulty MEDIUM, so both EASY and HARD are meaningful moves. 13 registered tests — 4
+behaviour tests plus 9 structural tests driven by a structure oracle (`test.json`) — with task
+markers referencing the real test names and a PlantUML diagram with `testsColor(...)` annotations. `Context`, `Policy`
 and `SortStrategy` have no file in the template; `BubbleSort` and `MergeSort` ship as stubs because
 the behaviour test references those types at compile time. Starting invariants were verified before
 any run: the solution scores 100 %, the template compiles and scores 0 %.
 
-**Quiz source** — a 10-question design-patterns quiz (7 multiple-choice, 3 short-answer, 14 points)
+**Quiz source** — a 10-question design-patterns quiz (7 multiple-choice, 3 short-answer, 14 points
+total, applied scenario questions rather than definition recall, several with more than one correct
+option)
 covering Strategy, Observer, Adapter/Facade, Singleton criticism, Abstract Factory, Template
 Method, SRP, Decorator/Proxy/State, strategy-pattern roles, and DIP/dependency injection. Only Q9
 is directly coupled to the programming source's strategy-sorting scenario.
@@ -74,11 +77,24 @@ parenthesised forms (D4); line-number gutters copied into problem statements (D6
 referencing student-owned classes at compile time so the suite runs zero tests (D7); and invented
 test names surviving every prose rule because no tool closes the loop between statement references
 and registered tests (D8). D9 was a code defect: the reference gate validated an in-memory
-statement and reported green on a variant that shipped 20 unresolvable references. The prompts were
-revised in response and frozen at the commit above; the pilot also fixed three corpus-side quiz
-defects before the freeze. Of the pilot's defect classes, the measured runs still show D8's family
-(invented statement references, 3 of 84 programming runs — section 6.3) — a defect surfacing in the
-measured matrix is a result, not something to patch retroactively.
+statement and reported green on a variant that shipped 20 unresolvable references. The most
+prevalent pilot defect was D6, the work order's "known defect" of stray numbers in problem
+statements, present in 13 of 13 pilot programming variants and none of the four hypothesised kinds
+— it was the context renderer's line-number gutter copied into the statement:
+
+> ` 1 | In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.`
+> ` 2 | `
+
+**What needed code rather than prompt wording:** D9 (the reference gate validating an in-memory
+statement instead of the shipped one) and the short-answer mapping persistence fix listed in
+section 1; everything else was prompt work. **The freeze gate** — evaluated by `freeze_gate.py` on
+a 5 + 5 pilot round, restricted to mechanically checkable defects — required at least 4 of 5
+programming runs `COMPLETED` and zero stray `<testid>` numbers, zero dangling task references, and
+zero fenced PlantUML. The prompts were frozen at the commit above once the gate passed; the pilot
+also fixed three corpus-side quiz defects before the freeze. **Left unfixed at the freeze:** the D8
+family — nothing closes the loop between statement task references and registered test names — and
+the measured runs duly reproduce it (3 of 84 programming variants, section 5.6). A defect surfacing
+in the measured matrix is a result, not something to patch retroactively.
 
 ## 4. Method
 
@@ -89,6 +105,16 @@ isolate difficulty (EASY/HARD), C3/C4 isolate the domain axis, C5–C8 walk the 
 (TECHNICAL, REALISTIC, CREATIVE, IMAGINATIVE) without a domain, C9–C12 walk the same scale with the
 books domain, C13 combines the unspecified-key domain with the strongest narrative, C14 stacks
 HARD + unspecified-key domain + CREATIVE.
+
+**Run protocol.** Runs executed in rounds — one replicate of every configuration on both exercise
+types per round, order shuffled within each round — so the matrix stayed balanced and interruptible;
+six rounds were planned and six completed (168 planned = 168 executed, nothing cut or discarded).
+A pool of 3 concurrent jobs was fed from each round's queue; each run was polled every 2 seconds
+until terminal, with a 45-minute timeout that never fired. Job detail was collected at the terminal
+phase; artifacts were captured as JSON file sets through the REST API. Timings come from the
+instance log (the phase-timeline log line plus telemetry lines), rebuilt per job by timestamp
+subtraction and sanity-checked against `finished_at − started_at`; no timing was taken from
+polling.
 
 **Automated checks** (`checks.jsonl`, computed for all 84 programming and 84 quiz variants):
 stray `<testid>` numbers, dangling task references, fenced PlantUML, line-number gutters, byte-identical
@@ -139,9 +165,25 @@ Per-cell completion (n = 6 per cell; Wilson 95 % intervals from `tables/outcomes
 
 At n = 6 a perfect cell still has an interval reaching down to 0.61, so single-cell rates are
 estimates with wide uncertainty; the concentration of 4 of the 5 programming warnings in C2 is the
-signal, not any individual rate.
+signal, not any individual rate. The outcome distributions per configuration are plotted in
+`figures/outcomes-programming.pdf` and `figures/outcomes-quiz.pdf` (n = 6 per bar).
 
-### 5.2 Automated checks
+### 5.2 Cost
+
+All numbers at concurrency 3 on a single build agent — no contention-free baseline exists (section
+4, deviation 4). Per run (n = 84 per type): programming median wall 408 s (range 75–1118 s), median
+53,768.5 tokens; quiz median wall 197 s (range 41–963 s), median 48,852 tokens; 9,574,203 tokens in
+total across all 168 runs. Median verification attempts: 2 for both types; first-attempt passes
+range from 0 to 4 per cell (`tables/outcomes.csv`). Across the 14 programming cell medians
+(`tables/cost.csv`), TRANSFORMING is the largest phase (cell medians 27–281 s), followed by
+VERIFYING (32–286 s) and REPAIRING (18–364 s); PLANNING is 34–59 s. Split by what bounds them,
+programming runs are model-bound for a cell-median 78–322 s and build-bound for 32–635 s — the
+build agent dominates exactly in the repair-heavy cells (C2's build-bound median is the 635 s
+extreme). Quiz runs, which have no CI builds of their own, still spend 26–296 s build-bound in
+verification waits, but are model-bound in the typical case. Phase breakdowns per configuration are
+plotted in `figures/phases-programming.pdf` and `figures/phases-quiz.pdf`.
+
+### 5.3 Automated checks
 
 Across all 84 programming variants: **0 stray `<testid>` numbers, 0 fenced PlantUML blocks,
 0 line-number gutters, and 3 variants with dangling task references** (`programming-C2-r3`: 16
@@ -151,7 +193,7 @@ in `tables/quality.csv`; domain-changing cells (C3, C4, C9–C14) sit at 0.33/0.
 (template/solution/tests) — the re-theme touches most files — while narrative-only cells sit at
 0.83/0.78–0.89/0.89.
 
-### 5.3 Rubric
+### 5.4 Rubric
 
 Overall medians (n = 84 per type): programming — intent fidelity 4, preservation 5, statement
 quality 4, readiness 5. Quiz — identical: 4 / 5 / 4 / 5. Per-cell medians (n = 6 per cell) from
@@ -174,7 +216,7 @@ quality 4, readiness 5. Quiz — identical: 4 / 5 / 4 / 5. Per-cell medians (n =
 | C3 / C4 (domain) | 5.0 | 5.0 | 4.0 | 5.0 |
 | C7 / C8 (narrative) | 5.0 | 5.0 | 4.0 | 5.0 |
 
-### 5.4 Failure taxonomy (all 8 non-completed runs, n = 8)
+### 5.5 Failure taxonomy (all 8 non-completed runs, n = 8)
 
 All 8 are budget exhaustion in the mechanical sense — the pipeline used all 5 verification attempts
 and exited `DRAFT_WITH_WARNINGS` rather than failing. The underlying warning classes, read from
@@ -204,7 +246,7 @@ around such a call can never observe the raw exception type, so the tests are un
 solution, and the repair loop — which patches the solution, not the test idiom — burns all five
 attempts. C2-r3 is the outlier: a plain syntax-breaking edit.
 
-### 5.5 The three dangling-reference variants
+### 5.6 The three dangling-reference variants
 
 The automated checks flagged `programming-C2-r3`, `programming-C2-r6` and `programming-C6-r2` for
 task references that resolve to no registered test. The work order's hypothesis — the statement
@@ -304,7 +346,7 @@ solution hunk shows the transformation destroying the class it was hardening:
 test-framework annotation (`@Public`) has leaked into production code. The verifier reported
 `SOLUTION_BUILD: Score: 87.5% (14/16 tests passed)`, with `testMethods[Context]` failing on the
 unexpected annotation and `testContextSortWithoutAlgorithmThrows` failing on the wrapped exception
-type (section 5.4). Five repair attempts later the run exited `DRAFT_WITH_WARNINGS`. Scores:
+type (section 5.5). Five repair attempts later the run exited `DRAFT_WITH_WARNINGS`. Scores:
 3 / 2 / 3 / 2.
 
 ### 6.4 The narrative sweeps
@@ -360,7 +402,7 @@ legitimate mechanism — but r2 deletes Q1's distractors entirely.
 
 **HARD (programming C2)** is the weakest cell in the matrix by every measure: 2 of 6 completed,
 and the cell's rubric medians (preservation 2.0, statement quality 2.5, readiness 2.0, n = 6) are
-the corpus minimums. Beyond the unsatisfiable exception tests (section 5.4), the cell shows the
+the corpus minimums. Beyond the unsatisfiable exception tests (section 5.5), the cell shows the
 pipeline *gaming its own invariants*: C2-r6's template stubs contain deliberately test-breaking
 code with comments admitting the purpose ("`// Add a dummy date to break empty list handling`",
 "`// Reverse to break stability`"), and C2-r5's template throws on empty input — the exact opposite
@@ -389,7 +431,7 @@ entrench both.
 - **Question loss by duplication:** quiz-C11-r5 replaced Q8 (Decorator/Proxy/State) with a
   byte-identical duplicate of Q9 — the quiz asks the same question twice and the source's content
   is gone.
-- **Statement reference rewriting** (section 5.5): 3 of 84 programming variants.
+- **Statement reference rewriting** (section 5.6): 3 of 84 programming variants.
 
 ## 7. Interpretation
 
@@ -427,6 +469,17 @@ C11-r5 lost a quiz question to duplication, C1-r2's "easier" exercise still grad
 content. Verification proves builds, not meaning: a green `COMPLETED` badge does not certify that
 the exercise measures what its statement claims. The readiness medians (5 overall, but 2.0–3.0 in
 the difficulty cells) are the more honest summary.
+
+**Cost, and what waiting feels like.** For someone clicking "generate variant" in the UI, the
+typical wait is around 3½ minutes for a quiz and around 7 minutes for a programming exercise, but
+the range matters more than the median: a first-attempt pass can return in under 2 minutes while a
+repair-heavy programming run takes 15–19 minutes, and nothing visible to the user distinguishes the
+two paths early. The time goes where the repair loop goes — TRANSFORMING is the biggest single
+phase, but the difficulty cells flip the balance to builds (C2's build-bound cell median of 635 s
+against a model-bound 78–322 s range), so on this single-agent setup a struggling run monopolises
+the build agent precisely when it needs the most attempts. At roughly 50k tokens per variant
+(~9.6 M tokens for the whole matrix), token cost is unlikely to be the binding constraint;
+build-agent time is.
 
 **Repair spends its budget where the defect is not.** In all 8 warning runs the loop used 5 of 5
 attempts, and in the programming cluster every attempt patched the solution while the defect sat in
