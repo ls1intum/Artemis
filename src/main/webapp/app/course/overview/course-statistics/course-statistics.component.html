@@ -81,12 +81,31 @@
                             }
                         </div>
                         <div class="col-md-3">
-                            <h5
-                                class="fw-bolder"
-                                id="absolute-course-score"
-                                jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
-                                [translateValues]="{ number: overallPoints() }"
-                            ></h5>
+                            @if (courseHasExerciseVariants()) {
+                                <h5 class="fw-bolder" id="total-course-score">
+                                    <span jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints" [translateValues]="{ number: overallPointsTotal() }"></span>
+                                    <fa-icon
+                                        class="me-1"
+                                        [icon]="faQuestionCircle"
+                                        ngbTooltip="{{ 'artemisApp.courseOverview.statistics.yourTotalPointsHelp' | artemisTranslate }}"
+                                    />
+                                </h5>
+                                <h5 class="fw-bolder" id="credited-course-score">
+                                    <span jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints" [translateValues]="{ number: overallPoints() }"></span>
+                                    <fa-icon
+                                        class="me-1"
+                                        [icon]="faQuestionCircle"
+                                        ngbTooltip="{{ 'artemisApp.courseOverview.statistics.yourCreditedPointsHelp' | artemisTranslate }}"
+                                    />
+                                </h5>
+                            } @else {
+                                <h5
+                                    class="fw-bolder"
+                                    id="absolute-course-score"
+                                    jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
+                                    [translateValues]="{ number: overallPoints() }"
+                                ></h5>
+                            }
                             <h5 class="fw-bolder" id="reachable-course-score">
                                 <span
                                     jhiTranslate="artemisApp.courseOverview.statistics.reachablePoints"
