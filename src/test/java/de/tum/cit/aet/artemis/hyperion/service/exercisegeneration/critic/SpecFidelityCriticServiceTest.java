@@ -302,6 +302,75 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.selectedCandidate()).isNull();
         assertThat(review.feedback()).contains("scalar formula", "not intermediate", "nouns can be replaced").doesNotContain("radio", "logistics", "compression", "use a");
         assertThat(review.decisionSummary()).contains("learner-owned learning fit", "requested difficulty", "domain grounding").doesNotContain("potion", "artifact", "robot");
+        // The verdict rejected every candidate, and it still says which one it rejected least, ranked only on the per-axis judgments it already returned. That naming admits
+        // nothing: accepted() stays false and the findings are unchanged.
+        assertThat(review.fallback()).isNotNull();
+    }
+
+    @Test
+    void aCompletedConceptRejectionNamesTheCandidateItRejectedLeastWithoutAdmittingIt() {
+        Map<Integer, String> candidates = conceptCandidates("Strategies multiply potion volume by different constants.",
+                "Strategies reconcile overlapping fragments with different conflict policies.", "Strategies label readings from fixed thresholds.");
+        SpecFidelityCriticService critic = criticReturning(rawResponse(
+                """
+                        {"selectedCandidate":null,
+                         "selectionReason":"No candidate clears every required axis, though they are not equally far off.",
+                         "evaluations":[
+                          {"candidate":1,"candidateEvidenceIds":["C1.2"],"briefCoverage":"The surface brief is covered.",
+                           "objectiveCounterfactual":"All variants share one scalar formula.","difficultyFit":"Formula transcription is not intermediate.",
+                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"The nouns can be replaced without changing behavior.","feasibility":"The scope is feasible but shallow.",
+                           "objectiveEssential":false,"briefCovered":true,"learningFitSufficient":false,"learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true},
+                          {"candidate":2,"candidateEvidenceIds":["C2.2"],"briefCoverage":"The surface brief is covered.",
+                           "objectiveCounterfactual":"Interchangeable policies own meaningfully different conflict behavior.","difficultyFit":"Only one reconciliation step remains after plumbing.",
+                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"Conflicting fragments are inherent to damaged transmissions.","feasibility":"The bounded reconstruction is deterministic and proportionate.",
+                           "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":true,"feasibleAndProportionate":true},
+                          {"candidate":3,"candidateEvidenceIds":["C3.2"],"briefCoverage":"The surface brief is covered.",
+                           "objectiveCounterfactual":"Fixed labels leave no meaningful strategy-owned behavior.","difficultyFit":"Routine return statements are below the requested level.",
+                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"The labels have no stated domain constraint.","feasibility":"The concept is feasible but shallow.",
+                           "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true}
+                         ]}
+                        """));
+
+        SpecFidelityCriticService.ConceptSelectionReview review = critic.reviewConceptCandidates("Create an intermediate unusual Strategy exercise.", candidates, null,
+                () -> false);
+
+        assertThat(review.complete()).isTrue();
+        assertThat(review.accepted()).isFalse();
+        assertThat(review.selectedCandidate()).isNull();
+        // Candidate 2 fails one required axis, candidate 3 fails two, candidate 1 fails six. Fewest failures wins, and the count comes entirely from booleans the reviewer
+        // already returned — no separate scoring model is introduced to break the tie.
+        assertThat(review.fallback()).isEqualTo(new SpecFidelityCriticService.ConceptFallback(2, 1));
+        assertThat(review.findings()).hasSize(3);
+    }
+
+    @Test
+    void anEquallyRejectedConceptTieIsBrokenByTheLowerCandidateNumberSoTheChoiceIsReproducible() {
+        Map<Integer, String> candidates = conceptCandidates("Strategies reconcile fragments by recency.", "Strategies reconcile fragments by majority vote.",
+                "Strategies label readings from fixed thresholds.");
+        String equallyRejected = """
+                  {"candidate":%d,"candidateEvidenceIds":["C%d.2"],"briefCoverage":"The surface brief is covered.",
+                   "objectiveCounterfactual":"Interchangeable policies own meaningfully different behavior.","difficultyFit":"Only one reconciliation step remains after plumbing.",
+                   "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                   "domainGrounding":"Conflicting fragments are inherent to damaged transmissions.","feasibility":"The bounded reconstruction is deterministic and proportionate.",
+                   "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":true,"feasibleAndProportionate":true}\
+                """;
+        SpecFidelityCriticService critic = criticReturning(rawResponse("{\"selectedCandidate\":null,\"selectionReason\":\"Two candidates are equally close and one is worse.\","
+                + "\"evaluations\":[" + equallyRejected.formatted(1, 1) + "," + equallyRejected.formatted(2, 2) + ","
+                + """
+                          {"candidate":3,"candidateEvidenceIds":["C3.2"],"briefCoverage":"The surface brief is covered.",
+                           "objectiveCounterfactual":"Fixed labels leave no meaningful strategy-owned behavior.","difficultyFit":"Routine return statements are below the requested level.",
+                           "smallestStudentImplementation":"Students implement the cited central behavior.","reasoningAfterRoutineWork":"The cited non-routine reasoning remains after plumbing.",
+                           "domainGrounding":"The labels have no stated domain constraint.","feasibility":"The concept is feasible but shallow.",
+                           "objectiveEssential":true,"briefCovered":true,"learningFitSufficient":true,"learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"prematureContractClosure":false,"difficultySufficient":false,"domainGrounded":false,"feasibleAndProportionate":true}]}
+                        """));
+
+        SpecFidelityCriticService.ConceptSelectionReview review = critic.reviewConceptCandidates("Create an intermediate unusual Strategy exercise.", candidates, null,
+                () -> false);
+
+        assertThat(review.fallback()).isEqualTo(new SpecFidelityCriticService.ConceptFallback(1, 1));
     }
 
     @Test

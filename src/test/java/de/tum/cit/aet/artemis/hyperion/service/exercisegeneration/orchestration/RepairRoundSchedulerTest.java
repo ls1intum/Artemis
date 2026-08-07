@@ -263,6 +263,31 @@ class RepairRoundSchedulerTest {
             assertThat(RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(executableEvidence)).isFalse();
             assertThat(RepairRoundScheduler.hasInstrumentUnavailableFinding(executableEvidence)).isTrue();
         }
+
+        @Test
+        void aConceptAdmissionFindingAloneIsReportedAsConceptAdmittedWithFindings() {
+            // The run proceeded with the least-rejected candidate rather than producing nothing; the instructor needs to know that is why nothing was scheduled.
+            assertThat(RepairRoundScheduler.reasonForUnschedulableReport(report(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING)))
+                    .isEqualTo(TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS);
+        }
+
+        @Test
+        void aConceptAdmissionFindingOutranksAnotherUnschedulableBlocker() {
+            // A contested concept is upstream of the specification, tests, and statement that instantiate it, so it must be reported as the cause rather than as a second,
+            // unrelated "no schedulable surface" symptom.
+            SpecFidelityReport report = report(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING, SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
+
+            assertThat(RepairRoundScheduler.reasonForUnschedulableReport(report)).isEqualTo(TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS);
+        }
+
+        @Test
+        void anInstrumentUnavailableFindingOutranksAConceptAdmissionFinding() {
+            // A review that never ran cannot be reported as a design decision the instructor can act on.
+            SpecFidelityReport report = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING, "the central interaction is too shallow"),
+                    finding(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE, "the reviewer stopped")));
+
+            assertThat(RepairRoundScheduler.reasonForUnschedulableReport(report)).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+        }
     }
 
     @Nested

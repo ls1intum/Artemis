@@ -81,4 +81,14 @@ class SemanticRepairBatchTest {
         assertThat(staticReview.hasBlockingFindings()).isFalse();
         assertThat(SemanticRepairBatch.next(staticReview, EnumSet.noneOf(RepairSurface.class), null, 0)).isEmpty();
     }
+
+    @Test
+    void aConceptAdmissionFindingAloneSchedulesNoRepairBatch() {
+        // Blocking, but the objection is to the exercise's central design choice, which no scoped repair of tests, scaffold, or statement can settle — only the instructor can.
+        SpecFidelityReport conceptAdmission = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING, "the central interaction is too shallow", "...")));
+
+        assertThat(conceptAdmission.hasBlockingFindings()).isTrue();
+        assertThat(SemanticRepairBatch.next(conceptAdmission, EnumSet.noneOf(RepairSurface.class), null, 0)).isEmpty();
+    }
 }

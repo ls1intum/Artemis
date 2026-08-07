@@ -80,7 +80,9 @@ final class ConceptAdmissionCritic {
             if (parsed.admitted()) {
                 return new ConceptSelectionReview(true, candidateNumber, List.of(), selection.decisionSummary(), audit);
             }
-            return new ConceptSelectionReview(true, null, List.of(parsed.finding()), parsed.finding(), audit);
+            // The broad selector already passed this candidate on every required axis, so it is the best-evidenced fallback there is: zero failed selection axes, and only this
+            // narrower audit objecting. Recording it does not admit it — the finding above still travels with it.
+            return new ConceptSelectionReview(true, null, List.of(parsed.finding()), parsed.finding(), audit, new SpecFidelityCriticService.ConceptFallback(candidateNumber, 0));
         }
         catch (RuntimeException e) {
             log.warn("Selected-concept admission review failed: {}", e.getMessage());

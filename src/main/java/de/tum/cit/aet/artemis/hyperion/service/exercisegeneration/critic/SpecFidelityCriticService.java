@@ -159,19 +159,37 @@ public class SpecFidelityCriticService {
         }
     }
 
+    /**
+     * The best candidate a <em>completed</em> review saw, recorded even when that candidate was not admitted.
+     * <p>
+     * This is not a second opinion and it never softens {@link ConceptSelectionReview#accepted()}. It only names which candidate a caller should fall back to if it decides to
+     * proceed with findings attached rather than produce nothing at all, and it is derived exclusively from judgments the reviewer already returned — no new scoring model.
+     *
+     * @param candidate          the candidate number, using the reviewer's own numbering
+     * @param failedRequiredAxes how many of the selection reviewer's required axes this candidate failed. Zero means the broad selector passed it on every axis and a later,
+     *                               narrower pass objected, which is strictly better evidenced than any candidate the broad selector itself rejected
+     */
+    public record ConceptFallback(int candidate, int failedRequiredAxes) {
+    }
+
     /** A grounded, property-only verdict over three generator-authored concepts. */
-    public record ConceptSelectionReview(boolean complete, @Nullable Integer selectedCandidate, List<String> findings, String decisionSummary, String auditSummary) {
+    public record ConceptSelectionReview(boolean complete, @Nullable Integer selectedCandidate, List<String> findings, String decisionSummary, String auditSummary,
+            @Nullable ConceptFallback fallback) {
 
         public ConceptSelectionReview {
             findings = List.copyOf(findings);
         }
 
+        public ConceptSelectionReview(boolean complete, @Nullable Integer selectedCandidate, List<String> findings, String decisionSummary, String auditSummary) {
+            this(complete, selectedCandidate, findings, decisionSummary, auditSummary, null);
+        }
+
         public ConceptSelectionReview(boolean complete, @Nullable Integer selectedCandidate, List<String> findings, String decisionSummary) {
-            this(complete, selectedCandidate, findings, decisionSummary, decisionSummary);
+            this(complete, selectedCandidate, findings, decisionSummary, decisionSummary, null);
         }
 
         public ConceptSelectionReview(boolean complete, @Nullable Integer selectedCandidate, List<String> findings) {
-            this(complete, selectedCandidate, findings, "", "");
+            this(complete, selectedCandidate, findings, "", "", null);
         }
 
         public boolean accepted() {
@@ -364,7 +382,7 @@ public class SpecFidelityCriticService {
                 + ") during concept exploration. Keep the qualitative learner-owned branching or transformation, but leave exact constructs to the specification and preserve "
                 + "an instructor-requested technique there as non-graded pedagogy when public behavior cannot prove it.";
         String audit = review.auditSummary() + "\n\nServer concept invariant: rejected selected candidate — " + finding;
-        return new ConceptSelectionReview(true, null, List.of(finding), finding, audit);
+        return new ConceptSelectionReview(true, null, List.of(finding), finding, audit, new ConceptFallback(review.selectedCandidate(), 0));
     }
 
     private static Set<String> techniqueFamilies(List<String> mandates) {
@@ -988,6 +1006,10 @@ public class SpecFidelityCriticService {
             case SPECIFICATION_REVIEW_FINDING -> builder.append("\n- The frozen specification still carries this pre-freeze review finding: \"").append(finding.requirement())
                     .append("\". It cannot be repaired downstream without changing the approved contract; preserve it for explicit instructor review rather than disguising it "
                             + "with artifact changes.");
+            case CONCEPT_ADMISSION_FINDING ->
+                builder.append("\n- The concept review admitted no candidate and this exercise was built from the least-rejected one: \"").append(finding.requirement()).append(
+                        "\". The objection is to the central design, which the instructor must settle; keep building the exercise this concept describes and do not restate "
+                                + "or paper over the objection in the artifacts.");
         }
     }
 }

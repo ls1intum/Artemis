@@ -133,6 +133,23 @@ final class GenerationReviewSupport {
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
+    /**
+     * Attaches the objections raised against a concept the run proceeded with anyway, using the same report the quality review writes into, so they reach the instructor as
+     * ordinary review notes on a saved {@code NEEDS_REVIEW} exercise rather than through a second channel of their own.
+     */
+    static SpecFidelityReport preserveConceptAdmissionState(SpecFidelityReport report, List<String> unresolvedConceptFindings) {
+        if (unresolvedConceptFindings.isEmpty()) {
+            return report;
+        }
+        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
+        unresolvedConceptFindings.stream()
+                .map(finding -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING, finding,
+                        "The concept review admitted no candidate, so this exercise was generated from the one it rejected least. Deciding whether the objection matters is a "
+                                + "design call only you can make: accept it, regenerate from a sharper brief, or discard the draft."))
+                .filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecFidelityReport(List.copyOf(findings));
+    }
+
     static SpecFidelityReport preserveSpecificationReviewState(SpecFidelityReport report, List<String> unresolvedSpecificationFindings) {
         if (unresolvedSpecificationFindings.isEmpty()) {
             return report;

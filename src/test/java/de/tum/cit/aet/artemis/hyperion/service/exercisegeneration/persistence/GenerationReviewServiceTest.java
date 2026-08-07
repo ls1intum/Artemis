@@ -67,6 +67,20 @@ class GenerationReviewServiceTest {
     }
 
     @Test
+    void attachFindings_conceptAdmissionFindingRendersAsHighSeverityNamingTheConceptReview() {
+        SpecFidelityReport report = report(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING);
+        when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user))).thenReturn(List.of(thread()));
+
+        int created = reviewService.attachFindings(exercise, user, report);
+
+        assertThat(created).isOne();
+        assertThat(GenerationReviewService.toReviewFindings(report)).singleElement().satisfies(finding -> {
+            assertThat(finding.severity()).isEqualTo(Severity.HIGH);
+            assertThat(finding.description()).contains("concept review admitted no candidate", "required behavior");
+        });
+    }
+
+    @Test
     void attachFindings_mapsAdvisoryFindingAsMediumSeverity() {
         SpecFidelityReport report = report(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE);
         when(exerciseReviewService.createConsistencyCheckThreads(eq(42L), any(), eq(user))).thenReturn(List.of(thread()));

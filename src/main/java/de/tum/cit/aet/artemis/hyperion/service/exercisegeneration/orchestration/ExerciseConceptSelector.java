@@ -132,9 +132,12 @@ public class ExerciseConceptSelector {
         int turns = 0;
         String feedback = initialFeedback == null ? "" : initialFeedback.strip();
         StringBuilder audit = new StringBuilder();
+        // The best-scoring rejected candidate seen so far, across every batch this call explores. Rejection is not monotonic across batches — a replacement batch generated from
+        // review feedback can be worse than the one it replaced — so the caller is offered the best, not the most recent.
+        ConceptFallback fallback = null;
         for (int attempt = 1; attempt <= MAX_BATCHES; attempt++) {
             if (cancelled.getAsBoolean()) {
-                return new ConceptSelection(false, null, null, turns, transcript, "Concept discovery was cancelled.", audit.toString());
+                return new ConceptSelection(false, null, null, turns, transcript, "Concept discovery was cancelled.", audit.toString(), fallback);
             }
             emit(progress, attempt == 1 ? "Exploring exercise concepts" : "Exploring new concepts after learning-fit review");
             String prompt = CANDIDATE_PROMPT + brief.strip();
@@ -146,13 +149,13 @@ public class ExerciseConceptSelector {
             AgentLoopResult result = session.result();
             turns += result.turns();
             if (result.status() != AgentLoopResult.Status.COMPLETED) {
-                return new ConceptSelection(false, null, null, turns, transcript, "Concept generation did not complete.", audit.toString());
+                return new ConceptSelection(false, null, null, turns, transcript, "Concept generation did not complete.", audit.toString(), fallback);
             }
             Map<Integer, String> candidates = parseCandidates(result.finalMessage());
             if (candidates.size() != 3) {
                 feedback = "The batch did not contain exactly three complete candidates under the required headings.";
                 if (attempt == MAX_BATCHES) {
-                    return new ConceptSelection(false, null, null, turns, transcript, feedback, audit.toString());
+                    return new ConceptSelection(false, null, null, turns, transcript, feedback, audit.toString(), fallback);
                 }
                 continue;
             }
@@ -165,16 +168,36 @@ public class ExerciseConceptSelector {
                 audit.append("# Batch ").append(attempt).append("\n\n").append(review.auditSummary());
             }
             if (!review.complete()) {
-                return new ConceptSelection(false, null, null, turns, transcript, "Concept review was unavailable.", audit.toString());
+                return new ConceptSelection(false, null, null, turns, transcript, "Concept review was unavailable.", audit.toString(), fallback);
             }
             if (review.accepted()) {
                 String summary = progressSummary(review.feedback());
                 emit(progress, "Selected concept " + review.selectedCandidate() + " after learning-fit review" + (summary.isBlank() ? "" : ": " + summary));
                 return new ConceptSelection(true, review.selectedCandidate(), candidates.get(review.selectedCandidate()), turns, transcript, review.feedback(), audit.toString());
             }
+            fallback = better(fallback, review, candidates);
             feedback = attempt == MAX_BATCHES ? review.feedback() : REPLACEMENT_FEEDBACK + "\n" + review.decisionSummary();
         }
-        return new ConceptSelection(true, null, null, turns, transcript, feedback, audit.toString());
+        return new ConceptSelection(true, null, null, turns, transcript, feedback, audit.toString(), fallback);
+    }
+
+    /**
+     * Keeps the better of the incumbent fallback and this batch's least-rejected candidate: fewer failed required axes wins, and an incumbent is kept on a tie so the earliest
+     * batch is preferred. Every objection this review raised travels with the candidate, whichever way the comparison goes.
+     */
+    private static @Nullable ConceptFallback better(@Nullable ConceptFallback incumbent, SpecFidelityCriticService.ConceptSelectionReview review, Map<Integer, String> candidates) {
+        SpecFidelityCriticService.ConceptFallback reviewed = review.fallback();
+        if (reviewed == null) {
+            return incumbent;
+        }
+        String concept = candidates.get(reviewed.candidate());
+        if (concept == null || concept.isBlank()) {
+            return incumbent;
+        }
+        if (incumbent != null && incumbent.failedRequiredAxes() <= reviewed.failedRequiredAxes()) {
+            return incumbent;
+        }
+        return new ConceptFallback(concept, reviewed.candidate(), reviewed.failedRequiredAxes(), review.findings());
     }
 
     private static Map<Integer, String> parseCandidates(String response) {
@@ -205,15 +228,38 @@ public class ExerciseConceptSelector {
         return safe.length() <= 180 ? safe : safe.substring(0, 177) + "...";
     }
 
+    /**
+     * The best concept a completed review rejected, together with the findings that rejected it.
+     * <p>
+     * Offered so a caller facing "no candidate was admissible" can proceed with a draft plus its objections instead of producing no artifacts at all. It carries no verdict:
+     * {@link ConceptSelection#accepted()} stays false, and {@code findings} is exactly what the reviewers wrote, so nothing is loosened and nothing is hidden.
+     *
+     * @param concept            the candidate text, verbatim
+     * @param candidate          the reviewer's candidate number
+     * @param failedRequiredAxes how many required selection axes it failed; used only to pick between candidates, never to admit one
+     * @param findings           every objection raised against it, from the broad selection review and the focused admission audit alike
+     */
+    public record ConceptFallback(String concept, int candidate, int failedRequiredAxes, List<String> findings) {
+
+        public ConceptFallback {
+            findings = List.copyOf(findings);
+        }
+    }
+
     public record ConceptSelection(boolean complete, @Nullable Integer selectedCandidate, @Nullable String selectedConcept, int turns, List<Message> transcript, String feedback,
-            String auditSummary) {
+            String auditSummary, @Nullable ConceptFallback fallback) {
 
         public ConceptSelection {
             transcript = List.copyOf(transcript);
         }
 
+        public ConceptSelection(boolean complete, @Nullable Integer selectedCandidate, @Nullable String selectedConcept, int turns, List<Message> transcript, String feedback,
+                String auditSummary) {
+            this(complete, selectedCandidate, selectedConcept, turns, transcript, feedback, auditSummary, null);
+        }
+
         public ConceptSelection(boolean complete, @Nullable Integer selectedCandidate, @Nullable String selectedConcept, int turns, List<Message> transcript, String feedback) {
-            this(complete, selectedCandidate, selectedConcept, turns, transcript, feedback, "");
+            this(complete, selectedCandidate, selectedConcept, turns, transcript, feedback, "", null);
         }
 
         public boolean accepted() {

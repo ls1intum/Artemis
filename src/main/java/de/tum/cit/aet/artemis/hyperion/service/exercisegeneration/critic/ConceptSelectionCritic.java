@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +156,28 @@ class ConceptSelectionCritic {
         }
         List<String> findings = evaluations.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(entry -> "Candidate " + entry.getKey() + ": " + conceptFailureSummary(entry.getValue())).toList();
-        return new ConceptSelectionReview(true, null, findings, failedConceptAxes(evaluations.values()), conceptReviewAudit(response, evaluations));
+        return new ConceptSelectionReview(true, null, findings, failedConceptAxes(evaluations.values()), conceptReviewAudit(response, evaluations),
+                leastRejectedCandidate(evaluations));
+    }
+
+    /**
+     * Names the candidate this completed review rejected least, so a caller may proceed with findings attached instead of producing nothing.
+     * <p>
+     * The order is total and deterministic: fewest failed required axes wins, ties broken by the lower candidate number. Both inputs are judgments the reviewer already
+     * returned for every candidate — this introduces no new scoring model and no second opinion. The verdict itself is untouched: this candidate was still rejected, and every
+     * finding travels with it.
+     */
+    private static SpecFidelityCriticService.ConceptFallback leastRejectedCandidate(Map<Integer, ConceptCandidateReviewItem> evaluations) {
+        return evaluations.entrySet().stream().map(entry -> new SpecFidelityCriticService.ConceptFallback(entry.getKey(), failedRequiredAxes(entry.getValue())))
+                .min(Comparator.comparingInt(SpecFidelityCriticService.ConceptFallback::failedRequiredAxes).thenComparingInt(SpecFidelityCriticService.ConceptFallback::candidate))
+                .orElseThrow();
+    }
+
+    /** Counts the {@link #conceptPasses} axes this candidate failed. Kept in lockstep with that method: every axis it requires is counted here exactly once. */
+    private static int failedRequiredAxes(ConceptCandidateReviewItem item) {
+        return (item.briefCovered() ? 0 : 1) + (item.objectiveEssential() ? 0 : 1) + (item.learningFitSufficient() ? 0 : 1) + (item.learnerOwnsObjectiveMechanism() ? 0 : 1)
+                + (item.objectiveObservable() ? 0 : 1) + (item.prematureContractClosure() ? 1 : 0) + (item.difficultySufficient() ? 0 : 1) + (item.domainGrounded() ? 0 : 1)
+                + (item.feasibleAndProportionate() ? 0 : 1);
     }
 
     private static ConceptSelectionReview incompleteConceptReview(String detail) {

@@ -46,6 +46,9 @@ class ConceptAdmissionCriticTest {
         assertThat(result.accepted()).isFalse();
         assertThat(result.findings()).singleElement().asString().contains("thresholds", "switch or ternary", "minus-ten boundary");
         assertThat(result.auditSummary()).contains("Selected-concept admission", "Decision: rejected");
+        // The candidate this audit rejected is also the one the broad selector had already passed on every required axis, which makes it the best-evidenced starting point in
+        // the whole exploration — zero failed selection axes, one narrower objection. Naming it admits nothing: accepted() is still false and the finding still travels.
+        assertThat(result.fallback()).isEqualTo(new SpecFidelityCriticService.ConceptFallback(1, 0));
     }
 
     @Test

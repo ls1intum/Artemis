@@ -80,7 +80,7 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
             // A technique mandate blocks autonomous publication but has no repair surface: no assertion distinguishes a recursive implementation from an iterative one with the
             // same results. Leaving it unscheduled saves the verified candidate for an instructor decision instead of burning rounds on source inspection or proxy metrics.
             case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, EXECUTABLE_EVIDENCE_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE,
-                    UNENFORCEABLE_TECHNIQUE_RULE, SPECIFICATION_REVIEW_FINDING, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
+                    UNENFORCEABLE_TECHNIQUE_RULE, SPECIFICATION_REVIEW_FINDING, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE, CONCEPT_ADMISSION_FINDING ->
                 null;
         };
     }

@@ -271,6 +271,65 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void unresolvedConceptFindingsBecomeBlockingConceptAdmissionFindingEntries() {
+        String conceptFinding = "The concept review admitted no candidate. This exercise was built from candidate 2, which the review rejected least.";
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of(conceptFinding)));
+
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
+        loop.run();
+
+        assertThat(loop.specFidelityReport().findings()).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING);
+            assertThat(finding.requirement()).isEqualTo(conceptFinding);
+        });
+    }
+
+    @Test
+    void aConceptTheReviewAdmittedWithFindingsDoesNotEndTheRunAsNoAdmissibleConcept() {
+        // NO_ADMISSIBLE_CONCEPT means no candidate was usable at all; this run proceeded with one, so it must be told apart from that dead end.
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
+
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.NO_ADMISSIBLE_CONCEPT);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS);
+    }
+
+    @Test
+    void anUnadmittedConceptCannotAuthorizeValidatedWitnessAdoption() {
+        // Mirrors anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption: a contested concept must gate autonomous witness adoption exactly like a contested
+        // specification, because adopting an execution-proven counterexample would deepen a design choice the reviewer objected to.
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
+                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
+        sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
+                .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
+        ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Cycle.java", "class Cycle {}", "class Cycle { int stopsEarly; }", witness);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The first full-artifact review did not complete."), SpecFidelityReport.empty());
+
+        GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 3, 2, true);
+        loop.run();
+
+        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(baseTools, never()).enterRepairScope(any());
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL
+                && finding.detail().contains(witness.testName()) && !finding.isBlocking());
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS);
+    }
+
+    @Test
     void anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption() {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));

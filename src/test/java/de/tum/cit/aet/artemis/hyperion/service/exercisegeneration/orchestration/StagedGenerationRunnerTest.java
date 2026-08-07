@@ -474,6 +474,101 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void aRejectedConceptWithAFallbackIsBuiltAnywayInsteadOfProducingNothing() {
+        // The gate's judgment is untouched — no candidate was admitted — but a completed rejection is a design objection, not a crash, and an instructor who submitted an open
+        // brief is better served by a draft plus the objections than by four minutes of spend and no artifacts at all.
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
+                rejectingSelectorWithFallback(), "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(3, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY, true, true, null);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(outcome.terminationReason()).isNull();
+        assertThat(approvedSpecs.approved("s")).isPresent();
+        verify(baseTools).enterStage(GenerationStage.TESTS);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void everyObjectionRaisedAgainstTheFallbackConceptSurvivesAsAnInstructorNote() {
+        // Both reviewer voices must reach the instructor verbatim: the broad selector's per-candidate comparison and the focused admission audit. A note that summarizes them
+        // away is exactly where a working gate's judgment gets lost.
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
+                rejectingSelectorWithFallback(), "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(3, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY, true, true, null);
+
+        assertThat(outcome.unresolvedConceptFindings()).hasSize(3);
+        assertThat(outcome.unresolvedConceptFindings().getFirst()).contains("admitted no candidate", "candidate 2", "rejected least");
+        assertThat(outcome.unresolvedConceptFindings()).contains("Candidate 2: difficulty — only one numeric method")
+                .contains("Selected concept failed focused admission: introduces a fixed capacity limit the brief does not require");
+        // The concept objection is not a specification objection; conflating the two would mislabel the note the instructor has to act on.
+        assertThat(outcome.unresolvedSpecificationFindings()).isEmpty();
+    }
+
+    @Test
+    void objectionsAgainstTheFallbackConceptSurviveAStageFailureLaterInTheRun() {
+        // Every exit of the stage machine has to carry them, not just the clean one: a run that proceeded on a contested concept and then died at a gate must still be able to
+        // tell the instructor which design it was building and what the reviewer said about it.
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
+                rejectingSelectorWithFallback(), "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"),
+                new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "the provider failed"));
+
+        StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
+                () -> SeededStructuralTests.EMPTY, true, true, null);
+
+        assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(outcome.unresolvedConceptFindings()).isNotEmpty();
+    }
+
+    @Test
+    void theFallbackConceptIsWhatTheSpecificationStageIsAskedToInstantiate() {
+        SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
+                rejectingSelectorWithFallback(), "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(3, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+
+        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, true, null);
+
+        ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner, times(3)).run(anyString(), prompt.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompt.getAllValues().getFirst()).contains("a bounded stack over a fixed-size array");
+    }
+
+    /** A completed review that admitted nothing but named candidate 2 as the one it rejected least, carrying both reviewers' objections. */
+    private static ExerciseConceptSelector rejectingSelectorWithFallback() {
+        ExerciseConceptSelector conceptSelector = mock(ExerciseConceptSelector.class);
+        ExerciseConceptSelector.ConceptFallback fallback = new ExerciseConceptSelector.ConceptFallback(
+                "## Candidate 2\nCentral interaction: a bounded stack over a fixed-size array.", 2, 1, List.of("Candidate 2: difficulty — only one numeric method",
+                        "Selected concept failed focused admission: introduces a fixed capacity limit the brief does not require"));
+        when(conceptSelector.select(eq("brief"), any(), any(), any()))
+                .thenReturn(new ExerciseConceptSelector.ConceptSelection(true, null, null, 2, List.of(), "No candidate was admitted.", "", fallback));
+        return conceptSelector;
+    }
+
+    @Test
     void unavailableSpecificationReviewFailsOpenAndFreezesTheMechanicallyValidSpec() {
         // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must NOT discard a specification that already passed the
         // deterministic mechanical gate. The checked spec is frozen and generation proceeds; downstream objective gates and instructor review carry quality forward.

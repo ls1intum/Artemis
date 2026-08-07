@@ -127,6 +127,11 @@ class RepairRoundScheduler {
         if (!report.hasBlockingFindings()) {
             return TerminationReason.CONVERGED;
         }
+        // A contested concept outranks the other unschedulable blockers because it is upstream of them: the specification, the tests, and the statement all instantiate it, so
+        // "no repair surface" would name the symptom while hiding the cause the instructor actually has to rule on.
+        if (report.findings().stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING)) {
+            return TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS;
+        }
         return TerminationReason.NO_SCHEDULABLE_SURFACE;
     }
 

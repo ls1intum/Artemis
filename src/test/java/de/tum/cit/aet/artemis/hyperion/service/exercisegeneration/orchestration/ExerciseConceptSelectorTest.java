@@ -112,6 +112,98 @@ class ExerciseConceptSelectorTest {
     }
 
     @Test
+    void aCompletelyRejectedExplorationStillOffersTheCandidateItRejectedLeast() {
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()));
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(new SpecFidelityCriticService.ConceptSelectionReview(true, null,
+                List.of("Candidate 2: difficulty — one reconciliation step"), "", "", new SpecFidelityCriticService.ConceptFallback(2, 1)));
+
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+
+        // Nothing about the verdict softens: no concept was accepted. What is added is a usable starting point plus the exact objections raised against it, so the caller can
+        // choose between "produce a draft the reviewer argued with" and "produce nothing", instead of only ever having the second option.
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.fallback()).isNotNull();
+        assertThat(result.fallback().candidate()).isEqualTo(2);
+        assertThat(result.fallback().concept()).contains("## Candidate 2", "restoring fragmented radio transmissions").doesNotContain("## Candidate 1", "## Candidate 3");
+        assertThat(result.fallback().findings()).containsExactly("Candidate 2: difficulty — one reconciliation step");
+    }
+
+    @Test
+    void theLeastRejectedCandidateAcrossBothBatchesWins() {
+        // Rejection is not monotonic across batches: a replacement batch generated from review feedback can come back worse than the one it replaced. Offering the most recent
+        // batch's best would therefore discard a better draft the run already had in hand.
+        String replacementCandidates = THREE_CANDIDATES.replace("clock repair", "tide charts");
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any())).thenReturn(
+                new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()),
+                new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, replacementCandidates), List.of()));
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(
+                new SpecFidelityCriticService.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCriticService.ConceptFallback(2, 1)),
+                new SpecFidelityCriticService.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCriticService.ConceptFallback(1, 4)));
+
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.fallback().failedRequiredAxes()).isEqualTo(1);
+        assertThat(result.fallback().concept()).contains("restoring fragmented radio transmissions");
+        assertThat(result.fallback().findings()).containsExactly("batch one objection");
+    }
+
+    @Test
+    void aBetterSecondBatchReplacesTheFirstBatchesFallback() {
+        String replacementCandidates = THREE_CANDIDATES.replace("clock repair", "tide charts");
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any())).thenReturn(
+                new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()),
+                new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, replacementCandidates), List.of()));
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(
+                new SpecFidelityCriticService.ConceptSelectionReview(true, null, List.of("batch one objection"), "", "", new SpecFidelityCriticService.ConceptFallback(3, 5)),
+                new SpecFidelityCriticService.ConceptSelectionReview(true, null, List.of("batch two objection"), "", "", new SpecFidelityCriticService.ConceptFallback(1, 2)));
+
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+
+        assertThat(result.fallback().failedRequiredAxes()).isEqualTo(2);
+        assertThat(result.fallback().concept()).contains("tide charts");
+        assertThat(result.fallback().findings()).containsExactly("batch two objection");
+    }
+
+    @Test
+    void anIncompleteConceptReviewOffersNoFallbackBecauseNoCandidateWasEverJudged() {
+        // The distinction the caller depends on: a completed rejection is a design objection worth proceeding past, while a review that never returned a verdict has judged
+        // nothing and must not be dressed up as one.
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()));
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any())).thenReturn(new SpecFidelityCriticService.ConceptSelectionReview(false, null, List.of()));
+
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+
+        assertThat(result.complete()).isFalse();
+        assertThat(result.fallback()).isNull();
+    }
+
+    @Test
+    void anAcceptedConceptOffersNoFallbackBecauseThereIsNothingToFallBackFrom() {
+        AgentLoopRunner loop = mock(AgentLoopRunner.class);
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 1, THREE_CANDIDATES), List.of()));
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
+
+        ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
+
+        assertThat(result.accepted()).isTrue();
+        assertThat(result.fallback()).isNull();
+    }
+
+    @Test
     void malformedFinalBatchIsNotReportedAsACompletedRejection() {
         AgentLoopRunner loop = mock(AgentLoopRunner.class);
         SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);

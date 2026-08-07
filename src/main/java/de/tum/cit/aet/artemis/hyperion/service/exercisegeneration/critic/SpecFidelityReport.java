@@ -89,7 +89,13 @@ public record SpecFidelityReport(List<Finding> findings) {
         /** The automated full-artifact quality review could not produce a complete verdict. */
         QUALITY_REVIEW_UNAVAILABLE,
         /** A complete pre-freeze specification review still rejected the compiled contract after its bounded refinement budget. */
-        SPECIFICATION_REVIEW_FINDING
+        SPECIFICATION_REVIEW_FINDING,
+        /**
+         * A complete concept review admitted no candidate, and the run proceeded with the least-rejected one rather than producing nothing. Blocking and deliberately not
+         * auto-repairable: the objection is to the exercise's central design choice, which no scoped repair of tests, scaffold, or statement can settle. Only the instructor can
+         * accept the design, redirect it, or discard the draft — but they get to make that call against a real draft instead of an empty failure.
+         */
+        CONCEPT_ADMISSION_FINDING
     }
 
     /**
@@ -107,7 +113,7 @@ public record SpecFidelityReport(List<Finding> findings) {
                         CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, EXECUTABLE_EVIDENCE_UNAVAILABLE,
                         QUALITY_REVIEW_UNAVAILABLE ->
                     true;
-                case SPECIFICATION_REVIEW_FINDING -> true;
+                case SPECIFICATION_REVIEW_FINDING, CONCEPT_ADMISSION_FINDING -> true;
                 case INVENTED_REQUIREMENT -> true;
                 case UNENFORCEABLE_TECHNIQUE_RULE -> true;
                 case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE,

@@ -203,6 +203,13 @@ class GenerationAttemptLoop {
 
     private List<String> unresolvedSpecificationFindings = List.of();
 
+    /**
+     * Objections the concept review raised against the concept this run proceeded with anyway. Kept apart from {@link #unresolvedSpecificationFindings} because the two say
+     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea — while gating identically: neither one may authorize
+     * autonomously strengthening the graded suite.
+     */
+    private List<String> unresolvedConceptFindings = List.of();
+
     private List<SemanticMutant> semanticMutantsAwaitingKill = List.of();
 
     private List<SemanticMutant> semanticMutantsPendingRepair = List.of();
@@ -350,7 +357,7 @@ class GenerationAttemptLoop {
             // but a failed or unapproved specification cannot authorize new grading.
             boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(specFidelityReport).isPresent();
             boolean adoptWitnesses = verification.mechanicallyVerified() && !hasSchedulableRepair && !RepairRoundScheduler.hasInstrumentUnavailableFinding(specFidelityReport)
-                    && unresolvedSpecificationFindings.isEmpty() && attempt < maxGenerationAttempts && mode == GenerationMode.GENERATE
+                    && designAuthorityApproved() && attempt < maxGenerationAttempts && mode == GenerationMode.GENERATE
                     && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                 terminationReason = TerminationReason.CONVERGED;
@@ -409,6 +416,7 @@ class GenerationAttemptLoop {
             stagedTerminationReason = stagedOutcome.terminationReason();
             carriedConversation = stagedOutcome.conversation();
             unresolvedSpecificationFindings = stagedOutcome.unresolvedSpecificationFindings();
+            unresolvedConceptFindings = stagedOutcome.unresolvedConceptFindings();
         }
         else {
             SemanticRepairBatch repairBatchForAttempt = pendingSemanticRepair;
@@ -601,7 +609,7 @@ class GenerationAttemptLoop {
         SpecFidelityReport previousReview = candidateBeforeCurrentRepair == null ? specFidelityReport : candidateBeforeCurrentRepair.reviewReport();
         specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), adaptationChanges, repairDelta, previousReview,
                 GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-        specFidelityReport = GenerationReviewSupport.preserveSpecificationReviewState(specFidelityReport, unresolvedSpecificationFindings);
+        specFidelityReport = preserveDesignAuthorityState(specFidelityReport);
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
         if (candidateBeforeCurrentRepair != null && !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)
@@ -619,6 +627,22 @@ class GenerationAttemptLoop {
             return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
         return null;
+    }
+
+    /**
+     * Whether both design authorities this run depends on — the concept it builds and the contract it froze — came through their reviews unopposed.
+     * <p>
+     * Gates every autonomous strengthening of the graded suite. A contested concept counts the same as a contested specification: adopting an execution-proven counterexample
+     * would deepen a design choice the reviewer objected to, which is the opposite of what the instructor is being asked to decide.
+     */
+    private boolean designAuthorityApproved() {
+        return unresolvedSpecificationFindings.isEmpty() && unresolvedConceptFindings.isEmpty();
+    }
+
+    /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */
+    private SpecFidelityReport preserveDesignAuthorityState(SpecFidelityReport report) {
+        return GenerationReviewSupport.preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings),
+                unresolvedConceptFindings);
     }
 
     /**
@@ -681,7 +705,7 @@ class GenerationAttemptLoop {
                 // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
                 specFidelityReport = runSpecFidelityCritic(producedProblemStatement, exercise.getProgrammingLanguage(), retryAdaptationChanges, null, null,
                         GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-                specFidelityReport = preserveExecutableEvidenceState(GenerationReviewSupport.preserveSpecificationReviewState(specFidelityReport, unresolvedSpecificationFindings));
+                specFidelityReport = preserveExecutableEvidenceState(preserveDesignAuthorityState(specFidelityReport));
                 promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
                 repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
@@ -767,7 +791,7 @@ class GenerationAttemptLoop {
                     .map(SemanticMutantOutcome::mutant).distinct().toList();
             List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)
                     .map(SemanticMutantOutcome::mutant).toList();
-            boolean specificationApproved = unresolvedSpecificationFindings.isEmpty();
+            boolean specificationApproved = designAuthorityApproved();
             semanticMutantsPendingRepair = specificationApproved ? validatedMutants : List.of();
             // Preserve inconclusive rechecks as historical unavailable evidence; never upgrade them to current survivors while specification approval is pending.
             semanticMutantsAwaitingRecheck = inconclusivePendingMutants;

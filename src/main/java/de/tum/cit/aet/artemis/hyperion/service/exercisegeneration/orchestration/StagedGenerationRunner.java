@@ -240,18 +240,37 @@ public class StagedGenerationRunner {
      * continue the same logical conversation instead of starting each repair blind.
      */
     public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings,
-            @Nullable TerminationReason terminationReason) {
+            @Nullable TerminationReason terminationReason, List<String> unresolvedConceptFindings) {
 
         public StagedRunOutcome {
             unresolvedSpecificationFindings = List.copyOf(unresolvedSpecificationFindings);
+            unresolvedConceptFindings = List.copyOf(unresolvedConceptFindings);
+        }
+
+        public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings,
+                @Nullable TerminationReason terminationReason) {
+            this(result, conversation, unresolvedSpecificationFindings, terminationReason, List.of());
         }
 
         public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation) {
-            this(result, conversation, List.of(), null);
+            this(result, conversation, List.of(), null, List.of());
         }
 
         public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
-            this(result, conversation, unresolvedSpecificationFindings, null);
+            this(result, conversation, unresolvedSpecificationFindings, null, List.of());
+        }
+
+        /**
+         * This outcome with the objections raised against the concept it was built from.
+         *
+         * @param conceptFindings the reviewer's unresolved concept findings; an empty list leaves the outcome unchanged
+         * @return a copy carrying the findings, or {@code this} when there is nothing to add
+         */
+        StagedRunOutcome withConceptFindings(List<String> conceptFindings) {
+            if (conceptFindings.isEmpty()) {
+                return this;
+            }
+            return new StagedRunOutcome(result, conversation, unresolvedSpecificationFindings, terminationReason, conceptFindings);
         }
     }
 
@@ -304,6 +323,18 @@ public class StagedGenerationRunner {
     public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink) {
+        // The accumulator is owned here rather than threaded through every exit of the stage machine below: a concept the run proceeded with despite reviewer objections must
+        // carry those objections out of every exit — gate failure, wall clock, cancellation, or a clean finish — and one merge point cannot forget one of them.
+        List<String> conceptFindings = new ArrayList<>();
+        StagedRunOutcome outcome = runStages(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress,
+                structuralSeedHook, specStageApplies, conceptSelectionApplies, specSink, conceptFindings);
+        return conceptFindings.isEmpty() ? outcome : outcome.withConceptFindings(conceptFindings);
+    }
+
+    private StagedRunOutcome runStages(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief,
+            Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
+            @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
+            @Nullable Consumer<String> specSink, List<String> conceptFindings) {
         Instant startedAt = clock.get();
         boolean continuous = stagedContext == StagedContext.CONTINUOUS;
         int remainingPool = POOL_HARD_CAP;
@@ -345,10 +376,20 @@ public class StagedGenerationRunner {
                         + "has a coherent, sufficiently deep learning design.");
             }
             else if (!selection.accepted()) {
-                String failure = "No exercise concept passed the brief and learning-fit review. No specification or repository artifacts were produced."
-                        + (selection.feedback().isBlank() ? "" : "\n" + selection.feedback());
-                emit(progress, failure);
-                return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, failure, archivedConversation, conversation, List.of(), TerminationReason.NO_ADMISSIBLE_CONCEPT);
+                ExerciseConceptSelector.ConceptFallback fallback = selection.fallback();
+                if (fallback == null) {
+                    String failure = "No exercise concept passed the brief and learning-fit review, and the review named no candidate to fall back to. No specification or "
+                            + "repository artifacts were produced." + (selection.feedback().isBlank() ? "" : "\n" + selection.feedback());
+                    emit(progress, failure);
+                    return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, failure, archivedConversation, conversation, List.of(),
+                            TerminationReason.NO_ADMISSIBLE_CONCEPT);
+                }
+                selectedConcept = fallback.concept();
+                conceptFindings.addAll(conceptAdmissionNotes(fallback));
+                emit(progress, "No exercise concept was admitted outright. Continuing with candidate " + fallback.candidate()
+                        + ", the one the review rejected least, and attaching every objection for instructor review.");
+                log.info("Exercise {}: no concept was admitted; proceeding with candidate {} ({} failed selection axes) and {} finding(s) attached", exercise.getId(),
+                        fallback.candidate(), fallback.failedRequiredAxes(), conceptFindings.size());
             }
             else {
                 selectedConcept = selection.selectedConcept();
@@ -573,14 +614,29 @@ public class StagedGenerationRunner {
                                         if (cancelled.getAsBoolean()) {
                                             return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, replacement.feedback(), archivedConversation, conversation);
                                         }
-                                        if (!replacement.accepted()) {
-                                            String failure = replacement.complete() ? "No replacement exercise concept passed the learning-fit review."
+                                        ExerciseConceptSelector.ConceptFallback replacementFallback = replacement.fallback();
+                                        if (!replacement.accepted() && replacementFallback == null) {
+                                            String failure = replacement.complete()
+                                                    ? "No replacement exercise concept passed the learning-fit review, and the review named no candidate to fall back to."
                                                     : "Replacement concept discovery did not produce a reviewable decision.";
                                             return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns,
                                                     appendGateReport(lastFinalMessage, failure + "\n" + replacement.feedback()), archivedConversation, conversation, List.of(),
                                                     replacement.complete() ? TerminationReason.NO_ADMISSIBLE_CONCEPT : null);
                                         }
-                                        selectedConcept = replacement.selectedConcept();
+                                        if (replacement.accepted()) {
+                                            selectedConcept = replacement.selectedConcept();
+                                            // The rejected concept's objections described a design this run no longer builds, so carrying them would mislead the instructor.
+                                            conceptFindings.clear();
+                                        }
+                                        else {
+                                            selectedConcept = replacementFallback.concept();
+                                            conceptFindings.clear();
+                                            conceptFindings.addAll(conceptAdmissionNotes(replacementFallback));
+                                            emit(progress, "No replacement concept was admitted outright. Continuing with candidate " + replacementFallback.candidate()
+                                                    + ", the one the review rejected least, and attaching every objection for instructor review.");
+                                            log.info("Exercise {}: no replacement concept was admitted; proceeding with candidate {} ({} failed selection axes)", exercise.getId(),
+                                                    replacementFallback.candidate(), replacementFallback.failedRequiredAxes());
+                                        }
                                     }
                                     previousRejectedLearningFitDirection = null;
                                     // The concept is being replaced, so every specification measured so far described a concept the reviewer rejected.
@@ -684,6 +740,21 @@ public class StagedGenerationRunner {
         return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings);
     }
 
+    /**
+     * Renders one instructor-facing note per objection the concept review raised, led by a note naming the candidate the run actually proceeded with.
+     * <p>
+     * Findings are carried verbatim so the broad selection review and the focused admission audit stay distinguishable in the instructor's own reading — the selector writes
+     * {@code "Candidate N: ..."} for every candidate it compared, the admission audit writes {@code "Selected concept failed focused admission: ..."} — and so a reviewer can
+     * still see the objections raised against candidates this run did not build. Nothing is summarized away, because a summary is exactly where a gate's judgment gets lost.
+     */
+    private static List<String> conceptAdmissionNotes(ExerciseConceptSelector.ConceptFallback fallback) {
+        List<String> notes = new ArrayList<>();
+        notes.add("The concept review admitted no candidate. This exercise was built from candidate " + fallback.candidate()
+                + ", which the review rejected least, so the design below is a draft the review objected to rather than one it approved.");
+        fallback.findings().stream().filter(finding -> !finding.isBlank()).map(String::strip).forEach(notes::add);
+        return List.copyOf(notes);
+    }
+
     private static List<String> unresolvedInconclusiveReviewFindings(SpecFidelityCriticService.SpecificationReview review) {
         if (review.riskHistory().isEmpty()) {
             return List.of("The automated specification quality review was inconclusive, so the mechanically checked contract requires instructor review.");
@@ -763,17 +834,24 @@ public class StagedGenerationRunner {
 
     private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
             @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
-        return finish(exercise, status, totalTurns, finalMessage, archivedConversation, conversation, unresolvedSpecificationFindings, null);
+        return finish(exercise, status, totalTurns, finalMessage, archivedConversation, conversation, unresolvedSpecificationFindings, null, List.of());
     }
 
     private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
             @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings, @Nullable TerminationReason terminationReason) {
+        return finish(exercise, status, totalTurns, finalMessage, archivedConversation, conversation, unresolvedSpecificationFindings, terminationReason, List.of());
+    }
+
+    private StagedRunOutcome finish(ProgrammingExercise exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
+            @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings, @Nullable TerminationReason terminationReason,
+            List<String> unresolvedConceptFindings) {
         List<Message> transcriptConversation = new ArrayList<>(archivedConversation);
         if (conversation != null) {
             transcriptConversation.addAll(conversation);
         }
         transcriptWriter.write(exercise.getId(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), transcriptConversation);
-        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation, unresolvedSpecificationFindings, terminationReason);
+        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation, unresolvedSpecificationFindings, terminationReason,
+                unresolvedConceptFindings);
     }
 
     /** A gate that reused the tools' cached check instead of re-running it says so, to keep the transcript honest about why it was instant. */
