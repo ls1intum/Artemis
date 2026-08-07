@@ -97,7 +97,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "artemis_instance_websocket_users",
+                    "expr": "max(artemis_global_websocket_users)",
                     "instant": true,
                     "range": false,
                     "refId": "A"

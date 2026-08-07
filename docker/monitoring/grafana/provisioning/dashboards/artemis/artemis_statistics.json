@@ -83,7 +83,7 @@
                         "type": "prometheus",
                         "uid": "prometheus_default"
                     },
-                    "expr": "sum(artemis_instance_websocket_users)",
+                    "expr": "max(artemis_global_websocket_users)",
                     "instant": false,
                     "interval": "",
                     "legendFormat": "",
@@ -92,7 +92,7 @@
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Artemis User - Sum",
+            "title": "Connected Users (all instances)",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -179,7 +179,7 @@
                         "type": "prometheus",
                         "uid": "prometheus_default"
                     },
-                    "expr": "artemis_instance_websocket_users",
+                    "expr": "artemis_instance_websocket_sessions",
                     "instant": false,
                     "interval": "",
                     "legendFormat": "{{instance_name}}",
@@ -188,7 +188,7 @@
             ],
             "thresholds": [],
             "timeRegions": [],
-            "title": "Artemis User",
+            "title": "Websocket Sessions per Instance",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
