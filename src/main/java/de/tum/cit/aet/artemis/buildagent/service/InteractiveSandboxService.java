@@ -47,13 +47,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
- * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container an exercise-Hyperion sandbox drives through many cheap operations.
+ * Build-agent-side {@link InteractiveSandbox}: a warm, resource-limited Docker container driven through many cheap operations.
  * <p>
- * Reuses the build-agent Docker client and {@link BuildAgentConfiguration#hostConfig()} so isolation matches a CI build container (same CPU/memory/PID limits; runs untrusted
- * code but holds no credentials or database access), and adds {@code no-new-privileges}, dropped Linux capabilities, and a bounded workspace. A session spec may further
- * restrict Docker networking; Hyperion generation uses {@code network=none} by default so generated code cannot reach the network.
- * Unlike the regular build path it captures and returns each command's stdout/stderr as agent observations. Containers carry the {@value #SANDBOX_CONTAINER_PREFIX} prefix so
- * {@link InteractiveSandboxReaperService} never reaps a live session as if it were a CI build container.
+ * Reuses the build-agent Docker client and {@link BuildAgentConfiguration#hostConfig()} so isolation matches a CI build container (same CPU/memory/PID limits), then applies the
+ * hardening delta documented on {@code hardenedHostConfig}. Unlike the regular build path it captures and returns each command's stdout/stderr to the caller.
  */
 @Lazy
 @Service
@@ -65,7 +62,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     /** Name prefix for sandbox containers, distinct from the CI {@code local-ci-} prefix so each reaper matches only its own containers. */
     public static final String SANDBOX_CONTAINER_PREFIX = "hyperion-gen-";
 
-    @Value("${artemis.continuous-integration.build-agent.short-name:build-agent}")
+    // No default on purpose: a fallback here could only ever disagree with the name the rest of the build agent advertises.
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
     private static final String WORKING_DIRECTORY = "/workspace";
@@ -85,9 +83,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     private static final Duration COPY_TIMEOUT = Duration.ofMinutes(2);
 
     /**
-     * Grace Docker gives PID 1 to exit on SIGTERM before escalating to SIGKILL while {@link #resetSession} restarts the container. With Docker's init as PID 1 the stop completes
-     * in well under a second, so this only bounds the cost if that signal path ever regresses (a PID 1 that ignores SIGTERM burns the whole grace, twice per verification pass).
-     * It is deliberately short because SIGKILL is safe here: every writable path is a tmpfs the reset discards anyway, and PID 1 holds no state worth flushing.
+     * Grace Docker gives PID 1 to exit on SIGTERM before escalating to SIGKILL while {@link #resetSession} restarts the container. Short because SIGKILL is safe here: every
+     * writable path is a tmpfs the reset discards anyway, and PID 1 holds no state worth flushing.
      */
     static final int SESSION_RESET_STOP_GRACE_SECONDS = 5;
 
@@ -97,10 +94,9 @@ public class InteractiveSandboxService implements InteractiveSandbox {
 
     /**
      * Wall-clock of the last operation driven against each live session, keyed by container id. {@link InteractiveSandboxReaperService} reads this to tell a long-but-healthy
-     * session apart from a genuine orphan: Docker labels are immutable once a container is created, so a daemon-side "last activity" stamp is impossible, and this in-JVM registry
-     * is the cheapest in-process equivalent. Every session on this agent is driven through this bean (directly when co-located, via {@link InteractiveSandboxRelayHandler}
-     * otherwise), so the registry sees all activity. A container absent from the map — e.g. one left behind by a previous agent process — has no known activity, and the reaper
-     * falls back to its creation time so genuine orphans are still collected.
+     * session apart from a genuine orphan. Docker labels are immutable once a container is created, so a daemon-side "last activity" stamp is impossible; every session on this
+     * agent is driven through this bean, so this in-JVM registry sees all activity. A container absent from the map (for instance one left behind by a previous agent process) has
+     * no known activity, and the reaper falls back to its creation time.
      */
     private final Map<String, SessionState> sessionStates = new ConcurrentHashMap<>();
 
@@ -191,7 +187,6 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    /** The wall-clock of the last recorded activity for the given container, or empty if this process never drove it (the reaper then falls back to creation time). */
     Optional<Instant> lastActivity(String containerId) {
         SessionState state = sessionStates.get(containerId);
         if (state == null) {
@@ -202,7 +197,6 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    /** Returns whether Docker still knows the session container. */
     boolean sessionExists(String containerId) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         try (final var inspectCommand = dockerClient.inspectContainerCmd(containerId)) {
@@ -214,7 +208,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
         }
     }
 
-    /** Drops the activity entry for a session that has been (or is about to be) removed, bounding the registry to sessions still alive on this agent. */
+    /** Bounds the registry to sessions still alive on this agent. */
     void forgetActivity(String containerId) {
         sessionStates.remove(containerId);
     }
@@ -247,8 +241,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     /**
-     * Removes every sandbox container owned by this build-agent identity. This reconciles leftovers before startup and closes sessions during shutdown, including containers whose
-     * CREATE response was lost before the relay recorded their id.
+     * Removes every sandbox container owned by this build-agent identity, including containers whose CREATE response was lost before the caller ever learned their id.
      *
      * @return the number of leftover containers removed
      */
@@ -326,17 +319,14 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     }
 
     /**
-     * The CI host config plus a build-safe hardening delta.
-     * <p>
-     * Starts from {@link BuildAgentConfiguration#hostConfig()} (fresh per call, safe to mutate) to inherit the CI CPU/memory/PID limits, then:
+     * The CI host config plus a build-safe hardening delta. Starts from {@link BuildAgentConfiguration#hostConfig()} (fresh per call, safe to mutate) to inherit the CI
+     * CPU/memory/PID limits, drops privileges and capabilities, and puts every writable path on a bounded tmpfs. Two settings are less obvious:
      * <ul>
-     * <li>disables auto-remove — the container is torn down explicitly by {@link #destroySession}; auto-remove would race that and could delete it under an in-flight exec;</li>
-     * <li>adds {@code no-new-privileges} so no exec inside the container can gain privileges via setuid binaries;</li>
-     * <li>drops all Linux capabilities; the Java toolchain does not require privileged kernel operations.</li>
-     * <li>makes the image filesystem read-only and puts every required writable path on a bounded tmpfs so a runaway build cannot exhaust the build-agent host disk;</li>
-     * <li>runs Docker's init (tini) as PID 1. The container command is a bare shell loop, and the kernel discards signals a PID 1 has no handler for, so a shell PID 1 would
-     * ignore the SIGTERM {@link #resetSession} sends and every reset would burn the full stop grace before Docker escalated to SIGKILL. Init forwards the signal to the shell,
-     * which exits immediately, and it reaps processes orphaned by exec'd builds that would otherwise accumulate against the container PID limit over a long session.</li>
+     * <li>auto-remove is disabled: the container is torn down explicitly by {@link #destroySession}, and auto-remove would race that and could delete it under an in-flight
+     * exec;</li>
+     * <li>Docker's init (tini) runs as PID 1. The container command is a bare shell loop, and the kernel discards signals a PID 1 has no handler for, so a shell PID 1 would
+     * ignore the SIGTERM {@link #resetSession} sends and every reset would burn the full stop grace before Docker escalated to SIGKILL. Init also reaps processes orphaned by
+     * exec'd builds that would otherwise accumulate against the container PID limit over a long session.</li>
      * </ul>
      */
     private HostConfig hardenedHostConfig(DockerClient dockerClient, String immutableImageId) {
@@ -422,10 +412,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 CountDownLatch latch = new CountDownLatch(1);
                 AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-                // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only after the command completed. The callback owns the HTTP stream to
-                // the
-                // daemon from the shared docker client pool; it must be closed on every exit path (especially the timeout branch, where onComplete never fires) or the connection
-                // leaks.
+                // withDetach(false) keeps the stream open until the command finishes, so onComplete fires only once it has. The callback owns an HTTP connection from the shared
+                // docker client pool that CI builds also draw on, so it must be closed on every exit path — especially the timeout branch, where onComplete never fires.
                 ResultCallback.Adapter<Frame> callback = dockerClient.execStartCmd(execId).withDetach(false).exec(new ResultCallback.Adapter<>() {
 
                     @Override
@@ -491,7 +479,6 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     return new SandboxExecResultDTO(exitCode, stdout.snapshot(), stderr.snapshot(), false);
                 }
                 finally {
-                    // Release the client-side stream/connection back to the shared pool on every path; failing to close would leak a connection also used by CI builds.
                     closeQuietly(callback);
                 }
             }
@@ -667,8 +654,8 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                 throw new LocalCIException("Interactive sandbox session " + sessionId + " is not active on this build agent");
             }
             // A restart is what makes the reset authoritative: stopping the container tears down its mount and PID namespaces, so the kernel discards every writable tmpfs and
-            // SIGKILLs every process the agent left behind, including ones that ignore SIGTERM. Clearing paths and killing processes from inside the container could not offer
-            // that guarantee, and a path missed there would silently feed a stale candidate into the pristine verification build.
+            // SIGKILLs every process left behind, including ones that ignore SIGTERM. Clearing paths from inside the container could not offer that guarantee, and a path missed
+            // there would silently feed a stale candidate into the pristine verification build.
             try (var restartCommand = buildAgentConfiguration.getDockerClient().restartContainerCmd(sessionId).withTimeout(SESSION_RESET_STOP_GRACE_SECONDS)) {
                 restartCommand.exec();
             }

@@ -14,11 +14,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
  * Holds the SPEC.md content that PASSED the specification gate, per sandbox session.
  * <p>
  * Every later gate derives from the specification — which types the template must omit, whether the statement needs a diagram — but SPEC.md lives in the workspace and the agent
- * may write it, so reading the live file at gate time lets the agent dissolve the contract it is being judged against by downgrading its own ownership decisions until the
- * artifacts it has pass.
- * <p>
- * This snapshot is therefore unreachable from the sandbox and is every downstream gate's sole authority, while the guarded file tools reject edits and restore it after an
- * out-of-band shell mutation. When implementation exposes a conflict, the executable artifacts are what must be restructured.
+ * may write it, so reading the live file at gate time would let the agent dissolve the contract it is judged against by downgrading its own ownership decisions until the
+ * artifacts it already has pass. This snapshot is unreachable from the sandbox and is every downstream gate's sole authority; when implementation exposes a conflict, the
+ * executable artifacts are what must be restructured.
  */
 @Lazy
 @Component
@@ -51,11 +49,6 @@ public class ApprovedSpecRegistry {
         return sessionId == null ? Optional.empty() : Optional.ofNullable(approvedBySession.get(sessionId));
     }
 
-    /**
-     * Drops a finished session's specification, so the registry never outlives the runs it describes.
-     *
-     * @param sessionId the sandbox session being destroyed
-     */
     public void forget(String sessionId) {
         if (sessionId != null) {
             approvedBySession.remove(sessionId);

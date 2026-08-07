@@ -1,5 +1,6 @@
 import { TumUiButtonComponent, TumUiButtonDirective, TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faCircleCheck, faCircleXmark, faRotateLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -12,9 +13,18 @@ import { ExerciseGenerationFileChange, HyperionFileChangeRepo, HyperionGeneratio
 
 const REPO_ORDER: HyperionFileChangeRepo[] = ['solution', 'template', 'tests', 'other'];
 
+/** One changed file with everything the template needs already resolved, so no binding calls a method. */
+interface RepoFileEntry {
+    key: string;
+    file: ExerciseGenerationFileChange;
+    displayPath: string;
+    accessibleLabel: string;
+    navigable: boolean;
+}
+
 interface RepoFileGroup {
     repo: HyperionFileChangeRepo;
-    files: ExerciseGenerationFileChange[];
+    files: RepoFileEntry[];
 }
 
 interface ActivityLiveStatus {
@@ -37,7 +47,6 @@ export type { HyperionGenerationCompletedEvent } from './hyperion-generation-act
 @Component({
     selector: 'jhi-hyperion-generation-activity',
     templateUrl: './hyperion-generation-activity.component.html',
-    styleUrl: './hyperion-generation-activity.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [HyperionGenerationActivityFacade],
     imports: [
@@ -55,6 +64,7 @@ export type { HyperionGenerationCompletedEvent } from './hyperion-generation-act
 export class HyperionGenerationActivityComponent {
     private readonly facade = inject(HyperionGenerationActivityFacade);
     private readonly translateService = inject(TranslateService);
+    private readonly liveAnnouncer = inject(LiveAnnouncer);
 
     readonly exerciseId = input<number | undefined>();
     readonly startAllowed = input(true);
@@ -90,6 +100,9 @@ export class HyperionGenerationActivityComponent {
     readonly reverted = this.facade.reverted;
     readonly revertPartialRepositories = this.facade.revertPartialRepositories;
 
+    /** The run's outcome, scanned once and shared by everything that reports on it. */
+    private readonly terminalEvent = computed(() => latestTerminalEvent(this.events()));
+
     readonly visible = computed(() => this.exerciseId() !== undefined);
     readonly idle = computed(() => this.jobId() === undefined && !this.statusLoading() && !this.statusLoadFailed() && !this.editorRefreshFailed() && !this.reverted());
     readonly titleLabelKey = computed(() => (this.mode() === 'ADAPT' ? 'artemisApp.hyperion.generationActivity.adaptationTitle' : 'artemisApp.hyperion.generationActivity.title'));
@@ -104,7 +117,7 @@ export class HyperionGenerationActivityComponent {
         if (!this.startAllowed() || this.running() || this.statusLoading()) {
             return false;
         }
-        const terminal = latestTerminalEvent(this.events());
+        const terminal = this.terminalEvent();
         return terminal?.type === 'ERROR' || terminal?.type === 'CANCELLED' || (terminal?.type === 'DONE' && terminal.completionStatus === 'PARTIAL');
     });
     readonly effectiveRevertMode = this.facade.effectiveRevertMode;
@@ -143,10 +156,16 @@ export class HyperionGenerationActivityComponent {
         return this.detailsExpanded() ? 'artemisApp.hyperion.generationActivity.hideDetails' : 'artemisApp.hyperion.generationActivity.showDetails';
     });
     readonly filesByRepo = computed<RepoFileGroup[]>(() => {
-        const files = this.fileChanges();
+        const entries = this.fileChanges().map<RepoFileEntry>((file) => ({
+            key: `${file.repo}:${file.path}`,
+            file,
+            displayPath: displayFileChangePath(file),
+            accessibleLabel: `${this.translateService.instant(`artemisApp.hyperion.generationActivity.repo.${file.repo}`)}: ${displayFileChangePath(file)}`,
+            navigable: this.canNavigateFileChange(file),
+        }));
         return REPO_ORDER.map((repo) => ({
             repo,
-            files: files.filter((file) => file.repo === repo).sort((first, second) => this.displayPath(first).localeCompare(this.displayPath(second))),
+            files: entries.filter((entry) => entry.file.repo === repo).sort((first, second) => first.displayPath.localeCompare(second.displayPath)),
         })).filter((group) => group.files.length > 0);
     });
     readonly liveStatus = computed<ActivityLiveStatus | undefined>(() => {
@@ -156,7 +175,7 @@ export class HyperionGenerationActivityComponent {
         if (this.editorRefreshFailed()) {
             return { labelKey: 'artemisApp.hyperion.generationActivity.editorRefreshFailed', busy: false };
         }
-        const terminal = latestTerminalEvent(this.events());
+        const terminal = this.terminalEvent();
         if (terminal) {
             return { labelKey: `artemisApp.hyperion.generationActivity.terminalStatus.${terminal.type}`, busy: false };
         }
@@ -169,7 +188,7 @@ export class HyperionGenerationActivityComponent {
         return undefined;
     });
     readonly terminalStatus = computed(() => {
-        const type = latestTerminalEvent(this.events())?.type;
+        const type = this.terminalEvent()?.type;
         if (type === 'CANCELLED') {
             return { labelKey: 'artemisApp.hyperion.generationActivity.terminalStatus.CANCELLED', severity: 'secondary' as const };
         }
@@ -178,12 +197,12 @@ export class HyperionGenerationActivityComponent {
         }
         return undefined;
     });
-    readonly terminalMessage = computed(() => latestTerminalEvent(this.events())?.message);
+    readonly terminalMessage = computed(() => this.terminalEvent()?.message);
     readonly persistenceState = computed(() => {
         if (this.running()) {
             return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.workingCopy', severity: 'warn' as const };
         }
-        const terminal = latestTerminalEvent(this.events());
+        const terminal = this.terminalEvent();
         if (terminal?.type === 'DONE') {
             if (terminal.completionStatus === 'PARTIAL') {
                 return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.partial', severity: 'danger' as const };
@@ -204,7 +223,7 @@ export class HyperionGenerationActivityComponent {
         return undefined;
     });
     readonly canNavigateFileChanges = computed(() => {
-        const terminalEvent = latestTerminalEvent(this.events());
+        const terminalEvent = this.terminalEvent();
         return terminalEvent?.type === 'DONE' && terminalEvent.liveExerciseChanged === true;
     });
     readonly reviewJobId = computed(() => (this.canNavigateFileChanges() ? this.jobId() : this.revertAvailable() ? this.revertJobId() : undefined));
@@ -212,12 +231,26 @@ export class HyperionGenerationActivityComponent {
         if (!this.reviewJobId()) {
             return [];
         }
-        const terminal = latestTerminalEvent(this.events());
+        const terminal = this.terminalEvent();
         const repositoryCommits = terminal?.savedRepositoryCommits;
         return [
             ...(terminal?.savedExerciseVersionId ? (['problem-statement'] as const) : []),
             ...(['solution', 'template', 'tests'] as const).filter((repository) => repositoryCommits?.[repository]),
         ];
+    });
+
+    /**
+     * The one sentence a screen reader should hear about this run. Resolved to a string rather than kept as an
+     * object so an unchanged status does not re-announce every time the facade polls.
+     */
+    private readonly liveStatusAnnouncement = computed(() => {
+        const status = this.liveStatus();
+        if (!status) {
+            return '';
+        }
+        const headline = status.message ?? this.translateService.instant(status.labelKey);
+        const persistence = status.busy ? undefined : this.persistenceState();
+        return persistence ? `${headline} — ${this.translateService.instant(persistence.labelKey)}` : headline;
     });
 
     protected readonly faSpinner = faSpinner;
@@ -228,9 +261,15 @@ export class HyperionGenerationActivityComponent {
     protected readonly faRotateLeft = faRotateLeft;
 
     constructor() {
+        this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: this.refreshingEditor });
+        // The status region is rendered inside an @if that only becomes true in the same change-detection pass that
+        // first fills it, so an in-template live region would miss the first status. The CDK announcer owns a region
+        // that is mounted for the lifetime of the app, which is the only way the first announcement survives.
         effect(() => {
-            this.facade.exerciseId.set(this.exerciseId());
-            this.facade.refreshingEditor.set(this.refreshingEditor());
+            const announcement = this.liveStatusAnnouncement();
+            if (announcement) {
+                void this.liveAnnouncer.announce(announcement, 'polite');
+            }
         });
         this.facade.generationReverted.pipe(takeUntilDestroyed()).subscribe((completedAt) => this.generationReverted.emit(completedAt));
         this.facade.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => this.generationCompleted.emit(event));
@@ -256,15 +295,6 @@ export class HyperionGenerationActivityComponent {
         this.facade.toggleDetails();
     }
 
-    protected displayPath(fileChange: ExerciseGenerationFileChange): string {
-        return displayFileChangePath(fileChange);
-    }
-
-    protected fileChangeAccessibleLabel(fileChange: ExerciseGenerationFileChange): string {
-        const repository = this.translateService.instant(`artemisApp.hyperion.generationActivity.repo.${fileChange.repo}`);
-        return `${repository}: ${this.displayPath(fileChange)}`;
-    }
-
     canNavigateFileChange(fileChange: ExerciseGenerationFileChange): boolean {
         return fileChange.action !== 'delete' && this.canNavigateFileChanges() && (fileChange.repo !== 'other' || fileChange.path === 'problem-statement.md');
     }
@@ -280,7 +310,7 @@ export class HyperionGenerationActivityComponent {
         if (!currentJobId || !this.reviewTargets().includes(target)) {
             return;
         }
-        const terminal = latestTerminalEvent(this.events());
+        const terminal = this.terminalEvent();
         if (target === 'problem-statement' && terminal?.savedExerciseVersionId) {
             this.reviewRequested.emit({ target, jobId: currentJobId, savedExerciseVersionId: terminal.savedExerciseVersionId });
             return;

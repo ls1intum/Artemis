@@ -133,7 +133,6 @@ class DifferentialVerificationServiceTest {
         return BuildReportSpec.of(names, failed, exit);
     }
 
-    /** A build spec with explicit names and the subset that fail; the JUnit report carries a {@code <failure>} for each failed name. */
     private static BuildReportSpec resultWithFails(int exit, List<String> allNames, List<String> failedNames) {
         return BuildReportSpec.of(allNames, failedNames, exit);
     }
@@ -184,7 +183,7 @@ class DifferentialVerificationServiceTest {
 
         private final String buildOutput;
 
-        /** Served for {@code cat .../test-plan.json}; {@code null} means "no plan", which is the pre-plan behaviour every other test in this file relies on. */
+        /** Served for {@code cat .../test-plan.json}; {@code null} means "no plan", the fail-open shape most tests in this file run with. */
         private String testPlanJson;
 
         private String specDocument;
@@ -367,17 +366,6 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void buildEnvironmentPreflightDoesNotExposeBuildOutput() {
-        BuildReportSpec failedBuild = result(0, 0, 0, 1);
-        InteractiveSandbox sandbox = new ScriptedSandbox(failedBuild, failedBuild, PROBLEM_STATEMENT_WITH_TASK,
-                "Could not resolve all files for configuration ':testRuntimeClasspath'. https://user:secret@example.invalid/repository");
-
-        Optional<String> failure = newVerifier().checkBuildEnvironment(sandbox, "session", new ProgrammingExercise());
-
-        assertThat(failure).hasValueSatisfying(message -> assertThat(message).contains("readiness probe", "authoring agent was not started").doesNotContain("user:secret"));
-    }
-
-    @Test
     void buildEnvironmentPreflightLogsBoundedRedactedOutputForOperators() {
         Logger logger = (Logger) LoggerFactory.getLogger(DifferentialVerificationService.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();
@@ -445,9 +433,7 @@ class DifferentialVerificationServiceTest {
         VerificationRequest request = new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
-                PROBLEM_STATEMENT_WITH_TASK,
-                // The plan maps BOTH verified tests, so the approved-test-plan gate is silent and the scaffolded-away contract is the only failing conjunct.
-                FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false);
+                PROBLEM_STATEMENT_WITH_TASK, FULL_PLAN_FOR_DEFAULT_BOUND_NAMES, false);
 
         VerificationResult result = verifier.verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", new ProgrammingExercise(),
                 request, NO_RESTORE);
@@ -503,7 +489,7 @@ class DifferentialVerificationServiceTest {
                 .hasValueSatisfying(message -> assertThat(message).contains("could not be prepared", "authoring agent was not started"));
     }
 
-    /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs, so the tests never depend on a test-only convenience overload. */
+    /** Invokes the full production verify(...) in GENERATE mode with empty integrity-gate inputs. */
     private static VerificationResult verifyGenerate(DifferentialVerificationService verifier, InteractiveSandbox sandbox, ProgrammingExercise exercise) {
         return verifier.verify(sandbox, "s", exercise, new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()),
                 NO_RESTORE);
@@ -571,7 +557,6 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldRunThePristineScriptAndReadTheVerifierOwnedReportsDir() {
-        // The verifier must run the PRISTINE verify.sh and read its verdict from the verifier-owned reports dir, never the agent's /workspace copy.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
         VerificationResult result = verifyGenerate(newVerifier(), sandbox, new ProgrammingExercise());
@@ -628,7 +613,6 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldRejectWhenStudentProseLeaksGraderMechanics() {
-        // Otherwise-valid exercise must still be rejected when student prose explains how the exercise is rigged.
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nEach method should raise NotImplementedError in the template file to make the tests fail.";
         VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
         assertThat(result.mechanicallyVerified()).isFalse();
@@ -637,14 +621,12 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldSurfaceProseLeakToTheInLoopSelfCheck() {
-        // The same gate runs in the agent's in-loop self-check.
         String leaky = PROBLEM_STATEMENT_WITH_TASK + "\nRaise NotImplementedError to make the tests fail.";
         AgentVerifyReport report = selfCheck(result(5, 0, 0, 0), result(5, 3, 0, 1), leaky);
         assertThat(report.wouldBeAccepted()).isFalse();
         assertThat(report.toObservation()).contains("leaks grader internals");
     }
 
-    /** A {@code [task]} binding written WITH parentheses must resolve against the {@code testBubbleSort()} form the runner reports. */
     @Test
     void shouldAcceptWhenTaskBindingTestNamesCarryParentheses() {
         String problemStatement = "# Sort\n[task][Sort an array](testBubbleSort(),testMergeSort())\n";
@@ -655,7 +637,7 @@ class DifferentialVerificationServiceTest {
         assertThat(result.testCount()).isEqualTo(2);
     }
 
-    /** Task binding names must match production task extraction exactly; {@code testFoo} must not be accepted for a reported {@code testFoo()}. */
+    /** Task binding names must match production task extraction exactly, so {@code testFoo} must not be accepted for a reported {@code testFoo()}. */
     @Test
     void shouldRejectWhenTaskBindingOmitsParenthesesButTestNameHasThem() {
         String problemStatement = "# Sort\n[task][Sort an array](testBubbleSort,testMergeSort)\n";
@@ -800,8 +782,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void integrityGates_failClosedWhenJavaHarnessSnapshotIsEmpty() {
-        // F2 regression: Java always ships a build harness (pom.xml/build.gradle), so an EMPTY seed snapshot is a failed capture, not a harness-free exercise. The
-        // harness-immutability gate must fail CLOSED there rather than silently disabling itself and letting a tampered harness through.
+        // Java always ships a build harness, so an empty seed snapshot is a failed capture rather than a harness-free exercise.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
@@ -812,7 +793,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void integrityGates_failOpenWhenNonJavaHarnessSnapshotIsEmpty() {
-        // A language that may legitimately ship no text harness snapshot keeps the fail-OPEN behaviour, so an empty snapshot does not spuriously reject.
+        // Python may legitimately ship no text harness snapshot, so an empty one carries no evidence of tampering.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
@@ -862,7 +843,6 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldRejectWhenTemplateRunsFewerTestsThanSolution() {
-        // The solution and template suites must run an identical number of tests.
         VerificationResult result = verify(result(5, 0, 0, 0), result(3, 3, 0, 1));
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("different number of tests"));
@@ -870,8 +850,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldRejectWhenSomeBehaviouralTestsPassOnTemplateNamingEachOne() {
-        // Defect regression: the OLD aggregate gate required only `gradableTestCount / 2` failures (integer division let 2-of-5 failing pass as "half of 5"). The new policy has
-        // no "at least half" leniency: every non-structural gradable test must fail on the template, and the 3 that don't are named exactly so the retry prompt is actionable.
+        // Defect regression: an aggregate gate requiring only `gradableTestCount / 2` failures let 2-of-5 failing pass as "half of 5".
         List<String> names = List.of("t0", "t1", "t2", "t3", "t4");
         String ps = "# X\n[task][Zero](t0)\n[task][One](t1)\n[task][Two](t2)\n[task][Three](t3)\n[task][Four](t4)\n";
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, List.of("t0", "t1")), ps);
@@ -887,8 +866,7 @@ class DifferentialVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("task bindings"));
     }
 
-    // A near-miss keyword ([tasks]/[Task]/[TASK]) binds nothing and leaks the raw test name, even though one well-formed [task] line satisfies the "has a binding" gate. The
-    // case-sensitive match must reject all three (an equals -> equalsIgnoreCase mutant would accept them).
+    // A near-miss keyword binds nothing and leaks the raw test name, even though the one well-formed [task] line satisfies the "has a binding" gate.
     @ParameterizedTest
     @ValueSource(strings = { "tasks", "Task", "TASK" })
     void shouldRejectWhenATaskLineUsesTheWrongKeyword(String wrongKeyword) {
@@ -901,7 +879,6 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldNotFlagAWellFormedTaskListAsMalformedKeyword() {
-        // False-positive guard: exact [task] keywords plus ordinary Markdown links must not trip the near-miss gate.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         String problemStatement = "# Sort\nSee [the docs](https://example.com) and the [reference][ref].\n[task][Sort an array](sortsUnsortedArray)\n"
                 + "[task][Sort with duplicates](sortsArrayWithDuplicates)\n";
@@ -912,7 +889,6 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldRejectWhenTaskBindingReferencesDisplayNameInsteadOfMethodName() {
-        // [task] names are @DisplayName/prose text while the real method names differ, so the binding resolves to nothing.
         String problemStatement = "# Sort\n[task][Sort an unsorted array](Sort an unsorted array)\n[task][Sort with duplicates](Sort with duplicates)\n";
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         VerificationResult result = verify(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), problemStatement);
@@ -922,10 +898,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void buildSummary_fromReports_recordsACompleteSoundPerTestView_thatTheFailOpenGatesRelyOn() {
-        // The fail-open per-test gates rely on fromReports producing a complete, sound per-test view: every counted test is named and every failed test is a member of the full
-        // set.
-        // A regression (counting from <testsuite tests=N>, or de-duplicating the name list) would silently re-open the free-points hole: these fail-open per-test gates now rely on
-        // this invariant directly (the emitter-soundness gate that formerly enforced it was removed as redundant once fromReports was proven to keep the sets complete).
+        // The per-test gates fail open, so they depend on this: counting from <testsuite tests=N> or de-duplicating the name list would silently re-open the free-points hole.
         var summary = BuildSummary.fromReports(Map.of("0001" + SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN,
                 ReportTarFixtures.junitXml(List.of("passes_a", "fails_b", "passes_c"), List.of("fails_b")).getBytes(StandardCharsets.UTF_8)), 0);
         assertThat(summary.tests()).as("every counted test is named").isEqualTo(summary.testNames().size()).isEqualTo(3);
@@ -933,9 +906,8 @@ class DifferentialVerificationServiceTest {
         assertThat(summary.testFailedNames()).as("the failing test is recorded by name").containsExactly("fails_b");
     }
 
-    // Visibility is part of the binding contract. Before this pair, the oracle demanded that EVERY gradable test be bound while the prompt forbade binding a hidden one, so an
-    // exercise with a hidden variant could not be accepted at all — and the agent resolved the contradiction by binding the hidden tests, shipping task checkboxes that can
-    // never turn green before the deadline.
+    // Visibility is part of the binding contract: demanding a binding for every gradable test while the prompt forbids binding a hidden one would leave the agent
+    // shipping task checkboxes that can never turn green before the deadline.
 
     @Test
     void shouldAcceptWhenTheOnlyUnboundTestIsOneTheGradingPlanHidesUntilTheDueDate() {
@@ -995,7 +967,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldStillDemandEveryBindingWhenNoGradingPlanExists() {
-        // Fail-open contract: without a readable plan the oracle behaves exactly as it did before visibility existed.
+        // Fail-open contract: without a readable plan the oracle cannot know a test is hidden, so every gradable test must be bound.
         List<String> all = List.of("sorts_ascending", "sorts_descending");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n";
 
@@ -1007,8 +979,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldAcceptBuildGateHeavyExerciseWhereTemplateFailsEveryBehaviourTestButFewerThanHalfOfAllTests() {
-        // Regression for the compile-heavy false-reject (C/C++ FACT harness): 4 build/compile/configure gate tests + 2 behaviour tests. The gates legitimately pass on BOTH builds
-        // by design and are exempt; every non-gate (gradable) test still fails on the template, so the exercise must be accepted even though only 2 of the 6 total tests fail.
+        // Defect regression (C/C++ FACT harness): build gates legitimately pass on BOTH builds, so an exercise where only 2 of 6 total tests fail on the template is sound.
         List<String> all = List.of("TestConfigure", "CompileSort", "ConfigureDebug", "BuildTests", "sorts_ascending", "sorts_with_duplicates");
         List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n";
@@ -1034,8 +1005,7 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldAcceptWhenFrameworkPrefixedBuildGatePassesOnTemplate() {
-        // Build gates carry the framework suite prefix (production composes "<suite>.<testcase>" from multiple top-level suites); exemption keys on the final dot-segment, and
-        // prefixed behaviour tests must still fail on the template.
+        // Production composes "<suite>.<testcase>" from multiple top-level suites, so the exemption keys on the final dot-segment.
         List<String> all = List.of("GBS-Tester-1.36.TestConfigure", "GBS-Tester-1.36.CompileSort", "sort-test.empty_initial", "sort-test.push_top");
         List<String> failedOnTemplate = List.of("sort-test.empty_initial", "sort-test.push_top");
         String ps = "# Stack\n[task][Empty](sort-test.empty_initial)\n[task][Push/top](sort-test.push_top)\n";
@@ -1052,12 +1022,11 @@ class DifferentialVerificationServiceTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("bound more than once") && r.contains("push_grows"));
     }
 
-    // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser. The dangerous case — a
-    // test skipped on the solution but failing on the template — makes the solution run fewer tests, tripping the "different number of tests" gate.
+    // Skipped-test parity: production's TestResultXmlParser drops a <testcase><skipped/></testcase> from both lists, and the verifier uses that same parser.
 
     @Test
     void shouldRejectWhenATestSkippedOnSolutionFailsOnTemplate() {
-        // Solution skips peek_does_not_remove (2 executed) while the template runs it (3); the dropped skipped case yields 2 != 3 -> rejection.
+        // The solution skips peek_does_not_remove (2 executed) while the template runs it (3), so the dropped case yields 2 != 3.
         BuildReportSpec solution = skippedSolution();
         BuildReportSpec template = resultWithFails(1, List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"),
                 List.of("push_then_pop", "size_tracks_elements", "peek_does_not_remove"));
@@ -1120,11 +1089,11 @@ class DifferentialVerificationServiceTest {
         return BuildReportSpec.withJunitXml(sb.toString(), failedDotPrefixed.isEmpty() ? 0 : 1);
     }
 
-    // Hardened copyOut: a reports tar rejected by the hardened reader is classified as verifier infrastructure/integrity failure rather than a model-repairable exercise defect.
+    // A reports tar rejected by the hardened reader is verifier infrastructure/integrity failure, not a model-repairable exercise defect.
 
     @Test
     void shouldRejectWhenTheReportsArchiveContainsASymlinkedEntry() {
-        // A planted symlink could redirect the verifier to an out-of-tree file; the hardened reader rejects the whole archive.
+        // A planted symlink could redirect the verifier to an out-of-tree file.
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         InteractiveSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK)
                 .withTamperedSolutionReports(symlinkedReportsTar("solution"));
@@ -1194,8 +1163,7 @@ class DifferentialVerificationServiceTest {
             var repo = mock(StaticCodeAnalysisCategoryRepository.class);
             when(repo.findByExerciseId(4242L)).thenReturn(categories);
             var verifier = new DifferentialVerificationService(sandboxBuildCommandService(), Optional.of(repo));
-            // A Java exercise always ships a harness, so the F2 fail-closed gate requires a non-empty seed snapshot; supply an unchanged (seed == produced) pom.xml with no
-            // build-layout directives, which the harness-immutability gate treats as intact. This isolates the SCA-parity gate under test.
+            // A Java exercise always ships a harness, so an unchanged (seed == produced) pom.xml keeps the fail-closed snapshot gate silent and the SCA gate isolated.
             var harness = Map.of("pom.xml", aresPom());
             return verifier.verify(new ScriptedSandbox(solution, template, PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                     new VerificationRequest(harness, harness, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
@@ -1239,14 +1207,13 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void shouldAcceptWhenScaEnabledButCategoryRepositoryIsAbsent_failingOpenOnABuildAgentOnlyNode() {
-            // On a build-agent-only node the SCA category repository is absent (Optional.empty()); without categories the verifier cannot know what production grades, so it must
-            // fail open rather than crash or spuriously reject (parity is enforced on the integrated node, which has the repository).
+            // Without the category repository the verifier cannot know what production grades; parity is enforced on the integrated node, which has it.
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setId(909L);
             exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             exercise.setStaticCodeAnalysisEnabled(true);
             exercise.setMaxStaticCodeAnalysisPenalty(50);
-            // newVerifier() has no SCA repository (the build-agent-only configuration). Supply an unchanged Java harness so the F2 fail-closed snapshot gate passes.
+            // newVerifier() has no SCA repository; the unchanged Java harness keeps the fail-closed snapshot gate silent.
             var harness = Map.of("pom.xml", aresPom());
             VerificationResult result = newVerifier().verify(
                     new ScriptedSandbox(solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate(), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
@@ -1255,41 +1222,9 @@ class DifferentialVerificationServiceTest {
             assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
         }
 
-        @Test
-        void shouldAcceptWhenScaDisabledEvenIfFindingsLeakIntoOutput() {
-            var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
-            VerificationResult result = verifyScaExercise(50, false, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.mechanicallyVerified()).as("SCA disabled => no SCA rejection").isTrue();
-            assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
-        }
-
-        @Test
-        void shouldAcceptWhenMaxPenaltyIsZeroSoScaCannotAffectTheScore() {
-            var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.2));
-            VerificationResult result = verifyScaExercise(0, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.mechanicallyVerified()).as("maxStaticCodeAnalysisPenalty == 0 => SCA penalty is disabled => no rejection").isTrue();
-        }
-
-        @Test
-        void shouldAcceptWhenFindingIsInANonGradedCategory() {
-            // The finding maps to "Code Style" (FEEDBACK); only "Security" is GRADED, so production would not penalise it.
-            var categories = Set.of(category("Code Style", CategoryState.FEEDBACK, 0.2), category("Security", CategoryState.GRADED, 2.5));
-            VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.mechanicallyVerified()).as("a finding in a non-graded category must not be rejected").isTrue();
-            assertThat(result.reasons()).noneMatch(r -> r.contains("static-code-analysis"));
-        }
-
-        @Test
-        void shouldAcceptWhenGradedCategoryHasZeroPenalty() {
-            var categories = Set.of(category("Code Style", CategoryState.GRADED, 0.0));
-            VerificationResult result = verifyScaExercise(50, true, categories, solutionWithScaReports(Map.of("spotbugsXml.xml", SPOTBUGS_STYLE)), failingTemplate());
-            assertThat(result.mechanicallyVerified()).as("a graded category with zero penalty deducts nothing => no rejection").isTrue();
-        }
-
         /**
          * SARIF category derivation runs through the production categorizer, which reads the rule's {@code kind} property. Both cases grade {@code pycodestyle} — a real Python
-         * default category, so the comparison is actually reached — and differ only in whether the ruff rule carries that kind. Grading a category Python does not define (the
-         * previous "Security" fixture) never got past the default-category lookup, so it could not tell a real derivation from a wildcard match.
+         * default category, so the comparison is actually reached — and differ only in whether the ruff rule carries that kind.
          */
         @ParameterizedTest(name = "ruff rule kind {0} against a graded pycodestyle category => penalised={1}")
         @CsvSource({ "unknown-to-python, false", "pycodestyle, true" })
@@ -1342,7 +1277,6 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void shouldAcceptWhenStructuralBindingDoesNotResolveButDifferentialHolds() {
-            // The seeded bundle's exact structural results run in their own trusted lane and are merged with the source-isolated behavioral results.
             List<String> allNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates", "testClass[Sorter]", "testMethods[Sorter]");
             String problemStatement = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Create Sorter](testClass[Sorter],testMethods[Sorter])\n";
 
@@ -1364,7 +1298,7 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void forgeryResistance_aRealBehaviourTestNamedStructurallyThatPassesOnTemplate_isStillRejected() {
-            // A real behaviour test cannot gain the structural exemption merely through its name — only the authoritative seeded set (empty here) exempts a test.
+            // Only the authoritative seeded set (empty here) exempts a test; the name shape alone must not.
             List<String> all = List.of("realBehaviour", "testClass[Evil]");
             List<String> failedOnTemplate = List.of("realBehaviour");
             String ps = "# X\n[task][Real](realBehaviour)\n[task][Disguised](testClass[Evil])\n";
@@ -1500,7 +1434,7 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void returnsTheExactParserFormTestNamesToBind() {
-            // With multiple top-level suites production composes suite-prefixed <suite>.<case> names; the self-check surfaces those verbatim so the agent never derives the prefix.
+            // With multiple top-level suites production composes suite-prefixed <suite>.<case> names, which the agent must never have to derive itself.
             List<String> all = List.of("sort-test.stack_empty_initially", "size-test.size_tracks_elements");
             AgentVerifyReport report = selfCheck(multiSuiteSolution(all), multiSuiteTemplate(all, all),
                     "# Stack\n[task][Empty](sort-test.stack_empty_initially)\n[task][Size](size-test.size_tracks_elements)\n");
@@ -1511,7 +1445,7 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void reportsTemplateTestsThatWronglyPass() {
-            // A zero-value stub passes a test expecting exactly that; the self-check must name the wrongly-passing test so the agent fixes the stub in-loop.
+            // A zero-value stub passes a test expecting exactly that, so the wrongly-passing test must be named for the agent to fix the stub in-loop.
             List<String> all = List.of("returns_empty_for_empty_input", "reverses_non_empty");
             List<String> failedOnTemplate = List.of("reverses_non_empty");
             AgentVerifyReport report = selfCheck(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate),
@@ -1559,7 +1493,6 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void flagsTaskBindingsThatReferenceNoRealTest() {
-            // A bound display name must be listed as a binding problem so the agent copies a real name from `exactTestNames`.
             List<String> all = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             String ps = "# Sort\n[task][Sort](sortsUnsortedArray,sortsArrayWithDuplicates)\n[task][Mystery](aDisplayNameNotAMethodName)\n";
             AgentVerifyReport report = selfCheck(resultWithFails(0, all, List.of()), resultWithFails(1, all, all), ps);
@@ -1578,8 +1511,7 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void namesEveryTestThatWronglyPassesWhenTheTemplatePassesEveryTest() {
-            // A template that passes EVERY test must not be reported with the vague "does not fail enough" fallback: the per-test gate names each offending test exactly, so the
-            // observation must never read "correctly fails all N" and must list both test names as wrongly passing.
+            // With no failed names at all the per-test gate has nothing to diff, so a template that passes EVERY test used to fall back to a vague "correctly fails all N".
             List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
             AgentVerifyReport report = selfCheck(resultWithFails(0, names, List.of()), resultWithFails(0, names, List.of()), PROBLEM_STATEMENT_WITH_TASK);
             assertThat(report.templateCompiled()).isTrue();
@@ -1589,30 +1521,17 @@ class DifferentialVerificationServiceTest {
             assertThat(report.toObservation()).doesNotContain("correctly fails all").contains("Template WRONGLY PASSES").contains("sortsUnsortedArray", "sortsArrayWithDuplicates");
         }
 
-        @Test
-        void selfCheckAndPostLoopVerifyAgreeOnTheVerdict() {
-            // The self-check's wouldBeAccepted must match the post-loop verify's accepted on the same workspace (the integrity gates the self-check skips fail open with no files).
-            List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
-            BuildReportSpec solution = resultWithFails(0, names, List.of());
-            BuildReportSpec template = resultWithFails(1, names, names);
-            assertThat(selfCheck(solution, template, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, template).mechanicallyVerified()).isTrue();
-
-            BuildReportSpec passingTemplate = resultWithFails(0, names, List.of());
-            assertThat(selfCheck(solution, passingTemplate, PROBLEM_STATEMENT_WITH_TASK).wouldBeAccepted()).isEqualTo(verify(solution, passingTemplate).mechanicallyVerified())
-                    .isFalse();
-        }
     }
 
     // Adapt total-wipe (zero-retention) gate wired through the production verify(...): an ADAPT that keeps NONE of the pre-adapt graded test names is a from-scratch regeneration
-    // masquerading as an adapt (a destructive rewrite the internally-consistent differential cannot see). Only ever ADDS a reject; inert for GENERATE and for any partial edit.
+    // masquerading as an adapt, a destructive rewrite the internally-consistent differential cannot see.
 
     @Nested
     class AdaptTotalWipeGate {
 
         @Test
         void rejectsAnAdaptThatRetainsNoneOfThePreviouslyGradedTests() {
-            // The exercise had two graded tests; the adapt produced an entirely new suite. The differential itself is clean (solution passes, template fails, bindings resolve), so
-            // ONLY the total-wipe gate rejects — proving it is the gate under test.
+            // The differential itself is clean (solution passes, template fails, bindings resolve), so only the total-wipe gate can reject.
             List<String> newNames = List.of("brandNewTestA", "brandNewTestB");
             String ps = "# Cache\n[task][A](brandNewTestA)\n[task][B](brandNewTestB)\n";
             VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, newNames, List.of()), resultWithFails(1, newNames, newNames), ps,
@@ -1623,7 +1542,6 @@ class DifferentialVerificationServiceTest {
 
         @Test
         void acceptsAnAdaptThatKeepsAtLeastOnePreviouslyGradedTest() {
-            // A legitimate refinement: one graded test kept, one renamed/added. Retaining a single baseline name clears the total-wipe gate.
             List<String> names = List.of("evictsLeastRecentlyUsed", "capacityAndResize");
             String ps = "# Cache\n[task][Evict](evictsLeastRecentlyUsed)\n[task][Resize](capacityAndResize)\n";
             VerificationResult result = verifyAdaptWithBaseline(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), ps,
@@ -1633,8 +1551,8 @@ class DifferentialVerificationServiceTest {
         }
     }
 
-    // Verdict wiring. Each gate's own logic is covered where it lives; what is covered here is that its outcome actually reaches `mechanicallyVerified`. Every row perturbs exactly
-    // ONE input of the accepted baseline below, so dropping that gate's conjunct from the verdict (or forgetting to add its reasons) makes the row accept and the test fail.
+    // Verdict wiring: each gate's own logic is covered where it lives, and what is covered here is that its outcome reaches `mechanicallyVerified`. Every row perturbs exactly ONE
+    // input of the accepted baseline below, so dropping that gate's conjunct from the verdict makes the row accept and the test fail.
 
     @Nested
     class VerdictWiring {

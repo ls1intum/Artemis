@@ -100,11 +100,15 @@ artemis:
       # and the DB-backed revert affordance outlives this window either way. Memory is bounded by construction, not by this value: at most one retained run per exercise,
       # each capped at 500 transcript events, a 20 000-character SPEC.md, and 300 file-change entries.
       terminal-replay-ttl: PT4H
+      # How long shutdown waits for runs that have passed their point of no return (saving a verified exercise). Runs still before that point are interrupted immediately, so a
+      # rolling deploy only ever pays this when a save is genuinely in flight. Size it above test-case-sync-timeout, which is the longest leg of that save.
+      shutdown-drain-timeout: PT11M
     agent:
       context-window-tokens: 128000
       max-turns: 60 # Bounds one attempt, not the whole run; the staged workflow needs headroom for per-test differential checks.
       staged-generation: true # Enforce the specification->tests->statement stage order (each with its own gate) for Java GENERATE runs; ADAPT and other languages are unaffected.
       staged-context: CONTINUOUS # CONTINUOUS|FRESH. CONTINUOUS carries one conversation across the stages, so the model keeps what it learned earlier; FRESH starts each stage blank.
+      # Restates the binding default in HyperionAgentProperties so it can be read next to its documentation; the two are pinned equal by HyperionAgentPropertiesTest.
       max-job-duration: PT45M # Allows contract closure plus one complete review/repair cycle after staged authoring; keep provider/sandbox/repository timeouts bounded too.
       max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
       # Named effort profiles an instructor may pick per run. The values above are the deployment default AND what every profile inherits for the keys it leaves unset, so a
@@ -126,7 +130,7 @@ artemis:
       #     label: "Thorough"
       #     model: gpt-5.4
       #     max-turns: 90
-      #     max-job-duration: PT60M
+      #     max-job-duration: PT48M # Must stay below stale-job-timeout below; raise that first to go higher, or startup fails.
       #     max-tokens-per-job: 6000000
       #     context-window-tokens: 256000 # Belongs with the model it pins.
       # Also settable per profile: temperature, top-p, reasoning-effort, verbosity, max-completion-tokens, staged-generation, staged-context.
@@ -136,7 +140,8 @@ artemis:
       admission-max-tokens-per-course: 120000000 # Forty worst-case jobs per course within the rolling window.
       admission-max-tokens-global: 600000000 # Fleet-wide rolling ceiling; 0 explicitly disables a budget.
       owner-heartbeat-interval: PT15S
-      stale-job-timeout: PT50M # Recovers jobs whose owner left the cluster; keep above max-job-duration.
+      # Restates the binding default in HyperionAgentProperties; pinned equal by HyperionAgentPropertiesTest.
+      stale-job-timeout: PT50M # Recovers jobs whose owner left the cluster; must exceed the largest max-job-duration of the default AND of every effort profile.
       stale-job-scan-ms: 60000 # Deadline/stale-slot cleanup interval.
       provider-hard-failure-cooldown: PT5M # Shared admission for agent-turn, contract, and critic calls after hard quota/auth/config failures; transient rate limits do not open it.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
@@ -253,6 +258,19 @@ artemis:
   weaviate:
     enabled: false
 
+  telemetry:
+    gen-ai:
+      # Prompt, completion, and tool content is sensitive. Enable only for a protected tracing
+      # deployment. Langfuse retains its existing opt-in behavior through this default.
+      capture-content: ${management.langfuse.enabled:false}
+      # Ceiling for one serialized content attribute, in UTF-8 bytes. Sized for a saturated
+      # 256000-token agentic context (see artemis.hyperion.agent.context-window-tokens), which
+      # serializes to roughly a megabyte. A span whose content exceeds this keeps its metadata,
+      # loses that attribute, and is marked artemis.gen_ai.content.complete=false — so an
+      # omission is always visible rather than silent. Raise it if you pin a larger context
+      # window; keep it well under the OTLP collector's receive limit (4 MiB by default), since
+      # that limit applies to the whole export batch.
+      max-attribute-bytes: 2000000
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:
@@ -330,19 +348,6 @@ management:
       otlp:
         enabled: false
   opentelemetry:
-    instrumentation:
-      gen-ai:
-        # Prompt, completion, and tool content is sensitive. Enable only for a protected tracing
-        # deployment. Langfuse retains its existing opt-in behavior through this default.
-        capture-content: ${management.langfuse.enabled:false}
-        # Ceiling for one serialized content attribute, in UTF-8 bytes. Sized for a saturated
-        # 256000-token agentic context (see artemis.hyperion.agent.context-window-tokens), which
-        # serializes to roughly a megabyte. A span whose content exceeds this keeps its metadata,
-        # loses that attribute, and is marked artemis.gen_ai.content.complete=false — so an
-        # omission is always visible rather than silent. Raise it if you pin a larger context
-        # window; keep it well under the OTLP collector's receive limit (4 MiB by default), since
-        # that limit applies to the whole export batch.
-        max-attribute-bytes: 2000000
     tracing:
       export:
         otlp:

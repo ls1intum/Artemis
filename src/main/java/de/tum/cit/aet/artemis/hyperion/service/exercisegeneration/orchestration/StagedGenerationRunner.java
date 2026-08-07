@@ -54,13 +54,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * <p>
  * Phase file tools enforce write scope: specification is frozen after approval; the executable builder owns solution, template, tests, and grading plan together; the final
  * projection owns only the statement. There is no re-entry into an <em>earlier</em> phase — a gate failure that exhausts its own re-entry budget stops the whole run immediately
- * and hands the aggregated result (with the gate report appended) back to the outer attempt loop, which turns a rejected candidate into the next attempt's repair prompt.
+ * and hands the aggregated result (with the gate report appended) back to the outer attempt loop.
  * <p>
- * Conversation continuity across stages is controlled by {@code artemis.hyperion.agent.staged-context} ({@link StagedContext}, default {@code CONTINUOUS}): CONTINUOUS
- * checkpoints specification provenance, carries one logical conversation through the executable stages, then starts a clean statement conversation from the approved contract
- * and a typed grading handoff. FRESH starts a brand-new conversation per stage via {@link AgentLoopRunner#run}. Either way, a stage's first gate failure buys one re-entry
- * (same stage, gate feedback fed back in) while the shared pool still holds at least {@link #MIN_STAGE_BUDGET} turns and the run has not spent its {@link #MAX_TOTAL_REENTRIES}
- * whole-run re-entry budget; a second failure at the same stage stops the run.
+ * {@code artemis.hyperion.agent.staged-context} ({@link StagedContext}, default {@code CONTINUOUS}) controls conversation continuity across stages. Either way, a stage's first
+ * gate failure buys one re-entry (same stage, gate feedback fed back in) while the shared pool still holds at least {@link #MIN_STAGE_BUDGET} turns and the run has not spent its
+ * {@link #MAX_TOTAL_REENTRIES} whole-run re-entry budget; a second failure at the same stage stops the run.
  */
 @Lazy
 @Component
@@ -74,17 +72,16 @@ public class StagedGenerationRunner {
     private static final int SEMANTIC_SPEC_REFINEMENT_BUDGET = 5;
 
     /**
-     * One planning checkpoint, one coherent executable build, one student-facing projection. Solution, template, tests, and grading plan deliberately share a stage so the builder
-     * can complete risk-chosen seams vertically instead of handing four mutually dependent artifacts down a waterfall.
+     * One planning checkpoint, one coherent executable build, one student-facing projection. Solution, template, tests, and grading plan share a stage so the builder can complete
+     * risk-chosen seams vertically instead of handing four mutually dependent artifacts down a waterfall.
      */
     private static final List<GenerationStage> STAGE_ORDER = List.of(GenerationStage.SPEC, GenerationStage.TESTS, GenerationStage.STATEMENT);
 
     private static final int[] STAGE_BASE_BUDGETS = { 7, 54, 7 };
 
     /**
-     * Hard ceiling on authoring-agent turns spent across all generation phases. The separately context-isolated concept selector is bounded to two one-turn candidate batches
-     * per selection; at most the initial selection and three specification-triggered replacements can run. A stage (or re-entry) is only started while at least
-     * {@link #MIN_STAGE_BUDGET} turns remain, so this artifact-authoring cap holds.
+     * Hard ceiling on authoring-agent turns spent across all generation phases. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns remain, so
+     * the cap holds. The context-isolated concept selector is bounded separately (two one-turn candidate batches per selection, at most four selections).
      */
     private static final int POOL_HARD_CAP = 83;
 
@@ -104,12 +101,11 @@ public class StagedGenerationRunner {
             "Phase 2/3: building executable learning increments across solution, template, and tests", "Phase 3/3: polishing the problem statement");
 
     /**
-     * How much of the configured job deadline is held back for everything that runs after this authoring phase. The phase is only ever the run's first attempt, and the deadline
-     * ({@code artemis.hyperion.agent.max-job-duration}) cancels mid-flight without preserving unverified work, so the load-bearing item to protect is the first differential
-     * verification pass: artifact capture plus the pristine solution and template builds. Reaching it is what turns "the deadline fired and nothing was produced" into a
-     * mechanically verified checkpoint the deadline branch is allowed to keep and save. Calibrated against Java Maven builds, which is the only shape this phase runs for. Repair
-     * rounds and the fidelity review share the same remainder but need no guarantee: they are bounded by {@code cancelled}, and a checkpoint already in hand survives them.
-     * Persistence and CI synchronization are deliberately excluded — the task service cancels the deadline timer before them.
+     * How much of the configured job deadline ({@code artemis.hyperion.agent.max-job-duration}) is held back for everything that runs after this authoring phase. The deadline
+     * cancels mid-flight without preserving unverified work, so what this must guarantee is reaching the first differential verification pass — artifact capture plus the pristine
+     * solution and template builds — which is what turns "the deadline fired and nothing was produced" into a checkpoint the deadline branch may keep and save. Calibrated against
+     * Java Maven builds, the only shape this phase runs for. Repair rounds and the fidelity review share the remainder but need no guarantee; persistence and CI synchronization
+     * are excluded because the task service cancels the deadline timer before them.
      */
     private static final Duration POST_AUTHORING_RESERVE = Duration.ofMinutes(8);
 
@@ -145,8 +141,8 @@ public class StagedGenerationRunner {
     enum StagedContext {
 
         /**
-         * Executable stages (and their re-entries) continue one logical conversation via {@link AgentLoopRunner#runSession}. The terminal statement starts fresh so build logs,
-         * grading-plan authoring instructions, and intermediate debugging do not compete with the student-facing projection.
+         * Executable stages (and their re-entries) continue one logical conversation via {@link AgentLoopRunner#runSession}. The terminal statement starts fresh so build logs and
+         * intermediate debugging do not compete with the student-facing projection.
          */
         CONTINUOUS,
 
@@ -260,12 +256,7 @@ public class StagedGenerationRunner {
             this(result, conversation, unresolvedSpecificationFindings, null, List.of());
         }
 
-        /**
-         * This outcome with the objections raised against the concept it was built from.
-         *
-         * @param conceptFindings the reviewer's unresolved concept findings; an empty list leaves the outcome unchanged
-         * @return a copy carrying the findings, or {@code this} when there is nothing to add
-         */
+        /** Returns a copy carrying the objections raised against the concept this outcome was built from; an empty list leaves the outcome unchanged. */
         StagedRunOutcome withConceptFindings(List<String> conceptFindings) {
             if (conceptFindings.isEmpty()) {
                 return this;
@@ -296,11 +287,11 @@ public class StagedGenerationRunner {
 
     /**
      * Runs the enforced stages in order, honouring a shared turn-budget pool, the wall-clock budget derived from the configured job deadline (see {@link #authoringBudget}), and
-     * cooperative cancellation between stages, with the raw source brief kept separate from the authoring context for the pre-freeze semantic review. Every shorter overload
-     * delegates here.
+     * cooperative cancellation between stages. The raw source brief is kept separate from the authoring context so the pre-freeze semantic review has an untainted authority.
+     * Every shorter overload delegates here.
      *
      * @param exercise                the exercise being generated (Java/{@code GENERATE} only; the caller decides applicability)
-     * @param baseTools               the shared, stateful {@link SandboxAgentTools} instance whose {@code enterStage} is called before every stage; never re-created per stage
+     * @param baseTools               the shared, stateful tools instance whose {@code enterStage} is called before every stage; never re-created per stage
      * @param tools                   the tools object exposed to the model this turn (may be a decorator wrapping {@code baseTools})
      * @param briefPrompt             the current authoring context — the instructor brief or an outer-attempt repair prompt — injected fresh into every stage's user prompt
      * @param sourceBrief             the raw instructor brief, used as review authority and as the clean student-statement authoring context
@@ -310,21 +301,20 @@ public class StagedGenerationRunner {
      * @param cancelled               polled between stages (and inside each stage's own agent loop)
      * @param usageSink               receives token usage for every model call; may be {@code null}
      * @param progress                receives one short progress line per stage; may be {@code null}
-     * @param structuralSeedHook      refreshes generated Java structural tests during executable-build verification (the orchestrator's post-loop call remains the final source of
-     *                                    truth)
+     * @param structuralSeedHook      refreshes generated Java structural tests during executable-build verification; the orchestrator's post-loop call remains the final source of
+     *                                    truth
      * @param specStageApplies        whether to compile and review an internal executable specification
      * @param conceptSelectionApplies whether the model must invent a concept first; false when an authoritative statement already fixes it
-     * @param specSink                receives the gate-approved SPEC.md snapshot right after the spec gate passes (early instructor observability and the orchestrator's frozen
-     *                                    copy
-     *                                    for the critic and repair prompts); may be {@code null}
+     * @param specSink                receives the gate-approved SPEC.md snapshot right after the spec gate passes, which is also the orchestrator's frozen copy for the critic and
+     *                                    repair prompts; may be {@code null}
      * @return one aggregated {@link AgentLoopResult} — summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the last
      *         stage's final message (with the failing gate's report appended, if a gate failed) — together with the carried conversation
      */
     public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink) {
-        // The accumulator is owned here rather than threaded through every exit of the stage machine below: a concept the run proceeded with despite reviewer objections must
-        // carry those objections out of every exit — gate failure, wall clock, cancellation, or a clean finish — and one merge point cannot forget one of them.
+        // Owned here rather than threaded through the stage machine below, so that objections raised against a concept the run proceeded with anyway leave through every exit:
+        // gate failure, wall clock, cancellation, or a clean finish.
         List<String> conceptFindings = new ArrayList<>();
         StagedRunOutcome outcome = runStages(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress,
                 structuralSeedHook, specStageApplies, conceptSelectionApplies, specSink, conceptFindings);
@@ -436,8 +426,8 @@ public class StagedGenerationRunner {
                     return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation);
                 }
                 if (continuous && gateFeedback != null) {
-                    // A failed gate is a new attempt, not another turn in the trajectory that produced the failure. Preserve the old trajectory for diagnostics, but give the
-                    // model the current artifacts plus the high-signal gate report instead of making it reason through its own stale assumptions and tool history.
+                    // A failed gate starts a new attempt rather than another turn in the trajectory that produced the failure: keep the old trajectory for diagnostics, but give
+                    // the model the current artifacts plus the gate report instead of its own stale assumptions and tool history.
                     if (conversation != null) {
                         archivedConversation.addAll(conversation);
                         conversation = null;
@@ -460,8 +450,8 @@ public class StagedGenerationRunner {
                 else {
                     String stageBriefPrompt = switch (stage) {
                         case SPEC -> specPromptWithSelectedConcept(briefPrompt, selectedConcept);
-                        // Statement authoring starts from a deliberately fresh context: the raw instructor authority plus the typed SPEC/visible-test handoff below, not the
-                        // turn-0 workspace listing, which is useful only while building executable artifacts.
+                        // Statement authoring starts from the raw instructor authority plus the typed SPEC/visible-test handoff below, not the turn-0 workspace listing, which is
+                        // useful only while building executable artifacts.
                         case STATEMENT -> sourceBrief;
                         default -> briefPrompt;
                     };
@@ -497,8 +487,8 @@ public class StagedGenerationRunner {
                 }
                 if (stage == GenerationStage.TESTS) {
                     lastTestsReport = gate.report();
-                    // The agent's own in-loop checks may have recorded this already, but a gate that never went through the tools (a reused cache, or a TESTS turn that never
-                    // called verify/submit) would leave STATEMENT blind, so the official gate result is always written back.
+                    // A gate that never went through the tools (a reused cache, or a TESTS turn that never called verify/submit) would leave STATEMENT blind, so the official
+                    // gate result is always written back even though the agent's in-loop checks may have recorded it already.
                     baseTools.recordLastTestsReport(gate.report());
                 }
 
@@ -538,9 +528,8 @@ public class StagedGenerationRunner {
                             }
                             if (!review.complete()) {
                                 // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
-                                // already passed the deterministic mechanical gate. Downstream mechanical verification, the post-generation artifact critic, and instructor
-                                // review all remain fail-closed and carry quality forward. The current draft is unmeasured on this path, so a strictly better measured draft
-                                // already in hand is restored rather than frozen over.
+                                // already passed the deterministic mechanical gate. The current draft is unmeasured on this path, so a strictly better measured draft already in
+                                // hand is restored rather than frozen over.
                                 if (bestSpecSnapshot != null && !bestSpecSnapshot.equals(specSnapshot)) {
                                     String restoreAfterIncompleteReview = baseTools.writeFile("SPEC.md", bestSpecSnapshot);
                                     if (restoreAfterIncompleteReview != null && !restoreAfterIncompleteReview.startsWith("ERROR")) {
@@ -578,7 +567,7 @@ public class StagedGenerationRunner {
                                 boolean repeatedLearningFitFailure = rejectedDirection != null && rejectedDirection.equals(previousRejectedLearningFitDirection);
                                 previousRejectedLearningFitDirection = rejectedDirection;
                                 if (conceptSelectionApplies && (review.conceptualReworkRequired() || repeatedLearningFitFailure)) {
-                                    // The selected concept itself failed the pre-freeze review. Re-enter the same context-separated discovery boundary rather than let the SPEC
+                                    // The selected concept itself failed the pre-freeze review, so re-enter the context-separated discovery boundary rather than let the SPEC
                                     // agent privately replace its own plan. A repeated learning-fit direction also triggers reselection: rewriting a second time against an
                                     // unchanged qualitative proxy optimizes the proxy instead of the concept.
                                     if (conversation != null) {
@@ -644,8 +633,8 @@ public class StagedGenerationRunner {
                                     bestSpecFindingCount = Integer.MAX_VALUE;
                                     bestSpecFindings = List.of();
                                     previousSpecificationReview = null;
-                                    // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts. The independent reviewer
-                                    // will assess the replacement from scratch against the raw brief.
+                                    // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts: the independent reviewer assesses
+                                    // the replacement from scratch against the raw brief.
                                     gateFeedback = null;
                                     semanticSpecFeedback = null;
                                     freshSemanticSpecAttempt = true;
@@ -655,14 +644,12 @@ public class StagedGenerationRunner {
                                 continue;
                             }
                             else if (!review.accepted()) {
-                                // Refinement budget exhausted — fail open rather than discard a mechanically valid specification. Freeze it and surface the remaining findings
-                                // as an advisory for instructor review instead of erroring the one-click generation. Objective gates downstream (compile/tests/oracle) stay
-                                // fail-closed.
+                                // Refinement budget exhausted — fail open rather than discard a mechanically valid specification: freeze it and surface the remaining findings as
+                                // an advisory for instructor review. Objective gates downstream (compile/tests/oracle) stay fail-closed.
                                 log.info("Specification review still had findings for exercise {} after exhausting the refinement budget; freezing with advisory: {}",
                                         exercise.getId(), review.feedback());
                                 if (bestSpecSnapshot != null && bestSpecFindingCount < review.findings().size() && !bestSpecSnapshot.equals(specSnapshot)) {
-                                    // A later refinement left the contract worse than one this concept already reached. Freezing the most recent draft would hand every
-                                    // downstream stage the weaker contract for no reason, so restore the best one before it becomes read-only.
+                                    // A later refinement left the contract worse than one this concept already reached, so restore the best draft before it becomes read-only.
                                     String restore = baseTools.writeFile("SPEC.md", bestSpecSnapshot);
                                     if (restore != null && !restore.startsWith("ERROR")) {
                                         log.info("Restored the best reviewed specification for exercise {} ({} findings) over the final refinement ({} findings)", exercise.getId(),
@@ -681,13 +668,13 @@ public class StagedGenerationRunner {
                                 emit(progress, "Continuing with the reviewed specification; remaining concerns are attached for instructor review.");
                             }
                         }
-                        // Publish the APPROVED specification before anything downstream runs. From here on it is read-only; later stages repair executable artifacts
-                        // against this exact contract rather than weakening or expanding it under compile pressure.
+                        // Publish the APPROVED specification before anything downstream runs. From here on it is read-only: later stages repair executable artifacts against this
+                        // exact contract rather than weakening or expanding it under compile pressure.
                         approvedSpecs.approve(sessionId, specSnapshot);
                         if (specSink != null) {
                             specSink.accept(specSnapshot);
                         }
-                        // SPEC approval is the provenance checkpoint. Keep the complete authoring conversation in the audit transcript, but downstream stages see only the
+                        // SPEC approval is the provenance checkpoint: the audit transcript keeps the complete authoring conversation, but downstream stages see only the
                         // instructor brief and the approved workspace contract — never rejected candidates or pre-freeze reviewer discussion as a competing authority.
                         if (conversation != null) {
                             archivedConversation.addAll(conversation);
@@ -714,9 +701,9 @@ public class StagedGenerationRunner {
                 }
                 boolean stageCanReenter = stageReentriesUsed == 0 && reentriesRemaining > 0;
                 if (!stageCanReenter || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
-                    // A failed TESTS gate must not consume the statement reserve it was explicitly prevented from using. The statement can still be authored from the approved
-                    // SPEC and the exact tests that did execute; the outer authoritative verifier then gives one repair context both artifacts instead of making a missing
-                    // statement compete with the original test defect. SPEC has no safe downstream authority, and STATEMENT has no later stage, so those still stop here.
+                    // A failed TESTS gate still lets STATEMENT run: it can be authored from the approved SPEC and the tests that did execute, and the outer verifier then gives
+                    // one repair context both artifacts instead of making a missing statement compete with the original test defect. SPEC has no safe downstream authority and
+                    // STATEMENT has no later stage, so those still stop here.
                     if (stage == GenerationStage.TESTS) {
                         lastFinalMessage = appendGateReport(lastFinalMessage, gate.observation());
                         emit(progress, "The executable-build gate is still failing; preserving the reserved statement phase before authoritative repair.");
@@ -743,9 +730,9 @@ public class StagedGenerationRunner {
     /**
      * Renders one instructor-facing note per objection the concept review raised, led by a note naming the candidate the run actually proceeded with.
      * <p>
-     * Findings are carried verbatim so the broad selection review and the focused admission audit stay distinguishable in the instructor's own reading — the selector writes
-     * {@code "Candidate N: ..."} for every candidate it compared, the admission audit writes {@code "Selected concept failed focused admission: ..."} — and so a reviewer can
-     * still see the objections raised against candidates this run did not build. Nothing is summarized away, because a summary is exactly where a gate's judgment gets lost.
+     * Findings are carried verbatim, never summarized, so that the broad selection review ({@code "Candidate N: ..."}) and the focused admission audit
+     * ({@code "Selected concept failed focused admission: ..."}) stay distinguishable, and so a reviewer can still see the objections raised against candidates this run did not
+     * build.
      */
     private static List<String> conceptAdmissionNotes(ExerciseConceptSelector.ConceptFallback fallback) {
         List<String> notes = new ArrayList<>();
@@ -902,9 +889,9 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * Evaluates one stage's exit gate: reuses the tools' cached passing check when nothing has changed since it ran (see {@link SandboxAgentTools#reuseCachedPassingCheck}) so a
-     * stage the agent already verified clean does not pay for a redundant check, and otherwise delegates to {@link StageCheckService}. This runner never decides itself whether a
-     * stage's artifact passed; it owns only stage sequencing, turn budgets, re-entry, and this cache consultation.
+     * Evaluates one stage's exit gate: reuses the tools' cached passing check when nothing has changed since it ran (see {@link SandboxAgentTools#reuseCachedPassingCheck}), and
+     * otherwise delegates to {@link StageCheckService}. This runner never decides itself whether a stage's artifact passed; it owns only stage sequencing, turn budgets, re-entry,
+     * and this cache consultation.
      */
     private GateEvaluation evaluateGate(GenerationStage stage, SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise,
             Map<String, String> seedTestsFiles, @Nullable AgentVerifyReport lastTestsReport, Supplier<SeededStructuralTests> structuralSeedHook) {
@@ -930,8 +917,7 @@ public class StagedGenerationRunner {
 
     /**
      * Builds a stage's user prompt. When no conversation is carried this re-injects the current SPEC.md and workspace layout; a carried conversation already has that context.
-     *
-     * @param retryFeedback the previous failed attempt's gate report, folded into a fresh retry prompt
+     * {@code retryFeedback} is the previous failed attempt's gate report, folded into a fresh retry prompt.
      */
     private String buildStagePrompt(GenerationStage stage, String briefPrompt, InteractiveSandbox sandbox, String sessionId, boolean carriesConversation,
             Set<String> seededStructuralTestNames, @Nullable String retryFeedback) {
@@ -970,7 +956,7 @@ public class StagedGenerationRunner {
 
     /**
      * Projects the accepted grading plan and server-authored structural oracle into the only facts statement authoring needs. Raw build output and TESTS-stage instructions are
-     * deliberately excluded: they are debugging context, not student-facing contract evidence.
+     * excluded: they are debugging context, not student-facing contract evidence.
      */
     private String statementHandoff(InteractiveSandbox sandbox, String sessionId, Set<String> seededStructuralTestNames) {
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");

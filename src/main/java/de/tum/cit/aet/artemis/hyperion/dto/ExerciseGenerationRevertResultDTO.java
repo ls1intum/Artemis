@@ -9,10 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Result of reverting a Hyperion generation or adaptation.
- *
- * @param fullyReverted        whether every captured repository was reset successfully
- * @param revertedRepositories repositories that were reset before the response was returned
- * @param completedAt          server time after the revert completed
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Result of reverting the last Hyperion generation or adaptation")

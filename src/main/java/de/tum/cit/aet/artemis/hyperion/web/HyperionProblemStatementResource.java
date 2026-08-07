@@ -97,8 +97,7 @@ public class HyperionProblemStatementResource {
      * POST programming-exercises/{exerciseId}/consistency-check : check the consistency of a programming exercise.
      *
      * @param exerciseId        the id of the programming exercise to check
-     * @param skipThreadContext runs the check in isolation so it can be judged on its own merits: earlier findings stay out of the prompts, and this run's findings are not turned
-     *                              into review threads
+     * @param skipThreadContext runs the check in isolation: earlier findings stay out of the prompts, and this run's findings are not turned into review threads
      * @return the issues found, possibly none
      */
     @PostMapping("programming-exercises/{exerciseId}/consistency-check")

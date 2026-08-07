@@ -107,6 +107,12 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     }
 
     @Override
+    public <K, V> DistributedMap<K, V> getExpiringMap(String name) {
+        // A plain RMap has no per-entry expiry at all; RMapCache adds the eviction bookkeeping that DistributedMap#put(key, value, ttl) needs.
+        return new RedissonDistributedMap<>(redissonClient.getMapCache(name), redissonClient.getTopic(name + ":map_notification"));
+    }
+
+    @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         return new RedissonDistributedTopic<>(redissonClient.getTopic(name));
     }

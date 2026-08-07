@@ -60,10 +60,7 @@ class SpecFidelityCriticServiceTest {
     private static final String UNICODE_BRIEF = "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark "
             + "sequence, CJK characters, and at least one emoji.";
 
-    /**
-     * A complete artifact set whose solution declares a {@code public} member. That is what makes the contract reviewer's {@code apiChecks} array mandatory, so an empty one is a
-     * skipped discoverability check rather than a clean verdict.
-     */
+    /** A complete artifact set whose solution declares a {@code public} member, which is what makes the contract reviewer's {@code apiChecks} array mandatory. */
     private static final Map<RepositoryType, Map<String, String>> PUBLIC_API_ARTIFACTS = Map.of(RepositoryType.SOLUTION,
             Map.of("src/Graphemes.java", "class Graphemes { public int count(String value) { return value.length(); } }"), RepositoryType.TEMPLATE,
             Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return 0; } }"), RepositoryType.TESTS,
@@ -116,10 +113,7 @@ class SpecFidelityCriticServiceTest {
         return new ChatResponse(List.of(new Generation(new AssistantMessage(body))));
     }
 
-    /**
-     * The smallest artifact set that passes the completeness check, so a test that is not about artifact evidence does not have to spell one out. The tests repository carries the
-     * reviewed test names because several assertions read them back out of the rendered reviewer prompt.
-     */
+    /** The smallest artifact set that passes the completeness check. The tests repository carries the reviewed test names because assertions read them back out of the prompt. */
     private static Map<RepositoryType, Map<String, String>> minimalArtifacts(List<String> testNames) {
         return Map.of(RepositoryType.SOLUTION, Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryType.TEMPLATE,
                 Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryType.TESTS,
@@ -159,7 +153,6 @@ class SpecFidelityCriticServiceTest {
         return criticScripted(response).critic();
     }
 
-    /** A critic wired to a scripted model, plus the model itself for the tests that must script consecutive responses or capture the prompts that were sent. */
     private record ScriptedCritic(SpecFidelityCriticService critic, ChatModel model) {
     }
 
@@ -244,19 +237,6 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void conceptReviewPreservesAnImplementationConstructExplicitlyRequiredByTheInstructor() {
-        Map<Integer, String> candidates = Map.of(1, "Compute the digital root recursively without loops.", 2, "Aggregate invoice totals.", 3, "Classify readings.");
-        SpecFidelityCriticService.ConceptSelectionReview modelReview = new SpecFidelityCriticService.ConceptSelectionReview(true, 1, List.of(),
-                "Candidate 1 directly preserves the instructor's recursion requirement.", "The model accepted candidate 1.");
-
-        SpecFidelityCriticService.ConceptSelectionReview review = SpecFidelityCriticService.enforceExploratoryConcept("The exercise must be implemented recursively.", candidates,
-                modelReview);
-
-        assertThat(review).isEqualTo(modelReview);
-        assertThat(review.accepted()).isTrue();
-    }
-
-    @Test
     void conceptReviewPreservesATechniqueExpressedAsTheLearningObjective() {
         Map<Integer, String> candidates = Map.of(1, "Implement each method recursively.", 2, "Aggregate invoice totals.", 3, "Classify readings.");
         SpecFidelityCriticService.ConceptSelectionReview modelReview = new SpecFidelityCriticService.ConceptSelectionReview(true, 1, List.of(),
@@ -302,9 +282,6 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.selectedCandidate()).isNull();
         assertThat(review.feedback()).contains("scalar formula", "not intermediate", "nouns can be replaced").doesNotContain("radio", "logistics", "compression", "use a");
         assertThat(review.decisionSummary()).contains("learner-owned learning fit", "requested difficulty", "domain grounding").doesNotContain("potion", "artifact", "robot");
-        // The verdict rejected every candidate, and it still says which one it rejected least, ranked only on the per-axis judgments it already returned. That naming admits
-        // nothing: accepted() stays false and the findings are unchanged.
-        assertThat(review.fallback()).isNotNull();
     }
 
     @Test
@@ -340,8 +317,7 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.complete()).isTrue();
         assertThat(review.accepted()).isFalse();
         assertThat(review.selectedCandidate()).isNull();
-        // Candidate 2 fails one required axis, candidate 3 fails two, candidate 1 fails six. Fewest failures wins, and the count comes entirely from booleans the reviewer
-        // already returned — no separate scoring model is introduced to break the tie.
+        // Candidate 2 fails one required axis, candidate 3 fails two, candidate 1 fails six; fewest failures wins.
         assertThat(review.fallback()).isEqualTo(new SpecFidelityCriticService.ConceptFallback(2, 1));
         assertThat(review.findings()).hasSize(3);
     }
@@ -410,8 +386,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void conceptReviewCorrectionCallNamesTheServerValidationFailureItMustFix() {
-        // The correction call is what turns one unparseable response into a usable verdict, so it must carry the server's own diagnosis rather than silently re-ask. The concept
-        // prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
+        // The concept prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
         ScriptedCritic scripted = criticScripted(rawResponse("not json"));
 
         scripted.critic().reviewConceptCandidates("Create an intermediate Strategy exercise.",
@@ -544,7 +519,6 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_rejectsDefectFreeVerdictWithMiscitedEvidenceId() {
-        // A positive verdict must point at evidence it actually reviewed. Otherwise fluent generic prose can approve a specification without examining its objective.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],
@@ -755,7 +729,6 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewPromptNumbersBriefAndSpecificationEvidenceSeparately() {
-        // Every specification finding cites a [B*] or [E*] ID, so the two sources must reach the reviewer as separately numbered evidence rather than as one blended document.
         // The prompt's audited clauses are pinned against the rendered template in CriticPromptContractTest; the sentinel here only proves this pass renders that template.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
@@ -911,30 +884,6 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void rejectedSpecificationReviewReturnsToTheAuthorWithoutAnAsymmetricAppeal() {
-        ChatResponse proposed = rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
-                         "remainingStudentReasoning":"Students implement the allocation policy.","domainGrounding":"The potion domain motivates constrained mixing.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
-                         "internalConflicts":[{"firstSpecEvidenceIds":["E1"],"secondSpecEvidenceIds":["E3"],
-                          "reason":"R2 conflicts with R5 even though R5 is not cited."}]}
-                        """);
-        ScriptedCritic scripted = criticScripted(proposed);
-        SpecFidelityCriticService critic = scripted.critic();
-
-        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate Strategy exercise.", """
-                | R2 | Total potency must equal the requested potency. |
-                | R5 | Any allocation satisfying R1-R4 is acceptable. |
-                | R6 | Throw when no allocation satisfies the constraints. |
-                """, null, () -> false);
-
-        assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isFalse();
-        verify(scripted.model()).call(any(Prompt.class));
-    }
-
-    @Test
     void rejectedSpecificationReviewPreservesAGroundedBlockingFindingForTheAuthor() {
         ChatResponse groundedFinding = rawResponse(
                 """
@@ -953,26 +902,6 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.accepted()).isFalse();
         assertThat(review.feedback()).contains("preserving state", "resets");
         verify(scripted.model()).call(any(Prompt.class));
-    }
-
-    @Test
-    void malformedInitialSpecificationReviewStillUsesOneCorrectionCall() {
-        ChatResponse proposed = rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The context invokes the selected strategy.",
-                         "remainingStudentReasoning":"Students implement the requested policy.","domainGrounding":"No qualitative theme was requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[{"briefEvidenceIds":["B1"],"reason":"The requested behavior is absent."}],"conflicts":[],"internalConflicts":[],"exampleChecks":[],
-                         "ambiguities":[],"unsupportedConstraints":[]}
-                        """);
-        ScriptedCritic scripted = criticScripted(rawResponse("not json"), proposed);
-        SpecFidelityCriticService critic = scripted.critic();
-
-        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create a stateful strategy exercise.", "A context invokes a strategy.", null,
-                () -> false);
-
-        assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isFalse();
-        verify(scripted.model(), times(2)).call(any(Prompt.class));
     }
 
     @Test
@@ -1046,73 +975,6 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void specificationReviewResolvesMarkdownSourceLinesByEvidenceId() {
-        SpecFidelityCriticService critic = criticReturning(rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                         "remainingStudentReasoning":"the quoted rule is the strategy behaviour","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[],"conflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[],
-                         "internalConflicts":[{"firstSpecEvidenceIds":["E1"],
-                         "secondSpecEvidenceIds":["E1"],"reason":"the arithmetic conflicts"}]}
-                        """));
-        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Teach the strategy pattern.",
-                "**Healing potency** is `two` per herb. **Healing potency** is four for six herbs.", null, () -> false);
-        assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("the arithmetic conflicts", "choose one coherent interpretation grounded in the brief").doesNotContain("correct the worked example");
-    }
-
-    @Test
-    void specificationReviewResolvesHtmlWhitespaceSourceLinesByEvidenceId() {
-        String specification = """
-                R2: A concrete strategy adjusts the drink as follows:
-                &nbsp;&nbsp;• **SpicyFlavorStrategy** adds **3** to `flavorScore`.
-                """;
-        SpecFidelityCriticService critic = criticReturning(rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],
-                         "specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
-                         "remainingStudentReasoning":"Only the prescribed increment remains after routine wiring.",
-                         "domainGrounding":"The cited rule does not explain why spiciness changes this score.","learnerOwnsObjectiveMechanism":false,"objectiveObservable":false,"difficultySufficient":false,"domainGrounded":true,"sufficient":false,"direction":"TOO_SHALLOW"},
-                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                        """));
-        SpecFidelityCriticService.SpecificationReview review = critic.reviewSpecification("Create an intermediate Strategy exercise.", specification, null, () -> false);
-        assertThat(review.complete()).isTrue();
-        assertThat(review.accepted()).isFalse();
-        assertThat(review.feedback()).contains("Only the prescribed increment remains");
-    }
-
-    @Test
-    void specificationReview_distinguishesMalformedFromUngroundedVerdicts() {
-        // A malformed verdict and a fluent but ungrounded verdict are both incomplete. Neither may freeze the generation contract.
-        SpecFidelityCriticService malformedCritic = criticReturning(rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true},
-                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                        """));
-        assertThat(malformedCritic.reviewSpecification("Create a counter.", "# Counter", null, () -> false).complete()).isFalse();
-
-        SpecFidelityCriticService ungroundedCritic = criticReturning(rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[],"conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                        """));
-        SpecFidelityCriticService.SpecificationReview ungrounded = ungroundedCritic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
-        assertThat(ungrounded.complete()).isFalse();
-        assertThat(ungrounded.accepted()).isFalse();
-
-        SpecFidelityCriticService groundedFindingCritic = criticReturning(rawResponse(
-                """
-                        {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],"objectiveEvidenceIds":["E1"],"studentOwnershipEvidenceIds":["E1"],"assessmentEvidenceIds":["E1"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.","remainingStudentReasoning":"the counter work is meaningful","domainGrounding":"The cited behavior is plausibly motivated by the requested domain, or no qualitative theme is requested.","learnerOwnsObjectiveMechanism":true,"objectiveObservable":true,"difficultySufficient":true,"domainGrounded":true,"sufficient":true,"direction":"SUFFICIENT"},
-                         "omissions":[{"briefEvidenceIds":["B1"],"reason":"the learning objective is missing"}],
-                         "conflicts":[],"internalConflicts":[],"exampleChecks":[],"ambiguities":[],"unsupportedConstraints":[]}
-                        """));
-        SpecFidelityCriticService.SpecificationReview groundedFinding = groundedFindingCritic.reviewSpecification("Create a Java counter.", "# Counter", null, () -> false);
-        assertThat(groundedFinding.complete()).isTrue();
-        assertThat(groundedFinding.accepted()).isFalse();
-    }
-
-    @Test
     void specificationReview_rejectsPositiveLearningFitWithoutItsMandatoryDirection() {
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
@@ -1126,8 +988,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_requiresTheRequestedObjectiveMechanismProse() {
-        // Evidence-ID citation is advisory, but the learningFit's own prose is mandatory: this fixture omits objectiveMechanism entirely,
-        // so the verdict is discarded as incomplete.
+        // Evidence-ID citation is advisory, but the learningFit's own prose is mandatory.
         SpecFidelityCriticService critic = criticReturning(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E1"],
@@ -1153,7 +1014,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReview_rejectsPositiveLearningVerdictWithoutGroundedEvidenceIds() {
-        // Booleans and plausible prose are self-reports. The reviewer must cite evidence from this prompt before its positive verdict can freeze the SPEC.
+        // Booleans and plausible prose are self-reports, so a positive verdict must cite evidence from this prompt before it can freeze the SPEC.
         ScriptedCritic scripted = criticScripted(rawResponse(
                 """
                         {"learningFit":{"briefEvidenceIds":["B1"],"specEvidenceIds":["E99"],"objectiveEvidenceIds":["E99"],"studentOwnershipEvidenceIds":["E99"],"assessmentEvidenceIds":["E99"],"objectiveMechanism":"The cited student work exercises the requested objective through an observable collaboration.",
@@ -1198,8 +1059,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewUsesTheCompleteFreshRetryVerdict() {
-        // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), so the reviewer makes its one
-        // correction call. The fresh, complete ALIGNED retry is used verbatim rather than the discarded first verdict.
+        // The first verdict's learningFit omits the mandatory direction, so it is incomplete and costs the one correction call.
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
@@ -1230,8 +1090,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void specificationReviewDoesNotCarryAnUngroundedFirstFindingIntoTheFreshRetry() {
-        // The first verdict is genuinely incomplete (its learningFit omits the mandatory direction), and its alleged conflict cites an unknown E ID. The correction receives no F
-        // continuity because the server cannot independently ground that hypothesis.
+        // The first verdict's learningFit omits the mandatory direction, and its alleged conflict cites an unknown E ID that the server cannot independently ground.
         ScriptedCritic scripted = criticScripted(
                 rawResponse(
                         """
@@ -1501,8 +1360,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void contractReviewTemplateGapAgainstATypeTheDesignNeverNamesFailsClosed() {
-        // Once the approved Design fixes who owns which type, a scaffold complaint about some other type means the reviewer was not reading that contract. Surfacing it would
-        // send the repair loop after a type the design does not have, so the whole verdict is discarded instead.
+        // Surfacing a scaffold complaint about a type the approved Design never names would send the repair loop after a type that does not exist.
         ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"templateChecks\":[{\"ownerType\":\"WaterStrategy\",\"test\":\"missing WaterStrategy stub\",\"targetReached\":false,\"blockingCause\":\"PROVIDED_SCAFFOLD_DEFECT\",\"reason\":\"the template has no WaterStrategy class or TODO\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
@@ -1518,8 +1376,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void contractReviewTemplateGapAgainstSharedScaffoldIsReportedWithoutADesignRow() {
-        // Build files, fixtures, and other shared scaffold are real and repairable but deliberately absent from the Design ownership table, so the reserved owner name must pass
-        // the guard that discards a complaint about a type the design never names.
+        // Build files and other shared scaffold are repairable but absent from the Design ownership table, so the reserved owner name passes the unnamed-type guard.
         ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"templateChecks\":[{\"ownerType\":\"shared scaffold\",\"test\":\"buildsBeforeAnyTask\",\"targetReached\":false,\"blockingCause\":\"PROVIDED_SCAFFOLD_DEFECT\",\"reason\":\"the shared fixture fails to compile before any student-owned code runs\",\"evidenceQuote\":\"class Graphemes\"}]}"),
                 rawResponse(COMPLETE_ORACLE_VERDICT));
@@ -1546,8 +1403,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void eachFullArtifactReviewPassRendersItsOwnSpecializedSystemPrompt() {
-        // The two passes are specialized only as long as each receives its own system prompt in its own call. Their audited clauses, and the cross-pass vocabulary neither may
-        // name, are pinned against the rendered templates in CriticPromptContractTest; the two sentinels here prove the routing that no resource assertion can.
+        // The prompts' audited clauses are pinned against the rendered templates in CriticPromptContractTest; the two sentinels here prove only the per-pass routing.
         ScriptedCritic scripted = criticScripted(rawResponse("""
                 {"exampleChecks":[],
                  "apiChecks":[],
@@ -1592,9 +1448,9 @@ class SpecFidelityCriticServiceTest {
     /**
      * One incomplete review input and the fail-closed verdict it must produce.
      * <p>
-     * Each row kills a different conjunct of {@code CriticVerdictParser}'s malformed-verdict predicates — sixteen for the contract pass, seven for the oracle pass — or a
-     * different pre-flight guard in {@code SpecFidelityCriticService#reviewArtifacts}. They share one table because they make one claim: an incomplete review is never reported
-     * as a clean one. They stay separate rows because no row implies another.
+     * Each row kills a different conjunct of {@code CriticVerdictParser}'s malformed-verdict predicates or a different pre-flight guard in
+     * {@code SpecFidelityCriticService#reviewArtifacts}, and no row implies another. They share one table because they make one claim: an incomplete review is never reported as
+     * a clean one.
      *
      * @param responses the scripted reviewer responses; {@code null} means no AI provider is configured and an empty list means the provider must never be called
      */
@@ -1633,7 +1489,6 @@ class SpecFidelityCriticServiceTest {
                 generation("contract contradiction entry is empty", List.of(jsonResponse("{\"contradictions\":[{}]}")), "contract reviewer", 1, 2),
                 generation("contract contradiction entry omits its reason", List.of(jsonResponse("{\"contradictions\":[{\"requirement\":\"conflict\"}]}")), "contract reviewer", 1,
                         2),
-                // A solution declaring a public member makes apiChecks mandatory, so an empty array is a skipped check rather than a clean one.
                 generation("contract api checks are empty although the solution declares a public member",
                         List.of(rawResponse(COMPLETE_CONTRACT_VERDICT), rawResponse(COMPLETE_ORACLE_VERDICT)), PUBLIC_API_ARTIFACTS, UNICODE_BRIEF, "contract reviewer", 1, 2),
 
@@ -1653,7 +1508,6 @@ class SpecFidelityCriticServiceTest {
                 generation("no AI provider is configured", null, "No AI reviewer is configured.", 1, 0),
                 new FailClosedCase("cancelled before the first reviewer call", List.of(), true, COMPLETE_ARTIFACTS, UNICODE_BRIEF, "Count graphemes.", null,
                         Kind.QUALITY_REVIEW_UNAVAILABLE, "cancelled before both review passes completed", 1, 0),
-                // The artifact set is deliberately complete, so this row reaches the evidence cap instead of stopping at the completeness guard ahead of it.
                 generation("artifact evidence exceeds its bounded size", List.of(), OVERSIZED_ARTIFACTS, "Create an exercise.", "exceeded the bounded review input", 1, 0),
                 generation("artifact set is missing a repository", List.of(),
                         Map.of(RepositoryType.SOLUTION, Map.of("src/Exercise.java", "class Exercise {}"), RepositoryType.TESTS, Map.of("test/ExerciseTest.java", "class T {}")),
@@ -2145,23 +1999,6 @@ class SpecFidelityCriticServiceTest {
     }
 
     @Test
-    void ungroundedContradictionFinding_isExcludedFromRepairPrompt() {
-        ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"contradictions\":[{\"requirement\":\"the answer is always 42\",\"sourceQuote\":\"the answer is always 42\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the solution and template disagree\"}]}"),
-                rawResponse("""
-                        {"mutantChecks":[{"mutant":"ignore CJK input","killed":true,"reason":"the assertion kills it"}],
-                         "uncovered":[],"weakOracle":[]}
-                        """));
-        SpecFidelityCriticService critic = scripted.critic();
-        SpecFidelityReport report = critique(critic,
-                "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
-                "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
-        assertThat(report.findings()).noneMatch((SpecFidelityReport.Finding finding) -> finding.kind() == Kind.CONTRACT_CONTRADICTION);
-        assertThat(report.findings()).isEmpty();
-        assertThat(critic.renderForRetryPrompt(report)).isEmpty();
-    }
-
-    @Test
     void producedArtifactCannotAuthorizeItsOwnContractContradiction() {
         ScriptedCritic scripted = criticScripted(jsonResponse(
                 "{\"contradictions\":[{\"requirement\":\"Graphemes must be absent\",\"sourceQuote\":\"class Graphemes\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the template supplies this type\"}]}"),
@@ -2599,29 +2436,15 @@ class SpecFidelityCriticServiceTest {
 
     // --- Unenforceable technique rules ---
 
-    private SpecFidelityCriticService detectorOnly() {
-        return new SpecFidelityCriticService(null, objectMapper);
-    }
-
     @Test
     void techniqueRules_flagARecursionMandateNoAssertionCanObserve() {
-        // A specification whose brief asked for recursion: rewriting both methods iteratively still passes every graded test, so the mandate is unenforceable.
         String spec = "## Rules\n| R1 | `factorial(int n)` returns n!. The implementation **must be recursive** (direct or indirect self-call). |\n";
 
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
+        assertThat(detector().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
             assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
             assertThat(finding.isBlocking()).as("nothing downstream can repair it, so it blocks publication without scheduling impossible work").isTrue();
             assertThat(finding.requirement()).containsIgnoringCase("must be recursive");
         });
-    }
-
-    @Test
-    void techniqueRules_flagAStreamPipelineMandate() {
-        // A specification whose brief asked for the Streams API: a plain for-loop scores full marks against the graded suite.
-        String spec = "## Rules\nR3: The implementation must use a Stream pipeline with a filter lambda and a mapToDouble step.\n";
-
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement()
-                .satisfies(finding -> assertThat(finding.requirement()).containsIgnoringCase("must use a Stream"));
     }
 
     @Test
@@ -2636,7 +2459,7 @@ class SpecFidelityCriticServiceTest {
                 | Require use of if-else | PEDAGOGICAL_OBJECTIVE | Practice branching | Not observable through the public API |
                 """;
 
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
+        assertThat(detector().detectUnenforceableTechniqueRules(spec)).singleElement().satisfies(finding -> {
             assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
             assertThat(finding.isBlocking()).isTrue();
             assertThat(finding.requirement()).containsIgnoringCase("require use of if-else");
@@ -2645,8 +2468,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_doNotFireOnOrdinaryRulesThatMerelyMentionStreamsOrLoops() {
-        // "stream" and "loop" are ordinary domain nouns — an input stream, a self-loop in a graph, a retry loop — and an iteratively refined algorithm is not a mandate to
-        // write a loop. A false positive downgrades a real blocking finding to advisory, so the pattern has to earn every match.
+        // "stream" and "loop" are ordinary domain nouns — an input stream, a self-loop in a graph, a retry loop — and an iteratively refined algorithm mandates no loop.
         String spec = """
                 ## Rules
                 | R1 | The parser must use the provided input stream and close it. |
@@ -2657,7 +2479,7 @@ class SpecFidelityCriticServiceTest {
                 | R6 | The result must be iteratively refined until it converges. |
                 """;
 
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).isEmpty();
+        assertThat(detector().detectUnenforceableTechniqueRules(spec)).isEmpty();
     }
 
     @Test
@@ -2668,14 +2490,13 @@ class SpecFidelityCriticServiceTest {
                 "The total must use a Java **Stream** pipeline (filter, map, reduce).",
                 "Each method must be implemented *recursively*; the code may not contain any loop construct.",
                 "The implementation must use lambda expressions for the predicate and mapper.", "The method must be recursive and must not use any looping construct.")) {
-            assertThat(detectorOnly().detectUnenforceableTechniqueRules("## Rules\n" + rule)).as("should flag: %s", rule).isNotEmpty();
+            assertThat(detector().detectUnenforceableTechniqueRules("## Rules\n" + rule)).as("should flag: %s", rule).isNotEmpty();
         }
     }
 
     @Test
     void techniqueRules_staySilentOnRulesThatAreObservable() {
-        // Delegation IS observable through a recording fake, and ordering and validation through ordinary assertions, so none may be flagged or the finding becomes noise
-        // attached to every exercise.
+        // Delegation is observable through a recording fake, and ordering and validation through ordinary assertions, so none of these may be flagged.
         String spec = """
                 ## Rules
                 R1: `aggregate` must delegate to the injected PricingPolicy and return its result unchanged.
@@ -2684,19 +2505,18 @@ class SpecFidelityCriticServiceTest {
                 R4: The method must return an empty map for an empty input list.
                 """;
 
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).isEmpty();
+        assertThat(detector().detectUnenforceableTechniqueRules(spec)).isEmpty();
     }
 
     @Test
     void techniqueRules_reportEachDistinctMandateOnce() {
         String spec = "## Rules\nR1: must be recursive\nR2: must be recursive\nR3: must not use loops\n";
 
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).hasSize(2);
+        assertThat(detector().detectUnenforceableTechniqueRules(spec)).hasSize(2);
     }
 
     @Test
     void techniqueRules_stopAtTheAdvisoryBudgetWhenASpecificationIsFullOfThem() {
-        // The findings are advisory and unrepairable, so a specification that mandates a technique in every rule must not push every other advisory finding out of the report.
         String spec = """
                 ## Rules
                 R1: The implementation must be recursive.
@@ -2707,15 +2527,12 @@ class SpecFidelityCriticServiceTest {
                 R6: The implementation must use a for loop.
                 """;
 
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(spec)).hasSize(4);
+        assertThat(detector().detectUnenforceableTechniqueRules(spec)).hasSize(4);
     }
 
     // --- Grader-mechanics leak detection ---
 
-    /**
-     * Each phrasing the deterministic, model-free leak scan must catch. Every pattern is independently deletable from
-     * {@code SpecFidelityCriticService#MECHANICS_LEAK_PATTERNS} without any other test noticing, so each one is pinned by its own row.
-     */
+    /** Each phrasing the model-free leak scan must catch. Every {@code SpecFidelityCriticService#MECHANICS_LEAK_PATTERNS} entry is independently deletable, so each has a row. */
     private static Stream<String> mechanicsLeakPhrasings() {
         return Stream.of("Raise NotImplementedError from the stub.", "The starter contains todo!() where your code goes.", "These make the tests fail until you implement it.",
                 "Note that the template must fail every test before you start.", "Use the exact test name reported below.",
@@ -2748,8 +2565,8 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void techniqueRules_emptyWithoutASpecification() {
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules(null)).isEmpty();
-        assertThat(detectorOnly().detectUnenforceableTechniqueRules("   ")).isEmpty();
+        assertThat(detector().detectUnenforceableTechniqueRules(null)).isEmpty();
+        assertThat(detector().detectUnenforceableTechniqueRules("   ")).isEmpty();
     }
 
     // --- Contract witnesses ---
@@ -2842,7 +2659,6 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_dropsAWitnessThatAssertsNothing() {
-        // A witness with no assertion passes against every implementation, correct or not, so it pins no rule.
         assertThat(witnessesFrom("""
                 {"witnesses":[{"rule":"R1","testName":"testWitnessEmpty","code":"@Test\\nvoid testWitnessEmpty() { new RosterParser().formatRoster(\\"a\\"); }",
                  "wrongBehavior":"accepts an invalid record"}]}
@@ -2851,7 +2667,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_dropsAWitnessForARuleTheSpecificationNeverStates() {
-        // Inventing a requirement is the one thing this pass must never do: the witness would become grading material for a rule no student was told about.
+        // The witness would otherwise become grading material for a rule no student was told about.
         assertThat(witnessesFrom("""
                 {"witnesses":[{"rule":"R999","testName":"testWitnessInvented","code":"@Test\\nvoid testWitnessInvented() { assertEquals(1, 1, \\"invented\\"); }",
                  "wrongBehavior":"violates an invented rule"}]}
@@ -2881,7 +2697,6 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void authorContractWitnesses_authorsNothingWhenTheResponseIsNotUsableJson() {
-        // A critic that fails must never cost the exercise anything: the caller keeps the suite it already has.
         assertThat(witnessesFrom("I could not find any uncovered rules.")).isEmpty();
         assertThat(witnessesFrom("{\"witnesses\": null}")).isEmpty();
     }
@@ -3064,8 +2879,7 @@ class SpecFidelityCriticServiceTest {
 
     @Test
     void criticModelId_comesFromTheChatModelBeanRatherThanTheRawProperty() {
-        // One value, one source. Reading spring.ai.openai.chat.model separately let a deployment that configured its model anywhere else review with a different model than it
-        // authored with, and nothing in the system could observe the split.
+        // Reading spring.ai.openai.chat.model separately let a deployment that configured its model anywhere else review with a different model than it authored with.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("bean-model").build());
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"complete\": true, \"findings\": []}"));

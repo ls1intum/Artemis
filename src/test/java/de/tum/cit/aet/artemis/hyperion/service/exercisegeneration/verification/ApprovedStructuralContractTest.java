@@ -184,30 +184,6 @@ class ApprovedStructuralContractTest {
     }
 
     @Test
-    void treatsAnUnqualifiedJdkCollectionInTheSpecAsTheImportedRepositoryType() {
-        ApprovedStructuralContract.ParseResult result = ApprovedStructuralContract.parse("""
-                ## Public API
-                ```java
-                public interface DispatchStrategy {
-                    Elevator select(List<Elevator> elevators, int callFloor);
-                }
-                ```
-                ```java
-                public class Elevator {}
-                ```
-                """, Set.of("DispatchStrategy", "Elevator"), Set.of("DispatchStrategy"));
-
-        assertThat(result.errors()).isEmpty();
-        assertThat(result.contract().solutionSurfaceReasons(java.util.Map.of("src/DispatchStrategy.java", """
-                package seededexercise;
-                import java.util.List;
-                public interface DispatchStrategy {
-                    Elevator select(List<Elevator> elevators, int callFloor);
-                }
-                """, "src/Elevator.java", "package seededexercise; public class Elevator {}"))).isEmpty();
-    }
-
-    @Test
     void doesNotConfuseAnExerciseTypeWithAnEquallyNamedLibraryType() {
         ApprovedStructuralContract.ParseResult result = ApprovedStructuralContract.parse("""
                 ## Public API

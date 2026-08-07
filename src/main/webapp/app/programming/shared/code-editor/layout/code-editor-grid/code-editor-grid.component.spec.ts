@@ -154,18 +154,17 @@ describe('CodeEditorGridComponent', () => {
     it('exposes truthful focusable semantics for every resize handle', () => {
         fixture.detectChanges();
 
-        const separators = ['#draggableIconForFileBrowser', '#draggableIconForInstructions', '#draggableIconForEditorMain'].map(
+        const handles = ['#draggableIconForFileBrowser', '#draggableIconForInstructions', '#draggableIconForEditorMain', '#draggableIconForBuildOutput'].map(
             (selector) => fixture.nativeElement.querySelector(selector) as HTMLElement,
         );
-        const bottomHandle = fixture.nativeElement.querySelector('#draggableIconForBuildOutput') as HTMLElement;
 
-        for (const handle of [...separators, bottomHandle]) {
+        for (const handle of handles) {
+            expect(handle.getAttribute('role')).toBe('separator');
             expect(handle.getAttribute('tabindex')).toBe('0');
+            expect(handle.getAttribute('aria-controls')).not.toBeNull();
             expect(handle.getAttribute('aria-valuemin')).not.toBeNull();
             expect(handle.getAttribute('aria-valuemax')).not.toBeNull();
             expect(handle.getAttribute('aria-valuenow')).not.toBeNull();
         }
-        expect(separators.every((handle) => handle.getAttribute('role') === 'separator')).toBe(true);
-        expect(bottomHandle.getAttribute('role')).toBe('slider');
     });
 });

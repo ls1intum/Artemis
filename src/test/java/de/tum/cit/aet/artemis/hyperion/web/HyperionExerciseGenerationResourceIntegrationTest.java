@@ -23,19 +23,12 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * Real-HTTP authorization matrix for {@link HyperionExerciseGenerationResource}.
+ * Real-HTTP authorization matrix for {@link HyperionExerciseGenerationResource}: {@link HyperionExerciseGenerationResourceTest} only reflects on the {@code @EnforceAtLeast...}
+ * annotations, so the security filters, route mapping and enforcement aspects never run there; they do here.
  * <p>
- * {@link HyperionExerciseGenerationResourceTest} constructs the resource directly with mocks; its least-privilege test only reflects on the {@code @EnforceAtLeast...} annotations,
- * so Spring Security filters, route mapping, and the {@code @EnforceAtLeastEditorInExercise}/{@code @EnforceAtLeastEditor} AOP aspects never actually run. This class drives the
- * same endpoints through the real filter chain and MockMvc so a regression in the security configuration, route mapping, or the aspect itself would be caught here.
- * <p>
- * No collaborator is mocked (the repo's {@code SpringContextConfigurationArchitectureTest} forbids per-class {@code @MockitoBean}/{@code @MockitoSpyBean} outside the shared base
- * classes, since that would fork a fresh Spring context per test class). Instead, every "role passed" assertion below is engineered to hit a real, side-effect-free branch of the
- * genuine service instead of ever starting an agentic job: the fixture exercise uses {@link ProjectType#MAVEN_BLACKBOX}, which the real {@code LanguageGenerationProfile} rejects
- * before the resource ever reaches the sandbox/orchestration/LLM collaborators, and the status/cancel/revert endpoints naturally resolve to their real "nothing retained yet"
- * branch for an exercise that never had a run. This class therefore asserts status codes at the role boundary only (not business behaviour, which is already covered by
- * {@link HyperionExerciseGenerationResourceTest} and the mocked-LLM end-to-end tests) - but a 400/204/404 in the "success" rows below is the expected real response for an
- * authorized caller, distinctly different from the 401/403 rows, which is what proves the boundary itself.
+ * No collaborator is mocked, so every "role passed" row is engineered to hit a real, side-effect-free branch rather than start an agentic job: the fixture exercise uses
+ * {@link ProjectType#MAVEN_BLACKBOX}, which the real {@code LanguageGenerationProfile} rejects with a 400, and status/cancel/revert resolve to their "nothing retained yet"
+ * branch. A 400/204/404 row is therefore the expected response for an authorized caller, distinct from the 401/403 rows — which is what proves the boundary.
  */
 class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -62,8 +55,8 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         userUtilService.addEditorToCourse(TEST_PREFIX + "editor1", course);
         userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", course);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
-        // MAVEN_BLACKBOX (unverified DejaGnu grading) is a real project type the differential verifier does not support (see LanguageGenerationProfile), so an authorized caller
-        // deterministically hits generateExercise's real "unsupportedGenerationLanguage" 400 branch instead of ever reaching the sandbox/orchestration/LLM collaborators.
+        // MAVEN_BLACKBOX (unverified DejaGnu grading) is a real project type LanguageGenerationProfile rejects, so an authorized caller deterministically hits generateExercise's
+        // "unsupportedGenerationLanguage" 400 branch instead of reaching the sandbox/orchestration/LLM collaborators.
         programmingExercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
         exerciseId = programmingExerciseRepository.save(programmingExercise).getId();
     }
@@ -71,8 +64,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     private String generateExerciseRequestBody() throws Exception {
         return objectMapper.writeValueAsString(new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, null, null));
     }
-
-    // ---- POST programming-exercises/{exerciseId}/generate-exercise ----
 
     @Test
     @WithAnonymousUser
@@ -116,8 +107,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
                 .content(generateExerciseRequestBody())).andExpect(status().isBadRequest());
     }
 
-    // ---- GET programming-exercises/{exerciseId}/generate-exercise/status ----
-
     @Test
     @WithAnonymousUser
     void getExerciseGenerationStatus_anonymous_returnsUnauthorized() throws Exception {
@@ -139,7 +128,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getExerciseGenerationStatus_editor_passesAuthorizationAndReturnsNoContent() throws Exception {
-        // No run was ever started for this exercise, so the real service naturally resolves to "nothing retained" (204) once authorization passes.
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status", exerciseId)).andExpect(status().isNoContent());
     }
 
@@ -154,8 +142,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     void getExerciseGenerationStatus_admin_passesAuthorizationAndReturnsNoContent() throws Exception {
         request.performMvcRequest(get("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status", exerciseId)).andExpect(status().isNoContent());
     }
-
-    // ---- DELETE programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId} ----
 
     @Test
     @WithAnonymousUser
@@ -179,7 +165,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void cancelExerciseGeneration_editor_passesAuthorizationAndReturnsNotFound() throws Exception {
-        // No job named "job-1" is active for this exercise, so the real service naturally reports "no matching job" (404) once authorization passes.
         request.performMvcRequest(delete("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}", exerciseId, "job-1")).andExpect(status().isNotFound());
     }
 
@@ -194,8 +179,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     void cancelExerciseGeneration_admin_passesAuthorizationAndReturnsNotFound() throws Exception {
         request.performMvcRequest(delete("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}", exerciseId, "job-1")).andExpect(status().isNotFound());
     }
-
-    // ---- POST programming-exercises/{exerciseId}/generate-exercise/revert ----
 
     @Test
     @WithAnonymousUser
@@ -218,7 +201,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void revertExerciseGeneration_editor_passesAuthorizationAndReturnsNotFound() throws Exception {
-        // No baseline was ever recorded for this exercise, so the real service naturally reports "nothing to revert" (404) once authorization passes.
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isNotFound());
     }
 
@@ -233,8 +215,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     void revertExerciseGeneration_admin_passesAuthorizationAndReturnsNotFound() throws Exception {
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isNotFound());
     }
-
-    // ---- GET programming-exercises/generation/supported-languages (not exercise-scoped: guarded by the global least-privilege editor role only) ----
 
     @Test
     @WithAnonymousUser
@@ -263,8 +243,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSupportedGenerationLanguages_instructorOfUnrelatedCourse_returnsOk() throws Exception {
-        // Unlike the exercise-scoped endpoints above, this endpoint is not scoped to any specific exercise/course: any authenticated user holding at least the global EDITOR role
-        // is allowed, regardless of course membership - so the OTHER_PREFIX instructor (who is not a member of the fixture course) is still allowed here.
+        // This endpoint is not exercise-scoped: the global EDITOR role suffices regardless of course membership, so a non-member instructor is allowed.
         request.performMvcRequest(get("/api/hyperion/programming-exercises/generation/supported-languages")).andExpect(status().isOk());
     }
 

@@ -351,18 +351,19 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Keyed staging area for the large tar payloads of interactive-sandbox {@code COPY_IN} / {@code COPY_OUT} operations, keyed by the operation's correlation id. The bytes are
-     * kept off the broadcast request/response topics on purpose: a topic message is delivered to and deserialized by every subscribed member, so routing a 32 MB blob through a
-     * topic would fan it out to every subscribed node on the distributed event threads. Staging it here instead means only the one node that owns the correlation id ever fetches
-     * the payload — the
-     * sender writes the entry, the recipient reads it without consuming it so retries remain possible, and the sender removes it after the terminal response or timeout. The map
-     * is initialized lazily the first time this method is called if it is still null.
+     * Keyed staging area for the large tar payloads of interactive-sandbox {@code COPY_IN} / {@code COPY_OUT} operations, keyed by the operation's correlation id. Keeping the
+     * bytes here rather than on the broadcast request/response topics means only the node owning the correlation id fetches them, instead of every subscriber deserializing them
+     * on its event thread. The recipient reads an entry without consuming it, so a retry can still recover it; the sender removes it after the terminal response or timeout.
+     * <p>
+     * Obtained as an <em>expiring</em> map, and every write must use {@link de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap#put(Object, Object,
+     * java.time.Duration)}. Removal by the writer is not sufficient: the agent stages a copy-out payload only after the requesting core node may already have timed out and run
+     * its removal, and a core node can crash between staging and removal, either of which leaves a large blob with nothing to reclaim it.
      *
      * @return the distributed map staging interactive-sandbox copy payloads by correlation id
      */
     public DistributedMap<String, byte[]> getHyperionSandboxPayloads() {
         if (this.hyperionSandboxPayloads == null) {
-            this.hyperionSandboxPayloads = this.distributedDataProvider.getMap("hyperion-sandbox-payloads");
+            this.hyperionSandboxPayloads = this.distributedDataProvider.getExpiringMap("hyperion-sandbox-payloads");
         }
         return this.hyperionSandboxPayloads;
     }

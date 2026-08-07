@@ -95,7 +95,11 @@ public class InteractiveSandboxRelayHandler {
 
     private final Object requestDeduplicationLock = new Object();
 
-    /** In-flight ids are never evicted; doing so could repeat a side effect when a retry arrives. */
+    /**
+     * Ids whose operation is still running, mapped to the instant after which a retry may no longer arrive (the request deadline plus grace). Entries are swept by that stored
+     * deadline rather than by size or age: evicting one while its operation is genuinely in flight would let a retry repeat the side effect, and never evicting leaks the entry
+     * (and permanently blocks its correlation id) whenever an operation dies before reaching {@link #rememberCompletedResponse}.
+     */
     private final Map<String, Long> inFlightCorrelationIds = new HashMap<>();
 
     /** Terminal responses retained with their correlation ids so a retried request can recover a lost response without repeating the side effect. */
@@ -144,7 +148,7 @@ public class InteractiveSandboxRelayHandler {
      */
     @PostConstruct
     public void registerRequestListener() {
-        // Opt-in placement: an agent with the cap at 0 never hosts a relayed Hyperion sandbox, so it adds no generation load to CI/exam builds. Do not even subscribe.
+        // Without capacity the agent does not even subscribe, so it adds no generation load to CI/exam builds.
         if (maxGenerationSandboxSlots <= 0) {
             log.info("Interactive sandbox relay hosting disabled on build agent '{}' (max-generation-sandbox-slots=0); it will not host Hyperion sandboxes.", buildAgentShortName);
             return;
@@ -224,9 +228,9 @@ public class InteractiveSandboxRelayHandler {
                     publishResponse(response);
                 }
             });
-            // Advertise only after the request listener is live. Setting the local slot state is not enough: the periodic heartbeat only writes this agent's entry while it is
-            // absent from the distributed map, so an agent that gains capacity would keep advertising zero until some unrelated event happened to republish it, and core nodes
-            // would reject every generation request in the meantime. Publish it here, the same way publishSessionState does after each create/destroy.
+            // Advertise only after the request listener is live, and publish rather than only setting local state: the periodic heartbeat writes this agent's entry only while it
+            // is absent from the distributed map, so an agent that gains capacity would keep advertising zero until some unrelated event republished it, and core nodes would
+            // reject every generation request in the meantime.
             buildAgentInformationService.updateGenerationSandboxSlotState(0, maxGenerationSandboxSlots);
             buildAgentInformationService.refreshLocalBuildAgentInformationPreservingFailures(sharedQueueProcessingService.isPaused());
             log.info("InteractiveSandboxRelayHandler initialized for build agent '{}' (max generation sandbox slots: {})", buildAgentShortName, maxGenerationSandboxSlots);
@@ -344,9 +348,16 @@ public class InteractiveSandboxRelayHandler {
                 };
             }
         }
-        catch (Exception e) {
-            log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}' ({})", request.op(), request.correlationId(), buildAgentShortName,
-                    e.getClass().getSimpleName());
+        // Throwable, not Exception: the caller is a core node blocked on a distributed future, so an Error here (a LinkageError from a partial deploy, an OOM) would otherwise
+        // leave it waiting out the whole relay budget with no diagnosis. The worker thread is dedicated to this operation, so nothing else inherits the damaged state.
+        catch (Throwable e) {
+            if (e instanceof Exception) {
+                log.warn("Interactive sandbox relay operation {} ({}) failed on agent '{}' ({})", request.op(), request.correlationId(), buildAgentShortName,
+                        e.getClass().getSimpleName());
+            }
+            else {
+                log.error("Interactive sandbox relay operation {} ({}) hit a fatal error on agent '{}'", request.op(), request.correlationId(), buildAgentShortName, e);
+            }
             response = SandboxOpResponseDTO.failure(request.correlationId(), "Interactive sandbox " + request.op() + " operation failed: " + sanitizedCauseMessage(e));
         }
         finally {
@@ -360,6 +371,7 @@ public class InteractiveSandboxRelayHandler {
         synchronized (requestDeduplicationLock) {
             long now = System.currentTimeMillis();
             completedResponses.values().removeIf(cached -> cached.expiresAtEpochMillis() < now);
+            inFlightCorrelationIds.values().removeIf(retryDeadline -> retryDeadline < now);
             CachedResponse completedResponse = completedResponses.get(request.correlationId());
             if (completedResponse != null) {
                 return new RequestClaim(false, completedResponse.response());
@@ -443,8 +455,7 @@ public class InteractiveSandboxRelayHandler {
                     if (isDeadlineExpired(request)) {
                         created = retainExpiredContainerWhenCleanupFails(containerId, request.sessionSpec());
                         if (created) {
-                            // The originating core may already have timed out. Cache CREATED so a retry on this handler recovers the retained container instead of replaying a
-                            // false failure that could trigger duplicate placement.
+                            // Cache CREATED so a retry recovers the retained container instead of a false failure that could trigger duplicate placement.
                             return SandboxOpResponseDTO.created(request.correlationId(), containerId);
                         }
                         return deadlineExpiredResponse(request);
@@ -456,8 +467,7 @@ public class InteractiveSandboxRelayHandler {
                         publishSessionState();
                     }
                     catch (RuntimeException e) {
-                        // The container already exists. Returning a retryable CREATE failure could place the same job on another agent, so observability refresh is best-effort
-                        // here.
+                        // Best-effort: the container already exists, and failing CREATE here could place the same job on a second agent.
                         log.warn("Could not publish generation sandbox slot state after creating session {}: {}", containerId, e.getMessage());
                     }
                     return SandboxOpResponseDTO.created(request.correlationId(), containerId);
@@ -505,7 +515,7 @@ public class InteractiveSandboxRelayHandler {
 
     private SandboxOpResponseDTO handleCopyIn(SandboxOpRequestDTO request) {
         requireOwnedSession(request.sessionId());
-        // Keep the staged payload until the caller receives a terminal response, so a retried request can recover after a lost response without losing the input.
+        // Read without removing: the payload has to survive until the caller sees a terminal response, or a retry after a lost response would find no input.
         byte[] payload = distributedDataAccessService.getHyperionSandboxPayloads().get(request.correlationId());
         if (payload == null) {
             return SandboxOpResponseDTO.failure(request.correlationId(),
@@ -532,10 +542,10 @@ public class InteractiveSandboxRelayHandler {
                 return deadlineExpiredResponse(request);
             }
             // Stage the repacked archive in the keyed map rather than on the response topic, so only the originating core node fetches the bytes instead of every response
-            // subscriber
-            // deserializing them on its event thread. The client reads and removes the entry.
+            // subscriber deserializing them on its event thread. The client reads and removes the entry.
             var payloads = distributedDataAccessService.getHyperionSandboxPayloads();
-            payloads.put(request.correlationId(), payload);
+            // With an expiry, because the client's finally-block removal may already have run against a key this staging is only now creating.
+            payloads.put(request.correlationId(), payload, RemoteInteractiveSandboxClient.PAYLOAD_STAGING_TTL);
             if (isDeadlineExpired(request)) {
                 payloads.remove(request.correlationId());
                 return deadlineExpiredResponse(request);
@@ -612,7 +622,7 @@ public class InteractiveSandboxRelayHandler {
     }
 
     /** A short, single-line, length-bounded rendering of the failure cause to include in the response sent back to the blocked caller. */
-    private static String sanitizedCauseMessage(Exception e) {
+    private static String sanitizedCauseMessage(Throwable e) {
         String message = e.getMessage();
         if (StringUtils.isBlank(message)) {
             message = e.getClass().getSimpleName();

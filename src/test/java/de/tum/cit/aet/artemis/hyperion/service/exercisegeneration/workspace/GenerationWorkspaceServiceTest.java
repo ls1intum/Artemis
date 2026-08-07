@@ -194,7 +194,6 @@ class GenerationWorkspaceServiceTest {
 
     @Test
     void readStyleGuides_loadsAllSixArtifactGuidesWithoutACompetingWorkedExercise() {
-        // Unlike readReferenceSample the style guides are language-agnostic prose, so the method takes no exercise parameter and every GENERATE run is seeded identically.
         ResourceLoaderService resourceLoaderService = new ResourceLoaderService(new DefaultResourceLoader(), mock());
         ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", Optional.empty());
         GenerationWorkspaceService service = new GenerationWorkspaceService(mock(), mock(), mock(), resourceLoaderService, tempFileUtilService());
@@ -203,7 +202,6 @@ class GenerationWorkspaceServiceTest {
 
         assertThat(guides).containsOnlyKeys("reference/style/draft-statement.md", "reference/style/final-statement.md", "reference/style/template.md",
                 "reference/style/solution.md", "reference/style/tests.md", "reference/style/spec.md");
-        // Each guide states its role up front so the agent can tell them apart at a glance.
         assertThat(guides.get("reference/style/spec.md")).contains("## Worked Examples").contains("## Design").contains("## Testing Strategy").contains("## Diagram")
                 .contains("student-creates", "owner-controlled responsibility", "independently diagnosable");
         assertThat(guides.get("reference/style/draft-statement.md")).contains("BEFORE any tests");
@@ -211,7 +209,7 @@ class GenerationWorkspaceServiceTest {
         assertThat(guides.get("reference/style/template.md")).contains("// TODO");
         assertThat(guides.get("reference/style/solution.md")).contains("Diff discipline");
         assertThat(guides.get("reference/style/tests.md")).contains("Harness conventions (Java/Ares)");
-        // Style guidance must stay topic-neutral: the seeded worked sample is the only place the agent may read a concrete exercise topic from.
+        // The seeded worked sample is the only place the agent may read a concrete exercise topic from, so the guides stay topic-neutral.
         assertThat(guides.values())
                 .noneMatch(content -> content.contains("ShippingCalculator") || content.contains("FeeStrategy") || content.contains("LoyaltyAccount")
                         || content.contains("RewardStrategy") || content.contains("Cafe Loyalty") || content.contains("Loyalty Points"))
@@ -390,12 +388,13 @@ class GenerationWorkspaceServiceTest {
                         Map.of("test/MainTest.java", "class MainTest {}")),
                 Map.of(RepositoryType.SOLUTION, new GenerationWorkspaceService.RepositorySeedMetadata(Map.of("tool.bin", WorkspaceArchive.sha256(binary)), Set.of("gradlew"))),
                 Map.of(RepositoryType.SOLUTION, Map.of("tool.bin", new GenerationWorkspaceService.BinarySeedFile(binary))), null, null, null);
+
+        verify(sandbox).copyIn(eq("session"), eq("/workspace"), any());
     }
 
     @Test
     void materializeRepositoryFiles_reseedsTheProblemStatementSpecAndGradingPlanWhenGiven() {
-        // /workspace is a tmpfs; a resetSession() (container restart) between the two differential builds wipes it entirely, and problem-statement.md lives at the workspace root
-        // outside any of the three repositories, so the restore must re-seed it explicitly or the next read fails with "the generated problem statement is missing".
+        // A resetSession() wipes the /workspace tmpfs, and problem-statement.md lives at the workspace root outside the three repositories, so the restore must re-seed it.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         doAnswer(invocation -> {
             try (TarArchiveInputStream tar = new TarArchiveInputStream(invocation.getArgument(2))) {
@@ -410,6 +409,8 @@ class GenerationWorkspaceServiceTest {
 
         service.materializeRepositoryFiles(sandbox, "session", exercise, GenerationMode.ADAPT, Map.of(), Map.of(), Map.of(), "# Restored\n", "# Spec\n",
                 "{\"tests\":[{\"name\":\"testFoo\",\"seamWeightTier\":2,\"visibility\":\"AFTER_DUE_DATE\"}]}");
+
+        verify(sandbox).copyIn(eq("session"), eq("/workspace"), any());
     }
 
     @Test

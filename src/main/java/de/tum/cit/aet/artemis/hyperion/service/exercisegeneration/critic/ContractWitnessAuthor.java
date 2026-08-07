@@ -60,13 +60,8 @@ class ContractWitnessAuthor {
     }
 
     /**
-     * Authors executable witnesses for rules of the approved specification, so rule coverage becomes something the server can run rather than something a model asserts.
-     * <p>
-     * The oracle review already proposes plausible wrong implementations and reports whether the graded suite kills them, but its {@code killed} flag is the reviewing model's own
-     * claim and is never executed. A witness is executed, so the caller can validate each one against the reference solution and discard any that does not pass.
-     * <p>
-     * Kept separate from the oracle review on purpose: a rule is usually untested because the authoring agent did not think of it, so asking that same context to attack its own
-     * work reproduces the blind spot.
+     * Authors executable witnesses for rules of the approved specification. Kept separate from the oracle review because a rule is usually untested precisely because the
+     * authoring agent did not think of it, so asking that same context to attack its own work reproduces the blind spot.
      *
      * @param specificationContract the approved specification whose {@code ## Rules} rows are the only admissible source of a witness
      * @param testSources           the graded test sources as produced, so the pass targets rules the suite does not already pin
@@ -146,8 +141,8 @@ class ContractWitnessAuthor {
             String testName = item.testName().strip();
             String code = item.code().strip();
             String ruleId = item.rule().strip();
-            // Each check below drops a witness that would otherwise be validated on no evidence: the name must be the method the code DECLARES, or a build result could never be
-            // attributed to it; a witness with no assertion passes against every implementation; and a rule the specification does not contain is an invented requirement.
+            // The name must be the method the code DECLARES, or a build result could never be attributed to it; a witness with no assertion passes against every implementation;
+            // and a rule the specification does not contain is an invented requirement.
             if (!declaresMethod(code, testName) || !containsAssertion(code) || !specificationDeclaresRule(specificationContract, ruleId)
                     || usesSuiteLocalHelper(code, testName, testSources) || !seenNames.add(testName)) {
                 continue;

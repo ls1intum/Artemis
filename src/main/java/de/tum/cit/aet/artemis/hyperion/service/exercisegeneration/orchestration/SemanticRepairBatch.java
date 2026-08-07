@@ -22,8 +22,8 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
     private static final int MAX_CONSECUTIVE_ROUNDS_PER_SURFACE = 2;
 
     /**
-     * The oracle batch that offers the agent every validated contract witness. Separate from {@link #next} because that one deliberately schedules only blocking findings,
-     * and a witness is advisory: it is a test the agent may adopt, not a defect it must fix.
+     * The oracle batch that offers the agent every validated contract witness. Separate from {@link #next}, which schedules only blocking findings, because a witness is advisory:
+     * a test the agent may adopt, not a defect it must fix.
      */
     static Optional<SemanticRepairBatch> witnessAdoption(SpecFidelityReport report) {
         List<SpecFidelityReport.Finding> witnesses = report.findings().stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE).toList();
@@ -35,11 +35,6 @@ record SemanticRepairBatch(RepairSurface surface, SpecFidelityReport report, Set
      * The next repair batch. Exactly one coherent surface per attempt, so a single repair cannot rewrite every artifact at once, and chosen by priority only while no surface is
      * being starved: a surface that has held {@link #MAX_CONSECUTIVE_ROUNDS_PER_SURFACE} rounds in a row yields to any surface with blocking findings that has never had a round.
      * Priority alone would let one surface hold the entire budget while another shipped unrepaired.
-     *
-     * @param report            the current review findings
-     * @param repairedSurfaces  surfaces already repaired at least once in this generation
-     * @param currentSurface    the surface the previous round repaired, or {@code null} for the first round
-     * @param consecutiveRounds how many rounds in a row {@code currentSurface} has held
      */
     static Optional<SemanticRepairBatch> next(SpecFidelityReport report, Set<RepairSurface> repairedSurfaces, @Nullable RepairSurface currentSurface, int consecutiveRounds) {
         if (currentSurface != null && consecutiveRounds >= MAX_CONSECUTIVE_ROUNDS_PER_SURFACE) {

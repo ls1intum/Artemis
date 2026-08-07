@@ -16,21 +16,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * A single progress event streamed to the instructor over the websocket while an agentic whole-exercise generation/adaptation runs.
  * <p>
  * {@link Serializable} because it is retained (inside {@code JobTranscript}) in a distributed Hazelcast map for reconnect/replay.
- *
- * @param type                   the event kind
- * @param message                a human-readable progress or result message
- * @param completionStatus       on a terminal {@code DONE} event, whether the run succeeded, needs review, or partially completed; otherwise {@code null}
- * @param verdict                on a terminal event with a verification result, the structured verdict (which gates passed/failed) so the client can render scannable chips; else
- *                                   {@code null}
- * @param liveExerciseChanged    on a terminal event, whether the live exercise repositories/problem statement were changed and an open editor should refresh; otherwise
- *                                   {@code null}
- * @param savedRepositoryCommits exact commit hashes saved by repository name on a successful terminal event; otherwise {@code null}
- * @param savedExerciseVersionId the id of the exact {@code ExerciseVersion} row saved by this run, on a successful terminal event; {@code null} when no new version was
- *                                   recorded (e.g. a no-op run)
- * @param terminationReason      on a terminal event, why the generation run ended, as a closed machine-readable value; {@code null} otherwise. Orthogonal to
- *                                   {@link #completionStatus()}: this says why the attempt loop stopped producing candidates, that says what became of the result
- * @param repairRound            on a repair-round progress event, that round's finding bookkeeping; {@code null} on every other event
- * @param timestamp              the moment the event was produced
+ * <p>
+ * Everything except {@code type} and {@code timestamp} is populated only on the events it describes and is {@code null} elsewhere. {@link TerminationReason} is orthogonal to
+ * {@link CompletionStatus}: the first says why the attempt loop stopped producing candidates, the second what became of the result.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "A progress event streamed to the instructor while an agentic whole-exercise generation or adaptation runs")
@@ -50,21 +38,12 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public enum Type {
-        /** The session has started. */
-        STARTED,
-        /** A progress update (e.g. a tool call or a verification step). */
-        PROGRESS,
-        /** A terminal event: the run finished (see {@link #completionStatus()}). */
-        DONE,
-        /** The run was cancelled by the instructor. */
-        CANCELLED,
-        /** A terminal error event. */
-        ERROR
+        STARTED, PROGRESS, DONE, CANCELLED, ERROR
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public enum CompletionStatus {
-        /** The exercise was verified and saved. */
+        /** The exercise was verified and saved with no blocking quality findings. */
         SUCCESS,
         /** The mechanically verified exercise was saved, but automated quality findings require instructor review. */
         NEEDS_REVIEW,
@@ -73,15 +52,12 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
     }
 
     /**
-     * Why one generation or adaptation run stopped producing candidates.
-     * <p>
-     * A closed set rather than prose, because this is the number that decides whether the repair loop converges or merely runs out of budget, and a substring match against a log
-     * line cannot answer that. Every exit of the attempt loop maps to exactly one value; the run-level controls the loop cannot see (wall clock, token budget) refine
-     * {@link #CANCELLED} into their own value where the caller knows better.
+     * Why one generation or adaptation run stopped producing candidates. Every exit of the attempt loop maps to exactly one value; the run-level controls the loop cannot see
+     * (wall clock, token budget) refine {@link #CANCELLED} into their own value.
      */
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public enum TerminationReason {
-        /** The candidate was mechanically verified and its quality review found nothing blocking: the loop stopped because it was finished. */
+        /** The candidate was mechanically verified and its quality review found nothing blocking. */
         CONVERGED,
         /** Every semantic repair round the run was allowed had been spent while blocking findings remained. */
         REPAIR_BUDGET_EXHAUSTED,
@@ -102,9 +78,8 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
         /** Concept exploration completed, but no candidate satisfied the instructor brief and learning-fit review, and none was usable as a fallback either. */
         NO_ADMISSIBLE_CONCEPT,
         /**
-         * Concept exploration admitted no candidate, so the run proceeded with the least-rejected one and stopped with the reviewer's objections attached for the instructor. A
-         * verified exercise was produced; it needs a design decision no automated repair can make. Distinct from {@link #NO_SCHEDULABLE_SURFACE}, which it refines, because the
-         * contested artifact is the exercise idea rather than any file the repair loop could edit.
+         * Concept exploration admitted no candidate, so the run proceeded with the least-rejected one and stopped with the reviewer's objections attached. Refines
+         * {@link #NO_SCHEDULABLE_SURFACE}: the contested artifact is the exercise idea rather than any file the repair loop could edit.
          */
         CONCEPT_ADMITTED_WITH_FINDINGS,
         /** The run was stopped cooperatively (instructor cancellation, lost job ownership, or an unclassified stop signal). */
@@ -127,13 +102,12 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
         return new ExerciseGenerationEventDTO(type, message, null, null, null, null, null, null, null, Instant.now());
     }
 
-    /** A progress event carrying one repair round's finding bookkeeping alongside its human-readable line. */
     public static ExerciseGenerationEventDTO repairRound(@Nullable String message, ExerciseGenerationRepairRoundDTO repairRound) {
         return new ExerciseGenerationEventDTO(Type.PROGRESS, message, null, null, null, null, null, null, repairRound, Instant.now());
     }
 
     /**
-     * This event with {@code terminationReason} set, so terminal events can be stamped where the reason is known without threading it through every factory overload.
+     * This event with {@code terminationReason} set, so a terminal event can be stamped where the reason is known.
      *
      * @param terminationReason why the run ended; {@code null} leaves the event unchanged
      * @return a copy carrying the reason, or {@code this} when there is nothing to add

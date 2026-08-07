@@ -138,6 +138,12 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     }
 
     @Override
+    public <K, V> DistributedMap<K, V> getExpiringMap(String name) {
+        // An IMap supports a per-entry TTL directly, so this is the same proxy; the distinct factory method exists for the backends where it is not.
+        return getMap(name);
+    }
+
+    @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         return new HazelcastDistributedTopic<>(hazelcastInstance.getTopic(name));
     }

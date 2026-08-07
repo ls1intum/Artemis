@@ -21,6 +21,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.ApplicationContext;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,23 +37,30 @@ class ChatModelContentObservationFilterTest {
             .withUserConfiguration(ChatModelContentObservationFilter.class);
 
     @Test
-    void contentCaptureRequiresExplicitOptIn() {
-        contextRunner.run(context -> assertThat(context).hasSingleBean(ChatModelContentObservationFilter.class));
-        contextRunner.withPropertyValues("management.opentelemetry.instrumentation.gen-ai.capture-content=true")
-                .run(context -> assertThat(context).hasSingleBean(ChatModelContentObservationFilter.class));
+    void theConfiguredCaptureFlagAndBoundReachTheSpringBuiltBean() {
+        String content = "x".repeat(80_000);
+
+        contextRunner.run(context -> assertThat(mapped(context, content).getHighCardinalityKeyValues()).noneMatch(keyValue -> keyValue.getKey().startsWith("gen_ai.")));
+        contextRunner.withPropertyValues("artemis.telemetry.gen-ai.capture-content=true")
+                .run(context -> assertThat(mapped(context, content).getHighCardinalityKeyValue("gen_ai.input.messages").getValue()).contains(content));
+        contextRunner.withPropertyValues("artemis.telemetry.gen-ai.capture-content=true", ChatModelContentObservationFilter.MAX_ATTRIBUTE_BYTES_PROPERTY + "=64000")
+                .run(context -> {
+                    ChatModelObservationContext observed = mapped(context, content);
+
+                    assertThat(observed.getHighCardinalityKeyValue("gen_ai.input.messages")).isNull();
+                    assertThat(observed.getHighCardinalityKeyValue("artemis.gen_ai.content.complete").getValue()).isEqualTo("false");
+                });
     }
 
-    @Test
-    void theAttributeBoundIsReadFromConfiguration() {
-        contextRunner.withPropertyValues(ChatModelContentObservationFilter.MAX_ATTRIBUTE_BYTES_PROPERTY + "=250000")
-                .run(context -> assertThat(context).hasSingleBean(ChatModelContentObservationFilter.class));
+    private static ChatModelObservationContext mapped(ApplicationContext context, String content) {
+        ChatModelObservationContext observationContext = ChatModelObservationContext.builder().prompt(new Prompt(new UserMessage(content))).provider("openai").build();
+        context.getBean(ChatModelContentObservationFilter.class).map(observationContext);
+        return observationContext;
     }
 
     @Test
     void aNonPositiveBoundFallsBackToTheShippedDefaultInsteadOfBreakingTracing() {
-        // Two things at once. A bound of zero would omit every attribute, silently reproducing the measurement loss the property exists to let an operator escape. And this
-        // bean is lazy, so throwing here would not fail startup — it would surface at the first span, inside the provider call this filter only observes. Neither is acceptable,
-        // so the misconfiguration is refused and the shipped default is used.
+        // A bound of zero would omit every attribute, and this bean is lazy, so throwing would surface at the first span rather than at startup.
         String content = "x".repeat(80_000);
         ChatModelObservationContext context = ChatModelObservationContext.builder().prompt(new Prompt(new UserMessage(content))).provider("openai").build();
 
@@ -64,7 +72,6 @@ class ChatModelContentObservationFilterTest {
 
     @Test
     void aConfiguredBoundDecidesWhetherTheSameContentIsKeptOrOmitted() {
-        // The bound is the operator's dial, not a compile-time fact: one deployment's collector sizing must be able to differ from another's without a rebuild.
         String content = "x".repeat(80_000);
         ChatModelObservationContext omitted = ChatModelObservationContext.builder().prompt(new Prompt(new UserMessage(content))).provider("openai").build();
         ChatModelObservationContext kept = ChatModelObservationContext.builder().prompt(new Prompt(new UserMessage(content))).provider("openai").build();
@@ -152,9 +159,7 @@ class ChatModelContentObservationFilterTest {
 
     @Test
     void aFullSizedAgenticPromptIsCapturedIntact() {
-        // The case the shipped bound exists to serve, and the one a 64000-byte ceiling silently destroyed: an agentic turn whose context carries repository contents and tool
-        // output. A harness that requires content on every counted model span records the whole run unmeasurable when a span like this loses its attribute, and because long
-        // runs are the successful ones, the loss is not just noise — it inverts the result. Any future tightening has to fail here first.
+        // The case a 64000-byte ceiling silently destroyed: an agentic turn carrying repository contents and tool output. Any future tightening has to fail here first.
         String repositoryContents = "public class Solution { /* generated exercise source */ }\n".repeat(6_000);
         String specification = "## Rules\n- R1: the reference solution passes every generated test.\n".repeat(1_500);
         AssistantMessage toolCall = AssistantMessage.builder().content("")

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -35,8 +35,7 @@ import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/sh
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { TabsModule } from 'primeng/tabs';
-import { ButtonModule } from 'primeng/button';
+import { TumUiButtonDirective, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -66,8 +65,12 @@ export enum CodeEditorBottomPanel {
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         KeysPipe,
-        TabsModule,
-        ButtonModule,
+        TumUiTabsComponent,
+        TumUiTabListComponent,
+        TumUiTabComponent,
+        TumUiTabPanelsComponent,
+        TumUiTabPanelComponent,
+        TumUiButtonDirective,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -140,7 +143,23 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     private readonly selectedFileValue = signal<string | undefined>(undefined);
     private bypassNextUnloadWarning = false;
     unsavedFilesValue!: { [fileName: string]: string }; // {[fileName]: fileContent}; set in constructor via initializeProperties()
-    readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
+
+    /**
+     * File-browser badges for code files and the Problem Statement entry, covering feedback
+     * suggestions, graded feedbacks, and active review-comment threads.
+     */
+    readonly fileBadges = computed<{ [fileName: string]: FileBadge[] }>(() => {
+        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
+        this.collectFeedbackSuggestionBadges(fileBadgesByType);
+        this.collectReviewThreadBadges(fileBadgesByType);
+
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
+        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+        }
+        return fileBadges;
+    });
+
     get selectedFile(): string | undefined {
         return this.selectedFileValue();
     }
@@ -163,7 +182,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
 
     readonly errorFiles = signal<string[]>([]);
     readonly annotations = signal<Array<Annotation>>([]);
-    readonly activeBottomPanel = signal<CodeEditorBottomPanel>(CodeEditorBottomPanel.BUILD_OUTPUT);
+    /**
+     * Without a build output there is no build-output tab, so the additional panel takes over.
+     * Keeping the previous value when the build output reappears preserves an explicit user choice.
+     */
+    readonly activeBottomPanel = linkedSignal<boolean, CodeEditorBottomPanel>({
+        source: this.buildable,
+        computation: (buildable, previous) => (buildable ? (previous?.value ?? CodeEditorBottomPanel.BUILD_OUTPUT) : CodeEditorBottomPanel.ADDITIONAL),
+    });
     readonly bottomPanelCollapsed = signal(false);
     readonly CodeEditorBottomPanel = CodeEditorBottomPanel;
     readonly faChevronDown = faChevronDown;
@@ -173,16 +199,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     private fileTreeChangeSubscription?: Subscription;
 
     constructor() {
-        effect(() => {
-            if (!this.buildable()) {
-                this.activeBottomPanel.set(CodeEditorBottomPanel.ADDITIONAL);
-            }
-        });
         this.initializeProperties();
-
-        effect(() => {
-            this.updateFileBadges();
-        });
 
         effect(() => {
             const syncService = this.fileSyncService();
@@ -239,23 +256,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
             this.editorState = EditorState.UNSAVED_CHANGES;
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
         }
-    }
-
-    /**
-     * Updates file-browser badges for code files and the Problem Statement entry
-     * (includes feedback suggestions, graded feedbacks, and active review-comment threads).
-     */
-    updateFileBadges() {
-        const fileBadgesByType = new Map<string, Map<FileBadgeType, number>>();
-
-        this.collectFeedbackSuggestionBadges(fileBadgesByType);
-        this.collectReviewThreadBadges(fileBadgesByType);
-
-        const fileBadges: { [fileName: string]: FileBadge[] } = {};
-        for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
-            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
-        }
-        this.fileBadges.set(fileBadges);
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
@@ -320,7 +320,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.fileBadges.set({});
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };

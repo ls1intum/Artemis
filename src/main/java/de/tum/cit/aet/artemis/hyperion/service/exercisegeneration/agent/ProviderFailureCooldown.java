@@ -13,8 +13,8 @@ import com.openai.errors.OpenAIServiceException;
 
 /**
  * Shared guard that lets Hyperion fail fast while a provider failure that no retry can fix is cooling down: exhausted quota or billing, a missing model or deployment, and
- * rejected credentials (401/403). Rate limits (429) and provider-side 5xx deliberately do NOT open a cooldown — they are transient, the SDK client already retries them, and
- * pausing every node on one of them would take the feature down for a blip.
+ * rejected credentials (401/403). Rate limits (429) and provider-side 5xx do NOT open a cooldown — they are transient, the SDK client already retries them, and pausing every
+ * node on one of them would take the feature down for a blip.
  */
 public interface ProviderFailureCooldown {
 

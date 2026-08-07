@@ -21,12 +21,10 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
- * Real-HTTP authorization matrix and contract test for {@link HyperionCodeGenerationCompatibilityResource}, the honest retirement tombstone of the deleted
- * {@code POST api/hyperion/programming-exercises/{exerciseId}/generate-code} operation.
- * <p>
- * Mirrors the harness of {@link HyperionExerciseGenerationResourceIntegrationTest}: it drives the endpoint through the real Spring Security filter chain and MockMvc (not a mocked
- * resource) so a regression in the route mapping, the {@code @EnforceAtLeastEditorInExercise} aspect, or the {@code HyperionEnabled} conditional would be caught here. No
- * collaborator is mocked; the tombstone has no collaborators to mock in the first place.
+ * Real-HTTP authorization matrix and contract test for {@link HyperionCodeGenerationCompatibilityResource}, the retirement tombstone of the deleted
+ * {@code POST api/hyperion/programming-exercises/{exerciseId}/generate-code} operation. Like {@link HyperionExerciseGenerationResourceIntegrationTest} it drives the endpoint
+ * through the real Spring Security filter chain, so a regression in the route mapping, the {@code @EnforceAtLeastEditorInExercise} aspect or the {@code HyperionEnabled}
+ * conditional is caught here.
  */
 class HyperionCodeGenerationCompatibilityResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -37,7 +35,7 @@ class HyperionCodeGenerationCompatibilityResourceIntegrationTest extends Abstrac
 
     private static final String ENDPOINT = "/api/hyperion/programming-exercises/{exerciseId}/generate-code";
 
-    /** A full legacy {@code CodeGenerationRequestDTO}-shaped body, as a real deployed 8.7.0–9.7 client would have sent it. */
+    /** A full legacy {@code CodeGenerationRequestDTO}-shaped body, as a deployed 8.7.0–9.7 client sent it. */
     private static final String LEGACY_SHAPED_BODY = """
             {"repositoryType":"SOLUTION","checkOnly":false,"initialAutoGeneration":false,"selectedFeedbackThreadIds":[1,2]}""";
 
@@ -102,7 +100,7 @@ class HyperionCodeGenerationCompatibilityResourceIntegrationTest extends Abstrac
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void generateCode_editorWithCheckOnlyBody_returnsGone() throws Exception {
-        // Old clients also polled with {"checkOnly": true} (repositoryType omitted); the tombstone must accept this shape too, even though it never inspects it.
+        // Old clients also polled with the bare checkOnly shape (repositoryType omitted); the tombstone must accept it too, even though it never inspects the body.
         assertRetirementContract(post(ENDPOINT, exerciseId).contentType(MediaType.APPLICATION_JSON).content(CHECK_ONLY_BODY));
     }
 

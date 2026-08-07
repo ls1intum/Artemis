@@ -8,8 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Text-level inspection of Java sources and Maven manifests, split out of {@link ExerciseIntegrityGate} because it answers questions about <em>the Java language</em> rather than
- * about what makes a generated exercise trustworthy.
+ * Text-level inspection of Java sources and Maven manifests: questions about <em>the Java language</em>, as opposed to {@link ExerciseIntegrityGate}'s questions about what makes
+ * a generated exercise trustworthy.
  * <p>
  * There is no parser: a candidate under inspection is often broken source that never has to compile for the gates to run, so every function here is total and yields a
  * conservative answer rather than an exception on malformed input.

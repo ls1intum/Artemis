@@ -96,9 +96,7 @@ class StagedGenerationRunnerTest {
 
     private static final BooleanSupplier NEVER_CANCELLED = () -> false;
 
-    /**
-     * The staged runner reads three workspace files back between stages and probes the tree layout; everything else the shared fake already models.
-     */
+    /** The staged runner reads three workspace files back between stages and probes the tree layout; everything else the shared fake already models. */
     private static final class FakeSandbox extends FakeInteractiveSandbox {
 
         private String specMarkdown = VALID_SPEC_DOCUMENT;
@@ -475,8 +473,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void aRejectedConceptWithAFallbackIsBuiltAnywayInsteadOfProducingNothing() {
-        // The gate's judgment is untouched — no candidate was admitted — but a completed rejection is a design objection, not a crash, and an instructor who submitted an open
-        // brief is better served by a draft plus the objections than by four minutes of spend and no artifacts at all.
+        // The gate still admitted no candidate, but a completed rejection is a design objection rather than a failure, so the run produces a draft plus the objections.
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
@@ -498,8 +495,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void everyObjectionRaisedAgainstTheFallbackConceptSurvivesAsAnInstructorNote() {
-        // Both reviewer voices must reach the instructor verbatim: the broad selector's per-candidate comparison and the focused admission audit. A note that summarizes them
-        // away is exactly where a working gate's judgment gets lost.
+        // Both reviewer voices reach the instructor verbatim: the selector's per-candidate comparison and the focused admission audit.
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
@@ -516,14 +512,13 @@ class StagedGenerationRunnerTest {
         assertThat(outcome.unresolvedConceptFindings().getFirst()).contains("admitted no candidate", "candidate 2", "rejected least");
         assertThat(outcome.unresolvedConceptFindings()).contains("Candidate 2: difficulty — only one numeric method")
                 .contains("Selected concept failed focused admission: introduces a fixed capacity limit the brief does not require");
-        // The concept objection is not a specification objection; conflating the two would mislabel the note the instructor has to act on.
+        // A concept objection is not a specification objection; conflating the two mislabels the note the instructor has to act on.
         assertThat(outcome.unresolvedSpecificationFindings()).isEmpty();
     }
 
     @Test
     void objectionsAgainstTheFallbackConceptSurviveAStageFailureLaterInTheRun() {
-        // Every exit of the stage machine has to carry them, not just the clean one: a run that proceeded on a contested concept and then died at a gate must still be able to
-        // tell the instructor which design it was building and what the reviewer said about it.
+        // Every exit of the stage machine carries them, so a run that died at a later gate can still say which contested design it was building.
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.SpecificationReview(true, false, false, List.of(), "", "SUFFICIENT"));
@@ -570,8 +565,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void unavailableSpecificationReviewFailsOpenAndFreezesTheMechanicallyValidSpec() {
-        // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must NOT discard a specification that already passed the
-        // deterministic mechanical gate. The checked spec is frozen and generation proceeds; downstream objective gates and instructor review carry quality forward.
+        // Fail open on the subjective axis: a reviewer that cannot return a well-formed verdict must not discard a specification that already passed the mechanical gate.
         SpecFidelityCriticService reviewer = mock(SpecFidelityCriticService.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any()))
                 .thenReturn(new SpecFidelityCriticService.SpecificationReview(false, false, false, List.of(), "malformed verdict"));
@@ -686,7 +680,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void wallClockBudgetStopsBeforeStartingAnotherPhase() {
-        // At the shipped PT30M deadline the budget is 22 minutes, so 23 minutes stops the phase — unchanged from when that ceiling was a constant.
+        // At the default PT30M deadline the authoring budget is 22 minutes, so an elapsed 23 minutes stops the run before the next phase.
         AtomicBoolean firstPhaseCompleted = new AtomicBoolean();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             firstPhaseCompleted.set(true);
@@ -703,9 +697,8 @@ class StagedGenerationRunnerTest {
 
     @Test
     void raisingTheConfiguredJobDeadlineExtendsThePhaseThatWouldOtherwiseStop() {
-        // The companion of the test above, differing only in the configured deadline: at PT30M the phase stops after one stage at 23 minutes, so nothing but a budget genuinely
-        // derived from artemis.hyperion.agent.max-job-duration can let the same run reach all three. Reintroducing any private wall-clock ceiling at or below 23 minutes — the
-        // defect this replaced — fails here while leaving the default-deadline test green.
+        // The companion of the test above, differing only in the configured deadline: only a budget derived from artemis.hyperion.agent.max-job-duration lets the same elapsed 23
+        // minutes reach all three stages, so any private wall-clock ceiling at or below 23 minutes fails here.
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, null, null, "FRESH",
                 Duration.ofMinutes(60));
         AtomicBoolean firstPhaseCompleted = new AtomicBoolean();
@@ -726,7 +719,6 @@ class StagedGenerationRunnerTest {
 
     @Test
     void theAuthoringBudgetReservesAFixedTailOfTheConfiguredJobDeadline() {
-        // The shipped default must keep behaving exactly as the previous hardcoded ceiling did.
         assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(30))).isEqualTo(Duration.ofMinutes(22));
         // The reserve protects one differential verification pass, which costs the same however long a job may run, so a raised deadline is passed through in full.
         assertThat(StagedGenerationRunner.authoringBudget(Duration.ofMinutes(60))).isEqualTo(Duration.ofMinutes(52));
@@ -762,8 +754,7 @@ class StagedGenerationRunnerTest {
 
     @Test
     void anExhaustedSpecificationRefinementFreezesTheBestDraftNotTheLatest() {
-        // Refinement is not monotonic: a later draft can review worse than an earlier one, and freezing the latest would hand every downstream stage the weaker contract. The
-        // loop must keep the best draft this concept reached.
+        // Refinement is not monotonic: a later draft can review worse, so freezing the latest would hand every downstream stage the weaker contract.
         String draftA = VALID_SPEC_DOCUMENT + "\n<!-- draft A -->\n";
         String draftB = VALID_SPEC_DOCUMENT + "\n<!-- draft B -->\n";
         String draftC = VALID_SPEC_DOCUMENT + "\n<!-- draft C -->\n";

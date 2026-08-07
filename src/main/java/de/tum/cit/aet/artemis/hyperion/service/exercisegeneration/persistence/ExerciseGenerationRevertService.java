@@ -45,7 +45,7 @@ public class ExerciseGenerationRevertService {
 
     private static final String BASELINE_MAP_NAME = "hyperion-exercise-generation-baselines";
 
-    /** A bounded latest-only recovery window, deliberately not a durable history. */
+    /** A bounded latest-only recovery window, not a durable history. */
     private static final int BASELINE_TTL_SECONDS = 7 * 24 * 60 * 60;
 
     /** The same order the persist commits them, so tests come last and the re-sync build sees the reverted solution. */
@@ -79,7 +79,7 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Records what a completed run has to be rolled back to. Call this only after a guarded persist succeeded: a failure here leaves the run saved but not undoable, and every
+     * Records what a completed run has to be rolled back to. Call this only after a guarded persist succeeded: a failure here leaves the run saved but not undoable. Every
      * "expected current" argument is a guard that later refuses the revert if something other than this run has since touched the exercise.
      *
      * @param exercise                        the persisted exercise
@@ -91,7 +91,7 @@ public class ExerciseGenerationRevertService {
      * @param title                           title before persistence
      * @param expectedCurrentProblemStatement problem statement written by the run
      * @param expectedCurrentTitle            title written by the run
-     * @param repositoryBranch                the branch persistence actually committed to, which is the branch the revert must reset
+     * @param repositoryBranch                the branch persistence committed to, which is the branch the revert must reset
      * @return whether automatic revert is available for this run
      */
     public boolean recordBaseline(ProgrammingExercise exercise, String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads,
@@ -137,8 +137,8 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Callers must invoke this whenever a later run's persistence stops in anything but a clean, fully-verified save. A retained baseline was captured relative to the repository
-     * state <em>before</em> that later run started, so applying it on top of the run's partial or unconfirmed changes would mix two never jointly-verified states. Idempotent.
+     * Callers must invoke this whenever a later run's persistence stops in anything but a clean, fully-verified save: a retained baseline was captured relative to the repository
+     * state <em>before</em> that later run started, so applying it on top of partial or unconfirmed changes would mix two never jointly-verified states. Idempotent.
      *
      * @param exerciseId the exercise whose baseline should no longer be offered for automatic revert
      */
@@ -152,8 +152,8 @@ public class ExerciseGenerationRevertService {
     }
 
     /**
-     * Resets the repositories to the commits captured before persistence, then re-synchronises grading. There is deliberately no unguarded entry point: force-pushing an
-     * exercise's repositories from a node that no longer owns the job would race the node that does.
+     * Resets the repositories to the commits captured before persistence, then re-synchronises grading. There is no unguarded entry point: force-pushing an exercise's
+     * repositories from a node that no longer owns the job would race the node that does.
      *
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)

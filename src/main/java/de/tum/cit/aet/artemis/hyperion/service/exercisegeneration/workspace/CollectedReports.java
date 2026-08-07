@@ -16,6 +16,12 @@ public final class CollectedReports {
 
     static final long MAX_TOTAL_BYTES = 128L * 1024 * 1024;
 
+    /**
+     * Entry-count cap, mirroring {@code WorkspaceArchive}. The byte caps alone do not bound this read: an archive of a million zero-byte entries passes every size check while
+     * growing the returned map without limit. Both readers consume the same agent-controlled sandbox output, so they need the same bound.
+     */
+    static final int MAX_ARCHIVE_ENTRIES = 10_000;
+
     private CollectedReports() {
     }
 
@@ -38,8 +44,12 @@ public final class CollectedReports {
         Map<String, byte[]> result = new LinkedHashMap<>();
         String normalizedPrefix = expectedPrefix.isEmpty() || expectedPrefix.endsWith("/") ? expectedPrefix : expectedPrefix + "/";
         long total = 0;
+        int entryCount = 0;
         TarArchiveEntry entry;
         while ((entry = tar.getNextEntry()) != null) {
+            if (++entryCount > MAX_ARCHIVE_ENTRIES) {
+                throw new RejectedReportException("Refusing a verifier reports archive with more than " + MAX_ARCHIVE_ENTRIES + " entries");
+            }
             // commons-compress's isFile() returns true for FIFO, character, and block devices, whose link flags are not the recognised non-file ones, so reject them explicitly.
             if (entry.isSymbolicLink() || entry.isLink()) {
                 throw new RejectedReportException("Refusing to read a linked report entry from the verifier reports archive: " + entry.getName());

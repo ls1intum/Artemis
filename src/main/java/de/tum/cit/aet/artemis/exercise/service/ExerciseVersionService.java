@@ -84,9 +84,8 @@ public class ExerciseVersionService {
 
     private final ObjectMapper objectMapper;
 
-    // Executor for versioning work. In production this is a dedicated, bounded thread pool (see
-    // AsyncConfiguration#exerciseVersionTaskExecutor) so slow git access does not exhaust the shared async pool;
-    // under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
+    // A dedicated bounded pool in production (AsyncConfiguration#exerciseVersionTaskExecutor) so slow git access cannot exhaust the shared async pool; synchronous under the test
+    // profile, keeping versioning-triggering tests deterministic.
     private final Executor exerciseVersionExecutor;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -157,11 +156,9 @@ public class ExerciseVersionService {
     }
 
     /**
-     * Creates an exercise version, swallowing all failures. Runs on the {@code exerciseVersionExecutor} thread when reached through
-     * {@link #createExerciseVersion(Exercise, User)}, and on the caller's thread through {@code createExerciseVersionSynchronously}.
-     * Exercise version creation is a non-critical side effect of saving an exercise: failures here (e.g.
-     * serialization issues, DB errors) must not surface to the caller, since the exercise save itself has already
-     * succeeded by the time this runs.
+     * Creates an exercise version, swallowing all failures: versioning is a non-critical side effect of a save that has already succeeded by the time this runs, so it must not
+     * surface to the caller. Runs on the {@code exerciseVersionExecutor} thread when reached through {@link #createExerciseVersion(Exercise, User)}, and on the caller's thread
+     * through {@code createExerciseVersionSynchronously}.
      *
      * @param targetExercise The exercise to create a version of
      * @param author         The user who created the version
@@ -262,7 +259,6 @@ public class ExerciseVersionService {
                 log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());
             }
         });
-        // Publish event to notify listeners (e.g., search indexing services)
         try {
             eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise));
         }

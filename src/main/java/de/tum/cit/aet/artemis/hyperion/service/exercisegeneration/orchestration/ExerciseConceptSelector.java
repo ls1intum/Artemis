@@ -103,15 +103,6 @@ public class ExerciseConceptSelector {
         this.critic = critic;
     }
 
-    /**
-     * Generates and reviews exercise concepts for an instructor brief.
-     *
-     * @param brief     the instructor brief
-     * @param cancelled cooperative cancellation signal
-     * @param usageSink optional token-usage sink
-     * @param progress  optional progress sink
-     * @return the selected concept and its review evidence, or an unsuccessful result
-     */
     public ConceptSelection select(String brief, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress) {
         return select(brief, "", cancelled, usageSink, progress);
     }
@@ -229,15 +220,10 @@ public class ExerciseConceptSelector {
     }
 
     /**
-     * The best concept a completed review rejected, together with the findings that rejected it.
+     * The best concept a completed review rejected, together with the verbatim findings that rejected it.
      * <p>
      * Offered so a caller facing "no candidate was admissible" can proceed with a draft plus its objections instead of producing no artifacts at all. It carries no verdict:
-     * {@link ConceptSelection#accepted()} stays false, and {@code findings} is exactly what the reviewers wrote, so nothing is loosened and nothing is hidden.
-     *
-     * @param concept            the candidate text, verbatim
-     * @param candidate          the reviewer's candidate number
-     * @param failedRequiredAxes how many required selection axes it failed; used only to pick between candidates, never to admit one
-     * @param findings           every objection raised against it, from the broad selection review and the focused admission audit alike
+     * {@link ConceptSelection#accepted()} stays false, and {@code failedRequiredAxes} only ever picks between candidates, never admits one.
      */
     public record ConceptFallback(String concept, int candidate, int failedRequiredAxes, List<String> findings) {
 

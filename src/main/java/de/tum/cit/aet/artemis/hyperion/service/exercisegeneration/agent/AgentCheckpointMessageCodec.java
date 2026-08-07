@@ -10,8 +10,8 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 
 /**
- * Stable, lossless representation of the text-only Spring AI messages used by the generation agent. Checkpoints intentionally do not serialize Spring implementation classes:
- * their Jackson shape is not a public compatibility contract.
+ * Stable, lossless representation of the text-only Spring AI messages used by the generation agent. Checkpoints do not serialize Spring implementation classes: their Jackson
+ * shape is not a public compatibility contract.
  */
 final class AgentCheckpointMessageCodec {
 

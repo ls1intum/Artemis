@@ -47,7 +47,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
     readonly onApplyInlineFix = output<InlineCodeChange>();
     /** Emits this thread's id when the instructor asks to adapt the exercise from it; the host adds it to the shared feedback selection and opens the adapt dialog. */
-    readonly onAdaptThread = output<number>();
+    readonly adaptThread = output<number>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -252,7 +252,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         if (!this.canAdaptExercise()) {
             return;
         }
-        this.onAdaptThread.emit(this.thread().id);
+        this.adaptThread.emit(this.thread().id);
     }
 
     /**

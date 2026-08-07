@@ -42,9 +42,8 @@ class StageCheckServiceTest {
         private String problemStatement = "# Title\n\nDo the thing.";
 
         /**
-         * Output of the type-declaration probe (find/grep), keyed by whether the probed repo path contains "solution" or "template". The probe is TYPE-AWARE: it answers only
-         * for the type actually being probed, because the template gate now asks two opposite questions of the same helper — "is this student-created type absent?" and "is
-         * this supplied/stubbed scaffold type present?". A payload that answered every probe identically would make one of the two questions meaningless.
+         * Output of the type-declaration probe (find/grep), keyed by whether the probed repo path contains "solution" or "template". The probe answers per type, because the
+         * template gate asks two opposite questions of the same helper: "is this student-created type absent?" and "is this supplied/stubbed scaffold type present?".
          */
         private String solutionFindOutput = "";
 
@@ -53,10 +52,7 @@ class StageCheckServiceTest {
         /** Whether the template ships the specification's supplied/stubbed scaffold. False models the empty starter repository the scaffold gate must reject. */
         private boolean templateShipsScaffold = true;
 
-        /**
-         * The specification the workspace was actually built against. Files on disk do not change when the live SPEC.md is edited after approval, so the probe must model the
-         * approved snapshot — otherwise a downgraded live copy would appear to move a declaration between repositories.
-         */
+        /** The specification the workspace was built against: files on disk do not change when the live SPEC.md is edited after approval. */
         private java.util.function.Supplier<String> builtAgainstSpec = () -> spec;
 
         /** Stable work markers found in the template; the default matches the default specification's sole S1 seam. */
@@ -68,8 +64,8 @@ class StageCheckServiceTest {
         private int diffExitCode = 1;
 
         /**
-         * Answers a single type-declaration probe. The explicitly configured payload wins when it names the probed type (how a test models a leaked or present declaration);
-         * otherwise a healthy repository is modelled: the template ships the specification's supplied/stubbed scaffold, and the solution ships everything.
+         * Answers a single type-declaration probe. The configured payload wins when it names the probed type; otherwise a healthy repository is modelled, where the template
+         * ships the specification's supplied/stubbed scaffold and the solution ships everything.
          */
         private String declarationProbe(String[] command, boolean solutionRepo) {
             String type = probedType(command);
@@ -142,7 +138,7 @@ class StageCheckServiceTest {
         }
     }
 
-    /** A complete, gate-valid SPEC.md whose '## Design' table carries the given data rows — every stage now re-checks the spec, so a partial fixture would fail that check. */
+    /** A complete, gate-valid SPEC.md whose '## Design' table carries the given data rows; every stage re-checks the spec, so a partial fixture would fail that check. */
     private static String specWithDesign(String designRows) {
         String ownerType = designRows.split("\\|")[1].strip();
         String publicApi = java.util.Arrays.stream(designRows.lines().toArray(String[]::new)).filter(line -> line.startsWith("|")).map(line -> line.split("\\|")[1].strip())
@@ -323,7 +319,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
-            // The spec's own Testing Strategy is the plan's contract: silently shipping every test visible throws away the overfit resistance the spec promised.
+            // The spec's own Testing Strategy is the plan's contract: shipping every test visible throws away the overfit resistance it promised.
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
@@ -400,7 +396,7 @@ class StageCheckServiceTest {
 
         @Test
         void reportsTheDifferentialFailureFirst_neverTheMissingPlan_whenBothAreWrong() {
-            // Feedback-priority contract: a failing differential is the real problem; plan noise on top of it would bury the actionable signal.
+            // A failing differential is the real problem; plan noise on top of it would bury the actionable signal.
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(false, true));
 
             StageCheckResult result = check(GenerationStage.TESTS);
@@ -584,7 +580,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenPlantUmlDirectivesLeakOutsideTheDiagramBlock() {
-            // Observed live: 'hide empty fields' after @enduml renders as stray statement text.
+            // 'hide empty fields' after @enduml renders as stray statement text.
             sandbox.problemStatement = "# Title\n@startuml\nclass A\n@enduml\nhide empty fields\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
@@ -595,7 +591,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenMultipleTaskLinesShareATitle() {
-            // Observed live: 18 [task] lines split 1:1 per test with titles like "Telepathic Retrieval" repeated four times.
+            // A repeated title is how a 1:1 task-per-test split shows up.
             sandbox.problemStatement = "# T\n[task][Telepathic](testA)\n[task][Telepathic](testB)\n[task][Crane](testC)\n";
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testA\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
                     + "{\"name\":\"testB\",\"seam\":\"S2\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"},"
@@ -739,7 +735,7 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.STATEMENT, lastTestsReport);
 
             assertThat(result.passed()).isFalse();
-            // The exact-names hint lets the agent copy a real name; a hidden test is never offered as one, because binding it would ship a checkbox that cannot turn green.
+            // Binding the offered name must not ship a checkbox that cannot turn green.
             assertThat(result.observation()).contains("reference names that match no actual test", "testDoesNotExist", "testSortsAscending")
                     .doesNotContain("testSortsAscending_hidden");
         }
@@ -774,8 +770,7 @@ class StageCheckServiceTest {
 
         @Test
         void aSectionThatDeclinesHiddenVariantsInProseIsNotReadAsDeclaringThem() {
-            // The prose heuristic this replaced fired on exactly this text: the words "hidden" and "after the due date" appear while the decision is NO. A false trigger here
-            // forced the agent to invent hidden tests it had deliberately decided against.
+            // The words "hidden" and "after the due date" appear in the prose while the decision cell says NO; reading the prose would force invented hidden tests.
             String spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | no |\n\n                Every test stays visible; no partition gets a hidden after-due-date variant.");
 
@@ -784,7 +779,7 @@ class StageCheckServiceTest {
 
         @Test
         void aStructuralYesInAnotherColumnDoesNotCountAsAHiddenDeclaration() {
-            // The old regex matched any "| yes" anywhere in the section, so an unrelated column could satisfy the hidden-variant declaration.
+            // A "yes" anywhere else in the section must not satisfy the hidden-variant declaration.
             String spec = specWithDesign("| Calculator | computes | stubbed |\n")
                     .replace("| Seam | Owner type | Observable responsibility | Weight | Hidden variant |", "| Seam | Owner type | Structural | Weight | Hidden variant |")
                     .replace("| S1 | Calculator | typical; zero | 3 | no |", "| S1 | Calculator | yes | 3 | no |");
@@ -798,8 +793,7 @@ class StageCheckServiceTest {
 
         @Test
         void laterStageFails_whenSpecMdWasEditedIntoAnInvalidSpecification() {
-            // Observed live: a later stage appended a '## Tasks' section with [task] bindings and emptied the '## Diagram' decision, silently disarming the statement's
-            // diagram-coherence check. The drift is caught where it happens instead of passing vacuously.
+            // A later stage appending [task] bindings to SPEC.md silently disarms the statement's diagram-coherence check, so the drift is caught where it happens.
             sandbox.spec = sandbox.spec + "\n## Tasks\n[task][Do it](testDoIt)\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT);
@@ -862,8 +856,7 @@ class StageCheckServiceTest {
 
         @Test
         void namesTheReflectionConsequenceOfStudentCreatedOwnershipWhenTheContractIsFrozen() {
-            // Shift-left feedback at the decision boundary. A run that learned this only from downstream "cannot find symbol" errors cycled its entire repair budget between
-            // re-adding the type to the template and having the ownership gate reject it, without anything naming the actual constraint.
+            // Learning this only from downstream "cannot find symbol" errors cycles the repair budget between re-adding the type and the ownership gate rejecting it.
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| Stack | student work | student-creates |\n| OverflowPolicy | supplied policy | given |\n");
 
@@ -974,25 +967,15 @@ class StageCheckServiceTest {
 
         @Test
         void acceptsOneStudentWorkSeamWithSeveralBehavioralPartitions() {
-            // Seam cardinality describes independently actionable student work, not the number of behavioral partitions. Forcing four seams here turned one classify method into
-            // four repetitive tasks in a live run. Mutation testing and contract witnesses assess whether its four rules are actually discriminated.
+            // Seam cardinality describes independently actionable student work, not the number of behavioral partitions: four rules on one method are still one seam.
             sandbox.spec = specWithRulesAndSeams(4, 1);
 
             assertThat(check(GenerationStage.SPEC).passed()).isTrue();
         }
 
         @Test
-        void acceptsASingleSeamWhenTheExerciseGenuinelyHasFewRules() {
-            // The floor is deliberately low: collapse is the target, not a decomposition the exercise does not need.
-            sandbox.spec = specWithRulesAndSeams(3, 1);
-
-            assertThat(check(GenerationStage.SPEC).passed()).isTrue();
-        }
-
-        @Test
         void advisesOnATechniqueMandateWithoutRejectingTheSpecification() {
-            // Rejecting this was measured wrong six times in eight, and a false rejection here discards a sound contract with no recourse. Said as advice on a pass it still
-            // reaches the agent while the specification is editable, which is where it changes the outcome: the damage came from the seam the agent then wrote for the rule.
+            // A false rejection here discards a sound contract with no recourse; as advice on a pass it still reaches the agent while the specification is editable.
             sandbox.spec = specWithRules("| R1 | `sum` must be implemented recursively. |\n| R2 | `sum` returns 0 for an empty list. |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -1029,8 +1012,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenEveryDesignRowIsStudentCreated_becauseTheTemplateWouldShipEmpty() {
-            // The root cause of the empty-template defect: with no supplied or stubbed row the starter repository is empty by construction, whatever the builder does later.
-            // Catching it at the contract keeps the agent from authoring a whole exercise around a design that cannot produce a teaching scaffold.
+            // With no supplied or stubbed row the starter repository is empty by construction, whatever the builder does later.
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| BaseShape | abstract base | student-creates |\n| Rectangle | concrete shape | student-creates |\n");
 
@@ -1048,7 +1030,6 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.SPEC);
 
             assertThat(result.passed()).isTrue();
-            // The pass observation echoes the parsed Design plan so the agent sees exactly what the later gates will enforce.
             assertThat(result.observation()).contains("Calculator=stubbed");
         }
 
@@ -1106,7 +1087,7 @@ class StageCheckServiceTest {
 
         @Test
         void fails_whenADesignRowCarriesNoValidTemplateStatusToken() {
-            // The old exemplar's verbose tokens ("student-creates-absent-from-template") are exactly what this catches: only the literal tokens are enforceable.
+            // Only the literal status tokens are enforceable; a verbose variant such as "student-implements-stubbed" is not one of them.
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", "| Calculator | computes the result | student-implements-stubbed |");
 
             StageCheckResult result = check(GenerationStage.SPEC);

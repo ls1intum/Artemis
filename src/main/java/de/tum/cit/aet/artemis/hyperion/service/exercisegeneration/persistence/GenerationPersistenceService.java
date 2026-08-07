@@ -66,9 +66,9 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * Persists a verified-complete generated exercise through Artemis's normal pipeline — commit the repositories, wait for the tests push to trigger test-case sync, update the
  * problem statement, record an exercise version — the same path a manual instructor edit takes.
  * <p>
- * The three repositories cannot commit inside one database/git transaction, so a broad {@code @Transactional} would not make the multi-repository write atomic anyway. Instead
- * each push uses the captured remote head as an exact ref lease, and a failure caught in-process compensates the already-pushed repositories in REVERSE commit order, so the
- * tests repository (pushed last, and the one that drives grading) is the first to be rolled back. Concurrent repository changes are never overwritten.
+ * The three repositories cannot commit inside one database/git transaction, so each push uses the captured remote head as an exact ref lease, and a failure caught in-process
+ * compensates the already-pushed repositories in REVERSE commit order, so the tests repository (pushed last, and the one that drives grading) is the first to be rolled back.
+ * Concurrent repository changes are never overwritten.
  */
 @Lazy
 @Service
@@ -239,9 +239,8 @@ public class GenerationPersistenceService {
         catch (RuntimeException e) {
             // Revert the already-committed repositories to their captured pre-persist commit, so no publishable half-generated tree survives on the default branch.
             boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
-            // An ambiguous push is never compensated above: that helper walks only `committed`, and this repository never reached it because commitRepository threw before
-            // returning a hash. Report it conservatively — the live exercise MAY have changed — and surface the best-known (unconfirmed) hash rather than an empty, falsely
-            // reassuring commit map.
+            // An ambiguous push is never compensated above: that helper walks only `committed`, which this repository never reached. Report it conservatively as possibly
+            // changed and surface the best-known unconfirmed hash.
             boolean ambiguousRemoteState = e instanceof AmbiguousCommitFailure;
             boolean liveExerciseChanged = ambiguousRemoteState || !fullyReverted;
             // EnumMap cannot infer its key type from an empty source map, so populate one built from the enum class instead of wrapping a possibly-empty map.
@@ -268,8 +267,7 @@ public class GenerationPersistenceService {
         if (shouldSaveProblemStatement) {
             try {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
-                // The metadata write and the task rebuild it drives are one narrow transaction (see ProblemStatementMetadataUpdateService), so a task-rebuild failure never
-                // leaves a committed problem statement paired with a half-rebuilt task set.
+                // One narrow transaction (see ProblemStatementMetadataUpdateService): a task-rebuild failure rolls the metadata write back with it.
                 saveProblemStatementIfUnchanged(exercise, producedProblemStatement, targetTitle, expectedProblemStatement, expectedTitle, beforeFirstDurableMutation);
             }
             catch (RuntimeException e) {
@@ -279,7 +277,6 @@ public class GenerationPersistenceService {
             }
         }
 
-        // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so the canonical tests build must be triggered explicitly before waiting for test-case sync.
         String expectedFinalProblemStatement = shouldSaveProblemStatement ? producedProblemStatement.trim() : expectedProblemStatement;
         String expectedFinalTitle = shouldSaveProblemStatement ? targetTitle : expectedTitle;
         Map<RepositoryType, String> persistedRepositoryHeads = new EnumMap<>(RepositoryType.class);
@@ -293,6 +290,7 @@ public class GenerationPersistenceService {
         };
         Long savedExerciseVersionId;
         try {
+            // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so the canonical tests build must be triggered explicitly before waiting for test-case sync.
             savedExerciseVersionId = syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard,
                     persistedRepositoryHeads, outcome.testPlanJson());
         }
@@ -386,10 +384,9 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Runs the post-commit half of {@link #persist} again after a caller force-reset the repositories back to a captured commit: trigger the canonical tests build so grading
-     * follows the reverted tests, re-apply the build-gate zero-weighting, and record an exercise version so open editors and search see the reverted state. Best-effort — a
-     * failure here leaves the repositories reverted, which is the part that matters. {@code problemStatement}/{@code title} are the values to restore, guarded by a
-     * compare-and-set against the {@code expected*} values; a {@code null} signal skips the build.
+     * Runs the post-commit half of {@link #persist} again after a caller force-reset the repositories back to a captured commit, so grading, build-gate zero-weighting, and the
+     * recorded exercise version follow the reverted tests. Best-effort: a failure here still leaves the repositories reverted. {@code problemStatement}/{@code title} are
+     * restored under a compare-and-set against the {@code expected*} values; a {@code null} signal skips the build.
      */
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds) {
@@ -425,7 +422,7 @@ public class GenerationPersistenceService {
             zeroWeightBuildGateTestCases(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
         }
         // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. The guard belongs immediately before this durable
-        // mutation; where a tests commit exists, the two calls above have already waited for the synchronized test-case set.
+        // mutation.
         finalizationGuard.run();
         applyGeneratedTestPlan(exercise, testPlanJson);
         finalizationGuard.run();
@@ -638,8 +635,8 @@ public class GenerationPersistenceService {
             }
             gitService.stageAllChanges(repository);
             String postHash = gitService.commitStagedChanges(repository, commitMessage, user);
-            // The ownership guard is deliberately adjacent to the push. If eligibility changes while it is in flight, the post-push check throws into the reconciliation path,
-            // which resets this exact leased commit before the outer compensation handles the earlier repositories.
+            // The ownership guard must stay adjacent to the push: if eligibility changes while it is in flight, the post-push check throws into the reconciliation path, which
+            // resets this exact leased commit before the outer compensation handles the earlier repositories.
             assertStillOwnsMutationSlot(stillOwnsMutationSlot);
             beforeFirstDurableMutation.run();
             gitService.pushCommitWithLease(repository, postHash, repositoryBranch, prePersistHead);
@@ -677,8 +674,7 @@ public class GenerationPersistenceService {
 
     /**
      * Thrown when a push fails inconclusively: the local commit succeeded, but the remote branch could not be confirmed to still be at its pre-persist state, so whether the push
-     * landed is unknown. Carries the repository and the best-known (unconfirmed) hash, so the caller can report the live exercise as conservatively changed and give manual
-     * review a concrete lead instead of an empty, falsely reassuring commit map.
+     * landed is unknown. Carries the repository and the best-known unconfirmed hash so the caller can report the live exercise as conservatively changed.
      */
     static final class AmbiguousCommitFailure extends IllegalStateException {
 
@@ -872,8 +868,8 @@ public class GenerationPersistenceService {
 
     /**
      * Applies the TESTS stage's grading plan to the freshly synchronized test cases: per-test weights and {@code AFTER_DUE_DATE} visibility for hidden variants. Must run after
-     * {@link #syncTestCasesAndRecordVersion} has awaited the sync, so the cases exist. A non-empty plan is part of the mechanically verified artifact set, so a mismatch fails
-     * persistence: silently falling back to Artemis defaults would publish a grading contract other than the reviewed one.
+     * {@link #syncTestCasesAndRecordVersion} has awaited the sync, so the cases exist. A mismatch fails persistence, because falling back to Artemis defaults would publish a
+     * grading contract other than the reviewed one.
      */
     private void applyGeneratedTestPlan(ProgrammingExercise exercise, @Nullable String testPlanJson) {
         if (testPlanJson == null || testPlanJson.isBlank()) {

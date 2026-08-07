@@ -9,54 +9,28 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 
 /**
- * A long-lived interactive execution sandbox: a warm Docker container an agentic exercise-Hyperion sandbox drives through many cheap operations (read a file, write a file, run a
- * command), rather than the fire-and-forget single-script model of a regular CI build.
+ * A long-lived interactive execution sandbox: a warm Docker container a caller drives through many cheap operations (read a file, write a file, run a command), rather than the
+ * fire-and-forget single-script model of a regular CI build. The container stays warm across the session, so the toolchain resolves once and incremental builds reuse it.
  * <p>
- * The primitive decouples the agent loop (on the core node, holding the LLM client and database) from code execution (on a build agent, where untrusted code runs in isolation
- * without credentials or database access). A single-node deployment talks to a local implementation in-process; a multi-node deployment relays the same operations to the owning
- * build agent. The container stays warm across the session, so the toolchain resolves once and incremental builds reuse it — no per-iteration container start or cold build.
+ * This decouples the agent loop (on the core node, holding the LLM client and database) from code execution (on a build agent, where untrusted code runs in isolation without
+ * credentials or database access). A single-node deployment talks to a local implementation in-process; a multi-node deployment relays the same operations to the owning build
+ * agent.
+ * <p>
+ * The session handle returned by {@link #createSession} is the container id and identifies the session in every later call. {@link #exec} runs its command directly rather than
+ * through a shell (pass {@code sh -c ...} to get one) and truncates captured output to a bounded size. {@link #destroySession} is safe to call more than once.
  */
 public interface InteractiveSandbox {
 
-    /**
-     * Creates and starts a warm container for a Hyperion sandbox.
-     *
-     * @param spec the container image, resource limits and seed inputs for the session
-     * @return an opaque session handle (the container id) used by every subsequent operation
-     */
     String createSession(SandboxSessionSpecDTO spec);
 
-    /**
-     * Runs a command inside the session container; it is executed without a shell unless the caller passes {@code sh -c ...}, and stdout/stderr are truncated to a bounded size so
-     * large build logs cannot overflow the agent's context window.
-     *
-     * @param sessionId the session handle
-     * @param timeout   the maximum time to wait for the command to finish
-     * @param command   the command and its arguments (run directly, not through a shell)
-     * @return the exit code and the bounded captured stdout/stderr
-     */
     SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command);
 
-    /**
-     * Copies a tar archive into the session container at the given absolute destination path.
-     *
-     * @param sessionId       the session handle
-     * @param destinationPath the absolute container path to extract the archive into
-     * @param tarArchive      the tar archive to copy in
-     */
     void copyIn(String sessionId, String destinationPath, InputStream tarArchive);
 
-    /**
-     * Reads a path out of the session container as a tar archive.
-     *
-     * @param sessionId the session handle
-     * @param path      the absolute container path to read
-     * @return the path's contents as a tar archive
-     */
     TarArchiveInputStream copyOut(String sessionId, String path);
 
     /**
-     * Restarts the existing container, clearing its writable tmpfs mounts and terminating every process started by prior agent commands.
+     * Restarts the container, discarding its writable tmpfs mounts and killing every process started by prior commands.
      *
      * @param sessionId the session handle
      */
@@ -64,10 +38,5 @@ public interface InteractiveSandbox {
         throw new UnsupportedOperationException("This interactive sandbox does not support session reset");
     }
 
-    /**
-     * Stops and removes the session container, releasing its resources. Safe to call more than once.
-     *
-     * @param sessionId the session handle
-     */
     void destroySession(String sessionId);
 }

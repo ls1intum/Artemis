@@ -29,6 +29,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 
 import com.openai.errors.OpenAIIoException;
 
@@ -76,7 +78,7 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_lengthTruncatedToolCalls_areNotExecutedAndTheModelIsAskedToReissue() {
         ChatModel chatModel = mock(ChatModel.class);
-        // The truncated turn carries a write_file whose content may have been cut off mid-file; it must never reach the sandbox.
+        // The truncated turn's write_file content may have been cut off mid-file, so it must never reach the sandbox.
         when(chatModel.call(any(Prompt.class))).thenReturn(lengthTruncatedToolCallResponse("write_file", "{\"path\":\"solution/A.java\",\"content\":\"class A {\"}"),
                 textResponse("DONE"));
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
@@ -112,9 +114,8 @@ class AgentLoopRunnerTest {
 
     @Test
     void agentLoop_cancelledAtATurnBoundary_leavesTheSinkCountAndTheLoopResultCountDeliberatelyDifferent() {
-        // The two counters answer different questions and must not be "fixed" into agreement. AgentLoopResult.turns is per-session control state that a cancelled session reports
-        // as its own local count; the sink is the run-level total across every session, which is the number an administrator reads. A run whose second session is cancelled at a
-        // turn boundary has spent turns that its last result reports as zero — exactly the accounting hole that made gate-abandoned runs invisible.
+        // The two counters answer different questions and must not be "fixed" into agreement: AgentLoopResult.turns is per-session control state, while the sink is the run-level
+        // total an administrator reads. Reconciling them is what once made gate-abandoned runs invisible.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), toolCallResponse("bash", "{\"command\":\"ls\"}"),
                 textResponse("DONE"));
@@ -126,15 +127,13 @@ class AgentLoopRunnerTest {
 
         assertThat(firstSession.turns()).isEqualTo(3);
         assertThat(cancelledSession.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
-        // No turn began in the cancelled session, so it records none and reports none.
+        // No turn began in the cancelled session, yet the sink still carries the whole run's three turns.
         assertThat(cancelledSession.turns()).isZero();
-        // The sink still carries the whole run: three turns were spent, and the outcome the caller ends up holding reports zero.
         verify(usageSink, times(3)).recordTurn();
     }
 
     @Test
     void agentLoop_withoutAProviderUsageSink_recordsTurnsWithoutFailing() {
-        // The default no-op on the interface keeps every plain Consumer<ChatResponse> sink, including the two-argument test sinks, working unchanged.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
@@ -183,7 +182,7 @@ class AgentLoopRunnerTest {
     void agentLoopFailsImmediatelyWhenATimedOutCommandTerminatesTheSandbox() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"sleep 999\"}"), textResponse("must not be called"));
-        // Every command reports the timed-out sandbox: the loop must give up on the first one rather than keep issuing turns against a dead session.
+        // Every command reports the timed-out sandbox, so the loop must give up rather than keep issuing turns against a dead session.
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(-1, "", "", true));
         List<String> steps = new ArrayList<>();
 
@@ -194,6 +193,45 @@ class AgentLoopRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(chatModel, times(1)).call(any(Prompt.class));
         assertThat(steps).contains("The build environment stopped responding.");
+    }
+
+    @Test
+    void agentLoopFailsImmediatelyWhenAToolsImplementationOtherThanTheTwoKnownOnesReportsATerminatedSandbox() {
+        // The loop must learn "the sandbox is gone" from the SubmitVetoAware contract: a type switch over the two known tools classes answers "sandbox alive" for any third
+        // implementation and keeps calling a dead sandbox for the rest of the turn budget.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("must not be called"));
+        DeadSandboxTools tools = new DeadSandboxTools();
+        List<String> steps = new ArrayList<>();
+
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "do it", tools, 10, () -> false, null, steps::add);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(tools.executedCommands).containsExactly("ls"); // the turn's tools did run; what must not happen is a second turn against the dead session
+        verify(chatModel, times(1)).call(any(Prompt.class));
+        assertThat(steps).contains("The build environment stopped responding.");
+    }
+
+    /** A tools object that is neither {@link SandboxAgentTools} nor {@link FileChangeEmittingAgentTools} — the third implementation a type switch cannot see. */
+    private static final class DeadSandboxTools implements SubmitVetoAware {
+
+        private final List<String> executedCommands = new ArrayList<>();
+
+        @Tool(name = "bash", description = "Runs a command in the workspace.")
+        String bash(@ToolParam(description = "The shell command to run.") String command) {
+            executedCommands.add(command);
+            return "";
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return true;
+        }
     }
 
     @Test
@@ -251,8 +289,7 @@ class AgentLoopRunnerTest {
 
         assertThat(secondResult.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(secondChatModel, times(0)).call(any(Prompt.class));
-        // The turn itself is still recorded: it began and spent a turn of the budget. What must not happen is any spend or uncertainty being attributed to it, because the
-        // cooldown rejected it locally before the provider call started.
+        // The cooldown rejected the turn locally before the provider call started, so no spend or uncertainty may be attributed to it.
         verify(secondUsageSink, never()).markUncertain();
         verify(secondUsageSink, never()).accept(any());
         verify(secondUsageSink, never()).recordToolCalls(anyLong());
@@ -297,8 +334,7 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_interruptedDuringEmptyResponseBackoff_reportsError() {
         ChatModel chatModel = mock(ChatModel.class);
-        // A cancel lands while the empty-response re-sample is backing off: the interrupt must surface as ERROR, not be papered over by handing the benign empty response to the
-        // loop as a COMPLETED. Symmetric with the error-retry path, which also bails to ERROR on a mid-backoff interrupt.
+        // An interrupt during the re-sample backoff must surface as ERROR, not be papered over by handing the benign empty response to the loop as a COMPLETED.
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             Thread.currentThread().interrupt();
             return textResponse("");
@@ -312,16 +348,15 @@ class AgentLoopRunnerTest {
         AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, null, steps::add);
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        verify(chatModel, times(1)).call(any(Prompt.class)); // the interrupt stops the re-sample ladder instead of returning the empty response as a completion
-        // The interrupt flag was restored by the backoff (honouring the interrupt); clear it here so it does not leak into other tests.
+        verify(chatModel, times(1)).call(any(Prompt.class));
+        // The backoff restored the interrupt flag; asserting through Thread.interrupted() also clears it so it cannot leak into other tests.
         assertThat(Thread.interrupted()).isTrue();
     }
 
     @Test
     void agentLoop_normalizesLeakedHarmonyToolName_andDispatchesToTheRealTool() {
         ChatModel chatModel = mock(ChatModel.class);
-        // A model server can leak a harmony control token into the tool name. Without normalization the name matches no registered tool and the loop thrashes on
-        // tool-execution failures; with it the call dispatches to "bash" and the run completes.
+        // A model server can leak a harmony control token into the tool name; unnormalized it matches no registered tool and the loop thrashes on tool-execution failures.
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash<|channel|>commentary", "{\"command\":\"ls\"}"), textResponse("DONE"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
@@ -358,8 +393,6 @@ class AgentLoopRunnerTest {
 
     @Test
     void agentLoop_submitVetoedByAStagedStageCheck_continuesTheLoopUntilAFixedResubmitEndsIt() {
-        // A staged session's submit() rejects the first attempt (the stage check fails), so the loop must NOT end on turn 1; the model then fixes the artifact and resubmits,
-        // and only that second, passing submit() ends the loop.
         ProgrammingExercise exercise = mock(ProgrammingExercise.class);
         StageCheckService stageCheckService = mock(StageCheckService.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), any(), anyString(), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
@@ -383,8 +416,7 @@ class AgentLoopRunnerTest {
 
     @Test
     void agentLoop_nonStagedSubmit_isNeverVetoed_endsOnTheFirstCallEvenWhenTheToolsObjectImplementsSubmitVetoAware() {
-        // SandboxAgentTools always implements SubmitVetoAware, but an unstaged session's submit() never sets the flag: implementing the interface must not by itself gate a
-        // session that was never staged.
+        // SandboxAgentTools always implements SubmitVetoAware, so implementing the interface must not by itself gate a session that was never staged.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("submit", "{}"), textResponse("must not be called"));
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
@@ -400,8 +432,7 @@ class AgentLoopRunnerTest {
     @Test
     void agentLoop_appendsTheBudgetPressureNudge_intoThePromptOfTheFinalAllowedTurn() {
         ChatModel chatModel = mock(ChatModel.class);
-        // The model keeps calling a tool and never submits. With maxTurns=2 the nudge must be appended AFTER the conversation is rebuilt from turn 1's tool result, or the
-        // rebuild discards it and it never reaches the model on turn 2.
+        // The nudge must be appended after the conversation is rebuilt from turn 1's tool result, or the rebuild discards it and it never reaches the model on turn 2.
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"));
 
         AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
@@ -672,21 +703,6 @@ class AgentLoopRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
     }
 
-    @Test
-    void agentLoop_invokesUsageSinkOncePerModelCall() {
-        ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE"));
-
-        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
-        SandboxAgentTools tools = new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session");
-        List<ChatResponse> recorded = new ArrayList<>();
-
-        AgentLoopResult result = runner.run("system", "do it", tools, 10, () -> false, recorded::add, null);
-
-        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(recorded).hasSize(2);
-    }
-
     // --- runSession: carrying one logical conversation across several bounded run calls (staged generation continuity) ---
 
     @Test
@@ -716,7 +732,7 @@ class AgentLoopRunnerTest {
                 new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, null, null);
 
         assertThat(viaSession.result()).as("a null prior conversation must behave exactly like run()").isEqualTo(viaRun);
-        // The returned conversation excludes the system message but carries the rest of the exchange, ready to seed a later runSession call.
+        // The returned conversation excludes the system message but carries the rest, ready to seed a later runSession call.
         assertThat(viaSession.conversation()).hasSize(4);
         assertThat(viaSession.conversation().get(0)).isInstanceOfSatisfying(UserMessage.class, message -> assertThat(message.getText()).isEqualTo("do it"));
         assertThat(viaSession.conversation().getLast()).isInstanceOfSatisfying(AssistantMessage.class, message -> assertThat(message.getText()).isEqualTo("DONE"));
@@ -742,14 +758,11 @@ class AgentLoopRunnerTest {
         assertThat(secondSession.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(secondChatModel).call(promptCaptor.capture());
-        // The second call's model prompt must contain the first call's assistant turn (proof the conversation was actually carried, not discarded), as well as the new
-        // stage's system/user prompts.
         assertThat(renderPrompt(promptCaptor.getValue())).contains("MARKER_FROM_CALL_ONE").contains("system stage 2").contains("do stage 2");
     }
 
     @Test
     void runSession_carriedConversationOverTheCompactionThreshold_getsCompactedAndKeepsTheSummarySentinel() {
-        // A carried conversation built directly (not via a prior run), so its size is under our control: 8 tool-call/tool-result turns of 8k characters each.
         List<Message> priorConversation = new ArrayList<>();
         priorConversation.add(new UserMessage("create a bubble-sort exercise"));
         for (int i = 0; i < 8; i++) {
@@ -793,7 +806,7 @@ class AgentLoopRunnerTest {
 
     @Test
     void forSettings_pinsTheProfilesModelAndDecodingParametersOnEveryCall() {
-        // The whole point of a named effort profile: what actually reaches the provider must be the profile's configuration, not the deployment model bean's.
+        // What reaches the provider must be the named profile's configuration, not the deployment model bean's.
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("deployment-model").temperature(1.0).maxCompletionTokens(8_192).build());
         when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));

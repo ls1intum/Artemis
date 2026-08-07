@@ -72,7 +72,7 @@
         <div class="flex flex-wrap items-center gap-3">
             <fa-icon [icon]="released() || naturallyEnded() ? faCircleCheck : faSpinner" [animation]="released() || naturallyEnded() ? undefined : 'spin'" size="2x" />
             <div class="flex flex-wrap items-center gap-2">
-                <h2 class="mb-0 text-xl">{{ modeKey(generation.mode) | artemisTranslate }} · {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})</h2>
+                <h2 class="mb-0 text-xl">{{ modeLabelKey() | artemisTranslate }} · {{ generation.exerciseTitle }} (#{{ generation.exerciseId }})</h2>
                 <tum-ui-tag
                     [severity]="released() || naturallyEnded() ? 'secondary' : 'info'"
                     [value]="
@@ -111,7 +111,7 @@
                     </dd>
                 }
                 <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.mode"></dt>
-                <dd>{{ modeKey(generation.mode) | artemisTranslate }}</dd>
+                <dd>{{ modeLabelKey() | artemisTranslate }}</dd>
                 <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.initiatedBy"></dt>
                 <dd>{{ generation.userLogin }}</dd>
             </dl>
@@ -126,7 +126,7 @@
                 </dd>
                 <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.containerId"></dt>
                 <dd class="min-w-0">
-                    <code data-testid="hyperion-container-id" class="select-all break-all">{{ containerId(generation.sessionId) }}</code>
+                    <code data-testid="hyperion-container-id" class="select-all break-all">{{ containerId() }}</code>
                 </dd>
             </dl>
         </div>
@@ -138,7 +138,7 @@
             <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.started"></dt>
             <dd>{{ generation.startedAt | artemisDate: 'long' : true }}</dd>
             <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.duration"></dt>
-            <dd>{{ elapsedSeconds(generation.startedAt) | artemisDurationFromSeconds }}</dd>
+            <dd>{{ elapsedSeconds() | artemisDurationFromSeconds }}</dd>
             <dt jhiTranslate="artemisApp.buildAgents.generationSandboxes.lastSandboxActivity"></dt>
             <dd>
                 {{ generation.lastActivityAt | artemisTimeAgo }}
@@ -149,13 +149,10 @@
 
     <tum-ui-dialog
         [(visible)]="confirmCancelVisible"
-        [modal]="true"
         [closable]="true"
         [closeOnEscape]="true"
         [dismissableMask]="true"
-        [draggable]="false"
-        [appendTo]="'body'"
-        [style]="{ width: '32rem' }"
+        [size]="'small'"
         [header]="'artemisApp.buildAgents.generationSandboxes.cancelTitle' | artemisTranslate"
     >
         <div class="flex items-start gap-2">

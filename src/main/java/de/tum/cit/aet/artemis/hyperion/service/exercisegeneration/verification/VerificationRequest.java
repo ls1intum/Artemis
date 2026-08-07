@@ -6,9 +6,8 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The produced artifacts and integrity-gate inputs the post-loop {@link DifferentialVerificationService#verify} decides on, bundled so the "what to verify" travels as one value
- * beside the "where to run it" the verifier keeps as separate arguments. These are exactly the sandbox-free inputs the in-loop self-check cannot supply: the read-back repository
- * files and the seed snapshot the agent loop lacks mid-session.
+ * The produced artifacts and integrity-gate inputs the post-loop {@link DifferentialVerificationService#verify} decides on. These are the sandbox-free inputs the in-loop
+ * self-check cannot supply: the read-back repository files and the seed snapshot the agent loop lacks mid-session.
  *
  * @param seedTestsFiles               tests-repo files snapshotted at seed time; enables the harness-immutability and generated-source-layout gates
  * @param seedTemplateFiles            template-repo files snapshotted at seed time; files unchanged since remain valid during adaptation

@@ -1,17 +1,16 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
 /**
- * A single stage of the orchestrator-enforced staged generation workflow, run as its own bounded agent loop with its own stage-scoped system prompt
+ * A single stage of the staged generation workflow, run as its own bounded agent loop with its own stage-scoped system prompt
  * ({@link AgentSystemPromptService#buildStage(de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise, GenerationStage)}). The orchestrator runs the stages in this
- * declared order, gating each stage's output before starting the next one; within a stage, the agent's {@code submit} tool call means only that this stage's artifact is
- * finished, not that the exercise is complete.
+ * declared order, gating each stage's output before starting the next one; within a stage, {@code submit} means only that this stage's artifact is finished.
  */
 public enum GenerationStage {
 
     /**
-     * Write {@code /workspace/SPEC.md}: the unified specification — numbered rules with real computation, a worked-examples table whose arithmetic is machine-checked in the
-     * sandbox, the design (classes with template status and state ownership), and the testing strategy (weights, hidden variants, diagram decision).
-     * One planning artifact instead of a spec/design pair, so the two can never drift apart. Skipped when the instructor provided a real statement — that statement is the spec.
+     * Write {@code /workspace/SPEC.md}: numbered rules with real computation, a worked-examples table whose arithmetic is machine-checked in the sandbox, the design (classes
+     * with template status and state ownership), and the testing strategy (weights, hidden variants, diagram decision). Skipped when the instructor provided a real statement —
+     * that statement is the spec.
      */
     SPEC("Specification"),
 

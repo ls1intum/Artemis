@@ -62,20 +62,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * The attempt loop's own decisions, driven through {@link GenerationAttemptLoop#run()} rather than through
- * {@link GenerationOrchestrationService#generate}.
- * <p>
- * Everything the owning service's public seam can already observe stays covered there, in {@code GenerationOrchestrationServiceTest}: the termination reason of every ordinary
- * exit, the per-round finding-drain counts, the mechanical/semantic interleaving, and the ADAPT budget clamp (which
- * {@code acceptedAdaptationWithPersistentScopeDriftRemainsMechanicallyAcceptedAndRequiresReview} kills by pinning the attempt count at two). Duplicating those here would buy a
- * second way to fail for the same defect and nothing else.
- * <p>
- * What is covered here is what that seam cannot reach:
+ * The attempt loop's own decisions, driven through {@link GenerationAttemptLoop#run()} rather than through {@link GenerationOrchestrationService#generate}. Everything the
+ * owning service's public seam can observe — termination reasons, finding-drain counts, the mechanical/semantic interleaving, the ADAPT budget clamp — stays covered in
+ * {@code GenerationOrchestrationServiceTest}. Covered here is what that seam cannot reach:
  * <ul>
- * <li>the repair <b>scope</b> handed to the agent tools — the service builds {@code SandboxAgentTools} internally, so no caller of {@code generate} can see which write barrier a
- * repair round runs under, and today nothing asserts that the scheduled surface's writable roots are the ones the agent actually gets;</li>
- * <li>the loop's own <b>fairness bookkeeping</b> across rounds ({@code markSurfaceRepaired}), which decides what {@link SemanticRepairBatch#next} is asked — the batch's reply to
- * a given state is a pure function covered by {@code SemanticRepairBatchTest}, but nothing checked that the loop feeds it the right state;</li>
+ * <li>the repair <b>scope</b> handed to the agent tools: the service builds {@code SandboxAgentTools} internally, so no caller of {@code generate} can see which write barrier a
+ * repair round runs under;</li>
+ * <li>the loop's <b>fairness bookkeeping</b> across rounds ({@code markSurfaceRepaired}), which decides what state {@link SemanticRepairBatch#next} is asked about — the reply
+ * itself is a pure function covered by {@code SemanticRepairBatchTest};</li>
  * <li>budgets and caps at a <b>configured boundary</b>: the service derives the attempt cap from the repair budget, so a degenerate or exact-boundary configuration is only
  * reachable by constructing the loop directly.</li>
  * </ul>
@@ -125,8 +119,7 @@ class GenerationAttemptLoopTest {
         specFidelityCritic = mock(SpecFidelityCriticService.class);
         jobService = mock(GenerationJobService.class);
         stagedGenerationRunner = mock(StagedGenerationRunner.class);
-        // A mock, not the shared fake: the repair scope is a write barrier inside the tools object with no reader, so the call carrying the scheduled surface's roots is the only
-        // observable form the decision takes.
+        // A mock, not the shared fake: the repair scope is a write barrier with no reader, so the call carrying the scheduled surface's roots is the only observable form.
         baseTools = mock(SandboxAgentTools.class);
         sandbox = new FakeInteractiveSandbox();
         progressLines.clear();
@@ -163,13 +156,7 @@ class GenerationAttemptLoopTest {
         verify(recordingSink, times(3)).recordAttempt();
     }
 
-    /**
-     * A loop over the fixture above.
-     *
-     * @param mode                  the run mode, which also decides the semantic repair budget's ceiling
-     * @param maxGenerationAttempts how many authoring attempts the loop may make
-     * @param maxSemanticRepairs    the semantic repair budget a GENERATE run gets
-     */
+    /** A loop over the fixture above. The mode also decides the semantic repair budget's ceiling. */
     private GenerationAttemptLoop newLoop(GenerationMode mode, int maxGenerationAttempts, int maxSemanticRepairs) {
         return newLoop(mode, maxGenerationAttempts, maxSemanticRepairs, false);
     }
@@ -300,8 +287,7 @@ class GenerationAttemptLoopTest {
 
     @Test
     void anUnadmittedConceptCannotAuthorizeValidatedWitnessAdoption() {
-        // Mirrors anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption: a contested concept must gate autonomous witness adoption exactly like a contested
-        // specification, because adopting an execution-proven counterexample would deepen a design choice the reviewer objected to.
+        // A contested concept gates autonomous witness adoption like a contested specification: adopting a proven counterexample would deepen a design choice under objection.
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
                 .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
         sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
@@ -949,7 +935,7 @@ class GenerationAttemptLoopTest {
 
         @Test
         void anAdvisoryOnlyReviewSchedulesNoRepairAtAll() {
-            // Nothing blocks, so the run is finished; entering a repair scope here would spend a round rewriting a candidate that already passed every gate.
+            // Nothing blocks, so entering a repair scope would spend a round rewriting a candidate that already passed every gate.
             reviewAlwaysReturns(report(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE));
 
             GenerationAttemptLoop loop = newGenerateLoop(3, 2);
@@ -1005,8 +991,7 @@ class GenerationAttemptLoopTest {
 
         @Test
         void theRepairScopeIsLeftBehindEvenWhenTheAttemptItScopedIsTheLastOne() {
-            // The barrier is entered before an attempt and must be gone after it: a scope that outlived its attempt would silently constrain the next agent call, or the
-            // post-loop verify, to the previous round's surface.
+            // A scope that outlived its attempt would silently constrain the next agent call, or the post-loop verify, to the previous round's surface.
             reviewAlwaysReturns(report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
 
             newGenerateLoop(2, 1).run();
@@ -1061,7 +1046,7 @@ class GenerationAttemptLoopTest {
 
         @Test
         void aNonPositiveAttemptCapRunsNothingAndStillNamesItsExit() {
-            // Only reachable by misconfiguration, which is exactly when a run's artifact must still say why it did nothing rather than carry no reason at all.
+            // Only reachable by misconfiguration, which is when a run's artifact most needs to say why it did nothing.
             GenerationAttemptLoop loop = newGenerateLoop(0, 3);
 
             assertThat(loop.run()).as("the caller resolves the outcome from the loop's final state, which here is untouched").isNull();
@@ -1073,8 +1058,7 @@ class GenerationAttemptLoopTest {
 
         @Test
         void aMechanicallyRejectedCandidateNeverEntersARepairScope() {
-            // The mechanical repair phase asks the agent to fix the build against the verifier's own reasons; scoping it to a semantic surface would forbid the very files the
-            // rejection names.
+            // The mechanical repair phase asks the agent to fix the build against the verifier's reasons; a semantic scope would forbid the very files the rejection names.
             when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("the template passed a graded test"));
             when(workspace.extractProblemStatement(any(), anyString())).thenReturn("attempt 1", "attempt 2", "attempt 3", "attempt 4");
 

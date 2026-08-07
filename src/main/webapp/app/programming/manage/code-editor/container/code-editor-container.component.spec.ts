@@ -446,6 +446,16 @@ describe('CodeEditorContainerComponent', () => {
         expect(gridStub.toggleCollapse).toHaveBeenCalledWith(event, CollapsableCodeEditorElement.BuildOutput);
     });
 
+    it('should fall back to the projected bottom panel while no build output exists, and keep it once one does', () => {
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.BUILD_OUTPUT);
+
+        fixture.componentRef.setInput('buildable', false);
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
+
+        fixture.componentRef.setInput('buildable', true);
+        expect(component.activeBottomPanel()).toBe(CodeEditorBottomPanel.ADDITIONAL);
+    });
+
     it('should select and expand the projected bottom panel', () => {
         component.openEditorBottomPanel();
 

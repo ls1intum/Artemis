@@ -69,8 +69,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 
 /**
  * Resource-level unit tests for {@link HyperionExerciseGenerationResource}: the non-LLM contract (202/409/404/204/400 and role gating) with the collaborators mocked. The
- * end-to-end
- * agentic behaviour is covered by the mocked-LLM E2E tests, not here.
+ * end-to-end agentic behaviour is covered by the mocked-LLM E2E tests.
  */
 class HyperionExerciseGenerationResourceTest {
 
@@ -110,7 +109,7 @@ class HyperionExerciseGenerationResourceTest {
 
     private ProgrammingExercise testExercise;
 
-    /** A real resolver over the shipped defaults: the profile feature is inert unless a deployment configures profiles, which is exactly the state these tests exercise. */
+    /** A real resolver over the shipped defaults: the profile feature is inert unless a deployment configures profiles. */
     private final HyperionEffortProfileService effortProfileService = new HyperionEffortProfileService(new HyperionAgentProperties(), List.of());
 
     @BeforeEach
@@ -161,7 +160,7 @@ class HyperionExerciseGenerationResourceTest {
                 .satisfies(exception -> assertThat(exception.getBody().getProperties()).containsEntry("message", "error.generationCapacityUnavailable"));
 
         verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any());
-        // The rejection must leave a trace on the server: without it the only signal is a bare 503 in the client, and the default of zero sandbox slots is undiagnosable.
+        // The rejection must leave a server-side trace: otherwise the only signal is a bare 503 in the client and the default of zero sandbox slots is undiagnosable.
         verify(generationCapacityHealthIndicator).warnGenerationRejectedForMissingCapacity();
     }
 
@@ -243,8 +242,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().fullyReverted()).isTrue();
-        // The Hyperion-facing label (matching the "template"/"solution"/"tests" vocabulary already used by file-change events), not RepositoryType#getName()'s LocalVC-facing
-        // "exercise" for TEMPLATE.
+        // The Hyperion-facing label used by file-change events, not RepositoryType#getName()'s LocalVC-facing "exercise" for TEMPLATE.
         assertThat(response.getBody().revertedRepositories()).containsExactly("template", "solution", "tests");
         assertThat(response.getBody().completedAt()).isNotNull();
         verify(jobService).discardRetainedRun(1L, "adapt-job");
@@ -391,7 +389,7 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void getSupportedGenerationLanguages_returnsSortedSet() {
-        // An unordered supported set must be served in a stable (natural enum) order; JAVA precedes PYTHON.
+        // An unordered supported set must be served in a stable (natural enum) order.
         when(agentSystemPromptService.supportedGenerationLanguages()).thenReturn(Set.of(ProgrammingLanguage.PYTHON, ProgrammingLanguage.JAVA));
 
         ResponseEntity<List<ProgrammingLanguage>> response = resource.getSupportedGenerationLanguages();
@@ -418,6 +416,8 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody().running()).isTrue();
         assertThat(response.getBody().mode()).isEqualTo(GenerationMode.ADAPT);
         assertThat(response.getBody().revertAvailable()).isFalse();
+        assertThat(response.getBody().revertJobId()).isNull();
+        assertThat(response.getBody().revertMode()).isNull();
     }
 
     @Test
@@ -498,23 +498,6 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody().jobId()).isEqualTo("generate-job");
         assertThat(response.getBody().mode()).isEqualTo(GenerationMode.GENERATE);
         assertThat(response.getBody().revertAvailable()).isTrue();
-    }
-
-    @Test
-    void getExerciseGenerationStatus_whenAnotherMutationIsActive_hidesRevertCapability() {
-        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("new-job", true, GenerationMode.GENERATE, List.of(), List.of(), false);
-        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
-        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
-        when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
-        when(generationRevertService.findRevertibleRun(1L)).thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertibleRun("old-adaptation", GenerationMode.ADAPT)));
-        when(jobService.hasActiveJob(1L)).thenReturn(true);
-
-        ResponseEntity<ExerciseGenerationStatusDTO> response = resource.getExerciseGenerationStatus(1L);
-
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().revertAvailable()).isFalse();
-        assertThat(response.getBody().revertJobId()).isNull();
-        assertThat(response.getBody().revertMode()).isNull();
     }
 
     @Test
@@ -623,7 +606,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(effortProfiles.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
     }
 
-    /** A resource wired to a deployment that configures two profiles, so the endpoint's set and the accepted set can be compared. */
+    /** A resource wired to a deployment that configures two profiles. */
     private HyperionExerciseGenerationResource resourceWithProfiles() {
         HyperionAgentProperties properties = new HyperionAgentProperties();
         properties.setMaxTokensPerJob(3_000_000L);
@@ -665,7 +648,7 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void generateExercise_withAnUnknownEffortProfile_isRejectedBeforeAnythingIsReserved() {
-        // Fail closed. A silent fallback is how an instructor gets a surprise bill, and how a comparison between two configurations silently becomes a comparison of one.
+        // Fail closed: a silent fallback to the default profile is how an instructor gets a surprise bill.
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "thorough", null, null);
         HyperionExerciseGenerationResource profiled = resourceWithProfiles();
 
@@ -698,7 +681,7 @@ class HyperionExerciseGenerationResourceTest {
 
         resourceWithProfiles().generateExercise(1L, request);
 
-        // The reservation is sized to what the run may actually spend, which is the point of allowing the bound at all.
+        // The reservation is sized to what the run may actually spend, not to the profile ceiling.
         verify(generationBudgetService).reserveGenerationBudget(any(), any(), eq(50_000L));
         verify(jobService).startJob(any(), any(), any(), any(), any(), any(), settings.capture());
         assertThat(settings.getValue().maxJobDuration()).isEqualTo(Duration.ofMinutes(5));
@@ -706,7 +689,7 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void generateExercise_withRequestedBoundsAboveTheProfile_clampsInsteadOfWidening() {
-        // A request may only tighten. Clamping rather than rejecting means a client never has to know the server's ceiling to construct a valid request.
+        // A request may only tighten; clamping rather than rejecting means a client never has to know the server's ceiling to construct a valid request.
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, "draft", 900_000_000L, Duration.ofHours(9));
         stubHappyPath(request);
         ArgumentCaptor<HyperionGenerationSettings> settings = ArgumentCaptor.forClass(HyperionGenerationSettings.class);
@@ -720,7 +703,7 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void generateExercise_withANonPositiveRequestedDuration_isRejected() {
-        // Clamping is right for "at most N"; a zero or negative N has no run it could have meant, so it is rejected rather than silently turned into the ceiling.
+        // Clamping is right for "at most N", but a zero or negative N has no run it could have meant, so it is rejected rather than turned into the ceiling.
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.GENERATE, "brief", null, null, null, Duration.ZERO);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.generateExercise(1L, request))

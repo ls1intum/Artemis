@@ -606,6 +606,10 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
+            'src/main/webapp/app/hyperion/**/*.html',
+            'src/main/webapp/app/localci/hyperion-generation-detail/**/*.html',
+            'src/main/webapp/app/localci/hyperion-generation-jobs-table/**/*.html',
+            'src/main/webapp/app/exercise/review/adapt-exercise-dialog/**/*.html',
             'packages/tum-ui/src/lib/**/*.html',
         ],
         languageOptions: {

@@ -107,24 +107,36 @@
     </ng-container>
     <ng-container editorBottomArea>
         @if (editorBottomPanelTitle(); as bottomPanelTitle) {
-            <p-tabs class="editor-bottom-tabs" [value]="activeBottomPanel()" (valueChange)="selectBottomPanel($event)" data-testid="code-editor-bottom-tabs">
+            <tum-ui-tabs class="editor-bottom-tabs" [value]="activeBottomPanel()" (valueChange)="selectBottomPanel($event)" data-testid="code-editor-bottom-tabs">
                 <div class="editor-bottom-tabs-header">
-                    <p-tablist [pt]="{ tabList: { 'aria-label': 'artemisApp.editor.bottomPanels' | artemisTranslate } }">
-                        @if (buildable()) {
-                            <p-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab" (click)="expandSelectedBottomPanel()">
+                    <!--
+                        Branching the whole list, rather than wrapping the build-output tab in @if, keeps every tab created
+                        together with its list: TumUiTabListComponent reads the tabs' required `value` input from an effect
+                        that runs before Angular applies the bindings of a tab created inside an @if, which throws NG0950.
+                    -->
+                    @if (buildable()) {
+                        <tum-ui-tab-list [attr.aria-label]="'artemisApp.editor.bottomPanels' | artemisTranslate">
+                            <tum-ui-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab" (click)="expandSelectedBottomPanel()">
                                 <fa-icon [icon]="faTerminal" />
                                 <span jhiTranslate="artemisApp.editor.buildOutput"></span>
-                            </p-tab>
-                        }
-                        <p-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
-                            <span [jhiTranslate]="bottomPanelTitle"></span>
-                        </p-tab>
-                    </p-tablist>
+                            </tum-ui-tab>
+                            <tum-ui-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
+                                <span [jhiTranslate]="bottomPanelTitle"></span>
+                            </tum-ui-tab>
+                        </tum-ui-tab-list>
+                    } @else {
+                        <tum-ui-tab-list [attr.aria-label]="'artemisApp.editor.bottomPanels' | artemisTranslate">
+                            <tum-ui-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
+                                <span [jhiTranslate]="bottomPanelTitle"></span>
+                            </tum-ui-tab>
+                        </tum-ui-tab-list>
+                    }
                     <button
-                        pButton
-                        type="button"
-                        text
+                        tumUiButton
+                        variant="text"
                         severity="secondary"
+                        size="small"
+                        type="button"
                         class="editor-bottom-collapse"
                         (click)="onToggleCollapse({ event: $event, horizontal: false }, CollapsableCodeEditorElement.BuildOutput)"
                         [attr.aria-expanded]="!bottomPanelCollapsed()"
@@ -135,9 +147,9 @@
                         <span class="sr-only" [jhiTranslate]="bottomPanelCollapsed() ? 'artemisApp.editor.expandBottomPanel' : 'artemisApp.editor.collapseBottomPanel'"></span>
                     </button>
                 </div>
-                <p-tabpanels id="code-editor-bottom-panel-content" [hidden]="bottomPanelCollapsed()">
+                <tum-ui-tab-panels id="code-editor-bottom-panel-content" [hidden]="bottomPanelCollapsed()">
                     @if (buildable()) {
-                        <p-tabpanel [value]="CodeEditorBottomPanel.BUILD_OUTPUT">
+                        <tum-ui-tab-panel [value]="CodeEditorBottomPanel.BUILD_OUTPUT">
                             <jhi-code-editor-build-output
                                 [participation]="participation()"
                                 [secondaryHeader]="!showNavbar()"
@@ -145,13 +157,13 @@
                                 (onAnnotations)="onAnnotations($event)"
                                 (onError)="onError($event)"
                             />
-                        </p-tabpanel>
+                        </tum-ui-tab-panel>
                     }
-                    <p-tabpanel [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel">
+                    <tum-ui-tab-panel [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel">
                         <ng-content select="[editorBottomPanel]" />
-                    </p-tabpanel>
-                </p-tabpanels>
-            </p-tabs>
+                    </tum-ui-tab-panel>
+                </tum-ui-tab-panels>
+            </tum-ui-tabs>
         } @else if (buildable()) {
             <jhi-code-editor-build-output
                 [participation]="participation()"

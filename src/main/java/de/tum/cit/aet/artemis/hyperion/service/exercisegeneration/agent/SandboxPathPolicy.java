@@ -7,7 +7,16 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ExerciseIntegrityGate;
 
-/** Workspace-path and managed-build-infrastructure policy used by the sandbox tools. */
+/**
+ * Model steering for the sandbox tools' path arguments. <strong>Not a security boundary.</strong>
+ * <p>
+ * Every check here operates on the string the model passed to a structured tool, so it is trivially bypassable: the same session exposes an unrestricted {@code bash} tool, and
+ * {@link #workspaceRelativePath} normalises text rather than resolving the filesystem, so a symlink created inside the workspace reaches outside it. Its purpose is to turn the
+ * common accident — the model deciding to "fix" the build by editing the seeded harness — into an immediate, explanatory tool observation instead of a verification failure ten
+ * turns later. The actual containment lives in the sandbox container, in the link-rejecting {@code copyOut} read-back ({@code WorkspaceArchive}, {@code CollectedReports}) that
+ * decides which bytes may reach a Git commit, and in {@code ExerciseIntegrityGate} plus the differential verifier, which re-derive harness immutability from the produced
+ * artefacts.
+ */
 final class SandboxPathPolicy {
 
     private static final String WORKSPACE = "/workspace";
@@ -37,6 +46,13 @@ final class SandboxPathPolicy {
         return "ERROR: do not modify " + path + ". Repository build infrastructure is seeded and managed by Artemis; edit only the problem statement and exercise source files.";
     }
 
+    /**
+     * A best-effort textual guess at whether a {@code bash} command line would rewrite seeded build infrastructure, used to answer with the same explanatory observation the
+     * structured edit tools give. It pattern-matches a lowercased command string, so quoting, variables, {@code $(...)}, an editor, or a script file all evade it.
+     *
+     * @param command the command line the model asked to run
+     * @return whether it looks like a rewrite of managed build infrastructure
+     */
     static boolean mutatesManagedBuildInfrastructure(String command) {
         String lower = command.toLowerCase();
         if (!lower.matches(

@@ -18,17 +18,14 @@ public final class LanguageGenerationProfile {
     private LanguageGenerationProfile() {
     }
 
-    /**
-     * @return the languages with at least one supported generation configuration
-     */
     public static Set<ProgrammingLanguage> supportedLanguages() {
         return SUPPORTED_LANGUAGES;
     }
 
     /**
-     * Checks the exercise configuration because test execution depends on both language and project type. Deliberately touches only simple entity fields — NEVER the lazy
-     * {@code auxiliaryRepositories} collection (accessing it on a detached exercise threw {@code LazyInitializationException} and turned a clean 400 into a 500); callers that
-     * must also reject auxiliary repositories query them explicitly and pass the result to {@link #isSupported(ProgrammingExercise, boolean)}.
+     * Checks the exercise configuration because test execution depends on both language and project type. Touches only simple entity fields — NEVER the lazy
+     * {@code auxiliaryRepositories} collection, which throws {@code LazyInitializationException} on a detached exercise; callers that must also reject auxiliary repositories
+     * query them explicitly and pass the result to {@link #isSupported(ProgrammingExercise, boolean)}.
      *
      * @param exercise the exercise to check, or {@code null}
      * @return whether the differential verifier supports this language/project-type configuration

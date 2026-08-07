@@ -163,7 +163,7 @@ class GenerationPersistenceServiceTest {
         when(exercise.getRepositoryURI(RepositoryType.TESTS)).thenReturn(testsUri);
     }
 
-    /** Builds the service with a shrunken test-case sync wait and the real metadata/task-rebuild collaborator, so the build-completion wait is exercised without sleeping. */
+    /** Builds the service with a shrunken test-case sync wait, so the build-completion wait runs without sleeping. */
     private GenerationPersistenceService newService(Duration testCaseSyncTimeout) {
         return new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
                 exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
@@ -249,10 +249,7 @@ class GenerationPersistenceServiceTest {
         when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-tests");
     }
 
-    /**
-     * Produced paths are authored by the model and are written straight into a Git working tree that is force-pushed to a live exercise, so every shape that could escape the
-     * repository root must be refused before the first file is created.
-     */
+    /** Produced paths are model-authored and land in a tree force-pushed to a live exercise, so every shape escaping the repository root is refused before the first write. */
     static Stream<Arguments> unsafeProducedPaths() {
         return Stream.of(Arguments.of("null path", null, "must not be blank"), Arguments.of("blank path", "   ", "must not be blank"),
                 // Not absolute on a POSIX file system, so only the explicit drive-letter check keeps it out of the tree.
@@ -266,7 +263,7 @@ class GenerationPersistenceServiceTest {
     @MethodSource("unsafeProducedPaths")
     void persist_refusesAProducedPathOutsideTheRepository_beforeWritingAnything(String scenario, String path, String expectedReason) throws Exception {
         stubSuccessfulCheckoutAndCommits();
-        // Collections.singletonMap rather than Map.of: the null-key row is exactly the case a null-hostile factory would hide.
+        // Collections.singletonMap rather than Map.of: the null-key row is the case a null-hostile factory would hide.
         GenerationOutcome outcome = outcomeWith(Collections.singletonMap(path, "class Escaped {}"), Map.of(), Map.of(), "");
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining(expectedReason);
@@ -377,7 +374,7 @@ class GenerationPersistenceServiceTest {
         service.persist(exercise, user, outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "new statement"), "old statement", null,
                 "job-1", GenerationMode.GENERATE, () -> true, invalidationAttempts::incrementAndGet);
 
-        // Four call sites reach the hook — one per repository commit plus the metadata save — and it is a cache invalidation the caller pays for, so only the first may run it.
+        // Four call sites reach the hook (one per repository commit plus the metadata save) and it is a cache invalidation the caller pays for, so only the first may run it.
         assertThat(invalidationAttempts).hasValue(1);
         verify(gitService, times(3)).pushCommitWithLease(any(), anyString(), anyString(), anyString());
         verify(programmingExerciseRepository).updateProblemStatementAndTitleIfUnchanged(1L, "new statement", null, "old statement", null);
@@ -522,8 +519,7 @@ class GenerationPersistenceServiceTest {
     void persist_rechecksRepositoryHeadsAfterTestCaseSyncBeforeCreatingVersion() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        // Keyed on the event that must precede the re-check, not on a call count: counting encodes how many times persist happens to read the head today, so adding a guard
-        // would silently relocate the divergence instead of failing here.
+        // Keyed on the event that must precede the re-check rather than a call count, which would only encode how many times persist reads the head today.
         AtomicBoolean testsBuildTriggered = new AtomicBoolean();
         doAnswer(invocation -> {
             testsBuildTriggered.set(true);
@@ -586,9 +582,8 @@ class GenerationPersistenceServiceTest {
     }
 
     /**
-     * The pre-write metadata guard compares the exercise's live problem statement and title against the values captured when the job started, tolerating exactly the drift the
-     * platform itself introduces (line endings, outer whitespace, the initial test-case sync's task-reference ids) and refusing everything else. Each row is one accepted or
-     * rejected drift shape.
+     * The pre-write metadata guard compares the exercise's live problem statement and title against the values captured when the job started, tolerating only the drift the
+     * platform itself introduces (line endings, outer whitespace, the initial test-case sync's task-reference ids). Each row is one accepted or rejected drift shape.
      */
     static Stream<Arguments> metadataGuardCases() {
         return Stream.of(
@@ -624,8 +619,7 @@ class GenerationPersistenceServiceTest {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), producedProblemStatement);
 
         if (expectThrow) {
-            // Plain IllegalStateException, never GenerationIncompleteException: that pairing is what pins the guard ahead of the commit block, whose catch would otherwise wrap
-            // the same failure and report a half-saved exercise that never existed.
+            // Plain IllegalStateException, never GenerationIncompleteException: that pins the guard ahead of the commit block, whose catch would report a half-saved exercise.
             assertThatThrownBy(() -> service.persist(exercise, user, outcome, expectedProblemStatement, expectedTitle)).isInstanceOf(IllegalStateException.class)
                     .isNotInstanceOf(GenerationIncompleteException.class).hasMessageContaining("problem statement");
             verify(repositoryService, never()).commitChanges(any(), any());
@@ -746,8 +740,7 @@ class GenerationPersistenceServiceTest {
         assertThat(configure.getWeight()).as("configure gate (present in the partial set) zero-weighted").isEqualTo(0.0);
         assertThat(compileSort.getWeight()).as("compile gate (only in the complete set) zero-weighted").isEqualTo(0.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
-        // The wait is for a result of the TESTS commit this persist pushed, not for any newer solution result: the stub above only answers for that hash, so a run polling on
-        // anything else would never see the complete set.
+        // The wait is for a result of the TESTS commit this persist pushed: the stub only answers for that hash, so a run polling on anything else never sees the complete set.
         verify(programmingSubmissionService, atLeastOnce()).existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
     }
 
@@ -847,7 +840,7 @@ class GenerationPersistenceServiceTest {
         promptService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
         assertThat(buildGate.getWeight()).as("build gate zero-weighted even though the count never moved off the pre-build value").isEqualTo(0.0);
-        // The invocation bound, not wall-clock, is the claim: the service is built with a ten-second sync timeout, so spinning it out would take far more than these four polls.
+        // The service is built with a ten-second sync timeout, so spinning it out would take far more than these four polls.
         verify(programmingSubmissionService, atMost(4)).existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
     }
 
@@ -1159,8 +1152,8 @@ class GenerationPersistenceServiceTest {
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class, thrown -> {
             assertThat(thrown).hasMessageContaining("requires manual review");
-            // The push outcome is genuinely unknown (the local commit landed, but the remote branch could not be confirmed to still be at its pre-persist state): the live
-            // exercise must be conservatively reported as changed, and the best-known (unconfirmed) commit hash surfaced instead of an empty, falsely-reassuring commit map.
+            // The local commit landed but the remote branch could not be confirmed at its pre-persist state, so the live exercise is reported as changed and the best-known
+            // (unconfirmed) commit hash is surfaced rather than an empty commit map.
             assertThat(thrown.liveExerciseChanged()).isTrue();
             assertThat(thrown.savedRepositoryCommits()).containsExactly(Map.entry(RepositoryType.TEMPLATE, "template-after"));
         });
@@ -1216,12 +1209,6 @@ class GenerationPersistenceServiceTest {
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class);
         verify(gitService).resetToCommitAndForcePush(repository, "template-pre", "template-post", exerciseBranch);
-    }
-
-    private final String jobId = "job-42";
-
-    private void stubAdaptTarget() {
-        when(repositoryService.getFiles(any())).thenReturn(Map.of("src/de/test/BankAccount.java", FileType.FILE));
     }
 
     @Test

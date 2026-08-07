@@ -27,13 +27,11 @@ import io.swagger.v3.oas.annotations.Hidden;
  * whole-exercise generation. Removing a released path silently is not permitted (see {@code documentation/docs/developer/guidelines/rest-api.mdx}), so the route stays mapped and
  * editor-authorized and answers a deterministic {@code 410 Gone} instead of an ambiguous {@code 404}.
  * <p>
- * The successor {@code POST .../generate-exercise} ({@link HyperionExerciseGenerationResource}) is not a drop-in: it multiplexes {@code GENERATE}/{@code ADAPT} explicitly, answers
- * {@code 202}, rewrites the problem statement plus all repositories rather than one, and has a different status/cancel/revert/event contract. Forwarding a legacy request into it
- * would silently broaden the mutation scope and still return a shape the caller cannot parse, so there is no safe transparent adapter.
- * <p>
- * Consequently this controller depends on <b>no</b> generation service, job, prompt, or DTO, and takes the body as an opaque {@link JsonNode} so that both the full legacy payload
- * and the bare {@code checkOnly} poll are accepted without resurrecting the old contract. It is {@link Hidden} from the generated OpenAPI spec so new integrations never see a
- * callable dead API; only already-deployed callers are expected to reach it. Delete the class once {@link #SUNSET_DATE} has passed and no legacy caller remains.
+ * The successor {@code POST .../generate-exercise} ({@link HyperionExerciseGenerationResource}) is not a drop-in: forwarding a legacy request into it would broaden the mutation
+ * scope from one repository to the whole exercise and still return a shape the caller cannot parse, so there is no safe transparent adapter. This controller therefore depends on
+ * <b>no</b> generation service, job, prompt, or DTO, and takes the body as an opaque {@link JsonNode} so both the full legacy payload and the bare {@code checkOnly} poll are
+ * accepted without resurrecting the old contract. {@link Hidden} from the generated OpenAPI spec, so only already-deployed callers reach it. Delete the class once
+ * {@link #SUNSET_DATE} has passed and no legacy caller remains.
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -46,8 +44,8 @@ public class HyperionCodeGenerationCompatibilityResource {
 
     /**
      * RFC 9745 Deprecation field-value: an HTTP Structured Field date, i.e. {@code "@"} followed by the Unix epoch second — here 2026-07-19T00:00:00Z, the release in which callers
-     * can first observe the retirement. Deliberately not {@link LegacyApiPathDeprecationInterceptor#DEPRECATION_DATE}: that instant was announced for other paths, and this
-     * operation was still fully functional then.
+     * can first observe the retirement. Not {@link LegacyApiPathDeprecationInterceptor#DEPRECATION_DATE}: that instant was announced for other paths, and this operation was still
+     * fully functional then.
      */
     static final String DEPRECATION_DATE = "@1784419200";
 

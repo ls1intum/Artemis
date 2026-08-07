@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 /**
  * The file, shell, and verification tools the exercise-generation agent calls, bound to one sandbox session. Created per session (it holds the session id), so not a Spring bean.
  * <p>
- * Handing the agent a full shell is safe because correctness is never judged from what these tools report. In a staged session, {@code verify} and the gating half of
- * {@code submit} delegate to {@link StageCheckService} for the current stage's check, as cheap as that stage allows; in an unstaged session {@code verify} runs the same
- * differential as the post-loop verifier. Either way the result is advisory — the post-loop verifier decides mechanical validity.
+ * In a staged session, {@code verify} and the gating half of {@code submit} delegate to {@link StageCheckService} for the current stage's check, as cheap as that stage allows;
+ * in an unstaged session {@code verify} runs the same differential as the post-loop verifier. Either way the result is advisory — the post-loop verifier decides mechanical
+ * validity.
  * <p>
  * Nothing here is synchronized: one session's tool calls are serial, and the volatile fields exist only because the orchestrator may hand a stage over from a different thread
  * between two of them.
@@ -62,16 +62,14 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private static final String SPILL_DIR = "/tmp/hyperion";
 
     /**
-     * Bytes of the output tail returned inline. It must stay under {@link AgentConversationContext#MAX_TOOL_RESPONSE_CHARS}, or the loop truncates again on top and the marker this
-     * tool
-     * appends becomes a lie about what was elided. The full output stays in the spill file.
+     * Bytes of the output tail returned inline. It must stay under {@link AgentConversationContext#MAX_TOOL_RESPONSE_CHARS}, or the loop truncates again on top and the marker
+     * this tool appends becomes a lie about what was elided. The full output stays in the spill file.
      */
     static final int BASH_TAIL_BYTES = 10_000;
 
     /**
      * Characters {@code read_file} returns inline per call. Same {@link AgentConversationContext#MAX_TOOL_RESPONSE_CHARS} constraint as {@link #BASH_TAIL_BYTES}, so the
-     * continuation
-     * footer names a line that really is next.
+     * continuation footer names a line that really is next.
      */
     static final int READ_INLINE_MAX_CHARS = 10_000;
 
@@ -144,8 +142,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private volatile AgentVerifyReport lastTestsReport;
 
     /**
-     * Serializable continuation state for a development turn checkpoint. Constructor dependencies and {@link #structuralOracleRefresh} deliberately stay bound to the live run;
-     * restoring a callback captured from another sandbox would target the wrong session.
+     * Serializable continuation state for a development turn checkpoint. Constructor dependencies and {@link #structuralOracleRefresh} stay bound to the live run; restoring a
+     * callback captured from another sandbox would target the wrong session.
      */
     public record CheckpointState(int bashSequence, boolean sandboxSessionTerminated, @Nullable GenerationStage currentStage, @Nullable Set<String> repairWritableRoots,
             SeededStructuralTests seededStructuralTests, boolean structuralOracleRefreshConfigured, boolean submitVetoed, boolean dirtySinceLastPassingCheck,
@@ -586,8 +584,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (SandboxPathPolicy.mutatesManagedBuildInfrastructure(command)) {
             return "exit=2\nDo not modify tests-repository build/harness files such as tests/pom.xml. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
         }
-        // Even a read-only inspection invalidates the cached passing check, because a shell command can mutate the workspace outside the file tools' guardrails. The case the
-        // cache exists for — a passing check immediately followed by the loop ending — has no bash call in between, so being conservative here costs nothing.
+        // Even a read-only inspection invalidates the cached passing check, because a shell command can mutate the workspace outside the file tools' guardrails.
         markDirty();
         int sequence = bashSequence++;
         String logPath = SPILL_DIR + "/bash-" + sequence + ".log";
@@ -625,7 +622,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
         return screenObservation("tool/bash", output);
     }
 
-    boolean isSandboxSessionTerminated() {
+    @Override
+    public boolean isSandboxSessionTerminated() {
         return sandboxSessionTerminated;
     }
 
@@ -688,9 +686,9 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Stages are monotonic: a stage may correct its own executable artifact or an earlier executable dependency, but never pre-author a later one. Writing ahead would populate
-     * the template and tests before their dedicated instructions and gates exist, so the later stage spends its turns undoing an artifact that should not have crossed the
-     * boundary. Repair loops may rewrite executable artifacts; the approved specification stays read-only through {@link #approvedContractWriteRejection}.
+     * Stages are monotonic: a stage may correct its own executable artifact or an earlier executable dependency, but never pre-author a later one, which would leave the later
+     * stage undoing an artifact written before its instructions and gates existed. Repair loops may rewrite executable artifacts; the approved specification stays read-only
+     * through {@link #approvedContractWriteRejection}.
      */
     private @Nullable String stageWriteRejection(String path) {
         GenerationStage stage = currentStage;
@@ -714,7 +712,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
                 + "'. Finish only this stage's artifact (or correct an earlier dependency); the dedicated later stage will author this file with its own instructions and gate.";
     }
 
-    /** The wrapper snapshots these and rolls them back by comparison, because guessing write intent from arbitrary shell command text is not something to attempt. */
+    /** The wrapper snapshots these and rolls them back by comparison, because write intent cannot be guessed from arbitrary shell command text. */
     private static List<String> protectedStagePaths(@Nullable GenerationStage stage) {
         if (stage == null) {
             return List.of();
@@ -766,9 +764,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Rejects a Java source before it can enter a package that the grader cannot compile. This is build-contract feedback, not a semantic policy: the exact package comes from
-     * the exercise configuration and the same source layout is shown to the model. Returning it on the write that introduced the mismatch avoids hiding a deterministic error
-     * until the end-of-stage build.
+     * Rejects a Java source before it can enter a package that the grader cannot compile. Returning it on the write that introduced the mismatch avoids hiding a deterministic
+     * error until the end-of-stage build.
      */
     private @Nullable String javaPackageWriteRejection(String path, String content) {
         if (exercise == null || exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA || exercise.getPackageName() == null || exercise.getPackageName().isBlank()
@@ -792,7 +789,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
     }
 
     /**
-     * Consulted only by the orchestrator's per-stage exit gate. {@code verify} and {@code submit} deliberately never read it and always run the live check.
+     * Consulted only by the orchestrator's per-stage exit gate. {@code verify} and {@code submit} never read it and always run the live check.
      *
      * @param stage the stage the orchestrator is about to gate
      * @return the cached passing result if the stage matches and nothing has mutated the workspace since, otherwise empty

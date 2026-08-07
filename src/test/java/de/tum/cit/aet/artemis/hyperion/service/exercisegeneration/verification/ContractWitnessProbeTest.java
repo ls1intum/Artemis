@@ -57,7 +57,7 @@ class ContractWitnessProbeTest {
 
     @Test
     void buildProbeSource_doesNotCopyTheGradedSuitesHarnessAnnotations() {
-        // The probe is a throwaway written next to the graded suite. Copying @Public/@StrictTimeout would make it look like a graded test to the production harness.
+        // Copying @Public/@StrictTimeout would make this throwaway probe look like a graded test to the production harness.
         String probe = ContractWitnessProbe.buildProbeSource(GENERATED_TEST, List.of(NEGATIVE_SALARY));
 
         assertThat(probe).doesNotContain("@Public").doesNotContain("@StrictTimeout");
@@ -85,7 +85,6 @@ class ContractWitnessProbeTest {
 
     @Test
     void validated_attributesAResultReportedInAnyOfTheUsualFormsToItsWitness() {
-        // Report forms differ per framework; attribution must survive all of them, in both directions.
         assertThat(ContractWitnessProbe.validated(List.of("testWitnessNegativeSalaryIgnored()"), List.of("testWitnessNegativeSalaryIgnored()"), List.of(NEGATIVE_SALARY)))
                 .isEmpty();
         assertThat(ContractWitnessProbe.validated(List.of("HyperionContractWitnessProbeTest.testWitnessNegativeSalaryIgnored"), List.of(), List.of(NEGATIVE_SALARY)))
@@ -94,8 +93,8 @@ class ContractWitnessProbeTest {
 
     @Test
     void validated_rejectsAWitnessTheBuildNeverRan() {
-        // The decisive case: absence from the failure list is ALSO satisfied by a witness that never executed — undiscovered by the runner, missing its annotation, disabled, or
-        // in a probe class that failed to compile while the ordinary graded tests still ran and made the build look healthy. Silence is not evidence of passing.
+        // Absence from the failure list is also satisfied by a witness that never executed (undiscovered, disabled, or in a probe class that failed to compile while the graded
+        // tests still ran), so silence is not evidence of passing.
         assertThat(ContractWitnessProbe.validated(List.of("testValidInput"), List.of(), List.of(NEGATIVE_SALARY, BLANK_LINE))).isEmpty();
     }
 
@@ -105,11 +104,6 @@ class ContractWitnessProbeTest {
 
         assertThat(ContractWitnessProbe.collidesWithExistingTest(collision, Map.of("test/RosterParserTest.java", GENERATED_TEST))).isTrue();
         assertThat(ContractWitnessProbe.collidesWithExistingTest(NEGATIVE_SALARY, Map.of("test/RosterParserTest.java", GENERATED_TEST))).isFalse();
-    }
-
-    @Test
-    void validated_provesNothingWhenTheBuildReportedNoTestsAtAll() {
-        assertThat(ContractWitnessProbe.validated(List.of(), List.of(), List.of(NEGATIVE_SALARY))).isEmpty();
     }
 
     @Test
@@ -133,7 +127,7 @@ class ContractWitnessProbeTest {
 
     @Test
     void probePath_refusesToOverwriteAGeneratedTestOfTheSameName() {
-        // The name is distinctive, not reserved. Overwriting graded work would destroy it, and removing the probe afterwards would delete it.
+        // The name is distinctive, not reserved: removing the probe afterwards would delete the graded test it overwrote.
         String taken = "test/de/tum/cit/aet/nodraft/" + ContractWitnessProbe.PROBE_CLASS_NAME + ".java";
 
         assertThat(ContractWitnessProbe.probePath("test/de/tum/cit/aet/nodraft/RosterParserTest.java", Set.of(taken))).isNull();

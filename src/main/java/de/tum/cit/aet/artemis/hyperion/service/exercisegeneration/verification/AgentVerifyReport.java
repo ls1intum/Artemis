@@ -48,7 +48,6 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
 
     private static final String ARES_CONSTRUCTOR_MISMATCH = "does not have a constructor with the arguments";
 
-    /** Failure evidence is optional. */
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, int templateTests, boolean templateCompiled, boolean templateFailed,
             List<String> templateWronglyPassing, List<String> exactTestNames, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted,
             List<String> blockingReasons) {
@@ -64,7 +63,6 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
                 templateWronglyPassing, exactTestNames, unresolvedTaskBindings, possiblyDeadFiles, wouldBeAccepted, blockingReasons, List.of(), "", "");
     }
 
-    /** Build diagnostics are unavailable to older callers and tests that construct reports directly. */
     public AgentVerifyReport(int solutionTests, boolean solutionPassed, List<String> solutionFailedNames, List<TestFailureEvidence> solutionFailureEvidence, int templateTests,
             boolean templateCompiled, boolean templateFailed, List<TestFailureEvidence> templateFailureEvidence, List<String> templateWronglyPassing, List<String> exactTestNames,
             List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, boolean wouldBeAccepted, List<String> blockingReasons, List<String> hiddenTestNames) {
@@ -92,10 +90,8 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
     }
 
     /**
-     * Renders the report as the observation text the {@code verify} tool returns: one actionable fact per line, name lists truncated so the observation stays within the agent's
-     * per-tool-result context budget, and the verdict the agent iterates against on the final line.
-     *
-     * @return the agent-facing observation text
+     * @return the observation text the {@code verify} tool returns: one actionable fact per line, name lists truncated to the agent's per-tool-result context budget, and the
+     *         verdict on the final line
      */
     public String toObservation() {
         return toObservation(true);
@@ -169,7 +165,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
 
         // No structured line above reflects prose hygiene, so surface its reason verbatim.
         for (String reason : blockingReasons) {
-            if (reason.contains("leaks grader internals")) {
+            if (reason.startsWith(ProblemStatementBindingChecker.PROSE_HYGIENE_REJECTION_PREFIX)) {
                 builder.append(reason).append('\n');
             }
         }
@@ -238,7 +234,6 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         return sanitized.substring(0, maxLength - 1).stripTrailing() + "…";
     }
 
-    /** Truncates past {@link #MAX_RENDERED_NAMES} with a remaining-count, so a large suite never floods the observation. */
     private static String renderNames(List<String> names) {
         if (names.isEmpty()) {
             return "[]";

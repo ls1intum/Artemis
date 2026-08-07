@@ -11,9 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *
  * @param modelCalls                 the number of provider responses recorded for this run
  * @param toolCalls                  the number of tool calls the model requested across the run
- * @param agentTurns                 the number of agent loop turns the run started, summed over every attempt including the ones abandoned at a gate. Together with
- *                                       {@code attempts} this separates "a few long attempts" from "many short ones", which {@code modelCalls} alone cannot: only that split says
- *                                       whether an administrator should raise or lower {@code artemis.hyperion.agent.max-turns}
+ * @param agentTurns                 the number of agent loop turns the run started, summed over every attempt including the ones abandoned at a gate; with {@code attempts} it
+ *                                       separates a few long attempts from many short ones, which is what {@code artemis.hyperion.agent.max-turns} is tuned against
  * @param attempts                   the number of authoring attempts the run started
  * @param inputTokens                total prompt tokens billed across the run
  * @param outputTokens               total completion tokens billed across the run

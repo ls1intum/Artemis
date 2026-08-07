@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.api.map;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,19 @@ public interface DistributedMap<K, V> {
      * @param value the value to be associated with the specified key
      */
     void put(K key, V value);
+
+    /**
+     * Associates the specified value with the specified key, and expires the entry after the given duration.
+     * <p>
+     * Every backend must implement this natively rather than ignoring the argument: an entry written here is one whose owner may die before it can remove it (the caller stages
+     * a payload for a peer and reclaims it afterwards), so a backend that silently dropped the expiry would leak that payload for the lifetime of the process. Configuring the
+     * expiry on the backend's map configuration instead is not equivalent, because only one of the supported backends has such a configuration.
+     *
+     * @param key        the key with which the specified value is to be associated
+     * @param value      the value to be associated with the specified key
+     * @param timeToLive how long the entry may live if nobody removes it first; must be positive
+     */
+    void put(K key, V value, Duration timeToLive);
 
     /**
      * Removes the mapping for the specified key from this map if present.

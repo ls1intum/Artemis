@@ -44,6 +44,10 @@
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
+@source './app/hyperion';
+@source './app/exercise/review/adapt-exercise-dialog';
+@source './app/localci/hyperion-generation-detail';
+@source './app/localci/hyperion-generation-jobs-table';
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

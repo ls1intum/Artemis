@@ -45,9 +45,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * stops, the turn budget is reached, cancellation is requested, or an error occurs. The loop is manual because Spring AI's automatic tool execution has no iteration cap and no
  * per-step hook, so it can enforce neither the safety budget nor the transcript. Artifact correctness is decided separately by the authoritative verifier.
  * <p>
- * This rests on the {@link ChatModel} contract: a model call returns the requested tool calls UNEXECUTED and never runs them itself, so
- * executing them through {@code toolCallingManager.executeToolCalls} and feeding the results back is this loop's obligation, not an optimization. A model implementation that
- * executed tools internally would silently bypass every budget, veto, and transcript rule below.
+ * This rests on the {@link ChatModel} contract that a model call returns the requested tool calls UNEXECUTED: a model implementation that executed them internally would
+ * silently bypass every budget, veto, and transcript rule below.
  * <p>
  * The loop's only intrinsic bound is {@code maxTurns}; it enforces no wall-clock deadline. Cancellation is turn-granular — {@code cancelled} is polled once before each turn, so a
  * cancel arriving mid-turn takes effect only after the current model call and its tool executions return. Prompt abort of a long-running tool is the caller's: it registers a
@@ -62,8 +61,6 @@ public class AgentLoopRunner {
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
     private static final String SUBMIT_TOOL_NAME = "submit";
-
-    // --- Context-window management ---
 
     /** Headroom reserved below the context window for the default response allowance plus estimation slack. */
     private static final int RESERVE_TOKENS = 20_480;
@@ -131,7 +128,7 @@ public class AgentLoopRunner {
 
     /**
      * The options every request for this runner starts from: the effort profile's prebuilt provider options when the run selected one, and otherwise the configured
-     * {@link ChatModel}'s own options. Resolved once here so the model id, the reasoning effort, the output-token limit, and the checkpoint provider contract can never read from
+     * {@link ChatModel}'s own options. Resolved once so the model id, the reasoning effort, the output-token limit, and the checkpoint provider contract cannot read from
      * different sources.
      */
     @Nullable
@@ -196,7 +193,7 @@ public class AgentLoopRunner {
 
     /**
      * The model id this runner's effective options were set up with. It is pinned on every request because Spring AI uses prompt options in place of model defaults when they are
-     * present. Returns {@code null} when no options are available.
+     * present.
      */
     @Nullable
     private String configuredModel() {
@@ -324,8 +321,7 @@ public class AgentLoopRunner {
                 emit(stepListener, "Cancelling generation…");
                 return session(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText, conversation);
             }
-            // The single place in the codebase where a turn begins. Recorded unconditionally and before anything can fail, so a run abandoned at a gate still reports the turns it
-            // spent; AgentLoopResult.turns stays loop-local control state for the staged turn-budget pool and is deliberately not the number anyone reports.
+            // Recorded unconditionally and before anything can fail, so a run abandoned at a gate still reports the turns it spent.
             recordTurn(usageSink);
             if (tools instanceof TurnAware turnAware) {
                 turnAware.onTurn(turn);
@@ -388,8 +384,7 @@ public class AgentLoopRunner {
             }
 
             if (!response.hasToolCalls()) {
-                // The model considers the task complete; the verifier decides whether it actually is. Append this closing turn before returning so a caller carrying the
-                // conversation forward does not lose it.
+                // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
                 List<Message> completedConversation = new ArrayList<>(conversation);
                 completedConversation.add(response.getResult().getOutput());
@@ -469,7 +464,7 @@ public class AgentLoopRunner {
                 // Unknown tool or malformed arguments surface here: feed the error back so the model can self-correct rather than failing the run on one bad call.
                 consecutiveToolFailures++;
                 log.warn("Agent loop tool execution failed on turn {} (consecutive failures: {}, type: {})", turn, consecutiveToolFailures, e.getClass().getSimpleName());
-                // Tool names are model-chosen identifiers, not user content, so naming them here is safe; arguments and paths are not (see sanitizeProgressPath).
+                // Tool names are model-chosen identifiers, not user content, so naming them here is safe; arguments and paths are not (see AgentToolProgress).
                 emit(stepListener, "The agent tried an unavailable action (" + AgentToolProgress.attemptedNames(response) + ") and is correcting it.");
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
@@ -576,11 +571,7 @@ public class AgentLoopRunner {
     }
 
     private static boolean isSandboxSessionTerminated(Object tools) {
-        return switch (tools) {
-            case SandboxAgentTools sandboxTools -> sandboxTools.isSandboxSessionTerminated();
-            case FileChangeEmittingAgentTools emittingTools -> emittingTools.isSandboxSessionTerminated();
-            default -> false;
-        };
+        return tools instanceof SubmitVetoAware sandboxAware && sandboxAware.isSandboxSessionTerminated();
     }
 
     private static boolean isSubmitVetoed(Object tools) {
@@ -589,7 +580,7 @@ public class AgentLoopRunner {
 
     /**
      * Removes leaked harmony control tokens from tool-call names, so a name like {@code bash<|channel|>commentary} dispatches as {@code bash} instead of matching no registered
-     * tool. Rebuilds the response only when a name actually changes, which is the rare case.
+     * tool.
      */
     private static ChatResponse normalizeToolNames(ChatResponse response) {
         if (response.getResult() == null || response.getResult().getOutput() == null) {
@@ -826,7 +817,7 @@ public class AgentLoopRunner {
             cut = snapToTurnStart(conversation, cut + 1);
         }
         if (cut == n) {
-            // Even the minimal tail does not fit, so the conversation becomes summary-only. The per-result caps make this unreachable in practice; log it if it ever happens.
+            // Even the minimal tail does not fit, so the conversation becomes summary-only.
             log.warn("Compaction kept no recent turns verbatim: the context did not fit even minimally (window {} tokens, {} messages).", contextWindowTokens, n);
         }
         return cut;
@@ -849,9 +840,8 @@ public class AgentLoopRunner {
         }
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
-        // No tool callbacks, so the summarizer cannot call tools. The options must be OpenAiChatOptions rather than a generic ChatOptions: OpenAiChatModel#buildRequestPrompt
-        // casts the runtime options, so a DefaultChatOptions throws ClassCastException. Compaction is a bounded factual summary, not an authoring decision, so reasoning effort
-        // is pinned low where the provider supports it — a server-side reasoning default would otherwise consume the whole summary allowance.
+        // The options must be OpenAiChatOptions rather than a generic ChatOptions: OpenAiChatModel#buildRequestPrompt casts the runtime options, so a DefaultChatOptions throws
+        // ClassCastException. Reasoning effort is pinned low where the provider supports it — a server-side reasoning default would otherwise consume the whole summary allowance.
         OpenAiChatOptions.Builder summaryOptions = configuredOptionsBuilder().toolCallbacks(List.of()).reasoningEffort(hasConfiguredReasoningEffort() ? "low" : null)
                 .maxTokens(null).maxCompletionTokens(null);
         int summaryOutputTokens = Math.min(SUMMARY_MAX_OUTPUT_TOKENS, configuredTurnTokenLimit().tokens());

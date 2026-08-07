@@ -297,8 +297,7 @@ public class HyperionProblemStatementRefinementService {
     }
 
     /**
-     * Both sides are trimmed before the unchanged-check, so that the whitespace the line-preserving sanitization deliberately keeps cannot pass as a refinement. The returned text
-     * is trimmed for the same reason: leading and trailing blank lines carry no meaning in a problem statement.
+     * Both sides are trimmed before the unchanged-check, so that the whitespace the line-preserving sanitization keeps cannot pass as a refinement.
      */
     private ProblemStatementRefinementResponseDTO validateAndReturnResponse(String originalProblemStatementText, String refinedProblemStatementText, String sanitizedInstruction) {
         String trimmedRefined = refinedProblemStatementText.trim();

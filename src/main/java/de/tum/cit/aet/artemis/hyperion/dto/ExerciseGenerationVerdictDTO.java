@@ -12,12 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * The structured outcome of the differential verification, mirrored from {@code VerificationResult} so the client can show which gates passed without parsing prose.
  * <p>
  * {@link Serializable} because it is carried inside {@link ExerciseGenerationEventDTO}, which is retained in a distributed Hazelcast map for reconnect/replay.
- *
- * @param mechanicallyVerified whether the exercise passed mechanical verification
- * @param solutionPassed       whether the solution passed all its tests
- * @param templateFailed       whether the template compiled but (correctly) failed the tests
- * @param testCount            the number of tests discovered
- * @param reasons              human-readable explanations of any failed gate (empty when mechanically verified)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "The structured outcome of the differential verification, so the client can show which gates passed without parsing prose")

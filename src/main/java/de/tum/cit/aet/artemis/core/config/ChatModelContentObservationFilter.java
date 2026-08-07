@@ -50,20 +50,19 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
 
     private static final String CONTENT_COMPLETE = "artemis.gen_ai.content.complete";
 
-    static final String MAX_ATTRIBUTE_BYTES_PROPERTY = "management.opentelemetry.instrumentation.gen-ai.max-attribute-bytes";
+    /**
+     * Under {@code artemis.*} rather than {@code management.opentelemetry.instrumentation.*}: that namespace belongs to Spring Boot, so an Artemis key there gets no configuration
+     * metadata and a future Boot release could give the same name a different meaning.
+     */
+    static final String MAX_ATTRIBUTE_BYTES_PROPERTY = "artemis.telemetry.gen-ai.max-attribute-bytes";
 
     /**
      * Default ceiling for one serialized GenAI content attribute, in UTF-8 bytes.
      * <p>
-     * Derived from what this feature actually emits rather than from a round number. The largest context window the shipped configuration contemplates is 256,000 tokens
-     * ({@code artemis.hyperion.agent.context-window-tokens}, whose per-profile example pins exactly that). Source-heavy agentic context runs near three characters per token, so
-     * a saturated context is roughly 768,000 characters, and JSON structure plus escaping adds about a quarter again — call it 960,000 bytes. This is double that, leaving room
-     * for multi-byte content and for a deployment that pins a larger window before it has to touch the property.
-     * <p>
-     * The predecessor filter had no ceiling at all and ran in production for months with observed attributes up to ~220,000 characters, so a bound is a precaution, not a
-     * requirement. It is kept because one pathological attribute can push an OTLP export batch past the collector's receive limit (the OpenTelemetry Collector's OTLP receiver
-     * defaults to 4 MiB) and take every span in that batch down with it — losing measurement silently, which is the same harm this filter exists to prevent. It is deliberately
-     * <em>not</em> a substitute for collector-side batch sizing: that limit applies per export batch, not per attribute, and remains an operator concern.
+     * Sized against what the feature emits: a saturated 256,000-token context ({@code artemis.hyperion.agent.context-window-tokens}) is roughly 768,000 characters at the ~3
+     * characters per token of source-heavy content, plus about a quarter again for JSON structure and escaping. This is double that, leaving room for multi-byte content and for a
+     * deployment that pins a larger window. The bound exists because one pathological attribute can push an OTLP export batch past the collector's receive limit (4 MiB by
+     * default) and take every span in that batch down with it; it does not replace collector-side batch sizing, which applies per batch rather than per attribute.
      */
     static final int DEFAULT_MAX_ATTRIBUTE_BYTES = 2_000_000;
 
@@ -76,14 +75,12 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
 
     private final int maxAttributeBytes;
 
-    public ChatModelContentObservationFilter(ObjectMapper objectMapper, @Value("${management.opentelemetry.instrumentation.gen-ai.capture-content:false}") boolean captureContent,
+    public ChatModelContentObservationFilter(ObjectMapper objectMapper, @Value("${artemis.telemetry.gen-ai.capture-content:false}") boolean captureContent,
             @Value("${" + MAX_ATTRIBUTE_BYTES_PROPERTY + ":" + DEFAULT_MAX_ATTRIBUTE_BYTES + "}") int maxAttributeBytes) {
         this.objectMapper = objectMapper;
         this.captureContent = captureContent;
-        // Deliberately falls back instead of throwing. This bean is @Lazy, so a constructor exception would not fail startup — it would surface at the first span, inside a
-        // provider call, and break the generation this filter only exists to observe. A tracing misconfiguration must never be able to do that, which is the same rule that
-        // makes map() swallow serialization failures. A non-positive bound would also omit every attribute, silently reproducing the measurement loss this property exists to
-        // let an operator escape, so it is refused loudly and the shipped default is used.
+        // Falls back rather than throwing: this bean is @Lazy, so a constructor exception would not fail startup but would surface at the first span, inside a provider call,
+        // breaking the generation this filter only exists to observe.
         if (maxAttributeBytes <= 0) {
             log.error("Ignoring {}={}: the bound must be positive, otherwise every span would lose its content. Falling back to {} bytes.", MAX_ATTRIBUTE_BYTES_PROPERTY,
                     maxAttributeBytes, DEFAULT_MAX_ATTRIBUTE_BYTES);
@@ -208,7 +205,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
         return part;
     }
 
-    /** The span identifier an operator actually sees in the trace backend, falling back to the observation name when no contextual name was set. */
+    /** The span identifier an operator sees in the trace backend. */
     private static String spanName(ChatModelObservationContext context) {
         String contextualName = context.getContextualName();
         return StringUtils.hasText(contextualName) ? contextualName : String.valueOf(context.getName());
@@ -222,8 +219,6 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
             String value = objectMapper.writeValueAsString(messages);
             int bytes = value.getBytes(StandardCharsets.UTF_8).length;
             if (bytes > maxAttributeBytes) {
-                // Everything an operator needs to act, on one line: which attribute, which span it belonged to, how far over it was without subtracting anything themselves,
-                // the marker that makes the affected spans findable in the trace backend, and the property to raise.
                 log.warn("Omitting the {} OpenTelemetry attribute of chat span '{}': {} bytes exceeds the {}-byte limit. The span is marked {}=false; raise {} to keep it.", key,
                         spanName(context), bytes, maxAttributeBytes, CONTENT_COMPLETE, MAX_ATTRIBUTE_BYTES_PROPERTY);
                 return false;

@@ -69,8 +69,8 @@ public class AgentCheckpointManager {
 
     private static final DateTimeFormatter RUN_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC);
 
-    // Only agent-owned mutable state belongs in time travel. /opt/hyperion is verifier-owned and contains fresh JUnit reports whose timestamps differ on every readiness run;
-    // recording it made otherwise identical forks fail before call 1. The immutable verifier and readiness fixture are part of the current runtime, not authoring state.
+    // Only agent-owned mutable state belongs in time travel. /opt/hyperion is verifier-owned and holds fresh JUnit reports whose timestamps differ on every readiness run, so
+    // recording it makes otherwise identical forks diverge before the first call.
     private static final List<String> SNAPSHOT_ROOTS = List.of("/workspace", "/tmp/hyperion");
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
@@ -145,9 +145,8 @@ public class AgentCheckpointManager {
     /**
      * Fingerprints the provider contract a checkpoint was taken under, so a recorded turn can never be replayed against an incompatible configuration.
      * <p>
-     * The fingerprint covers the options the run actually sends, not the model bean's defaults: once an effort profile can pin a different model, context window, or decoding
-     * parameter, defaults-only fingerprinting would make a checkpoint taken under one profile replayable under another. The profile name is included as well, so two profiles
-     * remain distinguishable even if their options happen to serialize identically.
+     * The fingerprint covers the options the run actually sends rather than the model bean's defaults, since an effort profile can pin a different model, context window, or
+     * decoding parameter. The profile name is included as well, so two profiles remain distinguishable even if their options happen to serialize identically.
      *
      * @param chatModel           the configured provider implementation, or {@code null} when none is configured
      * @param contextWindowTokens the context window this run compacts against

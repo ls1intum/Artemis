@@ -13,11 +13,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * The candidate a terminal generation run produced but never saved, retained read-only so the work stays inspectable instead of dying with the sandbox.
  * <p>
- * This is explicitly <em>not</em> a save. Nothing here was written to the exercise, no repository was committed to, no exercise version was recorded, and no code path can promote
- * this snapshot into one — a candidate that did not pass mechanical verification is structurally unpersistable. It exists so an instructor whose run spent half an hour and then
- * failed can read what was built and decide for themselves, and so a failed run stops being a black box.
- * <p>
- * Retention is bounded and expires with the rest of the run's replay evidence.
+ * This is <em>not</em> a save: nothing here was written to the exercise, no repository was committed to, no exercise version was recorded, and no code path can promote this
+ * snapshot into one, because a candidate that did not pass mechanical verification is structurally unpersistable. Retention is bounded and expires with the rest of the run's
+ * replay evidence.
  *
  * @param jobId            the run that produced this candidate
  * @param completeness     whether these files are everything the run produced, or only what fit inside the retention bounds

@@ -39,9 +39,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  * Renders a {@link ProgrammingExercise} — its problem statement plus its template and solution repositories — as the plain text a prompt can reason over.
  * <p>
  * The prompts ask models to answer with file paths and line numbers, which only works because every file is announced by its path and numbered from 1. A repository is preceded by
- * its tree so that its layout is legible without reconstructing it from the file headers; hidden paths are left out of the tree. The output is deterministic for a given
- * repository state: paths are sorted, and a repository that cannot be read becomes an empty section rather than an error, because a partial context still supports a partial
- * answer.
+ * its tree, with hidden paths left out. The output is deterministic for a given repository state: paths are sorted, and a repository that cannot be read becomes an empty section
+ * rather than an error.
  *
  * <pre>
  * ===== Problem Statement =====
@@ -206,7 +205,6 @@ public class HyperionProgrammingExerciseContextRendererService {
         String horizontalRule = "-".repeat(HR_WIDTH);
         String fullPath = root != null && !root.isBlank() ? root + "/" + path : path;
         List<String> lines = Arrays.asList(Objects.requireNonNullElse(content, "").split("\n", -1));
-        // Right-aligned to a common width, so the numbers form a column the eye and the model can follow down the file.
         int lineNumberWidth = Integer.toString(lines.size()).length();
         List<String> renderedLines = new ArrayList<>(lines.size() + 1);
         renderedLines.add(horizontalRule + "\n" + fullPath + ":\n" + horizontalRule);
@@ -218,7 +216,7 @@ public class HyperionProgrammingExerciseContextRendererService {
      * Walks a checked-out repository and draws its current layout as a tree.
      *
      * @param repository the checked-out repository to walk
-     * @return the tree, or a sentence saying it could not be determined — the caller puts this into a prompt, where a message reads better than a blank
+     * @return the tree, or a sentence saying it could not be determined, since the caller puts this straight into a prompt
      */
     public String getRepositoryStructure(Repository repository) {
         try {
@@ -251,7 +249,7 @@ public class HyperionProgrammingExerciseContextRendererService {
      * Renders the build files of a repository, which are what decides whether generated code compiles and its tests run.
      *
      * @param repository the checked-out repository to read, may be null
-     * @return the rendered build files, or a sentence saying there are none — the caller puts this into a prompt, where a message reads better than a blank
+     * @return the rendered build files, or a sentence saying there are none
      */
     public String getBuildEnvironmentContext(Repository repository) {
         if (repository == null || repository.getLocalPath() == null) {
@@ -382,8 +380,7 @@ public class HyperionProgrammingExerciseContextRendererService {
      *
      * @param exercise   the exercise whose solution to read
      * @param gitService checks the solution repository out
-     * @return the solution sources, or a sentence pointing at the problem statement when there are none to read — the caller puts this into a prompt, where a message reads better
-     *         than a blank
+     * @return the solution sources, or a sentence pointing at the problem statement when there are none to read
      * @throws NetworkingException if the solution repository cannot be reached at all
      */
     public String getExistingSolutionCode(ProgrammingExercise exercise, GitService gitService) throws NetworkingException {

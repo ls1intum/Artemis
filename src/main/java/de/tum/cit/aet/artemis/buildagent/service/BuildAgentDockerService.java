@@ -156,10 +156,11 @@ public class BuildAgentDockerService {
      * Cleans up dangling build containers from the system. This method differentiates between the initial cleanup
      * and subsequent cleanups to handle containers differently based on their age and status.
      * <p>
-     * For the initial cleanup, it removes all containers that match the build container prefix. When generation hosting is disabled, it also removes generation sandboxes owned by
-     * this build agent, which covers capacity being changed to zero. Enabled generation hosting performs its own startup reconciliation before accepting work. For subsequent
-     * cleanups, this method only removes build containers that are older
+     * For the initial cleanup, it removes all containers that match the build container prefix. For subsequent cleanups, this method only removes build containers that are older
      * than a specified age threshold (defaulted to 5 minutes), targeting containers likely stuck or inactive.
+     * <p>
+     * The initial cleanup also removes generation sandboxes owned by this build agent, but only while generation hosting is disabled, which covers capacity having been changed to
+     * zero; an agent that still hosts generation reconciles its own sandboxes before accepting work.
      * <p>
      * Detailed steps include:
      * - Logging the start of the cleanup process.

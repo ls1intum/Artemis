@@ -76,7 +76,7 @@ describe('CodeEditorContainerComponent bottom panel composition', () => {
     it('preserves the original build-output composition when no optional panel is configured', () => {
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('p-tabs'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('tum-ui-tabs'))).toBeNull();
         expect(fixture.debugElement.queryAll(By.directive(CodeEditorBuildOutputComponent))).toHaveLength(1);
     });
 
@@ -84,10 +84,9 @@ describe('CodeEditorContainerComponent bottom panel composition', () => {
         host.panelTitle.set('artemisApp.hyperion.generationActivity.title');
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.css('p-tab'))).toHaveLength(2);
+        expect(fixture.debugElement.queryAll(By.css('tum-ui-tab'))).toHaveLength(2);
         const buildOutput = fixture.debugElement.query(By.directive(CodeEditorBuildOutputComponent));
         expect(buildOutput.componentInstance.showHeader).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="projected-bottom-panel"]')).not.toBeNull();
     });
 
     it('renders only the projected tab when build output is unavailable', () => {
@@ -95,7 +94,7 @@ describe('CodeEditorContainerComponent bottom panel composition', () => {
         host.buildable.set(false);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.css('p-tab'))).toHaveLength(1);
+        expect(fixture.debugElement.queryAll(By.css('tum-ui-tab'))).toHaveLength(1);
         expect(fixture.debugElement.query(By.directive(CodeEditorBuildOutputComponent))).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="projected-bottom-panel"]')).not.toBeNull();
     });

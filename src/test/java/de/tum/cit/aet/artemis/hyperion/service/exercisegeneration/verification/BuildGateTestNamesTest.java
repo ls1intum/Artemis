@@ -7,9 +7,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Pins the single source of truth that the differential oracle (exemption) and persistence (zero-weighting) both consult, so the two call sites cannot drift:
- * build/compile/configure
- * gates are recognised across the real harness name forms, while behaviour tests — including ones whose name merely starts with a gate word — are never misclassified.
+ * Pins the single source of truth that the differential oracle (exemption) and persistence (zero-weighting) both consult, so the two call sites cannot drift: build/compile/
+ * configure gates are recognised across the real harness name forms, while behaviour tests whose name merely starts with a gate word are never misclassified.
  */
 class BuildGateTestNamesTest {
 
@@ -23,9 +22,7 @@ class BuildGateTestNamesTest {
     @ParameterizedTest(name = "\"{0}\" is NOT a build gate")
     @ValueSource(strings = { "sort-test.stack_empty_initially", "TestCatch2", "testPushPop", "compiles_an_empty_program", "buildsTheList", "configures_nothing", "push_then_pop",
             "sort-test.size_tracks_elements", "GBS-Tester-1.36.TestSortAscending",
-            // JVM camelCase behaviour tests whose gate word is lowercase must never be mistaken for the PascalCase C/C++ gates (regression for the false-positive that
-            // zero-weighted
-            // real Java tests): the gate word here is lowercase (buildGraph…, compileExpression, configureRoutes), unlike CompileSort/BuildTests.
+            // A lowercase gate word starting a camelCase JVM test name must not be read as one of the PascalCase C/C++ gates (CompileSort, BuildTests).
             "buildGraphFromEdges", "compileExpression", "configureRoutes", "SomeTest.buildAdjacencyList" })
     void rejectsBehaviourTests(String name) {
         assertThat(BuildGateTestNames.isBuildGate(name)).as(name).isFalse();

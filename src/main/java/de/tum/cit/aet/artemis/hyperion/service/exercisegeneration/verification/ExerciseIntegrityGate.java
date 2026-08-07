@@ -53,7 +53,7 @@ public final class ExerciseIntegrityGate {
     /** Filename suffixes that always denote a build/harness/manifest file regardless of basename. Matched case-insensitively. */
     private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");
 
-    /** Randomness constructs whose only purpose is to make one run differ from the next; a seeded generator ({@code new Random(42)}) is deliberately absent. */
+    /** Randomness constructs whose only purpose is to make one run differ from the next; a seeded generator ({@code new Random(42)}) is not one of them. */
     private static final List<String> NONDETERMINISM_SOURCES = List.of("Collections.shuffle", "Math.random()", "new Random()", "ThreadLocalRandom", "UUID.randomUUID()");
 
     private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
@@ -244,10 +244,8 @@ public final class ExerciseIntegrityGate {
                     + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
                     + "approval cannot turn the required design work into prebuilt stubs.");
         }
-        // An all-student-creates design defeats the differential itself: the empty template "compiles" (no sources) and "fails every test" (none run), so the degenerate candidate
-        // satisfies the very checks meant to reject it. Duplicated from the stage gate because repair attempts do not re-run the staged gates but do reach acceptance.
-        // Requires at least one parsed row: with none there is no evidence of a design at all, and an unparseable or absent '## Design' table would otherwise be rejected as if it
-        // had marked every type 'student-creates' — a claim the specification never made. Doubt on read-back leaves this contract inert, as it does for a blank specification.
+        // An all-student-creates design defeats the differential itself: the empty template "compiles" (no sources) and "fails every test" (none run). Repeated from the stage
+        // gate, which repair attempts skip. Fails open on an unparsed '## Design' table, which claims nothing rather than claiming every type is student-created.
         if (!designRows.isEmpty() && designRows.stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
             reasons.add("the approved specification marks every type 'student-creates', so the template ships no starting scaffold and students would clone an empty project. "
                     + "Supply at least one type as 'given' or 'stubbed' so the exercise has a teaching scaffold the differential can actually discriminate.");
@@ -745,11 +743,11 @@ public final class ExerciseIntegrityGate {
     private static final int MIN_LEAK_BODY_LENGTH = 40;
 
     /**
-     * Rejects unseeded randomness in a graded test: the same submission then scores differently on re-run, and neither student nor instructor can tell a regression from a dice
-     * roll. The differential oracle is structurally blind to it, building each assignment once, where a probabilistic pass looks exactly like a real one.
+     * Rejects unseeded randomness in a graded test: the same submission then scores differently on re-run. The differential oracle is blind to it, building each assignment once,
+     * where a probabilistic pass looks exactly like a real one.
      * <p>
-     * Time and identity sources ({@code Instant.now()}, {@code LocalDate.now()}) are deliberately not matched: constructing a value object with the current timestamp is common in
-     * a test that never asserts on it, so matching them would reject correct suites.
+     * Time and identity sources ({@code Instant.now()}, {@code LocalDate.now()}) are not matched: building a value object with the current timestamp is common in a test that
+     * never asserts on it, so matching them would reject correct suites.
      */
     static List<String> nondeterministicGradedTestReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
@@ -821,36 +819,44 @@ public final class ExerciseIntegrityGate {
     /** Grading-context introspection a produced assignment source must never contain: a stub that senses its caller can fake "fails on the template" per test. */
     private static final Pattern GRADING_CONTEXT_SNIFFING = Pattern.compile("Thread\\s*\\.\\s*currentThread\\s*\\(\\s*\\)\\s*\\.\\s*getStackTrace|StackWalker");
 
+    /** Names that can only denote a code construct, so a sentence requiring one is a technique mandate whatever else it says. */
+    private static final String CONSTRUCT_NOUN = "recursion|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?|stream\\**\\s+\\**pipelines?|lambda\\s+expressions?";
+
+    /**
+     * Technique names that are ordinary domain words when required — "must use the pipeline stages", "the loopback address", "the previous iteration's estimate" — and so may be
+     * matched only under a prohibition, where the reading is unambiguous.
+     */
+    private static final String PROHIBITED_TECHNIQUE_NOUN = "recursion|loops?|iteration|lambdas?|pipelines?|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?";
+
+    /** Keeps a hyphenated compound whose head is a domain term out of the technique nouns, such as "Self-loops are not allowed". */
+    private static final String NOT_HYPHENATED = "(?<![-\\w])";
+
+    /**
+     * A prohibition with no verb of its own ("Loops are not allowed") constrains the student's code only when the clause ends there or names the implementation; otherwise it
+     * constrains something else entirely, as in "Recursion is not allowed in the grammar of the input language".
+     */
+    private static final String SCOPED_TO_THE_IMPLEMENTATION = "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))";
+
     /** Implementation-technique mandates: control flow or an API whose use the tests cannot see. Kept narrow so observable mandates ("must delegate to ...") never match. */
     private static final Pattern TECHNIQUE_MANDATE = Pattern.compile(
-            // The nouns split by polarity, because that is where the ambiguity lives. Forbidding a technique is unambiguous ("must not use loops"), so bare nouns match there.
-            // Requiring one is not: "must use the pipeline stages", "the loopback address", "the previous iteration's estimate" are all ordinary domain phrases, so the
-            // positive form matches only construct-bearing names — recursion, the Stream API, a looping construct, a lambda expression.
-            // The standalone prohibition ("Loops are not allowed") needs a third discriminator, because a domain rule can be lexically identical: "Recursion is not allowed in
-            // the grammar of the input language" is about the input, not the student's code. The mandate ends the clause or scopes itself to the implementation; the domain
-            // rule continues into what it constrains. The hyphen lookbehind separately keeps "Self-loops are not allowed" out.
             "(?:must|should|shall)\\s+(?:be\\s+)?(?:implemented\\s+)?\\**recursive(?:ly)?\\**" + "|implement\\w*\\s+[^.|\\n]{0,60}?\\brecursively\\b"
                     + "|(?:teach\\w*|practi[cs]e\\w*|learn\\w*)\\s+(?:[\\w*]+\\s+){0,5}?(?:recursion|iteration|stream\\s+api|lambdas?|if\\p{Pd}?else|switch)\\b"
                     + "|implement\\w*\\s+(?:[\\w*]+\\s+){0,4}?(?:recursive|iterative|stream-based|lambda-based)\\s+(?:methods?|functions?|solutions?)\\b"
-                    + "|must\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|implement)\\s+(?:[\\w*]+\\s+){0,3}\\**"
-                    + "(?:recursion|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?|stream\\**\\s+\\**pipelines?|lambda\\s+expressions?)\\**\\b"
-                    + "|(?:must\\s+not|may\\s+not|cannot|can't|do\\s+not|don't|never)\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|contain)\\s+(?:[\\w*]+\\s+){0,3}\\**"
-                    + "(?<![-\\w])(?:recursion|loops?|iteration|lambdas?|pipelines?|stream\\s+api|looping\\s+constructs?|loop\\s+constructs?)\\**\\b"
-                    + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}(?<![-\\w])(?:recursion|loops?|iteration)\\b" + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
+                    + "|must\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|implement)\\s+(?:[\\w*]+\\s+){0,3}\\**(?:" + CONSTRUCT_NOUN + ")\\**\\b"
+                    + "|(?:must\\s+not|may\\s+not|cannot|can't|do\\s+not|don't|never)\\s+(?:[\\w*]+\\s+){0,3}?(?:use|using|contain)\\s+(?:[\\w*]+\\s+){0,3}\\**" + NOT_HYPHENATED
+                    + "(?:" + PROHIBITED_TECHNIQUE_NOUN + ")\\**\\b" + "|must\\s+avoid\\s+(?:[\\w*]+\\s+){0,2}" + NOT_HYPHENATED + "(?:recursion|loops?|iteration)\\b"
+                    + "|must\\s+be\\s+expressed\\s+as\\s+a[^.|\\n]{0,40}(?:stream|pipeline)"
                     + "|must\\**\\s+be\\s+implemented\\s+as\\s+(?:a\\s+)?[^.|\\n]{0,30}\\bif\\p{Pd}?else\\b"
                     + "|must\\s+(?:rely\\s+on|employ|use)\\s+(?:(?:only|plain|nested)\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
                     + "|(?:use|using)\\s+only\\s+(?:plain\\s+|nested\\s+|sequential\\s+)*(?:if\\p{Pd}?else|ternary|switch)\\b"
-                    + "|require(?:s|d)?\\s+(?:the\\s+)?use\\s+of\\s+(?:a\\s+)?(?:if\\p{Pd}?else|ternary|switch|stream\\s+pipeline|lambda\\s+expression)\\b"
-                    + "|(?<![-\\w])(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed"
-                    + "(?=\\s*[.;,|\\n]|\\s*$|\\s+(?:in|for)\\s+(?:your|the|this)\\s+(?:implementation|solution|method|code|answer))",
+                    + "|require(?:s|d)?\\s+(?:the\\s+)?use\\s+of\\s+(?:a\\s+)?(?:if\\p{Pd}?else|ternary|switch|stream\\s+pipeline|lambda\\s+expression)\\b" + "|" + NOT_HYPHENATED
+                    + "(?:iterative|looping|loops?|recursion|iteration)\\s+(?:constructs?\\s+)?(?:are|is)\\s+not\\s+allowed" + SCOPED_TO_THE_IMPLEMENTATION,
             Pattern.CASE_INSENSITIVE);
 
     /**
-     * Prose describing <em>how</em> an implementation is written rather than what it does. Distinct from {@link #TECHNIQUE_MANDATE}, which reads a specification rule; this reads
-     * a critic finding, written in the critic's voice ("an iterative implementation using an explicit stack") and so almost never containing "must".
-     * <p>
-     * Demands a technique <em>contrast</em> or a named implementation shape: merely mentioning the topic is not enough, because on a recursion exercise nearly every finding says
-     * "recursive" somewhere, and "the recursive helper's base case is untested" is an ordinary repairable gap that must keep its repair round.
+     * Prose describing <em>how</em> an implementation is written, in a critic finding's voice ("an iterative implementation using an explicit stack") rather than a specification
+     * rule's, so unlike {@link #TECHNIQUE_MANDATE} it almost never contains "must". Requires a technique <em>contrast</em> or a named implementation shape, because on a recursion
+     * exercise nearly every finding says "recursive" somewhere and "the recursive helper's base case is untested" is an ordinary repairable gap.
      */
     private static final Pattern TECHNIQUE_CLAIM = Pattern
             .compile("(?:instead\\s+of|rather\\s+than|without|not)\\s+(?:[\\w*]+\\s+){0,3}?\\b(?:recursi\\w*|loops?|looping|iterat\\w*|streams?|lambdas?|if\\p{Pd}?else)\\b"
@@ -861,8 +867,8 @@ public final class ExerciseIntegrityGate {
     /**
      * Implementation-technique mandates stated as {@code ## Rules} — that a method be recursive, use a stream pipeline, avoid loops. No assertion over the public API separates a
      * recursive implementation from an iterative one returning identical values, so an agent obliged to cover every rule either leaves the mandate ungraded or reaches for the
-     * student's source text, which runtime source isolation rejects. Deliberately narrow, and scoped to {@code ## Rules}: a technique named as
-     * guidance in the student-facing statement is fine and often desirable.
+     * student's source text, which runtime source isolation rejects. Narrow, and scoped to {@code ## Rules}: naming a technique as guidance in the student-facing statement is
+     * fine and often desirable.
      *
      * @param spec the specification document
      * @return the distinct mandates stated as rules, in encounter order

@@ -4,22 +4,22 @@
 }
 
 .editor-bottom-tabs {
-    display: flex;
-    flex-direction: column;
     height: 100%;
     min-height: 0;
 
-    p-tabpanels {
+    // The panels host ships with page-level padding; the bottom area is edge-to-edge.
+    tum-ui-tab-panels {
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
+        padding: 0;
     }
 
-    p-tabpanel {
+    tum-ui-tab-panel {
+        display: block;
         height: 100%;
         min-height: 0;
         overflow: hidden;
-        padding: 0;
     }
 }
 
@@ -27,7 +27,7 @@
     display: flex;
     align-items: center;
 
-    p-tablist {
+    tum-ui-tab-list {
         flex: 1 1 auto;
         min-width: 0;
     }

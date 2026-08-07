@@ -1,49 +1,55 @@
-<div class="review-adapt-exercise-dialog">
-    <p class="review-adapt-exercise-dialog__summary">
-        <fa-icon [icon]="facArtemisIntelligence" class="review-adapt-exercise-dialog__brand-icon" />
-        @if (isFreeMode) {
+<div class="flex min-w-0 flex-col gap-3">
+    <p class="m-0 flex items-center gap-2">
+        <fa-icon [icon]="facArtemisIntelligence" class="text-(--p-primary-color)" />
+        @if (isFreeMode()) {
             <span jhiTranslate="artemisApp.review.adaptExercise.freeSummary"></span>
         } @else {
             <span jhiTranslate="artemisApp.review.adaptExercise.summary"></span>
         }
     </p>
 
-    <!-- tum-ui-message owns [attr.role]: it resolves to alert only for severity error, and status otherwise. -->
-    <tum-ui-message severity="warn" aria-live="polite">
+    <!-- No aria-live here: tum-ui-message binds [attr.role], which resolves to status for warn, and role="status" already implies aria-live="polite". -->
+    <tum-ui-message severity="warn">
         <span jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></span>
     </tum-ui-message>
 
-    @if (!isFreeMode) {
+    @if (!isFreeMode()) {
         <h3
             id="adaptExerciseFindingsHeading"
-            class="review-adapt-exercise-dialog__label"
+            class="-mb-1 text-base font-semibold"
             jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel"
-            [translateValues]="{ count: findings.length }"
+            [translateValues]="{ count: sortedFindings().length }"
         ></h3>
-        <ul class="review-adapt-exercise-dialog__findings-list" aria-labelledby="adaptExerciseFindingsHeading">
-            @for (finding of findings; track finding) {
-                <li class="review-adapt-exercise-dialog__finding-card">
-                    <div class="review-adapt-exercise-dialog__finding-header">
+        <ul class="m-0 flex max-h-[35vh] list-none flex-col gap-2 overflow-y-auto ps-0 pe-1 sm:max-h-[min(45vh,26rem)]" aria-labelledby="adaptExerciseFindingsHeading">
+            @for (finding of sortedFindings(); track finding) {
+                <li class="min-w-0 rounded-md border px-3 py-2">
+                    <div class="mb-1 flex flex-wrap items-center gap-1.5">
                         <tum-ui-tag [severity]="finding.tagSeverity" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
-                        <span class="review-adapt-exercise-dialog__finding-category" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                        <span class="font-semibold" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
                         @if (finding.locationLabel) {
-                            <code class="review-adapt-exercise-dialog__finding-location">{{ finding.locationLabel }}</code>
+                            <code class="min-w-0 text-xs wrap-anywhere text-muted-color">{{ finding.locationLabel }}</code>
                         }
                     </div>
-                    <div class="review-adapt-exercise-dialog__finding-description">{{ finding.description }}</div>
+                    <div class="whitespace-pre-wrap">{{ finding.description }}</div>
                     @if (finding.suggestedFix; as fix) {
                         @if (fix.replacementCode) {
-                            <div class="review-adapt-exercise-dialog__finding-fix">
-                                <small class="review-adapt-exercise-dialog__finding-fix-label" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                            <div class="mt-1.5">
+                                <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
                                 @if (fix.expectedCode) {
-                                    <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
+                                    <pre
+                                        class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                        >{{ fix.expectedCode }}</pre>
                                 }
-                                <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--added">{{ fix.replacementCode }}</pre>
+                                <pre
+                                    class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-success/40 bg-state-success/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                    >{{ fix.replacementCode }}</pre>
                             </div>
                         } @else if (fix.expectedCode) {
-                            <div class="review-adapt-exercise-dialog__finding-fix">
-                                <small class="review-adapt-exercise-dialog__finding-fix-label" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
-                                <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
+                            <div class="mt-1.5">
+                                <small class="block font-semibold" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
+                                <pre
+                                    class="mt-0.5 mb-0 rounded-md border-l-[3px] border-l-state-danger/40 bg-state-danger/10 px-2.5 py-1.5 text-xs whitespace-pre-wrap wrap-anywhere"
+                                    >{{ fix.expectedCode }}</pre>
                             </div>
                         }
                     }
@@ -51,27 +57,29 @@
             }
         </ul>
     } @else {
-        <small class="review-adapt-exercise-dialog__free-help text-muted-color" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
+        <small class="text-muted-color" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
     }
 
-    <label class="review-adapt-exercise-dialog__label" for="adaptExerciseInstructions" jhiTranslate="artemisApp.review.adaptExercise.instructionsLabel"></label>
+    <label class="-mb-1 text-base font-semibold" for="adaptExerciseInstructions" jhiTranslate="artemisApp.review.adaptExercise.instructionsLabel"></label>
     <textarea
         tumUiTextarea
         id="adaptExerciseInstructions"
-        class="review-adapt-exercise-dialog__instructions"
+        class="w-full resize-y"
         rows="3"
         [attr.maxlength]="maxInstructionsLength"
-        [attr.aria-describedby]="isFreeMode ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
-        [placeholder]="(isFreeMode ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate"
+        [attr.aria-describedby]="isFreeMode() ? 'adaptExerciseFreeHelp adaptExerciseCharacterCount' : 'adaptExerciseCharacterCount'"
+        [placeholder]="
+            (isFreeMode() ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate
+        "
         [ngModel]="instructions()"
         (ngModelChange)="instructions.set($event)"
     ></textarea>
-    <small id="adaptExerciseCharacterCount" class="review-adapt-exercise-dialog__character-count text-muted-color">
+    <small id="adaptExerciseCharacterCount" class="-mt-2 self-end text-muted-color">
         <span jhiTranslate="artemisApp.review.adaptExercise.charactersRemaining" [translateValues]="{ count: remainingCharacters() }"></span>
     </small>
 
-    <div class="review-adapt-exercise-dialog__actions">
-        <tum-ui-button severity="secondary" (clicked)="cancel()">
+    <div class="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <tum-ui-button severity="secondary" (clicked)="cancelled.emit()">
             {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
         </tum-ui-button>
         <tum-ui-button [icon]="facArtemisIntelligence" [disabled]="confirmDisabled()" (clicked)="confirm()">

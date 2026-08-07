@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { HttpErrorResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, map, of, throwError } from 'rxjs';
@@ -93,16 +94,23 @@ function revertConfirmButton(action: 'accept' | 'reject'): HTMLButtonElement {
 
 describe('HyperionGenerationActivityComponent', () => {
     let service: MockService;
+    let announcements: string[];
 
     beforeEach(() => {
         vi.useRealTimers();
         service = new MockService();
+        announcements = [];
         TestBed.configureTestingModule({
             imports: [HyperionGenerationActivityComponent],
             providers: [
                 { provide: HyperionExerciseGenerationService, useValue: service },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
+        });
+        // The status is announced through the CDK announcer, whose region lives outside the fixture.
+        vi.spyOn(TestBed.inject(LiveAnnouncer), 'announce').mockImplementation((message) => {
+            announcements.push(String(message));
+            return Promise.resolve();
         });
     });
 
@@ -455,8 +463,11 @@ describe('HyperionGenerationActivityComponent', () => {
 
         expect(toggle.getAttribute('aria-expanded')).toBe('false');
         expect(toggle.textContent).toContain('generationActivity.showChangedFiles');
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]').hidden).toBe(true);
+        // The panel stays mounted for aria-controls, so [hidden] is what has to hide it: it must therefore carry no
+        // display utility of its own, or the layout on it would win over the attribute.
+        const details = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]');
+        expect(details.hidden).toBe(true);
+        expect(getComputedStyle(details).display).toBe('none');
     });
 
     it('keeps open details mounted when a live run completes', () => {
@@ -495,21 +506,38 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(visibleProgress.getAttribute('aria-live')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('event 8');
         expect(fixture.nativeElement.querySelector('[role="log"]')).toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('[role="status"]')).toHaveLength(1);
+        expect(announcements).toEqual(['artemisApp.hyperion.generationActivity.running']);
     });
 
-    it('announces a terminal outcome instead of stale progress in one atomic status region', () => {
+    it('announces the first status even though its region only appears once there is something to say', () => {
+        createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
+
+        expect(announcements).toEqual(['artemisApp.hyperion.generationActivity.running']);
+    });
+
+    it('re-announces only when the status itself changes, not on every poll', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
+
+        service.stream$.next({ type: 'PROGRESS', message: 'Still editing' });
+        fixture.detectChanges();
+        expect(announcements).toEqual(['artemisApp.hyperion.generationActivity.running']);
+
+        service.stream$.next({ type: 'CANCELLED' });
+        fixture.detectChanges();
+        expect(announcements).toHaveLength(2);
+        expect(announcements[1]).toContain('artemisApp.hyperion.generationActivity.terminalStatus.CANCELLED');
+    });
+
+    it('announces a terminal outcome and where it left the exercise, instead of stale progress', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [{ type: 'PROGRESS', message: 'Still editing' }], fileChanges: [] });
 
         service.stream$.next({ type: 'ERROR', message: 'Generation failed' });
         fixture.detectChanges();
 
-        const statuses = fixture.nativeElement.querySelectorAll('[role="status"]');
-        expect(statuses).toHaveLength(1);
-        expect(statuses[0].getAttribute('aria-atomic')).toBe('true');
-        expect(statuses[0].textContent).toContain('generationActivity.terminalStatus.ERROR');
-        expect(statuses[0].textContent).toContain('generationActivity.persistence.failed');
-        expect(statuses[0].textContent).not.toContain('Still editing');
+        const announcement = announcements.at(-1)!;
+        expect(announcement).toContain('generationActivity.terminalStatus.ERROR');
+        expect(announcement).toContain('generationActivity.persistence.failed');
+        expect(announcement).not.toContain('Still editing');
         const terminalMessage = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-terminal-message"]');
         expect(terminalMessage.textContent).toContain('Generation failed');
         expect(terminalMessage.tagName).toBe('DIV');
@@ -524,13 +552,11 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentRef.setInput('refreshingEditor', true);
         fixture.detectChanges();
 
-        const status = fixture.nativeElement.querySelector('[role="status"]');
-        expect(status.textContent).toContain('generationActivity.refreshingEditor');
-        expect(status.textContent).not.toContain('generationActivity.persistence.saved');
+        expect(announcements.at(-1)).toBe('artemisApp.hyperion.generationActivity.refreshingEditor');
 
         fixture.componentRef.setInput('refreshingEditor', false);
         fixture.detectChanges();
-        expect(status.textContent).toContain('generationActivity.persistence.saved');
+        expect(announcements.at(-1)).toContain('generationActivity.persistence.saved');
     });
 
     it('does not allow undo while the editor is applying the completed generation', () => {
@@ -552,9 +578,9 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentRef.setInput('editorRefreshFailed', true);
         fixture.detectChanges();
 
-        const status = fixture.nativeElement.querySelector('[role="status"]');
-        expect(status.textContent).toContain('generationActivity.editorRefreshFailed');
-        expect(status.textContent).toContain('generationActivity.persistence.saved');
+        const announcement = announcements.at(-1)!;
+        expect(announcement).toContain('generationActivity.editorRefreshFailed');
+        expect(announcement).toContain('generationActivity.persistence.saved');
 
         const recoveryButton = fixture.nativeElement.querySelector('[data-testid="hyperion-editor-refresh-retry"]');
         expect(recoveryButton.textContent).toContain('generationActivity.reloadSavedExercise');
@@ -662,7 +688,7 @@ describe('HyperionGenerationActivityComponent', () => {
             fileChanges: [fileChange('solution/Z.java', 'write'), fileChange('solution/A.java', 'write')],
         });
 
-        expect(fixture.componentInstance.filesByRepo()[0].files.map((file) => file.path)).toEqual(['solution/A.java', 'solution/Z.java']);
+        expect(fixture.componentInstance.filesByRepo()[0].files.map((entry) => entry.file.path)).toEqual(['solution/A.java', 'solution/Z.java']);
     });
 
     it('keeps live changed-file controls non-actionable until the run is terminal', () => {
@@ -676,7 +702,7 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.detectChanges();
 
         expect(component.fileChanges()).toHaveLength(2);
-        expect(component.filesByRepo().map((group) => [group.repo, group.files.map((file) => file.path)])).toEqual([
+        expect(component.filesByRepo().map((group) => [group.repo, group.files.map((entry) => entry.file.path)])).toEqual([
             ['solution', ['src/Main.java']],
             ['template', ['src/Main.java']],
         ]);

@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
  */
 public final class WorkspaceArchive {
 
-    /** Default permissions: world-readable regular file, and executable for files that are executable in the working copy (e.g. {@code gradlew}). */
     private static final int MODE_FILE = 0644;
 
     private static final int MODE_EXECUTABLE = 0755;
@@ -51,18 +50,15 @@ public final class WorkspaceArchive {
     /** Leaves room for tar headers below the relay's 32 MiB payload limit. */
     static final long MAX_FILE_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
 
-    /**
-     * Whole-archive cap on read-back, so a flood of files (each under the per-file cap) still cannot exhaust node memory when the whole copyOut tar is materialised into Strings.
-     */
+    /** Whole-archive cap on read-back, so a flood of files each under the per-file cap still cannot exhaust node memory when the copyOut tar is materialised into Strings. */
     static final long MAX_TOTAL_BYTES = WORKSPACE_CONTENT_LIMIT_BYTES;
 
     private WorkspaceArchive() {
     }
 
     /**
-     * Signals that a {@code copyOut} archive contained a rejected entry: over the read-back byte caps, a symbolic or hard link, or a path escaping the archive root. The
-     * produced map feeds a git commit, so an escaping path must never reach the write, and a runaway agent's multi-GB file must not be materialised at all. The caller treats
-     * this as a failed read-back and fails closed.
+     * Signals that a {@code copyOut} archive contained a rejected entry: over the read-back byte caps, a symbolic or hard link, or a path escaping the archive root. The produced
+     * map feeds a git commit, so an escaping path must never reach the write. The caller treats this as a failed read-back and fails closed.
      */
     public static final class RejectedWorkspaceEntryException extends RuntimeException {
 
@@ -118,11 +114,6 @@ public final class WorkspaceArchive {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    /**
-     * @param files binary files to archive
-     * @param modes exact file modes by path
-     * @return a bounded tar stream for checkpoint restore
-     */
     public static InputStream buildBinaryFilesTarStream(Map<String, byte[]> files, Map<String, Integer> modes) {
         return buildBinaryFilesTarStream(files, modes, Map.of());
     }

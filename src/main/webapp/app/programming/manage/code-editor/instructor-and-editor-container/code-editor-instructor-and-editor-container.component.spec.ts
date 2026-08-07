@@ -49,9 +49,8 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
-import { DialogService } from 'primeng/dynamicdialog';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
-import { ConfirmationService } from 'primeng/api';
+import { TumUiConfirmationService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 
@@ -156,8 +155,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ParticipationService, useClass: MockParticipationService },
         { provide: ActivatedRoute, useValue: { params: of({}) } },
         { provide: NgbModal, useValue: { open: vi.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
-        { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of({ confirmed: true }) })) } },
-        { provide: ConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
+        { provide: TumUiConfirmationService, useValue: { confirm: vi.fn(), close: vi.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: vi.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: vi.fn(() => of({})) } },
         { provide: TranslateService, useClass: MockTranslateService },
@@ -1284,7 +1282,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let generationService: { generate: ReturnType<typeof vi.fn> };
-    let dialogOpen: ReturnType<typeof vi.fn>;
     let attachToJob: ReturnType<typeof vi.fn>;
     let confirm: ReturnType<typeof vi.fn>;
     let openEditorBottomPanel: ReturnType<typeof vi.fn>;
@@ -1351,14 +1348,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
             clearSelectedFeedback: vi.fn(() => selectedIds.set([])),
         };
         generationService = { generate: vi.fn(() => of({ jobId: 'job-adapt-1' })) };
-        dialogOpen = vi.fn(() => ({ onClose: of({ instructions: 'also rename the method' }) }));
         confirm = vi.fn((options) => options.accept?.());
 
         await configureTestBed([
             { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
             { provide: HyperionExerciseGenerationService, useValue: generationService },
-            { provide: DialogService, useValue: { open: dialogOpen } },
-            { provide: ConfirmationService, useValue: { confirm, close: vi.fn() } },
+            { provide: TumUiConfirmationService, useValue: { confirm, close: vi.fn() } },
         ]);
 
         const adaptProfileService = TestBed.inject(ProfileService);
@@ -1388,13 +1383,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         vi.clearAllMocks();
     });
 
+    // The specs run with an empty template, so these stand in for what the rendered tum-ui-dialog emits.
+    const confirmAdaptDialog = (instructions?: string) => (comp as any).onAdaptDialogConfirmed({ instructions });
+    const dismissAdaptDialog = () => {
+        comp.adaptDialogVisible.set(false);
+        (comp as any).onAdaptDialogHidden();
+    };
+
     it('adaptFromThread selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
         reviewCommentService.threads.set([consistencyThread(9)]);
 
         (comp as any).adaptFromThread(9);
-
         expect(reviewCommentService.selectThreadAsFeedback).toHaveBeenCalledExactlyOnceWith(9);
-        expect(dialogOpen).toHaveBeenCalledOnce();
+        expect(comp.adaptDialogVisible()).toBe(true);
+
+        confirmAdaptDialog('also rename the method');
+
+        expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
             mode: 'ADAPT',
             prompt: 'also rename the method',
@@ -1412,7 +1417,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(confirm).toHaveBeenCalledWith(
             expect.objectContaining({
                 key: 'hyperionGenerateConfirmation',
-                defaultFocus: 'reject',
+                rejectLabel: 'entity.action.cancel',
+                acceptLabel: 'artemisApp.programmingExercise.codeGeneration.generateCode',
                 accept: expect.any(Function),
             }),
         );
@@ -1513,7 +1519,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         (comp as any).openAdaptDialog();
 
-        expect(dialogOpen).not.toHaveBeenCalled();
+        expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
     });
@@ -1896,7 +1902,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).openAdaptDialog();
 
         expect(reviewCommentService.selectThreadAsFeedback).not.toHaveBeenCalled();
-        expect(dialogOpen).not.toHaveBeenCalled();
+        expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
@@ -2065,12 +2071,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
                 key: 'hyperionReloadSavedExerciseConfirmation',
                 header: 'artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmHeader',
                 message: 'artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmMessage',
-                defaultFocus: 'reject',
-                reject: expect.any(Function),
+                rejectLabel: 'entity.action.cancel',
+                acceptLabel: 'artemisApp.hyperion.generationActivity.reloadSavedExercise',
+                acceptSeverity: 'danger',
                 accept: expect.any(Function),
             }),
         );
-        confirm.mock.calls.at(-1)![0].reject();
 
         expect(reloadEditor).not.toHaveBeenCalled();
         expect((comp as any).generationRefreshPending()).toBe(false);
@@ -2165,9 +2171,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(comp.selectedAdaptFeedbackCount()).toBe(1);
 
         (comp as any).openAdaptDialog();
+        expect(comp.adaptDialogFindings()).toHaveLength(1);
+        expect(comp.adaptDialogFindings()[0].description).toBe('Fix method signature');
 
-        expect(dialogOpen.mock.calls[0][1].data.findings).toHaveLength(1);
-        expect(dialogOpen.mock.calls[0][1].data.findings[0].description).toBe('Fix method signature');
+        confirmAdaptDialog('also rename the method');
+
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
             mode: 'ADAPT',
             prompt: 'also rename the method',
@@ -2177,6 +2185,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
     it('openAdaptDialog with no selected threads dispatches an ADAPT run with undefined ids', () => {
         (comp as any).openAdaptDialog();
+        confirmAdaptDialog('also rename the method');
 
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
             mode: 'ADAPT',
@@ -2187,50 +2196,54 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('does not dispatch a run when the adapt dialog is dismissed', () => {
-        dialogOpen.mockReturnValue({ onClose: of(undefined) });
-
         (comp as any).openAdaptDialog();
+        dismissAdaptDialog();
 
-        expect(dialogOpen).toHaveBeenCalledOnce();
         expect(generationService.generate).not.toHaveBeenCalled();
         expect(attachToJob).not.toHaveBeenCalled();
     });
 
     it('adaptFromThread rolls back a new preview selection when the dialog is dismissed', () => {
-        dialogOpen.mockReturnValue({ onClose: of(undefined) });
         reviewCommentService.threads.set([consistencyThread(9)]);
 
         (comp as any).adaptFromThread(9);
+        dismissAdaptDialog();
 
         expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledExactlyOnceWith(9);
         expect(selectedIds()).toEqual([]);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
-    it('does not dispatch adaptation when the dialog closes after editor destruction', () => {
-        const dialogResult = new Subject<{ instructions: string }>();
-        const close = vi.fn();
-        dialogOpen.mockReturnValue({ onClose: dialogResult, close });
+    it('keeps the preview selection when the adapt dialog is closed programmatically rather than dismissed', () => {
+        reviewCommentService.threads.set([consistencyThread(9)]);
+        (comp as any).adaptFromThread(9);
 
+        (comp as any).invalidateHyperionLifecycleState();
+        (comp as any).onAdaptDialogHidden();
+
+        expect(comp.adaptDialogVisible()).toBe(false);
+        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
+        expect(selectedIds()).toEqual([9]);
+    });
+
+    it('closes the adapt dialog on destruction and ignores a late confirmation', () => {
         (comp as any).openAdaptDialog();
         fixture.destroy();
-        dialogResult.next({ instructions: 'late adaptation' });
 
-        expect(close).toHaveBeenCalledOnce();
+        confirmAdaptDialog('late adaptation');
+
+        expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
-    it('does not dispatch adaptation when the dialog closes after navigating to another exercise', () => {
-        const dialogResult = new Subject<{ instructions: string }>();
-        const close = vi.fn();
-        dialogOpen.mockReturnValue({ onClose: dialogResult, close });
-
+    it('does not dispatch adaptation when the dialog is confirmed after navigating to another exercise', () => {
         (comp as any).openAdaptDialog();
         (comp as any).invalidateHyperionLifecycleState();
         comp.exercise.set(createMockExercise({ id: 84 }));
-        dialogResult.next({ instructions: 'late adaptation' });
 
-        expect(close).toHaveBeenCalledOnce();
+        confirmAdaptDialog('late adaptation');
+
+        expect(comp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
@@ -2240,6 +2253,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         const errorSpy = vi.spyOn(alertService, 'error');
 
         (comp as any).openAdaptDialog();
+        confirmAdaptDialog('also rename the method');
 
         expect(generationService.generate).toHaveBeenCalledOnce();
         expect(attachToJob).not.toHaveBeenCalled();
@@ -2316,6 +2330,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect((jenkinsComp as any).showGenerationActivity()).toBe(false);
 
         (jenkinsComp as any).openAdaptDialog();
+        expect(jenkinsComp.adaptDialogVisible()).toBe(false);
         expect(generationService.generate).not.toHaveBeenCalled();
         expect(jenkinsAttach).not.toHaveBeenCalled();
         jenkinsFixture.destroy();

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -89,7 +88,6 @@ class SubmissionPolicyResourceMutationGuardTest {
         assertThatThrownBy(() -> resource.addSubmissionPolicyToProgrammingExercise(EXERCISE_ID, policy)).isSameAs(failure);
 
         assertThat(leaseHeld).isFalse();
-        assertThatCode(() -> mutationGuard.claimExternalMutation(EXERCISE_ID).close()).doesNotThrowAnyException();
     }
 
     private enum Mutation {

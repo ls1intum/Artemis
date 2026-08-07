@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
@@ -26,7 +25,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled;
 
 /**
  * Reaps orphaned interactive sandbox containers, i.e. those named with the {@link InteractiveSandboxService#SANDBOX_CONTAINER_PREFIX} prefix.
@@ -35,9 +33,12 @@ import de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled;
  * (far longer than a CI build), so it needs its own, longer threshold, and the CI reaper's prefix never matches a sandbox container.
  * <p>
  * Reaping is by <em>inactivity</em>, not age: an agentic session can accumulate more than an hour of healthy wall-clock (many turns, each up to a multi-minute build or verify),
- * which age-based reaping would kill mid-run and break the next {@code exec}. {@link InteractiveSandboxService} refreshes a per-container last-activity stamp on every operation
- * (create, exec, copy), and a container is removed only once it has been idle past the threshold. A container with no known activity — one left behind by a previous agent
- * process — falls back to its creation time, so genuine orphans are still collected on the first sweep after an agent restart.
+ * which age-based reaping would kill mid-run and break the next {@code exec}. {@link InteractiveSandboxService} refreshes a per-container last-activity stamp on every operation,
+ * and a container is removed only once it has been idle past the threshold. A container with no known activity — one left behind by a previous agent process — falls back to its
+ * creation time, so genuine orphans are still collected on the first sweep after an agent restart.
+ * <p>
+ * It runs on every build agent, not only on those that opted into hosting generation sandboxes: an agent SIGKILLed mid-session and then redeployed with
+ * {@code max-generation-sandbox-slots=0} still has the containers, and no other bean would ever collect them.
  *
  * @see BuildAgentDockerService#cleanUpContainers()
  * @see InteractiveSandboxService
@@ -45,7 +46,6 @@ import de.tum.cit.aet.artemis.buildagent.config.GenerationSandboxHostingEnabled;
 @Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
-@Conditional(GenerationSandboxHostingEnabled.class)
 public class InteractiveSandboxReaperService {
 
     private static final Logger log = LoggerFactory.getLogger(InteractiveSandboxReaperService.class);
@@ -54,16 +54,14 @@ public class InteractiveSandboxReaperService {
 
     private final ApplicationContext applicationContext;
 
-    /**
-     * The relay handler owns the per-agent session permits. Both beans use the same build-agent profile and generation-hosting condition, so a plain dependency is safe.
-     */
-    private final InteractiveSandboxRelayHandler relayHandler;
+    /** Owns the per-agent session permits, and only exists when this agent opted into hosting — hence optional, since the sweep must not be gated on that opt-in. */
+    private final Optional<InteractiveSandboxRelayHandler> relayHandler;
 
     private final TaskScheduler taskScheduler;
 
     /**
-     * A sandbox container idle (no operation) for longer than this is considered orphaned. The threshold need only exceed the longest single operation an agent can drive (a
-     * multi-minute build or verify), not the whole session wall-clock, because any activity refreshes the stamp — so a healthy but hours-long session is never reaped.
+     * A sandbox container idle for longer than this is considered orphaned. It need only exceed the longest single operation an agent can drive (a multi-minute build or verify),
+     * not the whole session wall-clock, because any activity refreshes the stamp.
      */
     @Value("${artemis.continuous-integration.build-agent.generation-sandbox-idle-timeout-minutes:90}")
     private int sandboxContainerExpiryMinutes;
@@ -71,8 +69,8 @@ public class InteractiveSandboxReaperService {
     @Value("${artemis.continuous-integration.build-agent.generation-sandbox-cleanup-interval-minutes:15}")
     private int sandboxCleanupScheduleMinutes;
 
-    public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, ApplicationContext applicationContext, InteractiveSandboxRelayHandler relayHandler,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    public InteractiveSandboxReaperService(BuildAgentConfiguration buildAgentConfiguration, ApplicationContext applicationContext,
+            Optional<InteractiveSandboxRelayHandler> relayHandler, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.applicationContext = applicationContext;
         this.relayHandler = relayHandler;
@@ -86,6 +84,24 @@ public class InteractiveSandboxReaperService {
             throw new IllegalArgumentException("Generation sandbox cleanup interval and idle timeout must be positive");
         }
         taskScheduler.scheduleAtFixedRate(this::reapOrphanedSessions, Instant.now().plusSeconds(30), Duration.ofMinutes(sandboxCleanupScheduleMinutes));
+        if (relayHandler.isEmpty()) {
+            // No relay handler will reconcile leftovers before advertising capacity here, so sweep once at startup. A pure name-prefix sweep is safe at zero capacity: this
+            // process owns no sessions, so every container carrying the prefix is left over from a previous one. Scheduled rather than called inline because it resolves the
+            // lazy InteractiveSandboxService, which must not be built during context refresh on an agent that hosts nothing. The periodic idle sweep is the backstop.
+            taskScheduler.schedule(this::removeLeftoverSessionsFromAPreviousProcess, Instant.now());
+        }
+    }
+
+    private void removeLeftoverSessionsFromAPreviousProcess() {
+        try {
+            int removed = interactiveSandboxService().removeSessionsForCurrentAgent();
+            if (removed > 0) {
+                log.info("Removed {} leftover interactive sandbox container(s) on a build agent that does not host generation sandboxes.", removed);
+            }
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not remove leftover interactive sandbox containers at startup; the periodic idle sweep will retry: {}", e.getMessage());
+        }
     }
 
     /**
@@ -101,7 +117,7 @@ public class InteractiveSandboxReaperService {
         long now = Instant.now().getEpochSecond();
         long idleThreshold = sandboxContainerExpiryMinutes * 60L;
 
-        Set<String> ownedSessionsBeforeListing = relayHandler.ownedSessionIdsSnapshot();
+        Set<String> ownedSessionsBeforeListing = relayHandler.map(InteractiveSandboxRelayHandler::ownedSessionIdsSnapshot).orElseGet(Set::of);
         List<Container> currentAgentContainers;
         try {
             String namePrefix = interactiveSandboxService().containerNamePrefix();
@@ -126,7 +142,7 @@ public class InteractiveSandboxReaperService {
         for (Container container : orphanedSandboxContainers) {
             try {
                 if (interactiveSandboxService().reapSessionIfInactive(container.getId(), container.getCreated(), idleThreshold)) {
-                    relayHandler.releaseIfOwned(container.getId());
+                    relayHandler.ifPresent(handler -> handler.releaseIfOwned(container.getId()));
                 }
             }
             catch (Exception ex) {
@@ -141,7 +157,7 @@ public class InteractiveSandboxReaperService {
             try {
                 if (!interactiveSandboxService().sessionExists(sessionId)) {
                     interactiveSandboxService().forgetActivity(sessionId);
-                    relayHandler.releaseIfOwned(sessionId);
+                    relayHandler.ifPresent(handler -> handler.releaseIfOwned(sessionId));
                     log.warn("Released the generation sandbox slot for externally removed session {}", sessionId);
                 }
             }
@@ -155,10 +171,6 @@ public class InteractiveSandboxReaperService {
         return applicationContext.getBean(InteractiveSandboxService.class);
     }
 
-    /**
-     * The epoch-second of a container's last recorded activity, falling back to its creation time when this process has no activity record for it (e.g. a container left behind
-     * by a previous agent process). Reading the in-process registry keeps the sweep cheap.
-     */
     private long lastActivityEpochSecond(Container container) {
         Optional<Instant> lastActivity = interactiveSandboxService().lastActivity(container.getId());
         return lastActivity.map(Instant::getEpochSecond).orElseGet(container::getCreated);

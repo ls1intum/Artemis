@@ -45,9 +45,8 @@ public class HyperionProblemStatementGenerationService {
     private static final String GENERATION_PIPELINE_ID = "HYPERION_PROBLEM_GENERATION";
 
     /**
-     * Draft generation is the creative stage of the pipeline: the instructor reviews and edits the result, so determinism matters less than variety. A deliberately higher
-     * sampling temperature counters the mode collapse observed with the deployment default (repeated briefs converging on the same textbook domain). The agent loop and the
-     * critic keep the deployment's precise defaults.
+     * Higher than the deployment default, which collapses repeated briefs onto the same textbook domain. Draft generation is the creative stage of the pipeline and the instructor
+     * edits the result, so variety is worth more than determinism here; the agent loop and the critic keep the deployment's defaults.
      */
     private static final double DRAFT_TEMPERATURE = 0.7;
 

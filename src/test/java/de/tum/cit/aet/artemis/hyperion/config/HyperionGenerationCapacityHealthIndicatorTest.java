@@ -21,8 +21,8 @@ class HyperionGenerationCapacityHealthIndicatorTest {
 
     @Test
     void reportsDownAndNamesTheOptInPropertyWhenNoAgentAdvertisesCapacity() {
-        // The default of zero slots is deliberate, but it makes the feature look enabled in the startup banner and in /management/info while every request 503s. This is the one
-        // place an administrator can see the gap, so it must be DOWN and it must say which property to set.
+        // With the default of zero slots the feature looks enabled in the startup banner and in /management/info while every request 503s; this is the one place an administrator
+        // can see the gap, so it must be DOWN and name the property to set.
         Health health = indicatorFor(new GenerationSandboxCapacity(3, 0, 0, 0)).health();
 
         assertThat(health.getStatus()).isEqualTo(Status.DOWN);
@@ -31,7 +31,7 @@ class HyperionGenerationCapacityHealthIndicatorTest {
 
     @Test
     void reportsUpWhenTheFleetIsMerelyBusy() {
-        // A full fleet resolves on its own when a run finishes; reporting DOWN for it would turn ordinary load into a false alarm and hide the configuration case above.
+        // A full fleet resolves on its own when a run finishes; reporting DOWN would turn ordinary load into a false alarm and hide the configuration case above.
         Health health = indicatorFor(new GenerationSandboxCapacity(2, 1, 2, 2)).health();
 
         assertThat(health.getStatus()).isEqualTo(Status.UP);

@@ -3,9 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic;
 /**
  * One executable witness for a rule of the approved specification: a legal input and the result the rule requires, expressed as a single test method.
  * <p>
- * A witness exists to turn a claim into evidence. The oracle review reasons about plausible wrong implementations and reports whether the graded suite kills them, but that
- * verdict is the reviewing model's own assertion and is never run. A witness is run: one that goes green against the reference solution is evidence that the rule holds and is
- * testable, and can then be handed to the authoring agent as a concrete test to adopt.
+ * Unlike the oracle review's {@code killed} flag, which is the reviewing model's own assertion and is never run, a witness is executed: one that goes green against the
+ * reference solution is evidence that the rule holds and is testable, and can then be handed to the authoring agent as a concrete test to adopt.
  *
  * @param ruleId        the rule this witness pins, spelled exactly as the approved specification writes it
  * @param testName      the test method name, which must match the method declared in {@link #code()} so a validation result can be attributed to this witness

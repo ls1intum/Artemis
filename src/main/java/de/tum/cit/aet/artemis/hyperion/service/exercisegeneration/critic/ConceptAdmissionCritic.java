@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 /**
  * A small adversarial admission pass over only the selected concept.
  * <p>
- * The broad selector compares learning designs and carries a deliberately general rubric. This pass gets a much smaller context and checks the failure modes that are otherwise
- * easy to miss in that comparison: unsupported exact choices, unobservable implementation requirements, and distinctions that disappear from the smallest equivalent behavior.
+ * The broad selector compares learning designs against a general rubric. This pass gets a much smaller context and checks the failure modes that are easy to miss in that
+ * comparison: unsupported exact choices, unobservable implementation requirements, and distinctions that disappear from the smallest equivalent behavior.
  */
 final class ConceptAdmissionCritic {
 
@@ -80,8 +80,7 @@ final class ConceptAdmissionCritic {
             if (parsed.admitted()) {
                 return new ConceptSelectionReview(true, candidateNumber, List.of(), selection.decisionSummary(), audit);
             }
-            // The broad selector already passed this candidate on every required axis, so it is the best-evidenced fallback there is: zero failed selection axes, and only this
-            // narrower audit objecting. Recording it does not admit it — the finding above still travels with it.
+            // Zero failed selection axes with only this narrower audit objecting makes it the best-evidenced fallback. Recording it does not admit it: the finding travels with it.
             return new ConceptSelectionReview(true, null, List.of(parsed.finding()), parsed.finding(), audit, new SpecFidelityCriticService.ConceptFallback(candidateNumber, 0));
         }
         catch (RuntimeException e) {

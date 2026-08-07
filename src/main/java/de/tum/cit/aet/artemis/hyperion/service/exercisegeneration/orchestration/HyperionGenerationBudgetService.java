@@ -132,20 +132,13 @@ public class HyperionGenerationBudgetService {
         }
     }
 
-    /**
-     * Fails fast before starting a new expensive generation run if any configured rolling token budget is already exhausted.
-     *
-     * @param userId   the requesting user's id, or null if unavailable
-     * @param courseId the course id, or null if unavailable
-     */
     public void assertWithinBudgets(@Nullable Long userId, @Nullable Long courseId) {
         assertWithinBudgets(userId, courseId, 0);
     }
 
     /**
-     * Reserves exactly what the admitted job is allowed to spend. Reserving the fleet-wide worst case for every job regardless of its size throttles a course that only ever
-     * drafts small exercises at the same job count as one running the largest possible jobs; sizing the reservation to the run is a straight capacity gain that changes nothing
-     * about the ceiling itself. The reservation is released when the async job finishes; a TTL is a crash safety net.
+     * Reserves exactly what the admitted job is allowed to spend, rather than the fleet-wide worst case, which would throttle a course that only ever drafts small exercises at
+     * the same job count as one running the largest possible jobs. The reservation is released when the async job finishes; a TTL is a crash safety net.
      *
      * @param userId         the requesting user's id, or null if unavailable
      * @param courseId       the course id, or null if unavailable
@@ -232,14 +225,11 @@ public class HyperionGenerationBudgetService {
             if (reservation == null) {
                 return;
             }
+            // Clamp to zero, never remove: the owning worker's heartbeat reads the reservation's presence as proof it still owns the job (GenerationJobService#heartbeat), so
+            // removing a fully spent one would tell that job it lost ownership within a heartbeat interval, mid-save. releaseReservation removes it when the job ends.
             long remaining = Math.max(0, reservation.tokens() - tokens);
-            if (remaining == 0) {
-                reservationMap.remove(reservationId);
-            }
-            else {
-                reservationMap.set(reservationId, new TokenBudgetReservation(reservation.userId(), reservation.courseId(), remaining), Math.max(1L, reservationTtl.toSeconds()),
-                        TimeUnit.SECONDS);
-            }
+            reservationMap.set(reservationId, new TokenBudgetReservation(reservation.userId(), reservation.courseId(), remaining), Math.max(1L, reservationTtl.toSeconds()),
+                    TimeUnit.SECONDS);
         }
         catch (RuntimeException exception) {
             log.warn("Could not reduce Hyperion generation budget reservation {} after durable usage was recorded; admission remains conservative: {}", reservationId,

@@ -73,7 +73,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
 
     @BeforeEach
     void switchToRealDockerClientAndOverrideBuildImage() {
-        // The shared test profile uses a placeholder image; this test needs the Java image used by the sandbox and verifier.
+        // The shared test profile configures a placeholder image; the sandbox and verifier need the real Java build image.
         replacedJavaBuildImage = HyperionMockedLlmE2eSupport.useProductionJavaBuildImage(programmingLanguageConfiguration);
 
         initializeLazyLocalCIServices();
@@ -99,7 +99,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         interactiveSandboxRelayHandler.registerRequestListener();
         sharedQueueProcessingService.updateBuildAgentInformation();
 
-        // The interactive sandbox creates its container directly from this image and never pulls it, so ensure it is present locally before any test body runs.
+        // The interactive sandbox creates its container from this image without ever pulling it.
         ensureDockerImageAvailable(HyperionMockedLlmE2eSupport.JAVA_BUILD_IMAGE);
     }
 
@@ -125,10 +125,7 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
         }
     }
 
-    /**
-     * Forces initialization of the lazily-created LocalCI result-pipeline beans so re-opening the build agent services leaves the node in a consistent state. The Hyperion tests
-     * do not enqueue LocalCI build jobs (the differential oracle builds inside the sandbox), so no result is awaited here.
-     */
+    /** Forces initialization of the lazily-created LocalCI result-pipeline beans so re-opening the build agent services leaves the node in a consistent state. */
     private void initializeLazyLocalCIServices() {
         applicationContext.getBean(LocalCIEventListenerService.class);
         applicationContext.getBean(LocalCIResultProcessingService.class);

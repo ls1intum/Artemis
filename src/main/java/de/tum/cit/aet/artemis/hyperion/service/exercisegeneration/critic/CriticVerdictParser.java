@@ -370,14 +370,11 @@ class CriticVerdictParser {
     }
 
     /**
-     * Appends one blocking finding per grounded item, uniformly requiring a {@code sourceQuote} that literally appears in the grounding source the caller passed. That source is
-     * not the same per pass (see {@code SpecFidelityCriticService#reviewArtifacts}): the ORACLE pass grounds against the instructor brief plus the frozen specification only,
-     * while the CONTRACT pass also accepts the produced problem statement, the grading plan, and the produced solution/template/test sources. Grounding therefore proves
-     * provenance — the quote was in something the reviewer was shown — and for the CONTRACT pass that can be the candidate's own artifacts rather than any instructor-authored
-     * requirement.
+     * Appends one blocking finding per grounded item, requiring a {@code sourceQuote} that literally appears in the grounding source the caller passed. That source differs per
+     * pass (see {@code SpecFidelityCriticService#reviewArtifacts}): ORACLE grounds against the instructor brief plus the frozen specification only, while CONTRACT also accepts
+     * the produced problem statement, the grading plan, and the produced sources. Grounding therefore proves provenance only, not that the quote states a requirement.
      * <p>
-     * An item whose quote does not validate is the critic's abstain outcome: it is logged for observability and dropped rather than surfaced, so it can never drive repair or
-     * reach the instructor as a hallucinated blocker.
+     * An item whose quote does not validate is dropped rather than surfaced, so it can never drive repair or reach the instructor as a hallucinated blocker.
      */
     private static void appendGroundedBlockingFindings(List<SpecFidelityReport.Finding> findings, List<RequirementFindingItem> items, String authoritativeSource,
             SpecFidelityReport.Kind kind, String detailPrefix) {
@@ -530,8 +527,8 @@ class CriticVerdictParser {
     }
 
     /**
-     * The critic's abstain outcome for a finding it cannot ground: logged for operability so ungrounded-finding rates are observable, then dropped. An abstained finding is
-     * never added to the report, so it can never drive the retry prompt (see {@code SpecFidelityCriticService#renderForRetryPrompt}) or reach the instructor review.
+     * The abstain outcome for a finding the critic cannot ground: logged so ungrounded-finding rates stay observable, then dropped. An abstained finding never reaches the
+     * report, the retry prompt, or the instructor review.
      */
     private static void abstainUngroundedFinding(SpecFidelityReport.Kind kind, @Nullable String requirement) {
         log.info("Critic abstained on an ungrounded {} finding (no verbatim source quote in that finding category's grounding source): {}", kind,
@@ -546,8 +543,8 @@ class CriticVerdictParser {
         if (evidenceId.matches("P[1-9][0-9]*") && EvidenceSource.from("P", authoritativeSource).passages().containsKey(evidenceId)) {
             return true;
         }
-        // Verbatim quoting is the general grounding mechanism, not a compatibility shim: server-generated evidence IDs are rendered for the ORACLE pass's primary source only, so
-        // a quote taken from the problem statement, the grading plan, or the produced artifacts can prove its provenance only by appearing literally in the grounding source.
+        // Server-generated evidence IDs are rendered for the ORACLE pass's primary source only, so a quote taken from the problem statement, the grading plan, or the produced
+        // artifacts can prove its provenance only by appearing literally in the grounding source.
         return normalizeQuote(authoritativeSource).contains(normalizeQuote(sourceQuote));
     }
 

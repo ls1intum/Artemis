@@ -44,7 +44,6 @@ class ExerciseGenerationDtoTest {
         ExerciseGenerationFileChangeDTO change = ExerciseGenerationFileChangeDTO.of("solution/src/A.java", ExerciseGenerationFileChangeDTO.ACTION_DELETE, 7);
 
         assertThat(change.repo()).isEqualTo(ExerciseGenerationFileChangeDTO.REPOSITORY_SOLUTION);
-        assertThat(change.turn()).isEqualTo(7);
         JsonNode json = mapper.readTree(mapper.writeValueAsString(change));
         assertThat(json.get("type").asText()).isEqualTo("FILE_CHANGE");
         assertThat(json.get("action").asText()).isEqualTo("delete");

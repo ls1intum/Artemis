@@ -1,7 +1,6 @@
 import { TumUiButtonComponent, TumUiInputDirective, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -9,53 +8,50 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AdaptFinding } from 'app/exercise/review/review-comment-utils';
 import { ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 
-export interface ReviewAdaptExerciseDialogData {
-    findings?: AdaptFinding[];
-}
-
 export interface ReviewAdaptExerciseDialogResult {
     instructions?: string;
 }
 
+/** Severity order so the most important findings surface first when there are many to triage. */
+const SEVERITY_ORDER: Record<string, number> = {
+    [ConsistencyIssueSeverityEnum.High]: 0,
+    [ConsistencyIssueSeverityEnum.Medium]: 1,
+    [ConsistencyIssueSeverityEnum.Low]: 2,
+};
+
+const MAX_INSTRUCTIONS_LENGTH = 8000;
+
+/**
+ * Body of the "adapt exercise" dialog: it renders the findings the instructor picked and collects free-text
+ * instructions. The host owns presentation and the result — this component only reports the decision.
+ */
 @Component({
     selector: 'jhi-review-adapt-exercise-dialog',
     templateUrl: './review-adapt-exercise-dialog.component.html',
-    styleUrl: './review-adapt-exercise-dialog.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, TumUiButtonComponent, TumUiTagComponent, TumUiInputDirective, TumUiMessageComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ReviewAdaptExerciseDialogComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    readonly findings = input<AdaptFinding[]>([]);
+
+    readonly confirmed = output<ReviewAdaptExerciseDialogResult>();
+    readonly cancelled = output<void>();
+
+    readonly instructions = signal('');
 
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
-    protected readonly maxInstructionsLength = 8000;
+    protected readonly maxInstructionsLength = MAX_INSTRUCTIONS_LENGTH;
 
-    /** Severity order so the most important findings surface first when there are many to triage. */
-    private static readonly SEVERITY_ORDER: Record<string, number> = {
-        [ConsistencyIssueSeverityEnum.High]: 0,
-        [ConsistencyIssueSeverityEnum.Medium]: 1,
-        [ConsistencyIssueSeverityEnum.Low]: 2,
-    };
+    protected readonly sortedFindings = computed(() => [...this.findings()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+    protected readonly isFreeMode = computed(() => this.sortedFindings().length === 0);
+    protected readonly remainingCharacters = computed(() => MAX_INSTRUCTIONS_LENGTH - this.instructions().length);
+    /** Without findings there is nothing to act on, so free-form instructions become mandatory. */
+    protected readonly confirmDisabled = computed(() => this.isFreeMode() && this.instructions().trim().length === 0);
 
-    readonly findings: AdaptFinding[] = [...((this.dialogConfig.data as ReviewAdaptExerciseDialogData | undefined)?.findings ?? [])].sort(
-        (a, b) => ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[a.severity] - ReviewAdaptExerciseDialogComponent.SEVERITY_ORDER[b.severity],
-    );
-    readonly isFreeMode = this.findings.length === 0;
-    readonly instructions = signal('');
-    readonly remainingCharacters = computed(() => this.maxInstructionsLength - this.instructions().length);
-
-    readonly confirmDisabled = computed(() => this.isFreeMode && this.instructions().trim().length === 0);
-
-    confirm(): void {
+    protected confirm(): void {
         if (this.confirmDisabled()) {
             return;
         }
-        const trimmed = this.instructions().trim();
-        this.dialogRef.close({ instructions: trimmed || undefined } satisfies ReviewAdaptExerciseDialogResult);
-    }
-
-    cancel(): void {
-        this.dialogRef.close(undefined);
+        this.confirmed.emit({ instructions: this.instructions().trim() || undefined });
     }
 }

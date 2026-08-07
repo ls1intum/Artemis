@@ -30,8 +30,8 @@ public final class ContractWitnessProbe {
 
     /**
      * Builds one compilable probe class carrying every witness method. The package and imports are lifted from a test the agent produced rather than assembled from a fixed list,
-     * so the probe matches whichever assertion library and JUnit version that exercise uses. Class-level harness annotations are deliberately NOT copied: they are the graded
-     * suite's contract with the production grader, and this throwaway must never look like a graded test.
+     * so the probe matches whichever assertion library and JUnit version that exercise uses. Class-level harness annotations are NOT copied: they are the graded suite's contract
+     * with the production grader, and this throwaway must never look like a graded test.
      *
      * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
      * @param witnesses          the candidate witnesses, each contributing one method
@@ -159,8 +159,8 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Finds a normal assertion-based Java test whose package and imports a throwaway probe can safely reuse. Structural {@code @TestFactory} harnesses are deliberately excluded:
-     * they sort before most behavioral tests but do not import {@code @Test}, assertions, or the domain helpers a model-authored witness is instructed to reuse.
+     * Finds a normal assertion-based Java test whose package and imports a throwaway probe can safely reuse. Structural {@code @TestFactory} harnesses are excluded: they sort
+     * before most behavioral tests but do not import {@code @Test}, assertions, or the domain helpers a model-authored witness is instructed to reuse.
      */
     static Optional<Map.Entry<String, String>> host(Map<String, String> testFiles) {
         return testFiles.entrySet().stream()

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.Provider
 public class HyperionAsyncConfiguration {
 
     /**
-     * Wires the task-agnostic {@link AgentLoopRunner} as an exercise-generation-conditional bean, supplying the deployment's context-window size.
+     * Wires the task-agnostic {@link AgentLoopRunner} with the deployment's context-window size.
      *
      * @param chatModels                  the available chat models (the first is used; empty if no AI provider is configured)
      * @param agentProperties             the bound {@code artemis.hyperion.agent} configuration, supplying the deployment-default context window
@@ -48,17 +48,23 @@ public class HyperionAsyncConfiguration {
 
     /**
      * @param maxConcurrentJobsPerNode node-local generation concurrency; excess starts fail fast instead of waiting in memory
+     * @param shutdownGuard            knows which runs have passed their point of no return and must not be interrupted by a rolling deploy
+     * @param shutdownDrainTimeout     how long shutdown waits for those runs; size it to the persistence path, whose longest leg is
+     *                                     {@code artemis.hyperion.generation.test-case-sync-timeout}
      * @return the bounded executor that runs {@code GenerationTaskService.runAsync}. Per-exercise single-flight already bounds duplicate work; this bounds total
      *         concurrent generations on a node and keeps them off the shared task executor.
      */
     @Bean(name = "hyperionGenerationExecutor")
-    public Executor hyperionGenerationExecutor(@Value("${artemis.hyperion.generation.max-concurrent-jobs-per-core-node:2}") int maxConcurrentJobsPerNode) {
+    public Executor hyperionGenerationExecutor(@Value("${artemis.hyperion.generation.max-concurrent-jobs-per-core-node:2}") int maxConcurrentJobsPerNode,
+            GenerationShutdownGuard shutdownGuard, @Value("${artemis.hyperion.generation.shutdown-drain-timeout:PT11M}") Duration shutdownDrainTimeout) {
         if (maxConcurrentJobsPerNode < 1) {
             throw new IllegalArgumentException("artemis.hyperion.generation.max-concurrent-jobs-per-core-node must be at least 1");
         }
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // Keep generation admission honest: these jobs are long-lived and already hold a per-exercise slot, so do not accept a deep in-memory backlog that can wait far longer
-        // than the configured generation deadline before it even starts.
+        if (shutdownDrainTimeout == null || shutdownDrainTimeout.isNegative()) {
+            throw new IllegalArgumentException("artemis.hyperion.generation.shutdown-drain-timeout must not be negative");
+        }
+        ThreadPoolTaskExecutor executor = new HyperionGenerationExecutor(shutdownGuard, shutdownDrainTimeout);
+        // No queue: a buffered generation could wait past its own deadline before it even starts, so excess starts are rejected rather than backlogged.
         executor.setCorePoolSize(maxConcurrentJobsPerNode);
         executor.setMaxPoolSize(maxConcurrentJobsPerNode);
         executor.setQueueCapacity(0);

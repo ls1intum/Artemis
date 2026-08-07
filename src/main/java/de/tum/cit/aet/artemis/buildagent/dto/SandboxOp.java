@@ -7,24 +7,10 @@ package de.tum.cit.aet.artemis.buildagent.dto;
  */
 public enum SandboxOp {
 
-    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#createSession */
-    CREATE,
+    CREATE, EXEC, COPY_IN, COPY_OUT, RESET,
 
-    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#exec */
-    EXEC,
-
-    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyIn */
-    COPY_IN,
-
-    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#copyOut */
-    COPY_OUT,
-
-    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#resetSession */
-    RESET,
-
-    /** Lists live generation sandbox sessions on the target agent. */
+    /** The one operation with no {@code InteractiveSandbox} counterpart: lists the live generation sandbox sessions on the target agent. */
     LIST,
 
-    /** @see de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox#destroySession */
     DESTROY
 }

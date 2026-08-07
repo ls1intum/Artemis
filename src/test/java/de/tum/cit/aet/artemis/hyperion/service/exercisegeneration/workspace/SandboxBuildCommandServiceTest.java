@@ -35,10 +35,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 
 /**
- * Deterministic unit test for the generated {@code verify.sh}: it must embed the exercise's real build phases with the CI placeholders substituted to the hermetic layout, and
- * collect the build-fresh test/SCA reports into the verifier-owned dir from both the phase result paths and the common per-language locations. The OS-gated nested classes drive
- * the live collect step under a real {@code sh} and feed the collected report into the production {@code TestResultXmlParser}, proving collection covers exactly what the verifier
- * parses.
+ * Covers the generated {@code verify.sh}: it embeds the exercise's real build phases with the CI placeholders substituted to the hermetic layout, and collects the build-fresh
+ * test/SCA reports into the verifier-owned dir from both the phase result paths and the common per-language locations. The OS-gated nested classes run the collect step under a
+ * real {@code sh} and feed the result into the production {@code TestResultXmlParser}.
  */
 class SandboxBuildCommandServiceTest {
 
@@ -50,13 +49,11 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_substitutesCiPlaceholders_andSearchesPhaseResultPaths() {
-        // A Python-like phase that cd's into the (placeholder) test working directory and writes its report under test-reports/.
         BuildPhaseDTO phase = new BuildPhaseDTO("test", "cd ${testWorkingDirectory}\npytest --junitxml=test-reports/results.xml", null, false,
                 List.of("test-reports/*results.xml"));
         String script = factoryWithPhases(List.of(phase)).verifyScriptContent(new ProgrammingExercise());
 
-        // The PHASE form of ${testWorkingDirectory} is substituted to "." (the seeded-harness sed stanza keeps the literal placeholder — a separate mechanism — so assert only the
-        // phase).
+        // Only the phase form of ${testWorkingDirectory} is substituted here; the seeded-harness sed stanza keeps the literal placeholder as a separate mechanism.
         assertThat(script).doesNotContain("cd ${testWorkingDirectory}").contains("cd .");
         assertThat(script).contains("test-reports");
         // Only the non-authoritative liveness line is printed; no stdout-scraped verdict markers.
@@ -67,19 +64,17 @@ class SandboxBuildCommandServiceTest {
     void verifyScript_collectsReportsIntoTheVerifierOwnedDir_regularFilesOnly_mtimeGated() {
         BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo run", null, false, List.of());
         String script = factoryWithPhases(List.of(phase)).verifyScriptContent(new ProgrammingExercise());
-        // Per-assignment subdir of the verifier-owned reports dir, re-seeded empty each run.
         assertThat(script).contains("REPORTS_DIR=\"" + SandboxBuildCommandService.REPORTS_DIR + "/$ASSIGNMENT\"").contains("rm -rf \"$REPORTS_DIR\"")
                 .contains("mkdir -p \"$REPORTS_DIR\"");
-        // Only build-fresh regular files (find -type f, -newer marker excludes planted stale reports), renamed to <seq>__<canonical> with the JUnit token.
+        // -newer against the build-start marker is what excludes a planted stale report.
         assertThat(script).contains("find \"$BUILD_DIR\" -type f -newer \"$BUILD_START_MARKER\"").contains("cp -P")
                 .contains(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + "$canonical").contains(SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
     }
 
     @Test
     void verifyScript_java_searchesTheBuildDirDirectlyForJunitReports_noRedirect() {
-        // Maven Surefire's reportsDirectory parameter has no CLI-settable property binding, so a -Dsurefire.reportsDirectory=... flag is silently ignored and Surefire always
-        // writes to ${project.build.directory}/surefire-reports. The collection step must therefore search $BUILD_DIR with the same globs as every other language, not a
-        // redirect directory Maven never writes to.
+        // Surefire's reportsDirectory has no CLI-settable property binding, so a -Dsurefire.reportsDirectory flag is ignored and reports always land under
+        // ${project.build.directory}/surefire-reports; collection has to search $BUILD_DIR with the same globs as every other language.
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
@@ -91,8 +86,7 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_neverLeavesAnUnsubstitutedTemplateToken() {
-        // Regression guard for tokens like @@REPORT_FIND@@, which must be computed/interpolated and registered in the final .replace(...) chain, so the shell script never
-        // silently carries the literal placeholder text instead of the real value.
+        // A token like @@REPORT_FIND@@ must be registered in the final .replace(...) chain, or the script carries the literal placeholder instead of the real value.
         ProgrammingExercise defaultJava = new ProgrammingExercise();
         defaultJava.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         String defaultScript = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(defaultJava);
@@ -107,8 +101,7 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_escapesSingleQuotesInReportGlobs_soAQuotedCheckoutPathCannotBreakTheShell() {
-        // A report glob derived from an instructor-configured checkout path can contain a single quote. Escape it with the POSIX '\'' idiom rather than letting it close the
-        // single-quoted `find -path '...'` predicate and inject shell.
+        // A report glob derived from an instructor-configured checkout path can contain a single quote, which would otherwise close the single-quoted `find -path '...'` predicate.
         BuildPhaseDTO phase = new BuildPhaseDTO("test", "echo run", null, false, List.of("o'dir/results.xml"));
         String script = factoryWithPhases(List.of(phase)).verifyScriptContent(new ProgrammingExercise());
 
@@ -182,8 +175,7 @@ class SandboxBuildCommandServiceTest {
 
     @Test
     void verifyScript_fallbackUsesTheGenericBuildDetector_forConfigurationsOutsideJavaMaven() {
-        // LanguageGenerationProfile admits only Java/Maven, so a Java/Gradle exercise cannot reach the fallback in production; if one ever does, it gets generic best-effort
-        // build detection rather than Gradle-specific commands.
+        // LanguageGenerationProfile admits only Java/Maven, so a Java/Gradle exercise reaching the fallback gets generic best-effort detection, not Gradle-specific commands.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
@@ -206,7 +198,7 @@ class SandboxBuildCommandServiceTest {
     @Test
     void pristineBuildCommands_targetTheVerifierOwnedScript() {
         SandboxBuildCommandService factory = new SandboxBuildCommandService(Optional.empty(), Optional.empty());
-        // The verifier runs the pristine copy outside /workspace, which the agent's tools cannot reach.
+        // The pristine copy lives outside /workspace, where the agent's tools cannot reach it.
         assertThat(factory.pristineSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution");
         assertThat(factory.pristineTemplateBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh template");
         assertThat(factory.behavioralSolutionBuildCommand()).isEqualTo("sh /opt/hyperion/verify.sh solution behavior-isolated");
@@ -457,10 +449,7 @@ class SandboxBuildCommandServiceTest {
         assertThat(Files.readString(kotlinBuild)).contains("java").doesNotContain("com.teamscale");
     }
 
-    /**
-     * Drives the live placeholder-substitution stanza against a fixture Haskell {@code test.cabal} under a real {@code sh}, confirming raw {@code ${...}} placeholders resolve to
-     * the assignment/ layout.
-     */
+    /** Runs the placeholder-substitution stanza against a fixture Haskell {@code test.cabal} under a real {@code sh}: raw placeholders resolve to the assignment/ layout. */
     @Nested
     @EnabledOnOs({ LINUX, MAC })
     class HarnessPlaceholderSubstitution {
@@ -497,9 +486,8 @@ class SandboxBuildCommandServiceTest {
     }
 
     /**
-     * Runs the live collect step against fixture JUnit XML under a real {@code sh} and feeds the result into the production {@code TestResultXmlParser}, proving the script
-     * collects
-     * exactly what the verifier parses and that the planted-report mitigation ({@code -newer} mtime gate) holds.
+     * Runs the collect step against fixture JUnit XML under a real {@code sh} and feeds the result into the production {@code TestResultXmlParser}: the script collects exactly
+     * what the verifier parses, and the {@code -newer} mtime gate keeps planted reports out.
      */
     @Nested
     @EnabledOnOs({ LINUX, MAC })
@@ -528,7 +516,6 @@ class SandboxBuildCommandServiceTest {
             String collectedXml = collected.values().iterator().next();
             assertThat(collected.keySet().iterator().next()).endsWith(SandboxBuildCommandService.COLLECTED_NAME_SEPARATOR + SandboxBuildCommandService.COLLECTED_JUNIT_TOKEN);
 
-            // The production parser sees exactly the two passing + one failing testcase.
             List<LocalCITestJobDTO> failed = new ArrayList<>();
             List<LocalCITestJobDTO> ok = new ArrayList<>();
             TestResultXmlParser.processTestResultFile(collectedXml, failed, ok);
@@ -547,8 +534,6 @@ class SandboxBuildCommandServiceTest {
 
         @Test
         void collectsMavenReportsFromTheDefaultSurefireLocation_forJavaExercises(@TempDir Path tempDir) throws Exception {
-            // Surefire always writes to its default ${project.build.directory}/surefire-reports regardless of any -D flag, so the collect snippet must find the report there,
-            // directly under $BUILD_DIR, exactly like every other language.
             ProgrammingExercise java = new ProgrammingExercise();
             java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             Map<String, String> collected = VerifyScriptTestHarness.collect(factory(), java, tempDir, "java-maven", Map.of("target/surefire-reports/TEST-StackTest.xml", SUREFIRE));
@@ -565,7 +550,6 @@ class SandboxBuildCommandServiceTest {
 
         @Test
         void doesNotCollectAReportPlantedBeforeTheBuildStart(@TempDir Path tempDir) throws Exception {
-            // A report whose mtime predates the build-start marker must NOT be collected (anti-forgery): pre-write it and back-date it.
             Path buildDir = Files.createDirectories(tempDir.resolve("planted").resolve("build"));
             Path reportsDir = tempDir.resolve("planted").resolve("reports-root").resolve("solution");
             Path marker = buildDir.resolve(".hyperion-build-start");
@@ -587,8 +571,8 @@ class SandboxBuildCommandServiceTest {
     }
 
     /**
-     * The static-code-analysis collection. SCA disabled: no SCA reports collected; SCA enabled: each tool's canonical report collected by name (keeping the name so the verifier's
-     * production {@code ReportParser} routes it). The live tests slice the collect block out of the generated script and run it under a real {@code sh}.
+     * The static-code-analysis collection: nothing is collected while SCA is off, and with SCA on each tool's report is collected under its canonical name so the verifier's
+     * production {@code ReportParser} can route it.
      */
     @Nested
     class StaticCodeAnalysisCollection {
@@ -615,7 +599,6 @@ class SandboxBuildCommandServiceTest {
         @Test
         void scaEnabled_collectsTheLanguageToolReports() {
             String script = factory().verifyScriptContent(exercise(ProgrammingLanguage.JAVA, true));
-            // SpotBugs/Checkstyle/PMD/CPD by canonical name, build-fresh only.
             assertThat(script).contains("-name 'spotbugsXml.xml'").contains("-name 'checkstyle-result.xml'").contains("-name 'pmd.xml'").contains("-name 'cpd.xml'")
                     .contains("-newer \"$BUILD_START_MARKER\"").contains("collected_sca=$((collected_sca + 1))");
         }
@@ -657,7 +640,6 @@ class SandboxBuildCommandServiceTest {
                             <checkstyle version="10.3"><file name="Stack.java">
                               <error line="3" severity="warning" message="x" source="com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTypeCheck"/></file></checkstyle>
                             """));
-            // Both SCA reports are collected under their canonical names so the verifier's production ReportParser can route them.
             assertThat(collected.keySet()).anyMatch(n -> n.endsWith("spotbugsXml.xml")).anyMatch(n -> n.endsWith("checkstyle-result.xml"));
         }
     }

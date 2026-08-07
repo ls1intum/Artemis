@@ -5,7 +5,7 @@
     tabindex="0"
     [attr.aria-label]="'artemisApp.buildAgents.activeHyperionGenerations' | artemisTranslate"
 >
-    <table tumUiTable [size]="'small'" [striped]="true" [styleClass]="'min-w-[56rem]'">
+    <table tumUiTable class="min-w-[56rem]" [size]="'small'" [striped]="true">
         <thead>
             <tr>
                 <th scope="col" jhiTranslate="artemisApp.buildAgents.generationSandboxes.status"></th>
@@ -22,7 +22,8 @@
             </tr>
         </thead>
         <tbody>
-            @for (job of jobs(); track job.jobId) {
+            @for (row of rows(); track row.job.jobId) {
+                @let job = row.job;
                 <tr [attr.data-stale]="job.stale || null">
                     <td>
                         @if (job.stale) {
@@ -40,7 +41,7 @@
                             {{ job.exerciseTitle }} (#{{ job.exerciseId }})
                         }
                     </td>
-                    <td>{{ modeKey(job.mode) | artemisTranslate }}</td>
+                    <td>{{ row.modeLabelKey | artemisTranslate }}</td>
                     <td>{{ job.userLogin }}</td>
                     @if (showAgent()) {
                         <td>
@@ -52,7 +53,7 @@
                         @if (job.stale) {
                             <span data-testid="hyperion-generation-duration-unavailable" jhiTranslate="artemisApp.buildAgents.generationSandboxes.unavailable"></span>
                         } @else {
-                            {{ elapsedSeconds(job.startedAt) | artemisDurationFromSeconds }}
+                            {{ row.elapsedSeconds | artemisDurationFromSeconds }}
                         }
                     </td>
                     <td [title]="job.lastActivityAt | artemisDate: 'long' : true">{{ job.lastActivityAt | artemisTimeAgo }}</td>

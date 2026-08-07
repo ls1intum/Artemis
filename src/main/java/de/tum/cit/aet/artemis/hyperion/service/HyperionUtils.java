@@ -143,7 +143,7 @@ final class HyperionUtils {
 
     /**
      * Sanitizes like {@link #sanitizeInput(String)}, but every line stays at its original position: matches are blanked rather than removed, no line-spanning pattern is applied,
-     * and the result is deliberately not trimmed. Targeted refinement addresses text by line number, so any shift would make the client's selection point at the wrong line.
+     * and the result is not trimmed. Targeted refinement addresses text by line number, so any shift would make the client's selection point at the wrong line.
      */
     static String sanitizeInputPreserveLines(String input) {
         if (input == null) {

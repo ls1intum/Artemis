@@ -24,8 +24,7 @@ import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 /** Acquires Hyperion's distributed exercise mutation slot for external programming REST mutations. */
 @Lazy
 @Service
-// Mirrors the nodes whose beans inject it: the core REST resources and the LocalVC git-server path. Every documented deployment pairs localvc with core, but naming
-// both keeps the bean present wherever an injection point exists rather than relying on that pairing holding.
+// Both profiles are named, rather than relying on every deployment pairing localvc with core, so the bean exists wherever an injection point does.
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
 public class ProgrammingExerciseMutationGuardService {
 

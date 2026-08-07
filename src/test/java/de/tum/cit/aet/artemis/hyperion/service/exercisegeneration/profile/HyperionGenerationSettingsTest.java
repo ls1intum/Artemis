@@ -7,8 +7,7 @@ import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 /**
- * The narrowing-only rule is the whole authorization model of per-request budget bounds: nobody needs a role to lower their own ceiling, and no value can raise one. These tests
- * are the only place that rule is stated, so a regression here silently turns a bound into a privilege escalation.
+ * Per-request budget bounds may only narrow a profile: nobody needs a role to lower their own ceiling, and no value can raise one.
  */
 class HyperionGenerationSettingsTest {
 
@@ -42,7 +41,7 @@ class HyperionGenerationSettingsTest {
 
     @Test
     void narrowingOnlyTheTokenBound_keepsTheEngineOnTheSharedSingletons() {
-        // The token bound is enforced by the run's usage sink, which the shared engine objects already read per run; deriving a whole object graph for it would be waste.
+        // The token bound is enforced by the run's usage sink, which the shared engine objects already read per run.
         HyperionGenerationSettings tightened = profile().tightenedBy(600_000L, null);
 
         assertThat(tightened.engineDefaults()).isTrue();

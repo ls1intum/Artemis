@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.hazelcast;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.map.IMap;
@@ -39,6 +41,11 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     @Override
     public void put(K key, V value) {
         map.put(key, value);
+    }
+
+    @Override
+    public void put(K key, V value, Duration timeToLive) {
+        map.put(key, value, Math.max(1L, timeToLive.toSeconds()), TimeUnit.SECONDS);
     }
 
     @Override

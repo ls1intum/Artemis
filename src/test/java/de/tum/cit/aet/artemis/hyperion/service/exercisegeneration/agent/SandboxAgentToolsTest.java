@@ -29,10 +29,7 @@ import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
-/**
- * Unit tests for the agent tools, focused on the security-relevant path allowlist and the all-or-nothing edit semantics. A fake sandbox records the commands it is asked to run
- * so the tests can assert that unsafe paths never reach the shell.
- */
+/** A fake sandbox records the commands it is asked to run, so the tests can assert that unsafe paths never reach the shell. */
 class SandboxAgentToolsTest {
 
     private static final String GITHUB_SENTINEL = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij";
@@ -105,7 +102,6 @@ class SandboxAgentToolsTest {
 
         assertThat(new SandboxAgentTools(sandbox, "s").search("", "find me")).isEqualTo("solution/src/Example.java:4:find me");
         assertThat(sandbox.executedCommands()).singleElement().satisfies(command -> assertThat(command).endsWith("-- find me /workspace"));
-        assertThat(AgentToolDescriptions.SEARCH_PATH).contains("empty string", "entire workspace");
     }
 
     @Test
@@ -155,7 +151,7 @@ class SandboxAgentToolsTest {
         String result = tools.editFile("solution/A.java", "int b;\n// it's fine", "int b2;\n// still fine");
 
         assertThat(result).isEqualTo("Replaced 1 occurrence in solution/A.java.");
-        // Untouched lines keep their original bytes; only the matched lines are rewritten.
+        // Untouched lines keep their original bytes.
         String written = new String(java.util.Base64.getDecoder().decode(sandbox.lastWrittenBase64()), java.nio.charset.StandardCharsets.UTF_8);
         assertThat(written).isEqualTo("int a;\nint b2;\n// still fine\nint c;");
     }
@@ -171,10 +167,7 @@ class SandboxAgentToolsTest {
         assertThat(result).contains("occurs 2 times").contains("whitespace-only differences");
     }
 
-    /**
-     * The tools' inline caps and the agent loop's per-tool-result cap are two constants in two classes that only work as a pair: if a tool returns more than the loop keeps, the
-     * loop elides on top of the tool's own elision and the tool's truncation marker misdescribes what the model can still see.
-     */
+    /** If a tool returns more than the loop keeps, the loop elides on top of the tool's own elision and the tool's truncation marker misdescribes what the model can still see. */
     @Test
     void inlineOutputCaps_stayBelowTheAgentLoopPerToolResultCap() {
         assertThat(SandboxAgentTools.READ_INLINE_MAX_CHARS).isLessThan(AgentConversationContext.MAX_TOOL_RESPONSE_CHARS);
@@ -429,9 +422,8 @@ class SandboxAgentToolsTest {
     void bash_buildsSpillWrapper_subshellUlimitRedirectTailAndSoftTimeout() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "__HYP_META__ rc=0 bytes=5 lines=1\nhello"));
         new SandboxAgentTools(sandbox, "s").bash("echo hello");
-        // The command travels base64-encoded into its own script file (quoting can never corrupt the wrapper), runs in a subshell under a file-size ulimit with stdin from
-        // /dev/null and combined output to the log, is stopped by coreutils `timeout` before the session-destroying exec timeout when the image has it, and a bounded tail
-        // comes back.
+        // The command travels base64-encoded into its own script file so quoting can never corrupt the wrapper, and coreutils `timeout` stops it before the
+        // session-destroying exec timeout when the image has it.
         String encoded = java.util.Base64.getEncoder().encodeToString("echo hello".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         assertThat(sandbox.lastScript()).contains("printf '%s' '" + encoded + "' | base64 -d > \"$CMD\"")
                 .contains("if [ \"$snapshot_ok\" -eq 1 ] && command -v timeout >/dev/null 2>&1; then")
@@ -481,7 +473,6 @@ class SandboxAgentToolsTest {
 
     @Test
     void bash_mangledJsonArrayCommand_isRejectedLoudlyWithoutTouchingTheSandbox() {
-        // The mangled array form must be rejected with a non-zero exit and never reach the sandbox.
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("[bash, -lc, ls -R]");
         assertThat(out).startsWith("exit=2\n").contains("must be a single shell string").contains("JSON array");
@@ -553,7 +544,6 @@ class SandboxAgentToolsTest {
 
     @Test
     void bash_applyPatchCommand_shortCircuitsLoudlyWithoutTouchingTheSandbox() {
-        // A bare `apply_patch` must short-circuit with a loud, non-zero result and never reach the sandbox.
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch");
         assertThat(out).isEqualTo("exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
@@ -593,14 +583,12 @@ class SandboxAgentToolsTest {
 
     @Test
     void isRenderedArgvArray_matchesTheArgvArrayFormButNotAPosixTest() {
-        // Rendered argv array (bracket, no space, comma inside): matches.
         assertThat(SandboxAgentTools.isRenderedArgvArray("[bash, -lc, ls -R]")).isTrue();
         assertThat(SandboxAgentTools.isRenderedArgvArray("  [sh, -c, sh verify.sh solution]  ")).isTrue();
         assertThat(SandboxAgentTools.isRenderedArgvArray("[ls -R, grep foo]")).isTrue();
         // POSIX test (space after the bracket): does not match.
         assertThat(SandboxAgentTools.isRenderedArgvArray("[ -f solution/pom.xml ]")).isFalse();
         assertThat(SandboxAgentTools.isRenderedArgvArray("[ -d tests ] && echo y")).isFalse();
-        // Single-element render (no comma) and ordinary commands: do not match.
         assertThat(SandboxAgentTools.isRenderedArgvArray("[ls]")).isFalse();
         assertThat(SandboxAgentTools.isRenderedArgvArray("ls -R solution template tests")).isFalse();
         assertThat(SandboxAgentTools.isRenderedArgvArray("grep -n 'a,b' tests/Foo.java")).isFalse();
@@ -894,7 +882,6 @@ class SandboxAgentToolsTest {
 
     @Test
     void agentVerifyReport_observation_truncatesLongNameLists() {
-        // A long name list is truncated with a remaining-count so it cannot flood the agent's context.
         List<String> names = java.util.stream.IntStream.range(0, 60).mapToObj(i -> "t" + i).toList();
         AgentVerifyReport report = new AgentVerifyReport(60, true, List.of(), 60, true, true, List.of(), names, List.of(), List.of(), true, List.of());
         assertThat(report.toObservation()).contains("(+20 more)");

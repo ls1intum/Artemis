@@ -105,8 +105,8 @@ record EvidenceSource(Map<String, String> passages) {
     }
 
     /**
-     * Whether every cited passage is descriptive student reasoning rather than a requirement. The concept prompt explicitly makes this field non-normative, but a reviewer can
-     * still mistake an illustrative control flow for a required implementation form. Admission uses this check to enforce that prompt contract deterministically.
+     * Whether every cited passage is descriptive student reasoning rather than a requirement. The concept prompt makes this field non-normative, but a reviewer can still mistake
+     * an illustrative control flow for a required implementation form, so admission enforces that prompt contract deterministically here.
      */
     boolean citesOnlyNonNormativeStudentReasoning(@Nullable List<String> evidenceIds) {
         return containsAll(evidenceIds) && evidenceIds.stream().map(passages::get)

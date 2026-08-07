@@ -307,7 +307,7 @@ export class ReviewCommentWidgetManager {
         widgetRef.instance.onToggleCollapse.subscribe((collapsed) => this.collapseState.set(thread.id, collapsed));
         widgetRef.instance.onNavigateToLocation.subscribe((location) => this.config.onNavigateToLocation?.(location));
         widgetRef.instance.onApplyInlineFix.subscribe((inlineFix) => this.handleInlineFixApplication(thread, widgetRef, inlineFix));
-        widgetRef.instance.onAdaptThread.subscribe((threadId) => this.config.onAdaptThread?.(threadId));
+        widgetRef.instance.adaptThread.subscribe((threadId) => this.config.onAdaptThread?.(threadId));
     }
 
     /**

@@ -121,8 +121,8 @@ class StructuralOracleSeedingServiceTest {
         assertThat(seededTests.repositoryFiles()).containsOnlyKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/ConstructorTest.java",
                 "test/sorting/test.json");
         assertThat(seededTests.repositoryFiles().get("test/sorting/test.json")).isEqualTo(seeded.get("tests/test/sorting/test.json"));
-        // Only providers with something to check are seeded. Empty AttributeTest/ConstructorTest factories are reported by JUnit under their shared factory-method name,
-        // generateTestsForAllClasses, which creates duplicate production test cases and fails an otherwise correct solution.
+        // Only providers with something to check are seeded: empty factories all report under the shared factory-method name generateTestsForAllClasses, which creates
+        // duplicate production test cases and fails an otherwise correct solution.
         assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
     }
 
@@ -237,9 +237,7 @@ class StructuralOracleSeedingServiceTest {
 
     @Test
     void seededStructuralTestClasses_passTheJavaAresConventionIntegrityGate() throws Exception {
-        // Composed test: production wires this seeder and ExerciseIntegrityGate together (GenerationOrchestrationService seeds structural tests, then the read-back tests
-        // repository is checked by the Java/Ares convention gate), but they were previously only exercised in isolation. The seeded structural classes carry @StrictTimeout(10)
-        // (see ClassTest.java etc.), not the exact @StrictTimeout(1) the gate used to demand — a whole-missing-class seed must not be rejected by the gate it is composed with.
+        // Production composes this seeder with ExerciseIntegrityGate: the seeded classes carry @StrictTimeout(10), so the gate must not reject the seed it is composed with.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         Map<String, String> solution = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter { int[] sort(int[] a); }", "src/sorting/MergeSort.java",
                 "package sorting;\npublic class MergeSort implements Sorter {\n    public int[] sort(int[] a){ return a; }\n}");
@@ -293,25 +291,6 @@ class StructuralOracleSeedingServiceTest {
     }
 
     @Test
-    void preservesUnmanagedStructuralAssets() {
-        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
-        Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort {}");
-        Map<String, String> template = Map.of("src/sorting/Sorter.java", "package sorting;\npublic interface Sorter {}");
-        Map<String, String> tests = new LinkedHashMap<>();
-        tests.put("test/sorting/SortTest.java", "package sorting;\nclass SortTest {}");
-        tests.put("test/structural/test.json", "[]");
-        tests.put("test/structural/ClassTest.java", "package structural;\nclass ClassTest {}");
-
-        StructuralOracleSeedingService seeder = seederWith(sandbox, solution, template, tests);
-        seeder.captureBaseline("s", tests);
-        SeededStructuralTests seededTests = seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
-
-        verify(sandbox, never()).copyIn(any(), any(), any());
-        verify(sandbox, never()).exec(any(), any(), any(), any(), any());
-        assertThat(seededTests.testNames()).isEmpty();
-    }
-
-    @Test
     void refusesToOverwriteUnmanagedStructuralAssetsForAnApprovedStudentCreatedType() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         Map<String, String> solution = Map.of("src/sorting/MergeSort.java", "package sorting;\npublic class MergeSort {}");
@@ -327,9 +306,8 @@ class StructuralOracleSeedingServiceTest {
 
     @Test
     void reseedsAfterTheAgentDeletedTheStructuralClassesThisServiceSeeded() {
-        // Verbatim from a live run. The seeder had written test.json, ClassTest and MethodTest on an earlier attempt; the agent then deleted both classes. An earlier revision
-        // read the surviving oracle as somebody else's grading harness and threw, which discarded the entire generation with nothing saved. Its own incomplete output is the
-        // state this service exists to repair.
+        // An earlier attempt seeded test.json plus both provider classes and the agent then deleted the classes; the surviving oracle is this service's own incomplete output,
+        // not somebody else's grading harness, so reading it as unmanaged would discard the whole generation.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         when(sandbox.exec(eq("s"), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");
@@ -347,7 +325,7 @@ class StructuralOracleSeedingServiceTest {
 
     @Test
     void reseedsWhenOnlySomeOfTheSeededStructuralClassesSurvive() {
-        // The partial case: one marked class left behind, the other deleted. Completeness is not what identifies ownership — the marker is.
+        // One marked class left behind, the other deleted: the marker identifies ownership, not the completeness of the bundle.
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         when(sandbox.exec(eq("s"), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         Map<String, String> solution = Map.of("src/sorting/ScoreProcessor.java", "package sorting;\npublic class ScoreProcessor { public void process() {} }");

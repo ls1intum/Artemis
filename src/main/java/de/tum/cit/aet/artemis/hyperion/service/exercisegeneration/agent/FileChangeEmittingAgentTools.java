@@ -49,63 +49,21 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
         return delegate.search(path, query);
     }
 
-    /**
-     * Emits a file-change notification when the delegate reports success.
-     *
-     * @param path    the workspace-relative file path to write
-     * @param content the complete new file content
-     * @return the delegate's confirmation or error message
-     */
     @Tool(name = "write_file", description = AgentToolDescriptions.WRITE_FILE)
     public String writeFile(@ToolParam(description = AgentToolDescriptions.WRITE_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.WRITE_FILE_CONTENT) String content) {
-        String result = delegate.writeFile(path, content);
-        if (isSuccess(result)) {
-            String safePath = SandboxAgentTools.workspaceRelativePath(path);
-            if (safePath != null) {
-                emit(safePath, ExerciseGenerationFileChangeDTO.ACTION_WRITE);
-            }
-        }
-        return result;
+        return emitOnSuccess(delegate.writeFile(path, content), WRITE_SUCCESS_PREFIX, path, ExerciseGenerationFileChangeDTO.ACTION_WRITE);
     }
 
-    /**
-     * Emits a file-change notification when the delegate reports success.
-     *
-     * @param path    the workspace-relative file path to edit
-     * @param oldText the exact text to replace
-     * @param newText the replacement text
-     * @return the delegate's confirmation or error message
-     */
     @Tool(name = "edit_file", description = AgentToolDescriptions.EDIT_FILE)
     public String editFile(@ToolParam(description = AgentToolDescriptions.EDIT_FILE_PATH) String path,
             @ToolParam(description = AgentToolDescriptions.EDIT_FILE_OLD_TEXT) String oldText, @ToolParam(description = AgentToolDescriptions.EDIT_FILE_NEW_TEXT) String newText) {
-        String result = delegate.editFile(path, oldText, newText);
-        if (result != null && result.startsWith(EDIT_SUCCESS_PREFIX)) {
-            String safePath = SandboxAgentTools.workspaceRelativePath(path);
-            if (safePath != null) {
-                emit(safePath, ExerciseGenerationFileChangeDTO.ACTION_EDIT);
-            }
-        }
-        return result;
+        return emitOnSuccess(delegate.editFile(path, oldText, newText), EDIT_SUCCESS_PREFIX, path, ExerciseGenerationFileChangeDTO.ACTION_EDIT);
     }
 
-    /**
-     * Emits a file-change notification when the delegate reports success.
-     *
-     * @param path the workspace-relative file path to delete
-     * @return the delegate's confirmation or error message
-     */
     @Tool(name = "delete_file", description = AgentToolDescriptions.DELETE_FILE)
     public String deleteFile(@ToolParam(description = AgentToolDescriptions.DELETE_FILE_PATH) String path) {
-        String result = delegate.deleteFile(path);
-        if (result != null && result.startsWith(DELETE_SUCCESS_PREFIX)) {
-            String safePath = SandboxAgentTools.workspaceRelativePath(path);
-            if (safePath != null) {
-                emit(safePath, ExerciseGenerationFileChangeDTO.ACTION_DELETE);
-            }
-        }
-        return result;
+        return emitOnSuccess(delegate.deleteFile(path), DELETE_SUCCESS_PREFIX, path, ExerciseGenerationFileChangeDTO.ACTION_DELETE);
     }
 
     @Tool(name = "bash", description = AgentToolDescriptions.BASH)
@@ -123,13 +81,24 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
         return delegate.submit(summary);
     }
 
-    boolean isSandboxSessionTerminated() {
+    @Override
+    public boolean isSandboxSessionTerminated() {
         return delegate.isSandboxSessionTerminated();
     }
 
     @Override
     public boolean consumeSubmitVeto() {
         return delegate.consumeSubmitVeto();
+    }
+
+    private String emitOnSuccess(@Nullable String result, String successPrefix, String path, String action) {
+        if (result != null && result.startsWith(successPrefix)) {
+            String safePath = SandboxAgentTools.workspaceRelativePath(path);
+            if (safePath != null) {
+                emit(safePath, action);
+            }
+        }
+        return result;
     }
 
     private void emit(String path, String action) {
@@ -139,9 +108,5 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
         catch (RuntimeException e) {
             log.warn("Failed to stream file change for '{}': {}", path, e.getMessage());
         }
-    }
-
-    private static boolean isSuccess(@Nullable String result) {
-        return result != null && result.startsWith(WRITE_SUCCESS_PREFIX);
     }
 }

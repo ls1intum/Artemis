@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
@@ -79,6 +80,9 @@ public class GenerationJobService {
 
     static final Duration DEFAULT_TERMINAL_REPLAY_TTL = Duration.ofHours(4);
 
+    /** Lease on the per-exercise coordination lock. See {@link #lockJobSlot(String)} for why it exists. */
+    private static final long LOCK_LEASE_SECONDS = 30;
+
     private final HazelcastInstance hazelcastInstance;
 
     private final ApplicationEventPublisher eventPublisher;
@@ -90,6 +94,10 @@ public class GenerationJobService {
     private final Duration staleJobTimeout;
 
     private final Duration maxJobDuration;
+
+    /** The longest deadline any configured effort profile can hand a run. Validation only: {@link #maxJobDuration} remains what an unnamed-profile run is given. */
+    @Nullable
+    private final Duration longestConfiguredJobDuration;
 
     private final Executor cancellationExecutor;
 
@@ -111,12 +119,14 @@ public class GenerationJobService {
 
     @Autowired
     public GenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
-            LLMTokenUsageService llmTokenUsageService, HyperionGenerationBudgetService generationBudgetService,
-            @Value("${artemis.hyperion.agent.stale-job-timeout:PT35M}") Duration staleJobTimeout, HyperionAgentProperties agentProperties,
-            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
+            LLMTokenUsageService llmTokenUsageService, HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties,
+            HyperionEffortProfileService effortProfiles, @Qualifier("taskExecutor") Executor cancellationExecutor,
+            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
             @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, agentProperties.getMaxJobDuration(), cancellationExecutor,
-                expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0);
+        // The stale-job timeout is validated against the longest deadline ANY configured effort profile can hand a run, not against the deployment default: a profile that raises
+        // the deadline above the stale timeout would otherwise have its slot reclaimed by another node while it is still legitimately running.
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
+                cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0, effortProfiles.longestMaxJobDuration());
     }
 
     GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
@@ -129,6 +139,14 @@ public class GenerationJobService {
     GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage) {
+        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+                terminalReplayTtl, exactProviderUsage, maxJobDuration);
+    }
+
+    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
+            int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
+        this.longestConfiguredJobDuration = longestConfiguredJobDuration;
         this.hazelcastInstance = hazelcastInstance;
         this.eventPublisher = eventPublisher;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -227,12 +245,10 @@ public class GenerationJobService {
         if (expectedDataMemberCount < 1) {
             throw new IllegalArgumentException("jhipster.cache.hazelcast.expected-data-member-count must be at least 1");
         }
-        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
-            throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
-        }
-        if (staleJobTimeout == null || staleJobTimeout.compareTo(maxJobDuration) <= 0) {
-            throw new IllegalArgumentException("artemis.hyperion.agent.stale-job-timeout must be greater than max-job-duration");
-        }
+        HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
+        Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
+                : longestConfiguredJobDuration;
+        HyperionGenerationTimeouts.validateStaleJobTimeout(staleJobTimeout, longestJobDuration);
         jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
         cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
         replayStore = new GenerationJobReplayStore(hazelcastInstance, terminalReplayTtl);
@@ -312,7 +328,7 @@ public class GenerationJobService {
      */
     public void rejectIfActiveJobCannotBeReclaimed(long exerciseId) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             verifyExpectedDataMemberTopology();
             JobInfo existing = jobMap.get(key);
@@ -328,12 +344,12 @@ public class GenerationJobService {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
     private void rollbackUnpublishedStart(long exerciseId, String key, JobInfo newJob, GenerationJobReplayStore.@Nullable StartedReplay startedReplay) {
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             jobMap.remove(key, newJob);
             if (startedReplay != null) {
@@ -341,12 +357,12 @@ public class GenerationJobService {
             }
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
     private void claimSlot(String key, JobInfo newJob, String conflictMessage, String errorKey) {
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             verifyExpectedDataMemberTopology();
             JobInfo existing = jobMap.get(key);
@@ -364,20 +380,42 @@ public class GenerationJobService {
             jobMap.set(key, newJob);
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
-    private void verifyExpectedDataMemberTopology() {
-        final long actualDataMemberCount;
+    /**
+     * Recovery's weaker topology requirement: a strict majority of the expected data members must be visible, not all of them.
+     * <p>
+     * Admission demands the exact count, but recovery runs because a node died, so by construction fewer members than expected are visible and the exact check would refuse every
+     * recovery it was written for. A majority is what makes "the owner is absent from the membership view" trustworthy rather than a partition artefact, and it matches the
+     * {@code READ_WRITE} split-brain protection configured on these maps (minimum cluster size {@code expected / 2 + 1}).
+     */
+    private void verifyMajorityDataMemberTopology() {
+        long actualDataMemberCount = countDataMembers();
+        int majority = expectedDataMemberCount / 2 + 1;
+        if (actualDataMemberCount < majority || actualDataMemberCount > expectedDataMemberCount) {
+            throw new ServiceUnavailableAlertException(
+                    "Hyperion slot recovery requires a majority of the expected " + expectedDataMemberCount + " Hazelcast data members (at least " + majority
+                            + ") to be visible, but observed " + actualDataMemberCount
+                            + ". Recovering from a minority island could clear a slot whose owner is merely partitioned away, not stopped.",
+                    ENTITY_NAME, "hyperionDataMemberTopologyMismatch");
+        }
+    }
+
+    private long countDataMembers() {
         try {
-            actualDataMemberCount = hazelcastInstance.getCluster().getMembers().stream().filter(member -> !member.isLiteMember()).count();
+            return hazelcastInstance.getCluster().getMembers().stream().filter(member -> !member.isLiteMember()).count();
         }
         catch (RuntimeException e) {
             throw new ServiceUnavailableAlertException(
                     "Hyperion coordination cannot verify the Hazelcast data-member topology. Check jhipster.cache.hazelcast.expected-data-member-count.", ENTITY_NAME,
                     "hyperionDataMemberTopologyUnavailable");
         }
+    }
+
+    private void verifyExpectedDataMemberTopology() {
+        long actualDataMemberCount = countDataMembers();
         if (actualDataMemberCount != expectedDataMemberCount) {
             throw new ServiceUnavailableAlertException(
                     "Hyperion coordination is configured for expected " + expectedDataMemberCount + " Hazelcast data members, but observed " + actualDataMemberCount
@@ -403,8 +441,7 @@ public class GenerationJobService {
     }
 
     /**
-     * Retains a terminal run's unsaved candidate so its work stays inspectable. Best-effort by design: this is diagnostic observability layered on a run that is already over,
-     * so a retention failure must never change the outcome the instructor is told about.
+     * Retains a terminal run's unsaved candidate so its work stays inspectable. Best effort: a retention failure must never change the outcome the instructor is told about.
      *
      * @param exerciseId the exercise the run belonged to
      * @param jobId      the run that produced the candidate
@@ -466,7 +503,7 @@ public class GenerationJobService {
     public boolean requestCancellation(long exerciseId, String jobId, User user) {
         String key = key(exerciseId);
         ExerciseGenerationEventDTO cancellationEvent;
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId)) {
@@ -487,7 +524,7 @@ public class GenerationJobService {
             cancellationEvent = replayStore.appendCancellation(job, USER_CANCELLATION_MESSAGE);
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
         if (cancellationEvent == null) {
             return false;
@@ -508,7 +545,7 @@ public class GenerationJobService {
         String key = key(exerciseId);
         ExerciseGenerationEventDTO cancellationEvent;
         String userLogin;
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId)) {
@@ -527,7 +564,7 @@ public class GenerationJobService {
             userLogin = replayState.userLogin();
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
         if (cancellationEvent == null) {
             return false;
@@ -547,8 +584,8 @@ public class GenerationJobService {
     }
 
     private void interruptCluster(String jobId) {
-        // Run the node-local interrupt once on this node and publish a cluster-wide interrupt so cancellation is prompt even when the request hits a different core node than the
-        // one running the sandbox. The hook remains node-local because it closes over live sandbox objects; every node simply tries remove-and-run for the job id.
+        // The hook closes over live sandbox objects, so it can only run on the node holding them: run it here and broadcast, so cancellation is prompt even when the request hits
+        // a different core node than the one running the sandbox.
         runLocalCancelHook(jobId);
         try {
             hazelcastInstance.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
@@ -592,21 +629,20 @@ public class GenerationJobService {
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
             }
             if (isCancelled(jobId)) {
-                // Cancellation already won this job under the same lock (recorded by requestCancellation/requestSystemCancellation): the run is terminal as CANCELLED, so this
-                // must not flip the job non-cancellable or allow the caller to persist.
+                // Cancellation already won this job under the same lock: the run is terminal as CANCELLED, so this must not flip it non-cancellable or let the caller persist.
                 return false;
             }
             jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(false));
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
         // The sandbox phase is over; there is no longer an in-flight tool/build operation that a cancel hook may safely interrupt.
         cancelHooks.remove(jobId);
@@ -632,13 +668,13 @@ public class GenerationJobService {
      */
     public boolean isOwnedActiveJob(long exerciseId, String jobId) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId));
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
@@ -651,7 +687,7 @@ public class GenerationJobService {
      */
     public boolean heartbeat(long exerciseId, String jobId) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
@@ -664,7 +700,7 @@ public class GenerationJobService {
             return true;
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
@@ -713,48 +749,68 @@ public class GenerationJobService {
     }
 
     /**
-     * Returns the external mutation currently blocking an exercise, if any.
+     * Returns the slot currently blocking an exercise when it is one {@link #reclaimStaleJob} refuses to release on its own, so an operator can read the exact token that
+     * {@link #recoverWedgedSlot(long, String)} requires.
+     * <p>
+     * That is every non-cancellable slot: an external REST mutation, an adaptation revert, and a generation past its point of no return. All three block generation, revert
+     * <em>and</em> ordinary REST edits of the exercise, the map has no TTL, and nothing else ever clears them.
      *
      * @param exerciseId the exercise id
-     * @return the active external mutation, if present
+     * @return the blocking slot, if the exercise currently has one that cannot be reclaimed automatically
      */
-    public Optional<ExternalMutationInfo> getExternalMutationInfo(long exerciseId) {
+    public Optional<WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
-            if (job == null || !isExternalMutationJob(job)) {
+            if (job == null || job.cancellable()) {
                 return Optional.empty();
             }
-            return Optional.of(new ExternalMutationInfo(exerciseId, job.jobId(), job.ownerNodeId(), job.startedAt()));
+            return Optional.of(new WedgedSlotInfo(exerciseId, job.jobId(), slotKind(job), job.ownerNodeId(), job.startedAt(), !ownerMemberIsPresent(job)));
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
     /**
-     * Value-guarded recovery for an external mutation whose owning JVM has been confirmed terminated. Cluster departure alone is insufficient because a partitioned request may
-     * still be writing.
+     * Value-guarded recovery for a non-cancellable slot whose owning JVM has been confirmed terminated. Cluster departure alone is insufficient because a partitioned request may
+     * still be writing, so this is an audited operator action rather than something the stale-job scan does.
+     * <p>
+     * Accepts a generation, revert, or external-mutation token. A recovered generation slot is terminalized like a stale one, so the instructor is told the run stopped and is
+     * warned to review the repositories rather than left with a job that reports as running forever.
      *
      * @param exerciseId the exercise id
-     * @param token      the exact external mutation token to recover
+     * @param token      the exact slot token to recover, as reported by {@link #getWedgedSlotInfo(long)}
      * @return whether a departed owner's matching slot was recovered
      */
-    public boolean recoverExternalMutationSlot(long exerciseId, String token) {
-        if (!token.startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
+    public boolean recoverWedgedSlot(long exerciseId, String token) {
+        if (token == null || token.isBlank()) {
             return false;
         }
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
-            verifyExpectedDataMemberTopology();
+            verifyMajorityDataMemberTopology();
             JobInfo job = jobMap.get(key);
-            return job != null && job.jobId().equals(token) && isExternalMutationJob(job) && !ownerMemberIsPresent(job) && jobMap.remove(key, job);
+            if (job == null || !job.jobId().equals(token) || job.cancellable() || ownerMemberIsPresent(job)) {
+                return false;
+            }
+            if (isGenerationJob(job)) {
+                return stopActiveJob(key, job, Instant.now());
+            }
+            return jobMap.remove(key, job);
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
+    }
+
+    private static WedgedSlotKind slotKind(JobInfo job) {
+        if (job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
+            return WedgedSlotKind.EXTERNAL_MUTATION;
+        }
+        return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
     }
 
     /**
@@ -769,7 +825,7 @@ public class GenerationJobService {
 
     private void clearClaimedSlot(long exerciseId, String token) {
         String key = key(exerciseId);
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job != null && job.jobId().equals(token)) {
@@ -777,7 +833,7 @@ public class GenerationJobService {
             }
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
     }
 
@@ -805,7 +861,7 @@ public class GenerationJobService {
     public void clearJob(long exerciseId, String jobId) {
         String key = key(exerciseId);
         boolean released = false;
-        jobMap.lock(key);
+        lockJobSlot(key);
         try {
             JobInfo job = jobMap.get(key);
             if (job != null && job.jobId().equals(jobId)) {
@@ -815,7 +871,7 @@ public class GenerationJobService {
             replayStore.retainAfterJobCleared(exerciseId, jobId);
         }
         finally {
-            jobMap.unlock(key);
+            unlockJobSlot(key);
         }
         cancellationMap.remove(jobId);
         if (released) {
@@ -834,7 +890,7 @@ public class GenerationJobService {
                 continue;
             }
             String key = entry.getKey();
-            jobMap.lock(key);
+            lockJobSlot(key);
             try {
                 JobInfo current = jobMap.get(key);
                 if (current == null || !current.jobId().equals(job.jobId()) || !shouldClearAsStale(current, staleBefore)) {
@@ -843,7 +899,7 @@ public class GenerationJobService {
                 reclaimStaleJob(key, current, Instant.now());
             }
             finally {
-                jobMap.unlock(key);
+                unlockJobSlot(key);
             }
         }
     }
@@ -851,24 +907,22 @@ public class GenerationJobService {
     /**
      * Reclaims a cancellable stale job only after its owner leaves the cluster. Non-cancellable and external mutation slots fail closed because their durable writes may still be
      * running after membership loss.
-     *
-     * @return {@code true} when the slot was reclaimed
      */
     private boolean reclaimStaleJob(String key, JobInfo current, Instant now) {
-        // An external request is not fenced or hard-cancelled by Hazelcast membership loss. Retain its no-TTL slot until normal completion or explicit recovery after the JVM is
-        // terminated; clearing it here could overlap a partitioned writer with a new generation.
+        // Membership loss neither fences nor hard-cancels an external request, so clearing its slot here could overlap a partitioned writer with a new generation.
         if (isExternalMutationJob(current)) {
             return false;
         }
         if (!current.cancellable()) {
-            // Durable persistence/revert mutation may already be in flight. Fail closed: retain the slot so a replacement claim conflicts instead of possibly overlapping the
-            // old owner's un-fenced Git/DB writes. Only an absent owner is logged; a live owner with a merely stale heartbeat (a scheduler pause, say) is not actionable.
+            // A durable persistence/revert mutation may still be in flight, so retain the slot: a replacement claim must conflict rather than race the old owner's un-fenced
+            // Git/DB writes. Only an absent owner is logged; a live owner with a merely stale heartbeat is not actionable.
             if (!ownerMemberIsPresent(current)) {
                 log.warn(
                         "Retaining non-cancellable generation slot for job {} (exercise {}) after its owner {} left the Hazelcast cluster: cluster departure does not prove that "
-                                + "the in-flight persistence/revert mutation has stopped. The slot stays claimed to block a replacement job; release it only via audited, "
-                                + "exact-token manual recovery once the old owner and its Git/DB requests are confirmed quiescent.",
-                        current.jobId(), current.exerciseId(), current.ownerNodeId());
+                                + "the in-flight persistence/revert mutation has stopped. The slot stays claimed and blocks generation, revert and ordinary REST edits of this "
+                                + "exercise until an operator recovers it: read it with GET /api/admin/exercises/{}/hyperion-wedged-slot and, once the old owner and its Git/DB "
+                                + "requests are confirmed quiescent, release it with DELETE /api/admin/exercises/{}/hyperion-wedged-slots/{}?reason=...",
+                        current.jobId(), current.exerciseId(), current.ownerNodeId(), current.exerciseId(), current.exerciseId(), current.jobId());
             }
             return false;
         }
@@ -902,11 +956,13 @@ public class GenerationJobService {
         }
     }
 
-    private void stopActiveJob(String key, JobInfo current, Instant now) {
+    /** @return whether this call was the one that removed the slot */
+    private boolean stopActiveJob(String key, JobInfo current, Instant now) {
         cancellationMap.set(current.jobId(), Boolean.TRUE, Math.max(1, maxJobDuration.toSeconds()), TimeUnit.SECONDS);
         replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
         replayStore.sealUsageIncomplete(current.jobId());
-        if (jobMap.remove(key, current)) {
+        boolean released = jobMap.remove(key, current);
+        if (released) {
             replayStore.retainAfterJobCleared(current.exerciseId(), current.jobId());
         }
         retainUncertainBudgetReservation(current);
@@ -914,6 +970,7 @@ public class GenerationJobService {
         if (isGenerationJob(current)) {
             publishExerciseState(current.exerciseId(), current.jobId(), false);
         }
+        return released;
     }
 
     static boolean isGenerationJob(JobInfo job) {
@@ -964,7 +1021,39 @@ public class GenerationJobService {
         return String.valueOf(exerciseId);
     }
 
-    public record ExternalMutationInfo(long exerciseId, String token, @Nullable String ownerNodeId, Instant startedAt) {
+    /**
+     * Acquires the per-exercise coordination lock <em>with a lease</em>.
+     * <p>
+     * Every guarded section is a few local map reads and writes plus at most a topic publish, so it cannot legitimately take seconds. Without a lease, an owner that is alive but
+     * stalled blocks every other node's claim, cancellation, heartbeat and recovery for this exercise indefinitely — and the heartbeat runs on the shared scheduler, so a few
+     * such stalls take that scheduler with them. The mutations under the lock are value-guarded compare-and-set operations, so an expired lease loses a race rather than
+     * corrupting state.
+     */
+    private void lockJobSlot(String key) {
+        jobMap.lock(key, LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
+    }
+
+    /** Releases the lock, tolerating a lease that already expired: that is diagnostic, not a reason to replace the caller's outcome with an exception. */
+    private void unlockJobSlot(String key) {
+        try {
+            jobMap.unlock(key);
+        }
+        catch (IllegalMonitorStateException e) {
+            log.warn("The Hyperion coordination lock for exercise {} expired before this node released it; the section it guarded took longer than the {}s lease", key,
+                    LOCK_LEASE_SECONDS);
+        }
+    }
+
+    /** What kind of work claimed a non-cancellable slot, so an operator knows what to confirm quiescent before recovering it. */
+    public enum WedgedSlotKind {
+        GENERATION, REVERT, EXTERNAL_MUTATION
+    }
+
+    /**
+     * A slot the automatic stale-job scan will never release. The {@code token} is what {@link #recoverWedgedSlot(long, String)} requires, and {@code ownerLeftCluster} is a
+     * precondition of that recovery.
+     */
+    public record WedgedSlotInfo(long exerciseId, String token, WedgedSlotKind kind, @Nullable String ownerNodeId, Instant startedAt, boolean ownerLeftCluster) {
     }
 
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,

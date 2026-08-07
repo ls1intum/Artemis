@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -68,6 +69,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
@@ -291,11 +293,8 @@ class GenerationJobServiceTest {
 
     @Test
     void shippedTerminalReplayTtl_outlastsTheShippedMaximumJobDuration() throws IOException {
-        // The product claim behind the configured window: an instructor who starts a run, teaches, and comes back must still find the verdict, the specification, the file-change
-        // list and the cost they are being asked to review. A window shorter than one run's own maximum duration cannot deliver that, and the DB-backed revert affordance would
-        // then outlive the evidence — offering a revert button for a run that can no longer be inspected. Read from the shipped configuration, not from the constant under test,
-        // so raising max-job-duration without raising the retention window fails here.
-        // The test classpath shadows config/application-artemis.yml, so select by content: the shipped configuration is the one that declares the retention window.
+        // Read from the shipped configuration rather than from the constant under test, so raising max-job-duration without raising the retention window fails here. The test
+        // classpath shadows config/application-artemis.yml, so the shipped copy is selected by content: the one that declares the retention window.
         List<PropertySource<?>> shippedConfiguration = artemisConfigurationDeclaring("artemis.hyperion.generation.terminal-replay-ttl");
         Duration shippedTerminalReplayTtl = shippedDuration(shippedConfiguration, "artemis.hyperion.generation.terminal-replay-ttl");
         Duration shippedMaxJobDuration = shippedDuration(shippedConfiguration, "artemis.hyperion.agent.max-job-duration");
@@ -334,7 +333,6 @@ class GenerationJobServiceTest {
 
         jobService.clearJob(exerciseId, jobId);
         assertThat(cancellationMap.get(jobId)).isNull();
-        // Retained for the configured terminal-replay window, which must outlast the maximum job duration so an instructor who leaves and comes back still finds the verdict.
         assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL.toMillis());
     }
 
@@ -396,7 +394,6 @@ class GenerationJobServiceTest {
         long exerciseId = 445L;
         String token = jobService.claimExternalMutationSlot(exerciseId);
         forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
-        // An owner still present in the membership view takes the same path: an external mutation is never reclaimed for staleness, only recovered by exact token.
         forceJobOwner(exerciseId, "departed-node");
         GenerationJobService scanner = new GenerationJobService(hazelcastInstance, event -> {
         }, mock(LLMTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
@@ -406,25 +403,117 @@ class GenerationJobServiceTest {
 
         assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
-        assertThat(scanner.getExternalMutationInfo(exerciseId)).hasValueSatisfying(info -> {
+        assertThat(scanner.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> {
             assertThat(info.token()).isEqualTo(token);
             assertThat(info.ownerNodeId()).isEqualTo("departed-node");
         });
-        assertThat(scanner.recoverExternalMutationSlot(exerciseId, "external-mutation-wrong")).isFalse();
+        assertThat(scanner.recoverWedgedSlot(exerciseId, "external-mutation-wrong")).isFalse();
         assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
-        assertThat(scanner.recoverExternalMutationSlot(exerciseId, token)).isTrue();
+        assertThat(scanner.recoverWedgedSlot(exerciseId, token)).isTrue();
         assertThat(scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
     }
 
+    /**
+     * A generation that dies inside the non-cancellable persistence phase is never reclaimed by the stale-job scan, and the slot it holds is the same one ordinary REST edits
+     * claim, so without recovery the exercise stays un-generatable, un-revertable and un-editable on a map with no TTL until the cluster restarts.
+     */
     @Test
-    void recoverExternalMutationSlot_rejectsLiveOwner() {
-        long exerciseId = 447L;
-        String token = jobService.claimExternalMutationSlot(exerciseId);
+    void recoverWedgedSlot_releasesAGenerationSlotStuckInThePersistencePhaseAfterItsOwnerLeftTheCluster() {
+        long exerciseId = 460L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        forceJobOwner(exerciseId, "departed-node");
 
-        assertThat(jobService.recoverExternalMutationSlot(exerciseId, token)).isFalse();
+        // No automatic or interactive lever releases this slot, which is what makes the operator path necessary.
+        jobService.clearStaleJobs();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+        assertThat(jobService.requestSystemCancellation(exerciseId, jobId)).isFalse();
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> {
+            assertThat(info.token()).isEqualTo(jobId);
+            assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.GENERATION);
+            assertThat(info.ownerNodeId()).isEqualTo("departed-node");
+            assertThat(info.ownerLeftCluster()).isTrue();
+        });
+        assertThat(jobService.recoverWedgedSlot(exerciseId, "not-the-token")).isFalse();
         assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
 
-        jobService.clearExternalMutationSlot(exerciseId, token);
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isTrue();
+
+        // Usable again on all three axes the wedged slot blocked.
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).isEmpty();
+        String mutationToken = jobService.claimExternalMutationSlot(exerciseId);
+        jobService.clearExternalMutationSlot(exerciseId, mutationToken);
+        String revertToken = jobService.claimRevertSlot(user("owner"), exerciseId);
+        jobService.clearRevertSlot(exerciseId, revertToken);
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
+    }
+
+    /** A recovered generation run must be reported as over, not left polling as running forever with the instructor told nothing. */
+    @Test
+    void recoverWedgedSlot_terminalizesTheGenerationRunItReleases() {
+        long exerciseId = 461L;
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        forceJobOwner(exerciseId, "departed-node");
+
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isTrue();
+
+        assertThat(jobService.getStatus(owner, exercise(exerciseId))).hasValueSatisfying(status -> {
+            assertThat(status.running()).isFalse();
+            assertThat(status.jobId()).isEqualTo(jobId);
+        });
+    }
+
+    /** Cluster departure alone never justifies recovery, so a live owner must keep its slot even for a non-cancellable generation. */
+    @Test
+    void recoverWedgedSlot_refusesAGenerationSlotWhoseOwnerIsStillAClusterMember() {
+        long exerciseId = 462L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isFalse();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+    }
+
+    @Test
+    void recoverWedgedSlot_releasesAWedgedRevertSlot() {
+        long exerciseId = 463L;
+        String token = jobService.claimRevertSlot(user("owner"), exerciseId);
+        forceJobOwner(exerciseId, "departed-node");
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT));
+        assertThat(jobService.recoverWedgedSlot(exerciseId, token)).isTrue();
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+    }
+
+    /** Diagnosis must not offer a healthy, still-cancellable run to an operator as something to yank. */
+    @Test
+    void getWedgedSlotInfo_isEmptyForARunningCancellableGeneration() {
+        long exerciseId = 464L;
+        jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).isEmpty();
+    }
+
+    /**
+     * A minority island must never recover: the owner may merely be partitioned away rather than stopped. The two-member case is a minority once one member is lost, which is
+     * inherent to the majority quorum these maps are configured with — a two-node deployment cannot self-recover. The surviving-majority case needs two real members and lives in
+     * {@code GenerationJobServiceClusterTest}.
+     */
+    @ParameterizedTest
+    @ValueSource(ints = { 2, 3, 5 })
+    void recoverWedgedSlot_failsClosedWhenTheVisibleMembersAreNotAMajority(int expectedDataMemberCount) {
+        long exerciseId = 465L + expectedDataMemberCount;
+        String token = jobService.claimExternalMutationSlot(exerciseId);
+        forceJobOwner(exerciseId, "departed-node");
+        GenerationJobService island = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, expectedDataMemberCount);
+        island.init();
+
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> island.recoverWedgedSlot(exerciseId, token)).withMessageContaining("majority");
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
     }
 
     @Test
@@ -625,7 +714,6 @@ class GenerationJobServiceTest {
         assertThat(events).hasSize(500);
         assertThat(events.getFirst().type()).isEqualTo(ExerciseGenerationEventDTO.Type.STARTED);
         assertThat(events.getFirst().message()).isEqualTo("STARTED-HEAD");
-        // A reconnecting instructor must not read a gapped transcript as a complete narrative: the dropped span is replaced by exactly one marker that names its size.
         // 600 progress events follow the retained head, the tail holds 498 of them (the head and the marker occupy the other two slots), so 600 - 498 = 102 were dropped.
         assertThat(events.get(1).message()).isEqualTo("102 earlier progress events are no longer retained.");
         assertThat(events.stream().filter(event -> event.message() != null && event.message().endsWith("no longer retained."))).hasSize(1);
@@ -670,8 +758,7 @@ class GenerationJobServiceTest {
                 new ExerciseGenerationVerdictDTO(true, true, true, 3, List.of()), true, Map.of("solution", "abc123"), 42L), true);
         jobService.clearJob(exerciseId, jobId);
 
-        // Only the mid-run transcript (prompts/tool activity) is hidden from a non-owner authorized instructor; the terminal outcome itself carries the same exact review
-        // identity (message, verdict, saved commits, saved version id) the owner sees, since none of it is sensitive to another instructor with editor access to this exercise.
+        // Only the mid-run transcript is hidden from a non-owner instructor; the terminal outcome carries the same review identity the owner sees.
         assertThat(jobService.getStatus(user("instructorB"), exercise)).hasValueSatisfying(status -> {
             assertThat(status.running()).isFalse();
             assertThat(status.ownedByCaller()).isFalse();
@@ -841,6 +928,20 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void initRejectsAnEffortProfileDeadlineThatOutlastsTheStaleJobTimeout() {
+        // The deployment default (45m) fits inside the 50m stale timeout, but the run a profile hands out lasts 55m and its slot would be reclaimed before it can finish.
+        GenerationJobService raisedByProfile = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofMinutes(55));
+
+        assertThatThrownBy(raisedByProfile::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("stale-job-timeout").hasMessageContaining("profiles");
+
+        GenerationJobService withinTheTimeout = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofMinutes(48));
+
+        assertThatCode(withinTheTimeout::init).doesNotThrowAnyException();
+    }
+
+    @Test
     void requestCancellation_publishesCancelToOtherServiceInstances() {
         GenerationJobService ownerNode = jobService;
         GenerationJobService apiNode = new GenerationJobService(hazelcastInstance, event -> {
@@ -910,7 +1011,7 @@ class GenerationJobServiceTest {
 
         assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isTrue();
 
-        // Cancellation already won this job under the job-map lock: the caller must not be allowed to persist, and the run stays cancelled — never both.
+        // Cancellation already won this job under the job-map lock, so the caller must not be allowed to persist.
         assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isFalse();
         assertThat(jobService.isCancelled(jobId)).isTrue();
         ExerciseGenerationStatusDTO status = jobService.getStatus(user("owner"), exercise(exerciseId)).orElseThrow();
@@ -922,7 +1023,7 @@ class GenerationJobServiceTest {
         long exerciseId = 141L;
         String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
 
-        // Persistence already won this job under the job-map lock: a later cancel request must not succeed or retroactively claim "nothing was changed".
+        // Persistence already won this job under the job-map lock, so a later cancel must not retroactively claim "nothing was changed".
         assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
 
         assertThat(jobService.requestCancellation(exerciseId, jobId, user("owner"))).isFalse();
@@ -1012,6 +1113,25 @@ class GenerationJobServiceTest {
 
         // The budget-reservation guard must short-circuit before the jobMap write, not merely report failure while still refreshing liveness.
         assertThat(jobMap.get(String.valueOf(exerciseId)).lastHeartbeatOrStartedAt()).isEqualTo(heartbeatBeforeAttempt);
+    }
+
+    @Test
+    void heartbeat_afterAJobSpendsItsWholeTokenAllowance_stillReportsThisNodeAsTheOwner() {
+        // Regression: exhaustion deleting the reservation made the heartbeat read a spent run as one that had lost ownership. The real budget service is wired in because the
+        // defect lives in the interaction between the two, which a mock cannot show.
+        long exerciseId = 226L;
+        HyperionGenerationBudgetService budgetService = new HyperionGenerationBudgetService(mock(LLMTokenUsageTraceTestRepository.class), hazelcastInstance, Duration.ofHours(24),
+                300, 0, 0, 300, Duration.ofMinutes(30));
+        budgetService.init();
+        HyperionGenerationBudgetService.BudgetReservation reservation = budgetService.reserveGenerationBudget(1L, 2L, 300);
+        GenerationJobService service = new GenerationJobService(hazelcastInstance, event -> {
+        }, mock(LLMTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
+        service.init();
+        String jobId = service.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE, reservation.id());
+
+        budgetService.recordPersistedUsage(reservation.id(), 300);
+
+        assertThat(service.heartbeat(exerciseId, jobId)).isTrue();
     }
 
     @Test
@@ -1198,9 +1318,7 @@ class GenerationJobServiceTest {
 
         shortTimeoutService.clearStaleJobs();
 
-        // Cluster membership loss is a failure-detector result, not proof that the departed owner's Git/DB persistence request has actually stopped (GC pause, partition,
-        // false-positive detection). The non-cancellable slot must be retained so a replacement generation cannot interleave with an un-fenced writer, even though the owner is
-        // absent from the local membership view.
+        // Membership loss is a failure-detector result, not proof the departed owner stopped writing, so the non-cancellable slot is retained against an un-fenced writer.
         assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isTrue();
         assertThat(shortTimeoutService.getStatus(owner, exercise)).hasValueSatisfying(status -> {
             assertThat(status.running()).isTrue();
@@ -1225,8 +1343,7 @@ class GenerationJobServiceTest {
 
         shortTimeoutService.clearStaleJobs();
 
-        // Same fail-closed rule as the persistence barrier above: a departed owner mid force-reset may still be writing to the Git server, so the revert barrier must not be
-        // freed just because the owner left the cluster view. Both a new generation and a new revert must conflict with the retained slot.
+        // Same fail-closed rule as the persistence barrier: a departed owner mid force-reset may still be writing to the Git server.
         assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isTrue();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE));
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.claimRevertSlot(owner, exerciseId));
@@ -1312,8 +1429,7 @@ class GenerationJobServiceTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     void tokenUsageSink_stopsTheRunExactlyWhenAModelCallCouldNotBeAccounted(boolean recorded) {
-        // Every other test stubs this sink out, so the accounting guard itself has never run: a run whose token spend cannot be attributed must stop rather than keep calling
-        // the provider off the books.
+        // A run whose token spend cannot be attributed must stop rather than keep calling the provider off the books.
         LLMTokenUsageService tokenUsageService = mock(LLMTokenUsageService.class);
         when(tokenUsageService.trackChatResponseTokenUsage(any(), any(), anyString(), any(), any())).thenReturn(recorded);
         GenerationJobService accountingService = new GenerationJobService(hazelcastInstance, event -> {
@@ -1332,7 +1448,7 @@ class GenerationJobServiceTest {
 
     @Test
     void isOwnedActiveJob_isTrueOnlyForThisNodesLiveJob() {
-        // The stale-writer guard consulted before every durable Git/DB write; it is stubbed at every call site, so this is the only place it actually executes.
+        // The stale-writer guard consulted before every durable Git/DB write.
         long exerciseId = 235L;
         String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE);
 
@@ -1391,6 +1507,12 @@ class GenerationJobServiceTest {
             jobMap.lock(key);
             return null;
         }).when(observedJobMap).lock(key);
+        // The service takes the per-exercise lock with a lease and the replay store takes it without one, so both overloads must be observed or the latch never counts down.
+        doAnswer(invocation -> {
+            lockAttempted.countDown();
+            jobMap.lock(key, invocation.getArgument(1), invocation.getArgument(2));
+            return null;
+        }).when(observedJobMap).lock(eq(key), anyLong(), any(TimeUnit.class));
         ReflectionTestUtils.setField(service, "jobMap", observedJobMap);
         GenerationJobReplayStore replayStore = (GenerationJobReplayStore) ReflectionTestUtils.getField(service, "replayStore");
         ReflectionTestUtils.setField(replayStore, "jobMap", observedJobMap);

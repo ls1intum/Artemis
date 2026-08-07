@@ -59,11 +59,7 @@ class ProgrammingExerciseMutationGuardTest {
     void claimExternalMutation_isNoOpWhenGenerationIsDisabledOnAllCurrentMembers() {
         ProgrammingExerciseMutationGuardService guard = disabledGuard(hazelcastWithMembers(dataMember("false"), dataMember("false")), 2);
 
-        assertThatCode(() -> {
-            try (ProgrammingExerciseMutationGuardService.MutationLease ignored = guard.claimExternalMutation(42L)) {
-                // no-op
-            }
-        }).doesNotThrowAnyException();
+        assertThatCode(() -> guard.claimExternalMutation(42L).close()).doesNotThrowAnyException();
     }
 
     @Test
@@ -104,11 +100,7 @@ class ProgrammingExerciseMutationGuardTest {
         HyperionExerciseMutationApi hyperionApi = mock(HyperionExerciseMutationApi.class);
         ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(hyperionApi), mock(HazelcastInstance.class));
 
-        assertThatCode(() -> {
-            try (ProgrammingExerciseMutationGuardService.MutationLease ignored = guard.claimExternalMutation(OptionalLong.empty())) {
-                // no-op
-            }
-        }).doesNotThrowAnyException();
+        assertThatCode(() -> guard.claimExternalMutation(OptionalLong.empty()).close()).doesNotThrowAnyException();
         verifyNoInteractions(hyperionApi);
     }
 

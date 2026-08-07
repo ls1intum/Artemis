@@ -73,14 +73,13 @@ public class DifferentialVerificationService {
     private final SandboxBuildCommandService sandboxBuildCommandService;
 
     /**
-     * Persisted SCA categories, read the same way production grading does, so the SCA-parity gate decides from authoritative state rather than a detached in-memory collection.
-     * Optional because SCA categories live in the core profile; on a node without them the gate fails open, and that node cannot grade anyway.
+     * SCA categories live in the core profile, so this is optional: on a node without them the SCA-parity gate fails open, and that node cannot grade anyway.
      */
     private final Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository;
 
     private final ApprovedSpecRegistry approvedSpecs;
 
-    // Required: with several constructors and no annotation, Spring cannot pick one.
+    // Required: with several constructors and no annotation, Spring cannot pick one and startup fails.
     @Autowired
     public DifferentialVerificationService(SandboxBuildCommandService sandboxBuildCommandService,
             Optional<StaticCodeAnalysisCategoryRepository> staticCodeAnalysisCategoryRepository, ApprovedSpecRegistry approvedSpecs) {
@@ -104,8 +103,8 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The normalized test names the workspace's grading plan hides until the due date. Fail-open by construction: a missing, unreadable, or malformed {@code test-plan.json}
-     * yields an empty set, so the binding gate demands that every gradable test be bound rather than silently relaxing.
+     * The normalized test names the workspace's grading plan hides until the due date. A missing, unreadable, or malformed {@code test-plan.json} yields an empty set, so the
+     * binding gate demands that every gradable test be bound rather than silently relaxing.
      */
     private Set<String> readHiddenTestNames(InteractiveSandbox sandbox, String sessionId) {
         try {
@@ -126,12 +125,11 @@ public class DifferentialVerificationService {
         return result.isSuccess() ? result.stdout() : "";
     }
 
-    /** Cap on the dead-file probe output, so a runaway workspace listing cannot blow the agent's context. */
     private static final int MAX_POSSIBLY_DEAD_FILES = 20;
 
     /**
-     * Advisory (never a gate) language-agnostic probe for the agent's self-check: a source file present in exactly one of {@code solution/} and {@code template/} is a likely
-     * abandoned orphan, because the two repositories should differ only in method bodies. Ignores build manifests and hidden files and never throws.
+     * Advisory (never a gate) probe for the agent's self-check: a source file present in exactly one of {@code solution/} and {@code template/} is a likely abandoned orphan,
+     * because the two repositories should differ only in method bodies. Never throws.
      */
     private static List<String> possiblyDeadWorkspaceFiles(InteractiveSandbox sandbox, String sessionId) {
         try {
@@ -152,8 +150,8 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Build manifests are legitimately repository-specific, so the dead-file probe must not flag them. Only Maven is listed because generation runs for Java/Maven exercises
-     * alone (see {@link de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile}).
+     * Build manifests are legitimately repository-specific, so the dead-file probe must not flag them. Only Maven is listed because generation runs for Java/Maven exercises alone
+     * (see {@link de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile}).
      */
     private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("pom.xml");
 
@@ -180,26 +178,25 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs the differential verification and the sandbox-free integrity gates; mechanical verification passes only when both do. The authoritative pass wipes and re-seeds the
-     * verifier control directory, builds in fresh temporary directories, and counts only reports written during the build. The integrity gates fail open on genuinely-empty
-     * inputs but fail closed on {@code extractionFailedRepositories}, so a flaky read-back cannot silently disable a gate.
+     * Runs the differential verification and the sandbox-free integrity gates; mechanical verification passes only when both do. Each build wipes and re-seeds the verifier
+     * control directory and counts only reports written during that build. The integrity gates fail open on genuinely-empty inputs but fail closed on
+     * {@code extractionFailedRepositories}, so a flaky read-back cannot silently disable a gate.
      *
      * @param sandbox          the open sandbox session the pristine builds run in
      * @param sessionId        the sandbox session id
      * @param exercise         the exercise being verified (drives the per-language build recipe)
-     * @param request          the produced artifacts and integrity-gate inputs to decide on (see {@link VerificationRequest})
-     * @param restoreCandidate resets the sandbox and re-materializes the exact captured candidate before each build, so generated tests or detached processes cannot change a
-     *                             later build's input and make the verifier approve a tree different from the one persistence receives
+     * @param request          the produced artifacts and integrity-gate inputs to decide on
+     * @param restoreCandidate re-materializes the exact captured candidate before each build, so generated tests or detached processes cannot change a later build's input and make
+     *                             the verifier approve a tree different from the one persistence receives
      * @return the mechanical verdict (verified, solution-passed, template-failed, test count, and rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, VerificationRequest request, Runnable restoreCandidate) {
-        // Shared with the in-loop self-check so the agent's `verify` tool and this mechanical decision cannot diverge; only the integrity gates and the verdict are layered here.
         DifferentialAnalysis analysis = runDifferential(sandbox, sessionId, exercise, request.seededStructuralTests(), request.producedProblemStatement(), restoreCandidate);
         BuildSummary solution = analysis.solution();
         BuildSummary template = analysis.template();
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
 
-        // Integrity gates the build cannot see. Post-loop only (the self-check skips them): they need the seed snapshot and read-back files the agent loop lacks mid-session.
+        // Integrity gates the build cannot see. Post-loop only: they need the seed snapshot and read-back files the agent loop lacks mid-session.
         boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
         List<String> harnessTamperingReasons = new ArrayList<>();
         harnessTamperingReasons.addAll(ExerciseIntegrityGate.harnessTamperingReasons("tests", request.seedTestsFiles(), request.producedTestsFiles(), harnessSnapshotRequired));
@@ -253,7 +250,7 @@ public class DifferentialVerificationService {
 
         boolean extractionSound = checkExtractionSound(request.extractionFailedRepositories(), reasons);
 
-        // An adapt retaining none of the pre-adapt graded names is a from-scratch regeneration mislabeled as an adapt, which the internally-consistent differential cannot see.
+        // An adapt retaining none of the pre-adapt graded names is a from-scratch regeneration mislabelled as an adapt, which the internally-consistent differential cannot see.
         List<String> adaptWipeReasons = ExerciseIntegrityGate.adaptWipedGradedTestsReasons(request.baselineGradedTestNames(), solution.testNames());
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
@@ -284,11 +281,9 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The in-loop self-check the agent's {@code verify} tool calls: the same provenance-separated pristine builds, production parse and actionable gates as {@link #verify},
-     * rendered as an agent-readable {@link AgentVerifyReport}. It skips the sandbox-free integrity gates, so {@code wouldBeAccepted} covers the differential and actionable gates
-     * only and proves nothing about semantic quality. Each call re-runs the behavioral solution/template lanes and, when structural authority exists, both trusted structural
-     * lanes. Threading the exact server-authored bundle through keeps the grading plan and statement contract identical to final verification; {@code includeStatementChecks} is
-     * false for the tests-stage entry point, which reports on test artifacts only.
+     * The in-loop self-check the agent's {@code verify} tool calls: the same pristine builds, production parse and actionable gates as {@link #verify}, rendered as an
+     * agent-readable {@link AgentVerifyReport}. It skips the sandbox-free integrity gates, so {@code wouldBeAccepted} covers the differential and actionable gates only and proves
+     * nothing about semantic quality. {@code includeStatementChecks} is false for the tests-stage entry point, which reports on test artifacts only.
      */
     private AgentVerifyReport selfCheck(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles, boolean adaptation,
             boolean includeStatementChecks, SeededStructuralTests seededStructuralTests) {
@@ -344,8 +339,8 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Validates the immutable build harness and offline sandbox image before any provider call, using the same pristine script and build phases as final verification, so
-     * generation retries cannot spend tokens on an environment defect they are unable to repair.
+     * Validates the immutable build harness and offline sandbox image before any provider call, using the same pristine script and build phases as final verification, so an
+     * environment defect that authoring cannot repair is caught before tokens are spent on it.
      *
      * @param sandbox   the sandbox that will host the generation job
      * @param sessionId its active session id
@@ -413,8 +408,8 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Runs the shared, sandbox-dependent half of verification once: source-isolated behavioral builds plus, when present, exact server-owned structural builds for solution and
-     * template. Both the post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
+     * The sandbox-dependent half of verification: source-isolated behavioral builds plus, when present, exact server-owned structural builds for solution and template. Both the
+     * post-loop {@link #verify} and the in-loop {@link #selfCheck} consume this, so the agent's feedback and the verdict are computed by identical code.
      */
     private DifferentialAnalysis runDifferential(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, SeededStructuralTests seededStructuralTests,
             @Nullable String producedProblemStatement, Runnable restoreCandidate) {
@@ -491,7 +486,7 @@ public class DifferentialVerificationService {
         boolean taskBindingsResolve = checkTaskBindingsResolve(unresolvedTaskBindings, bindableTestNames, problemStatementHasTasks, statementReasons);
         List<String> duplicateTaskBindings = ProblemStatementBindingChecker.duplicateTaskBindings(problemStatement);
         boolean noDuplicateTaskBindings = checkNoDuplicateTaskBindings(duplicateTaskBindings, problemStatementHasTasks, statementReasons);
-        // Hidden tests are deliberately unbound, so they are exempt here and forbidden below. Both halves must move together: exempting alone lets a bound hidden test through,
+        // Hidden tests must stay unbound, so they are exempt here and forbidden below. Both halves must move together: exempting alone lets a bound hidden test through,
         // forbidding alone makes the two gates jointly unsatisfiable.
         List<String> unboundGradableTests = ProblemStatementBindingChecker.unboundGradableTestNames(problemStatement, solution.testNames(), testCount, hiddenTestNames);
         boolean allGradableTestsBound = checkAllGradableTestsBound(unboundGradableTests, problemStatementHasTasks, taskBindingsResolve, statementReasons);
@@ -502,13 +497,10 @@ public class DifferentialVerificationService {
         }
         boolean solutionScaClean = checkSolutionScaClean(exercise, solution, reasons);
 
-        // The build oracle is blind to what the student-facing statement exposes, so grader internals and bare task markers are blocked here.
         List<String> proseHygieneLeaks = ProblemStatementBindingChecker.proseHygieneLeaks(problemStatement);
         boolean proseHygienic = proseHygieneLeaks.isEmpty();
         if (!proseHygienic) {
-            statementReasons.add("The problem statement leaks grader internals or stray task markers into student-facing prose: " + proseHygieneLeaks
-                    + ". Rewrite it as a student would read it — describe the required behaviour and edge cases, never how the exercise is built, tested or graded, and bind tasks "
-                    + "only via [task][Title](testName) lines.");
+            statementReasons.add(ProblemStatementBindingChecker.proseHygieneRejection(proseHygieneLeaks));
         }
 
         // Statement-shape defects the staged gate also enforces, repeated because repair attempts run only this verifier and would otherwise ship the statement it rejected.
@@ -541,8 +533,7 @@ public class DifferentialVerificationService {
         if (!headingsUnique) {
             statementReasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        // A later edit may promise a diagram but never un-promise one, so both the live and the approved specification are consulted: rewriting '## Diagram' from yes to no under
-        // gate pressure must not make this pass vacuously.
+        // The approved specification, never the live file: rewriting '## Diagram' from yes to no under gate pressure must not make this pass vacuously.
         boolean diagramPromised = approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
         boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
         if (!statementHonoursDiagramPromise) {
@@ -564,9 +555,9 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * The shared, sandbox-dependent half of verification: the two parsed build summaries, the actionable gate outcome and its reasons, plus the exact name lists the agent is
-     * shown verbatim. {@code gradableTestsPassingOnTemplate} (non-structural, non-build-gate solution tests that also pass on the template; empty when the template did not build
-     * soundly) both drives the gate and is reported to the agent, so gate and feedback can never disagree.
+     * The two parsed build summaries, the actionable gate outcome and its reasons, plus the exact name lists the agent is shown verbatim.
+     * {@code gradableTestsPassingOnTemplate} (non-structural, non-build-gate solution tests that also pass on the template; empty when the template did not build soundly) both
+     * drives the gate and is reported to the agent, so gate and feedback can never disagree.
      */
     private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean testArtifactGatesPass,
             boolean actionableGatesPass, List<String> testArtifactReasons, List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles,
@@ -610,12 +601,7 @@ public class DifferentialVerificationService {
             throw new VerificationInfrastructureException(
                     "The verifier could not retrieve the " + assignmentName + " reports archive; build process: " + boundedReadinessDiagnostic(run.combinedOutput()), e);
         }
-        return new PristineBuildExecution(BuildSummary.fromReports(reports, run.exitCode(), boundedBuildDiagnostic(run.combinedOutput())), run);
-    }
-
-    /** Build scripts put compiler failures at the end; keep that actionable tail while applying the same credential redaction as protected readiness logs. */
-    private static String boundedBuildDiagnostic(@Nullable String diagnostic) {
-        return boundedReadinessDiagnostic(diagnostic);
+        return new PristineBuildExecution(BuildSummary.fromReports(reports, run.exitCode(), boundedReadinessDiagnostic(run.combinedOutput())), run);
     }
 
     private record PristineBuildExecution(BuildSummary summary, SandboxExecResultDTO process) {
@@ -670,7 +656,7 @@ public class DifferentialVerificationService {
             return false;
         }
         if (solution.tests() > 0 && template.tests() != solution.tests()) {
-            // A differing count means the template silently dropped tests, so a vacuous template can "fail" without the tests discriminating anything.
+            // A differing count means the template silently dropped tests, so it can "fail" vacuously without the tests discriminating anything.
             reasons.add("The template runs a different number of tests (" + template.tests() + ") than the solution (" + solution.tests()
                     + "). Both must run the same tests; the template must differ only in its (unimplemented) method bodies, not in which tests compile and run.");
             return false;
@@ -724,10 +710,7 @@ public class DifferentialVerificationService {
         return false;
     }
 
-    /**
-     * A {@code [task]}'s names must be real runner test names, not a {@code @DisplayName} or prose title: a binding that resolves to nothing shows the student no progress in
-     * Artemis, and the differential build cannot detect it.
-     */
+    /** A binding that resolves to no runner test name shows the student no progress in Artemis, and the differential build cannot detect it. */
     private static boolean checkTaskBindingsResolve(List<String> unresolvedTaskBindings, List<String> bindableTestNames, boolean problemStatementHasTasks, List<String> reasons) {
         boolean taskBindingsResolve = unresolvedTaskBindings.isEmpty();
         if (problemStatementHasTasks && !taskBindingsResolve) {
@@ -881,9 +864,9 @@ public class DifferentialVerificationService {
     }
 
     /**
-     * Installs the readiness variant of the pristine script and returns the command that runs it. The two are one step on purpose: the readiness script replaces the exercise's
-     * own test and assignment sources with the trusted fixture inside its disposable build tree, so running the ordinary solution command without installing it first would
-     * silently probe the exercise instead of the environment.
+     * Installs the readiness variant of the pristine script and returns the command that runs it. The two must stay one step: the readiness script replaces the exercise's own
+     * test and assignment sources with the trusted fixture inside its disposable build tree, so running the ordinary solution command without installing it first would silently
+     * probe the exercise instead of the environment.
      */
     private String seedReadinessProbe(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise) {
         seedPristineVerifyScript(sandbox, sessionId, sandboxBuildCommandService.readinessVerifyScriptContent(exercise));
@@ -925,7 +908,7 @@ public class DifferentialVerificationService {
 
     /**
      * The solution-build SCA findings production would penalise, rendered as {@code <TOOL>|<category>}; empty when SCA cannot dock the solution. Reads the persisted categories
-     * the same way production grading does, so the decision matches {@code calculateTotalPenalty}; fails open when the repository is absent.
+     * the same way production grading does, so the decision matches {@code calculateTotalPenalty}. Fails open when the repository is absent.
      */
     private List<String> penalisingScaFindings(ProgrammingExercise exercise, BuildSummary solution) {
         if (solution.scaFindings().isEmpty() || !Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) || exercise.getId() == null

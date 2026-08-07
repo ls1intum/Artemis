@@ -3,11 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * Exercise-scoped generation state shared with authorized editors. It intentionally contains no prompt, progress, file-change, or owner information.
- *
- * @param exerciseId the exercise whose mutation slot changed
- * @param jobId      the generation job that changed the slot
- * @param running    whether that job currently owns the slot
+ * Which job currently owns an exercise's mutation slot. Broadcast to every authorized editor of the exercise, so it carries no prompt, progress, file-change, or owner
+ * information.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStateDTO(long exerciseId, String jobId, boolean running) {

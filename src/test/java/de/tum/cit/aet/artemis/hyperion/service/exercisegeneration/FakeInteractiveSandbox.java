@@ -16,19 +16,14 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 
 /**
- * The one in-memory {@link InteractiveSandbox} the Hyperion generation tests run against, replacing the six near-identical hand-rolled doubles that used to live one per test
- * class.
+ * The in-memory {@link InteractiveSandbox} the Hyperion generation tests run against: a fixed session handle, inert copy/destroy, and {@code cat} served from a file map.
  * <p>
- * Those six agreed on everything that is not interesting — a fixed session handle, inert copy/destroy, {@code cat} served from a map — and disagreed silently on everything that
- * is, which is how {@link InteractiveSandbox#resetSession} came to be unimplemented in all of them: it was added to the interface as a throwing {@code default}, so every double
- * kept compiling while modelling a sandbox that cannot reset, which no production implementation is.
- * <p>
- * Bespoke behaviour is configured, not forked: the file map and {@link #returning(SandboxExecResultDTO)} cover the simple cases, and a test whose sandbox must answer probes
- * (find/grep/diff/verify.sh) overrides the single {@link #respond(String[])} seam while still inheriting the recording and the inert half.
+ * Bespoke behaviour is configured rather than forked. The file map and {@link #returning(SandboxExecResultDTO)} cover the simple cases; a test whose sandbox must answer probes
+ * (find/grep/diff/verify.sh) overrides the single {@link #respond(String[])} seam and still inherits the recording and the inert half.
  */
 public class FakeInteractiveSandbox implements InteractiveSandbox {
 
-    /** The handle {@link #createSession} hands out; every operation accepts any handle, because no test under this fake is about handle routing. */
+    /** The handle {@link #createSession} hands out; every operation accepts any handle, since no test under this fake is about handle routing. */
     public static final String SESSION_ID = "fake-session";
 
     private static final SandboxExecResultDTO EMPTY_SUCCESS = new SandboxExecResultDTO(0, "", "", false);
@@ -62,10 +57,7 @@ public class FakeInteractiveSandbox implements InteractiveSandbox {
         return SESSION_ID;
     }
 
-    /**
-     * Records the command, then answers it. Final so that the recording below can never be lost by a subclass that overrides {@code exec} and forgets to call {@code super}: the
-     * extension point is {@link #respond(String[])}.
-     */
+    /** Records the command, then answers it. Final so a subclass cannot drop the recording; the extension point is {@link #respond(String[])}. */
     @Override
     public final SandboxExecResultDTO exec(String sessionId, Duration timeout, String... command) {
         executedCommands.add(String.join(" ", command));

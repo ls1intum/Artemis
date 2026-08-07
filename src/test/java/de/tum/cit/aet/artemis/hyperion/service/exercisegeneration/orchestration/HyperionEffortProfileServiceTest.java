@@ -25,10 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 
-/**
- * The admin-defined half of "admins define, users select". Every test here pins a rule that decides what a run costs, so a silent regression in any of them is a billing or
- * comparability defect rather than a cosmetic one.
- */
+/** The admin-defined half of "admins define, users select": each rule here decides what a run is allowed to cost. */
 class HyperionEffortProfileServiceTest {
 
     private static final OpenAiChatOptions MODEL_DEFAULTS = OpenAiChatOptions.builder().model("deployment-model").temperature(1.0).maxCompletionTokens(8_192).build();
@@ -58,7 +55,7 @@ class HyperionEffortProfileServiceTest {
         assertThat(resolved.name()).isEmpty();
         assertThat(resolved.maxTurns()).isEqualTo(60);
         assertThat(resolved.maxJobDuration()).isEqualTo(Duration.ofMinutes(45));
-        // The engine must reuse the shared singletons, or a deployment that configured nothing would silently start deriving per-run objects.
+        // The engine reuses the shared singletons rather than deriving per-run objects for a deployment that configured nothing.
         assertThat(resolved.engineDefaults()).isTrue();
         assertThat(resolved.chatOptions()).isNull();
     }
@@ -73,7 +70,7 @@ class HyperionEffortProfileServiceTest {
 
     @Test
     void profileWithNoConfiguredName_isRejectedEvenWhenAnotherProfileExists() {
-        // A deployment that configures profiles at all must not accept a name outside the set it published; otherwise the endpoint's set and the accepted set diverge.
+        // The accepted set must equal the published set, so a name outside it is rejected even after trimming.
         HyperionEffortProfileService service = new HyperionEffortProfileService(propertiesWith(Map.of("draft", profile("Quick draft"))), MODEL_DEFAULTS);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> service.resolve("   draft-typo "));
@@ -95,7 +92,7 @@ class HyperionEffortProfileServiceTest {
         assertThat(standard.maxJobDuration()).isEqualTo(Duration.ofMinutes(45));
         assertThat(standard.maxTokensPerJob()).isEqualTo(3_000_000L);
         assertThat(standard.contextWindowTokens()).isEqualTo(128_000);
-        // A profile that changes nothing must still be recognisable as the deployment default, so it costs no per-run object graph.
+        // A profile that changes nothing stays recognisable as the deployment default, so it costs no per-run object graph.
         assertThat(standard.engineDefaults()).isTrue();
     }
 
@@ -114,7 +111,7 @@ class HyperionEffortProfileServiceTest {
         assertThat(settings.chatOptions()).isInstanceOf(OpenAiChatOptions.class);
         assertThat(settings.chatOptions().getModel()).isEqualTo("draft-model");
         assertThat(settings.chatOptions().getReasoningEffort()).isEqualTo("low");
-        // Unstated decoding parameters are inherited, not reset: a profile states only what it changes.
+        // Unstated decoding parameters are inherited from the model bean, not reset.
         assertThat(settings.chatOptions().getTemperature()).isEqualTo(1.0);
         assertThat(settings.chatOptions().getMaxCompletionTokens()).isEqualTo(8_192);
         assertThat(settings.providerOptionsOverride()).isTrue();
@@ -146,8 +143,7 @@ class HyperionEffortProfileServiceTest {
 
     @Test
     void selectableProfiles_exposeNameAndLabelOnlyAndKeepConfiguredOrder() {
-        // Six entries rather than three: the order-losing implementation (Map.copyOf) randomizes its iteration order per JVM via ImmutableCollections' salt, so a short list
-        // can agree with the configured order by chance. The order matters because this list is instructor-facing and must not reshuffle itself between restarts.
+        // Six entries rather than three: Map.copyOf randomizes iteration order per JVM via ImmutableCollections' salt, so a short list can match the configured order by chance.
         LinkedHashMap<String, HyperionAgentProperties.EffortProfileProperties> profiles = new LinkedHashMap<>();
         HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
         draft.setModel("secret-procurement-model");
@@ -242,5 +238,51 @@ class HyperionEffortProfileServiceTest {
         properties.setMaxTokensPerJob(3_000_000L);
 
         assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).largestMaxTokensPerJob()).isEqualTo(3_000_000L);
+    }
+
+    @Test
+    void longestMaxJobDuration_withoutConfiguredProfiles_isTheDeploymentDefault() {
+        HyperionAgentProperties properties = new HyperionAgentProperties();
+        properties.setMaxJobDuration(Duration.ofMinutes(45));
+
+        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
+    }
+
+    @Test
+    void longestMaxJobDuration_isTheLongestDeadlineAnyProfileCanHandARun() {
+        // Startup validates the stale-slot timeout against this value, so a profile that raises the deadline past that timeout fails the deploy instead of losing its slot at run
+        // time.
+        HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
+        draft.setMaxJobDuration(Duration.ofMinutes(12));
+        HyperionAgentProperties.EffortProfileProperties thorough = profile("Thorough");
+        thorough.setMaxJobDuration(Duration.ofMinutes(48));
+        HyperionAgentProperties properties = propertiesWith(Map.of("draft", draft, "thorough", thorough));
+        properties.setMaxJobDuration(Duration.ofMinutes(45));
+
+        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(48));
+    }
+
+    @Test
+    void longestMaxJobDuration_isNotLoweredByAProfileWithAShorterDeadline() {
+        // A profile narrows what one run is given, never what the deployment must tolerate, so the timeout validated against this must not shrink.
+        HyperionAgentProperties.EffortProfileProperties draft = profile("Quick draft");
+        draft.setMaxJobDuration(Duration.ofMinutes(12));
+        HyperionAgentProperties properties = propertiesWith(Map.of("draft", draft));
+        properties.setMaxJobDuration(Duration.ofMinutes(45));
+
+        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).longestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
+    }
+
+    @Test
+    void nonPositiveProfileJobDuration_failsStartup() {
+        HyperionAgentProperties.EffortProfileProperties zero = profile("Zero");
+        zero.setMaxJobDuration(Duration.ZERO);
+        HyperionAgentProperties.EffortProfileProperties negative = profile("Negative");
+        negative.setMaxJobDuration(Duration.ofMinutes(-5));
+
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("zero", zero)), MODEL_DEFAULTS))
+                .withMessageContaining("max-job-duration");
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("negative", negative)), MODEL_DEFAULTS))
+                .withMessageContaining("max-job-duration");
     }
 }

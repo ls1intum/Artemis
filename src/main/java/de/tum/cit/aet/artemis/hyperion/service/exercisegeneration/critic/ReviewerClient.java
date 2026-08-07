@@ -24,8 +24,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.Provider
  * Bounded provider access shared by every reviewer pass: it renders the pass's system-prompt template, computes the output-token budget that still fits the configured context
  * window, applies the provider cooldown, and meters the response.
  * <p>
- * One owner for this policy means a new review pass cannot accidentally ship its own retry, budget, or metering behaviour, and a pass can be exercised against a scripted client
- * without going near provider configuration.
+ * One owner for this policy means a new review pass cannot accidentally ship its own retry, budget, or metering behaviour.
  */
 final class ReviewerClient {
 
@@ -61,7 +60,6 @@ final class ReviewerClient {
     @Nullable
     private final Integer configuredMaxOutputTokens;
 
-    /** Retained so a run can derive a profile-pinned client that starts from the same provider options this one inherited. */
     @Nullable
     private final ChatOptions configuredOptions;
 

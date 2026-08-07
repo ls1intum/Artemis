@@ -20,8 +20,19 @@ public class HyperionAgentProperties {
     /** Hard cap on model turns for one attempt of a run. Bounds an attempt, not the whole run. */
     private int maxTurns = 60;
 
-    /** Wall-clock deadline for one run. Also the basis of the budget reservation TTL and the staged authoring budget. */
-    private Duration maxJobDuration = Duration.ofMinutes(30);
+    /**
+     * Wall-clock deadline for one run. Also the basis of the budget reservation TTL and the staged authoring budget.
+     * <p>
+     * {@code config/application-artemis.yml} restates this default for operator documentation and {@code HyperionAgentPropertiesTest} fails if the two diverge: a node without the
+     * {@code artemis} profile binds the value from here, so a divergence would make the {@link #staleJobTimeout} invariant hold on one node and fail startup on another.
+     */
+    private Duration maxJobDuration = Duration.ofMinutes(45);
+
+    /**
+     * How long a slot may go without a heartbeat before another node reclaims it. Must be strictly greater than {@link #maxJobDuration} and than the longest duration any
+     * configured effort profile can raise it to; validated at startup.
+     */
+    private Duration staleJobTimeout = Duration.ofMinutes(50);
 
     /** Post-response per-job provider spend guard, and the number of tokens admission reserves for a job it admits. */
     private long maxTokensPerJob = 3_000_000L;
@@ -32,7 +43,7 @@ public class HyperionAgentProperties {
     /** {@code CONTINUOUS} or {@code FRESH}; validated where it is parsed, so an invalid value fails startup rather than the first run. */
     private String stagedContext = "CONTINUOUS";
 
-    /** The model's usable context window in tokens. Belongs with the model, so a profile that pins a model may pin this too. */
+    /** The model's usable context window in tokens; a profile that pins a model may pin this too. */
     private int contextWindowTokens = 128_000;
 
     /** Name of the profile used when a request names none. Empty means the top-level values above are used directly. */
@@ -55,6 +66,14 @@ public class HyperionAgentProperties {
 
     public void setMaxJobDuration(Duration maxJobDuration) {
         this.maxJobDuration = maxJobDuration;
+    }
+
+    public Duration getStaleJobTimeout() {
+        return staleJobTimeout;
+    }
+
+    public void setStaleJobTimeout(Duration staleJobTimeout) {
+        this.staleJobTimeout = staleJobTimeout;
     }
 
     public long getMaxTokensPerJob() {
@@ -266,9 +285,7 @@ public class HyperionAgentProperties {
         }
 
         /**
-         * Whether this profile changes the model or any decoding parameter, which is what decides whether a run needs its own prebuilt provider options.
-         *
-         * @return {@code true} when at least one provider-facing value is set on this profile
+         * @return {@code true} when this profile sets any provider-facing value, which is what decides whether a run needs its own prebuilt provider options
          */
         public boolean overridesProviderOptions() {
             return model != null || temperature != null || topP != null || reasoningEffort != null || verbosity != null || maxCompletionTokens != null;

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.ByteArrayInputStream;
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -21,8 +23,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * Tests the tar pack/unpack used to move the workspace in and out of the sandbox, in particular that a large file survives the round trip: a per-file shell read truncates
- * anything over the exec output-capture limit, silently corrupting the committed repository.
+ * Covers the tar pack/unpack that moves the workspace in and out of the sandbox. A file larger than the exec output-capture limit must survive the round trip, otherwise it is
+ * truncated and the committed repository is silently corrupted.
  */
 class WorkspaceArchiveTest {
 
@@ -34,7 +36,7 @@ class WorkspaceArchiveTest {
         files.put("solution/src/Calculator.java", "public class Calculator {}\n");
         files.put("solution/build.gradle", "plugins {}\n");
 
-        // Pack under a "solution/" tree, then read it back the way Docker presents a copied-out directory (prefixed with the directory name).
+        // Docker presents a copied-out directory prefixed with the directory name, which is what the read side has to strip.
         try (TarArchiveInputStream tar = new TarArchiveInputStream(WorkspaceArchive.buildWorkspaceTarStream(files, Map.of()))) {
             Map<String, String> read = WorkspaceArchive.readTar(tar, "solution");
             assertThat(read).containsOnlyKeys("src/Calculator.java", "build.gradle");
@@ -80,9 +82,7 @@ class WorkspaceArchiveTest {
 
     @Test
     void readTar_excludesBinaryFilesButRoundTripsText() throws Exception {
-        // The read-back is the boundary where a binary would otherwise be decoded into a lossy UTF-8 String and later re-written mangled. A binary entry (gradle-wrapper.jar bytes:
-        // a NUL + non-UTF-8 sequence) must be DROPPED from the produced text map (persist preserves the scaffolded original byte-exact); a text file (build.gradle) must still
-        // round-trip exactly.
+        // Read-back is where a binary would be decoded into a lossy UTF-8 String and later re-written mangled, so it is dropped instead: persist keeps the scaffolded original.
         byte[] wrapperJarBytes = { 0x50, 0x4B, 0x03, 0x04, 0, 1, 2, (byte) 0xFF, (byte) 0x89 };
         try (TarArchiveInputStream in = new TarArchiveInputStream(packTar(Map.of("gradle/wrapper/gradle-wrapper.jar", wrapperJarBytes, "build.gradle",
                 "plugins { id 'java' }\n".getBytes(StandardCharsets.UTF_8), "src/Main.java", "class Main {}\n".getBytes(StandardCharsets.UTF_8))))) {
@@ -93,7 +93,7 @@ class WorkspaceArchiveTest {
         }
     }
 
-    /** Packs a {@code path -> bytes} map into a flat tar (no prefix), for read-back tests that need to control exact byte content per entry. */
+    /** Packs a {@code path -> bytes} map into a flat tar (no prefix), for tests that control the exact byte content per entry. */
     private static InputStream packTar(Map<String, byte[]> entries) throws Exception {
         var out = new java.io.ByteArrayOutputStream();
         try (var tar = new org.apache.commons.compress.archivers.tar.TarArchiveOutputStream(out)) {
@@ -110,8 +110,7 @@ class WorkspaceArchiveTest {
 
     @Test
     void readTar_rejectsAnOversizedEntry_ratherThanMaterialisingItAndOoming() throws Exception {
-        // The copyOut tar is agent-controlled: a runaway or hostile agent writing a multi-GB file must be REFUSED on read-back, not read into a String and OOM the node. The
-        // header-declared size is honoured before the body is read, so the reject is cheap and never allocates the body.
+        // The copyOut tar is agent-controlled; the header-declared size is honoured before the body is read, so a multi-GB entry is refused without ever being allocated.
         long oversize = WorkspaceArchive.MAX_FILE_BYTES + 1;
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
@@ -134,8 +133,59 @@ class WorkspaceArchiveTest {
     }
 
     @Test
+    void readTar_acceptsTheEntryCapAndRejectsOneEntryMore() throws Exception {
+        // Both byte caps accumulate content bytes only, so an archive of zero-byte entries grows the read-back map unbounded unless the entry cap stops it.
+        int cap = maxArchiveEntries();
+        String capMessage = "more than " + cap + " entries";
+
+        assertThat(readZeroByteEntryTar(cap)).as("an archive at exactly the cap is still read").hasSize(cap);
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> readZeroByteEntryTar(cap + 1)).withMessageContaining(capMessage);
+    }
+
+    @Test
+    void buildFilesTar_acceptsTheEntryCapAndRejectsOneEntryMore() {
+        // Outbound, a further entry costs a tar header rather than content bytes, so the seed byte total cannot bound it either.
+        int cap = maxArchiveEntries();
+        String capMessage = "more than " + cap + " entries";
+
+        assertThatCode(() -> buildEmptyFilesTar(cap)).doesNotThrowAnyException();
+        assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> buildEmptyFilesTar(cap + 1)).withMessageContaining(capMessage);
+    }
+
+    /** The production entry cap, read from the class under test so the boundary assertions cannot drift from the real value. */
+    private static int maxArchiveEntries() {
+        return (int) ReflectionTestUtils.getField(WorkspaceArchive.class, "MAX_ARCHIVE_ENTRIES");
+    }
+
+    /** Reads back a tar of {@code entryCount} zero-byte entries: the cheapest archive that passes every byte cap, so only the entry cap can reject it. */
+    private static Map<String, String> readZeroByteEntryTar(int entryCount) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
+            tarOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            for (int i = 0; i < entryCount; i++) {
+                TarArchiveEntry entry = new TarArchiveEntry("flood/" + i + ".txt");
+                entry.setSize(0);
+                tarOut.putArchiveEntry(entry);
+                tarOut.closeArchiveEntry();
+            }
+        }
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
+            return WorkspaceArchive.readTar(tar, "");
+        }
+    }
+
+    /** The seed-side counterpart of {@link #readZeroByteEntryTar}: packs {@code entryCount} empty files, contributing zero bytes to the seed total. */
+    private static void buildEmptyFilesTar(int entryCount) {
+        Map<String, String> textFiles = new LinkedHashMap<>();
+        for (int i = 0; i < entryCount; i++) {
+            textFiles.put("solution/" + i + ".txt", "");
+        }
+        WorkspaceArchive.buildFilesTarStream(textFiles, Map.of(), Set.of());
+    }
+
+    @Test
     void readTar_rejectsASymlinkEntry_soAReadCannotBeRedirectedOutsideTheWorkspace() throws Exception {
-        // The copyOut tar is agent-controlled: a symlink entry could redirect a read to a file outside the workspace on extraction, so it is refused by its link flag on read-back.
+        // A symlink entry could redirect a read to a file outside the workspace on extraction, so it is refused by its link flag on read-back.
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
             TarArchiveEntry link = new TarArchiveEntry("solution/passwd", TarArchiveEntry.LF_SYMLINK);
@@ -170,19 +220,32 @@ class WorkspaceArchiveTest {
 
     @Test
     void readTar_rejectsAPathTraversingEntry_soNoAbsoluteOrDotDotPathReachesTheCommit() throws Exception {
-        // The produced map is keyed by the entry path and later written into a git repo, so a ..-traversing path must never be accepted (it would escape the repository root).
+        // Two separate escapes of the repository root the produced map is written into: the ..-path climbs out under normalize(), an absolute path makes resolve() discard the
+        // archive root.
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(singleEntryTar("solution/../../evil.java", false))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""))
+                    .withMessageContaining("escapes the archive root");
+        }
+        // preserveAbsolutePath, or commons-compress strips the leading slash while packing and the entry is no longer the absolute path under test. The message is pinned so this
+        // half cannot pass for an unrelated reason, such as the entry name tripping the credential-file policy.
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(singleEntryTar("/etc/passwd", true))) {
+            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""))
+                    .withMessageContaining("escapes the archive root");
+        }
+    }
+
+    /** Packs one small regular-file entry under the exact name given, optionally keeping a leading slash commons-compress would otherwise strip. */
+    private static InputStream singleEntryTar(String name, boolean preserveAbsolutePath) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
-            TarArchiveEntry entry = new TarArchiveEntry("solution/../../evil.java");
+            TarArchiveEntry entry = new TarArchiveEntry(name, preserveAbsolutePath);
             byte[] body = "x".getBytes(StandardCharsets.UTF_8);
             entry.setSize(body.length);
             tarOut.putArchiveEntry(entry);
             tarOut.write(body);
             tarOut.closeArchiveEntry();
         }
-        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()))) {
-            assertThatExceptionOfType(WorkspaceArchive.RejectedWorkspaceEntryException.class).isThrownBy(() -> WorkspaceArchive.readTar(tar, ""));
-        }
+        return new ByteArrayInputStream(out.toByteArray());
     }
 
     @Test
@@ -215,7 +278,6 @@ class WorkspaceArchiveTest {
 
     @Test
     void buildWorkspaceTar_packsWorkingTreePreservingBinariesAndExecBit(@TempDir Path repo) throws Exception {
-        // A Gradle-style repo: a binary wrapper jar, an executable gradlew, a text build file, and a .git directory that must be excluded.
         byte[] binary = { 0, 1, 2, (byte) 0xFF, (byte) 0x89, 0x50 };
         FileUtils.writeByteArrayToFile(repo.resolve("gradle-wrapper.jar").toFile(), binary);
         Path gradlew = repo.resolve("gradlew");

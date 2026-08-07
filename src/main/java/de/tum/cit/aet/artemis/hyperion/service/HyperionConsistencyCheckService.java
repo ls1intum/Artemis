@@ -207,7 +207,6 @@ public class HyperionConsistencyCheckService {
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
     }
 
-    /** A failed structural check contributes nothing rather than failing the whole run: the semantic check's findings still stand on their own. */
     private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
         var child = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).contextualName("structural check")
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
@@ -236,7 +235,6 @@ public class HyperionConsistencyCheckService {
         }
     }
 
-    /** A failed semantic check contributes nothing rather than failing the whole run: the structural check's findings still stand on their own. */
     private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
         var child = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).contextualName("semantic check")
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))

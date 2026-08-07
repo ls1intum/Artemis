@@ -62,7 +62,7 @@ final class ReviewGuardrails {
         return value.length() <= MAX_REQUIREMENT_CHARS ? value : value.substring(0, MAX_REQUIREMENT_CHARS) + "…";
     }
 
-    /** Learning-fit explanations need enough room to retain the reviewer's causal diagnosis; the generic finding excerpts remain deliberately shorter. */
+    /** Learning-fit explanations need enough room to retain the reviewer's causal diagnosis; generic finding excerpts stay shorter. */
     static String truncateLearningEvidence(String value) {
         int limit = MAX_REQUIREMENT_CHARS * 2;
         return value.length() <= limit ? value : value.substring(0, limit) + "…";

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.api;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -56,6 +57,19 @@ public interface DistributedDataProvider {
      * @return a DistributedMap with the specified name
      */
     <K, V> DistributedMap<K, V> getMap(String name);
+
+    /**
+     * Returns a distributed map whose entries can be written with a per-entry expiry through {@link DistributedMap#put(Object, Object, Duration)}.
+     * <p>
+     * Separate from {@link #getMap(String)} because one backend needs a different underlying structure to support expiry at all, and because a map obtained here must not be
+     * mistaken for a plain one: the caller is relying on the expiry as its only backstop against leaking an entry whose writer died.
+     *
+     * @param name the name of the map
+     * @param <K>  the type of keys in the map
+     * @param <V>  the type of values in the map
+     * @return a DistributedMap supporting per-entry expiry
+     */
+    <K, V> DistributedMap<K, V> getExpiringMap(String name);
 
     /**
      * Returns a distributed topic with the given name.

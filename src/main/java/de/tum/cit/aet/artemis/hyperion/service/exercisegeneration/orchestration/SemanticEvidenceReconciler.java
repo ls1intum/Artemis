@@ -16,9 +16,9 @@ final class SemanticEvidenceReconciler {
     }
 
     /**
-     * Updates only the exact text-review hypothesis the mutant author explicitly targeted. One killed mutant refutes one concrete hypothesis, never an entire rule: unassociated,
-     * unassociated, paraphrased, or inconclusive findings remain untouched. A conclusive survivor is replaced by executable weak-oracle evidence in the caller; a killed mutant
-     * drains the exact hypothesis because the current suite already distinguishes it.
+     * Updates only the exact text-review hypothesis the mutant author targeted. One killed mutant refutes one concrete hypothesis, never an entire rule, so unassociated,
+     * paraphrased, or inconclusive findings remain untouched. A conclusive survivor is replaced by executable weak-oracle evidence in the caller; a killed mutant drains the
+     * exact hypothesis because the current suite already distinguishes it.
      */
     static List<SpecFidelityReport.Finding> reconcile(SpecFidelityReport report, List<SemanticMutantOutcome> outcomes) {
         Map<SpecFidelityReport.Finding, List<Disposition>> dispositionsByTarget = outcomes.stream().filter(outcome -> outcome.mutant().reviewTarget() != null).collect(

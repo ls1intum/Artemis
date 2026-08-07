@@ -231,7 +231,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(comp.canAdaptExercise()).toBe(true);
 
         const emitted: number[] = [];
-        comp.onAdaptThread.subscribe((threadId) => emitted.push(threadId));
+        comp.adaptThread.subscribe((threadId) => emitted.push(threadId));
         comp.requestAdapt();
         expect(emitted).toEqual([1]);
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.threadAction');
@@ -270,7 +270,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(comp.canAdaptExercise()).toBe(false);
         const emitted: number[] = [];
-        comp.onAdaptThread.subscribe((threadId) => emitted.push(threadId));
+        comp.adaptThread.subscribe((threadId) => emitted.push(threadId));
         comp.requestAdapt();
         expect(emitted).toEqual([]);
         expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.threadAction');

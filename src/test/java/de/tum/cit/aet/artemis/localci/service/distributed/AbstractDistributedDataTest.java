@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.localci.service.distributed;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +30,24 @@ import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
+
+    /**
+     * The expiring map must expire on <em>every</em> backend, not just the one whose map configuration happens to declare a TTL.
+     * <p>
+     * This is the payload-staging contract in {@code DistributedDataAccessService.getHyperionSandboxPayloads}: the interactive-sandbox relay stages up to 32 MB per copy
+     * operation and the writer's own removal is not guaranteed to run — the requesting core node can time out and run its removal before the agent has even staged the reply, and
+     * either side can crash mid-operation. A backend that silently ignored the expiry would therefore leak those blobs with nothing left to reclaim them, which is exactly what
+     * the Hazelcast-only map-level TTL used to hide.
+     */
+    @Test
+    void expiringMapEntryIsReclaimedWithoutAnyoneRemovingIt() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testExpiringMap-" + UUID.randomUUID());
+
+        map.put("staged-payload", "value", Duration.ofSeconds(1));
+
+        assertThat(map.get("staged-payload")).isEqualTo("value");
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertThat(map.get("staged-payload")).isNull());
+    }
 
     @Test
     void testQueueListener() {

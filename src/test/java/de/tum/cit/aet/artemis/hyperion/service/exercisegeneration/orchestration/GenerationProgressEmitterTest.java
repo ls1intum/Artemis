@@ -12,10 +12,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 
-/**
- * Plain unit test (no Spring/websocket/Hazelcast) for {@link GenerationProgressEmitter}: it streams every progress line to the live client immediately (per-turn feedback, no
- * buffering lag), sends progress before a following milestone (the ordering invariant), and records every event to the transcript with the correct terminal flag.
- */
 class GenerationProgressEmitterTest {
 
     /** A recorded transcript entry: the event and whether it terminated the run. */
@@ -37,7 +33,6 @@ class GenerationProgressEmitterTest {
         emitter.progress("line 0");
         emitter.progress("line 1");
 
-        // No coalescing: one push per line, verbatim.
         assertThat(sent).allSatisfy(push -> assertThat(push.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS));
         assertThat(sent.stream().map(ExerciseGenerationEventDTO::message).toList()).containsExactly("line 0", "line 1");
     }
@@ -49,7 +44,6 @@ class GenerationProgressEmitterTest {
         emitter.progress("progress a");
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "milestone"));
 
-        // Order matters: progress is streamed before the following milestone.
         assertThat(sent).hasSize(2);
         ExerciseGenerationEventDTO progress = sent.get(0);
         ExerciseGenerationEventDTO milestone = sent.get(1);
@@ -67,7 +61,6 @@ class GenerationProgressEmitterTest {
         emitter.progress("two");
         emitter.progress("three");
 
-        // Each line is recorded individually and non-terminally (the source of truth on reconnect).
         assertThat(recorded).allSatisfy(r -> {
             assertThat(r.event().type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
             assertThat(r.terminal()).isFalse();
@@ -75,8 +68,7 @@ class GenerationProgressEmitterTest {
         assertThat(recorded.stream().map(r -> r.event().message()).toList()).containsExactly("one", "two", "three");
     }
 
-    // Every terminal type (DONE/CANCELLED/ERROR) must be recorded with terminal=true so a reconnecting client knows the run finished; deleting any clause of the three-way OR would
-    // mislabel a finished run as still running.
+    // Every terminal type must be recorded with terminal=true, or a reconnecting client reads a finished run as still running.
     @ParameterizedTest
     @EnumSource(value = ExerciseGenerationEventDTO.Type.class, names = { "DONE", "CANCELLED", "ERROR" })
     void terminalEvent_isRecordedWithTerminalTrue(ExerciseGenerationEventDTO.Type type) {
@@ -102,7 +94,7 @@ class GenerationProgressEmitterTest {
 
     @Test
     void repairRoundLine_carriesItsCountsOnTheSameEventItStreams() {
-        // The counts must ride the event the client and the persisted transcript already carry; a second, parallel channel would be invisible to reconnect replay.
+        // The counts ride the event the transcript already carries; a parallel channel would be invisible to reconnect replay.
         GenerationProgressEmitter emitter = newEmitter();
 
         emitter.progress("Quality review round 2: 3 issues", new ExerciseGenerationRepairRoundDTO(2, 4, 2, 1, 2, 1, 1));
@@ -127,10 +119,7 @@ class GenerationProgressEmitterTest {
         assertThat(sent).singleElement().satisfies(event -> assertThat(event.repairRound()).isNull());
     }
 
-    /**
-     * The channel the attempt loop is handed must be usable as a plain {@code Consumer<String>}; every stage below the loop takes one, and a caller that supplies only a lambda
-     * must still get the human-readable line rather than losing it.
-     */
+    /** Every stage below the attempt loop takes a plain {@code Consumer<String>}, so a caller that supplies only a lambda must still receive the human-readable line. */
     @Test
     void aPlainConsumerSink_stillReceivesTheRoundLineWithoutTheCounts() {
         List<String> lines = new ArrayList<>();

@@ -123,45 +123,46 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * Returns the fail-closed external mutation slot for operational diagnosis.
+     * Returns the fail-closed slot currently blocking an exercise for operational diagnosis: an external REST mutation, an adaptation revert, or a generation past its point of no
+     * return. All three block generation, revert and ordinary REST edits, and none is ever released by the automatic stale-job scan, so this is the only way to obtain the token
+     * recovery requires.
      *
      * @param exerciseId the exercise id
-     * @return the active mutation, or 404 when none exists
+     * @return the blocking slot, or 404 when none exists
      */
-    @GetMapping("exercises/{exerciseId}/hyperion-external-mutation")
-    public ResponseEntity<GenerationJobService.ExternalMutationInfo> getExternalMutation(@PathVariable long exerciseId) {
-        return generationJobService.flatMap(service -> service.getExternalMutationInfo(exerciseId)).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("exercises/{exerciseId}/hyperion-wedged-slot")
+    public ResponseEntity<GenerationJobService.WedgedSlotInfo> getWedgedSlot(@PathVariable long exerciseId) {
+        return generationJobService.flatMap(service -> service.getWedgedSlotInfo(exerciseId)).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
-     * Recovers a wedged external mutation after the owning JVM has been confirmed terminated. The expected token prevents delayed recovery from clearing a newer owner.
+     * Recovers a wedged slot after the owning JVM has been confirmed terminated. The expected token prevents delayed recovery from clearing a newer owner.
      *
      * @param exerciseId the exercise id
-     * @param token      the expected mutation token
+     * @param token      the expected slot token
      * @param reason     the incident reason recorded in the persistent audit log
      * @return 204 when recovered, 400 for a missing reason, otherwise 404
      */
-    @DeleteMapping("exercises/{exerciseId}/hyperion-external-mutations/{token}")
-    public ResponseEntity<Void> recoverExternalMutation(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
+    @DeleteMapping("exercises/{exerciseId}/hyperion-wedged-slots/{token}")
+    public ResponseEntity<Void> recoverWedgedSlot(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
         if (reason.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
         Optional<GenerationJobService> service = generationJobService;
-        Optional<GenerationJobService.ExternalMutationInfo> mutation = service.flatMap(value -> value.getExternalMutationInfo(exerciseId))
-                .filter(info -> info.token().equals(token));
-        if (mutation.isEmpty()) {
+        Optional<GenerationJobService.WedgedSlotInfo> wedged = service.flatMap(value -> value.getWedgedSlotInfo(exerciseId)).filter(info -> info.token().equals(token));
+        if (wedged.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        GenerationJobService.ExternalMutationInfo info = mutation.orElseThrow();
+        GenerationJobService.WedgedSlotInfo info = wedged.orElseThrow();
         String auditReason = reason.replaceAll("[\\r\\n\\t]+", " ").replaceAll(" +", " ").trim();
         if (auditReason.length() > 500) {
             auditReason = auditReason.substring(0, 500);
         }
         String ownerNodeId = info.ownerNodeId() == null ? "unknown" : info.ownerNodeId();
-        auditEventRepository.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), Constants.HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT,
-                Map.of("exerciseId", exerciseId, "token", token, "ownerNodeId", ownerNodeId, "startedAt", info.startedAt().toString(), "reason", auditReason)));
-        boolean recovered = service.orElseThrow().recoverExternalMutationSlot(exerciseId, token);
-        log.info("External mutation recovery attempt for exercise {} and owner {} completed with recovered={}", exerciseId, info.ownerNodeId(), recovered);
+        auditEventRepository.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), Constants.HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT, Map.of("exerciseId",
+                exerciseId, "token", token, "kind", info.kind().name(), "ownerNodeId", ownerNodeId, "startedAt", info.startedAt().toString(), "reason", auditReason)));
+        boolean recovered = service.orElseThrow().recoverWedgedSlot(exerciseId, token);
+        log.info("Wedged {} slot recovery attempt for exercise {} and owner {} completed with recovered={}", info.kind(), exerciseId, info.ownerNodeId(), recovered);
         return recovered ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 

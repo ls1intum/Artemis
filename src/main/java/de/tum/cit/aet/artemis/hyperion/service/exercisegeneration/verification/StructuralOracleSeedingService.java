@@ -271,11 +271,6 @@ public class StructuralOracleSeedingService {
         }
     }
 
-    /**
-     * Drops the immutable oracle when its sandbox session ends.
-     *
-     * @param sessionId the finished sandbox session
-     */
     public void forget(String sessionId) {
         if (sessionId != null) {
             baselineBundles.remove(sessionId);
@@ -344,12 +339,6 @@ public class StructuralOracleSeedingService {
         }
         JsonNode values = entries.path(field);
         return values.isArray() && !values.isEmpty();
-    }
-
-    /** The first Java test file's directory, so structural tests land in the same source set and package; {@code null} when the agent wrote none. */
-    private static String locateTestSourceDirectory(Map<String, String> testFiles) {
-        return testFiles.keySet().stream().filter(path -> path.endsWith(".java") && path.contains("/")).map(path -> path.substring(0, path.lastIndexOf('/'))).findFirst()
-                .orElse(null);
     }
 
     private static String locateStructuralAssetDirectory(Map<String, String> testFiles) {

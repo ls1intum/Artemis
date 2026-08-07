@@ -31,8 +31,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.hyperion.config.GenerationShutdownGuard;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
@@ -96,15 +98,19 @@ public class GenerationTaskService {
 
     private final Duration ownerHeartbeatInterval;
 
+    private final GenerationShutdownGuard shutdownGuard;
+
     // Required: with the package-private test constructor also present, Spring cannot pick an injection constructor without it.
     @Autowired
     public GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
             HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
             ExerciseGenerationRevertService generationRevertService, @Qualifier("taskScheduler") TaskScheduler taskScheduler, ObservationRegistry observationRegistry,
-            HyperionAgentProperties agentProperties, @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval) {
+            HyperionAgentProperties agentProperties, @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval,
+            GenerationShutdownGuard shutdownGuard) {
         this(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository, generationBudgetService,
-                generationRevertService, taskScheduler, observationRegistry, agentProperties.getMaxJobDuration(), agentProperties.getMaxTokensPerJob(), ownerHeartbeatInterval);
+                generationRevertService, taskScheduler, observationRegistry, agentProperties.getMaxJobDuration(), agentProperties.getMaxTokensPerJob(), ownerHeartbeatInterval,
+                shutdownGuard);
     }
 
     GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
@@ -112,15 +118,20 @@ public class GenerationTaskService {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
             ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler, ObservationRegistry observationRegistry, Duration maxJobDuration,
             long maxTokensPerJob, Duration ownerHeartbeatInterval) {
-        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
-            throw new IllegalArgumentException("artemis.hyperion.agent.max-job-duration must be positive");
-        }
+        this(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository, generationBudgetService,
+                generationRevertService, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval, new GenerationShutdownGuard());
+    }
+
+    GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
+            HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
+            ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler, ObservationRegistry observationRegistry, Duration maxJobDuration,
+            long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard) {
+        HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
         if (maxTokensPerJob <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-tokens-per-job must be positive");
         }
-        if (ownerHeartbeatInterval == null || ownerHeartbeatInterval.isZero() || ownerHeartbeatInterval.isNegative() || ownerHeartbeatInterval.compareTo(maxJobDuration) >= 0) {
-            throw new IllegalArgumentException("artemis.hyperion.agent.owner-heartbeat-interval must be positive and shorter than max-job-duration");
-        }
+        HyperionGenerationTimeouts.validateOwnerHeartbeatInterval(ownerHeartbeatInterval, maxJobDuration);
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
         this.reviewService = reviewService;
@@ -135,6 +146,7 @@ public class GenerationTaskService {
         this.maxJobDuration = maxJobDuration;
         this.maxTokensPerJob = maxTokensPerJob;
         this.ownerHeartbeatInterval = ownerHeartbeatInterval;
+        this.shutdownGuard = shutdownGuard;
     }
 
     /**
@@ -206,8 +218,7 @@ public class GenerationTaskService {
                 return;
             }
             // The event's exercise was loaded on the request thread, so on this executor thread its lazy associations (buildConfig, template/solution participations) are
-            // detached and touching one during seeding would throw. Re-load it with exactly those associations initialized, and fail closed if it has since been deleted rather
-            // than falling back to the detached entity.
+            // detached and touching one during seeding would throw. Re-load with those associations initialized, and fail closed if the exercise has since been deleted.
             ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exerciseId).orElse(null);
             if (exercise == null) {
                 log.error("Exercise generation job {} aborted: programming exercise {} no longer exists", jobId, exerciseId);
@@ -236,8 +247,7 @@ public class GenerationTaskService {
             // Set only where the exercise was actually written. Everything else is a run whose work would otherwise die with the sandbox, and the finally below is what keeps it.
             boolean savedToExercise = false;
             try (GenerationOutcome outcome = generated) {
-                // Why the run stopped producing candidates, decided once for every terminal branch below. The run-level controls the attempt loop cannot see refine its own
-                // cooperative stop into the specific budget that ended it.
+                // Decided once for every terminal branch below: the run-level controls the attempt loop cannot see refine its cooperative stop into the budget that ended it.
                 TerminationReason terminationReason = refineTerminationReason(outcome.terminationReason(), deadlineExceeded.get(), tokenBudgetExceeded.get());
                 // Before any terminal branch below, so specification quality stays inspectable through the status/replay API even for a run that is never saved.
                 if (outcome.specDocument() != null) {
@@ -250,8 +260,7 @@ public class GenerationTaskService {
                     return;
                 }
                 if (tokenBudgetExceeded.get()) {
-                    // The budget controls provider spend, so it stops further model calls but must not discard work already paid for: saving consumes no provider tokens. Only
-                    // a run without a mechanically verified candidate ends here.
+                    // The budget controls provider spend, so it stops further model calls but must not discard work already paid for: saving consumes no provider tokens.
                     if (!outcome.isMechanicallyVerified()) {
                         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(false, true, false))
                                 .withTerminationReason(terminationReason));
@@ -260,8 +269,7 @@ public class GenerationTaskService {
                     emitter.progress("The token budget was reached; keeping and saving the already-verified exercise instead of discarding it.");
                 }
                 if (deadlineExceeded.get()) {
-                    // Same rule as the token budget above: the deadline stops further model work, it does not invalidate a candidate that already passed verification, and
-                    // persisting one neither re-runs nor re-bills it. Only a deadline hit with no verified checkpoint discards.
+                    // Same rule as the token budget above: the deadline stops further model work but does not invalidate a candidate that already passed verification.
                     if (!outcome.isMechanicallyVerified()) {
                         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, cancellationMessage(true, false, false))
                                 .withTerminationReason(terminationReason));
@@ -290,10 +298,13 @@ public class GenerationTaskService {
                                     .withTerminationReason(terminationReason));
                             break;
                         }
+                        // Registered BEFORE the transition and released again if it is refused, so a shutdown that observes this thread can only ever over-protect it.
+                        // Registering after a successful transition would leave a window in which an interrupt corrupts a half-written save.
+                        shutdownGuard.enterPointOfNoReturn();
                         if (!jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                            // enterNonCancellablePhase returns false for exactly two reasons, resolved atomically under the same distributed job-map lock as
-                            // requestCancellation/requestSystemCancellation: either a cancellation already won the race (the transcript is already terminal as CANCELLED, so
-                            // this run must be reported the same way, never as a save failure), or ownership of the job was genuinely lost.
+                            shutdownGuard.leavePointOfNoReturn();
+                            // enterNonCancellablePhase refuses for exactly two reasons, resolved atomically under the same distributed job-map lock as the cancellation paths:
+                            // a cancellation won the race (already terminal as CANCELLED, so report it that way and never as a save failure), or ownership was lost.
                             if (jobService.isCancelled(jobId)) {
                                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed.")
                                         .withTerminationReason(terminationReason));
@@ -430,26 +441,26 @@ public class GenerationTaskService {
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
             }
             finally {
-                // One place rather than one per terminal branch: a run stops producing candidates through a dozen exits, and a retention that has to be remembered at each of
-                // them is a retention that will be forgotten at the next one added. Reading the captured artifacts after close() is safe — close destroys the sandbox, not the
-                // in-memory capture verification already took.
+                // One place rather than one per terminal branch, because a run stops producing candidates through a dozen exits. Reading the captured artifacts after close() is
+                // safe: close destroys the sandbox, not the in-memory capture verification already took.
                 if (!savedToExercise) {
                     retainUnsavedCandidate(exerciseId, jobId, user, generated);
                 }
             }
         }
         catch (RuntimeException | LinkageError e) {
-            // A live-development rebuild can briefly invalidate a lazily loaded class in bootRun. Linkage errors are not recoverable inside this worker, but they must still
-            // terminalize the retained production job instead of leaving every status client polling forever. Production classpath failures receive the same honest terminal
-            // result.
+            // Linkage errors (a live-development rebuild invalidating a lazily loaded class, or a production classpath fault) are not recoverable inside this worker, but they
+            // must still terminalize the job instead of leaving every status client polling forever.
             log.error("Exercise generation job {} failed before producing a terminal outcome", jobId, e);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
         }
         finally {
+            // The run is over either way, so this thread is interruptible again and must not keep a shutdown waiting for it.
+            shutdownGuard.leavePointOfNoReturn();
             cancelScheduled(deadlineFuture);
             cancelScheduled(heartbeatFuture);
-            // Every terminal event this run published already sealed the accounting inside the transcript lock, before the event reached a client. This only resolves the paths
-            // that reach here without one, which must close as permanently incomplete rather than staying pending until the replay evidence expires.
+            // Every terminal event this run published already sealed the accounting inside the transcript lock. This resolves only the paths that reach here without one, which
+            // must close as permanently incomplete rather than staying pending until the replay evidence expires.
             jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
             clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
         }
@@ -458,14 +469,13 @@ public class GenerationTaskService {
     /**
      * Keeps a terminal run's produced candidate readable when the run did not earn a save.
      * <p>
-     * This is retention, not persistence, and the distinction is the whole point: the exercise, its repositories, and its version history are untouched, the candidate is held
-     * read-only in the same bounded replay evidence that already holds the transcript and the specification, it expires on the same TTL, and only the instructor who started the
-     * run can read it. The guarantee that unverified output never reaches a live exercise is unchanged — {@code GenerationPersistenceService} still refuses it outright. What
-     * changes is only that a failed run stops destroying the work the instructor paid for while telling them nothing about it.
+     * This is retention, not persistence: the exercise, its repositories, and its version history are untouched, the candidate is held read-only in the same bounded replay
+     * evidence that already holds the transcript and the specification, it expires on the same TTL, and only the instructor who started the run can read it. Unverified output
+     * still never reaches a live exercise — {@code GenerationPersistenceService} refuses it outright.
      */
     private void retainUnsavedCandidate(long exerciseId, String jobId, User user, GenerationOutcome outcome) {
-        // Deliberately not gated on hasCapturedArtifacts(): that is true for an outcome carrying only an empty problem statement, which is nothing to inspect. The snapshot
-        // itself is the one place that knows whether anything survived its own bounds and screening, so it is the only place allowed to answer "is there anything here".
+        // Not gated on hasCapturedArtifacts(), which is true even for an outcome carrying only an empty problem statement. Only the snapshot knows whether anything survived its
+        // own bounds and screening, so only it may answer "is there anything here".
         ExerciseGenerationRetainedArtifactsDTO candidate = RetainedArtifacts.of(jobId, outcome.capturedProducedFiles(), outcome.producedProblemStatement(), outcome.specDocument());
         if (candidate.isEmpty()) {
             return;
@@ -498,8 +508,8 @@ public class GenerationTaskService {
 
     /**
      * The deadline is a wall-clock SAFETY control, not a user stop. It halts further model work — the cancelled supplier reads {@code deadlineExceeded}, so the run stops at the
-     * next poll — but deliberately does not cancel the job: that would make {@link GenerationJobService#enterNonCancellablePhase} refuse and discard a mechanically verified
-     * candidate that is already a save obligation. The terminal branch decides save-vs-discard from whether a verified checkpoint survived.
+     * next poll — but does not cancel the job, which would make {@link GenerationJobService#enterNonCancellablePhase} refuse and discard a mechanically verified candidate that
+     * is already a save obligation. The terminal branch decides save-vs-discard from whether a verified checkpoint survived.
      */
     private ScheduledFuture<?> scheduleDeadline(AtomicBoolean deadlineExceeded, Instant deadlineAt) {
         Instant effectiveDeadlineAt = effectiveDeadlineAt(deadlineAt);
@@ -572,11 +582,6 @@ public class GenerationTaskService {
      * The loop sees only a cooperative {@code cancelled} flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@link TerminationReason#CANCELLED};
      * only this class knows which fired. Every other reason is the loop's own conclusion about the candidate and is passed through untouched — a run that converged before the
      * deadline fired still terminated by converging.
-     *
-     * @param reason              the reason the attempt loop recorded, or {@code null} when no loop produced this outcome
-     * @param deadlineExceeded    whether the run's wall-clock budget elapsed
-     * @param tokenBudgetExceeded whether the run's provider token budget was reached
-     * @return the reason to report on the terminal event
      */
     @Nullable
     static TerminationReason refineTerminationReason(@Nullable TerminationReason reason, boolean deadlineExceeded, boolean tokenBudgetExceeded) {
@@ -627,8 +632,8 @@ public class GenerationTaskService {
                 }
                 long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
                 if (total >= runTokenBudget && tokenBudgetExceeded.compareAndSet(false, true)) {
-                    // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Deliberately not requestSystemCancellation, which
-                    // would mark the job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.
+                    // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Not requestSystemCancellation, which would mark the
+                    // job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.
                     log.info("Exercise generation job {} reached its token budget; stopping after the current model response", jobId);
                 }
             }
@@ -687,8 +692,8 @@ public class GenerationTaskService {
      * baseline or claiming {@code liveExerciseChanged} for such a run would misrepresent a no-op as a real save, and would discard an earlier run's still-valid baseline.
      */
     private static boolean isNoOpPersist(GenerationPersistenceService.PersistResult persistResult) {
-        // A test-plan-only save changes weights/visibility without a repository commit or metadata update. Persistence records an exercise version for that durable change, so
-        // the version id is part of the no-op decision; otherwise the UI would claim nothing changed and skip revert/review setup after mutating grading.
+        // A test-plan-only save changes weights/visibility with no repository commit or metadata update, but does record an exercise version, so the version id is part of the
+        // decision; otherwise the UI would claim nothing changed and skip revert/review setup after mutating grading.
         return persistResult.postPersistHeads().isEmpty() && !persistResult.metadataChanged() && persistResult.savedExerciseVersionId() == null;
     }
 

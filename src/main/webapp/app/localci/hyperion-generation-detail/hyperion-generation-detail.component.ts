@@ -1,6 +1,6 @@
 import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, effect, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faCircleCheck, faRotate, faSpinner, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,10 +11,10 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { EMPTY, Observable, Subject, catchError, exhaustMap, interval, map, merge, takeUntil, tap, timer } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, exhaustMap, map, merge, takeUntil, tap, timer } from 'rxjs';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { elapsedSecondsSince, generationModeLabelKey, serverTimeSignal } from 'app/localci/hyperion-generation-job.utils';
 
 @Component({
     selector: 'jhi-hyperion-generation-detail',
@@ -39,12 +39,9 @@ import { ArtemisServerDateService } from 'app/foundation/service/server-date.ser
 export class HyperionGenerationDetailComponent implements OnInit {
     private static readonly REFRESH_INTERVAL_MS = 5000;
 
-    private static readonly CLOCK_INTERVAL_MS = 1000;
-
     private readonly route = inject(ActivatedRoute);
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly destroyRef = inject(DestroyRef);
-    private readonly serverDateService = inject(ArtemisServerDateService);
 
     readonly job = signal<GenerationSandboxJob | undefined>(undefined);
     readonly loading = signal(false);
@@ -69,13 +66,24 @@ export class HyperionGenerationDetailComponent implements OnInit {
 
     private readonly loadRequests = new Subject<boolean>();
 
-    private readonly now = toSignal(
-        interval(HyperionGenerationDetailComponent.CLOCK_INTERVAL_MS).pipe(
-            takeUntil(this.generationEnded),
-            map(() => this.serverDateService.now().valueOf()),
-        ),
-        { initialValue: this.serverDateService.now().valueOf() },
-    );
+    private readonly now = serverTimeSignal(this.generationEnded);
+
+    readonly modeLabelKey = computed(() => {
+        const job = this.job();
+        return job ? generationModeLabelKey(job.mode) : undefined;
+    });
+
+    readonly elapsedSeconds = computed(() => {
+        const job = this.job();
+        return job ? elapsedSecondsSince(job.startedAt, this.now()) : 0;
+    });
+
+    /** The sandbox container id: the session id without the {@code <agent>::} affinity prefix the server encodes into it. */
+    readonly containerId = computed(() => {
+        const sessionId = this.job()?.sessionId ?? '';
+        const separatorIndex = sessionId.indexOf('::');
+        return separatorIndex < 0 ? sessionId : sessionId.slice(separatorIndex + 2);
+    });
 
     private initialLoadResolved = false;
     private readonly backToAgent = viewChild<ElementRef<HTMLAnchorElement>>('backToAgent');
@@ -129,18 +137,6 @@ export class HyperionGenerationDetailComponent implements OnInit {
             return;
         }
         this.cancel(job);
-    }
-
-    elapsedSeconds(timestamp: string): number {
-        return Math.max(0, Math.floor((this.now() - Date.parse(timestamp)) / 1000));
-    }
-
-    containerId(sessionId: string): string {
-        return sessionId.includes('::') ? sessionId.slice(sessionId.indexOf('::') + 2) : sessionId;
-    }
-
-    modeKey(mode: GenerationSandboxJob['mode']): string {
-        return `artemisApp.buildAgents.generationSandboxes.${mode === 'ADAPT' ? 'adapt' : 'generate'}`;
     }
 
     private fetchJob(showLoading: boolean): Observable<unknown> {

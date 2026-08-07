@@ -7,9 +7,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * How much of a generation run's provider spend the reported {@link ExerciseGenerationUsageDTO} accounts for.
  * <p>
- * Three-valued on purpose. This is a metered feature, so an administrator reconciling a provider invoice against the recorded token-usage traces must be able to tell a cost that
- * is still being accumulated from a cost that is a permanent lower bound. Artemis already models every unknown per-model price as a nullable value rather than zero for the same
- * reason; collapsing the aggregate completeness signal back into a boolean would undo that at the level where it is actually read.
+ * Three-valued rather than a boolean: an administrator reconciling a provider invoice against the recorded token-usage traces must be able to tell a cost that is still being
+ * accumulated from a cost that is a permanent lower bound.
  */
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 @Schema(description = "Whether the reported usage is a complete account of a generation run's provider spend")

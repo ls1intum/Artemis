@@ -38,11 +38,8 @@ class SpecificationReviewCritic {
     private static final String SPECIFICATION_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/specification_review_system.st";
 
     /**
-     * Sized for the declared response shape: seven finding arrays (omissions, conflicts, internal conflicts, boundary checks, example checks, ambiguities, unsupported
-     * constraints), each entry
-     * carrying evidence IDs and one short reason, plus the learning-fit object (five ID lists, three prose fields, five booleans, one direction) and the concept-alignment
-     * object. Findings are capped at {@link #SPECIFICATION_REVIEW_MAX_FINDINGS} anyway, so a full critic-sized budget would buy length rather than evidence — but the cap covers
-     * hidden reasoning too, and a response cut off by it is unparseable and costs the correction pass below.
+     * Sized for the declared response shape: seven finding arrays plus the learning-fit and concept-alignment objects. Findings are capped at
+     * {@link #SPECIFICATION_REVIEW_MAX_FINDINGS} anyway, but this cap covers hidden reasoning too, and a response cut off by it is unparseable and costs a correction pass.
      */
     private static final int SPECIFICATION_REVIEW_MAX_OUTPUT_TOKENS = 8_192;
 
@@ -135,29 +132,11 @@ class SpecificationReviewCritic {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Reviews the cheapest irreversible boundary: the mechanically valid candidate SPEC before it becomes authority for solution, template, tests, and statement.
-     *
-     * @param brief         raw instructor brief, the scope authority
-     * @param specification mechanically valid candidate specification
-     * @param usageSink     optional token-usage sink
-     * @param cancelled     cooperative cancellation signal
-     * @return complete grounded findings, or an incomplete verdict when no trustworthy review was available
-     */
     SpecificationReview reviewSpecification(String brief, String specification, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
         return reviewSpecification(brief, null, specification, usageSink, cancelled);
     }
 
-    /**
-     * Reviews a mechanically valid candidate specification against the brief and its selected concept before the specification becomes authoritative.
-     *
-     * @param brief           the instructor brief
-     * @param selectedConcept the reviewed concept that led to the specification, or {@code null}
-     * @param specification   the candidate SPEC.md
-     * @param usageSink       optional token-usage sink
-     * @param cancelled       cooperative cancellation signal
-     * @return complete grounded findings, or an incomplete verdict when no trustworthy review was available
-     */
+    /** Returns complete grounded findings, or an incomplete verdict when no trustworthy review was available. */
     SpecificationReview reviewSpecification(String brief, @Nullable String selectedConcept, String specification, @Nullable Consumer<ChatResponse> usageSink,
             BooleanSupplier cancelled) {
         return reviewSpecification(brief, selectedConcept, specification, null, usageSink, cancelled);
@@ -705,8 +684,8 @@ class SpecificationReviewCritic {
 
     private static @Nullable String conceptAlignmentValidationError(@Nullable SpecificationConceptAlignmentItem item, SpecificationReviewEvidence evidence) {
         if (!evidence.hasConcept()) {
-            // There is no concept claim to adjudicate, so an unsolicited value cannot affect the verdict. Treat it like an unknown optional response field instead of
-            // discarding an otherwise complete, grounded review. The downstream disposition is derived as ALIGNED without reading this value.
+            // There is no concept claim to adjudicate, so an unsolicited value is treated like an unknown optional field rather than discarding an otherwise complete review;
+            // the downstream disposition is derived as ALIGNED without reading it.
             return null;
         }
         if (item == null) {

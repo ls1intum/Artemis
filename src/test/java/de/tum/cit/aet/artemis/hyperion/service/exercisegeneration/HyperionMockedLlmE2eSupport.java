@@ -34,7 +34,7 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     /**
-     * @return whether a Docker daemon is reachable, used locally as the developer convenience part of the {@code @EnabledIf} gate for the Docker-backed mocked E2E tests
+     * @return whether a Docker daemon is reachable
      */
     static boolean isDockerAvailable() {
         TransportConfig dockerTransportConfig = discoverDockerTransportConfig();
@@ -58,11 +58,8 @@ final class HyperionMockedLlmE2eSupport {
     }
 
     /**
-     * {@code @EnabledIf} gate for the Docker-backed mocked E2E tests.
-     * <p>
-     * Locally, a broken or absent Docker daemon skips the test — a developer convenience, since not every workstation runs Docker. In CI, Docker is expected to always be present
-     * (the server-test job already depends on it for Testcontainers), so the gate returns {@code true} unconditionally there even when the Docker probe itself fails: a broken
-     * Docker daemon in CI must fail the test loudly with the real error, not silently skip it and report a green, meaningless run.
+     * {@code @EnabledIf} gate for the Docker-backed mocked E2E tests. Locally an absent Docker daemon skips them; in CI the gate is always on, so a broken daemon fails loudly with
+     * the real error instead of reporting a green, meaningless run.
      *
      * @return whether the Docker-backed tests should run
      */
@@ -70,17 +67,13 @@ final class HyperionMockedLlmE2eSupport {
         return isRunningInCi() || isDockerAvailable();
     }
 
-    /**
-     * {@code @EnabledIf} gate for {@link HyperionBuildReadinessDockerIntegrationTest}. {@link #JAVA_BUILD_IMAGE} already falls back to the repo-owned production default when
-     * {@code HYPERION_TEST_JAVA_BUILD_IMAGE} is unset, so unlike the Docker daemon this test does not additionally require the environment variable to be set.
-     */
+    /** {@code @EnabledIf} gate for {@link HyperionBuildReadinessDockerIntegrationTest}; {@link #JAVA_BUILD_IMAGE} defaults to production, so only Docker is needed. */
     static boolean isReadinessMatrixConfigured() {
         return dockerGateEnabled();
     }
 
     /**
-     * @return the Testcontainers-discovered Docker transport config, or {@code null} when no Docker daemon is reachable; shared with the mocked E2E tests so they can re-point the
-     *         build agent at the real Docker host without duplicating the discovery logic
+     * @return the Testcontainers-discovered Docker transport config, or {@code null} when no Docker daemon is reachable
      */
     static TransportConfig discoverDockerTransportConfig() {
         DockerClientFactory dockerClientFactory = DockerClientFactory.instance();

@@ -21,17 +21,14 @@ public record SandboxOpResponseDTO(String correlationId, boolean success, String
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /** A success response carrying no further data (used by {@link SandboxOp#COPY_IN} and {@link SandboxOp#DESTROY}). */
     public static SandboxOpResponseDTO ok(String correlationId, String sessionId) {
         return new SandboxOpResponseDTO(correlationId, true, sessionId, null, null, null);
     }
 
-    /** A {@link SandboxOp#CREATE} success response carrying the new container id as the session handle. */
     public static SandboxOpResponseDTO created(String correlationId, String containerId) {
         return new SandboxOpResponseDTO(correlationId, true, containerId, null, null, null);
     }
 
-    /** An {@link SandboxOp#EXEC} success response carrying the captured exit code and bounded output. */
     public static SandboxOpResponseDTO exec(String correlationId, String sessionId, SandboxExecResultDTO execResult) {
         return new SandboxOpResponseDTO(correlationId, true, sessionId, execResult, null, null);
     }
@@ -48,7 +45,6 @@ public record SandboxOpResponseDTO(String correlationId, boolean success, String
         return new SandboxOpResponseDTO(correlationId, true, null, null, List.copyOf(sessions), null);
     }
 
-    /** A failure response carrying a short error description for the blocked caller to rethrow. */
     public static SandboxOpResponseDTO failure(String correlationId, String errorMessage) {
         return new SandboxOpResponseDTO(correlationId, false, null, null, null, errorMessage);
     }

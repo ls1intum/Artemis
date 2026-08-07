@@ -122,8 +122,7 @@ class ExerciseConceptSelectorTest {
 
         ExerciseConceptSelector.ConceptSelection result = new ExerciseConceptSelector(loop, critic).select("RAW BRIEF", () -> false, null, null);
 
-        // Nothing about the verdict softens: no concept was accepted. What is added is a usable starting point plus the exact objections raised against it, so the caller can
-        // choose between "produce a draft the reviewer argued with" and "produce nothing", instead of only ever having the second option.
+        // The verdict stays a rejection; what is added is a usable starting point plus the exact objections raised against it.
         assertThat(result.accepted()).isFalse();
         assertThat(result.fallback()).isNotNull();
         assertThat(result.fallback().candidate()).isEqualTo(2);
@@ -133,8 +132,7 @@ class ExerciseConceptSelectorTest {
 
     @Test
     void theLeastRejectedCandidateAcrossBothBatchesWins() {
-        // Rejection is not monotonic across batches: a replacement batch generated from review feedback can come back worse than the one it replaced. Offering the most recent
-        // batch's best would therefore discard a better draft the run already had in hand.
+        // Rejection is not monotonic across batches: a replacement batch can come back worse, so offering the latest batch's best would discard a better draft already in hand.
         String replacementCandidates = THREE_CANDIDATES.replace("clock repair", "tide charts");
         AgentLoopRunner loop = mock(AgentLoopRunner.class);
         SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
@@ -174,8 +172,7 @@ class ExerciseConceptSelectorTest {
 
     @Test
     void anIncompleteConceptReviewOffersNoFallbackBecauseNoCandidateWasEverJudged() {
-        // The distinction the caller depends on: a completed rejection is a design objection worth proceeding past, while a review that never returned a verdict has judged
-        // nothing and must not be dressed up as one.
+        // A completed rejection is a design objection worth proceeding past; a review that never returned a verdict has judged nothing.
         AgentLoopRunner loop = mock(AgentLoopRunner.class);
         SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
         when(loop.runTextSession(anyString(), eq(null), anyString(), eq(1), any(), any(), any()))
@@ -222,9 +219,8 @@ class ExerciseConceptSelectorTest {
 
     @Test
     void conceptAdmissionRejection_stillReportsTheAgentTurnsItSpent() throws Exception {
-        // The gate-abandoned paths are the ones an administrator most needs to see, and this is the earliest of them: the run is rejected before any attempt loop starts, so
-        // nothing downstream ever produces an outcome carrying a turn count. Exercised through the real agent loop and the real usage accumulator so the whole push path — turn
-        // begins, sink records, usage DTO reports — is covered rather than any single link of it.
+        // The run is rejected before any attempt loop starts, so nothing downstream produces an outcome carrying a turn count. The real agent loop and usage accumulator are wired
+        // in so the whole push path is covered rather than a single link of it.
         HazelcastInstance hazelcastInstance = Hazelcast
                 .newHazelcastInstance(new Config().setClusterName("hyperion-concept-turn-accounting-" + System.nanoTime()).setProperty("hazelcast.phone.home.enabled", "false"));
         try {

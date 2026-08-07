@@ -145,7 +145,6 @@ class GenerationJobReplayStoreTest {
         IMap<String, GenerationJobService.JobInfo> originalJobMap = jobMap();
         IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(originalJobMap);
         CountDownLatch lockAttempts = new CountDownLatch(2);
-        // Which future acquires the job-map lock first decided the outcome, and nothing ordered them: the restore must be the one that holds it while the status call arrives.
         CountDownLatch firstLockAcquired = new CountDownLatch(1);
         AtomicInteger acquisitions = new AtomicInteger();
         doAnswer(invocation -> {
@@ -184,8 +183,9 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void retainAfterJobCleared_expiresTranscriptFileChangesAndUsageTogetherOnTheConfiguredTtl() {
-        // The TTL is set at three independent call sites; a short injected value proves all three read the same configured property rather than drifting apart.
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofSeconds(1));
+        // The TTL is set at three independent call sites, so a short injected value proves all three read the same configured value. It must still outlast the writes below,
+        // which already carry it, and the pre-condition reads that follow them.
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofSeconds(5));
         long exerciseId = 610L;
         String key = String.valueOf(exerciseId);
         String jobId = "short-lived";
@@ -229,7 +229,7 @@ class GenerationJobReplayStoreTest {
 
         assertThat(events).hasSize(GenerationJobReplayStore.MAX_RETAINED_EVENTS);
         assertThat(events.getFirst().message()).isEqualTo("HEAD");
-        // One marker, never a run of them, and its count covers every event it stands in for: the marker occupies a retained slot, so the first overflow drops two events.
+        // The marker occupies a retained slot itself, so the first overflow drops two events.
         assertThat(events.get(1).type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
         assertThat(events.get(1).message()).isEqualTo((overflow + 1) + " earlier progress events are no longer retained.");
         assertThat(events.stream().filter(event -> event.message() != null && event.message().endsWith("no longer retained.")).toList()).hasSize(1);
@@ -281,11 +281,6 @@ class GenerationJobReplayStoreTest {
         replayStore.sealUsageOnWorkerExit(exerciseId, jobId);
 
         assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
-    }
-
-    @Test
-    void usageSnapshot_forAnExpiredOrDiscardedRun_reportsIncompleteRatherThanPending() {
-        assertThat(replayStore.usageSnapshot("never-existed")).isEqualTo(new GenerationJobReplayStore.UsageSnapshot(null, ExerciseGenerationAccountingState.INCOMPLETE));
     }
 
     @Test

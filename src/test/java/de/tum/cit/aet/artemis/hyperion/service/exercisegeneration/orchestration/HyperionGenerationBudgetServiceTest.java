@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,7 +67,7 @@ class HyperionGenerationBudgetServiceTest {
         when(repository.sumTokensSince(any(), any(), any())).thenReturn(299L);
         HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, Duration.ofHours(24), 100, 200, 300);
 
-        service.assertWithinBudgets(1L, 2L);
+        assertThatCode(() -> service.assertWithinBudgets(1L, 2L)).doesNotThrowAnyException();
     }
 
     @Test
@@ -119,10 +120,37 @@ class HyperionGenerationBudgetServiceTest {
         }
     }
 
+    @Test
+    void aFullyConsumedReservationIsClampedToZeroRatherThanRemoved() {
+        // The owning worker's heartbeat reads presence as proof it still owns the job, so removing a spent reservation would report lost ownership mid-save. The user budget
+        // equals one job's ceiling, so the final admission of the same size succeeds only if the exhausted reservation contributes exactly zero.
+        Config config = new Config();
+        config.setClusterName("hyperion-budget-service-test-" + System.nanoTime());
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
+        HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+        try {
+            when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 300, 0, 0, 300,
+                    Duration.ofMinutes(35));
+            service.init();
+            HyperionGenerationBudgetService.BudgetReservation exhausted = service.reserveGenerationBudget(1L, 2L, 300);
+
+            service.recordPersistedUsage(exhausted.id(), 300);
+
+            IMap<String, ?> reservations = hazelcastInstance.getMap("hyperion-generation-token-budget-reservations");
+            assertThat(reservations.containsKey(exhausted.id())).as("the spent reservation is still there for the owning worker's heartbeat to find").isTrue();
+            assertThat(service.refreshReservation(exhausted.id())).isTrue();
+            assertThat(service.reserveGenerationBudget(1L, 2L, 300).id()).isNotBlank();
+        }
+        finally {
+            hazelcastInstance.shutdown();
+        }
+    }
+
     /**
      * Two admissions racing at the last free slot must not both win. The reservation is serialised by a lock on one shared map key, so two services sharing a member exercise
-     * exactly that mutual exclusion. Forming a real multi-member cluster would test Hazelcast's own distribution rather than this budget arithmetic, and needs network
-     * conditions a test host cannot be relied on to provide.
+     * exactly that mutual exclusion; a real multi-member cluster would test Hazelcast's distribution rather than this budget arithmetic.
      */
     @Test
     void reserveGenerationBudget_concurrentAdmissionsAdmitExactlyOneJobAtTheBudgetBoundary() throws Exception {
@@ -206,7 +234,7 @@ class HyperionGenerationBudgetServiceTest {
 
     @Test
     void reservationIsSizedToWhatTheJobMaySpendRatherThanTheFleetWorstCase() {
-        // Reserving the fleet-wide worst case for every job throttled a course that only drafts small exercises at the same job count as one running the largest jobs.
+        // Reserving the fleet-wide worst case for every job throttles a course that only drafts small exercises at the same job count as one running the largest jobs.
         Config config = new Config();
         config.setClusterName("hyperion-budget-service-test-" + System.nanoTime());
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);

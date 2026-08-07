@@ -7,7 +7,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 /** Enables build-agent-side generation sandbox hosting only when the agent has configured positive capacity. */
 public class GenerationSandboxHostingEnabled implements Condition {
 
-    /** The single opt-in for build-agent-side generation hosting. Public so every diagnostic that reports missing capacity names the exact property an admin has to set. */
+    /** The single opt-in for build-agent-side generation hosting. Public so diagnostics can name the exact property an admin has to set. */
     public static final String MAX_GENERATION_SANDBOX_SLOTS_PROPERTY = "artemis.continuous-integration.build-agent.max-generation-sandbox-slots";
 
     @Override

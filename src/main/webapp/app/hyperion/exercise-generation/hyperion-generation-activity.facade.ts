@@ -1,6 +1,6 @@
-import { DestroyRef, Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject, Subscription, finalize, timeout } from 'rxjs';
+import { Observable, Subject, Subscription, defer, finalize, retry, takeUntil, throwError, timeout, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
@@ -21,15 +21,53 @@ import {
     HyperionGenerationEvent,
     HyperionGenerationMessage,
     HyperionGenerationMode,
+    HyperionGenerationStatus,
     HyperionGenerationVerdict,
     isFileChange,
 } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 const MAX_STATUS_LOAD_ATTEMPTS = 3;
+const STATUS_RETRY_BASE_DELAY_MS = 1_000;
 const STATUS_REQUEST_TIMEOUT_MS = 5_000;
+const STREAM_LOSS_REFRESH_MS = 1_000;
+const REVERT_AVAILABILITY_REFRESH_MS = 500;
+const CANCELLATION_STATUS_REFRESH_MS = 1_000;
 const MAX_CANCELLATION_STATUS_CHECKS = 3;
 const ACTIVE_STATUS_REFRESH_MS = 5_000;
 const IDLE_STATUS_REFRESH_MS = 15_000;
+
+/**
+ * A single delayed callback. Arming an armed slot is ignored, so the earliest deadline wins, and the owning
+ * injector being destroyed cancels it - which is why this facade needs no `ngOnDestroy`.
+ */
+class DelayedCall {
+    private subscription?: Subscription;
+
+    constructor(private readonly destroyRef: DestroyRef) {}
+
+    arm(delayMs: number, run: () => void): void {
+        if (this.subscription) {
+            return;
+        }
+        this.subscription = timer(delayMs)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.subscription = undefined;
+                run();
+            });
+    }
+
+    cancel(): void {
+        this.subscription?.unsubscribe();
+        this.subscription = undefined;
+    }
+}
+
+/** The host component's inputs, handed over once so the facade can derive from them instead of being pushed into. */
+export interface HyperionGenerationActivityInputs {
+    exerciseId: Signal<number | undefined>;
+    refreshingEditor: Signal<boolean>;
+}
 
 export interface HyperionGenerationCompletedEvent {
     jobId: string;
@@ -42,13 +80,15 @@ export interface HyperionGenerationCompletedEvent {
 }
 
 @Injectable()
-export class HyperionGenerationActivityFacade implements OnDestroy {
+export class HyperionGenerationActivityFacade {
     private readonly service = inject(HyperionExerciseGenerationService);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
 
-    readonly exerciseId = signal<number | undefined>(undefined);
-    readonly refreshingEditor = signal(false);
+    private readonly inputs = signal<HyperionGenerationActivityInputs>({ exerciseId: signal(undefined), refreshingEditor: signal(false) });
+
+    readonly exerciseId = computed(() => this.inputs().exerciseId());
+    readonly refreshingEditor = computed(() => this.inputs().refreshingEditor());
     readonly generationReverted = new Subject<string>();
     readonly generationCompleted = new Subject<HyperionGenerationCompletedEvent>();
 
@@ -82,49 +122,38 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     private streamSubscription?: Subscription;
     private streamJobId?: string;
     private exerciseStateSubscription?: Subscription;
-    private statusSubscription?: Subscription;
+    /** Completes the in-flight status request so its response can no longer be applied. */
+    private readonly statusRequestInvalidated = new Subject<void>();
     private statusRequestInFlight = false;
     private pendingStatusLoad?: { exerciseId: number; expectedJobId?: string; background: boolean };
-    private streamLossRefreshTimeout?: ReturnType<typeof setTimeout>;
-    private statusRetryTimeout?: ReturnType<typeof setTimeout>;
-    private revertAvailabilityRefreshTimeout?: ReturnType<typeof setTimeout>;
-    private cancellationStatusTimeout?: ReturnType<typeof setTimeout>;
-    private activeStatusTimeout?: ReturnType<typeof setTimeout>;
+    private readonly streamLossRefresh = new DelayedCall(this.destroyRef);
+    private readonly revertAvailabilityRefresh = new DelayedCall(this.destroyRef);
+    private readonly cancellationStatusRefresh = new DelayedCall(this.destroyRef);
+    /** Shared by the active (5 s) and idle (15 s) reconciliation polls, which are mutually exclusive. */
+    private readonly statusPoll = new DelayedCall(this.destroyRef);
     private cancellationStatusChecks = 0;
     private statusLoadAttempts = 0;
-    private loadedExerciseId?: number;
-    private loadSequence = 0;
     private ownershipResolved = false;
-    private destroyed = false;
     private readonly emittedTerminalJobs = new Set<string>();
 
     constructor() {
+        // Only the exercise being watched may retrigger this. Everything below writes signals that a synchronous
+        // status response also reads, so tracking the body would make the effect retrigger itself indefinitely.
         effect(() => {
             const id = this.exerciseId();
-            if (id === this.loadedExerciseId) {
-                return;
-            }
-            this.loadedExerciseId = id;
-            this.closeExerciseState();
-            this.reset();
-            if (id !== undefined) {
-                this.openExerciseState(id);
-                this.loadStatus(id);
-            }
+            untracked(() => {
+                this.closeExerciseState();
+                this.reset();
+                if (id !== undefined) {
+                    this.openExerciseState(id);
+                    this.loadStatus(id);
+                }
+            });
         });
     }
 
-    ngOnDestroy(): void {
-        this.destroyed = true;
-        this.loadSequence++;
-        this.closeStream();
-        this.closeExerciseState();
-        this.statusSubscription?.unsubscribe();
-        this.clearStreamLossRefresh();
-        this.clearStatusRetry();
-        this.clearRevertAvailabilityRefresh();
-        this.clearCancellationStatusRefresh();
-        this.clearActiveStatusRefresh();
+    connect(inputs: HyperionGenerationActivityInputs): void {
+        this.inputs.set(inputs);
     }
 
     attachToJob(jobId: string, mode: HyperionGenerationMode): void {
@@ -164,7 +193,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
 
     private revert(): void {
         const id = this.exerciseId();
-        if (this.destroyed || id === undefined || !this.canRevert() || this.reverting()) {
+        if (this.destroyRef.destroyed || id === undefined || !this.canRevert() || this.reverting()) {
             return;
         }
         this.reverting.set(true);
@@ -194,7 +223,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     cancel(): void {
         const id = this.exerciseId();
         const job = this.jobId();
-        if (this.destroyed || id === undefined || job === undefined || !this.ownedByCaller() || !this.cancellable() || this.cancelRequested()) {
+        if (this.destroyRef.destroyed || id === undefined || job === undefined || !this.ownedByCaller() || !this.cancellable() || this.cancelRequested()) {
             return;
         }
         this.cancelRequested.set(true);
@@ -224,7 +253,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     }
 
     private loadStatus(exerciseId: number, expectedJobId?: string, background = false): void {
-        if (this.destroyed) {
+        if (this.destroyRef.destroyed) {
             return;
         }
         if (this.statusRequestInFlight) {
@@ -235,23 +264,22 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
             };
             return;
         }
-        const sequence = ++this.loadSequence;
         this.statusRequestInFlight = true;
         if (!background) {
             this.statusLoading.set(true);
         }
-        this.statusSubscription = this.service
-            .getStatus(exerciseId)
+        this.requestStatus(exerciseId, background)
             .pipe(
-                timeout(STATUS_REQUEST_TIMEOUT_MS),
+                takeUntil(this.statusRequestInvalidated),
                 takeUntilDestroyed(this.destroyRef),
                 finalize(() => {
                     this.statusRequestInFlight = false;
-                    const pending = this.pendingStatusLoad;
-                    this.pendingStatusLoad = undefined;
-                    if (pending && !this.destroyed && sequence === this.loadSequence) {
+                    // Re-read rather than capture: invalidating the request also drops whatever it had queued.
+                    if (this.pendingStatusLoad) {
                         window.queueMicrotask(() => {
-                            if (!this.destroyed && sequence === this.loadSequence) {
+                            const pending = this.pendingStatusLoad;
+                            this.pendingStatusLoad = undefined;
+                            if (pending && !this.destroyRef.destroyed) {
                                 this.loadStatus(pending.exerciseId, pending.expectedJobId, pending.background);
                             }
                         });
@@ -260,10 +288,6 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
             )
             .subscribe({
                 next: (status) => {
-                    if (sequence !== this.loadSequence) {
-                        return;
-                    }
-                    this.clearStatusRetry();
                     this.statusLoading.set(false);
                     this.statusLoadFailed.set(false);
                     this.statusLoadAttempts = 0;
@@ -291,7 +315,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
                             return;
                         }
                         this.cancelRequested.set(false);
-                        this.clearCancellationStatusRefresh();
+                        this.cancellationStatusRefresh.cancel();
                         this.running.set(false);
                     }
                     const sameJob = this.jobId() === status.jobId;
@@ -311,8 +335,8 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
                     const terminalEvent = latestTerminalEvent(events);
                     if (terminalEvent) {
                         this.cancelRequested.set(false);
-                        this.clearCancellationStatusRefresh();
-                        this.clearActiveStatusRefresh();
+                        this.cancellationStatusRefresh.cancel();
+                        this.statusPoll.cancel();
                         this.closeStream();
                         this.restoreTerminalState(terminalEvent);
                         this.running.set(false);
@@ -347,37 +371,47 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
                         }
                         this.scheduleActiveStatusRefresh(exerciseId, status.jobId);
                     } else {
-                        this.clearActiveStatusRefresh();
+                        this.statusPoll.cancel();
                         this.scheduleIdleStatusRefresh(exerciseId);
                     }
                 },
-                error: (error: unknown) => {
-                    if (sequence === this.loadSequence) {
-                        if (background) {
-                            this.statusLoading.set(false);
-                            this.statusLoadAttempts++;
-                            if (!this.ownershipResolved || this.statusLoadAttempts >= MAX_STATUS_LOAD_ATTEMPTS) {
-                                this.statusLoadFailed.set(true);
-                            }
-                            if (expectedJobId !== undefined && this.running()) {
-                                this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
-                            } else {
-                                this.scheduleIdleStatusRefresh(exerciseId);
-                            }
-                            return;
-                        }
+                error: () => {
+                    this.statusLoading.set(false);
+                    if (background) {
                         this.statusLoadAttempts++;
-                        if (this.isRetryableStatusError(error) && this.statusLoadAttempts < MAX_STATUS_LOAD_ATTEMPTS) {
-                            this.scheduleStatusRetry(exerciseId, expectedJobId, 1_000 * 2 ** (this.statusLoadAttempts - 1));
-                        } else {
-                            this.statusLoading.set(false);
-                            if (!this.ownershipResolved) {
-                                this.statusLoadFailed.set(true);
-                            }
+                        if (!this.ownershipResolved || this.statusLoadAttempts >= MAX_STATUS_LOAD_ATTEMPTS) {
+                            this.statusLoadFailed.set(true);
                         }
+                        if (expectedJobId !== undefined && this.running()) {
+                            this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
+                        } else {
+                            this.scheduleIdleStatusRefresh(exerciseId);
+                        }
+                        return;
+                    }
+                    if (!this.ownershipResolved) {
+                        this.statusLoadFailed.set(true);
                     }
                 },
             });
+    }
+
+    /**
+     * A foreground load owns its own bounded, exponentially backed-off retry; only the attempts a background
+     * poll makes still need counting, because those decide when the panel reports the status as unavailable.
+     */
+    private requestStatus(exerciseId: number, background: boolean): Observable<HyperionGenerationStatus | null> {
+        // `defer` so a retry issues a fresh request instead of re-subscribing the observable built here.
+        const request = defer(() => this.service.getStatus(exerciseId)).pipe(timeout(STATUS_REQUEST_TIMEOUT_MS));
+        return background
+            ? request
+            : request.pipe(
+                  retry({
+                      count: MAX_STATUS_LOAD_ATTEMPTS - 1,
+                      delay: (error: unknown, retryCount: number) =>
+                          this.isRetryableStatusError(error) ? timer(STATUS_RETRY_BASE_DELAY_MS * 2 ** (retryCount - 1)) : throwError(() => error),
+                  }),
+              );
     }
 
     private isRetryableStatusError(error: unknown): boolean {
@@ -385,7 +419,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     }
 
     private openStream(jobId: string): boolean {
-        if (this.destroyed) {
+        if (this.destroyRef.destroyed) {
             return false;
         }
         if (this.streamSubscription && this.streamJobId === jobId) {
@@ -431,7 +465,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
 
     private handleExerciseState(state: HyperionExerciseGenerationState): void {
         const exerciseId = this.exerciseId();
-        if (this.destroyed || exerciseId === undefined || state.exerciseId !== exerciseId) {
+        if (this.destroyRef.destroyed || exerciseId === undefined || state.exerciseId !== exerciseId) {
             return;
         }
         this.cancelStatusRequest();
@@ -449,7 +483,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
                 this.ownedByCaller.set(false);
                 this.cancellable.set(false);
             }
-            this.clearActiveStatusRefresh();
+            this.statusPoll.cancel();
             this.loadStatus(exerciseId, state.jobId, true);
             return;
         }
@@ -459,12 +493,12 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
         this.running.set(false);
         this.cancellable.set(false);
         this.closeStream();
-        this.clearActiveStatusRefresh();
+        this.statusPoll.cancel();
         this.loadStatus(exerciseId, state.jobId, true);
     }
 
     private handleMessage(message: HyperionGenerationMessage): void {
-        this.clearStreamLossRefresh();
+        this.streamLossRefresh.cancel();
         if (isFileChange(message)) {
             this.upsertFileChange(message);
             return;
@@ -478,8 +512,8 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
             this.statusLoadAttempts = 0;
             this.ownershipResolved = true;
             this.cancelRequested.set(false);
-            this.clearCancellationStatusRefresh();
-            this.clearActiveStatusRefresh();
+            this.cancellationStatusRefresh.cancel();
+            this.statusPoll.cancel();
             this.running.set(false);
             this.verdict.set(message.verdict);
             this.completionStatus.set(message.completionStatus);
@@ -496,7 +530,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     }
 
     private refreshRevertAvailability(exerciseId: number, jobId: string, retry = true): void {
-        if (this.destroyed) {
+        if (this.destroyRef.destroyed) {
             return;
         }
         this.service
@@ -505,7 +539,6 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
             .subscribe({
                 next: (status) => {
                     if (this.exerciseId() === exerciseId && this.jobId() === jobId && status?.jobId === jobId) {
-                        this.clearStatusRetry();
                         this.statusLoadFailed.set(false);
                         this.statusLoadAttempts = 0;
                         this.ownershipResolved = true;
@@ -527,17 +560,8 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     }
 
     private scheduleRevertAvailabilityRefresh(exerciseId: number, jobId: string): void {
-        if (this.destroyed) {
-            return;
-        }
-        this.clearRevertAvailabilityRefresh();
-        this.revertAvailabilityRefreshTimeout = setTimeout(() => {
-            this.revertAvailabilityRefreshTimeout = undefined;
-            if (this.destroyed) {
-                return;
-            }
-            this.refreshRevertAvailability(exerciseId, jobId, false);
-        }, 500);
+        this.revertAvailabilityRefresh.cancel();
+        this.revertAvailabilityRefresh.arm(REVERT_AVAILABILITY_REFRESH_MS, () => this.refreshRevertAvailability(exerciseId, jobId, false));
     }
 
     private upsertFileChange(fileChange: ExerciseGenerationFileChange): void {
@@ -622,105 +646,39 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
         );
     }
 
-    private refreshStatusAfterStreamLoss(delay = 1_000): void {
-        if (this.destroyed || this.streamLossRefreshTimeout !== undefined) {
-            return;
-        }
-        this.streamLossRefreshTimeout = setTimeout(() => {
-            this.streamLossRefreshTimeout = undefined;
-            if (this.destroyed) {
-                return;
-            }
+    private refreshStatusAfterStreamLoss(): void {
+        this.streamLossRefresh.arm(STREAM_LOSS_REFRESH_MS, () => {
             const id = this.exerciseId();
             if (id !== undefined && (this.running() || this.statusLoading())) {
                 this.loadStatus(id);
             }
-        }, delay);
-    }
-
-    private clearStreamLossRefresh(): void {
-        if (this.streamLossRefreshTimeout !== undefined) {
-            clearTimeout(this.streamLossRefreshTimeout);
-            this.streamLossRefreshTimeout = undefined;
-        }
-    }
-
-    private scheduleStatusRetry(exerciseId: number, expectedJobId: string | undefined, delay: number): void {
-        if (this.destroyed || this.statusRetryTimeout !== undefined) {
-            return;
-        }
-        this.statusRetryTimeout = setTimeout(() => {
-            this.statusRetryTimeout = undefined;
-            if (!this.destroyed && this.exerciseId() === exerciseId) {
-                this.loadStatus(exerciseId, expectedJobId);
-            }
-        }, delay);
-    }
-
-    private clearStatusRetry(): void {
-        if (this.statusRetryTimeout !== undefined) {
-            clearTimeout(this.statusRetryTimeout);
-            this.statusRetryTimeout = undefined;
-        }
-    }
-
-    private clearRevertAvailabilityRefresh(): void {
-        if (this.revertAvailabilityRefreshTimeout !== undefined) {
-            clearTimeout(this.revertAvailabilityRefreshTimeout);
-            this.revertAvailabilityRefreshTimeout = undefined;
-        }
+        });
     }
 
     private scheduleCancellationStatusRefresh(exerciseId: number, jobId: string): void {
-        if (this.destroyed || this.cancellationStatusTimeout !== undefined || this.cancellationStatusChecks >= MAX_CANCELLATION_STATUS_CHECKS) {
+        if (this.cancellationStatusChecks >= MAX_CANCELLATION_STATUS_CHECKS) {
             return;
         }
-        this.cancellationStatusTimeout = setTimeout(() => {
-            this.cancellationStatusTimeout = undefined;
-            if (this.destroyed) {
-                return;
-            }
+        this.cancellationStatusRefresh.arm(CANCELLATION_STATUS_REFRESH_MS, () => {
             this.cancellationStatusChecks++;
             this.loadStatus(exerciseId, jobId);
-        }, 1_000);
-    }
-
-    private clearCancellationStatusRefresh(): void {
-        if (this.cancellationStatusTimeout !== undefined) {
-            clearTimeout(this.cancellationStatusTimeout);
-            this.cancellationStatusTimeout = undefined;
-        }
+        });
     }
 
     private scheduleActiveStatusRefresh(exerciseId: number, jobId: string): void {
-        if (this.destroyed || this.activeStatusTimeout !== undefined) {
-            return;
-        }
-        this.activeStatusTimeout = setTimeout(() => {
-            this.activeStatusTimeout = undefined;
-            if (!this.destroyed && this.exerciseId() === exerciseId && this.jobId() === jobId && this.running()) {
+        this.statusPoll.arm(ACTIVE_STATUS_REFRESH_MS, () => {
+            if (this.exerciseId() === exerciseId && this.jobId() === jobId && this.running()) {
                 this.loadStatus(exerciseId, jobId, true);
             }
-        }, ACTIVE_STATUS_REFRESH_MS);
+        });
     }
 
     private scheduleIdleStatusRefresh(exerciseId: number): void {
-        if (this.destroyed || this.activeStatusTimeout !== undefined) {
-            return;
-        }
-        this.activeStatusTimeout = setTimeout(() => {
-            this.activeStatusTimeout = undefined;
-            if (!this.destroyed && this.exerciseId() === exerciseId && !this.running()) {
+        this.statusPoll.arm(IDLE_STATUS_REFRESH_MS, () => {
+            if (this.exerciseId() === exerciseId && !this.running()) {
                 this.loadStatus(exerciseId, undefined, true);
             }
-        }, IDLE_STATUS_REFRESH_MS);
-    }
-
-    private clearActiveStatusRefresh(): void {
-        if (this.activeStatusTimeout !== undefined) {
-            clearTimeout(this.activeStatusTimeout);
-            this.activeStatusTimeout = undefined;
-        }
+        });
     }
 
     private closeStream(): void {
@@ -735,9 +693,7 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     }
 
     private cancelStatusRequest(): void {
-        this.loadSequence++;
-        this.statusSubscription?.unsubscribe();
-        this.statusSubscription = undefined;
+        this.statusRequestInvalidated.next();
         this.statusRequestInFlight = false;
         this.pendingStatusLoad = undefined;
     }
@@ -745,11 +701,10 @@ export class HyperionGenerationActivityFacade implements OnDestroy {
     private reset(): void {
         this.cancelStatusRequest();
         this.closeStream();
-        this.clearStreamLossRefresh();
-        this.clearStatusRetry();
-        this.clearRevertAvailabilityRefresh();
-        this.clearCancellationStatusRefresh();
-        this.clearActiveStatusRefresh();
+        this.streamLossRefresh.cancel();
+        this.revertAvailabilityRefresh.cancel();
+        this.cancellationStatusRefresh.cancel();
+        this.statusPoll.cancel();
         this.jobId.set(undefined);
         this.mode.set(undefined);
         this.running.set(false);

@@ -294,7 +294,7 @@ final class ApprovedStructuralContract {
     /**
      * QDox preserves the spelling used at each source site in {@code getGenericValue()}. The approved SPEC commonly uses a fully qualified JDK type while normal Java source
      * imports it, so comparing that spelling rejects a semantically identical API. Compare resolved generic names instead, while reducing exercise-owned types back to their
-     * stable simple names because SPEC blocks intentionally have no package declaration.
+     * stable simple names because SPEC blocks have no package declaration.
      */
     private static String canonicalType(JavaType type, Set<String> exerciseTypes, String exercisePackage) {
         return canonicalTypeName(type.getGenericCanonicalName(), exerciseTypes, exercisePackage);
@@ -307,7 +307,7 @@ final class ApprovedStructuralContract {
                 canonical = canonical.replaceAll("(?<![\\w$])" + Pattern.quote(exercisePackage + "." + exerciseType) + "(?![\\w$])", exerciseType);
             }
         }
-        // Public-API skeletons intentionally contain declarations only, not package/import boilerplate. QDox therefore leaves a skeleton's ordinary `List<T>` spelling
+        // Public-API skeletons contain declarations only, not package/import boilerplate. QDox therefore leaves a skeleton's ordinary `List<T>` spelling
         // unresolved while resolving the same imported type in repository source to `java.util.List<T>`. Normalize the two Java namespaces implicitly available to these
         // skeletons, except where the exercise itself owns the colliding simple name. Other library types remain fully qualified, so unrelated same-named APIs cannot match.
         for (String implicitPackage : List.of("java.lang.", "java.util.")) {

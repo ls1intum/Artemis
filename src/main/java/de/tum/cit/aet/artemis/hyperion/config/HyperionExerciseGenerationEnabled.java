@@ -11,10 +11,9 @@ import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
  * Condition guarding the agentic exercise-generation feature specifically (not all of Hyperion).
  * <p>
  * On top of {@link HyperionEnabled} it requires the dedicated {@code artemis.hyperion.exercise-generation.enabled} opt-in and the {@code core}, {@code localci}, and
- * {@code localvc}
- * profiles, because generation uses the integrated LocalCI / LocalVC lifecycle and persists generated exercise content through core repository/database services. None of that
- * exists on a Jenkins deployment or a build-agent-only node, so the feature is inert there — the REST controller and orchestration engine are not registered. The other Hyperion
- * features (problem statement, quiz, FAQ) stay gated on {@link HyperionEnabled} alone.
+ * {@code localvc} profiles, because generation uses the integrated LocalCI / LocalVC lifecycle and persists generated exercise content through core repository/database services.
+ * None of that exists on a Jenkins deployment or a build-agent-only node, so the REST controller and orchestration engine are not registered there. The other Hyperion features
+ * (problem statement, quiz, FAQ) stay gated on {@link HyperionEnabled} alone.
  */
 public class HyperionExerciseGenerationEnabled implements Condition {
 

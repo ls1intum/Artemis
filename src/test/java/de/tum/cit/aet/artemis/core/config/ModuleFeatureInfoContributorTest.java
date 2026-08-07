@@ -126,9 +126,8 @@ class ModuleFeatureInfoContributorTest {
     }
 
     /**
-     * Makes the mocked environment honour the contract of the real one for the defaulting overload: {@code getProperty(key, type, default)} returns the default rather than
-     * null for an unknown key. Without this, any production lookup of a property this test does not explicitly stub returns null and fails with a NullPointerException the
-     * moment it is unboxed — which says nothing about the code under test and breaks whenever an unrelated feature flag is added.
+     * Makes the mocked environment honour the real contract of {@code getProperty(key, type, default)} for unknown keys; without it, every unstubbed property returns null and
+     * fails with a NullPointerException on unboxing whenever an unrelated feature flag is added.
      */
     @BeforeEach
     void defaultUnknownBooleanPropertiesToTheirDefault() {

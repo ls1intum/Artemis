@@ -47,6 +47,12 @@ public class LocalDataProviderService implements DistributedDataProvider {
     }
 
     @Override
+    public <K, V> DistributedMap<K, V> getExpiringMap(String name) {
+        // LocalMap schedules the expiry itself, so no distinct structure is needed.
+        return getMap(name);
+    }
+
+    @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         // noinspection unchecked
         return (DistributedTopic<T>) topics.computeIfAbsent(name, _ -> new LocalTopic<T>());

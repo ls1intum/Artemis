@@ -755,8 +755,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getStudentParticipations()).hasSize(1);
-        // Two participations were created above (instructor1, student1); pinning the literal catches a regression where the count silently drifts from what this test
-        // actually set up, which the previous self-referential query-based assertion could not.
+        // Two participations were created above (instructor1, student1).
         assertThat(programmingExerciseServer.getNumberOfParticipations()).isEqualTo(2L);
     }
 
@@ -869,7 +868,7 @@ public class ProgrammingExerciseIntegrationTestService {
         String problemStatementWithId = "[task][taskname](<testid>%s</testid>)".formatted(test1.getId());
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
-        // The problem statement is owned by its own endpoint; a metadata update deliberately leaves it untouched (issue #13046).
+        // The problem statement is owned by its own endpoint; a metadata update leaves it untouched (issue #13046).
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         var response = request.patchWithResponseBody(endpoint, problemStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
         assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);

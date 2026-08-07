@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.local;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +9,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -36,6 +39,10 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     private final ConcurrentHashMap<UUID, MapListener> mapListeners = new ConcurrentHashMap<>();
 
     private final ExecutorService notificationExecutor;
+
+    /** Shared across every local map; entries with an expiry are rare and the task is a single guarded removal. */
+    private static final ScheduledExecutorService EXPIRY_SCHEDULER = Executors
+            .newSingleThreadScheduledExecutor(BasicThreadFactory.builder().namingPattern("local-map-expiry-%d").daemon().build());
 
     public LocalMap() {
         this(Executors.newCachedThreadPool(BasicThreadFactory.builder().namingPattern("local-map-listener-%d").daemon().build()));
@@ -92,6 +99,26 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         else {
             notifyEntryAdded(key, value);
         }
+    }
+
+    @Override
+    public void put(K key, V value, Duration timeToLive) {
+        put(key, value);
+        // The single-JVM backend has no eviction machinery, so schedule the expiry. Value-guarded so a re-put under the same key is never evicted by the previous entry's timer.
+        EXPIRY_SCHEDULER.schedule(() -> {
+            ReentrantLock lock = getLock(key);
+            lock.lock();
+            boolean expired;
+            try {
+                expired = map.remove(key, value);
+            }
+            finally {
+                lock.unlock();
+            }
+            if (expired) {
+                notifyEntryRemoved(key, value);
+            }
+        }, Math.max(1L, timeToLive.toMillis()), TimeUnit.MILLISECONDS);
     }
 
     @Override

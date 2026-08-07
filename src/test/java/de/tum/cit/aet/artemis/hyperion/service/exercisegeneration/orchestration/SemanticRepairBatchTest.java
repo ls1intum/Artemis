@@ -9,10 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 
-/**
- * The repair-round scheduler is a pure function of the review findings and the fairness state, so it is covered here rather than through a generation run: driving it through the
- * orchestrator would pay a full agent-loop fixture for every scheduling rule and could only observe the choice indirectly, through the prompt.
- */
+/** The repair-round scheduler is a pure function of the review findings and the fairness state; through the orchestrator its choice is only observable via the prompt. */
 class SemanticRepairBatchTest {
 
     private static SpecFidelityReport oracleAndScaffoldFindings() {
@@ -23,8 +20,7 @@ class SemanticRepairBatchTest {
 
     @Test
     void aSurfaceMayHoldConsecutiveRoundsBecauseStrengtheningOneCanTakeSeveral() {
-        // Strengthening an oracle until it rejects every contract-breaking implementation can genuinely take several rounds, so yielding after one would cost the round that
-        // closes the last gap.
+        // Strengthening an oracle until it rejects every contract-breaking implementation can take several rounds, so yielding after one would cost the round that closes the gap.
         SpecFidelityReport report = oracleAndScaffoldFindings();
 
         assertThat(SemanticRepairBatch.next(report, EnumSet.noneOf(RepairSurface.class), null, 0).orElseThrow().surface()).isEqualTo(RepairSurface.ORACLE);

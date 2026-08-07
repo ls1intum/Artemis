@@ -20,7 +20,7 @@ class BinaryContentTest {
 
     @Test
     void detectsBinary_whenContentIsNotValidUtf8() {
-        // A lone 0xFF / 0x89 is invalid UTF-8 (the PNG/JAR signature bytes), so this is binary even without a NUL.
+        // A lone 0xFF / 0x89 is invalid UTF-8, so this is binary even without a NUL.
         byte[] invalidUtf8 = { (byte) 0xFF, (byte) 0x89, 0x50, 0x4E };
         assertThat(BinaryContent.isBinary(invalidUtf8)).isTrue();
     }
@@ -29,7 +29,6 @@ class BinaryContentTest {
     void treatsValidUtf8TextAsNonBinary_includingShellScripts() {
         assertThat(BinaryContent.isBinary("#!/bin/sh\necho build\n".getBytes(StandardCharsets.UTF_8))).as("a .sh script is text").isFalse();
         assertThat(BinaryContent.isBinary("public class A {}\n".getBytes(StandardCharsets.UTF_8))).isFalse();
-        // Multi-byte UTF-8 (emoji, accented characters) is valid text, not binary.
         assertThat(BinaryContent.isBinary("café — déjà vu ✅\n".getBytes(StandardCharsets.UTF_8))).isFalse();
         assertThat(BinaryContent.isBinary(new byte[0])).isFalse();
     }
@@ -44,7 +43,7 @@ class BinaryContentTest {
     }
 
     @Test
-    void detectsBinaryMarkersAfterTheFormerSniffWindow(@TempDir Path dir) throws Exception {
+    void detectsABinaryMarkerFarBeyondTheFirstKilobytes(@TempDir Path dir) throws Exception {
         byte[] content = new byte[9000];
         Arrays.fill(content, (byte) 'a');
         content[8500] = 0;
@@ -57,7 +56,7 @@ class BinaryContentTest {
 
     @Test
     void stillDetectsBinary_whenAnInvalidSequenceSitsInsideTheWindow_notOnlyAtTheBoundary() {
-        // The boundary back-off must trim ONLY a truncated tail; an invalid UTF-8 sequence earlier in a >8 KiB file must still mark it binary (no masking of a real defect).
+        // The boundary back-off trims only a truncated tail, so an invalid UTF-8 sequence earlier in a >8 KiB file still marks the content binary.
         byte[] content = new byte[9000];
         Arrays.fill(content, (byte) 'a');
         content[100] = (byte) 0xC0;
@@ -65,7 +64,7 @@ class BinaryContentTest {
         assertThat(BinaryContent.isBinary(content)).isTrue();
     }
 
-    /** Builds a NUL-free ASCII byte array of {@code totalLength} with {@code multibyte} spliced in at {@code offset}, for sniff-boundary tests. */
+    /** Builds a NUL-free ASCII byte array of {@code totalLength} with {@code multibyte} spliced in at {@code offset}. */
     private static byte[] textWithMultibyteAt(byte[] multibyte, int offset, int totalLength) {
         byte[] content = new byte[totalLength];
         Arrays.fill(content, (byte) 'a');
@@ -82,7 +81,7 @@ class BinaryContentTest {
 
         assertThat(BinaryContent.isBinaryFile(jar)).isTrue();
         assertThat(BinaryContent.isBinaryFile(script)).isFalse();
-        // A missing file is treated as non-binary (so the caller's normal handling applies), never silently protected.
+        // A missing file is non-binary, so the caller's normal handling applies.
         assertThat(BinaryContent.isBinaryFile(dir.resolve("does-not-exist"))).isFalse();
     }
 }

@@ -60,8 +60,7 @@ public class HyperionGenerationCapacityHealthIndicator implements HealthIndicato
     /**
      * Warns, at most once per {@link #REJECTION_WARNING_INTERVAL}, that a generation request was rejected for lack of capacity.
      * <p>
-     * Rate limited because an instructor retrying, or a client polling, would otherwise turn a single configuration problem into log noise; the interval is short enough that the
-     * first rejection after a quiet period is always recorded.
+     * Rate limited because an instructor retrying, or a client polling, would otherwise turn a single configuration problem into log noise.
      */
     public void warnGenerationRejectedForMissingCapacity() {
         GenerationSandboxCapacity capacity = capacity().orElse(null);

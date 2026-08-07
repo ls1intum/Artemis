@@ -509,8 +509,6 @@
             </div>
             <ng-container editorBottomPanel>
                 @if (showGenerationActivity()) {
-                    <p-confirmDialog key="hyperionGenerateConfirmation" />
-                    <p-confirmDialog key="hyperionReloadSavedExerciseConfirmation" />
                     <jhi-hyperion-generation-activity
                         [exerciseId]="exercise?.id"
                         [startAllowed]="canGenerateExercise()"
@@ -536,5 +534,20 @@
                 [generateHtmlEvents]="previewEvents$"
             />
         </jhi-code-editor-container>
+        <!-- Kept outside the editor's bottom panel: that panel's content is destroyed whenever another tab is
+             selected, which would take these overlays down with it. -->
+        @if (showGenerationActivity()) {
+            <tum-ui-confirm-dialog key="hyperionGenerateConfirmation" />
+            <tum-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
+            <tum-ui-dialog
+                [(visible)]="adaptDialogVisible"
+                [dismissableMask]="true"
+                size="medium"
+                [header]="'artemisApp.review.adaptExercise.title' | artemisTranslate"
+                (hidden)="onAdaptDialogHidden()"
+            >
+                <jhi-review-adapt-exercise-dialog [findings]="adaptDialogFindings()" (confirmed)="onAdaptDialogConfirmed($event)" (cancelled)="adaptDialogVisible.set(false)" />
+            </tum-ui-dialog>
+        }
     </div>
 }

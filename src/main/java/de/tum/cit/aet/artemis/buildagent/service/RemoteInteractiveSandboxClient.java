@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,14 +62,31 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     /** Hard cap for tar payloads carried by the distributed relay. */
     static final int MAX_PAYLOAD_BYTES = 32 * 1024 * 1024;
 
+    /**
+     * Expiry for a staged copy payload. Both sides write with it, because neither side's removal is guaranteed to run: the requesting core node can time out (and run its
+     * {@code finally} removal) before the agent has even staged the copy-out payload, and either side can crash mid-operation. Must stay comfortably longer than the longest
+     * control operation so it can never expire a payload that is still in play.
+     */
+    static final Duration PAYLOAD_STAGING_TTL = Duration.ofMinutes(15);
+
     /** Allows relay overhead beyond the inner operation timeout. */
     private static final Duration RELAY_SLACK = Duration.ofSeconds(60);
 
     /** Bounds control operations that have no inner execution timeout. */
     private static final Duration CONTROL_OP_TIMEOUT = Duration.ofMinutes(5);
 
-    /** Re-publish interval for the same idempotency key, recovering a request or response dropped by the distributed topic without repeating the operation. */
+    /**
+     * First re-publish delay for the same idempotency key, recovering a request or response dropped by the distributed topic without repeating the operation. A re-publish is a
+     * cluster-wide broadcast every hosting agent deserializes on its event thread, so it is not free: the delay doubles up to {@link #MAX_RELAY_RETRY_INTERVAL}, keeping recovery
+     * from a genuinely dropped message fast while a long, healthy operation costs about a dozen broadcasts instead of hundreds at a fixed interval.
+     */
     private static final Duration RELAY_RETRY_INTERVAL = Duration.ofSeconds(5);
+
+    /** Ceiling on the backoff, so even a multi-hour operation keeps a bounded worst-case recovery time for a dropped message. */
+    private static final Duration MAX_RELAY_RETRY_INTERVAL = Duration.ofSeconds(60);
+
+    /** Fraction of the delay that is randomised, so concurrent generations on different core nodes do not re-publish in lockstep. */
+    private static final double RETRY_JITTER_FRACTION = 0.2;
 
     private static final Duration OBSERVABILITY_OP_TIMEOUT = Duration.ofSeconds(10);
 
@@ -78,7 +96,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    /** Pending operations keyed by correlation id; completed by the response listener when the matching reply arrives. */
+    /** Completed by the response listener when the reply with the matching correlation id arrives. */
     private final Map<String, CompletableFuture<SandboxOpResponseDTO>> pendingOperations = new ConcurrentHashMap<>();
 
     private DistributedTopic<SandboxOpResponseDTO> responsesTopic;
@@ -94,7 +112,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     }
 
     /**
-     * Registers the response listener.
+     * Subscribes to the response topic, completing each pending operation when its reply arrives.
      */
     @PostConstruct
     public void registerResponseListener() {
@@ -223,15 +241,15 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         String targetAgent = agentOf(sessionId);
         String containerId = containerOf(sessionId);
         String correlationId = newCorrelationId();
-        // Stage the (up to 32 MB) tar in the keyed map instead of on the broadcast request, so only the target agent transfers the bytes rather than every subscriber deserializing
-        // them on its event thread.
-        distributedDataAccessService.getHyperionSandboxPayloads().put(correlationId, payload);
+        // Stage the tar in the keyed map instead of on the broadcast request, so only the target agent transfers the bytes rather than every subscriber deserializing them on its
+        // event thread.
+        distributedDataAccessService.getHyperionSandboxPayloads().put(correlationId, payload, PAYLOAD_STAGING_TTL);
         try {
             SandboxOpRequestDTO request = SandboxOpRequestDTO.copyIn(correlationId, targetAgent, containerId, destinationPath);
             relay(request, controlOpTimeout);
         }
         finally {
-            // Keep the payload available while the same correlation id may be retried, then reclaim it after a terminal response or timeout.
+            // Only after a terminal response or timeout: until then the same correlation id may still be retried and needs the payload.
             distributedDataAccessService.getHyperionSandboxPayloads().remove(correlationId);
         }
     }
@@ -251,7 +269,7 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
             return new TarArchiveInputStream(new ByteArrayInputStream(payload));
         }
         finally {
-            // Always reclaim the staged entry, whether we just read it or relay failed before the agent could stage/we could read, so a large blob never lingers in the map.
+            // Reclaim on every path, including a relay failure before the agent staged anything, so a large blob never lingers in the map.
             distributedDataAccessService.getHyperionSandboxPayloads().remove(correlationId);
         }
     }
@@ -345,21 +363,29 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
     private SandboxOpResponseDTO awaitResponse(SandboxOpRequestDTO request, CompletableFuture<SandboxOpResponseDTO> future, Duration budget)
             throws InterruptedException, ExecutionException, TimeoutException {
         long deadline = System.nanoTime() + budget.toNanos();
+        long retryIntervalNanos = relayRetryInterval.toNanos();
+        long maxRetryIntervalNanos = Math.max(retryIntervalNanos, MAX_RELAY_RETRY_INTERVAL.toNanos());
         while (true) {
             long remainingNanos = deadline - System.nanoTime();
             if (remainingNanos <= 0) {
                 throw new TimeoutException();
             }
             try {
-                return future.get(Math.min(remainingNanos, relayRetryInterval.toNanos()), TimeUnit.NANOSECONDS);
+                return future.get(Math.min(remainingNanos, jittered(retryIntervalNanos)), TimeUnit.NANOSECONDS);
             }
             catch (TimeoutException e) {
                 if (System.nanoTime() >= deadline) {
                     throw e;
                 }
                 publishRetry(request);
+                retryIntervalNanos = Math.min(retryIntervalNanos * 2, maxRetryIntervalNanos);
             }
         }
+    }
+
+    private static long jittered(long intervalNanos) {
+        double factor = 1.0 - RETRY_JITTER_FRACTION + ThreadLocalRandom.current().nextDouble() * 2 * RETRY_JITTER_FRACTION;
+        return Math.max(1L, (long) (intervalNanos * factor));
     }
 
     private void publishRetry(SandboxOpRequestDTO request) {
@@ -447,7 +473,6 @@ public class RemoteInteractiveSandboxClient implements InteractiveSandbox {
         return new String[] { sessionHandle.substring(0, separator), sessionHandle.substring(separator + SESSION_HANDLE_SEPARATOR.length()) };
     }
 
-    /** Buffers a tar payload while enforcing {@link #MAX_PAYLOAD_BYTES}. */
     private static byte[] readBounded(InputStream input) {
         try (ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
             byte[] chunk = new byte[8192];

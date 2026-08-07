@@ -35,7 +35,7 @@ final class ProblemStatementBindingChecker {
     private static final Pattern BARE_TASK_KEYWORD = Pattern.compile("\\[tasks?\\](?!\\s*\\[[^\\]]*\\]\\s*\\()", Pattern.CASE_INSENSITIVE);
 
     /**
-     * Grader-mechanics phrasings that must not reach a student, each naming a grader or runner internal a student-facing statement has no business exposing. Deliberately
+     * Grader-mechanics phrasings that must not reach a student, each naming a grader or runner internal a student-facing statement has no business exposing. They must stay
      * high-precision: generic instructor prose like "complete the method in the template file" is legitimate, and matching it would false-reject valid problem statements.
      */
     private static final List<Pattern> PROSE_MECHANICS_LEAKS = List.of(Pattern.compile("notimplementederror", Pattern.CASE_INSENSITIVE), Pattern.compile("todo!\\(\\)"),
@@ -276,7 +276,6 @@ final class ProblemStatementBindingChecker {
         return seams.stream().map(seam -> seam + "=" + visibleTestsBySeam.getOrDefault(seam, List.of())).collect(Collectors.joining(", "));
     }
 
-    /** See {@link #TASK_LIKE_BINDING}. */
     static List<String> malformedTaskKeywords(String problemStatement) {
         Matcher matcher = TASK_LIKE_BINDING.matcher(withoutMarkdownCode(problemStatement));
         List<String> wrongKeywords = new ArrayList<>();
@@ -331,9 +330,9 @@ final class ProblemStatementBindingChecker {
     }
 
     /**
-     * Real gradable tests production will grade but no {@code [task]} binding exposes, EXCLUDING the ones the grading plan hides until the due date. A hidden test is deliberately
-     * unbound: binding it would render a checkbox that cannot turn green before the deadline while advertising the overfit probe. The exemption must move together with the
-     * ban on mentioning hidden tests, or the two rules are jointly unsatisfiable. Empty {@code hiddenTestNames} (no readable plan) is fail-open.
+     * Real gradable tests production will grade but no {@code [task]} binding exposes, EXCLUDING the ones the grading plan hides until the due date. A hidden test must stay
+     * unbound: binding it would render a checkbox that cannot turn green before the deadline while advertising the overfit probe. The exemption must move together with the ban on
+     * mentioning hidden tests, or the two rules are jointly unsatisfiable. Empty {@code hiddenTestNames} (no readable plan) is fail-open.
      */
     static List<String> unboundGradableTestNames(String problemStatement, List<String> actualTestNames, int testCount, Set<String> hiddenTestNames) {
         if (actualTestNames.isEmpty() || actualTestNames.size() < testCount) {
@@ -384,6 +383,16 @@ final class ProblemStatementBindingChecker {
             }
         }
         return offenders;
+    }
+
+    /** Opening of {@link #proseHygieneRejection}, so a caller can recognise that rejection among untyped reason strings. */
+    static final String PROSE_HYGIENE_REJECTION_PREFIX = "The problem statement leaks grader internals or stray task markers into student-facing prose: ";
+
+    /** Shared by the stage gate and the acceptance oracle, so the two can never word this rule differently. */
+    static String proseHygieneRejection(List<String> leaks) {
+        return PROSE_HYGIENE_REJECTION_PREFIX + leaks
+                + ". Rewrite it as a student would read it — describe the required behaviour and edge cases, never how the exercise is built, tested or graded, and bind tasks "
+                + "only via [task][Title](testName) lines.";
     }
 
     /** Surfaced verbatim to the agent so a retry can excise the exact offending text. See {@link #BARE_TASK_KEYWORD} and {@link #PROSE_MECHANICS_LEAKS}. */

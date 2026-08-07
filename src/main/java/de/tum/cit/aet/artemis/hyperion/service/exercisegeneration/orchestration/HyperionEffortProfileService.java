@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -30,7 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.Hyperi
  * <p>
  * Admins define, users select: everything that costs money, pins a model, or changes semantics is decided here from Spring configuration, and the only thing that crosses the API
  * boundary is a name drawn from this set. An unknown or unconfigured name fails closed with a 400 rather than falling back to the default, because a silent fallback is how an
- * instructor gets a surprise bill — the same failure by which a comparison between two configurations would silently be a comparison of one.
+ * instructor gets a surprise bill.
  */
 @Lazy
 @Service
@@ -64,8 +67,8 @@ public class HyperionEffortProfileService {
         }
         Map<String, HyperionGenerationSettings> resolved = new LinkedHashMap<>();
         properties.getProfiles().forEach((name, profile) -> resolved.put(name, materialise(name, profile, properties, modelDefaults)));
-        // Deliberately order-preserving rather than Map.copyOf: the selectable list is instructor-facing, and a set that reorders itself between restarts is a UI
-        // defect and makes "the first one" an unusable convention for any client.
+        // Order-preserving rather than Map.copyOf: the selectable list is instructor-facing, and a set that reorders itself between restarts makes "the first one" an unusable
+        // convention for any client.
         this.profilesByName = Collections.unmodifiableMap(resolved);
         this.defaultSettings = resolveDefault(properties, deploymentDefault);
     }
@@ -88,7 +91,10 @@ public class HyperionEffortProfileService {
             throw new IllegalArgumentException("Hyperion effort profile names must use lower snake_case and contain at most 64 characters");
         }
         int maxTurns = profile.getMaxTurns() == null ? properties.getMaxTurns() : profile.getMaxTurns();
-        var maxJobDuration = profile.getMaxJobDuration() == null ? properties.getMaxJobDuration() : profile.getMaxJobDuration();
+        Duration maxJobDuration = profile.getMaxJobDuration() == null ? properties.getMaxJobDuration() : profile.getMaxJobDuration();
+        if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
+            throw invalidOption(name, "max-job-duration must be positive");
+        }
         long maxTokensPerJob = profile.getMaxTokensPerJob() == null ? properties.getMaxTokensPerJob() : profile.getMaxTokensPerJob();
         boolean stagedGeneration = profile.getStagedGeneration() == null ? properties.isStagedGeneration() : profile.getStagedGeneration();
         String stagedContext = profile.getStagedContext() == null ? properties.getStagedContext() : profile.getStagedContext();
@@ -204,5 +210,16 @@ public class HyperionEffortProfileService {
      */
     public long largestMaxTokensPerJob() {
         return Math.max(defaultSettings.maxTokensPerJob(), profilesByName.values().stream().mapToLong(HyperionGenerationSettings::maxTokensPerJob).max().orElse(0L));
+    }
+
+    /**
+     * The longest wall-clock deadline any configured profile can give a run. The duration twin of {@link #largestMaxTokensPerJob()}: the stale-slot timeout must exceed every
+     * deadline a run may actually be given, or a profile that raises the deadline would have its slot reclaimed by another node while it is still legitimately running.
+     *
+     * @return the maximum {@code max-job-duration} across the deployment default and every configured profile
+     */
+    public Duration longestMaxJobDuration() {
+        return profilesByName.values().stream().map(HyperionGenerationSettings::maxJobDuration).filter(Objects::nonNull).max(Comparator.naturalOrder())
+                .filter(longest -> longest.compareTo(defaultSettings.maxJobDuration()) > 0).orElseGet(defaultSettings::maxJobDuration);
     }
 }

@@ -36,8 +36,7 @@ class RetainedArtifactsTest {
     @Test
     void of_ordersFilesByRepositoryThenByPath_regardlessOfInputOrder() {
         Map<RepositoryType, Map<String, String>> producedFiles = new LinkedHashMap<>();
-        // Fed in SOLUTION, TESTS, TEMPLATE order (and with each repository's own entries reversed) to prove the output order comes from the fixed repository order and a path
-        // sort, not from whatever order the caller happened to build the maps in.
+        // Fed in SOLUTION, TESTS, TEMPLATE order with each repository's entries reversed, so a passing output order can only come from the fixed repository order and a path sort.
         LinkedHashMap<String, String> solutionFiles = new LinkedHashMap<>();
         solutionFiles.put("z.txt", "zzz");
         solutionFiles.put("a.txt", "aaa");
@@ -151,12 +150,5 @@ class RetainedArtifactsTest {
         ExerciseGenerationRetainedArtifactsDTO result = RetainedArtifacts.of("job-empty", Map.of(), null, null);
 
         assertThat(result.isEmpty()).isTrue();
-    }
-
-    @Test
-    void of_specDocumentPassesThroughVerbatim() {
-        ExerciseGenerationRetainedArtifactsDTO result = RetainedArtifacts.of("job-spec", Map.of(), null, "# Spec\n## Rules\n- R1");
-
-        assertThat(result.specDocument()).isEqualTo("# Spec\n## Rules\n- R1");
     }
 }

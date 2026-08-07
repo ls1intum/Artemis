@@ -12,23 +12,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * The reconnection view of an exercise-generation run, returned when a client (re)loads the page so it can replay the transcript and decide whether to keep listening.
  *
  * @param jobId           the job id (the websocket topic suffix)
- * @param running         whether the run is still active; owners subscribe for private updates, while other instructors poll the sanitized status
- * @param mode            the explicit run intent (generate vs. adapt), so a reconnecting client can restore the correct header label and the revert affordance without inferring
- *                            it
+ * @param running         whether the run is still active
+ * @param mode            the explicit run intent, so a reconnecting client does not have to infer it
  * @param events          the events produced so far, oldest first, to replay into the transcript
  * @param fileChanges     the latest lightweight change per file, in write order, for reconnect replay
  * @param revertAvailable whether the server still retains the baseline required to undo the latest saved generation or adaptation
  * @param revertJobId     the successful run whose baseline can be reverted; may differ from {@code jobId} when a later run failed or was cancelled
- * @param revertMode      the mode of {@code revertJobId}, used for truthful undo copy
+ * @param revertMode      the mode of {@code revertJobId}
  * @param ownedByCaller   whether the requesting instructor owns the active run and may inspect its retained details
  * @param cancellable     whether the active run is still in its disposable sandbox phase and can be cancelled safely
- * @param specDocument    the gate-approved {@code SPEC.md} behavioural specification, captured as soon as the spec gate passes (the earliest reviewable intermediate result);
- *                            {@code null}/omitted for non-owner or sanitized views, when the stage was skipped (an instructor statement served as the spec), or before the gate
+ * @param specDocument    the gate-approved {@code SPEC.md} behavioural specification; omitted for non-owner or sanitized views, when the stage was skipped, or before the gate
  * @param usage           aggregate model usage for this terminal run; owner-only and absent while running or when accounting could not be loaded
  * @param accountingState how complete {@code usage} is as an account of this run's provider spend. A running job is {@code PENDING}; terminal status without retained usage is
  *                            {@code INCOMPLETE}
- * @param effortProfile   the name of the effort profile this run actually resolved to, so a caller can verify what ran rather than what it asked for; omitted for sanitized views
- *                            and for deployments that configure no profiles
+ * @param effortProfile   the effort profile this run actually resolved to; omitted for sanitized views and for deployments that configure no profiles
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseGenerationStatusDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String jobId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean running,

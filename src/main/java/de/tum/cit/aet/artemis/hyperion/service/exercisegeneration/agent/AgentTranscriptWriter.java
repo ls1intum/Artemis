@@ -26,9 +26,8 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
 /**
- * Writes the full model conversation of a finished agent session to disk as Markdown, so an operator can read qualitatively what the model saw, said, and did — the
- * progress-event stream and final artifacts alone cannot answer "why did the agent do that". Disabled by default: it only writes when {@code artemis.hyperion.agent.transcript-dir}
- * names a directory, which deployments leave unset and test/debug environments point at a scratch folder. Strictly best-effort — a transcript write failure never affects the run.
+ * Writes the full model conversation of a finished agent session to disk as Markdown, so an operator can read what the model saw, said, and did. Disabled unless
+ * {@code artemis.hyperion.agent.transcript-dir} names a directory, which deployments leave unset. Best-effort — a transcript write failure never affects the run.
  */
 @Lazy
 @Component

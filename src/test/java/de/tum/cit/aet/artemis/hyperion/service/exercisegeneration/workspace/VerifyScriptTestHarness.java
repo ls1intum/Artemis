@@ -28,7 +28,7 @@ final class VerifyScriptTestHarness {
         FileUtils.writeStringToFile(path.toFile(), content.toString(), StandardCharsets.UTF_8);
     }
 
-    /** Renders a default Java verify.sh (generation only ever runs for Java/Maven exercises, so tests that do not care about the language use this fixture). */
+    /** Renders a default Java verify.sh, for tests that do not care about the language. */
     static String verifyScript() {
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -77,7 +77,7 @@ final class VerifyScriptTestHarness {
 
         String fullScript = verifyScript(service, exercise);
         String collectSnippet = slice(fullScript, "rm -rf \"$REPORTS_DIR\"", "echo \"" + SandboxBuildCommandService.COLLECTED_MARKER);
-        // Bind the variables the collect snippet reads; point REPORTS_DIR at a per-run dir so we can read back what was collected.
+        // Bind the variables the sliced collect snippet reads, with REPORTS_DIR pointing at a per-run dir the caller can read back.
         Path reportsDir = reportsParent.resolve("solution");
         String script = "BUILD_DIR='" + buildDir + "'\nBUILD_START_MARKER='" + marker + "'\nREPORTS_DIR='" + reportsDir + "'\nrc=0\nseq=0\n" + collectSnippet + "\n";
         Path scriptFile = tempDir.resolve(name + "-collect.sh");

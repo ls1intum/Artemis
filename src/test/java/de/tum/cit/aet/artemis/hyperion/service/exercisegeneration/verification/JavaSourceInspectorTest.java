@@ -29,8 +29,7 @@ class JavaSourceInspectorTest {
 
     @Test
     void stripJavaComments_removesCommentBodiesWithoutMovingAnyLine() {
-        // javaTestAnnotationSummary attributes a method to its enclosing class by LINE INDEX, so a stripper that collapsed a block comment would misattribute every method after
-        // it.
+        // javaTestAnnotationSummary attributes a method to its enclosing class by line index, so a stripper that collapsed a block comment would misattribute later methods.
         String source = """
                 class A {
                     /* first
@@ -49,7 +48,7 @@ class JavaSourceInspectorTest {
 
     @Test
     void javaTestAnnotationSummary_readsAnAnnotationWhoseArgumentListSpansLines() {
-        // The continuation scan is the only reason this parses: line-at-a-time reading would see "@StrictTimeout(" with no argument and reject a perfectly valid bound.
+        // Line-at-a-time reading would see "@StrictTimeout(" with no argument and reject a valid bound.
         String source = """
                 import de.tum.in.test.api.BlacklistPath;
                 import de.tum.in.test.api.StrictTimeout;

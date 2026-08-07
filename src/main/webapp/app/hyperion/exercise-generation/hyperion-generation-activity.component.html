@@ -1,10 +1,15 @@
 @if (visible()) {
-    <section class="hyperion-activity" [attr.aria-label]="titleLabelKey() | artemisTranslate" data-testid="hyperion-generation-activity">
+    <section
+        class="flex h-full min-w-0 flex-col overflow-auto bg-[var(--p-content-background)]"
+        [attr.aria-label]="titleLabelKey() | artemisTranslate"
+        data-testid="hyperion-generation-activity"
+    >
         @if (!idle() && !statusLoadFailed()) {
-            <header class="hyperion-activity-header">
-                <div class="hyperion-activity-heading">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
+                <div class="flex flex-wrap items-center gap-2">
                     @if (liveStatus(); as status) {
-                        <span class="hyperion-activity-running-status" role="status" aria-atomic="true" data-testid="hyperion-generation-live-status">
+                        <!-- Visible only: the same text is announced through the CDK LiveAnnouncer, see the component. -->
+                        <span class="flex items-center gap-1.5 text-[0.85rem] text-muted-color" data-testid="hyperion-generation-live-status">
                             @if (status.busy) {
                                 <fa-icon [icon]="faSpinner" animation="spin" />
                             }
@@ -13,14 +18,11 @@
                             } @else {
                                 <span [jhiTranslate]="status.labelKey"></span>
                             }
-                            @if (!status.busy && persistenceState(); as persistence) {
-                                <span class="visually-hidden"> — <span [jhiTranslate]="persistence.labelKey"></span></span>
-                            }
                         </span>
                     }
                 </div>
 
-                <div class="hyperion-activity-actions">
+                <div class="flex flex-wrap items-center gap-2">
                     @if (editorRefreshFailed()) {
                         <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="editorRefreshRequested.emit()" data-testid="hyperion-editor-refresh-retry">
                             <span jhiTranslate="artemisApp.hyperion.generationActivity.reloadSavedExercise"></span>
@@ -97,15 +99,20 @@
         }
 
         @if (running() && currentProgress()?.message; as message) {
-            <div class="hyperion-activity-current-progress" data-testid="hyperion-generation-current-progress">{{ message }}</div>
+            <div class="min-w-0 px-3 py-[0.4rem] text-[0.8rem] wrap-anywhere text-muted-color" data-testid="hyperion-generation-current-progress">{{ message }}</div>
         }
 
         @if (terminalMessage(); as message) {
-            <div class="hyperion-activity-terminal-message" data-testid="hyperion-generation-terminal-message">{{ message }}</div>
+            <div
+                class="mx-3 my-2 min-w-0 rounded-border border bg-[var(--p-content-hover-background)] px-3 py-2 text-sm wrap-anywhere text-muted-color"
+                data-testid="hyperion-generation-terminal-message"
+            >
+                {{ message }}
+            </div>
         }
 
         @if (idle()) {
-            <div class="hyperion-activity-empty" data-testid="hyperion-generation-empty">
+            <div class="flex min-h-0 flex-auto flex-col items-center justify-center gap-2 p-4 text-center text-muted-color" data-testid="hyperion-generation-empty">
                 <strong jhiTranslate="artemisApp.hyperion.generationActivity.emptyTitle"></strong>
                 @if (startAllowed()) {
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.emptyHint"></span>
@@ -119,8 +126,8 @@
         }
 
         @if (statusLoadFailed()) {
-            <tum-ui-message severity="error" class="hyperion-activity-message" aria-live="polite">
-                <div class="hyperion-activity-message-content">
+            <tum-ui-message severity="error" class="mx-3 my-2 w-auto">
+                <div class="flex w-full items-center justify-between gap-3">
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"></span>
                     <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="retryStatus()" data-testid="hyperion-generation-status-retry">
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.retryStatus"></span>
@@ -130,14 +137,17 @@
         }
 
         @if (revertPartialRepositories(); as repositories) {
-            <tum-ui-message severity="error" class="hyperion-activity-message" aria-live="polite" data-testid="hyperion-generation-revert-partial">
+            <tum-ui-message severity="error" class="mx-3 my-2 w-auto" data-testid="hyperion-generation-revert-partial">
                 <span jhiTranslate="artemisApp.hyperion.generationActivity.revertPartialFailed" [translateValues]="{ repositories }"></span>
             </tum-ui-message>
         }
 
         @if (verdict(); as currentVerdict) {
-            <div class="hyperion-activity-verification" data-testid="hyperion-generation-verdict">
-                <span [class]="currentVerdict.mechanicallyVerified ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+            <div
+                class="flex flex-wrap items-center gap-x-4 gap-y-3 border-b bg-[var(--p-content-hover-background)] px-3 py-[0.45rem] text-[0.8rem]"
+                data-testid="hyperion-generation-verdict"
+            >
+                <span class="inline-flex items-center gap-[0.3rem]" [class]="currentVerdict.mechanicallyVerified ? 'text-state-success' : 'text-state-danger'">
                     <fa-icon [icon]="currentVerdict.mechanicallyVerified ? faCircleCheck : faCircleXmark" />
                     <strong
                         [jhiTranslate]="
@@ -147,8 +157,8 @@
                         "
                     ></strong>
                 </span>
-                <span class="hyperion-verification-review" jhiTranslate="artemisApp.hyperion.generationActivity.verdict.instructorReviewRequired"></span>
-                <span [class]="currentVerdict.solutionPassed ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+                <span class="inline-flex items-center gap-[0.3rem]" jhiTranslate="artemisApp.hyperion.generationActivity.verdict.instructorReviewRequired"></span>
+                <span class="inline-flex items-center gap-[0.3rem]" [class]="currentVerdict.solutionPassed ? 'text-state-success' : 'text-state-danger'">
                     <fa-icon [icon]="currentVerdict.solutionPassed ? faCircleCheck : faCircleXmark" />
                     <span
                         [jhiTranslate]="
@@ -158,7 +168,7 @@
                         "
                     ></span>
                 </span>
-                <span [class]="currentVerdict.templateFailed ? 'hyperion-verification-success' : 'hyperion-verification-danger'">
+                <span class="inline-flex items-center gap-[0.3rem]" [class]="currentVerdict.templateFailed ? 'text-state-success' : 'text-state-danger'">
                     <fa-icon [icon]="currentVerdict.templateFailed ? faCircleCheck : faCircleXmark" />
                     <span
                         [jhiTranslate]="
@@ -168,7 +178,7 @@
                         "
                     ></span>
                 </span>
-                <span class="hyperion-verification-count">
+                <span class="inline-flex items-center gap-[0.3rem] text-muted-color">
                     {{ currentVerdict.testCount }}
                     <span
                         [jhiTranslate]="
@@ -178,8 +188,8 @@
                 </span>
             </div>
             @if (!currentVerdict.mechanicallyVerified && currentVerdict.reasons.length) {
-                <tum-ui-message severity="error" class="hyperion-activity-message" aria-live="polite">
-                    <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
+                <tum-ui-message severity="error" class="mx-3 my-2 w-auto">
+                    <ul class="m-0 pl-[1.1rem] wrap-anywhere" data-testid="hyperion-generation-verdict-reasons">
                         @for (reason of currentVerdict.reasons; track $index) {
                             <li>{{ reason }}</li>
                         }
@@ -189,12 +199,16 @@
         }
 
         @if (reviewTargets().length) {
-            <section class="hyperion-activity-review" aria-labelledby="hyperion-review-saved-title" data-testid="hyperion-generation-review">
-                <div class="hyperion-activity-review-copy">
-                    <h4 id="hyperion-review-saved-title" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
-                    <span jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
+            <section
+                class="flex min-w-0 flex-wrap items-center justify-between gap-3 border-t px-3 py-2"
+                aria-labelledby="hyperion-review-saved-title"
+                data-testid="hyperion-generation-review"
+            >
+                <div class="min-w-0 text-[0.8rem]">
+                    <h4 id="hyperion-review-saved-title" class="mt-0 mb-[0.1rem] text-sm" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
+                    <span class="wrap-anywhere text-muted-color" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
                 </div>
-                <div class="hyperion-activity-review-actions">
+                <div class="flex min-w-0 flex-wrap gap-[0.4rem]">
                     @for (target of reviewTargets(); track target) {
                         <tum-ui-button
                             size="small"
@@ -212,65 +226,76 @@
         }
 
         @if (jobId() && hasDetails()) {
-            <div id="hyperion-generation-details" class="hyperion-activity-body" [hidden]="!detailsExpanded()" data-testid="hyperion-generation-details">
-                @if (fileChanges().length) {
-                    <section class="hyperion-activity-files" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
-                        <h4 id="hyperion-changed-files-title" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
-                        @for (group of filesByRepo(); track group.repo) {
-                            <div class="hyperion-activity-repo" data-testid="hyperion-generation-repo">
-                                <div class="hyperion-activity-repo-label" [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"></div>
-                                @for (file of group.files; track file.repo + ':' + file.path) {
-                                    @if (canNavigateFileChange(file)) {
-                                        <tum-ui-button
-                                            class="hyperion-activity-file w-full"
-                                            size="small"
-                                            severity="secondary"
-                                            variant="text"
-                                            [ariaLabel]="fileChangeAccessibleLabel(file)"
-                                            [tumUiTooltip]="file.path"
-                                            tumUiTooltipPlacement="right"
-                                            (clicked)="selectFile(file)"
-                                            data-testid="hyperion-generation-file"
-                                        >
-                                            <span class="hyperion-activity-file-path">{{ displayPath(file) }}</span>
-                                        </tum-ui-button>
-                                    } @else {
-                                        <div
-                                            class="hyperion-activity-file-static"
-                                            [attr.aria-label]="fileChangeAccessibleLabel(file)"
-                                            data-testid="hyperion-generation-file-static"
-                                        >
-                                            {{ displayPath(file) }}
-                                        </div>
+            <!-- The wrapper carries no display utility, so the [hidden] attribute is not defeated by the grid on the inner element. -->
+            <div id="hyperion-generation-details" [hidden]="!detailsExpanded()" data-testid="hyperion-generation-details">
+                <div class="grid min-h-0 grid-cols-[minmax(0,1fr)] border-t sm:grid-cols-[minmax(14rem,1fr)_minmax(14rem,1fr)]">
+                    @if (fileChanges().length) {
+                        <section class="min-w-0 px-3 py-2" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
+                            <h4
+                                id="hyperion-changed-files-title"
+                                class="mt-0 mb-[0.35rem] text-[0.8rem] font-semibold"
+                                jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"
+                            ></h4>
+                            @for (group of filesByRepo(); track group.repo) {
+                                <div class="min-w-0" data-testid="hyperion-generation-repo">
+                                    <div
+                                        class="mt-[0.45rem] mb-[0.2rem] text-xs font-semibold tracking-[0.03em] text-muted-color uppercase"
+                                        [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"
+                                    ></div>
+                                    @for (entry of group.files; track entry.key) {
+                                        @if (entry.navigable) {
+                                            <tum-ui-button
+                                                class="block w-full"
+                                                size="small"
+                                                severity="secondary"
+                                                variant="text"
+                                                [ariaLabel]="entry.accessibleLabel"
+                                                [tumUiTooltip]="entry.file.path"
+                                                tumUiTooltipPlacement="right"
+                                                (clicked)="selectFile(entry.file)"
+                                                data-testid="hyperion-generation-file"
+                                            >
+                                                <span class="block w-full overflow-hidden text-left text-ellipsis whitespace-nowrap">{{ entry.displayPath }}</span>
+                                            </tum-ui-button>
+                                        } @else {
+                                            <div
+                                                class="px-3 py-[0.35rem] text-sm wrap-anywhere text-muted-color"
+                                                [attr.aria-label]="entry.accessibleLabel"
+                                                data-testid="hyperion-generation-file-static"
+                                            >
+                                                {{ entry.displayPath }}
+                                            </div>
+                                        }
                                     }
-                                }
-                            </div>
-                        }
-                    </section>
-                }
-                @if (previousProgress().length) {
-                    <section class="hyperion-activity-progress" aria-labelledby="hyperion-activity-progress-title">
-                        <h4 id="hyperion-activity-progress-title" jhiTranslate="artemisApp.hyperion.generationActivity.recentActivity"></h4>
-                        <ol class="hyperion-activity-timeline">
-                            @for (event of previousProgress(); track $index) {
-                                <li>{{ event.message }}</li>
+                                </div>
                             }
-                        </ol>
-                    </section>
-                }
+                        </section>
+                    }
+                    @if (previousProgress().length) {
+                        <section class="min-w-0 border-t px-3 py-2 sm:border-t-0 sm:border-l" aria-labelledby="hyperion-activity-progress-title">
+                            <h4
+                                id="hyperion-activity-progress-title"
+                                class="mt-0 mb-[0.35rem] text-[0.8rem] font-semibold"
+                                jhiTranslate="artemisApp.hyperion.generationActivity.recentActivity"
+                            ></h4>
+                            <ol class="m-0 pl-5 text-[0.8rem]">
+                                @for (event of previousProgress(); track $index) {
+                                    <li class="py-[0.12rem] wrap-anywhere">{{ event.message }}</li>
+                                }
+                            </ol>
+                        </section>
+                    }
+                </div>
             </div>
         }
 
         <!-- Keep the dialog mounted while open; action handlers re-check availability. -->
         <tum-ui-dialog
             [(visible)]="confirmRevertVisible"
-            [modal]="true"
             [closable]="true"
             [closeOnEscape]="true"
             [dismissableMask]="true"
-            [draggable]="false"
-            [appendTo]="'body'"
-            [style]="{ width: '32rem' }"
+            [size]="'small'"
             [header]="undoConfirmHeaderKey() | artemisTranslate"
         >
             <span [jhiTranslate]="undoConfirmMessageKey()" data-testid="hyperion-generation-revert-confirm-message"></span>

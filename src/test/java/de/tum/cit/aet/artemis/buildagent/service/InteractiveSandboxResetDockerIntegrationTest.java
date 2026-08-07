@@ -91,10 +91,6 @@ class InteractiveSandboxResetDockerIntegrationTest {
         }
     }
 
-    /**
-     * The candidate files, the build's scratch state, and a detached process that ignores SIGTERM must all be gone afterwards, and the session must remain usable — a reset that
-     * wiped nothing, wiped only {@code /workspace}, or left the container dead would each fail one of these.
-     */
     @Test
     void resetSessionWipesEveryWritablePathAndKillsProcessesTheAgentLeftBehind() {
         seedCandidateFilesAndStrayProcess();
@@ -108,10 +104,7 @@ class InteractiveSandboxResetDockerIntegrationTest {
         assertThat(writeBack.stdout()).contains("reusable");
     }
 
-    /**
-     * The verifier resets twice per pass, so a reset that only stopped the container gracefully the first time — or that started stalling once a stray process was running —
-     * would surface here as the second seed surviving.
-     */
+    /** The verifier resets twice per pass, so a reset that only works the first time would surface here as the second seed surviving. */
     @Test
     void resetSessionKeepsWipingWhenRepeatedWithinTheSameSession() {
         seedCandidateFilesAndStrayProcess();
@@ -149,7 +142,7 @@ class InteractiveSandboxResetDockerIntegrationTest {
                         + "&& echo report > /opt/hyperion/reports/results.xml");
         assertThat(seed.isSuccess()).as("the sandbox accepts the seeded candidate").isTrue();
         runInSession("sh", "-c", "nohup sh -c 'trap \"\" TERM HUP; while :; do sleep 1; done' " + STRAY_PROCESS_MARKER + " >/dev/null 2>&1 &");
-        // The assertions after the reset are only meaningful once the stray is actually running, so wait for it rather than assuming the shell got that far.
+        // The post-reset assertions are only meaningful once the stray is actually running.
         Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
                 .untilAsserted(() -> assertThat(runInSession("ps", "-eo", "args").stdout()).contains(STRAY_PROCESS_MARKER));
         for (String path : WRITABLE_PATHS) {

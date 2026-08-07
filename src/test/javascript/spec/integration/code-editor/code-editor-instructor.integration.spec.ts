@@ -161,7 +161,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                // CodeEditorInstructorAndEditorContainerComponent now injects PrimeNG DialogService (not provided in root).
+                // CodeEditorActionsComponent and ResultComponent inject PrimeNG's DialogService, which is not provided in root.
                 { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,

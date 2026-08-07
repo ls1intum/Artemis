@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.localci.service.distributed.redisson;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RMap;
+import org.redisson.api.RMapCache;
 import org.redisson.api.RTopic;
 import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
@@ -57,6 +60,23 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     @Override
     public void put(K key, V value) {
         V oldValue = map.put(key, value);
+        if (oldValue != null) {
+            publishSafely(MapItemEvent.updated(key, value, oldValue));
+        }
+        else {
+            publishSafely(MapItemEvent.added(key, value));
+        }
+    }
+
+    @Override
+    public void put(K key, V value, Duration timeToLive) {
+        // Plain RMap has no per-entry expiry, so an expiring map must have been obtained through the provider's expiring factory method, which backs it with an RMapCache.
+        // Failing loudly here is deliberate: silently ignoring the expiry is exactly the defect this method exists to prevent.
+        if (!(map instanceof RMapCache<K, V> expiringMap)) {
+            throw new UnsupportedOperationException(
+                    "Redisson map '" + map.getName() + "' does not support per-entry expiry; obtain it via DistributedDataProvider.getExpiringMap to write entries with a TTL");
+        }
+        V oldValue = expiringMap.put(key, value, Math.max(1L, timeToLive.toSeconds()), TimeUnit.SECONDS);
         if (oldValue != null) {
             publishSafely(MapItemEvent.updated(key, value, oldValue));
         }

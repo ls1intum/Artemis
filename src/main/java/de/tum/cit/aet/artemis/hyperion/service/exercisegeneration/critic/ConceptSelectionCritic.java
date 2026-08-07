@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
  * The concept-selection review pass: one bounded, tool-free review of exactly three generator-authored concepts against the instructor brief, run before any specification work
  * starts.
  * <p>
- * It is the cheapest place to reject a weak exercise idea — a concept that cannot carry the requested learning objective consumes the entire specification and repository
- * authoring budget before any later gate can see the problem. The reviewer is a selector and diagnostician only: it never proposes replacement design content, and its verdict is
- * accepted only when every judgment is grounded in the candidate lines it was shown.
+ * It is the cheapest place to reject a weak exercise idea: a concept that cannot carry the requested learning objective consumes the entire specification and repository
+ * authoring budget before any later gate can see the problem. The reviewer is a selector and diagnostician only — it never proposes replacement design content, and its verdict
+ * is accepted only when every judgment is grounded in the candidate lines it was shown.
  */
 class ConceptSelectionCritic {
 
@@ -38,9 +38,7 @@ class ConceptSelectionCritic {
     private static final String CONCEPT_REVIEW_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/concept_review_system.st";
 
     /**
-     * Sized for the declared response shape: the selected candidate and its reason, plus one evaluation per candidate carrying its evidence IDs, seven short prose analyses and
-     * nine booleans — so three candidates' worth of structured judgment, each field a phrase or a sentence rather than an essay. The cap covers hidden reasoning too, and a
-     * response cut off by it is unparseable and costs the correction pass below.
+     * Sized for the declared response shape across three candidates. The cap covers hidden reasoning too, and a response cut off by it is unparseable and costs a correction pass.
      */
     private static final int CONCEPT_REVIEW_MAX_OUTPUT_TOKENS = 4_096;
 
@@ -70,8 +68,7 @@ class ConceptSelectionCritic {
     }
 
     /**
-     * Selects one generator-authored concept without contributing design content. This early semantic check prevents a weak concept from consuming the full SPEC and repository
-     * authoring budget.
+     * Selects one generator-authored concept without contributing design content.
      *
      * @param brief      the instructor brief
      * @param candidates exactly three generator-authored concept candidates
@@ -161,11 +158,8 @@ class ConceptSelectionCritic {
     }
 
     /**
-     * Names the candidate this completed review rejected least, so a caller may proceed with findings attached instead of producing nothing.
-     * <p>
-     * The order is total and deterministic: fewest failed required axes wins, ties broken by the lower candidate number. Both inputs are judgments the reviewer already
-     * returned for every candidate — this introduces no new scoring model and no second opinion. The verdict itself is untouched: this candidate was still rejected, and every
-     * finding travels with it.
+     * Names the candidate this completed review rejected least, so a caller may proceed with findings attached instead of producing nothing. Fewest failed required axes wins,
+     * ties broken by the lower candidate number; both inputs are judgments the reviewer already returned, so this adds no scoring model. The verdict itself is untouched.
      */
     private static SpecFidelityCriticService.ConceptFallback leastRejectedCandidate(Map<Integer, ConceptCandidateReviewItem> evaluations) {
         return evaluations.entrySet().stream().map(entry -> new SpecFidelityCriticService.ConceptFallback(entry.getKey(), failedRequiredAxes(entry.getValue())))

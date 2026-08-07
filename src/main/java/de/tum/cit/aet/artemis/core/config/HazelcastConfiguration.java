@@ -1413,8 +1413,9 @@ public class HazelcastConfiguration {
         // accounting uncertain and cancels a running generation while pinning its whole reservation against the user and course for the rest of the budget window.
         config.getMapConfigs().put("hyperion-exercise-generation-usage", createHyperionCorrectnessMapConfig());
 
-        // Multi-node relay copy payloads (up to 32MB tar blobs) are staged off the request/response topics. The sender normally removes each entry; the TTL reclaims entries
-        // orphaned by a core-node crash.
+        // Multi-node relay copy payloads (up to 32MB tar blobs) are staged off the request/response topics. The sender normally removes each entry, and both senders write with a
+        // per-entry TTL (RemoteInteractiveSandboxClient.PAYLOAD_STAGING_TTL) because that is the only expiry the Redis backend has. This map-level TTL is the Hazelcast-only
+        // backstop for any writer that forgets it.
         config.getMapConfigs().put("hyperion-sandbox-payloads", createHyperionCorrectnessMapConfig().setTimeToLiveSeconds(15 * 60));
     }
 

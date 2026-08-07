@@ -62,7 +62,7 @@ final class GenerationJobReplayStore {
 
     /**
      * Recovers the running dropped-event count from the retained marker so repeated overflows update one marker instead of accumulating one per drop. The count lives in the
-     * marker's own message rather than in {@code JobTranscript}, which would change the shape of an already distributed Hazelcast value for a purely presentational counter.
+     * marker's message rather than in {@code JobTranscript}, so a purely presentational counter does not change the shape of an already distributed Hazelcast value.
      */
     private static final Pattern EVENT_TRUNCATION_MESSAGE_PATTERN = Pattern.compile("^(\\d+)" + Pattern.quote(EVENT_TRUNCATION_MESSAGE_SUFFIX) + "$");
 
@@ -149,8 +149,8 @@ final class GenerationJobReplayStore {
             try {
                 transcriptMap().set(key, currentTranscript);
                 fileChangeMap().set(key, currentFileChanges);
-                // A previous run's unsaved candidate must not outlive the start of a new one: the exercise retains one run, and leaving the old draft readable while a fresh
-                // run is producing a new one is the one way this snapshot could mislead an instructor about which draft they are looking at.
+                // The exercise retains one run, so a previous run's unsaved candidate must not outlive the start of a new one: leaving the old draft readable while a fresh run
+                // produces another would mislead an instructor about which draft they are looking at.
                 artifactMap().remove(key);
                 writeUsage(jobId, JobUsage.empty());
             }
@@ -337,9 +337,8 @@ final class GenerationJobReplayStore {
      * Appends an event to the running job's transcript for reconnect replay, bounded so a long run cannot grow the distributed map without limit. Dropped when {@code jobId} does
      * not match the retained transcript (a stale or older run); {@code terminal} marks the transcript done so a reconnecting client knows not to expect more.
      * <p>
-     * A terminal event seals the run's token accounting inside this same lock, before the transcript is published and before the caller pushes the event over the websocket. That
-     * makes "the transcript is terminal" imply "the accounting is sealed" by construction, so no consumer can observe a finished run whose reported cost is still accumulating,
-     * and none has to poll for the seal afterwards.
+     * A terminal event seals the run's token accounting inside this same lock, before the transcript is published and before the caller pushes the event over the websocket, so
+     * that "the transcript is terminal" implies "the accounting is sealed" and no consumer can observe a finished run whose reported cost is still accumulating.
      */
     boolean recordEvent(long exerciseId, String jobId, ExerciseGenerationEventDTO event, boolean terminal) {
         String key = key(exerciseId);
@@ -583,17 +582,10 @@ final class GenerationJobReplayStore {
     }
 
     /**
-     * Retains the candidate a terminal run produced but never saved, so the work stays inspectable by the instructor who started the run.
+     * Retains the candidate a terminal run produced but never saved, so the work stays inspectable by the instructor who started the run — the only one allowed to read it back.
      * <p>
-     * Written with the terminal-replay TTL immediately rather than being promoted later, because unlike the transcript there is no live phase during which this value is useful
-     * — it only ever exists after the run has stopped. Overwrites any older snapshot for the exercise, matching the one-retained-run-per-exercise rule the transcript and
-     * file-change index already follow.
-     *
-     * @param exerciseId the exercise the run belonged to
-     * @param jobId      the run that produced the candidate
-     * @param userLogin  the instructor who started the run and is the only one allowed to read it back
-     * @param artifacts  the bounded candidate snapshot
-     * @return whether anything was retained
+     * Written with the terminal-replay TTL immediately rather than promoted later, because unlike the transcript there is no live phase during which this value is useful.
+     * Overwrites any older snapshot for the exercise, matching the one-retained-run-per-exercise rule the transcript and file-change index already follow.
      */
     boolean retainUnsavedArtifacts(long exerciseId, String jobId, String userLogin, ExerciseGenerationRetainedArtifactsDTO artifacts) {
         if (artifacts.isEmpty()) {
@@ -611,14 +603,10 @@ final class GenerationJobReplayStore {
     }
 
     /**
-     * The unsaved candidate retained for this exercise's most recent run, for the instructor who started that run.
+     * The unsaved candidate retained for this exercise's most recent run; empty when none is retained or the requester did not start the run.
      * <p>
      * Owner-only with no sanitized fallback, unlike the status transcript: a transcript is a progress narrative another instructor may reasonably watch, while this is the
      * verbatim content of an unreviewed, unverified draft.
-     *
-     * @param user     the requesting user
-     * @param exercise the exercise whose latest run is being inspected
-     * @return the retained candidate, or empty when none is retained or the requester did not start the run
      */
     Optional<ExerciseGenerationRetainedArtifactsDTO> getRetainedArtifacts(User user, ProgrammingExercise exercise) {
         GenerationJobService.JobArtifacts retained = artifactMap().get(key(exercise.getId()));

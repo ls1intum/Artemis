@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationConfigurationValidator;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -84,16 +85,6 @@ public class GenerationOrchestrationService {
 
     static final String CHANGE_SUMMARY_TRUNCATED = "\n... [change summary truncated]\n";
 
-    /**
-     * The semantic repair budget: how many scoped repair rounds one run may schedule. Deliberately larger than the number of repair surfaces, because rounds are allocated to
-     * whichever surface currently carries the highest-priority findings rather than one per surface, so a single surface can legitimately hold several rounds. Configurable so
-     * the ceiling can be tuned per deployment against the configured job deadline rather than recompiled.
-     */
-    private static final int DEFAULT_MAX_SEMANTIC_REPAIRS = 6;
-
-    /** Ceiling on the configured repair budget. The attempt cap is derived from it, so an unreviewed value in a properties file would otherwise set the loop's whole shape. */
-    private static final int MAX_CONFIGURABLE_SEMANTIC_REPAIRS = 12;
-
     // Optional so a core-only node (where no build agent is co-located to host the sandbox) still starts; absence is reported only when a run is attempted.
     private final Optional<InteractiveSandbox> interactiveSandbox;
 
@@ -124,7 +115,7 @@ public class GenerationOrchestrationService {
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
             DifferentialVerificationService verifier, AgentSystemPromptService systemPromptService, StructuralOracleSeedingService structuralOracleSeeder,
             SpecFidelityCriticService specFidelityCritic, GenerationJobService jobService, Optional<ProgrammingExerciseTestCaseRepository> testCaseRepository,
-            HyperionAgentProperties agentProperties, @Value("${artemis.hyperion.exercise-generation.max-semantic-repairs:6}") int maxSemanticRepairs,
+            HyperionAgentProperties agentProperties, @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs,
             StagedGenerationRunner stagedGenerationRunner, StageCheckService stageCheckService, AgentTranscriptWriter transcriptWriter, ApprovedSpecRegistry approvedSpecs) {
         this(interactiveSandbox, workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic, jobService, testCaseRepository,
                 agentProperties.getMaxTurns(), maxSemanticRepairs, stagedGenerationRunner, agentProperties.isStagedGeneration(), stageCheckService, transcriptWriter,
@@ -147,11 +138,13 @@ public class GenerationOrchestrationService {
         this.structuralOracleSeeder = structuralOracleSeeder;
         this.jobService = jobService;
         this.testCaseRepository = testCaseRepository;
-        int effectiveMaxSemanticRepairs = maxSemanticRepairs > 0 && maxSemanticRepairs <= MAX_CONFIGURABLE_SEMANTIC_REPAIRS ? maxSemanticRepairs : DEFAULT_MAX_SEMANTIC_REPAIRS;
+        // Reject rather than substitute the default: silently running 6 where an operator wrote 20 makes the setting look applied and only shows up as a run that stops repairing
+        // earlier than the deployment was tuned for. HyperionGenerationConfigurationValidator applies the same rule eagerly at startup, so this is the second line of defence.
+        HyperionGenerationConfigurationValidator.validateMaxSemanticRepairs(maxSemanticRepairs);
+        int effectiveMaxSemanticRepairs = maxSemanticRepairs;
         // The attempt ceiling: the mechanical repair phase, one attempt per semantic repair the budget allows, and one more for the narrow mechanical correction the loop grants
-        // when a semantic repair breaks the build. That correction is a whole attempt neither of the other two terms pays for, so without it the last configured repair round is
-        // unreachable. Derived from the semantic budget rather than fixed, so raising the budget can never leave rounds arithmetically unreachable; the configured job deadline
-        // (artemis.hyperion.agent.max-job-duration) remains the real bound.
+        // when a semantic repair breaks the build — an attempt neither of the other two terms pays for, so without it the last configured repair round is unreachable. Derived
+        // from the semantic budget so raising that budget can never leave rounds unreachable; the configured job deadline remains the real bound.
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + effectiveMaxSemanticRepairs + 1;
         this.stageCheckService = stageCheckService;
         this.approvedSpecs = approvedSpecs;
@@ -511,8 +504,8 @@ public class GenerationOrchestrationService {
     }
 
     /**
-     * A deliberately conservative superset of the graded coverage the adapt total-wipe gate protects: every persisted case rather than the active/weighted subset, so the
-     * baseline is never under-reported. Empty — leaving the gate inert — when no authoritative baseline is available, so a missing baseline can never fabricate a rejection.
+     * A conservative superset of the graded coverage the adapt total-wipe gate protects: every persisted case rather than the active/weighted subset, so the baseline is never
+     * under-reported. Empty — leaving the gate inert — when no authoritative baseline is available, so a missing baseline can never fabricate a rejection.
      */
     private Set<String> captureBaselineGradedTestNames(ProgrammingExercise exercise) {
         if (testCaseRepository.isEmpty() || exercise.getId() == null) {

@@ -267,7 +267,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
             """;
 
     private void mockBulkRefinementSuccess() {
-        // The service calls refineQuizQuestion once per question; we return the same mock response for each call.
+        // The service refines one question per call, so the same response serves every question in the bulk request.
         String response = """
                 {
                   "question": {

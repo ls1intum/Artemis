@@ -69,7 +69,7 @@ describe('ReviewCommentWidgetManager', () => {
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
             onNavigateToLocation: { subscribe: vi.fn((cb) => (instance._onNavigateToLocation = cb)) },
             onApplyInlineFix: { subscribe: vi.fn((cb) => (instance._onApplyInlineFix = cb)) },
-            onAdaptThread: { subscribe: vi.fn((cb) => (instance._onAdaptThread = cb)) },
+            adaptThread: { subscribe: vi.fn((cb) => (instance._adaptThread = cb)) },
             setInlineFixOutdatedWarning: vi.fn(),
             hideAllCommentMenus: vi.fn(),
         };
@@ -275,7 +275,7 @@ describe('ReviewCommentWidgetManager', () => {
 
         manager.renderWidgets();
         const threadRef = vcRef.createComponent.mock.results.find((r: any) => r.value.instance.onToggleCollapse)?.value;
-        threadRef.instance._onAdaptThread(7);
+        threadRef.instance._adaptThread(7);
 
         expect(onAdaptThread).toHaveBeenCalledWith(7);
     });

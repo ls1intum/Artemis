@@ -73,8 +73,7 @@ public class GenerationWorkspaceService {
 
     /**
      * The single bound on any sandbox command that does no compilation: reading a file, listing the layout, deleting build output, staging a fixture directory. Compilation is
-     * bounded separately and far more generously by the verification and build timeouts, so this stays short — a {@code cat} or {@code rm} that has not returned within it means
-     * the sandbox is wedged, not that the work is slow.
+     * bounded separately by the verification and build timeouts, so a command that has not returned within this means the sandbox is wedged, not that the work is slow.
      */
     public static final Duration SANDBOX_READ_TIMEOUT = Duration.ofSeconds(30);
 
@@ -84,14 +83,14 @@ public class GenerationWorkspaceService {
     /** Sandbox directory holding the worked-sample reference; never extracted or persisted. */
     static final String REFERENCE_DIR = "reference";
 
-    /** The canonical Java exercise already used by Artemis when it creates a programming exercise. Hyperion must not maintain a competing example. */
+    /** The canonical Java exercise Artemis itself uses when it creates a programming exercise; Hyperion maintains no competing example. */
     private static final String JAVA_TEMPLATE_SOURCE_DIR = "java";
 
     private static final String JAVA_REFERENCE_PROJECT_SOURCE_DIR = JAVA_TEMPLATE_SOURCE_DIR + "/maven_maven";
 
     private static final String READINESS_SOURCE_DIR = "hyperion/readiness/java";
 
-    /** Classpath directory of language-agnostic per-artifact style guides, seeded under {@code reference/style/} for every GENERATE run regardless of exercise language. */
+    /** Language-agnostic per-artifact style guides, seeded under {@code reference/style/} for every GENERATE run regardless of exercise language. */
     private static final String STYLE_GUIDE_SOURCE_DIR = "hyperion/style";
 
     private static final String REFERENCE_GUIDE = """
@@ -110,7 +109,6 @@ public class GenerationWorkspaceService {
 
     private static final int MAX_REFERENCE_TOTAL_BYTES = 512_000;
 
-    /** Total cap on the seeded style-guide payload; the guides are tiny prose files, so this stays far below {@link #MAX_REFERENCE_TOTAL_BYTES}. */
     private static final int MAX_STYLE_GUIDE_TOTAL_BYTES = 96_000;
 
     private final GitService gitService;
@@ -259,13 +257,7 @@ public class GenerationWorkspaceService {
     private record RepositorySeedContent(RepositorySeedMetadata metadata, Map<String, BinarySeedFile> binaryFiles) {
     }
 
-    /**
-     * Assembles the worked reference from the same classpath template resources Artemis uses to create a programming exercise, so Hyperion owns no competing sample that could
-     * drift from the one instructors actually see.
-     *
-     * @param exercise the exercise whose language selects the reference
-     * @return the reference files keyed by their archive-relative path under {@code reference/}, or empty if the set is incomplete
-     */
+    /** Returns the reference files keyed by archive-relative path under {@code reference/}, or empty if the set is incomplete. */
     Map<String, String> readReferenceSample(ProgrammingExercise exercise) {
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             return Map.of();
@@ -286,11 +278,7 @@ public class GenerationWorkspaceService {
         return complete ? reference : Map.of();
     }
 
-    /**
-     * Unlike {@link #readReferenceSample} this is not gated on a language: the guides are topic-neutral prose, not source, so every GENERATE run gets them.
-     *
-     * @return the style guide files keyed by their archive-relative path under {@code reference/style/}, or empty if none could be read
-     */
+    /** Unlike {@link #readReferenceSample} this is not gated on a language: the guides are topic-neutral prose, not source, so every GENERATE run gets them. */
     Map<String, String> readStyleGuides() {
         Map<String, String> guides = new LinkedHashMap<>();
         int[] remainingBytes = { MAX_STYLE_GUIDE_TOTAL_BYTES };
@@ -354,10 +342,7 @@ public class GenerationWorkspaceService {
         }
     }
 
-    /**
-     * Adds the readable text files under {@code templates/<sourceArea>} keyed {@code reference/<targetArea>/<rest>}, within the remaining byte budget. The relative path is
-     * recovered from a URI marker rather than the resource path so the same code works for filesystem and jar resources.
-     */
+    /** The relative path is recovered from a URI marker rather than the resource path so the same code works for filesystem and jar resources. */
     private void addReferenceArea(Map<String, String> reference, String sourceArea, String targetArea, Predicate<String> include, int[] remainingBytes) {
         String marker = "/templates/" + sourceArea + "/";
         Resource[] resources = resourceLoaderService.getFileResources(Path.of("templates").resolve(sourceArea));
@@ -433,8 +418,7 @@ public class GenerationWorkspaceService {
      * @return the rendered layout snapshot, or an empty string if it could not be produced
      */
     public String probeWorkspaceLayout(InteractiveSandbox sandbox, String sessionId) {
-        // One shell pass: ls -R the repo dirs, then find+head the build manifest present at their roots. Generation only ever runs for Java/Maven exercises
-        // (LanguageGenerationProfile), so only pom.xml is probed.
+        // Generation only ever runs for Java/Maven exercises (LanguageGenerationProfile), so only pom.xml is probed.
         String script = "cd " + WORKSPACE + " 2>/dev/null || exit 0\n" + "echo '--- ls -R " + String.join(" ", REPOSITORY_DIRECTORIES) + " ---'\n" + "ls -R "
                 + String.join(" ", REPOSITORY_DIRECTORIES) + " 2>/dev/null\n" + "for f in $(find " + String.join(" ", REPOSITORY_DIRECTORIES)
                 + " -maxdepth 2 -type f -name pom.xml 2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
@@ -463,10 +447,7 @@ public class GenerationWorkspaceService {
         return layout.substring(0, LAYOUT_PROBE_MAX_CHARS) + "\n… [workspace layout truncated; list deeper directories yourself with `ls -R` if you need more]";
     }
 
-    /**
-     * Snapshots the seeded harness for the immutability gate. Best-effort by design: a binary or unreadable file is skipped, because a partial snapshot only weakens the gate
-     * while a thrown exception would fail the run.
-     */
+    /** Snapshots the seeded harness for the immutability gate. Fails open on an unreadable file: a partial snapshot only weakens the gate, while throwing would fail the run. */
     private static Map<String, String> readWorkingTreeTextFiles(Path workingTree) {
         Map<String, String> files = new LinkedHashMap<>();
         long total = 0;
@@ -528,21 +509,19 @@ public class GenerationWorkspaceService {
     }
 
     /**
-     * The produced files of a repository read back out of the sandbox, plus whether the result could not be represented safely for persistence. The verifier fails closed when
-     * {@code extractionFailed} is true.
+     * The produced files of a repository read back out of the sandbox. The verifier fails closed when {@code extractionFailed} is true.
      *
-     * @param files            the produced files keyed by repository-relative path; whether it is empty says nothing about success, and a failed read-back can still carry files
-     *                             (residue stripped, binaries changed). Only {@code extractionFailed} decides.
+     * @param files            the produced files keyed by repository-relative path; an empty map says nothing about success and a failed read-back can still carry files (residue
+     *                             stripped, binaries changed), so only {@code extractionFailed} decides
      * @param extractionFailed {@code true} when extraction failed or the produced tree contains unsupported residue or binary changes
      */
     public record RepositoryExtraction(Map<String, String> files, boolean extractionFailed) {
     }
 
     /**
-     * Overwrites repository text files with the canonical bytes that verification and persistence must share.
-     * <p>
-     * Also re-seeds the workspace-root files when given. Callers use this to restore a candidate into a session that was just reset, and {@code /workspace} is a bounded tmpfs,
-     * so the container restart empties it completely. A restore that touched only the three repositories would silently drop everything living at the workspace root.
+     * Overwrites repository text files with the canonical bytes that verification and persistence must share, and re-seeds the workspace-root files alongside them. Callers use
+     * this to restore a candidate into a just-reset session, and {@code /workspace} is a bounded tmpfs that the container restart empties completely, so a restore touching only
+     * the three repositories would silently drop everything living at the workspace root.
      *
      * @param sandbox               the sandbox session
      * @param sessionId             the session handle
@@ -550,7 +529,7 @@ public class GenerationWorkspaceService {
      * @param repositoryMetadata    seeded file metadata used to preserve executable modes
      * @param repositoryBinaryFiles the canonical repository binary files, written back verbatim alongside the text files
      * @param exercise              the exercise whose workspace-root bootstrap files ({@code verify.sh}, and for GENERATE the {@code reference/} sample and style guides) are
-     *                                  re-seeded alongside the repositories, so later attempts are not left chasing files the prompts promise exist
+     *                                  re-seeded
      * @param mode                  the generation mode the workspace was originally seeded for
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
      * @param testPlanJson          the TESTS stage's {@code test-plan.json} to re-seed at the workspace root, or {@code null} to leave it untouched

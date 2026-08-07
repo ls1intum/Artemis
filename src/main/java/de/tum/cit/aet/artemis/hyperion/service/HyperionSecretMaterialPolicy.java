@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Pure, deterministic defense-in-depth policy for high-confidence secret material that must not enter Hyperion provider context or durable generated output.
  * <p>
- * The policy intentionally recognizes only high-confidence paths, containers, private-key armor, and named provider token formats. It does not classify generic assignments,
+ * The policy recognizes only high-confidence paths, containers, private-key armor, and named provider token formats. It does not classify generic assignments,
  * entropy, UUIDs, hashes, JWTs, transformed secrets, or ordinary source-code identifiers. It is not a data-loss-prevention or authorization boundary; administrators must only
  * enable Hyperion for repositories whose contents may be disclosed to the configured model provider.
  */

@@ -15,10 +15,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 /**
  * The result of an agentic Hyperion sandbox, returned to the caller (the async task) so it can decide whether to persist and then close the session.
  * <p>
- * It is {@link AutoCloseable}: closing it destroys the underlying sandbox container. Verification already reads each repository's produced files (and the problem statement) out of
- * the session to run the integrity gates, so those extractions are captured on the outcome and reused at persist — no second full-repo read of the sandbox. Persist only runs on a
- * mechanically verified outcome, so the accessors return the captured value directly (empty when absent); the outcome holds a reference back to the orchestrator and the session
- * id solely so {@link #close()} can destroy the sandbox container.
+ * Closing destroys the underlying sandbox container. Verification already reads each repository's produced files (and the problem statement) out of the session to run the
+ * integrity gates, so those extractions are captured here and reused at persist rather than read from the sandbox a second time.
  */
 public final class GenerationOutcome implements AutoCloseable {
 
@@ -39,37 +37,28 @@ public final class GenerationOutcome implements AutoCloseable {
     @Nullable
     private final String errorMessage;
 
-    /**
-     * Produced files captured from the sandbox. Verified outcomes reuse the verification extraction; an errored run may retain best-effort diagnostics, but unverified artifacts
-     * are never persisted. Cancelled and artifact-less errored outcomes keep this empty.
-     */
+    /** An errored run may retain best-effort diagnostics here, but only a mechanically verified outcome is ever persisted. */
     private final Map<RepositoryType, Map<String, String>> capturedProducedFiles;
 
     private final Map<RepositoryType, String> seedRepositoryHeads;
 
-    /** Captured to avoid a later sandbox read; also present on an errored run, for diagnostics. */
     @Nullable
     private final String capturedProblemStatement;
 
-    /** Full-artifact review findings. Blocking findings require instructor review of the saved mechanically valid exercise; presentation findings are advisory. */
+    /** Blocking findings require instructor review of the saved mechanically valid exercise; presentation findings are advisory. */
     private final SpecFidelityReport specFidelityReport;
 
-    /**
-     * The workspace's {@code SPEC.md} content, read once (best effort) after the agent loop finishes; {@code null} when it could not be read. Never persisted into any
-     * repository — it is the agent's planning artifact, surfaced here only so its final state is observable.
-     */
+    /** The workspace's {@code SPEC.md}, the agent's planning artifact. Surfaced for observability and never persisted into any repository. */
     @Nullable
     private final String specDocument;
 
-    /** The workspace's {@code test-plan.json} content (the TESTS stage's grading plan), read once (best effort) after the agent loop finishes; {@code null} when absent. */
+    /** The workspace's {@code test-plan.json}, the TESTS stage's grading plan. */
     @Nullable
     private final String testPlanJson;
 
     /**
-     * Why the run stopped producing candidates, stamped by the orchestrator on the single thread that builds and returns this outcome, before it is handed to the caller.
-     * <p>
-     * Not a constructor parameter because the attempt loop only knows the reason once it has already produced the outcome object it is about to return; a stamp keeps every
-     * construction site readable and lets the reason be attached exactly where the exit is taken. Purely observational: nothing in persistence or the verdict reads it.
+     * Why the run stopped producing candidates. Purely observational: nothing in persistence or the verdict reads it. Stamped on the single thread that builds and returns this
+     * outcome, before it is handed to the caller, so it needs no synchronization.
      */
     @Nullable
     private TerminationReason terminationReason;
@@ -127,10 +116,8 @@ public final class GenerationOutcome implements AutoCloseable {
     }
 
     /**
-     * Records why the run ended. The first reason wins, so a wrapping path that adds context cannot overwrite the precise reason the exit itself recorded.
-     *
-     * @param reason the machine-readable termination reason
-     * @return this outcome, so the stamp reads inline at the {@code return} that takes the exit
+     * Records why the run ended and returns this outcome. The first reason wins, so a wrapping path that adds context cannot overwrite the precise reason the exit itself
+     * recorded.
      */
     GenerationOutcome withTermination(@Nullable TerminationReason reason) {
         if (this.terminationReason == null) {
@@ -139,9 +126,7 @@ public final class GenerationOutcome implements AutoCloseable {
         return this;
     }
 
-    /**
-     * @return why the run stopped producing candidates, or {@code null} when the outcome was produced outside the attempt loop and nothing stamped it
-     */
+    /** @return why the run stopped, or {@code null} when the outcome was produced outside the attempt loop and nothing stamped it */
     @Nullable
     public TerminationReason terminationReason() {
         return terminationReason;
@@ -159,7 +144,6 @@ public final class GenerationOutcome implements AutoCloseable {
         return loopResult;
     }
 
-    /** @return whether an errored run captured workspace artifacts for diagnostics */
     public boolean hasCapturedArtifacts() {
         return sessionId != null && (!capturedProducedFiles.isEmpty() || capturedProblemStatement != null);
     }
@@ -174,18 +158,10 @@ public final class GenerationOutcome implements AutoCloseable {
         return errorMessage;
     }
 
-    /**
-     * The produced files for a repository type — the extraction verification already performed and captured on this outcome. Only mechanically verified outcomes are persisted,
-     * so the capture is always present for the repositories persist reads.
-     *
-     * @param repositoryType the repository whose produced files to read
-     * @return the produced files (path to content), or an empty map if that repository produced none
-     */
     public Map<String, String> producedFiles(RepositoryType repositoryType) {
         return capturedProducedFiles.getOrDefault(repositoryType, Map.of());
     }
 
-    /** @return every captured repository's produced files, for callers that read the whole candidate rather than one repository at a time */
     public Map<RepositoryType, Map<String, String>> capturedProducedFiles() {
         return capturedProducedFiles;
     }
@@ -199,10 +175,6 @@ public final class GenerationOutcome implements AutoCloseable {
         return specDocument;
     }
 
-    /**
-     * @return the grading plan, or {@code null} when none was written; persistence applies it to the synchronized test cases (weights and AFTER_DUE_DATE visibility) after the
-     *         save's test-case sync
-     */
     @Nullable
     public String testPlanJson() {
         return testPlanJson;

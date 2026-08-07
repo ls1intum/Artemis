@@ -54,7 +54,8 @@ class GenerationSandboxHostingContextTest {
     }
 
     private static void assertHostingDisabled(AssertableApplicationContext context) {
-        assertThat(context).doesNotHaveBean(InteractiveSandboxRelayHandler.class).doesNotHaveBean(InteractiveSandboxReaperService.class);
+        // The reaper is not gated on the opt-in: an agent redeployed with hosting off still has to collect the containers its previous incarnation left behind.
+        assertThat(context).doesNotHaveBean(InteractiveSandboxRelayHandler.class).hasSingleBean(InteractiveSandboxReaperService.class);
         assertSandboxServiceIsLazy(context);
     }
 

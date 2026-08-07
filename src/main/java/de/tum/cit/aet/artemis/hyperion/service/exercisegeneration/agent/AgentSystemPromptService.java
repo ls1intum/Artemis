@@ -214,10 +214,8 @@ public class AgentSystemPromptService {
             """;
 
     // One constant per stage so buildStage() can select exactly one while the single-loop build() composes several. STAGE_SPEC_INSTRUCTIONS is excluded from that composition
-    // deliberately, and NOT because a specification always already exists — the single loop also serves a first attempt with none (any non-Java language, or
-    // artemis.hyperion.agent.staged-generation=false). It is excluded because only the staged path has a spec gate: a SPEC.md authored in the single loop would never be
-    // reviewed or approved, yet the review grounding falls back to whatever SPEC.md is on disk and reviews the candidate against it as the contract. Without the gate, the
-    // contract of an unstaged run is the instructor's brief and statement.
+    // because only the staged path has a spec gate: a SPEC.md authored in the single loop would never be reviewed or approved, yet the review grounding falls back to whatever
+    // SPEC.md is on disk and reviews the candidate against it as the contract. The contract of an unstaged run is the instructor's brief and statement.
 
     private static final String STAGED_WORKFLOW_INTRO = """
             Build the executable exercise in coherent learning increments: for each risk-chosen seam, update the canonical solution, derived template, behavioral evidence, and
@@ -565,9 +563,9 @@ public class AgentSystemPromptService {
     }
 
     /**
-     * Single-loop only, and not a duplicate of anything the stage prompts carry: the harness layout, the cross-repository package parity rule and the per-mode test-source scope
-     * live here alone. The staged path replaces them with the per-stage instructions and the shared {@link #HARNESS_IMMUTABILITY_RULE} inside {@link #STAGE_TOOLS_NOTE}; the
-     * single-loop counterpart of that constant is {@link #safeToolUseSection}, not this method.
+     * Single-loop only: the harness layout, the cross-repository package parity rule and the per-mode test-source scope live here alone. The staged path replaces them with the
+     * per-stage instructions and the shared {@link #HARNESS_IMMUTABILITY_RULE} inside {@link #STAGE_TOOLS_NOTE}, whose single-loop counterpart is {@link #safeToolUseSection}
+     * rather than this method.
      */
     private String layoutAndHarnessSection(ProgrammingExercise exercise, String testSourceGuidance) {
         return """

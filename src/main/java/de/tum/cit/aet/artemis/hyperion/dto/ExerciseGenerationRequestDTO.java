@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Request to start an agentic whole-exercise generation or adaptation run.
  * <p>
- * What may cross this boundary is deliberately narrow: a <em>name</em> drawn from the admin-defined effort profiles, and numeric bounds that may only tighten. The model and its
- * decoding parameters are not accepted here — editor is a widely granted role, arbitrary model selection is a cost and abuse vector, and Artemis's prompts and gates are co-tuned
- * with the model, so a caller that could set it freely could configure the generator into a state no instructor ever runs.
+ * What may cross this boundary is narrow: a <em>name</em> drawn from the admin-defined effort profiles, and numeric bounds that may only tighten. The model and its decoding
+ * parameters are not accepted here, because editor is a widely granted role, arbitrary model selection is a cost and abuse vector, and Artemis's prompts and gates are co-tuned
+ * with the model.
  *
  * @param mode                      the run intent; see {@link GenerationMode} for why the client states it rather than the server inferring it
  * @param prompt                    optional brief (generate) or feedback (adapt); capped to bound LLM cost/abuse

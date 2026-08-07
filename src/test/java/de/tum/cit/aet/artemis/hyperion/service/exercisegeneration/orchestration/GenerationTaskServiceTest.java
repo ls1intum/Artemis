@@ -146,8 +146,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void reloadedExerciseWithAuxiliaryRepositoryStopsBeforeOrchestration() {
-        // The aux-repos fact is queried explicitly (never through the reloaded entity's lazy collection, which is uninitializable on a detached instance); the guard must
-        // consult that query, not the event's exercise.
+        // Auxiliary repositories are queried explicitly rather than through the reloaded entity's lazy collection, which cannot be initialized on a detached instance.
         ProgrammingExercise reloadedExercise = new ProgrammingExercise();
         reloadedExercise.setId(EXERCISE_ID);
         reloadedExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -302,8 +301,6 @@ class GenerationTaskServiceTest {
 
     @Test
     void unsavedRunThatProducedFiles_retainsThemForInspectionWithoutTouchingTheExercise() {
-        // The run failed and stays failed: nothing is persisted, the sandbox is still destroyed, and the terminal event still says nothing was saved. What changes is only that
-        // half an hour of work stops being deleted along with the container that held it.
         GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 5, "done"),
                 new VerificationResult(false, true, false, 0, List.of()), SESSION_ID, orchestrator, sandbox,
                 Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", SpecFidelityReport.empty(), Map.of(),
@@ -592,10 +589,8 @@ class GenerationTaskServiceTest {
     @Test
     void noOpPersist_reportsHonestlyWithoutRecordingABaselineOrAttachingReviewFindings() {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
-            // The stub genuinely reaches the branch (it reads the same beforeDurableMutation callback argument the production GenerationPersistenceService receives) instead of
-            // being blind to its existence via a plain thenReturn(...). A truly no-op persist (nothing committed, metadata unchanged) never reaches a durable mutation in the real
-            // service, so it legitimately never invokes this callback; see mechanicallyVerifiedRun_persistsExactlyOnceAndDestroysTheSandbox above for the sibling "call" branch,
-            // which does invoke it and asserts invalidateBaseline() fires.
+            // A no-op persist never reaches a durable mutation, so it never invokes the callback; the sibling branch that does is covered by
+            // mechanicallyVerifiedRun_persistsExactlyOnceAndDestroysTheSandbox.
             Runnable beforeDurableMutation = invocation.getArgument(8);
             assertThat(beforeDurableMutation).isNotNull();
             return new GenerationPersistenceService.PersistResult(Map.of(), Map.of(), exercise.getProblemStatement(), exercise.getTitle(), "main", false, null);
@@ -734,8 +729,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void completedRun_thatWasAlreadyCancelledWhenEnteringTheNonCancellablePhase_reportsCancelledAndDoesNotSave() {
-        // enterNonCancellablePhase returns false for two different reasons; when the job-map lock resolved a cancel-first race (jobService.isCancelled() true), the run must be
-        // reported as cancelled — never as a save failure — because the user (or system) was already told nothing would be changed.
+        // enterNonCancellablePhase returns false for two reasons; when the job-map lock resolved a cancel-first race the run is cancelled, not a save failure.
         when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(false);
         when(jobService.isCancelled(JOB_ID)).thenReturn(true);
 
@@ -758,6 +752,7 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("superseded or expired");
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.NOT_STARTED);
         verify(programmingExerciseRepository, never()).findWithAllParticipationsAndBuildConfigById(EXERCISE_ID);
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
@@ -771,6 +766,7 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("time limit");
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED);
         verify(programmingExerciseRepository, never()).findWithAllParticipationsAndBuildConfigById(EXERCISE_ID);
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
@@ -784,7 +780,6 @@ class GenerationTaskServiceTest {
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(terminal.message()).contains("Nothing was saved", "template passed a graded test");
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
-        // The outcome is always closed → the sandbox is destroyed even on the budget-exhausted path, and the slot is cleared.
         verify(orchestrator).destroyQuietly(sandbox, SESSION_ID);
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }
@@ -836,7 +831,6 @@ class GenerationTaskServiceTest {
             verify(taskScheduler).schedule(deadline.capture(), any(java.time.Instant.class));
             assertThat(shouldCancel.getAsBoolean()).isFalse();
             deadline.getValue().run();
-            // The deadline stops the run cooperatively via the cancelled supplier, but must NOT force-cancel the job — that would discard a verified checkpoint.
             assertThat(shouldCancel.getAsBoolean()).isTrue();
             return GenerationOutcome.cancelled(new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 1, ""));
         });
@@ -846,15 +840,14 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
         assertThat(terminal.message()).contains("time limit");
-        // The safety deadline never force-cancels the job; with no verified candidate the run simply ends without persisting.
+        // The deadline stops the run cooperatively but never force-cancels the job, which would discard a verified checkpoint.
         verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
     }
 
     @Test
     void deadlineExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
-        // The wall-clock deadline is a SAFETY control, not a user stop. It stops further model work, but a candidate that already passed mechanical verification is a
-        // checkpointed, paid-for save obligation, and persisting it re-runs and re-bills nothing. Force-cancelling the job here would discard the run for nothing.
+        // The deadline stops further model work, but a candidate that already passed verification is paid for and persisting it costs no further provider calls.
         ArgumentCaptor<Runnable> deadline = ArgumentCaptor.forClass(Runnable.class);
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             BooleanSupplier shouldCancel = invocation.getArgument(5);
@@ -896,8 +889,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenBudgetExceeded_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
-        // The budget is a cost control on provider spend: it stops further model calls, but a candidate that already passed verification is paid for — saving it consumes no
-        // provider tokens, and the save-obligation doctrine applies. Discarding it (the old behavior) burned the whole budget for nothing.
+        // The budget stops further model calls, but saving a candidate that already passed verification consumes no provider tokens.
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
                 auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
                 java.time.Duration.ofSeconds(15));
@@ -994,8 +986,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void agentTurnsAndAttempts_arePushedToTheJobServiceFromTheRunSink() {
-        // The turn/attempt counters reach the job's usage accumulator through the sink the orchestrator is handed, not through the outcome it returns, so a run abandoned at a
-        // gate still reports them.
+        // The counters reach the usage accumulator through the sink the orchestrator is handed, not the outcome it returns, so a run abandoned at a gate still reports them.
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
             ProviderUsageSink usageSink = invocation.getArgument(8);
             usageSink.recordAttempt();
@@ -1060,7 +1051,6 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
 
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
-        // The run must not start the expensive orchestration for an exercise that no longer exists.
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
     }
@@ -1102,12 +1092,7 @@ class GenerationTaskServiceTest {
         verify(generationBudgetService).releaseReservation("reservation-2");
     }
 
-    // --- Termination reason on the terminal event ---
-
-    /**
-     * Whatever the attempt loop concluded must survive onto the terminal event, for every value of the closed enum: the harness reads the persisted terminal status, and a reason
-     * that only some branches carry is missing exactly when a campaign needs it.
-     */
+    /** Whatever the attempt loop concluded must survive onto the terminal event for every value of the closed enum, since that status is all a later reader has. */
     @ParameterizedTest
     @EnumSource(ExerciseGenerationEventDTO.TerminationReason.class)
     void terminalEvent_carriesTheOutcomesTerminationReason(ExerciseGenerationEventDTO.TerminationReason reason) {
@@ -1127,28 +1112,6 @@ class GenerationTaskServiceTest {
         ExerciseGenerationEventDTO terminal = sentEvents().getLast();
         assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
         assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
-    }
-
-    @Test
-    void jobThatNeverReachedTheAttemptLoop_reportsThatItNeverStarted() {
-        when(jobService.isActiveJob(EXERCISE_ID, JOB_ID)).thenReturn(false);
-
-        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
-
-        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
-        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
-        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.NOT_STARTED);
-    }
-
-    @Test
-    void deadlineThatElapsedBeforeTheRunStarted_reportsTheDeadline() {
-        GenerationStartedEvent event = new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(),
-                Instant.now().minusSeconds(1));
-
-        taskService.runAsync(event);
-
-        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
-        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED);
     }
 
     @Test
@@ -1192,9 +1155,8 @@ class GenerationTaskServiceTest {
     }
 
     /**
-     * The attempt loop sees only a cooperative stop flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@code CANCELLED}; only the task knows
-     * which fired. Every other reason is the loop's own conclusion about the candidate and must survive untouched — a run that converged before the deadline fired terminated by
-     * converging.
+     * The attempt loop sees only a cooperative stop flag, so a deadline, a token budget and an instructor pressing cancel all reach it as {@code CANCELLED} and only the task
+     * knows which fired. Every other reason is the loop's own conclusion about the candidate and must survive untouched.
      */
     @ParameterizedTest
     @EnumSource(ExerciseGenerationEventDTO.TerminationReason.class)
@@ -1230,7 +1192,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenBudget_isTheRunsOwnBoundRatherThanTheDeploymentDefault() {
-        // The run had exactly its own bound reserved at admission; spending the deployment default here would overshoot a reservation other jobs are admitted against.
+        // Admission reserved the run's own bound; spending the deployment default would overshoot the reservation other jobs are admitted against.
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
                 auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30),
                 1_000_000, java.time.Duration.ofSeconds(15));

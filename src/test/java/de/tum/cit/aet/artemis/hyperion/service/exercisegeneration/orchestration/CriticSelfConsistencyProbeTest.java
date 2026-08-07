@@ -34,14 +34,11 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFid
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Experiment Z of {@code .ai/eval/replay-design.md} §3.1 — critic test-retest reliability.
+ * Critic test-retest reliability probe. Calls {@link SpecFidelityCriticService#critique} N times against a real provider on one frozen candidate and writes every finding to disk;
+ * nothing about the candidate changes between calls, so all observed disagreement is the reviewer's own sampling noise. It costs real provider calls and therefore runs only under
+ * {@code HYPERION_CRITIC_PROBE=true}.
  * <p>
- * Calls {@link SpecFidelityCriticService#critique} N times against a real provider on one frozen, unchanged candidate and writes every finding to disk. Nothing about the candidate
- * changes between calls, so all observed disagreement is the reviewer's own sampling noise. This is NOT part of the committed suite: it costs real provider calls and is enabled
- * only by {@code HYPERION_CRITIC_PROBE=true}.
- * <p>
- * Finding identity is taken verbatim from {@code RepairRoundScheduler.findingIdentity} by reflection, so the probe measures the pipeline's own identity function rather than a
- * second one written here.
+ * Finding identity is taken from {@code RepairRoundScheduler.findingIdentity} by reflection, so the probe measures the pipeline's own identity function.
  */
 class CriticSelfConsistencyProbeTest {
 

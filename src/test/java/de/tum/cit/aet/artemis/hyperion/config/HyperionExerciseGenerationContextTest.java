@@ -37,9 +37,8 @@ class HyperionExerciseGenerationContextTest {
 
     @Test
     void registersGenerationBeansWhenExerciseGenerationIsExplicitlyEnabled() {
-        // Every generation bean here is @Lazy, so this only needs the HyperionExerciseGenerationEnabled condition to flip and the bean definitions to resolve their declared
-        // type — it does not require constructing the full production dependency graph (sandbox, git, workspace services, etc.), mirroring the disabled-path test's mechanism
-        // with the opposite property value.
+        // Every generation bean is @Lazy, so this asserts the condition flips and the definitions resolve their declared type, without constructing the full production
+        // dependency graph (sandbox, git, workspace services).
         contextRunner.withPropertyValues(HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME + "=true").run(context -> {
             assertThat(context).hasSingleBean(HyperionExerciseGenerationResource.class).hasSingleBean(GenerationOrchestrationService.class)
                     .hasSingleBean(GenerationPersistenceService.class).hasSingleBean(DifferentialVerificationService.class).hasSingleBean(AgentLoopRunner.class)

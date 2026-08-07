@@ -206,10 +206,8 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     /**
-     * Production has no retry loop: a listing failure during the first cleanup is caught, logged, and the method returns. But the {@code finally} block always flips
-     * {@code isFirstCleanup} to {@code false} regardless of success or failure, so the *next* {@link BuildAgentDockerService#cleanUpContainers()} invocation runs the
-     * subsequent-cleanup branch (age/sandbox-disabled filter) rather than retrying the first-cleanup listing. That second, independent call is what force-removes the
-     * generation sandbox here.
+     * There is no retry loop: a listing failure is caught and logged, but the {@code finally} block flips {@code isFirstCleanup} regardless, so the next independent
+     * {@link BuildAgentDockerService#cleanUpContainers()} call runs the subsequent-cleanup branch and is what force-removes the sandbox here.
      */
     @Test
     void firstCleanupListingFailureStillResetsFlagSoNextInvocationForceRemovesGenerationSandbox() {

@@ -175,8 +175,8 @@ class GenerationAttemptLoop {
     // Concept invention is distinct from contract compilation: an authoritative statement already fixes the concept, while a brief-only run still needs selection.
     private final boolean conceptSelectionApplies;
 
-    // The gate-approved SPEC.md snapshot, frozen by the runner's spec gate: instructor-visible immediately, fed to the critic's grounding, and appended to every repair prompt so
-    // scope-cutting under repair pressure faces the contract it is cutting.
+    // The gate-approved SPEC.md snapshot: instructor-visible immediately, fed to the critic's grounding, and appended to every repair prompt so scope-cutting under repair
+    // pressure faces the contract it is cutting.
     private final AtomicReference<String> specSnapshot = new AtomicReference<>();
 
     private String currentPrompt;
@@ -205,7 +205,7 @@ class GenerationAttemptLoop {
 
     /**
      * Objections the concept review raised against the concept this run proceeded with anyway. Kept apart from {@link #unresolvedSpecificationFindings} because the two say
-     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea — while gating identically: neither one may authorize
+     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea — while gating identically: neither may authorize
      * autonomously strengthening the graded suite.
      */
     private List<String> unresolvedConceptFindings = List.of();
@@ -401,8 +401,8 @@ class GenerationAttemptLoop {
 
     /** Runs staged authoring for the first attempt and a scoped agent loop for later repairs. */
     private void runAttempt(int attempt) {
-        // Pushed before any work, for the same reason the agent loop pushes turns: an attempt abandoned at a gate must still be counted, and a count derived from the outcome the
-        // caller returns is missing exactly for the runs an administrator wants to see.
+        // Pushed before any work: an attempt abandoned at a gate must still be counted, and a count derived from the returned outcome is missing exactly for the runs an
+        // administrator wants to see.
         recordAttempt();
         boolean stagedAttempt = useStagedGeneration && attempt == 1;
         if (stagedAttempt) {
@@ -630,10 +630,9 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Whether both design authorities this run depends on — the concept it builds and the contract it froze — came through their reviews unopposed.
-     * <p>
-     * Gates every autonomous strengthening of the graded suite. A contested concept counts the same as a contested specification: adopting an execution-proven counterexample
-     * would deepen a design choice the reviewer objected to, which is the opposite of what the instructor is being asked to decide.
+     * Whether both design authorities this run depends on — the concept it builds and the contract it froze — came through their reviews unopposed. Gates every autonomous
+     * strengthening of the graded suite: adopting an execution-proven counterexample under a contested concept or specification would deepen a design choice the reviewer
+     * objected to.
      */
     private boolean designAuthorityApproved() {
         return unresolvedSpecificationFindings.isEmpty() && unresolvedConceptFindings.isEmpty();
@@ -660,11 +659,7 @@ class GenerationAttemptLoop {
         candidateBeforeCurrentRepair = null;
     }
 
-    /**
-     * Hands this review to the round accounting and puts the resulting counts on the round's progress event.
-     *
-     * @param attempt the authoring attempt whose candidate was just reviewed
-     */
+    /** Hands this review to the round accounting and puts the resulting counts on the round's progress event. */
     private void recordReviewRound(int attempt) {
         ExerciseGenerationRepairRoundDTO round = repairScheduler.recordReviewRound(specFidelityReport, attempt);
         log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh", exercise.getId(), round.round(), attempt,
@@ -737,8 +732,8 @@ class GenerationAttemptLoop {
         else {
             repairScheduler.recordRepairRound(pendingSemanticRepair.surface());
         }
-        // Both what the critic raised and what this attempt was given to repair: without the pair, a weakness that was found but never scheduled cannot be told apart from one
-        // that was never found.
+        // Logs both what the critic raised and what this attempt was given to repair; without the pair, a weakness that was found but never scheduled cannot be told apart from
+        // one that was never found.
         log.info("Exercise {} semantic repair {}/{} on surface {}: critic findings {}; repairing {}", exercise.getId(), repairScheduler.roundsStarted(),
                 repairScheduler.roundLimit(), pendingSemanticRepair.surface(),
                 specFidelityReport.findings().stream().collect(Collectors.groupingBy(SpecFidelityReport.Finding::kind, Collectors.counting())),
@@ -920,8 +915,8 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list, because the candidate already passed every gate. Declining is explicitly
-     * allowed so the agent is not pushed into restating a case its suite already makes: a redundant test is a cost, not a win.
+     * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list, because the candidate already passed every gate, and declining is allowed so
+     * the agent is not pushed into restating a case its suite already makes.
      */
     private String witnessAdoptionPrompt(int completedAttempt, @Nullable String specSnapshotForPrompt, SemanticRepairBatch batch) {
         return attemptFraming(completedAttempt)
@@ -962,7 +957,7 @@ class GenerationAttemptLoop {
     }
 
     private GenerationOutcome cancelledOutcome(AgentLoopResult cancelledResult) {
-        // Every caller of this method is a cooperative stop, so the reason belongs here rather than repeated at each of them.
+        // Every caller of this method is a cooperative stop, so the reason is recorded once here.
         terminationReason = TerminationReason.CANCELLED;
         if (lastMechanicallyVerifiedCandidate != null) {
             return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
@@ -1013,9 +1008,7 @@ class GenerationAttemptLoop {
         return lastExtractedCandidate;
     }
 
-    /**
-     * @return why this loop stopped; {@code null} only while it is still running, or when it was abandoned by an exception it never caught
-     */
+    /** @return why this loop stopped; {@code null} only while it is still running, or when it was abandoned by an exception it never caught */
     @Nullable
     TerminationReason terminationReason() {
         return terminationReason;

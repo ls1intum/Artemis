@@ -5,15 +5,9 @@ import java.util.List;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.DifferentialVerificationService;
 
 /**
- * Result of the spec-fidelity and adaptation-scope review — quality axes the differential oracle is structurally blind to.
- * <p>
- * The differential oracle ({@link DifferentialVerificationService}) proves an exercise is internally consistent (the solution passes its own tests, the template fails them, the
- * bindings resolve) but never whether it implements the instructor's brief. This report carries the gaps between the brief and the produced tests (see {@link Kind} for the finding
- * categories).
+ * The gaps between the instructor's brief and the produced tests — the quality axes the differential oracle ({@link DifferentialVerificationService}) is structurally blind to.
  * <p>
  * Contract-risk findings require instructor review after a mechanically valid candidate is saved. Presentation findings remain advisory.
- *
- * @param findings the spec-fidelity or adaptation-scope findings
  */
 public record SpecFidelityReport(List<Finding> findings) {
 
@@ -33,10 +27,7 @@ public record SpecFidelityReport(List<Finding> findings) {
         REQUESTED_ADAPTATION_CHANGE_MISSING,
         /** The adaptation-scope review could not produce a complete verdict. */
         ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
-        /**
-         * A graded test file whose assertions carry no human-readable failure message, so a failing student sees only "expected X but was Y" with no hint at which behaviour broke
-         * (the gold-standard Artemis test pairs every check with a descriptive message). Deterministic, advisory.
-         */
+        /** A graded test file whose assertions carry no human-readable failure message, so a failing student sees only "expected X but was Y". Advisory. */
         MISSING_FAILURE_MESSAGE,
         /** The statement, reference solution, tests, template, or worked examples make incompatible claims about observable behaviour. */
         CONTRACT_CONTRADICTION,
@@ -44,12 +35,12 @@ public record SpecFidelityReport(List<Finding> findings) {
         HIDDEN_GRADED_REQUIREMENT,
         /**
          * A text-only reviewer suspects that plausible contract-breaking implementations are not distinguished by the generated assertions. Advisory until execution proves the
-         * claim: an LLM hypothesis is useful review context, but is not sufficient evidence for an autonomous repair.
+         * claim: an LLM hypothesis is not sufficient evidence for an autonomous repair.
          */
         WEAK_TEST_ORACLE,
         /**
          * A complete contract-breaking implementation passed the generated suite while an independently authored counterexample passed on the pristine solution and failed on
-         * that implementation. This is environment-proven evidence that the oracle is weak, so it may safely drive an autonomous repair.
+         * that implementation. Environment-proven, so it may drive an autonomous repair.
          */
         EXECUTABLE_WEAK_TEST_ORACLE,
         /**
@@ -64,10 +55,8 @@ public record SpecFidelityReport(List<Finding> findings) {
          */
         TEMPLATE_QUALITY_GAP,
         /**
-         * The specification states a rule mandating an implementation technique — that a method be recursive, use a stream pipeline, avoid loops — which behavioural tests
-         * cannot observe through the public API. Blocking publication but intentionally not auto-repairable: no assertion distinguishes a recursive implementation from an
-         * iterative one returning the same values, so a student who ignores the mandate scores full marks. Instructor review must either accept the objective as ungraded,
-         * provide a vetted assessment capability, or remove the mandate.
+         * The specification states a rule mandating an implementation technique — that a method be recursive, use a stream pipeline, avoid loops — which behavioural tests cannot
+         * observe through the public API. Blocking but not auto-repairable: only instructor review can accept the objective as ungraded or remove the mandate.
          */
         UNENFORCEABLE_TECHNIQUE_RULE,
         /**
@@ -91,31 +80,21 @@ public record SpecFidelityReport(List<Finding> findings) {
         /** A complete pre-freeze specification review still rejected the compiled contract after its bounded refinement budget. */
         SPECIFICATION_REVIEW_FINDING,
         /**
-         * A complete concept review admitted no candidate, and the run proceeded with the least-rejected one rather than producing nothing. Blocking and deliberately not
-         * auto-repairable: the objection is to the exercise's central design choice, which no scoped repair of tests, scaffold, or statement can settle. Only the instructor can
-         * accept the design, redirect it, or discard the draft — but they get to make that call against a real draft instead of an empty failure.
+         * A complete concept review admitted no candidate, and the run proceeded with the least-rejected one rather than producing nothing. Blocking and not auto-repairable: the
+         * objection is to the exercise's central design choice, which no scoped repair of tests, scaffold, or statement can settle.
          */
         CONCEPT_ADMISSION_FINDING
     }
 
-    /**
-     * One spec-fidelity gap.
-     *
-     * @param kind        the category of this gap (see {@link Kind})
-     * @param requirement the concrete requirement or the leaked phrase, in the instructor's own terms
-     * @param detail      a short human-readable explanation of why this is a gap and what to do about it
-     */
+    /** One spec-fidelity gap: {@code requirement} names it in the instructor's own terms, {@code detail} explains what to do about it. */
     public record Finding(Kind kind, String requirement, String detail) {
 
         public boolean isBlocking() {
             return switch (kind) {
-                case UNCOVERED_REQUIREMENT, MECHANICS_LEAK, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE,
-                        CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP, EXECUTABLE_EVIDENCE_UNAVAILABLE,
-                        QUALITY_REVIEW_UNAVAILABLE ->
+                case UNCOVERED_REQUIREMENT, MECHANICS_LEAK, INVENTED_REQUIREMENT, UNREQUESTED_ADAPTATION_CHANGE, REQUESTED_ADAPTATION_CHANGE_MISSING,
+                        ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, CONTRACT_CONTRADICTION, HIDDEN_GRADED_REQUIREMENT, EXECUTABLE_WEAK_TEST_ORACLE, TEMPLATE_QUALITY_GAP,
+                        UNENFORCEABLE_TECHNIQUE_RULE, EXECUTABLE_EVIDENCE_UNAVAILABLE, QUALITY_REVIEW_UNAVAILABLE, SPECIFICATION_REVIEW_FINDING, CONCEPT_ADMISSION_FINDING ->
                     true;
-                case SPECIFICATION_REVIEW_FINDING, CONCEPT_ADMISSION_FINDING -> true;
-                case INVENTED_REQUIREMENT -> true;
-                case UNENFORCEABLE_TECHNIQUE_RULE -> true;
                 case MISSING_WORKED_EXAMPLE, MISSING_FAILURE_MESSAGE, WEAK_TEST_ORACLE, EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, CONTRACT_WITNESS_AVAILABLE,
                         CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->
                     false;

@@ -520,7 +520,6 @@ class InteractiveSandboxRelayRoundTripTest {
         assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> client.copyIn(handle(), "/workspace", new ByteArrayInputStream(huge)))
                 .withMessageContaining("relay limit");
 
-        // The payload never reached the agent.
         verify(localSandbox, never()).copyIn(anyString(), anyString(), any());
     }
 
@@ -598,6 +597,26 @@ class InteractiveSandboxRelayRoundTripTest {
         SandboxOpResponseDTO completed = SandboxOpResponseDTO.ok(inFlightId, CONTAINER_ID);
         handler.rememberCompletedResponse(completed);
         assertThat(handler.claimRequest(inFlightRequest).completedResponse()).isEqualTo(completed);
+    }
+
+    @Test
+    void inFlightCorrelationIdWhoseOperationNeverCompleted_isReclaimedOnceItsRetryDeadlinePasses() {
+        String correlationId = "corr-leaked-in-flight";
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.list(correlationId, AGENT_SHORT_NAME);
+        assertThat(handler.claimRequest(request).accepted()).isTrue();
+
+        // While the operation may genuinely still be running, a retry must not repeat its side effect.
+        assertThat(handler.claimRequest(request).accepted()).isFalse();
+
+        // The operation never reaches rememberCompletedResponse (a killed worker, an Error), so nothing removes its entry. Age the stored retry deadline instead of waiting out
+        // the real request deadline plus its one-minute grace: past that instant no retry the requester could still send would be honoured anyway.
+        inFlightCorrelationIds().put(correlationId, System.currentTimeMillis() - 1);
+
+        InteractiveSandboxRelayHandler.RequestClaim reclaimed = handler.claimRequest(request);
+
+        // Without the sweep the leaked entry survives for the lifetime of the agent and this correlation id stays permanently unclaimable.
+        assertThat(reclaimed.accepted()).isTrue();
+        assertThat(reclaimed.completedResponse()).isNull();
     }
 
     @Test
@@ -815,6 +834,32 @@ class InteractiveSandboxRelayRoundTripTest {
     }
 
     @Test
+    void unansweredOperation_backsOffItsRePublishesInsteadOfBroadcastingAtAFixedInterval() {
+        // A re-publish is a cluster-wide broadcast that every hosting agent deserializes on its event thread, so a healthy but long operation must not keep paying for one every
+        // interval: the delay doubles instead of staying at the first interval.
+        LocalTopic<SandboxOpRequestDTO> unansweredRequests = new LocalTopic<>();
+        AtomicInteger publications = new AtomicInteger();
+        unansweredRequests.addMessageListener(request -> publications.incrementAndGet());
+        DistributedDataAccessService access = mock(DistributedDataAccessService.class);
+        when(access.getHyperionSandboxRequestsTopic()).thenReturn(unansweredRequests);
+        when(access.getHyperionSandboxResponsesTopic()).thenReturn(new LocalTopic<>());
+        RemoteInteractiveSandboxClient backingOffClient = new RemoteInteractiveSandboxClient(access);
+        ReflectionTestUtils.setField(backingOffClient, "relayRetryInterval", Duration.ofMillis(20));
+        ReflectionTestUtils.setField(backingOffClient, "controlOpTimeout", Duration.ofSeconds(2));
+        backingOffClient.registerResponseListener();
+
+        try {
+            assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> backingOffClient.resetSession(handle())).withMessageContaining("timed out");
+        }
+        finally {
+            backingOffClient.removeResponseListener();
+        }
+
+        // A fixed 20ms interval would re-publish about a hundred times over this two-second budget; doubling cannot exceed the initial publish plus seven re-publishes.
+        assertThat(publications).hasValueBetween(2, 20);
+    }
+
+    @Test
     void execRunsOffTheTopicListenerThread() {
         AtomicReference<Thread> execThread = new AtomicReference<>();
         when(localSandbox.exec(eq(CONTAINER_ID), any(), eq("echo"), eq("x"))).thenAnswer(invocation -> {
@@ -827,6 +872,23 @@ class InteractiveSandboxRelayRoundTripTest {
 
         assertThat(execThread.get()).isNotSameAs(callerThread);
         assertThat(execThread.get().getName()).startsWith("hyperion-sandbox-relay-");
+    }
+
+    @Test
+    void operationThatHitsAFatalErrorStillAnswersTheBlockedCallerWithAFailure() throws Exception {
+        // An Error is not an Exception: catching only Exception left the core node — which is blocked on a distributed future — waiting out its entire relay budget with no
+        // response and no diagnosis, for a failure the agent already knew about.
+        createOwnedHandle();
+        when(localSandbox.exec(eq(CONTAINER_ID), any(), any(String[].class))).thenThrow(new StackOverflowError("boom"));
+        SandboxOpRequestDTO request = SandboxOpRequestDTO.exec("corr-fatal", AGENT_SHORT_NAME, CONTAINER_ID, new String[] { "true" }, 5);
+        BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(request.correlationId());
+
+        requestsTopic.publish(request);
+
+        SandboxOpResponseDTO response = matchingResponses.poll(5, TimeUnit.SECONDS);
+        assertThat(response).isNotNull();
+        assertThat(response.success()).isFalse();
+        assertThat(response.errorMessage()).contains("boom");
     }
 
     @Test
@@ -1378,6 +1440,11 @@ class InteractiveSandboxRelayRoundTripTest {
     private String createOwnedHandle() {
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
         return client.createSession(sessionSpec());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Long> inFlightCorrelationIds() {
+        return (Map<String, Long>) ReflectionTestUtils.getField(handler, "inFlightCorrelationIds");
     }
 
     private BlockingQueue<SandboxOpResponseDTO> responsesFor(String correlationId) {

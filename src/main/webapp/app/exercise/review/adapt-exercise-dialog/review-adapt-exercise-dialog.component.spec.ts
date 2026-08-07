@@ -1,120 +1,104 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { AdaptFinding, adaptFindingTagSeverity } from 'app/exercise/review/review-comment-utils';
-import {
-    ReviewAdaptExerciseDialogComponent,
-    ReviewAdaptExerciseDialogData,
-    ReviewAdaptExerciseDialogResult,
-} from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 
 function finding(severity: ConsistencyIssueSeverityEnum, description: string): AdaptFinding {
     return { category: ConsistencyIssueCategoryEnum.MethodReturnTypeMismatch, severity, tagSeverity: adaptFindingTagSeverity(severity), description };
 }
 
-async function setup(data: ReviewAdaptExerciseDialogData): Promise<{
+async function setup(findings?: AdaptFinding[]): Promise<{
     component: ReviewAdaptExerciseDialogComponent;
     fixture: ComponentFixture<ReviewAdaptExerciseDialogComponent>;
-    close: ReturnType<typeof vi.fn>;
+    confirmed: ReturnType<typeof vi.fn>;
+    cancelled: ReturnType<typeof vi.fn>;
 }> {
-    const close = vi.fn();
     await TestBed.configureTestingModule({
         imports: [ReviewAdaptExerciseDialogComponent],
-        providers: [
-            { provide: TranslateService, useClass: MockTranslateService },
-            { provide: DynamicDialogRef, useValue: { close } },
-            { provide: DynamicDialogConfig, useValue: { data } },
-        ],
+        providers: [{ provide: TranslateService, useClass: MockTranslateService }],
     }).compileComponents();
     const fixture = TestBed.createComponent(ReviewAdaptExerciseDialogComponent);
-    return { component: fixture.componentInstance, fixture, close };
+    if (findings) {
+        fixture.componentRef.setInput('findings', findings);
+    }
+    const confirmed = vi.fn();
+    const cancelled = vi.fn();
+    fixture.componentInstance.confirmed.subscribe(confirmed);
+    fixture.componentInstance.cancelled.subscribe(cancelled);
+    fixture.detectChanges();
+    return { component: fixture.componentInstance, fixture, confirmed, cancelled };
+}
+
+/** The template renders exactly two kit buttons, cancel first. */
+function actionButtons(fixture: ComponentFixture<ReviewAdaptExerciseDialogComponent>): HTMLButtonElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('tum-ui-button button'));
 }
 
 describe('ReviewAdaptExerciseDialogComponent', () => {
     afterEach(() => TestBed.resetTestingModule());
 
-    it('sorts findings by severity, highest first', async () => {
-        const { component } = await setup({
-            findings: [
-                finding(ConsistencyIssueSeverityEnum.Low, 'low'),
-                finding(ConsistencyIssueSeverityEnum.High, 'high'),
-                finding(ConsistencyIssueSeverityEnum.Medium, 'medium'),
-            ],
-        });
-        expect(component.findings.map((f) => f.description)).toEqual(['high', 'medium', 'low']);
-        expect(component.isFreeMode).toBe(false);
-    });
+    it('renders the findings as a labelled list, highest severity first, and discloses automatic persistence', async () => {
+        const { fixture } = await setup([
+            finding(ConsistencyIssueSeverityEnum.Low, 'sorted-last'),
+            finding(ConsistencyIssueSeverityEnum.High, 'sorted-first'),
+            finding(ConsistencyIssueSeverityEnum.Medium, 'sorted-second'),
+        ]);
 
-    it('is free mode when no findings are selected and requires instructions before confirming', async () => {
-        const { component, close } = await setup({});
-        expect(component.isFreeMode).toBe(true);
-        expect(component.confirmDisabled()).toBe(true);
-
-        component.confirm();
-        expect(close).not.toHaveBeenCalled();
-
-        component.instructions.set('  make it harder  ');
-        expect(component.confirmDisabled()).toBe(false);
-        component.confirm();
-        expect(close).toHaveBeenCalledWith({ instructions: 'make it harder' } satisfies ReviewAdaptExerciseDialogResult);
-    });
-
-    it('allows confirming with findings and no instructions, sending an undefined prompt', async () => {
-        const { component, close } = await setup({ findings: [finding(ConsistencyIssueSeverityEnum.High, 'fix it')] });
-        expect(component.confirmDisabled()).toBe(false);
-        component.confirm();
-        expect(close).toHaveBeenCalledWith({ instructions: undefined } satisfies ReviewAdaptExerciseDialogResult);
-    });
-
-    it('closes with undefined when cancelled', async () => {
-        const { component, close } = await setup({ findings: [finding(ConsistencyIssueSeverityEnum.High, 'fix it')] });
-        component.cancel();
-        expect(close).toHaveBeenCalledWith(undefined);
-    });
-
-    it('exposes the remaining instruction capacity and associates it with the textarea', async () => {
-        const { component, fixture } = await setup({});
-        component.instructions.set('abc');
-        fixture.detectChanges();
-
-        expect(component.remainingCharacters()).toBe(7997);
-        const textarea = fixture.nativeElement.querySelector('#adaptExerciseInstructions');
-        expect(textarea.getAttribute('aria-describedby')).toContain('adaptExerciseCharacterCount');
-        expect(fixture.nativeElement.querySelector('#adaptExerciseCharacterCount').textContent).toContain('adaptExercise.charactersRemaining');
-    });
-
-    it('renders selected findings as a labelled list and discloses automatic persistence', async () => {
-        const { fixture } = await setup({ findings: [finding(ConsistencyIssueSeverityEnum.High, 'fix it')] });
-        fixture.detectChanges();
-
-        const heading = fixture.nativeElement.querySelector('#adaptExerciseFindingsHeading');
         const list = fixture.nativeElement.querySelector('ul[aria-labelledby="adaptExerciseFindingsHeading"]');
-        expect(heading).not.toBeNull();
-        expect(list.querySelectorAll('li')).toHaveLength(1);
-        expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('#adaptExerciseFindingsHeading')).not.toBeNull();
+        const items = Array.from(list.querySelectorAll('li'), (item) => (item as HTMLElement).textContent);
+        expect(items[0]).toContain('sorted-first');
+        expect(items[1]).toContain('sorted-second');
+        expect(items[2]).toContain('sorted-last');
+        expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(3);
         expect(fixture.nativeElement.querySelector('tum-ui-message[severity="warn"][role="status"]')).not.toBeNull();
         expect(fixture.nativeElement.textContent).toContain('adaptExercise.persistenceNotice');
     });
 
-    it('disables the confirm button while free mode has no instructions and confirms once they are entered', async () => {
-        const { fixture, close } = await setup({});
-        fixture.detectChanges();
-
-        const [cancelButton, confirmButton] = fixture.nativeElement.querySelectorAll('.review-adapt-exercise-dialog__actions tum-ui-button button');
-        expect(cancelButton.disabled).toBe(false);
+    it('requires instructions before confirming when no findings were selected', async () => {
+        const { component, fixture, confirmed } = await setup();
+        const [, confirmButton] = actionButtons(fixture);
         expect(confirmButton.disabled).toBe(true);
 
         confirmButton.click();
-        expect(close).not.toHaveBeenCalled();
+        expect(confirmed).not.toHaveBeenCalled();
 
-        fixture.componentInstance.instructions.set('rework the tests');
+        component.instructions.set('  make it harder  ');
         fixture.detectChanges();
         expect(confirmButton.disabled).toBe(false);
 
         confirmButton.click();
-        expect(close).toHaveBeenCalledWith({ instructions: 'rework the tests' } satisfies ReviewAdaptExerciseDialogResult);
+        expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: 'make it harder' } satisfies ReviewAdaptExerciseDialogResult);
+    });
+
+    it('confirms with findings and no instructions, reporting an undefined prompt', async () => {
+        const { fixture, confirmed } = await setup([finding(ConsistencyIssueSeverityEnum.High, 'fix it')]);
+        const [, confirmButton] = actionButtons(fixture);
+
+        expect(confirmButton.disabled).toBe(false);
+        confirmButton.click();
+
+        expect(confirmed).toHaveBeenCalledExactlyOnceWith({ instructions: undefined } satisfies ReviewAdaptExerciseDialogResult);
+    });
+
+    it('reports a cancellation without a result', async () => {
+        const { fixture, confirmed, cancelled } = await setup([finding(ConsistencyIssueSeverityEnum.High, 'fix it')]);
+
+        actionButtons(fixture)[0].click();
+
+        expect(cancelled).toHaveBeenCalledOnce();
+        expect(confirmed).not.toHaveBeenCalled();
+    });
+
+    it('caps the instructions and describes the textarea with the help text and the remaining-character count', async () => {
+        const { fixture } = await setup();
+
+        const textarea = fixture.nativeElement.querySelector('#adaptExerciseInstructions');
+        expect(textarea.getAttribute('maxlength')).toBe('8000');
+        expect(textarea.getAttribute('aria-describedby')).toBe('adaptExerciseFreeHelp adaptExerciseCharacterCount');
+        expect(fixture.nativeElement.querySelector('#adaptExerciseCharacterCount').textContent).toContain('adaptExercise.charactersRemaining');
     });
 });

@@ -24,8 +24,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Independent authoring pass for complete semantic mutants and the counterexamples that should kill them. It deliberately receives no graded test bodies: the environment, not
- * model inspection of the suite, proves whether the current tests miss the proposed defect.
+ * Independent authoring pass for complete semantic mutants and the counterexamples that should kill them. It receives no graded test bodies: the environment, not model
+ * inspection of the suite, proves whether the current tests miss the proposed defect.
  */
 class SemanticMutantAuthor {
 

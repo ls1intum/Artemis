@@ -17,9 +17,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGua
 /**
  * Toggles an exercise's second-correction round, holding Hyperion's mutation guard for the whole operation and recording the resulting version.
  * <p>
- * This is a service of its own rather than a method on {@link ExerciseVersionService} because of what depends on what: the versioning service is reachable from the LocalVC git
- * servlet and is therefore instantiated during startup, so giving it the mutation guard would pull the guard — and Hazelcast behind it — into the startup graph for every node,
- * to serve one REST endpoint. REST resources are not startup beans, so keeping this here costs nothing at boot.
+ * A service of its own rather than a method on {@link ExerciseVersionService}: that service is reachable from the LocalVC git servlet and therefore instantiated during startup, so
+ * giving it the mutation guard would pull the guard — and Hazelcast behind it — into the startup graph of every node to serve one REST endpoint.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -42,8 +41,7 @@ public class SecondCorrectionService {
      * Toggles second correction and records the new state as an exercise version.
      * <p>
      * The guard matters because a Hyperion generation may own the exercise: it rewrites repositories and metadata, and a concurrent toggle would race that. Only programming
-     * exercises can be owned, so the claim is empty for every other type and the lease is then a no-op. Programming exercises version synchronously, because the caller's
-     * response asserts the change is already durable.
+     * exercises can be owned, and only they version synchronously, because the caller's response asserts the change is already durable.
      *
      * @param exerciseId the exercise to toggle
      * @param user       the user performing the toggle, recorded as the version's author

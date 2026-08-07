@@ -8,19 +8,25 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { Component, viewChild } from '@angular/core';
-
-@Component({
-    imports: [HyperionGenerationJobsTableComponent],
-    template: '<jhi-hyperion-generation-jobs-table [jobs]="[]" />',
-})
-class TestHostComponent {
-    readonly table = viewChild.required(HyperionGenerationJobsTableComponent);
-}
+import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 
 describe('HyperionGenerationJobsTableComponent', () => {
     let fixture: ComponentFixture<HyperionGenerationJobsTableComponent>;
     let serverDateService: ArtemisServerDateService;
+    const jobs: GenerationSandboxJob[] = [
+        {
+            jobId: 'job-1',
+            exerciseId: 42,
+            exerciseTitle: 'Concurrency Lab',
+            courseId: 7,
+            userLogin: 'instructor',
+            mode: 'GENERATE',
+            startedAt: '2026-07-12T09:00:00Z',
+            lastActivityAt: '2026-07-12T09:01:00Z',
+            sessionId: 'agent-1::container-1',
+            agentName: 'agent-1',
+        },
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,20 +35,7 @@ describe('HyperionGenerationJobsTableComponent', () => {
         });
         serverDateService = TestBed.inject(ArtemisServerDateService);
         fixture = TestBed.createComponent(HyperionGenerationJobsTableComponent);
-        fixture.componentRef.setInput('jobs', [
-            {
-                jobId: 'job-1',
-                exerciseId: 42,
-                exerciseTitle: 'Concurrency Lab',
-                courseId: 7,
-                userLogin: 'instructor',
-                mode: 'GENERATE',
-                startedAt: '2026-07-12T09:00:00Z',
-                lastActivityAt: '2026-07-12T09:01:00Z',
-                sessionId: 'agent-1::container-1',
-                agentName: 'agent-1',
-            },
-        ]);
+        fixture.componentRef.setInput('jobs', jobs);
         fixture.componentRef.setInput('showAgent', true);
         fixture.detectChanges();
     });
@@ -68,16 +61,22 @@ describe('HyperionGenerationJobsTableComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('5 minutes ago');
     });
 
-    it('uses the server-adjusted clock for elapsed time', async () => {
+    it('keeps the elapsed time counting on the server-adjusted clock', async () => {
         vi.useFakeTimers();
-        vi.spyOn(serverDateService, 'now').mockReturnValue(dayjs('2026-07-12T09:01:00Z'));
+        const serverNow = vi.spyOn(serverDateService, 'now').mockReturnValue(dayjs('2026-07-12T09:00:30Z'));
+        // The clock seeds its initial value at construction, so the component has to be created after the server date is mocked.
         fixture.destroy();
-        const hostFixture = TestBed.createComponent(TestHostComponent);
-        hostFixture.detectChanges();
+        fixture = TestBed.createComponent(HyperionGenerationJobsTableComponent);
+        fixture.componentRef.setInput('jobs', jobs);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.rows()[0].elapsedSeconds).toBe(30);
 
+        serverNow.mockReturnValue(dayjs('2026-07-12T09:01:00Z'));
         await vi.advanceTimersByTimeAsync(1000);
+        fixture.detectChanges();
 
-        expect(hostFixture.componentInstance.table().elapsedSeconds('2026-07-12T09:00:00Z')).toBe(60);
+        expect(fixture.componentInstance.rows()[0].elapsedSeconds).toBe(60);
+        expect(fixture.nativeElement.textContent).toContain('1min');
     });
 
     it('does not present stale timing or a broken detail link as live data', () => {

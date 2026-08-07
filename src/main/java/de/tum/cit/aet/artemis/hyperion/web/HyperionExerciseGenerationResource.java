@@ -57,10 +57,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for Hyperion's agentic whole-exercise generation and adaptation.
  * <p>
- * One endpoint drives both {@link GenerationMode} values. The agent produces or revises a complete exercise candidate (problem statement plus all repositories). Mechanically
- * verified work is saved to the exercise and versioned; automated quality findings become review comments for the instructor. Mechanically invalid or interrupted candidates are
- * not saved. A run is a multi-minute async job addressed by the returned {@code jobId}, streaming progress over the websocket topic
- * {@code /user/topic/hyperion/exercise-generation/jobs/{jobId}}.
+ * One endpoint drives both {@link GenerationMode} values. Mechanically verified work is saved to the exercise and versioned, and automated quality findings become review comments
+ * for the instructor; mechanically invalid or interrupted candidates are not saved. A run is a multi-minute async job addressed by the returned {@code jobId}, streaming progress
+ * over the websocket topic {@code /user/topic/hyperion/exercise-generation/jobs/{jobId}}.
  */
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @Lazy
@@ -126,7 +125,7 @@ public class HyperionExerciseGenerationResource {
         log.debug("REST request to run agentic exercise generation ({}) for exercise [{}]", request.mode(), exerciseId);
         validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
         validateRequestedJobDuration(request.maxJobDuration());
-        // Resolved before anything expensive happens, and fail-closed on an unknown name: a silent fallback to the default profile is how an instructor gets a surprise bill.
+        // Fail-closed on an unknown profile name: falling back to the default profile would silently spend a budget nobody asked for.
         HyperionGenerationSettings settings = effortProfileService.resolve(request.effortProfile()).tightenedBy(request.maxTokens(), request.maxJobDuration());
         ProgrammingExercise exercise = loadExercise(exerciseId);
         validateDraftExercise(exercise);
@@ -135,14 +134,13 @@ public class HyperionExerciseGenerationResource {
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language + "' and project type '"
                     + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
-        // Queried explicitly: the entity's lazy auxiliary-repository collection is not initialized on this detached instance.
+        // Queried separately: the entity's auxiliary-repository collection is lazy and not initialized on this detached instance.
         if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
             throw new BadRequestAlertException("Whole-exercise generation is not available for exercises with auxiliary repositories: the verifier only models the solution, "
                     + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
         if (!sandboxClient.hasAvailableGenerationSandboxSlot()) {
-            // Without this the rejection is invisible on the server: the client sees a bare 503 and the log says nothing about why the fleet cannot host the run.
             generationCapacityHealthIndicator.warnGenerationRejectedForMissingCapacity();
             throw new ServiceUnavailableAlertException("No Hyperion generation build agent currently has a free sandbox slot to start a run.", ENTITY_NAME,
                     "generationCapacityUnavailable");
@@ -150,7 +148,7 @@ public class HyperionExerciseGenerationResource {
         User user = userRepository.getUserWithAuthorities();
         Long courseId = courseIdOf(exercise);
         String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
-        // Reserve what this run may actually spend rather than the fleet-wide worst case, so a course drafting small exercises is not throttled at the job count of the largest.
+        // Reserves what this run may spend rather than the fleet-wide worst case, so a course drafting small exercises is not throttled at the largest job's cost.
         HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId, settings.maxTokensPerJob());
         String jobId;
         try {
@@ -180,11 +178,10 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * GET programming-exercises/generation/effort-profiles : the effort profiles an instructor may pick for a run, so clients offer the deployment's configured set instead of
-     * hardcoding one. Empty when the deployment configures none, in which case every run uses the deployment-wide configuration.
+     * GET programming-exercises/generation/effort-profiles : the effort profiles an instructor may pick for a run. Empty when the deployment configures none, in which case every
+     * run uses the deployment-wide configuration.
      * <p>
-     * Name and label only. Model ids and budgets are admin-owned procurement details an instructor cannot act on, and what actually ran is attested separately through the run's
-     * terminal usage, its provider request ids, and its spans.
+     * Name and label only: model ids and budgets are admin-owned and must not be exposed here.
      * <p>
      * Not exercise-scoped, so it is guarded by the least-privileged global role that can create exercises ({@link EnforceAtLeastEditor}), mirroring
      * {@link #getSupportedGenerationLanguages()}.
@@ -225,12 +222,10 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/generate-exercise/artifacts : returns the candidate the caller's most recent run produced but never saved, so a run that failed
-     * after minutes of work leaves something inspectable instead of nothing.
+     * GET programming-exercises/{exerciseId}/generate-exercise/artifacts : returns the candidate the caller's most recent run produced but never saved, so a run that failed after
+     * minutes of work leaves something inspectable. Read-only, with the same lifetime as the run's transcript.
      * <p>
-     * Strictly read-only. Nothing here was written to the exercise and nothing here can be: a candidate that did not pass mechanical verification is refused by persistence
-     * outright, and this endpoint has no write counterpart. It is bounded diagnostic evidence with the same lifetime as the run's transcript, and it is owner-only — editor
-     * rights in the course are necessary but not sufficient, because this is the verbatim content of an unreviewed draft rather than a progress narrative.
+     * Owner-only: editor rights in the course are necessary but not sufficient, because this returns the verbatim content of an unreviewed draft rather than a progress narrative.
      *
      * @param exerciseId the programming exercise id
      * @return the retained candidate, or 404 when the caller's most recent run retained none (it saved successfully, produced nothing, or its evidence has expired)
@@ -246,8 +241,7 @@ public class HyperionExerciseGenerationResource {
 
     /**
      * DELETE programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId} : cancels a running generation job and immediately exposes its terminal status. An in-flight
-     * provider
-     * request may still finish at the transport layer, but its response is fenced from tool execution and completion publication.
+     * provider request may still finish at the transport layer, but its response is fenced from tool execution and completion publication.
      * <p>
      * Editor rights in the course are necessary but not sufficient: job ids are observable, so only the user who started the job may cancel it.
      *
@@ -350,7 +344,6 @@ public class HyperionExerciseGenerationResource {
 
     /**
      * Bean validation has no positivity constraint for {@link Duration}, and a non-positive bound would clamp the run to a deadline it can never meet rather than tighten it.
-     * Rejected rather than clamped: unlike an over-large value, there is no sensible run it could have meant.
      */
     private void validateRequestedJobDuration(@Nullable Duration maxJobDuration) {
         if (maxJobDuration != null && (maxJobDuration.isZero() || maxJobDuration.isNegative())) {

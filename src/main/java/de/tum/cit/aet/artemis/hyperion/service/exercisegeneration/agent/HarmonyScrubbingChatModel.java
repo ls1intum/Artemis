@@ -17,8 +17,6 @@ import reactor.core.publisher.Flux;
  * A thin {@link ChatModel} decorator that strips gpt-oss "harmony" control tokens (e.g. {@code <|channel|>commentary}, {@code <|end|>}) the deployment occasionally leaks into the
  * assistant {@code content}. If such a token were replayed verbatim in the next request, the server's harmony chat template would re-parse it as structure — most visibly an
  * {@code "Unknown role: assistant<|channel|>commentary"} HTTP 400 that aborts a long, otherwise-healthy run. Removing the tokens keeps the conversation replayable.
- * <p>
- * It delegates {@link #getOptions()} so the loop can still read the configured model id and request defaults.
  */
 public class HarmonyScrubbingChatModel implements ChatModel {
 
@@ -46,7 +44,6 @@ public class HarmonyScrubbingChatModel implements ChatModel {
         return delegate.getOptions();
     }
 
-    /** Rebuilds the response only when an assistant message actually carries a control token, so a clean response is returned as the same instance. */
     static ChatResponse scrub(ChatResponse response) {
         if (response == null || response.getResults() == null || response.getResults().isEmpty()) {
             return response;

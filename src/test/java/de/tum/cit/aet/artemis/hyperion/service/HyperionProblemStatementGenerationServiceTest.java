@@ -49,7 +49,7 @@ class HyperionProblemStatementGenerationServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // The ChatClient merges request options into the model's options, which must be non-null
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
@@ -129,8 +129,7 @@ class HyperionProblemStatementGenerationServiceTest {
 
         ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel).call(promptCaptor.capture());
-        // The draft is the creative stage: elevated temperature counters domain mode collapse; the agent loop and critic keep the deployment default.
-        // The ChatClient merges the request options into the model's options type, so assert the temperature on the ChatOptions contract rather than a concrete class.
+        // The draft is the creative stage: an elevated temperature counters domain mode collapse. The agent loop and the critics keep the deployment default.
         assertThat(promptCaptor.getValue().getOptions().getTemperature()).isEqualTo(0.7);
     }
 
@@ -150,8 +149,6 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Authoring-process headings are a semantic heuristic, not a mechanically-certain artifact: the draft is
-        // still returned and applied, with an advisory warning for the instructor to review.
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a compact library exercise");
         assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
         assertThat(resp.hygieneWarnings()).isNotEmpty();
@@ -303,7 +300,6 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // A design-oriented brief (pattern, UML, students define an interface) is asking the draft to talk about design — API details are on-topic, not invented.
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course,
                 "Create an exercise that teaches the strategy design pattern; students define the playback-order interface themselves and the statement should include a UML class diagram");
 
@@ -364,8 +360,7 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Both the unrequested optional scope and the contradictory conflict/no-conflict example are semantic
-        // heuristics: the draft is returned with (at least) two advisory warnings instead of being blocked.
+        // Two independent heuristics fire here: unrequested optional scope and the contradictory conflict example.
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Create a scheduler exercise");
         assertThat(resp.draftProblemStatement()).isEqualTo(artifactDraft.trim());
         assertThat(resp.hygieneWarnings()).hasSizeGreaterThanOrEqualTo(2);
@@ -492,8 +487,7 @@ class HyperionProblemStatementGenerationServiceTest {
 
     @Test
     void generateProblemStatement_throwsExceptionOnExcessivelyLongResponse() {
-        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000
-        // characters)
+        // One character past MAX_PROBLEM_STATEMENT_LENGTH.
         String excessivelyLongDraft = "a".repeat(50_001);
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongDraft)))));
 
@@ -512,7 +506,6 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should throw exception when userPrompt is null (sanitized to empty string)
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, null)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("User prompt cannot be empty");
     }
@@ -523,7 +516,6 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should throw exception when userPrompt is whitespace-only (sanitized to empty string)
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "   ")).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("User prompt cannot be empty");
     }
@@ -534,9 +526,7 @@ class HyperionProblemStatementGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
 
         var course = new Course();
-        // Leave title and description null
 
-        // Should use default values when course fields are null
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
@@ -544,7 +534,7 @@ class HyperionProblemStatementGenerationServiceTest {
 
     @Test
     void generateProblemStatement_acceptsMaximumLengthResponse() {
-        // Generate a string exactly at MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
+        // Exactly MAX_PROBLEM_STATEMENT_LENGTH.
         String maxLengthDraft = "a".repeat(50_000);
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(maxLengthDraft)))));
 
@@ -552,7 +542,6 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should succeed with exactly 50,000 characters
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).hasSize(50_000);
@@ -597,7 +586,7 @@ class HyperionProblemStatementGenerationServiceTest {
 
     @Test
     void generateProblemStatement_throwsExceptionWhenUserPromptTooLong() {
-        // 1001 characters exceeds MAX_USER_PROMPT_LENGTH (1000)
+        // One character past MAX_USER_PROMPT_LENGTH.
         String tooLongPrompt = "a".repeat(1001);
         var course = new Course();
         course.setTitle("Test Course");

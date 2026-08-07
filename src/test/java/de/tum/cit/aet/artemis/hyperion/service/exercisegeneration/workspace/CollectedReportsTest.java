@@ -50,7 +50,6 @@ class CollectedReportsTest {
 
     @Test
     void rejectsAPathEscapingEntry() {
-        // A regular file whose name climbs above the reports prefix must be refused.
         TarArchiveInputStream tar = tar(entry -> {
             entry.setName(PREFIX + "/../0001__junit.xml");
             return entry;
@@ -60,7 +59,6 @@ class CollectedReportsTest {
 
     @Test
     void rejectsAnOversizedEntry() {
-        // An entry whose ACTUAL content exceeds the per-file cap is refused after reading (a defense against a tar whose declared size understates the body).
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         long oversize = CollectedReports.MAX_FILE_BYTES + 1;
         try (TarArchiveOutputStream tarOut = new TarArchiveOutputStream(out)) {
@@ -68,7 +66,6 @@ class CollectedReportsTest {
             TarArchiveEntry entry = new TarArchiveEntry(PREFIX + "/0001__junit.xml");
             entry.setSize(oversize);
             tarOut.putArchiveEntry(entry);
-            // Stream the oversized body in chunks so the test does not hold it all in memory.
             byte[] chunk = new byte[1024 * 1024];
             long written = 0;
             while (written < oversize) {
@@ -83,6 +80,40 @@ class CollectedReportsTest {
         }
         TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()));
         assertThatExceptionOfType(CollectedReports.RejectedReportException.class).isThrownBy(() -> CollectedReports.read(tar, PREFIX));
+    }
+
+    @Test
+    void rejectsAnArchiveWithMoreEntriesThanTheEntryCap() {
+        // Both byte caps accumulate content bytes only, so an archive of zero-byte entries grows the returned map unbounded unless the entry cap stops it.
+        TarArchiveInputStream tar = zeroByteEntryTar(CollectedReports.MAX_ARCHIVE_ENTRIES + 1);
+
+        assertThatExceptionOfType(CollectedReports.RejectedReportException.class).isThrownBy(() -> CollectedReports.read(tar, PREFIX))
+                .withMessageContaining("more than " + CollectedReports.MAX_ARCHIVE_ENTRIES + " entries");
+    }
+
+    @Test
+    void acceptsAnArchiveAtExactlyTheEntryCap() throws Exception {
+        TarArchiveInputStream tar = zeroByteEntryTar(CollectedReports.MAX_ARCHIVE_ENTRIES);
+
+        assertThat(CollectedReports.read(tar, PREFIX)).hasSize(CollectedReports.MAX_ARCHIVE_ENTRIES);
+    }
+
+    /** Builds a tar of {@code entryCount} zero-byte report entries under the expected prefix: the cheapest archive that passes every byte cap. */
+    private static TarArchiveInputStream zeroByteEntryTar(int entryCount) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tar = new TarArchiveOutputStream(out)) {
+            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            for (int i = 0; i < entryCount; i++) {
+                TarArchiveEntry entry = new TarArchiveEntry(PREFIX + "/" + i + "__junit.xml");
+                entry.setSize(0);
+                tar.putArchiveEntry(entry);
+                tar.closeArchiveEntry();
+            }
+        }
+        catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+        return new TarArchiveInputStream(new ByteArrayInputStream(out.toByteArray()));
     }
 
     /** Builds a single-entry tar whose entry is mutated by {@code mutator} (a regular file by default) carrying {@code content}. */

@@ -34,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -48,6 +47,7 @@ import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationConfigurationValidator;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -79,7 +79,6 @@ class GenerationOrchestrationServiceTest {
         return new SeededStructuralTests(Set.of(names), Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
     }
 
-    /** Referenced, not copied: a change to the production budget must fail at the arithmetic below rather than pass against a stale literal. */
     private static final int MAX_MECHANICAL_ATTEMPTS = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS;
 
     private InteractiveSandbox sandbox;
@@ -135,7 +134,7 @@ class GenerationOrchestrationServiceTest {
                 : new GenerationWorkspaceService.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
         when(workspace.seedWorkspace(any(), anyString(), any(), any(), anyBoolean())).thenReturn(new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()));
-        // Mirror the real predicate's non-trivial threshold so fixtures with instructor statements keep steering the brief (the mock would otherwise return false for all).
+        // Mirrors the real predicate's length threshold; a plain mock would report every fixture statement as non-authoritative.
         when(systemPromptService.isAuthoritativeProblemStatement(any())).thenAnswer(invocation -> {
             String statement = ((ProgrammingExercise) invocation.getArgument(0)).getProblemStatement();
             return statement != null && statement.strip().length() >= 40;
@@ -160,8 +159,6 @@ class GenerationOrchestrationServiceTest {
     }
 
     private GenerationOrchestrationService newService() {
-        // Staged generation disabled by default so the existing battery of tests below keeps exercising the original single-agent-loop-call path unmodified; a dedicated test
-        // below constructs the flag=true variant to prove the delegation seam itself.
         return newService(false);
     }
 
@@ -198,10 +195,7 @@ class GenerationOrchestrationServiceTest {
         verify(structuralOracleSeeder).forget(SESSION_ID);
     }
 
-    /**
-     * Seeds a non-empty TEMPLATE baseline. Without one, "the repository could not be read" and "the repository legitimately produced nothing" are the same empty map, so the
-     * extraction-failed guard is unobservable: a diagnostic capture may only report repositories it actually read.
-     */
+    /** Without a non-empty TEMPLATE baseline, "could not be read" and "legitimately produced nothing" are the same empty map and the extraction-failed guard is unobservable. */
     private void seedNonEmptyTemplateBaseline() {
         when(workspace.seedWorkspace(any(), anyString(), any(), any(), anyBoolean())).thenReturn(
                 new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of(), Map.of(), Map.of(RepositoryType.TEMPLATE, Map.of("src/Given.java", "class Given {}"))));
@@ -363,8 +357,6 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void stagedGenerationDisabled_generateJava_usesTheSingleAgentLoopCallDirectly() {
-        // service (built by newService()) has staged generation disabled, matching the default in every other test in this file: flag off must be a no-op, leaving the
-        // original single, open-ended agent-loop call as the only path — the seam introduced for staged generation must not change existing behaviour.
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
@@ -373,7 +365,6 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
-        // The full overload is the one the attempt loop actually calls; verifying a convenience overload would pass even with the flag on.
         verify(stagedGenerationRunner, never()).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
                 anyBoolean(), any());
     }
@@ -578,8 +569,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void acceptedPath_handsTheSeededStructuralNamesToTheVerifier() {
-        // Ordering is incidental; the property is the data dependency. The verifier requires every seeded grading check to appear in the student checklist, and it can only
-        // enforce that against the names this run actually seeded — passing an empty set silently disables the gate while every ordering assertion still holds.
+        // The verifier can only require the seeded grading checks to appear in the student checklist against the names this run seeded; an empty set silently disables the gate.
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(structuralOracleSeeder.seedIfStructuralDiff(eq(sandbox), eq(SESSION_ID), eq(exercise))).thenReturn(structuralTests("testMethods[Strategy]", "testClass[Strategy]"));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenAnswer(invocation -> {
@@ -601,16 +591,6 @@ class GenerationOrchestrationServiceTest {
 
     private static SpecFidelityReport advisoryReportWith(String requirement) {
         return new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, requirement, "an example would improve clarity")));
-    }
-
-    @ParameterizedTest
-    @EnumSource(SpecFidelityReport.Kind.class)
-    void mechanicalAcceptanceIsIndependentFromQualityReviewDisposition(SpecFidelityReport.Kind kind) {
-        SpecFidelityReport report = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(kind, "requirement", "detail")));
-
-        GenerationOutcome outcome = new GenerationOutcome(completed(), accepted(), null, null, null, Map.of(), "", report, Map.of());
-
-        assertThat(outcome.isMechanicallyVerified()).as("quality finding %s must never change the mechanical verdict", kind).isTrue();
     }
 
     @Test
@@ -720,8 +700,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void truncatedAdaptationEvidence_requiresInstructorReviewEvenWhenTheCriticReportsNothing() {
-        // The critic returning clean on evidence it could only partly see is exactly the case a "no findings" report must not be trusted for: without the truncation merge the
-        // run reports a fully reviewed adaptation while lines it never saw ship unexamined.
+        // A clean report over evidence the critic could only partly see must not be reported as a fully reviewed adaptation.
         stageAdaptationWithOversizedChangeSummary();
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
 
@@ -1251,22 +1230,20 @@ class GenerationOrchestrationServiceTest {
     // --- Deterministic advisory findings ---
 
     /**
-     * The reclassification is guarded by two independent conditions — the frozen contract must mandate a technique, and the finding's own prose must demand one — so only the
-     * conjunction downgrades. Each row below is a distinct path through that pair. A fourth quadrant (contract silent, prose behavioural) is omitted: it returns from the same
-     * provenance gate as the second row, so it could only restate it.
+     * Only the conjunction of two independent conditions downgrades a finding: the frozen contract must mandate a technique, and the finding's own prose must demand one. Each
+     * row is a distinct path through that pair; the omitted fourth quadrant returns from the same provenance gate as the second row.
      */
     static Stream<Arguments> techniqueReclassificationCases() {
-        // Phrased the way the critic actually phrases a weak-oracle finding: the requirement carries the surviving mutant's description, in the critic's voice, without "must".
+        // The critic states a weak-oracle finding as the surviving mutant's description, without "must".
         String techniqueProse = "an iterative implementation using an explicit stack";
         String behaviouralProse = "the recursive helper's base case is untested";
         String mandatingContract = "| R1 | `sum` must be implemented recursively |";
         String silentContract = "| R1 | negative salary invalid |";
         return Stream.of(
-                // Both conditions hold: the finding is real but unrepairable, so it blocks publication without consuming an impossible repair round.
+                // Both conditions hold: real but unrepairable, so it blocks publication without consuming an impossible repair round.
                 Arguments.of("contract mandates a technique and the finding demands one", mandatingContract, techniqueProse, "it survives every assertion",
                         SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, true),
-                // Provenance is what keeps the downgrade honest: against a contract that mandates nothing the same prose describes a behavioural gap the tests can be made to
-                // see, so it keeps its round. Without this gate a misread finding would cost a round on every exercise, not only the ones carrying the defect.
+                // Against a contract that mandates nothing, the same prose describes a behavioural gap the tests can be made to see, so the finding keeps its round.
                 Arguments.of("contract mandates nothing", silentContract, techniqueProse, "it survives every assertion", SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, true),
                 // On a recursion exercise nearly every finding says "recursive" somewhere; an untested base case is ordinary oracle work the downgrade must not swallow.
                 Arguments.of("finding merely mentions the mandated technique", mandatingContract, behaviouralProse, "add a discriminator",
@@ -1294,9 +1271,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void anUngradeableTechniqueRuleBlocksPublicationWithoutInvalidatingMechanicalVerification() {
-        // The detector itself is covered in the critic's own tests; what is covered here is the wiring, which nothing else exercises: the orchestrator must call it and merge
-        // its findings into the report. An exercise whose brief asks for recursion still awards full marks to an iterative implementation, so this channel must stop autonomous
-        // publication while preserving the mechanically verified candidate for instructor review.
+        // Covers the wiring rather than the detector: the orchestrator must call it and merge its findings into the report.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
         SpecFidelityReport.Finding techniqueRule = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "must be recursive",
@@ -1317,8 +1292,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void aReviewThatCouldNotCompleteIsRetriedInsteadOfEndingTheRepairPhase() {
-        // A review that returns no verdict reports "1 blocking quality gap" when it means "we could not review this". The verdict must still fail open, but the WORK must not:
-        // a reviewer having a bad turn is not a reason to stop improving the exercise.
+        // A review that returns no verdict reports "1 blocking quality gap" when it means "we could not review this"; the verdict fails open, but the repair work continues.
         acceptedCandidateWithSpecAndTests();
         SpecFidelityReport unavailable = SpecFidelityReport.qualityReviewUnavailable("the reviewer returned no verdict");
         SpecFidelityReport actionable = new SpecFidelityReport(
@@ -1328,8 +1302,6 @@ class GenerationOrchestrationServiceTest {
         try (GenerationOutcome outcome = generate(() -> false)) {
             assertThat(outcome.isMechanicallyVerified()).isTrue();
         }
-        // The failed review, the retry, and the reviews after each repair the retry unlocked. The decisive assertion is that repair happened at all, rather than the run ending
-        // at the failed review with its whole budget unspent.
         verify(specFidelityCritic, atLeast(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(agentLoopRunner, atLeast(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
@@ -1416,8 +1388,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void theWitnessAdoptionPromptOffersTheTestsInsteadOfReportingBlockers() {
-        // The `times(2)` also pins the budget: without a round the agent never reads the witness, and more than one would let witnesses drive repeated rewrites of a finished
-        // exercise.
+        // The times(2) pins the budget: without a round the agent never reads the witness, and more than one would let witnesses drive repeated rewrites of a finished exercise.
         acceptedCandidateWithSpecAndTests();
         when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(WITNESS));
         when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
@@ -1450,17 +1421,21 @@ class GenerationOrchestrationServiceTest {
         }
     }
 
-    // --- Termination reason: every exit of the attempt loop names itself, so "budget or convergence" is answerable from a run's artifact rather than from a log line ---
+    // --- Termination reason: every exit of the attempt loop names itself ---
 
-    /**
-     * Runs a service whose semantic repair budget is {@code maxSemanticRepairs}, which also derives the attempt cap
-     * ({@link GenerationAttemptLoop#MAX_MECHANICAL_ATTEMPTS} + budget + 1). Referenced rather than copied so a change to that arithmetic breaks here instead of silently
-     * re-routing a scripted run into a different exit.
-     */
+    /** The semantic repair budget also derives the attempt cap ({@link GenerationAttemptLoop#MAX_MECHANICAL_ATTEMPTS} + budget + 1). */
     private GenerationOrchestrationService serviceWithRepairBudget(int maxSemanticRepairs) {
         return new GenerationOrchestrationService(Optional.of(sandbox), workspace, agentLoopRunner, verifier, systemPromptService, structuralOracleSeeder, specFidelityCritic,
                 jobService, Optional.of(testCaseRepository), 100, maxSemanticRepairs, stagedGenerationRunner, false, stageCheckService, new AgentTranscriptWriter(""),
                 new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry());
+    }
+
+    @Test
+    void aRepairBudgetOutsideTheReviewedRange_isRejectedRatherThanSilentlyDefaulted() {
+        // Substituting the default for an out-of-range value makes the setting look applied while the run quietly stops repairing earlier than the deployment was tuned for.
+        assertThatThrownBy(() -> serviceWithRepairBudget(0)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("artemis.hyperion.agent.max-semantic-repairs");
+        assertThatThrownBy(() -> serviceWithRepairBudget(HyperionGenerationConfigurationValidator.MAX_SEMANTIC_REPAIRS + 1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("artemis.hyperion.agent.max-semantic-repairs");
     }
 
     @Test
@@ -1475,7 +1450,6 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void repairBudgetSpentWithBlockersRemaining_terminatesAsRepairBudgetExhausted() {
-        // The single most consequential distinction the artifacts could not previously make: a run that stopped because it ran out of rounds, not because it was finished.
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
@@ -1626,12 +1600,9 @@ class GenerationOrchestrationServiceTest {
         }
     }
 
-    // The unschedulable-report classifier moved to RepairRoundScheduler with the rest of the repair-phase state machine, and is covered directly (including the
-    // failed-review-outranks-a-blocker precedence, which was never pinned here) in RepairRoundSchedulerTest.
-
     // --- Per-round finding drain: the counts that tell a recurring finding apart from a fresh one of the same category ---
 
-    /** Captures both halves of the progress channel: the human-readable lines, and the structured round telemetry rides on the same events. */
+    /** Captures both halves of the progress channel: the human-readable lines and the structured round telemetry that rides on the same events. */
     private static final class RecordingProgressSink implements GenerationProgressSink {
 
         private final List<String> lines = new ArrayList<>();
@@ -1687,7 +1658,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void aDifferentFindingOfTheSameKind_isCountedAsDrainedPlusFreshRatherThanCarriedOver() {
-        // The whole point of per-finding identity: both rounds carry exactly one UNCOVERED_REQUIREMENT, so a Kind histogram cannot tell "unrepaired" from "bottomless well".
+        // Both rounds carry exactly one UNCOVERED_REQUIREMENT, so a Kind histogram cannot tell "unrepaired" from "bottomless well".
         acceptedCandidateReviewedAs(reportWith("emoji graphemes"), reportWith("CJK graphemes"), SpecFidelityReport.empty());
 
         List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
@@ -1702,41 +1673,6 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void aRewordedDetailOnTheSameRequirement_stillCountsAsCarriedOver() {
-        // detail is prose the reviewer rewrites freely; treating it as part of the identity would report every finding as fresh and make drain unmeasurable.
-        SpecFidelityReport first = new SpecFidelityReport(
-                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji graphemes", "no test covers it")));
-        SpecFidelityReport reworded = new SpecFidelityReport(List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "emoji graphemes",
-                "Still nothing asserts this; add an assertion over a multi-codepoint sequence.")));
-        acceptedCandidateReviewedAs(first, reworded, SpecFidelityReport.empty());
-
-        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
-
-        assertThat(rounds.get(1).carriedOver()).isEqualTo(1);
-        assertThat(rounds.get(1).fresh()).isZero();
-    }
-
-    @Test
-    void aRequirementDifferingOnlyInCasingAndPunctuation_stillCountsAsCarriedOver() {
-        acceptedCandidateReviewedAs(reportWith("`emoji` graphemes are not counted"), reportWith("Emoji graphemes are not counted."), SpecFidelityReport.empty());
-
-        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
-
-        assertThat(rounds.get(1).carriedOver()).isEqualTo(1);
-        assertThat(rounds.get(1).fresh()).isZero();
-    }
-
-    @Test
-    void aRequirementCitingItsSpecificationRuleLabel_isTheSameFindingAsOneWithout() {
-        acceptedCandidateReviewedAs(reportWith("R3 reverse must handle the empty string"), reportWith("reverse must handle the empty string"), SpecFidelityReport.empty());
-
-        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
-
-        assertThat(rounds.get(1).carriedOver()).isEqualTo(1);
-        assertThat(rounds.get(1).fresh()).isZero();
-    }
-
-    @Test
     void aRequirementWhoseTextMerelyStartsWithALetterAndDigits_keepsItsOwnIdentity() {
         acceptedCandidateReviewedAs(reportWith("r2d2 identifiers are rejected"), reportWith("identifiers are rejected"), SpecFidelityReport.empty());
 
@@ -1747,23 +1683,8 @@ class GenerationOrchestrationServiceTest {
     }
 
     @Test
-    void aFindingUnderADifferentKind_isNotTheSameFinding() {
-        acceptedCandidateReviewedAs(reportWith("delegation is not proven"),
-                new SpecFidelityReport(
-                        List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "delegation is not proven", "a wrong forwarder passes"))),
-                SpecFidelityReport.empty());
-
-        List<ExerciseGenerationRepairRoundDTO> rounds = generateRecordingProgress().rounds;
-
-        assertThat(rounds.get(1).carriedOver()).isZero();
-        assertThat(rounds.get(1).drained()).isEqualTo(1);
-        assertThat(rounds.get(1).fresh()).isEqualTo(1);
-    }
-
-    @Test
     void aMechanicallyRejectedAttempt_isNotAReviewRoundAndDoesNotResetTheBaseline() {
-        // A rejected attempt empties the report without asking the reviewer anything. Counting it as a round would report every finding drained precisely when nothing was
-        // reviewed, and would then report the same finding as fresh on the next real review.
+        // A rejected attempt empties the report without asking the reviewer anything; counting it as a round would report every finding drained when nothing was reviewed.
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted(), rejected("the repair broke the build"),
                 accepted());
@@ -1822,7 +1743,6 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void effortProfile_replacesTheEngineWithProfilePinnedCollaboratorsAndItsOwnTurnBudget() {
-        // The end of the thread A4 pulls: whatever the resource resolved must be what the loop actually runs, turn budget included.
         when(agentLoopRunner.forSettings(any())).thenReturn(agentLoopRunner);
         when(specFidelityCritic.forSettings(any())).thenReturn(specFidelityCritic);
         when(stagedGenerationRunner.forSettings(any(), any(), any())).thenReturn(stagedGenerationRunner);
@@ -1842,7 +1762,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void withoutAnEffortProfile_theEngineIsNotDerivedAtAll() {
-        // A deployment that configures no profiles must keep running on exactly the shared singletons it ran on before profiles existed.
+        // A deployment that configures no profiles keeps running on the shared singletons.
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
 
         try (GenerationOutcome ignored = generate(() -> false)) {

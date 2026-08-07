@@ -19,10 +19,6 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import reactor.core.publisher.Flux;
 
-/**
- * Locks the two behaviours the long-running agent loop depends on: harmony control tokens are stripped from the assistant {@code content} while tool calls and metadata survive
- * verbatim, and a clean response is returned as the same instance so a healthy run pays nothing.
- */
 class HarmonyScrubbingChatModelTest {
 
     @Test
@@ -36,7 +32,6 @@ class HarmonyScrubbingChatModelTest {
     void sanitizeHarmonyTokens_withoutToken_returnsSameReference() {
         String clean = "a perfectly ordinary assistant reply";
 
-        // No allocation and no rewrite when there is nothing to scrub.
         assertThat(HarmonyScrubbingChatModel.sanitizeHarmonyTokens(clean)).isSameAs(clean);
         assertThat(HarmonyScrubbingChatModel.sanitizeHarmonyTokens(null)).isNull();
     }
@@ -52,11 +47,8 @@ class HarmonyScrubbingChatModelTest {
         ChatResponse scrubbed = HarmonyScrubbingChatModel.scrub(response);
 
         AssistantMessage cleaned = scrubbed.getResult().getOutput();
-        // Control token removed, surrounding text kept.
         assertThat(cleaned.getText()).isEqualTo("plancommentary next");
-        // Tool calls survive so the loop can still dispatch them.
         assertThat(cleaned.getToolCalls()).containsExactly(toolCall);
-        // Per-message properties and the response-level metadata are carried over unchanged.
         assertThat(cleaned.getMetadata()).containsEntry("finishReason", "tool_calls");
         assertThat(scrubbed.getMetadata()).isSameAs(metadata);
     }
@@ -65,7 +57,6 @@ class HarmonyScrubbingChatModelTest {
     void scrub_cleanResponse_returnsSameInstance() {
         ChatResponse clean = new ChatResponse(List.of(new Generation(new AssistantMessage("nothing to strip here"))));
 
-        // A run with no leaked harmony token must not be rebuilt at all.
         assertThat(HarmonyScrubbingChatModel.scrub(clean)).isSameAs(clean);
     }
 
@@ -96,7 +87,6 @@ class HarmonyScrubbingChatModelTest {
         when(delegate.getOptions()).thenReturn(options);
         HarmonyScrubbingChatModel model = new HarmonyScrubbingChatModel(delegate);
 
-        // A straight pass-through so the loop can read the configured model id.
         assertThat(model.getOptions()).isSameAs(options);
     }
 

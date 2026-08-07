@@ -20,15 +20,11 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
 
 /**
- * The repair phase's state machine, driven directly.
+ * The repair phase's state machine, driven directly: given a sequence of review reports, which surfaces does the scheduler pick, which budgets does it spend, and does a
+ * rephrased finding register as drained-plus-fresh?
  * <p>
- * Everything asserted here used to require the whole attempt loop — a sandbox, a verifier, a workspace and a mocked reviewer — to observe, because the state lived in
- * {@code GenerationAttemptLoop} and only reached the outside through a prompt or a progress line. The questions are all pure: given this sequence of review reports, which
- * surfaces does the scheduler pick, which budgets does it spend, and does a rephrased finding register as drained-plus-fresh?
- * <p>
- * The division of labour with the two neighbouring suites is deliberate: {@code SemanticRepairBatchTest} pins the scheduling <i>rule</i> as a pure function of state supplied by
- * hand, and {@code GenerationAttemptLoopTest} pins that the loop honours the answer (the write barrier the agent actually runs under). What is covered here is the state
- * <i>accumulation</i> in between — that consecutive rounds, repaired surfaces and spent budgets add up correctly across a run.
+ * {@code SemanticRepairBatchTest} pins the scheduling rule as a pure function of hand-supplied state and {@code GenerationAttemptLoopTest} pins that the loop honours the
+ * answer; covered here is the state accumulation in between, across a run.
  */
 class RepairRoundSchedulerTest {
 
@@ -48,13 +44,7 @@ class RepairRoundSchedulerTest {
         return report(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
     }
 
-    /**
-     * Asks the scheduler for a batch once per review and records each answer as a repair round, exactly as the attempt loop does.
-     *
-     * @param scheduler the scheduler under test
-     * @param reviews   the review report of each successive round
-     * @return the surface scheduled for each round, stopping at the first round with nothing schedulable
-     */
+    /** Asks the scheduler for a batch once per review and records each answer as a repair round, as the attempt loop does, stopping at the first unschedulable round. */
     private static List<RepairSurface> scheduleRounds(RepairRoundScheduler scheduler, List<SpecFidelityReport> reviews) {
         List<RepairSurface> scheduled = new ArrayList<>();
         for (SpecFidelityReport review : reviews) {
@@ -80,15 +70,12 @@ class RepairRoundSchedulerTest {
                     Arguments.of("a scaffold blocker alone", List.of(report(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP)), List.of(RepairSurface.SCAFFOLD)),
                     // An uncovered requirement is an oracle gap, not a contract one: the behaviour is agreed, only untested.
                     Arguments.of("an uncovered requirement", List.of(report(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT)), List.of(RepairSurface.ORACLE)),
-                    // No advisory-only row here on purpose: "nothing blocks, so nothing is scheduled" is guarded twice over in SemanticRepairBatch (the isBlocking filter AND the
-                    // null surface mapping), so no single mutation can make such a row fail. It is pinned where it is killable, in GenerationAttemptLoopTest.
                     // Declaration order in RepairSurface is the priority order, so a contract blocker outranks both others on the first round.
                     Arguments.of("contract, oracle and scaffold blockers together",
                             List.of(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                                     SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP)),
                             List.of(RepairSurface.CONTRACT)),
-                    // Both surfaces block on every round, so priority alone would give ORACLE the whole run and ship the scaffold gap unrepaired. Only the scheduler's own
-                    // accumulated consecutive-round count makes the third round differ from the first two — and the fourth revert, because SCAFFOLD has now had its turn.
+                    // Both surfaces block on every round, so priority alone would give ORACLE the whole run; only the accumulated consecutive-round count yields the third.
                     Arguments.of("a surface that has held two rounds yields to one never repaired", Collections.nCopies(4, oracleAndScaffold),
                             List.of(RepairSurface.ORACLE, RepairSurface.ORACLE, RepairSurface.SCAFFOLD, RepairSurface.ORACLE)),
                     // Yielding is only meaningful when something is waiting: with nothing else outstanding the leading surface continues rather than stalling the budget.
@@ -129,8 +116,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void anAdoptionRoundSpendsARoundOfTheSharedBudget() {
-            // Adoption is optional work on an already accepted candidate. It is free of fairness credit but not free of budget: two adoption rounds would be two rewrites of a
-            // finished exercise.
+            // Adoption is free of fairness credit but not of budget: two adoption rounds would be two rewrites of a finished exercise.
             RepairRoundScheduler scheduler = new RepairRoundScheduler(1);
 
             scheduler.recordAdoptionRound();
@@ -149,7 +135,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aValidatedWitnessIsOfferedAsAnOracleBatchEvenThoughItBlocksNothing() {
-            // The ordinary scheduler deliberately sees only blocking findings, so without this separate path a witness would never be offered at all.
+            // The ordinary scheduler sees only blocking findings, so without this separate path a witness would never be offered at all.
             RepairRoundScheduler scheduler = new RepairRoundScheduler(UNBOUNDED_BUDGET);
 
             assertThat(scheduler.nextRepairBatch(witnessOffer())).as("advisory, so no ordinary repair round is due").isEmpty();
@@ -177,8 +163,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void anAdoptionRoundClaimsNoSurfaceFairnessCredit() {
-            // An adoption round only offers optional tests. Recording it as an oracle repair would make the scheduler believe the oracle surface already had its turn, so a
-            // genuine weak oracle appearing next would yield to the scaffold a round early.
+            // Recording an adoption round as an oracle repair would make a genuine weak oracle appearing next yield to the scaffold a round early.
             RepairRoundScheduler scheduler = new RepairRoundScheduler(UNBOUNDED_BUDGET);
             scheduler.witnessAdoption(witnessOffer()).orElseThrow();
             scheduler.markWitnessAdoptionAttempted();
@@ -195,8 +180,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void theReReviewIsClaimableExactlyOnce() {
-            // A reviewer that returned no verdict must not be able to spend the whole budget on retries, but must get one: ending with repair rounds unspent because the
-            // reviewer had a bad turn reports a quality gap the reviewer never found.
+            // Ending with repair rounds unspent because the reviewer had a bad turn reports a quality gap the reviewer never found; one retry, not a budget's worth.
             RepairRoundScheduler scheduler = new RepairRoundScheduler(UNBOUNDED_BUDGET);
 
             assertThat(scheduler.claimReviewRetry()).as("first claim").isTrue();
@@ -221,8 +205,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aBlockingFindingWithNoRepairSurfaceIsReportedAsNoSchedulableSurface() {
-            // Pinned directly on the classifier: no blocking Kind currently maps to a null surface, so the loop cannot reach this state today. That is itself the audit finding —
-            // the "no schedulable surface" condition never fired in 97 runs because it is unreachable, not only because it was unobservable.
+            // Pinned directly on the classifier: no blocking Kind currently maps to a null surface, so the loop cannot reach this state through the engine.
             SpecFidelityReport blockingWithNoSurface = new SpecFidelityReport(
                     List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "unschedulable", "no surface owns it")));
 
@@ -245,8 +228,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aFailedReviewOutranksTheFindingsItDidManageToReturn() {
-            // The three reasons call for opposite fixes, and this is the only case where two of them are true at once. A partial review that also raised a blocker must still be
-            // reported as an instrument failure: reporting it as a surface-map gap would send the next investigation to the wrong place.
+            // The three reasons call for opposite fixes; a partial review that also raised a blocker is an instrument failure, not a surface-map gap.
             SpecFidelityReport partialReview = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE, "the reviewer stopped"),
                     finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "weak")));
 
@@ -273,8 +255,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aConceptAdmissionFindingOutranksAnotherUnschedulableBlocker() {
-            // A contested concept is upstream of the specification, tests, and statement that instantiate it, so it must be reported as the cause rather than as a second,
-            // unrelated "no schedulable surface" symptom.
+            // A contested concept is upstream of the specification, tests and statement that instantiate it, so it is the cause rather than a second symptom.
             SpecFidelityReport report = report(SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING, SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
 
             assertThat(RepairRoundScheduler.reasonForUnschedulableReport(report)).isEqualTo(TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS);
@@ -312,8 +293,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void roundsAreNumberedInSequenceAndKeepTheirAttemptsApart() {
-            // The round index counts completed reviews and the attempt counts authoring passes; they diverge whenever a mechanically rejected attempt is never reviewed, which
-            // is precisely when a transcript needs both.
+            // The round index counts completed reviews and the attempt counts authoring passes; they diverge when a mechanically rejected attempt is never reviewed.
             assertThat(round(1).round()).isEqualTo(1);
             assertThat(round(4).round()).isEqualTo(2);
             assertThat(round(4).attempt()).isEqualTo(4);
@@ -353,8 +333,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aRewrittenDetailDoesNotMakeTheSameDefectLookFresh() {
-            // Detail is prose the reviewer rewrites freely between rounds while the defect does not move; hashing it would report every finding as fresh and make drain
-            // unmeasurable — which is the entire question this instrument exists to answer.
+            // Detail is prose the reviewer rewrites freely while the defect does not move; hashing it would report every finding as fresh and make drain unmeasurable.
             scheduler.recordReviewRound(new SpecFidelityReport(
                     List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes", "the test only checks size"))), 1);
 
@@ -403,8 +382,8 @@ class RepairRoundSchedulerTest {
 
         @Test
         void aRephrasedFindingIsKnowinglyCountedAsOneDrainedAndOneFresh() {
-            // The documented, deliberate cost of exact matching: no similarity threshold can be calibrated before the reviewer's own stability is measured. Pinned so the
-            // overstated drain stays a known quantity rather than becoming a surprise when the numbers are read.
+            // The cost of exact matching, pinned so the overstated drain stays a known quantity: no similarity threshold can be calibrated before the reviewer's own
+            // stability is measured.
             round(1, finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "surrogate pairs are counted as two characters"));
 
             ExerciseGenerationRepairRoundDTO second = round(2, finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "a surrogate pair counts as two"));
@@ -416,8 +395,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void twoRequirementsThatDifferOnlyBeyondTheIdentityBoundAreOneIdentity() {
-            // The bound exists so a reviewer that emits a whole paragraph as a "requirement" cannot turn the per-round identity set into an unbounded allocation. Its visible
-            // consequence is here: past the bound, the tail no longer distinguishes two findings.
+            // The bound keeps a reviewer that emits a whole paragraph as a "requirement" from growing the identity set without limit; past it, the tail stops distinguishing.
             String sharedPrefix = "x".repeat(300);
             round(1, finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, sharedPrefix + "alpha"));
 
@@ -429,8 +407,7 @@ class RepairRoundSchedulerTest {
 
         @Test
         void twoIdenticalFindingsInOneRoundAreOneIdentityButTwoFindings() {
-            // A reviewer that lists the same defect twice must not double the fresh count, or a round would appear to have found twice the work it did. The blocking count is a
-            // finding count and deliberately keeps the duplicate.
+            // A duplicate must not double the fresh count, or a round would appear to have found twice the work it did; the blocking count is a finding count and keeps it.
             ExerciseGenerationRepairRoundDTO first = round(1, finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"),
                     finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "a wrong parser passes"));
 
@@ -465,14 +442,14 @@ class RepairRoundSchedulerTest {
 
         @Test
         void theFirstRoundHasNoPreviousRoundToCompareAgainst() {
-            // Reporting "0 still open from the previous round, 0 resolved" on the first round would invite an instructor to read a comparison that does not exist.
+            // Reporting "0 still open from the previous round, 0 resolved" would invite an instructor to read a comparison that does not exist.
             assertThat(RepairRoundScheduler.roundMessage(round(1, 0, 0, 2))).isEqualTo("Quality review round 1: 2 issues found.");
             assertThat(RepairRoundScheduler.roundMessage(round(1, 0, 0, 1))).isEqualTo("Quality review round 1: 1 issue found.");
         }
 
         @Test
         void aLaterRoundReportsTheDrainRatherThanJustTheTotal() {
-            // The point of the counts: "3 issues" alone cannot tell a stuck repair loop from a productive one.
+            // "3 issues" alone cannot tell a stuck repair loop from a productive one.
             assertThat(RepairRoundScheduler.roundMessage(round(2, 1, 4, 2)))
                     .isEqualTo("Quality review round 2: 3 issues — 1 still open from the previous round, 4 resolved, 2 new.");
         }

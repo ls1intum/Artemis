@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
- * Unit test for {@link ExerciseGenerationRevertService}'s capture-and-revert invariants against a real isolated embedded Hazelcast instance, with the git and persistence
- * collaborators mocked so the reset-to-captured-SHA behaviour is exercised deterministically without a real repository.
+ * Covers {@link ExerciseGenerationRevertService}'s capture-and-revert invariants against an isolated embedded Hazelcast instance, with git and persistence mocked so the
+ * reset-to-captured-SHA behaviour runs without a real repository.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExerciseGenerationRevertServiceTest {
@@ -427,7 +427,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
     }
 
-    /** Records a baseline the way a completed run does: whatever the exercise carries right now is what that run wrote, on the default branch. */
+    /** Records a baseline the way a completed run does: what the exercise carries right now is what that run wrote, on the default branch. */
     private boolean recordBaseline(String jobId, GenerationMode mode, Map<RepositoryType, String> preRunHeads, Map<RepositoryType, String> postRunHeads,
             String problemStatementBeforeRun, String titleBeforeRun) {
         return recordBaseline(jobId, mode, preRunHeads, postRunHeads, problemStatementBeforeRun, titleBeforeRun, DEFAULT_BRANCH);
@@ -457,7 +457,7 @@ class ExerciseGenerationRevertServiceTest {
         return heads;
     }
 
-    /** The pre-persist commit heads a full accepted adaptation of all three repositories hands back to {@code recordBaseline}. */
+    /** The pre-persist commit heads an accepted adaptation of all three repositories hands back to {@code recordBaseline}. */
     private static Map<RepositoryType, String> preRunHeads() {
         Map<RepositoryType, String> heads = new EnumMap<>(RepositoryType.class);
         heads.put(RepositoryType.TEMPLATE, "sha-template");

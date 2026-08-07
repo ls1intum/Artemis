@@ -26,10 +26,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 
-/**
- * Deterministic test for the agent loop's context-window management (no LLM, no Docker): token estimation, per-tool-result capping, the turn-start cut, the tool-pairing
- * validator, and summarization-based compaction with its drop-with-marker fallback.
- */
+/** Deterministic tests for the agent loop's context-window management: no LLM and no Docker. */
 class AgentLoopCompactionTest {
 
     private static AgentLoopRunner newTestRunner(List<ChatModel> chatModels, int contextWindowTokens) {
@@ -91,7 +88,6 @@ class AgentLoopCompactionTest {
 
         String capped = ((ToolResponseMessage) conversation.get(1)).getResponses().getFirst().responseData();
         assertThat(capped).hasSizeLessThan(40_000).startsWith("HEAD").endsWith("TAIL").contains("characters elided");
-        // The small result is untouched, and the id/name are preserved on the capped one.
         assertThat(((ToolResponseMessage) conversation.get(3)).getResponses().getFirst().responseData()).isEqualTo("short output");
         assertThat(((ToolResponseMessage) conversation.get(1)).getResponses().getFirst().name()).isEqualTo("bash");
     }
@@ -101,11 +97,9 @@ class AgentLoopCompactionTest {
         List<Message> valid = List.of(new SystemMessage("s"), new UserMessage("u"), assistantToolCall("c", "bash", "{}"), toolResult("c", "bash", "ok"));
         assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(valid));
 
-        // A tool result with no preceding assistant tool-call is an orphan.
         List<Message> orphanResult = List.of(new SystemMessage("s"), new UserMessage("u"), toolResult("c", "bash", "ok"));
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> AgentConversationContext.assertValidPairing(orphanResult));
 
-        // An assistant tool-call with no following tool result is also invalid.
         List<Message> unanswered = List.of(new SystemMessage("s"), new UserMessage("u"), assistantToolCall("c", "bash", "{}"), new UserMessage("nudge"));
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> AgentConversationContext.assertValidPairing(unanswered));
     }
@@ -117,14 +111,13 @@ class AgentLoopCompactionTest {
         List<Message> conversation = conversationWithTurns(12, 24_000);
         int cut = runner.findCutIndex(conversation, 2);
         assertThat(cut).isGreaterThan(2).isLessThan(conversation.size());
-        // The kept tail must begin at a turn start (an assistant tool-call), never an orphaned tool result.
         assertThat(conversation.get(cut)).isInstanceOf(AssistantMessage.class);
         assertThat(conversation.get(cut)).isNotInstanceOf(ToolResponseMessage.class);
     }
 
     @Test
     void findCutIndex_pushesForwardUntilTheKeptTailFitsTheBudget() {
-        // A deliberately tiny window (24k tokens => ~3.5k budget after the response reserve) forces most turns into the summary so the kept tail fits.
+        // A tiny window (24k tokens => ~3.5k budget after the response reserve) forces most turns into the summary so the kept tail fits.
         AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 24_000);
         List<Message> conversation = conversationWithTurns(20, 9_000);
         int cut = runner.findCutIndex(conversation, 2);
@@ -139,8 +132,7 @@ class AgentLoopCompactionTest {
 
     @Test
     void findCutIndex_whenEvenTheLastTurnDoesNotFit_dropsTheWholeTail() {
-        // A tiny window whose budget is below even one turn's tokens: the push-forward loop advances the cut all the way to the end, so nothing is kept verbatim
-        // (the conversation becomes summary-only). The runner logs a warning for this edge; here we pin the behaviour.
+        // A window whose budget is below even one turn's tokens: the push-forward loop advances the cut to the end, so the conversation becomes summary-only.
         AgentLoopRunner runner = newTestRunner(List.of(mock(ChatModel.class)), 20_600);
         List<Message> conversation = conversationWithTurns(6, 9_000);
         int cut = runner.findCutIndex(conversation, 2);
@@ -167,14 +159,11 @@ class AgentLoopCompactionTest {
             assertThat(options.getCustomHeaders()).containsEntry("X-Test", "value");
         });
 
-        // System prompt and the initial instruction are always preserved at the front.
         assertThat(compacted.get(0)).isInstanceOf(SystemMessage.class);
         assertThat(compacted.get(1)).isInstanceOf(UserMessage.class);
         assertThat(compacted.get(1).getText()).isEqualTo("create a bubble-sort exercise");
-        // The third message carries the structured summary.
         assertThat(compacted.get(2)).isInstanceOf(UserMessage.class);
         assertThat(compacted.get(2).getText()).contains("SESSION SUMMARY").contains("Build a bubble-sort exercise");
-        // Compaction shrank the history, the kept tail begins at a turn start, and the result satisfies the pairing contract.
         assertThat(compacted).hasSizeLessThan(conversation.size());
         assertThat(compacted.get(3)).isInstanceOf(AssistantMessage.class);
         assertThatNoException().isThrownBy(() -> AgentConversationContext.assertValidPairing(compacted));

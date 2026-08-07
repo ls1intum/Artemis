@@ -120,71 +120,75 @@ class AdminBuildJobQueueResourceTest {
     }
 
     @Test
-    void returnsExternalMutationForDiagnosis() {
+    void returnsWedgedSlotForDiagnosis() {
         GenerationJobService jobService = mock(GenerationJobService.class);
-        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", "node-1", Instant.EPOCH);
-        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
+        GenerationJobService.WedgedSlotInfo info = new GenerationJobService.WedgedSlotInfo(12L, "external-mutation-token", GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION,
+                "node-1", Instant.EPOCH, true);
+        when(jobService.getWedgedSlotInfo(12L)).thenReturn(Optional.of(info));
         AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService));
 
-        var response = resource.getExternalMutation(12L);
+        var response = resource.getWedgedSlot(12L);
 
         assertThat(response.getBody()).isEqualTo(info);
     }
 
     @Test
-    void recoversOnlyMatchingExternalMutation() {
+    void recoversOnlyMatchingWedgedSlot() {
         GenerationJobService jobService = mock(GenerationJobService.class);
         AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
-        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", "node-1", Instant.EPOCH);
-        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
-        when(jobService.recoverExternalMutationSlot(12L, "external-mutation-token")).thenReturn(true);
+        GenerationJobService.WedgedSlotInfo info = new GenerationJobService.WedgedSlotInfo(12L, "external-mutation-token", GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION,
+                "node-1", Instant.EPOCH, true);
+        when(jobService.getWedgedSlotInfo(12L)).thenReturn(Optional.of(info));
+        when(jobService.recoverWedgedSlot(12L, "external-mutation-token")).thenReturn(true);
         AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
 
-        assertThat(resource.recoverExternalMutation(12L, "wrong", "owner terminated").getStatusCode().value()).isEqualTo(404);
-        assertThat(resource.recoverExternalMutation(12L, "external-mutation-token", " owner\r\nterminated ").getStatusCode().value()).isEqualTo(204);
+        assertThat(resource.recoverWedgedSlot(12L, "wrong", "owner terminated").getStatusCode().value()).isEqualTo(404);
+        assertThat(resource.recoverWedgedSlot(12L, "external-mutation-token", " owner\r\nterminated ").getStatusCode().value()).isEqualTo(204);
 
         ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
         InOrder recoveryOrder = inOrder(auditEventRepository, jobService);
         recoveryOrder.verify(auditEventRepository).add(event.capture());
-        recoveryOrder.verify(jobService).recoverExternalMutationSlot(12L, "external-mutation-token");
+        recoveryOrder.verify(jobService).recoverWedgedSlot(12L, "external-mutation-token");
         assertThat(event.getValue().getType()).isEqualTo(Constants.HYPERION_EXTERNAL_MUTATION_RECOVERY_ATTEMPT);
         assertThat(event.getValue().getData()).containsEntry("exerciseId", 12L).containsEntry("ownerNodeId", "node-1").containsEntry("reason", "owner terminated");
     }
 
     @Test
-    void externalMutationRecoveryRequiresAnAuditReason() {
+    void wedgedSlotRecoveryRequiresAnAuditReason() {
         GenerationJobService jobService = mock(GenerationJobService.class);
         AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
         AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
 
-        assertThat(resource.recoverExternalMutation(12L, "external-mutation-token", "  ").getStatusCode().value()).isEqualTo(400);
-        verify(jobService, never()).recoverExternalMutationSlot(12L, "external-mutation-token");
+        assertThat(resource.recoverWedgedSlot(12L, "external-mutation-token", "  ").getStatusCode().value()).isEqualTo(400);
+        verify(jobService, never()).recoverWedgedSlot(12L, "external-mutation-token");
         verify(auditEventRepository, never()).add(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
-    void externalMutationRecoveryFailsClosedWhenAuditPersistenceFails() {
+    void wedgedSlotRecoveryFailsClosedWhenAuditPersistenceFails() {
         GenerationJobService jobService = mock(GenerationJobService.class);
         AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
-        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", "node-1", Instant.EPOCH);
-        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
+        GenerationJobService.WedgedSlotInfo info = new GenerationJobService.WedgedSlotInfo(12L, "external-mutation-token", GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION,
+                "node-1", Instant.EPOCH, true);
+        when(jobService.getWedgedSlotInfo(12L)).thenReturn(Optional.of(info));
         doThrow(new IllegalStateException("audit unavailable")).when(auditEventRepository).add(org.mockito.ArgumentMatchers.any());
         AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
 
-        assertThatThrownBy(() -> resource.recoverExternalMutation(12L, "external-mutation-token", "owner terminated")).isInstanceOf(IllegalStateException.class);
-        verify(jobService, never()).recoverExternalMutationSlot(12L, "external-mutation-token");
+        assertThatThrownBy(() -> resource.recoverWedgedSlot(12L, "external-mutation-token", "owner terminated")).isInstanceOf(IllegalStateException.class);
+        verify(jobService, never()).recoverWedgedSlot(12L, "external-mutation-token");
     }
 
     @Test
-    void externalMutationRecoveryAuditsAnUnknownLegacyOwner() {
+    void wedgedSlotRecoveryAuditsAnUnknownLegacyOwner() {
         GenerationJobService jobService = mock(GenerationJobService.class);
         AuditEventRepository auditEventRepository = mock(AuditEventRepository.class);
-        GenerationJobService.ExternalMutationInfo info = new GenerationJobService.ExternalMutationInfo(12L, "external-mutation-token", null, Instant.EPOCH);
-        when(jobService.getExternalMutationInfo(12L)).thenReturn(Optional.of(info));
-        when(jobService.recoverExternalMutationSlot(12L, "external-mutation-token")).thenReturn(true);
+        GenerationJobService.WedgedSlotInfo info = new GenerationJobService.WedgedSlotInfo(12L, "external-mutation-token", GenerationJobService.WedgedSlotKind.EXTERNAL_MUTATION,
+                null, Instant.EPOCH, true);
+        when(jobService.getWedgedSlotInfo(12L)).thenReturn(Optional.of(info));
+        when(jobService.recoverWedgedSlot(12L, "external-mutation-token")).thenReturn(true);
         AdminBuildJobQueueResource resource = resource(mock(DistributedDataAccessService.class), Optional.empty(), Optional.of(jobService), auditEventRepository);
 
-        assertThat(resource.recoverExternalMutation(12L, "external-mutation-token", "legacy owner unavailable").getStatusCode().value()).isEqualTo(204);
+        assertThat(resource.recoverWedgedSlot(12L, "external-mutation-token", "legacy owner unavailable").getStatusCode().value()).isEqualTo(204);
 
         ArgumentCaptor<AuditEvent> event = ArgumentCaptor.forClass(AuditEvent.class);
         verify(auditEventRepository).add(event.capture());

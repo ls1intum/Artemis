@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -15,8 +16,10 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -45,6 +49,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
 /**
@@ -85,7 +90,7 @@ class InteractiveSandboxReaperServiceTest {
         ReflectionTestUtils.setField(relayHandler, "maxGenerationSandboxSlots", 1);
         ReflectionTestUtils.setField(relayHandler, "sandboxSlotPermits", new Semaphore(1));
         taskScheduler = mock(TaskScheduler.class);
-        reaperService = new InteractiveSandboxReaperService(buildAgentConfiguration, applicationContext, relayHandler, taskScheduler);
+        reaperService = new InteractiveSandboxReaperService(buildAgentConfiguration, applicationContext, Optional.of(relayHandler), taskScheduler);
         ReflectionTestUtils.setField(reaperService, "sandboxContainerExpiryMinutes", (int) EXPIRY_MINUTES);
         ReflectionTestUtils.setField(reaperService, "sandboxCleanupScheduleMinutes", 15);
     }
@@ -167,7 +172,7 @@ class InteractiveSandboxReaperServiceTest {
         verify(dockerClient, never()).execCreateCmd("orphan-id");
         allowRemoval.countDown();
         reaping.get(5, TimeUnit.SECONDS);
-        assertThatThrownBy(copying::join).hasRootCauseInstanceOf(de.tum.cit.aet.artemis.localci.exception.LocalCIException.class);
+        assertThatThrownBy(copying::join).hasRootCauseInstanceOf(LocalCIException.class);
         verify(dockerClient, never()).execCreateCmd("orphan-id");
         assertThat(interactiveSandboxService.lastActivity("orphan-id")).isEmpty();
     }
@@ -300,7 +305,6 @@ class InteractiveSandboxReaperServiceTest {
         reaperService.reapOrphanedSessions();
 
         verify(dockerClient).removeContainerCmd("orphan-id");
-        // Exactly one permit is reclaimed and the session is no longer tracked, so repeated orphaning cannot starve the agent of generation capacity.
         assertThat(sandboxSlotPermits().availablePermits()).isOne();
         assertThat(ownedSessionIds()).doesNotContain("orphan-id");
     }
@@ -337,6 +341,61 @@ class InteractiveSandboxReaperServiceTest {
         verify(dockerClient, times(2)).removeContainerCmd("orphan-id");
         assertThat(sandboxSlotPermits().availablePermits()).isZero();
         assertThat(ownedSessionIds()).containsOnly("other-live-session");
+    }
+
+    /** A reaper over a mocked sandbox service, so the startup sweep can be observed without a Docker host. */
+    private InteractiveSandboxReaperService reaperFor(InteractiveSandboxService sandboxService, Optional<InteractiveSandboxRelayHandler> handler) {
+        ApplicationContext applicationContext = mock(ApplicationContext.class);
+        when(applicationContext.getBean(InteractiveSandboxService.class)).thenReturn(sandboxService);
+        InteractiveSandboxReaperService reaper = new InteractiveSandboxReaperService(mock(BuildAgentConfiguration.class), applicationContext, handler, taskScheduler);
+        ReflectionTestUtils.setField(reaper, "sandboxContainerExpiryMinutes", (int) EXPIRY_MINUTES);
+        ReflectionTestUtils.setField(reaper, "sandboxCleanupScheduleMinutes", 15);
+        return reaper;
+    }
+
+    @Test
+    void shouldSweepLeftoverContainersAtStartupOnAnAgentThatNoLongerHostsGenerationSandboxes() {
+        // An agent SIGKILLed mid-session and redeployed with max-generation-sandbox-slots=0 has no relay handler to reconcile before advertising capacity, and the CI reaper
+        // matches only the local-ci- prefix, so without this sweep its leftover containers are never collected.
+        InteractiveSandboxService sandboxService = mock(InteractiveSandboxService.class);
+        InteractiveSandboxReaperService reaperWithoutHandler = reaperFor(sandboxService, Optional.empty());
+
+        reaperWithoutHandler.scheduleCleanup();
+        runStartupSweep();
+
+        verify(sandboxService).removeSessionsForCurrentAgent();
+    }
+
+    /** Runs the one-shot startup sweep the reaper hands to the scheduler; it is deferred so context refresh never resolves the lazy sandbox service. */
+    private void runStartupSweep() {
+        ArgumentCaptor<Runnable> startupSweep = ArgumentCaptor.forClass(Runnable.class);
+        verify(taskScheduler).schedule(startupSweep.capture(), any(Instant.class));
+        startupSweep.getValue().run();
+    }
+
+    @Test
+    void shouldNotSweepAtStartupWhenTheRelayHandlerAlreadyReconcilesBeforeAdvertisingCapacity() {
+        // The handler removes leftovers before it advertises a single slot, so a second name-prefix sweep here would only add a race against a session it has just created.
+        InteractiveSandboxService sandboxService = mock(InteractiveSandboxService.class);
+        InteractiveSandboxReaperService hostingReaper = reaperFor(sandboxService, Optional.of(relayHandler));
+
+        hostingReaper.scheduleCleanup();
+
+        verify(taskScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
+        verify(sandboxService, never()).removeSessionsForCurrentAgent();
+    }
+
+    @Test
+    void shouldStillScheduleThePeriodicSweepWhenTheStartupCleanupFails() {
+        // Docker may not be up yet when this bean is constructed; the periodic idle sweep is the backstop, so a failing startup sweep must not escape @PostConstruct.
+        InteractiveSandboxService sandboxService = mock(InteractiveSandboxService.class);
+        when(sandboxService.removeSessionsForCurrentAgent()).thenThrow(new LocalCIException("Docker is not available"));
+        InteractiveSandboxReaperService reaperWithoutHandler = reaperFor(sandboxService, Optional.empty());
+
+        assertThatNoException().isThrownBy(reaperWithoutHandler::scheduleCleanup);
+
+        verify(taskScheduler).scheduleAtFixedRate(any(Runnable.class), any(Instant.class), any(Duration.class));
+        assertThatNoException().isThrownBy(this::runStartupSweep);
     }
 
     @Test

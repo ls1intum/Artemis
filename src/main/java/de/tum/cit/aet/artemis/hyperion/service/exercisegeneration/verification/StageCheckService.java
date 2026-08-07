@@ -56,7 +56,7 @@ public class StageCheckService {
 
     private final boolean workspaceSpecFallback;
 
-    // Required: with several constructors and no annotation, Spring cannot pick one.
+    // Required: with several constructors and no annotation, Spring cannot pick one and startup fails.
     @Autowired
     public StageCheckService(DifferentialVerificationService verifier, ApprovedSpecRegistry approvedSpecs) {
         this(verifier, approvedSpecs, false);
@@ -69,9 +69,8 @@ public class StageCheckService {
     }
 
     /**
-     * Rejects a workspace mutation that would undo an approved ownership decision, at the write boundary rather than at the next build: once SPEC.md passes its reviews it is the
-     * downstream contract, and a type assigned to the student cannot be restored to the template to make direct-reference tests compile. Executable artifacts stay writable so
-     * later stages can still repair real implementation defects.
+     * Rejects a workspace mutation that would undo an approved ownership decision, at the write boundary rather than at the next build: a type assigned to the student cannot be
+     * restored to the template to make direct-reference tests compile. Executable artifacts stay writable so later stages can still repair real implementation defects.
      *
      * @param sessionId sandbox session whose approved specification is authoritative
      * @param path      workspace-relative target path
@@ -353,21 +352,17 @@ public class StageCheckService {
             return StageCheckResult.failed("The Contract Risk Inventory reuses partition IDs " + duplicateRiskPartitionIds
                     + ". Give every admitted partition one unique stable ID so executable tests can trace to it.");
         }
-        // Echo the parsed plan back so the agent sees exactly what the later gates will hold it to, rather than only the absence of errors.
         String echo = designRows.stream().map(row -> row.type() + "=" + row.status()).collect(Collectors.joining(", "));
         String seamEcho = testingRows.stream().map(row -> row.seamId() + "->" + row.ownerType() + "(" + designStatusByType.get(row.ownerType()) + ")")
                 .collect(Collectors.joining(", "));
-        // The ownership decision is frozen here, so state its testing consequence here too: graded tests compile against the template as well as the solution, so a
-        // student-created type does not exist at test-compile time. Left unsaid, that constraint is discovered as an unexplained "cannot find symbol" and costs repair budgets.
         List<String> createdTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).toList();
         String reflectionConsequence = createdTypes.isEmpty() ? ""
                 : " The graded tests compile against the template too, so nothing may import or name " + createdTypes + " directly: reach them through Class.forName and the "
                         + "seeded reflection utilities (a dynamic proxy when supplied code must receive a student-created interface). Adding them to the template to make the "
                         + "tests compile is the one repair the ownership gate will always reject; choose 'stubbed' instead at specification time if the tests need to name a "
                         + "type directly.";
-        // Advice on a pass, never a rejection: the mandate detector is not precise enough to justify discarding a sound contract with no recourse, and the harm comes from the
-        // Testing Strategy seam the agent would write for such a rule rather than from the rule itself. Delivered here because this is the last point at which the spec is still
-        // editable. The advice must also forbid instrumenting the API (call counters, invocation flags) — that grades nothing and burdens the student's contract.
+        // Advice on a pass, never a rejection: the mandate detector is not precise enough to discard an otherwise sound contract, and this is the last point at which the
+        // specification is still editable.
         List<String> techniqueMandates = ExerciseIntegrityGate.techniqueMandatesInSpecification(spec);
         String techniqueAdvice = techniqueMandates.isEmpty() ? ""
                 : " One or more rules state an implementation technique (" + techniqueMandates + "). No assertion through the public API can separate a recursive "
@@ -452,10 +447,9 @@ public class StageCheckService {
     }
 
     /**
-     * The type names SPEC.md's '## Design' table marks {@code stubbed} — the ones the template must declare, because a stubbed type is the student's starting point. Only
-     * enforceable bare names count. The specification gate demands a bare name of {@code student-creates} rows only, so a stubbed row may legitimately read {@code Stack<T>}; the
-     * declaration probe matches the bare {@code Stack} a Java source actually declares, and searching for the generic cell verbatim would find nothing and reject a sound
-     * exercise. The {@code given} arm of this contract already fails open on the same input.
+     * The type names SPEC.md's '## Design' table marks {@code stubbed} — the ones the template must declare. The specification gate demands a bare name of
+     * {@code student-creates} rows only, so a stubbed row may legitimately read {@code Stack<T>}; dropping non-bare names here fails open, whereas searching for the generic cell
+     * verbatim would find nothing and reject a sound exercise.
      */
     static List<String> specStubbedTypes(String spec) {
         return designTableRows(spec).stream().filter(row -> "stubbed".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
@@ -500,10 +494,7 @@ public class StageCheckService {
         return Pattern.compile("(?<![A-Za-z0-9_])" + Pattern.quote(type) + "(?![A-Za-z0-9_])").matcher(text).find();
     }
 
-    /**
-     * Whether a '## Design' row's type name is a bare identifier the later gates can look for. Anything else ({@code Stack<T>}, a qualified name, {@code **bold**}, two types in
-     * one cell) is unenforceable, and silently dropping it would make the spec gate's own pass observation ("the later gates will enforce...") a lie.
-     */
+    /** Whether a '## Design' row's type name is a bare identifier the later gates can look for; {@code Stack<T>}, a qualified name or two types in one cell is not. */
     private static boolean isEnforceableTypeName(String type) {
         return type.matches("[A-Za-z_][A-Za-z0-9_]*");
     }
@@ -677,12 +668,11 @@ public class StageCheckService {
         return next < 0 ? document.substring(start) : document.substring(start, next);
     }
 
-    /** The {@code student-creates} types from the frozen specification. */
     private List<String> enforcedStudentCreatedTypes(InteractiveSandbox sandbox, String sessionId) {
         return specStudentCreatedTypes(authoritativeSpec(sandbox, sessionId));
     }
 
-    /** The scaffold the template must ship to the student; only enforceable bare names count. */
+    /** The scaffold the template must ship to the student. */
     static List<String> specScaffoldTypes(String spec) {
         return designTableRows(spec).stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(DesignRow::type)
                 .filter(StageCheckService::isEnforceableTypeName).toList();
@@ -698,8 +688,8 @@ public class StageCheckService {
 
     /**
      * Where the type is declared under the given repository: a file named after it OR any source file declaring it. Both probes are needed — a filename alone misses a nested or
-     * secondary declaration hidden in another file, and a declaration alone misses a stray {@code Type.md} or {@code Type.java.orig}. Type names are validated as bare
-     * identifiers and {@code exec} spawns without a shell, so neither argument can inject. Fails open on a tooling error.
+     * secondary declaration hidden in another file, and a declaration alone misses a stray {@code Type.md} or {@code Type.java.orig}. Type names are validated as bare identifiers
+     * and {@code exec} spawns without a shell, so neither argument can inject. Fails open on a tooling error.
      */
     private String findTypeDeclarations(InteractiveSandbox sandbox, String sessionId, String repo, String type) {
         String root = GenerationWorkspaceService.WORKSPACE + "/" + repo;
@@ -801,8 +791,7 @@ public class StageCheckService {
                 return StageCheckResult.failed("These [task] bindings reference names that match no actual test: " + unresolved
                         + ". A [task]'s parenthesised names must be exact, visible test names from the TESTS stage, copied verbatim: " + bindableNames + ".");
             }
-            // Artemis renders testsColor links interactively (pass/fail per diagram element), so a name matching no test is a dead link the student can never satisfy and is held
-            // to the same resolution standard as a [task] binding.
+            // Artemis renders testsColor links interactively (pass/fail per diagram element), so a name matching no test is a dead link the student can never satisfy.
             List<String> deadDiagramLinks = ProblemStatementBindingChecker.unresolvedTestsColorNames(statement, exactTestNames, seededStructuralTestNames);
             if (!deadDiagramLinks.isEmpty()) {
                 return StageCheckResult.failed("These diagram testsColor(...) names match no actual test: " + deadDiagramLinks
@@ -857,7 +846,6 @@ public class StageCheckService {
         if (!duplicateHeadings.isEmpty()) {
             return StageCheckResult.failed("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        // The same defect one level down: a repeated instruction sentence reads to a student as several different requirements.
         List<String> duplicateInstructions = ProblemStatementBindingChecker.duplicateInstructionLines(statement);
         if (!duplicateInstructions.isEmpty()) {
             return StageCheckResult.failed(

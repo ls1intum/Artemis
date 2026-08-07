@@ -477,8 +477,7 @@ class AgentCheckpointManagerTest {
 
     @Test
     void providerContract_distinguishesEffortProfilesAndTheOptionsTheyActuallySend() {
-        // A checkpoint records a turn under one provider contract. If the fingerprint ignored the profile, a turn recorded under "draft" would replay under "thorough" and the
-        // replayed run would silently claim to be the configuration it was not.
+        // If the fingerprint ignored the profile, a turn recorded under "draft" would replay under "thorough" and claim to be a configuration it was not.
         ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
         AgentCheckpointManager manager = new AgentCheckpointManager(mapper, tempDirectory.toString(), "", 0, true, "");
         ChatModel chatModel = mock(ChatModel.class);
@@ -487,7 +486,7 @@ class AgentCheckpointManagerTest {
 
         String draft = manager.providerContract(chatModel, 128_000, OpenAiChatOptions.builder().model("draft-model").build(), "draft");
         String thorough = manager.providerContract(chatModel, 128_000, OpenAiChatOptions.builder().model("thorough-model").build(), "thorough");
-        // Same options, different profile name: still distinguishable, so two profiles cannot share a checkpoint by coincidence of serialization.
+        // Same options, different profile name: two profiles must not share a checkpoint by coincidence of serialization.
         String sameOptionsOtherName = manager.providerContract(chatModel, 128_000, OpenAiChatOptions.builder().model("draft-model").build(), "draft-clone");
         String deploymentDefault = manager.providerContract(chatModel, 128_000, deploymentOptions, "");
 

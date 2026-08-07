@@ -321,8 +321,6 @@ class LocalVCServletServiceTest {
 
         localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
 
-        // Proves the actual ordering guarantee (exercise version capture happens-before the test submission is created), rather than merely observing a flag flipped
-        // sometime during the call.
         InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
         inOrder.verify(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, java.util.Map.of(RepositoryType.TESTS, "commit-hash"));
         inOrder.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash");

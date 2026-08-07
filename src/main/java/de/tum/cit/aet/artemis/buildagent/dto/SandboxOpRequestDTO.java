@@ -26,12 +26,10 @@ public record SandboxOpRequestDTO(String correlationId, String targetAgentShortN
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /** A {@link SandboxOp#CREATE} request: only the session spec is carried. */
     public static SandboxOpRequestDTO create(String correlationId, String targetAgentShortName, SandboxSessionSpecDTO sessionSpec) {
         return new SandboxOpRequestDTO(correlationId, targetAgentShortName, SandboxOp.CREATE, null, sessionSpec, null, 0L, null, 0L);
     }
 
-    /** An {@link SandboxOp#EXEC} request against an existing session, with the command and its per-op timeout. */
     public static SandboxOpRequestDTO exec(String correlationId, String targetAgentShortName, String sessionId, String[] command, long timeoutSeconds) {
         return new SandboxOpRequestDTO(correlationId, targetAgentShortName, SandboxOp.EXEC, sessionId, null, command, timeoutSeconds, null, 0L);
     }
@@ -44,17 +42,14 @@ public record SandboxOpRequestDTO(String correlationId, String targetAgentShortN
         return new SandboxOpRequestDTO(correlationId, targetAgentShortName, SandboxOp.COPY_IN, sessionId, null, null, 0L, workspacePath, 0L);
     }
 
-    /** A {@link SandboxOp#COPY_OUT} request reading {@code workspacePath} out of the session as a tar archive. */
     public static SandboxOpRequestDTO copyOut(String correlationId, String targetAgentShortName, String sessionId, String workspacePath) {
         return new SandboxOpRequestDTO(correlationId, targetAgentShortName, SandboxOp.COPY_OUT, sessionId, null, null, 0L, workspacePath, 0L);
     }
 
-    /** A {@link SandboxOp#RESET} request restarting an existing session container. */
     public static SandboxOpRequestDTO reset(String correlationId, String targetAgentShortName, String sessionId) {
         return new SandboxOpRequestDTO(correlationId, targetAgentShortName, SandboxOp.RESET, sessionId, null, null, 0L, null, 0L);
     }
 
-    /** A {@link SandboxOp#DESTROY} request tearing down an existing session. */
     public static SandboxOpRequestDTO destroy(String correlationId, String targetAgentShortName, String sessionId) {
         return new SandboxOpRequestDTO(correlationId, targetAgentShortName, SandboxOp.DESTROY, sessionId, null, null, 0L, null, 0L);
     }

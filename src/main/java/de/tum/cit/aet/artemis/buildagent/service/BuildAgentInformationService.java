@@ -74,10 +74,7 @@ public class BuildAgentInformationService {
         this.distributedDataAccessService = distributedDataAccessService;
     }
 
-    /**
-     * Updates this agent's generation sandbox slot load. Called by the relay handler on startup and after sandbox create/destroy so admin health information is
-     * refreshed without adding another eager Spring bean to startup.
-     */
+    /** Updates this agent's generation sandbox slot load; the relay handler calls this on startup and after every sandbox create or destroy. */
     void updateGenerationSandboxSlotState(int reservedSlots, int maxSlots) {
         this.reservedGenerationSandboxSlots.set(reservedSlots);
         this.maxGenerationSandboxSlots = maxSlots;
@@ -191,10 +188,9 @@ public class BuildAgentInformationService {
     }
 
     /**
-     * @param preserveConsecutiveFailures when {@code true}, the {@code isPausedDueToFailures} / {@code consecutiveFailures} arguments are ignored and the values already stored for
-     *                                        this agent are re-published instead, so a refresh triggered by an unrelated change (e.g. a generation sandbox slot count change) does
-     *                                        not
-     *                                        clobber the failure bookkeeping owned by the build-job path.
+     * @param preserveConsecutiveFailures when {@code true}, the {@code isPausedDueToFailures} / {@code consecutiveFailures} arguments are ignored in favour of the values already
+     *                                        stored for this agent, so a refresh triggered by an unrelated change cannot clobber the failure bookkeeping owned by the build-job
+     *                                        path
      */
     private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures,
             boolean preserveConsecutiveFailures) {

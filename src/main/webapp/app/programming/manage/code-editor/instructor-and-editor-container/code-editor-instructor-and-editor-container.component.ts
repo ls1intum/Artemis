@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, linkedSignal, signal, untracked, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -41,25 +41,19 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import {
-    ReviewAdaptExerciseDialogComponent,
-    ReviewAdaptExerciseDialogData,
-    ReviewAdaptExerciseDialogResult,
-} from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import dayjs from 'dayjs/esm';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { firstConsistencyIssueContent, getFirstCommentByCreatedDateThenId, selectedThreadsFindings } from 'app/exercise/review/review-comment-utils';
+import { AdaptFinding, firstConsistencyIssueContent, getFirstCommentByCreatedDateThenId, selectedThreadsFindings } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -91,6 +85,9 @@ const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
 const APPLIED_GENERATION_REFRESH_STATE = 'appliedHyperionGenerationRefresh';
 const MIN_MEANINGFUL_SPEC_LENGTH = 40;
+const HYPERION_GENERATE_CONFIRMATION_KEY = 'hyperionGenerateConfirmation';
+const HYPERION_RELOAD_CONFIRMATION_KEY = 'hyperionReloadSavedExerciseConfirmation';
+
 interface AppliedGenerationRefresh {
     exerciseId: number;
     jobId: string;
@@ -143,7 +140,7 @@ interface ConsistencyIssueNavigationIssue {
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
     // Keep review comment state scoped to each editor container instance.
-    providers: [ExerciseReviewCommentService, ConfirmationService],
+    providers: [ExerciseReviewCommentService, TumUiConfirmationService],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -170,7 +167,9 @@ interface ConsistencyIssueNavigationIssue {
         MessageModule,
         PopoverModule,
         HyperionGenerationActivityComponent,
-        ConfirmDialogModule,
+        TumUiConfirmDialogComponent,
+        TumUiDialogComponent,
+        ReviewAdaptExerciseDialogComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -228,15 +227,32 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
     private repositorySwitchTarget: { repository: RepositoryType; auxiliaryRepositoryId?: number } | undefined;
-    readonly selectedIssue = signal<ConsistencyIssueNavigationIssue | undefined>(undefined);
+    /**
+     * The issue the consistency toolbar is parked on. It is derived from {@link sortedIssues} — while the toolbar is
+     * open the selection falls back to the first issue whenever the current one disappears — but the toolbar's
+     * next/previous buttons also set it directly, which is exactly what `linkedSignal` is for.
+     */
+    readonly selectedIssue = linkedSignal<{ toolbarVisible: boolean; issues: ConsistencyIssueNavigationIssue[] }, ConsistencyIssueNavigationIssue | undefined>({
+        source: () => ({ toolbarVisible: this.showConsistencyIssuesToolbar(), issues: this.sortedIssues() }),
+        computation: ({ toolbarVisible, issues }, previous) => {
+            const current = previous?.value;
+            if (!toolbarVisible || (current && issues.some((issue) => issue.threadId === current.threadId))) {
+                return current;
+            }
+            return issues[0] ?? current;
+        },
+    });
     readonly generationStartPending = signal(false);
     readonly generationRefreshPending = signal(false);
     readonly generationRefreshFailed = signal(false);
     readonly generationRefreshBaselineUnknown = signal(false);
     readonly problemStatementHasUnsavedChanges = signal(false);
+    readonly adaptDialogVisible = signal(false);
+    readonly adaptDialogFindings = signal<AdaptFinding[]>([]);
     private generationStartSequence = 0;
     private pendingGenerationRefreshJobId?: string;
-    private activeAdaptDialogRef?: DynamicDialogRef<ReviewAdaptExerciseDialogComponent>;
+    /** Present exactly while an adapt dialog opened by {@link openAdaptDialog} is still awaiting the user's decision. */
+    private pendingAdaptDialog?: { exerciseId: number; onCancel?: () => void };
     private readonly exerciseChanged = new Subject<void>();
 
     // Icons
@@ -258,8 +274,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
-    private dialogService = inject(DialogService);
-    private confirmationService = inject(ConfirmationService);
+    private confirmationService = inject(TumUiConfirmationService);
     private generationService = inject(HyperionExerciseGenerationService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private reviewRouter = inject(Router);
@@ -292,24 +307,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.onInstructionChanged(content);
             },
-        });
-        effect(() => {
-            if (!this.showConsistencyIssuesToolbar()) {
-                return;
-            }
-
-            const issues = this.sortedIssues();
-            if (!issues.length) {
-                return;
-            }
-
-            const hasValidSelection = this.selectedIssue() ? issues.some((issue) => issue.threadId === this.selectedIssue()?.threadId) : false;
-            if (hasValidSelection) {
-                return;
-            }
-
-            this.selectedIssue.set(issues[0]);
-            this.jumpToLocation(this.selectedIssue()!);
         });
         effect(() => {
             if (!this.shouldAutoStartExerciseGeneration) {
@@ -541,19 +538,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         this.confirmationService.confirm({
-            key: 'hyperionReloadSavedExerciseConfirmation',
+            key: HYPERION_RELOAD_CONFIRMATION_KEY,
             header: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmHeader'),
             message: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmMessage'),
-            rejectButtonProps: {
-                label: this.translateService.instant('entity.action.cancel'),
-                severity: 'secondary',
-            },
-            acceptButtonProps: {
-                label: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExercise'),
-                severity: 'danger',
-            },
-            defaultFocus: 'reject',
-            reject: () => undefined,
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptLabel: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExercise'),
+            acceptSeverity: 'danger',
             accept: () => this.reloadSavedExercise(exerciseId, jobId),
         });
     }
@@ -632,17 +622,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
         if (!skipConfirmation) {
             this.confirmationService.confirm({
-                key: 'hyperionGenerateConfirmation',
+                key: HYPERION_GENERATE_CONFIRMATION_KEY,
                 header: this.translateService.instant('artemisApp.hyperion.generationActivity.generateConfirmHeader'),
                 message: this.translateService.instant('artemisApp.hyperion.generationActivity.generateConfirmMessage'),
-                rejectButtonProps: {
-                    label: this.translateService.instant('entity.action.cancel'),
-                    severity: 'secondary',
-                },
-                acceptButtonProps: {
-                    label: this.translateService.instant('artemisApp.programmingExercise.codeGeneration.generateCode'),
-                },
-                defaultFocus: 'reject',
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                acceptLabel: this.translateService.instant('artemisApp.programmingExercise.codeGeneration.generateCode'),
                 accept: () => this.dispatchGeneration(exerciseId),
             });
             return;
@@ -751,40 +735,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
-        const findings = selectedThreadsFindings(this.selectedAdaptFeedbackThreads(), this.translateService);
-        const dialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
-            header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
-            modal: true,
-            dismissableMask: true,
-            width: '40rem',
-            breakpoints: { '640px': 'calc(100vw - 2rem)' },
-            data: { findings } satisfies ReviewAdaptExerciseDialogData,
-        });
-        if (!dialogRef) {
-            return;
+        this.adaptDialogFindings.set(selectedThreadsFindings(this.selectedAdaptFeedbackThreads(), this.translateService));
+        this.pendingAdaptDialog = { exerciseId, onCancel };
+        this.adaptDialogVisible.set(true);
+    }
+
+    protected onAdaptDialogConfirmed(result: ReviewAdaptExerciseDialogResult): void {
+        // Taking the pending decision first also disarms the cancel callback the imminent (hidden) emission would run.
+        const pending = this.pendingAdaptDialog;
+        this.pendingAdaptDialog = undefined;
+        this.adaptDialogVisible.set(false);
+        if (pending && this.exercise()?.id === pending.exerciseId) {
+            this.startAdaptation(result.instructions);
         }
-        this.activeAdaptDialogRef = dialogRef;
-        dialogRef.onClose
-            .pipe(
-                take(1),
-                takeUntil(this.exerciseChanged),
-                takeUntilDestroyed(this.editorDestroyRef),
-                finalize(() => {
-                    if (this.activeAdaptDialogRef === dialogRef) {
-                        this.activeAdaptDialogRef = undefined;
-                    }
-                }),
-            )
-            .subscribe((result?: ReviewAdaptExerciseDialogResult) => {
-                if (this.exercise()?.id !== exerciseId) {
-                    return;
-                }
-                if (!result) {
-                    onCancel?.();
-                    return;
-                }
-                this.startAdaptation(result.instructions);
-            });
+    }
+
+    /** Runs for every dismissal — the cancel button, Escape, the backdrop, and the close icon alike. */
+    protected onAdaptDialogHidden(): void {
+        const pending = this.pendingAdaptDialog;
+        this.pendingAdaptDialog = undefined;
+        if (pending && this.exercise()?.id === pending.exerciseId) {
+            pending.onCancel?.();
+        }
     }
 
     private startAdaptation(instructions?: string): void {
@@ -904,9 +876,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private closeHyperionOverlays(): void {
-        this.confirmationService.close();
-        this.activeAdaptDialogRef?.close();
-        this.activeAdaptDialogRef = undefined;
+        this.confirmationService.close(HYPERION_GENERATE_CONFIRMATION_KEY);
+        this.confirmationService.close(HYPERION_RELOAD_CONFIRMATION_KEY);
+        // Dropping the pending decision before hiding keeps this programmatic close from running the cancel callback.
+        this.pendingAdaptDialog = undefined;
+        this.adaptDialogVisible.set(false);
         this.refinementPopover()?.hide();
     }
 
@@ -970,6 +944,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                             }
                             this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
                             this.showConsistencyIssuesToolbar.set(true);
+                            // Opening the toolbar re-derives the selection, so the jump belongs to this action rather
+                            // than to a reactive effect watching the selection.
+                            this.jumpToSelectedIssue();
                         });
                     },
                     error: () => {
@@ -1096,14 +1073,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     toggleConsistencyIssuesToolbar() {
         this.showConsistencyIssuesToolbar.update((v) => !v);
-        const issues = this.sortedIssues();
-
         if (this.showConsistencyIssuesToolbar()) {
-            const isIssueValid = this.selectedIssue() && issues.some((issue) => issue.threadId === this.selectedIssue()?.threadId);
-            if (!isIssueValid && issues.length > 0) {
-                this.selectedIssue.set(issues[0]);
-                this.jumpToLocation(this.selectedIssue()!);
-            }
+            this.jumpToSelectedIssue();
+        }
+    }
+
+    /** Moves the editor to whatever {@link selectedIssue} currently resolves to, if anything. */
+    private jumpToSelectedIssue(): void {
+        const issue = this.selectedIssue();
+        if (issue) {
+            this.jumpToLocation(issue);
         }
     }
 

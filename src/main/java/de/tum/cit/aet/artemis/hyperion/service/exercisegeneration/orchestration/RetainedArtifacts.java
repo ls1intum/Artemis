@@ -20,36 +20,23 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 /**
  * Turns the candidate a terminal run produced into the bounded, read-only snapshot that is retained for inspection when the run was not saved.
  * <p>
- * Three rules make this safe to hold in cluster memory and safe to hand back over the API, and all three fail toward retaining less rather than more:
- * <ul>
- * <li><b>Bounded.</b> Per-file, file-count, and total-size caps apply in a deterministic order, so the same candidate always yields the same snapshot and a pathological run
- * cannot grow the retained map without limit.</li>
- * <li><b>Screened.</b> Every file goes through the same secret-material policy that guards persistence. A file that trips it is dropped, not exported and not blocked — one bad
- * file must not cost the instructor the other forty.</li>
- * <li><b>Honest.</b> Any drop, for any reason, downgrades the snapshot to {@link ExerciseGenerationArtifactCompleteness#PARTIAL}, so a reader is never told a truncated
- * candidate is the whole one.</li>
- * </ul>
+ * The snapshot is held in cluster memory and handed back over the API, so every rule here fails toward retaining less: the caps apply in a deterministic order, a file that trips
+ * the persistence secret-material policy is dropped rather than blocking the rest, and any drop downgrades the snapshot to {@link ExerciseGenerationArtifactCompleteness#PARTIAL}.
  */
 final class RetainedArtifacts {
 
     private static final Logger log = LoggerFactory.getLogger(RetainedArtifacts.class);
 
-    /**
-     * Only the three instructor-facing repositories are retained, in the order an instructor reads them. The agent's scratch files are deliberately excluded: they are
-     * workspace mechanics, not exercise content, and the run's file-change index already records that they existed.
-     */
+    /** The instructor-facing repositories, in the order an instructor reads them. Agent scratch files are workspace mechanics, not exercise content, and are not retained. */
     private static final List<RepositoryType> RETAINED_REPOSITORIES = List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
 
-    /** Large enough for any generated source file; small enough that one runaway file cannot dominate the budget below. */
     static final int MAX_FILE_CHARS = 128_000;
 
-    /** Comfortably above a generated exercise's file count (tens), so the cap only ever fires on a pathological run. */
     static final int MAX_FILES = 400;
 
-    /** The whole snapshot's budget. Sized for several generated exercises' worth of source, and the reason a per-file cap alone is not enough. */
     static final int MAX_TOTAL_CHARS = 2_000_000;
 
-    /** Bounds the retained statement the same way the status API already bounds the retained SPEC.md. */
+    /** Matches the bound the status API already applies to the retained SPEC.md. */
     static final int MAX_PROBLEM_STATEMENT_CHARS = 100_000;
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
@@ -60,16 +47,11 @@ final class RetainedArtifacts {
     /**
      * Builds the bounded snapshot of an unsaved candidate.
      *
-     * @param jobId            the run that produced the candidate
-     * @param producedFiles    the produced files per repository, as captured from the sandbox
-     * @param problemStatement the produced problem statement, if any
-     * @param specDocument     the run's {@code SPEC.md}, if any
      * @return the snapshot; {@link ExerciseGenerationRetainedArtifactsDTO#isEmpty()} when the run produced nothing worth retaining
      */
     static ExerciseGenerationRetainedArtifactsDTO of(String jobId, Map<RepositoryType, Map<String, String>> producedFiles, @Nullable String problemStatement,
             @Nullable String specDocument) {
-        // One flat, deterministically ordered pass: repository order first, then path order, so the same candidate always yields the same snapshot and the caps below always
-        // cut the same tail rather than an arbitrary subset.
+        // Repository order, then path order, so the caps below always cut the same tail rather than an arbitrary subset.
         List<Map.Entry<String, String>> candidateFiles = RETAINED_REPOSITORIES.stream()
                 .flatMap(repository -> producedFiles.getOrDefault(repository, Map.of()).entrySet().stream().sorted(Comparator.comparing(Map.Entry::getKey))
                         .map(entry -> Map.entry(repository.name().toLowerCase(Locale.ROOT) + "/" + entry.getKey(), entry.getValue() == null ? "" : entry.getValue())))
@@ -102,9 +84,7 @@ final class RetainedArtifacts {
                 statement, specDocument, retained);
     }
 
-    /**
-     * Applies the persistence secret-material policy to one candidate file. Assessment failures are treated as unsafe: a screen that cannot run is not a screen that passed.
-     */
+    /** A screen that cannot run is not a screen that passed, so an assessment failure counts as unsafe. */
     private static boolean isSafe(String logicalPath, String content) {
         try {
             HyperionSecretMaterialPolicy.Assessment assessment = SECRET_MATERIAL_POLICY.assess(logicalPath, content.getBytes(StandardCharsets.UTF_8),

@@ -220,7 +220,6 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         String result = contextRendererService.getExistingSolutionCode(exerciseWithSolutionRepo, gitService);
 
-        // Production drops (never throws for) an unsafe file it encounters while scanning solution sources: the rest of the scan still completes.
         assertThat(result).contains("Library.java").doesNotContain("Config.java").doesNotContain(githubSentinel);
     }
 
@@ -239,7 +238,6 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         String result = contextRendererService.getExistingTestCode(exerciseWithTestRepo, gitService);
 
-        // Production drops (never throws for) an unsafe file it encounters while scanning test sources: the rest of the scan still completes.
         assertThat(result).contains("AaaTest.java").doesNotContain("CredentialsTest.java").doesNotContain(githubSentinel);
     }
 
@@ -253,7 +251,6 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         String result = contextRendererService.getRepositoryStructure(repository);
 
-        // The credential-path suffix (".aws/credentials") is omitted from the tree; the ordinary sibling file still appears.
         assertThat(result).contains("README.md").doesNotContain("credentials");
     }
 
@@ -267,7 +264,6 @@ class HyperionProgrammingExerciseContextRendererServiceTest {
 
         assertThatExceptionOfType(HyperionSecretMaterialPolicy.SecretMaterialException.class).isThrownBy(() -> contextRendererService.renderContext(exercise))
                 .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(githubSentinel);
-        // The problem statement is checked before any repository is fetched; a repository that would otherwise be reachable (had the guard not fired) is never touched.
         verifyNoInteractions(repositoryService);
     }
 }

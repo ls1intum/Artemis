@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 /**
  * How complete a retained candidate is as an account of what the run actually produced.
  * <p>
- * Stated rather than implied, because the retention is bounded on purpose: it is a diagnostic copy held in cluster memory, not an archive. A caller that reads these files must
- * be able to tell "this is everything the agent wrote" from "this is what fit", and neither of those is discoverable from the file list alone.
+ * Retention is bounded — this is a diagnostic copy held in cluster memory, not an archive — and the file list alone does not tell a caller whether it is everything the agent
+ * wrote or only what fit.
  */
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum ExerciseGenerationArtifactCompleteness {

@@ -95,9 +95,9 @@ describe('HyperionGenerationDetailComponent', () => {
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
         expect(fixture.componentInstance.naturallyEnded()).toBe(true);
         expect(fixture.componentInstance.job()?.jobId).toBe('job-1');
-        const terminalDuration = fixture.componentInstance.elapsedSeconds(jobs[0].startedAt);
+        const terminalDuration = fixture.componentInstance.elapsedSeconds();
         await vi.advanceTimersByTimeAsync(10_000);
-        expect(fixture.componentInstance.elapsedSeconds(jobs[0].startedAt)).toBe(terminalDuration);
+        expect(fixture.componentInstance.elapsedSeconds()).toBe(terminalDuration);
         expect(service.getGenerationSandboxes).toHaveBeenCalledTimes(2);
         fixture.destroy();
         vi.useRealTimers();
