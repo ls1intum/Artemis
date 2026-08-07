@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -21,8 +20,6 @@ import { MockProvider } from 'ng-mocks';
 import { TableLazyLoadEvent } from 'primeng/table';
 
 describe('CourseGroupComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let courseManagementService: CourseManagementService;
@@ -169,6 +166,32 @@ describe('CourseGroupComponent', () => {
             comp.onLazyLoad(eventWithSearch);
 
             expect(comp.totalMembers()).toBe(0); // unchanged from initial
+        });
+    });
+
+    describe('role change (route reused across role tabs)', () => {
+        it('should not reset the table on the initial render', () => {
+            const resetSpy = vi.fn();
+            (comp as any).tableViewRef = () => ({ reset: resetSpy });
+
+            fixture.detectChanges();
+
+            expect(resetSpy).not.toHaveBeenCalled();
+        });
+
+        it('should reset the table and refetch data for the new role when courseRoleSlug changes', () => {
+            const mockResult = { content: [user1], totalElements: 1 };
+            const getPagedSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole').mockReturnValue(of(mockResult));
+            // Simulate what TableViewComponent.reset() does in the real template: fire a fresh page-0 lazy load.
+            (comp as any).tableViewRef = () => ({ reset: () => comp.onLazyLoad(mockLazyEvent) });
+
+            fixture.detectChanges();
+            expect(getPagedSpy).not.toHaveBeenCalled();
+
+            fixture.componentRef.setInput('courseRoleSlug', CourseRoleSlug.TUTORS);
+            fixture.detectChanges();
+
+            expect(getPagedSpy).toHaveBeenCalledExactlyOnceWith(123, CourseRoleSlug.TUTORS, expect.any(Object));
         });
     });
 

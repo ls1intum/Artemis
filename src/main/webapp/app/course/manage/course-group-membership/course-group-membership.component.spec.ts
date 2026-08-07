@@ -1,12 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -14,8 +13,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Course Group Membership Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseGroupMembershipComponent;
     let fixture: ComponentFixture<CourseGroupMembershipComponent>;
     const courseRoleSlug = CourseRoleSlug.STUDENTS;
@@ -82,6 +79,38 @@ describe('Course Group Membership Component', () => {
             const removeUserSpy = vi.spyOn(courseService, 'removeUserFromCourseRole').mockReturnValue(of(new HttpResponse<void>()));
             comp.removeFromRole('testLogin');
             expect(removeUserSpy).toHaveBeenCalledWith(123, CourseRoleSlug.STUDENTS, 'testLogin');
+        });
+    });
+
+    describe('route reused across role tabs', () => {
+        it('should update courseRoleSlug to the newly navigated role without recreating the component', async () => {
+            const paramsSubject = new Subject<{ courseRoleSlug: CourseRoleSlug }>();
+            const reusedRoute = { parent: parentRoute, params: paramsSubject.asObservable() } as any as ActivatedRoute;
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [CourseGroupMembershipComponent],
+                providers: [
+                    { provide: ActivatedRoute, useValue: reusedRoute },
+                    MockProvider(CourseManagementService),
+                    { provide: AccountService, useClass: MockAccountService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                ],
+            }).overrideTemplate(CourseGroupMembershipComponent, '');
+            await TestBed.compileComponents();
+            const reusedFixture = TestBed.createComponent(CourseGroupMembershipComponent);
+            const reusedComp = reusedFixture.componentInstance;
+
+            reusedFixture.detectChanges();
+            paramsSubject.next({ courseRoleSlug: CourseRoleSlug.STUDENTS });
+            expect(reusedComp.courseRoleSlug()).toEqual(CourseRoleSlug.STUDENTS);
+
+            // Angular reuses this component instance when only the role-slug route param changes (no re-navigation to a new route).
+            paramsSubject.next({ courseRoleSlug: CourseRoleSlug.TUTORS });
+
+            expect(reusedComp.courseRoleSlug()).toEqual(CourseRoleSlug.TUTORS);
+            expect(reusedComp.course()).toEqual(course);
         });
     });
 
