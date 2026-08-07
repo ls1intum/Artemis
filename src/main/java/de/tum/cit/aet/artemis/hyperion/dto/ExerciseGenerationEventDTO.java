@@ -99,8 +99,14 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
         UNCHANGED_CANDIDATE_RESUBMITTED,
         /** A semantic repair introduced a new blocker or failed to remove any existing blocker, so the previous reviewed checkpoint was retained. */
         REPAIR_DID_NOT_IMPROVE,
-        /** Concept exploration completed, but no candidate satisfied the instructor brief and learning-fit review. */
+        /** Concept exploration completed, but no candidate satisfied the instructor brief and learning-fit review, and none was usable as a fallback either. */
         NO_ADMISSIBLE_CONCEPT,
+        /**
+         * Concept exploration admitted no candidate, so the run proceeded with the least-rejected one and stopped with the reviewer's objections attached for the instructor. A
+         * verified exercise was produced; it needs a design decision no automated repair can make. Distinct from {@link #NO_SCHEDULABLE_SURFACE}, which it refines, because the
+         * contested artifact is the exercise idea rather than any file the repair loop could edit.
+         */
+        CONCEPT_ADMITTED_WITH_FINDINGS,
         /** The run was stopped cooperatively (instructor cancellation, lost job ownership, or an unclassified stop signal). */
         CANCELLED,
         /** The run exceeded its configured wall-clock budget. */

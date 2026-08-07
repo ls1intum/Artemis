@@ -185,6 +185,11 @@ public final class GenerationOutcome implements AutoCloseable {
         return capturedProducedFiles.getOrDefault(repositoryType, Map.of());
     }
 
+    /** @return every captured repository's produced files, for callers that read the whole candidate rather than one repository at a time */
+    public Map<RepositoryType, Map<String, String>> capturedProducedFiles() {
+        return capturedProducedFiles;
+    }
+
     public Map<RepositoryType, String> seedRepositoryHeads() {
         return seedRepositoryHeads;
     }

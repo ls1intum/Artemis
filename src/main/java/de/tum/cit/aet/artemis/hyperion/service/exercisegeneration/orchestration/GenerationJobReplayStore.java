@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -45,6 +46,8 @@ final class GenerationJobReplayStore {
     static final String FILE_CHANGE_MAP_NAME = "hyperion-exercise-generation-file-changes";
 
     private static final String USAGE_MAP_NAME = "hyperion-exercise-generation-usage";
+
+    static final String ARTIFACT_MAP_NAME = "hyperion-exercise-generation-artifacts";
 
     static final int MAX_RETAINED_EVENTS = 500;
 
@@ -74,6 +77,8 @@ final class GenerationJobReplayStore {
     private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap;
 
     private IMap<String, JobUsage> usageMap;
+
+    private IMap<String, GenerationJobService.JobArtifacts> artifactMap;
 
     private final Set<String> usageWriteFailures = ConcurrentHashMap.newKeySet();
 
@@ -117,6 +122,13 @@ final class GenerationJobReplayStore {
         return fileChangeMap;
     }
 
+    private IMap<String, GenerationJobService.JobArtifacts> artifactMap() {
+        if (artifactMap == null) {
+            artifactMap = hazelcastInstance.getMap(ARTIFACT_MAP_NAME);
+        }
+        return artifactMap;
+    }
+
     private IMap<String, JobUsage> usageMap() {
         if (usageMap == null) {
             usageMap = hazelcastInstance.getMap(USAGE_MAP_NAME);
@@ -137,6 +149,9 @@ final class GenerationJobReplayStore {
             try {
                 transcriptMap().set(key, currentTranscript);
                 fileChangeMap().set(key, currentFileChanges);
+                // A previous run's unsaved candidate must not outlive the start of a new one: the exercise retains one run, and leaving the old draft readable while a fresh
+                // run is producing a new one is the one way this snapshot could mislead an instructor about which draft they are looking at.
+                artifactMap().remove(key);
                 writeUsage(jobId, JobUsage.empty());
             }
             catch (RuntimeException e) {
@@ -511,6 +526,10 @@ final class GenerationJobReplayStore {
             if (index != null && index.jobId().equals(jobId)) {
                 fileChangeMap().remove(key, index);
             }
+            GenerationJobService.JobArtifacts retainedArtifacts = artifactMap().get(key);
+            if (retainedArtifacts != null && retainedArtifacts.jobId().equals(jobId)) {
+                artifactMap().remove(key, retainedArtifacts);
+            }
             usageMap().remove(jobId);
             usageWriteFailures.remove(jobId);
         }
@@ -561,6 +580,52 @@ final class GenerationJobReplayStore {
         finally {
             jobMap().unlock(key);
         }
+    }
+
+    /**
+     * Retains the candidate a terminal run produced but never saved, so the work stays inspectable by the instructor who started the run.
+     * <p>
+     * Written with the terminal-replay TTL immediately rather than being promoted later, because unlike the transcript there is no live phase during which this value is useful
+     * — it only ever exists after the run has stopped. Overwrites any older snapshot for the exercise, matching the one-retained-run-per-exercise rule the transcript and
+     * file-change index already follow.
+     *
+     * @param exerciseId the exercise the run belonged to
+     * @param jobId      the run that produced the candidate
+     * @param userLogin  the instructor who started the run and is the only one allowed to read it back
+     * @param artifacts  the bounded candidate snapshot
+     * @return whether anything was retained
+     */
+    boolean retainUnsavedArtifacts(long exerciseId, String jobId, String userLogin, ExerciseGenerationRetainedArtifactsDTO artifacts) {
+        if (artifacts.isEmpty()) {
+            return false;
+        }
+        String key = key(exerciseId);
+        jobMap().lock(key);
+        try {
+            artifactMap().set(key, new GenerationJobService.JobArtifacts(jobId, userLogin, artifacts), terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            return true;
+        }
+        finally {
+            jobMap().unlock(key);
+        }
+    }
+
+    /**
+     * The unsaved candidate retained for this exercise's most recent run, for the instructor who started that run.
+     * <p>
+     * Owner-only with no sanitized fallback, unlike the status transcript: a transcript is a progress narrative another instructor may reasonably watch, while this is the
+     * verbatim content of an unreviewed, unverified draft.
+     *
+     * @param user     the requesting user
+     * @param exercise the exercise whose latest run is being inspected
+     * @return the retained candidate, or empty when none is retained or the requester did not start the run
+     */
+    Optional<ExerciseGenerationRetainedArtifactsDTO> getRetainedArtifacts(User user, ProgrammingExercise exercise) {
+        GenerationJobService.JobArtifacts retained = artifactMap().get(key(exercise.getId()));
+        if (retained == null || !retained.userLogin().equals(user.getLogin())) {
+            return Optional.empty();
+        }
+        return Optional.of(retained.artifacts());
     }
 
     void retainAfterJobCleared(long exerciseId, String jobId) {

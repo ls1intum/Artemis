@@ -461,6 +461,23 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/artifacts:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getRetainedGenerationArtifacts
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationRetainedArtifacts'}
+        '404':
+          description: The caller's most recent run retained no unsaved candidate
   /api/hyperion/programming-exercises/generation/supported-languages:
     get:
       tags: [hyperion-exercise-generation]
@@ -1529,8 +1546,8 @@ components:
           enum: [CONVERGED, REPAIR_BUDGET_EXHAUSTED, ATTEMPT_CAP_REACHED, MECHANICAL_REPAIR_EXHAUSTED,
             POST_REPAIR_CORRECTION_EXHAUSTED, NO_SCHEDULABLE_SURFACE, REVIEW_UNAVAILABLE,
             UNCHANGED_CANDIDATE_RESUBMITTED, REPAIR_DID_NOT_IMPROVE, NO_ADMISSIBLE_CONCEPT,
-            CANCELLED, DEADLINE_EXCEEDED, TOKEN_BUDGET_EXHAUSTED, AGENT_ERROR, ENVIRONMENT_UNAVAILABLE,
-            RUN_FAILED, NOT_STARTED]
+            CONCEPT_ADMITTED_WITH_FINDINGS, CANCELLED, DEADLINE_EXCEEDED, TOKEN_BUDGET_EXHAUSTED,
+            AGENT_ERROR, ENVIRONMENT_UNAVAILABLE, RUN_FAILED, NOT_STARTED]
         repairRound: {$ref: '#/components/schemas/ExerciseGenerationRepairRound',
           description: 'On a repair-round progress event, that round''s finding bookkeeping'}
         timestamp: {type: string, format: date-time, description: The moment the event
@@ -1542,6 +1559,30 @@ components:
         name: {type: string}
         label: {type: string}
       required: [label, name]
+    ExerciseGenerationRetainedFile:
+      type: object
+      description: A file of a generated candidate that was not saved to the exercise
+      properties:
+        repo: {type: string, description: Owning repository bucket, enum: [solution,
+            template, tests]}
+        path: {type: string, description: Repository-relative file path}
+        content: {type: string, description: The file's text content as the agent left
+            it}
+      required: [content, path, repo]
+    ExerciseGenerationRetainedArtifacts:
+      type: object
+      description: A generated candidate that was not saved to the exercise, retained
+        read-only for inspection
+      properties:
+        jobId: {type: string}
+        completeness: {type: string, description: Whether the retained files are a complete
+            account of what the run produced, enum: [COMPLETE, PARTIAL]}
+        problemStatement: {type: string}
+        specDocument: {type: string}
+        files:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationRetainedFile'}
+      required: [completeness, files, jobId]
     ExerciseGenerationStatus:
       type: object
       properties:

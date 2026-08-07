@@ -42,10 +42,13 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIndicator;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
@@ -555,6 +558,32 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(response.getBody()).isNull();
+    }
+
+    @Test
+    void getRetainedGenerationArtifacts_whenNothingRetained_returns404() {
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.getRetainedArtifacts(testUser, testExercise)).thenReturn(Optional.empty());
+
+        ResponseEntity<ExerciseGenerationRetainedArtifactsDTO> response = resource.getRetainedGenerationArtifacts(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNull();
+    }
+
+    @Test
+    void getRetainedGenerationArtifacts_whenRetained_returnsTheCandidate() {
+        ExerciseGenerationRetainedArtifactsDTO artifacts = new ExerciseGenerationRetainedArtifactsDTO("job-42", ExerciseGenerationArtifactCompleteness.COMPLETE, "Problem",
+                "# Spec", List.of(new ExerciseGenerationRetainedFileDTO("template", "Main.java", "class Main {}")));
+        when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.getRetainedArtifacts(testUser, testExercise)).thenReturn(Optional.of(artifacts));
+
+        ResponseEntity<ExerciseGenerationRetainedArtifactsDTO> response = resource.getRetainedGenerationArtifacts(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isEqualTo(artifacts);
     }
 
     @Test

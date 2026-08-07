@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -399,6 +400,28 @@ public class GenerationJobService {
 
     public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
         return replayStore.getStatus(user, exercise).map(this::withTerminalUsage);
+    }
+
+    /**
+     * Retains a terminal run's unsaved candidate so its work stays inspectable. Best-effort by design: this is diagnostic observability layered on a run that is already over,
+     * so a retention failure must never change the outcome the instructor is told about.
+     *
+     * @param exerciseId the exercise the run belonged to
+     * @param jobId      the run that produced the candidate
+     * @param userLogin  the instructor who started the run
+     * @param artifacts  the bounded candidate snapshot
+     */
+    public void retainUnsavedArtifacts(long exerciseId, String jobId, String userLogin, ExerciseGenerationRetainedArtifactsDTO artifacts) {
+        try {
+            replayStore.retainUnsavedArtifacts(exerciseId, jobId, userLogin, artifacts);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not retain the unsaved candidate of exercise generation job {}", jobId, e);
+        }
+    }
+
+    public Optional<ExerciseGenerationRetainedArtifactsDTO> getRetainedArtifacts(User user, ProgrammingExercise exercise) {
+        return replayStore.getRetainedArtifacts(user, exercise);
     }
 
     public void markTokenAccountingIncomplete(String jobId) {
@@ -981,6 +1004,13 @@ public class GenerationJobService {
     }
 
     public record JobFileChangeIndex(String jobId, String userLogin, List<ExerciseGenerationFileChangeDTO> changes) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+    }
+
+    /** A terminal run's unsaved candidate, bound to the owner who started it so only they can read it back. */
+    public record JobArtifacts(String jobId, String userLogin, ExerciseGenerationRetainedArtifactsDTO artifacts) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

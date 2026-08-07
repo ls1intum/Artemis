@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -221,6 +222,26 @@ public class HyperionExerciseGenerationResource {
         }
         return revertibleRun.<ResponseEntity<ExerciseGenerationStatusDTO>>map(run -> ResponseEntity.ok(ExerciseGenerationStatusDTO.revertOnly(run.jobId(), run.mode())))
                 .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /**
+     * GET programming-exercises/{exerciseId}/generate-exercise/artifacts : returns the candidate the caller's most recent run produced but never saved, so a run that failed
+     * after minutes of work leaves something inspectable instead of nothing.
+     * <p>
+     * Strictly read-only. Nothing here was written to the exercise and nothing here can be: a candidate that did not pass mechanical verification is refused by persistence
+     * outright, and this endpoint has no write counterpart. It is bounded diagnostic evidence with the same lifetime as the run's transcript, and it is owner-only — editor
+     * rights in the course are necessary but not sufficient, because this is the verbatim content of an unreviewed draft rather than a progress narrative.
+     *
+     * @param exerciseId the programming exercise id
+     * @return the retained candidate, or 404 when the caller's most recent run retained none (it saved successfully, produced nothing, or its evidence has expired)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/generate-exercise/artifacts")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ExerciseGenerationRetainedArtifactsDTO> getRetainedGenerationArtifacts(@PathVariable long exerciseId) {
+        log.debug("REST request to get the retained unsaved generation candidate for exercise [{}]", exerciseId);
+        ProgrammingExercise exercise = loadExercise(exerciseId);
+        User user = userRepository.getUserWithAuthorities();
+        return jobService.getRetainedArtifacts(user, exercise).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

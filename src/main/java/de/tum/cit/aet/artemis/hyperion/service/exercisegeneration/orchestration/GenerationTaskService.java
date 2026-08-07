@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
@@ -232,6 +233,8 @@ public class GenerationTaskService {
                     || heartbeatLost.get();
             GenerationOutcome generated = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink, event.sourceBrief(),
                     event.settings());
+            // Set only where the exercise was actually written. Everything else is a run whose work would otherwise die with the sandbox, and the finally below is what keeps it.
+            boolean savedToExercise = false;
             try (GenerationOutcome outcome = generated) {
                 // Why the run stopped producing candidates, decided once for every terminal branch below. The run-level controls the attempt loop cannot see refine its own
                 // cooperative stop into the specific budget that ended it.
@@ -315,6 +318,7 @@ public class GenerationTaskService {
                             persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
                                     event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId),
                                     () -> generationRevertService.invalidateBaseline(exerciseId));
+                            savedToExercise = true;
                         }
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
@@ -425,6 +429,14 @@ public class GenerationTaskService {
                 log.error("Exercise generation job {} failed", jobId, e);
                 emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed.").withTerminationReason(TerminationReason.RUN_FAILED));
             }
+            finally {
+                // One place rather than one per terminal branch: a run stops producing candidates through a dozen exits, and a retention that has to be remembered at each of
+                // them is a retention that will be forgotten at the next one added. Reading the captured artifacts after close() is safe — close destroys the sandbox, not the
+                // in-memory capture verification already took.
+                if (!savedToExercise) {
+                    retainUnsavedCandidate(exerciseId, jobId, user, generated);
+                }
+            }
         }
         catch (RuntimeException | LinkageError e) {
             // A live-development rebuild can briefly invalidate a lazily loaded class in bootRun. Linkage errors are not recoverable inside this worker, but they must still
@@ -441,6 +453,24 @@ public class GenerationTaskService {
             jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
             clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get());
         }
+    }
+
+    /**
+     * Keeps a terminal run's produced candidate readable when the run did not earn a save.
+     * <p>
+     * This is retention, not persistence, and the distinction is the whole point: the exercise, its repositories, and its version history are untouched, the candidate is held
+     * read-only in the same bounded replay evidence that already holds the transcript and the specification, it expires on the same TTL, and only the instructor who started the
+     * run can read it. The guarantee that unverified output never reaches a live exercise is unchanged — {@code GenerationPersistenceService} still refuses it outright. What
+     * changes is only that a failed run stops destroying the work the instructor paid for while telling them nothing about it.
+     */
+    private void retainUnsavedCandidate(long exerciseId, String jobId, User user, GenerationOutcome outcome) {
+        // Deliberately not gated on hasCapturedArtifacts(): that is true for an outcome carrying only an empty problem statement, which is nothing to inspect. The snapshot
+        // itself is the one place that knows whether anything survived its own bounds and screening, so it is the only place allowed to answer "is there anything here".
+        ExerciseGenerationRetainedArtifactsDTO candidate = RetainedArtifacts.of(jobId, outcome.capturedProducedFiles(), outcome.producedProblemStatement(), outcome.specDocument());
+        if (candidate.isEmpty()) {
+            return;
+        }
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, user.getLogin(), candidate);
     }
 
     private void clearJobAndReleaseBudget(long exerciseId, String jobId, GenerationStartedEvent event, boolean tokenAccountingFailed) {

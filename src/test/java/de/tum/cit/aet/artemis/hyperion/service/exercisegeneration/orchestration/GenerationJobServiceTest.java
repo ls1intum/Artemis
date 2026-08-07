@@ -69,8 +69,11 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
@@ -530,6 +533,79 @@ class GenerationJobServiceTest {
         executor.shutdownNow();
 
         assertThat(jobService.getStatus(owner, exercise)).isEmpty();
+    }
+
+    @Test
+    void retainUnsavedArtifacts_makesTheCandidateReadableByTheOwningUser() {
+        long exerciseId = 600L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        ExerciseGenerationRetainedArtifactsDTO artifacts = retainedArtifacts(jobId);
+
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), artifacts);
+
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).contains(artifacts);
+    }
+
+    @Test
+    void getRetainedArtifacts_forADifferentUser_isEmpty_ownerOnlyWithNoSanitizedFallback() {
+        long exerciseId = 601L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), retainedArtifacts(jobId));
+
+        assertThat(jobService.getRetainedArtifacts(user("other"), exercise)).isEmpty();
+    }
+
+    @Test
+    void retainUnsavedArtifacts_withAnEmptySnapshot_retainsNothing() {
+        long exerciseId = 602L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        ExerciseGenerationRetainedArtifactsDTO empty = new ExerciseGenerationRetainedArtifactsDTO(jobId, ExerciseGenerationArtifactCompleteness.COMPLETE, null, null, List.of());
+
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), empty);
+
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
+    }
+
+    @Test
+    void startJob_forANewRunOnTheSameExercise_clearsThePreviousRunsRetainedArtifacts() {
+        long exerciseId = 603L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String firstJob = jobService.startJob(owner, exercise, "first", GenerationMode.GENERATE);
+        jobService.retainUnsavedArtifacts(exerciseId, firstJob, owner.getLogin(), retainedArtifacts(firstJob));
+        jobService.clearJob(exerciseId, firstJob);
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isPresent();
+
+        jobService.startJob(owner, exercise, "second", GenerationMode.GENERATE);
+
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
+    }
+
+    @Test
+    void discardRetainedRun_removesOnlyTheMatchingRetainedArtifacts() {
+        long exerciseId = 604L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), retainedArtifacts(jobId));
+        jobService.clearJob(exerciseId, jobId);
+
+        jobService.discardRetainedRun(exerciseId, "different-job");
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isPresent();
+
+        jobService.discardRetainedRun(exerciseId, jobId);
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
+    }
+
+    private static ExerciseGenerationRetainedArtifactsDTO retainedArtifacts(String jobId) {
+        return new ExerciseGenerationRetainedArtifactsDTO(jobId, ExerciseGenerationArtifactCompleteness.COMPLETE, "Problem statement", "# Spec",
+                List.of(new ExerciseGenerationRetainedFileDTO(ExerciseGenerationFileChangeDTO.REPOSITORY_TEMPLATE, "src/Main.java", "public class Main {}")));
     }
 
     @Test

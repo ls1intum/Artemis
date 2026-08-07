@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
@@ -297,6 +298,47 @@ class GenerationTaskServiceTest {
         run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.CANCELLED, null));
 
         verify(jobService, never()).recordSpecDocument(anyLong(), anyString(), any());
+    }
+
+    @Test
+    void unsavedRunThatProducedFiles_retainsThemForInspectionWithoutTouchingTheExercise() {
+        // The run failed and stays failed: nothing is persisted, the sandbox is still destroyed, and the terminal event still says nothing was saved. What changes is only that
+        // half an hour of work stops being deleted along with the container that held it.
+        GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 5, "done"),
+                new VerificationResult(false, true, false, 0, List.of()), SESSION_ID, orchestrator, sandbox,
+                Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", SpecFidelityReport.empty(), Map.of(),
+                "## Rules\n- R1: push then pop", null);
+
+        run(GenerationMode.GENERATE, outcome);
+
+        ArgumentCaptor<ExerciseGenerationRetainedArtifactsDTO> retained = ArgumentCaptor.forClass(ExerciseGenerationRetainedArtifactsDTO.class);
+        verify(jobService).retainUnsavedArtifacts(eq(EXERCISE_ID), eq(JOB_ID), eq(user.getLogin()), retained.capture());
+        assertThat(retained.getValue().files()).singleElement().satisfies(file -> assertThat(file.path()).isEqualTo("src/Stack.java"));
+        assertThat(retained.getValue().problemStatement()).isEqualTo("# Bounded stack");
+        assertThat(retained.getValue().specDocument()).contains("push then pop");
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(sentEvents().getLast().liveExerciseChanged()).isNotEqualTo(Boolean.TRUE);
+    }
+
+    @Test
+    void savedRun_retainsNothingBecauseTheWorkIsAlreadyInTheExercise() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
+                Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(), "main"));
+        GenerationOutcome outcome = new GenerationOutcome(new AgentLoopResult(AgentLoopResult.Status.COMPLETED, 5, "done"), new VerificationResult(true, true, true, 3, List.of()),
+                SESSION_ID, orchestrator, sandbox, Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", SpecFidelityReport.empty(),
+                Map.of());
+
+        run(GenerationMode.GENERATE, outcome);
+
+        verify(jobService, never()).retainUnsavedArtifacts(anyLong(), anyString(), anyString(), any());
+    }
+
+    @Test
+    void unsavedRunThatProducedNothing_retainsNothing() {
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.CANCELLED, null));
+
+        verify(jobService, never()).retainUnsavedArtifacts(anyLong(), anyString(), anyString(), any());
     }
 
     @Test
