@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TumUiCheckboxComponent, TumUiProgressBarComponent } from '@tumaet/ui-angular';
@@ -12,9 +12,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
@@ -28,7 +29,9 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
+                MockDirective(NgbTooltip),
                 MockDirective(NgbCollapse),
+                FaIconComponent,
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
@@ -54,12 +57,12 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.disableDrag()).toBe(false);
     });
 
-    it('should derive the point pill from an instruction', () => {
-        const gradingInstruction = { id: 1, feedback: 'feedback', credits: 4 } as GradingInstruction;
-
-        expect(comp.pointsLabel(gradingInstruction.credits)).toBe('+4');
-        expect(comp.pointsSeverity(gradingInstruction.credits)).toBe('success');
+    it('should format the point pill of an instruction', () => {
+        expect(comp.pointsLabel(1)).toBe('+1');
+        expect(comp.pointsSeverity(1)).toBe('success');
+        expect(comp.pointsLabel(0)).toBe('0');
         expect(comp.pointsSeverity(0)).toBe('secondary');
+        expect(comp.pointsLabel(-1)).toBe('-1');
         expect(comp.pointsSeverity(-1)).toBe('danger');
     });
 
@@ -115,18 +118,24 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     });
 
     describe('with an editable feedback list registered', () => {
-        const instruction = { id: 7, instructionDescription: 'description', feedback: 'feedback', credits: 4, usageCount: 4 } as GradingInstruction;
+        const instruction = { id: 7, instructionDescription: 'description', feedback: 'feedback', credits: 4 } as GradingInstruction;
         const criterion = { id: 1, title: 'Documentation', structuredGradingInstructions: [instruction] } as GradingCriterion;
         let host: GradingInstructionSelectionHost;
         let appliedIds: ReturnType<typeof signal<ReadonlySet<number>>>;
         let appliedCounts: ReturnType<typeof signal<ReadonlyMap<number, number>>>;
+        /** Set by the tests in which the instruction is applied to a referenced element the feedback list does not own. */
+        let notRemovableIds: ReturnType<typeof signal<ReadonlySet<number>>>;
 
         beforeEach(() => {
             appliedIds = signal<ReadonlySet<number>>(new Set());
             appliedCounts = signal<ReadonlyMap<number, number>>(new Map());
+            notRemovableIds = signal<ReadonlySet<number>>(new Set());
+            // Tests mutate usageCount; reset so they cannot leak into each other.
+            delete instruction.usageCount;
             host = {
                 appliedInstructionIds: appliedIds,
                 appliedInstructionCounts: appliedCounts,
+                removableInstructionIds: computed(() => new Set([...appliedIds()].filter((id) => !notRemovableIds().has(id)))),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
@@ -136,6 +145,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             comp.ngOnInit();
             fixture.detectChanges();
         });
+
+        /** Marks the instruction as applied the given number of times (and therefore as present in appliedIds). */
+        function setApplicationCount(count: number): void {
+            if (count <= 0) {
+                appliedIds.set(new Set());
+                appliedCounts.set(new Map());
+            } else {
+                appliedIds.set(new Set([instruction.id!]));
+                appliedCounts.set(new Map([[instruction.id!, count]]));
+            }
+            fixture.detectChanges();
+        }
 
         /** The kit checkbox renders a real, visually hidden input that covers it, so a click always lands there. */
         function checkboxInput(): HTMLInputElement {
@@ -150,21 +171,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         it('should render a checkbox and usage progress', () => {
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
             expect(fixture.debugElement.query(By.directive(TumUiProgressBarComponent))).not.toBeNull();
-            expect(fixture.debugElement.query(By.css('.sgi-item__usage-counter')).nativeElement.textContent.trim()).toBe('0 / 4');
             expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
+            expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('0 / ∞');
         });
 
         it('should update the usage counter, progress, and severity from linked feedback', () => {
-            appliedCounts.set(new Map([[instruction.id!, 2]]));
-            fixture.detectChanges();
+            instruction.usageCount = 2;
+            setApplicationCount(2);
 
             expect(comp.instructionUseCount(instruction)).toBe(2);
-            expect(comp.instructionUsageProgress(instruction)).toBe(50);
-            expect(comp.instructionUsageSeverity(instruction)).toBe('primary');
-            expect(fixture.debugElement.query(By.css('.sgi-item__usage-counter')).nativeElement.textContent.trim()).toBe('2 / 4');
-
-            appliedCounts.set(new Map([[instruction.id!, 4]]));
+            expect(comp.instructionUsageProgress(instruction)).toBe(100);
             expect(comp.instructionUsageSeverity(instruction)).toBe('danger');
+            expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('2 / 2');
         });
 
         it('should count the applied instructions of the criterion', () => {
@@ -235,6 +253,65 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
             expect(checkboxInput().checked).toBe(false);
             expect(fixture.debugElement.query(By.css('.tum-ui-checkbox-icon'))).toBeNull();
+        });
+
+        /** The draggable attribute of the row that carries the instruction. */
+        function instructionRowDraggable(): string | null {
+            return fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('draggable');
+        }
+
+        it('should keep drag enabled after an application when the usage limit is unlimited', () => {
+            // No usageCount / usageCount 0 means unlimited — ticking must not lock drag onto further targets.
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+
+            setApplicationCount(1);
+
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+        });
+
+        it('should keep drag enabled until a finite usage limit is reached', () => {
+            instruction.usageCount = 2;
+            setApplicationCount(1);
+
+            expect(comp.isDraggable(instruction)).toBe(true);
+            expect(instructionRowDraggable()).toBe('true');
+
+            setApplicationCount(2);
+
+            expect(comp.isDraggable(instruction)).toBe(false);
+            expect(instructionRowDraggable()).toBe('false');
+        });
+
+        it('should not hand over any instruction data once its usage limit is exhausted', () => {
+            instruction.usageCount = 1;
+            setApplicationCount(1);
+            const dataTransfer = { setData: vi.fn() };
+            const dragEvent = { dataTransfer, preventDefault: vi.fn() } as unknown as DragEvent;
+
+            comp.drag(dragEvent, instruction);
+
+            expect(dataTransfer.setData).not.toHaveBeenCalled();
+            expect(dragEvent.preventDefault).toHaveBeenCalledOnce();
+        });
+
+        it('should show an instruction applied to a referenced element as ticked but locked', () => {
+            const openDeleteDialogSpy = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog').mockImplementation(() => {});
+            setApplicationCount(1);
+            notRemovableIds.set(new Set([instruction.id!]));
+            fixture.detectChanges();
+
+            expect(comp.isLockedByReferencedFeedback(instruction)).toBe(true);
+            expect(checkboxInput().checked).toBe(true);
+            expect(checkboxInput().disabled).toBe(true);
+
+            // Even a click that reaches the host element must not offer to delete feedback this list does not own.
+            comp.toggleApplied(new Event('click'), instruction);
+
+            expect(openDeleteDialogSpy).not.toHaveBeenCalled();
+            expect(host.unapplyInstruction).not.toHaveBeenCalled();
+            expect(host.applyInstruction).not.toHaveBeenCalled();
         });
     });
 

@@ -26,13 +26,12 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
+import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
@@ -88,7 +87,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
-    private selectionService = inject(GradingInstructionSelectionService);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -150,6 +148,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly feedbackSuggestions = signal<Feedback[]>([]);
     totalScoreBeforeAssessment!: number; // set in handleFeedback() before any read
 
+    /** Full assessment feedback for the unreferenced-feedback score summary and instruction usage counts. */
+    readonly allAssessmentFeedbacks = computed(() => [...this.referencedFeedback(), ...this.unreferencedFeedback(), ...this.automaticFeedback()]);
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
+
     isFirstAssessment = false;
     readonly lockLimitReached = signal(false);
 
@@ -187,9 +190,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Will load the participation according to participation id with the latest result and result details.
      */
     async ngOnInit(): Promise<void> {
-        // Inline feedback is not part of the unreferenced feedback list, but it consumes usages of the grading
-        // instruction it links to, so the instruction panel has to count it as well.
-        this.selectionService.registerUsageSource(this.referencedFeedback);
         // Used to check if the assessor is the current user
         void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
@@ -265,7 +265,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * If a subscription exists for paramSub, unsubscribe
      */
     ngOnDestroy() {
-        this.selectionService.unregisterUsageSource(this.referencedFeedback);
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
@@ -796,32 +795,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
-        const maxPoints = getTotalMaxPoints(this.exercise());
-        let totalScore = 0.0;
-        let scoreAutomaticTests = 0.0;
-        const encounteredInstructions = new Map<number, number>(); // instructionId -> noOfEncounters
-
-        feedbacks.forEach((feedback) => {
-            // Check for feedback from automatic tests and store them separately
-            if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-                scoreAutomaticTests += feedback.credits!;
-            } else {
-                if (feedback.gradingInstruction) {
-                    totalScore = this.structuredGradingCriterionService.calculateScoreForGradingInstructions(feedback, totalScore, encounteredInstructions);
-                } else {
-                    totalScore += feedback.credits!;
-                }
-            }
-        });
-
-        // Cap automatic test feedback to maxScore + bonus points of exercise
-        if (scoreAutomaticTests > maxPoints) {
-            scoreAutomaticTests = maxPoints;
-        }
-        totalScore += scoreAutomaticTests;
-        totalScore = getPositiveAndCappedTotalScore(totalScore, maxPoints);
-
-        return totalScore;
+        // Shared with the score summary of the feedback list, so both can never disagree.
+        return this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise()), true).total;
     }
 }
 

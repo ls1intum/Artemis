@@ -181,6 +181,7 @@ describe('AssessmentInstructionsComponent', () => {
             const host: GradingInstructionSelectionHost = {
                 appliedInstructionIds: signal(new Set([1])),
                 appliedInstructionCounts: signal(new Map([[1, 1]])),
+                removableInstructionIds: signal(new Set([1])),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             };
@@ -195,6 +196,7 @@ describe('AssessmentInstructionsComponent', () => {
             TestBed.inject(GradingInstructionSelectionService).register({
                 appliedInstructionIds: signal(new Set()),
                 appliedInstructionCounts: signal(new Map()),
+                removableInstructionIds: signal(new Set()),
                 applyInstruction: vi.fn(),
                 unapplyInstruction: vi.fn(),
             });

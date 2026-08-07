@@ -68,7 +68,8 @@
                         (onDiscardSuggestion)="removeSuggestion($event)"
                         [resultId]="result()!.id!"
                         [gradingCriteria]="modelingExercise()?.gradingCriteria ?? []"
-                        [maxPoints]="modelingExercise()?.maxPoints"
+                        [allFeedbacks]="allAssessmentFeedbacks()"
+                        [maxPoints]="getTotalMaxPoints(modelingExercise())"
                     />
                 }
                 @if ((hasAutomaticFeedback() || highlightMissingFeedback()) && !result()?.completionDate) {

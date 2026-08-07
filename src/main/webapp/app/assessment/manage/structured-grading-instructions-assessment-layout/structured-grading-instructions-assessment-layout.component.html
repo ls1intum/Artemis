@@ -39,9 +39,11 @@
                     @let usageTooltip =
                         (usageLimit > 0 ? 'artemisApp.assessment.detail.feedbackUsage.limited' : 'artemisApp.assessment.detail.feedbackUsage.unlimited')
                             | artemisTranslate: { used: useCount, limit: usageLimit };
+                    <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be
+                         draggable. isDraggable also stops further drops once a finite usageCount is exhausted. -->
                     <div
                         class="sgi-item"
-                        draggable="{{ allowDrop() }}"
+                        [draggable]="isDraggable(instruction)"
                         (dragstart)="disableDrag()"
                         (dragstart)="drag($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
@@ -61,11 +63,18 @@
                                             [tumUiTooltip]="usageTooltip"
                                         />
                                     </div>
-                                    <tum-ui-checkbox
-                                        [checked]="isApplied(instruction)"
-                                        [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
-                                        (click)="toggleApplied($event, instruction)"
-                                    />
+                                    <span
+                                        [tumUiTooltip]="
+                                            isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
+                                        "
+                                    >
+                                        <tum-ui-checkbox
+                                            [checked]="isApplied(instruction)"
+                                            [disabled]="isLockedByReferencedFeedback(instruction)"
+                                            [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
+                                            (click)="toggleApplied($event, instruction)"
+                                        />
+                                    </span>
                                 } @else {
                                     <span class="sgi-item__usage">
                                         @if (instruction!.usageCount && instruction!.usageCount !== 0) {

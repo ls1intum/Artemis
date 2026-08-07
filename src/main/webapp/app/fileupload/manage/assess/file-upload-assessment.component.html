@@ -61,7 +61,8 @@
                     [highlightDifferences]="highlightDifferences"
                     [resultId]="result()!.id!"
                     [gradingCriteria]="exercise()?.gradingCriteria ?? []"
-                    [maxPoints]="exercise()?.maxPoints"
+                    [allFeedbacks]="assessments"
+                    [maxPoints]="getTotalMaxPoints(exercise())"
                 />
             }
         </div>

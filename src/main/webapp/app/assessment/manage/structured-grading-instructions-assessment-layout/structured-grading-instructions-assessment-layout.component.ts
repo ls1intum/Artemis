@@ -107,11 +107,37 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
+     * Whether the instruction is applied to a referenced element (a line of code, a diagram element, a text block)
+     * only. Its feedback belongs to that element, so it can be removed there but not from the feedback list.
+     */
+    isLockedByReferencedFeedback(instruction: GradingInstruction): boolean {
+        return this.isApplied(instruction) && !this.selectionService.isRemovable(instruction);
+    }
+
+    /**
+     * Drag stays enabled until a finite {@link GradingInstruction.usageCount} is exhausted. Zero or an unset limit
+     * means unlimited, so the instruction can be dropped onto further targets even after it was checked.
+     */
+    isDraggable(instruction: GradingInstruction): boolean {
+        if (!this.allowDrop()) {
+            return false;
+        }
+        const usageLimit = instruction.usageCount ?? 0;
+        if (usageLimit <= 0) {
+            return true;
+        }
+        return this.selectionService.applicationCount(instruction) < usageLimit;
+    }
+
+    /**
      * Applying an instruction via its checkbox is equivalent to dropping it onto the feedback list. Un-applying it
      * deletes every feedback card that instruction produced.
      */
     toggleApplied(event: Event, instruction: GradingInstruction): void {
         event.preventDefault();
+        if (this.isLockedByReferencedFeedback(instruction)) {
+            return;
+        }
         if (!this.isApplied(instruction)) {
             this.selectionService.setApplied(instruction, true);
             return;
@@ -138,7 +164,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     /** Number of feedback entries currently linked to this instruction in the open assessment. */
     instructionUseCount(instruction: GradingInstruction): number {
-        return instruction.id === undefined ? 0 : (this.selectionService.appliedInstructionCounts().get(instruction.id) ?? 0);
+        return this.selectionService.applicationCount(instruction);
     }
 
     /** Percentage of the configured usage limit consumed by this assessment. */
@@ -160,6 +186,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * the corresponding drop method is in AssessmentDetailComponent
      */
     drag(event: DragEvent, instruction: GradingInstruction) {
+        if (!this.isDraggable(instruction)) {
+            event.preventDefault();
+            return;
+        }
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }

@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 describe('GradingInstructionSelectionService', () => {
     let service: GradingInstructionSelectionService;
@@ -15,6 +14,7 @@ describe('GradingInstructionSelectionService', () => {
         host = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
             appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 1]])),
+            removableInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };
@@ -23,8 +23,23 @@ describe('GradingInstructionSelectionService', () => {
     it('should report nothing as selectable or applied without a registered host', () => {
         expect(service.isSelectable()).toBe(false);
         expect(service.appliedInstructionIds().size).toBe(0);
-        expect(service.appliedInstructionCounts().size).toBe(0);
         expect(service.isApplied(instruction)).toBe(false);
+        expect(service.isRemovable(instruction)).toBe(false);
+        expect(service.applicationCount(instruction)).toBe(0);
+    });
+
+    it('should not report an instruction that the host cannot take back as removable', () => {
+        service.register({
+            appliedInstructionIds: signal<ReadonlySet<number>>(new Set([1])),
+            appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map([[1, 2]])),
+            removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        });
+
+        expect(service.isApplied(instruction)).toBe(true);
+        expect(service.isRemovable(instruction)).toBe(false);
+        expect(service.applicationCount(instruction)).toBe(2);
     });
 
     it('should expose the registered host state', () => {
@@ -32,7 +47,6 @@ describe('GradingInstructionSelectionService', () => {
 
         expect(service.isSelectable()).toBe(true);
         expect(service.isApplied(instruction)).toBe(true);
-        expect(service.appliedInstructionCounts().get(instruction.id!)).toBe(1);
         expect(service.isApplied({ id: 2, credits: 0 } as GradingInstruction)).toBe(false);
     });
 
@@ -58,40 +72,11 @@ describe('GradingInstructionSelectionService', () => {
         expect(host.applyInstruction).not.toHaveBeenCalled();
     });
 
-    it('should count feedback of a usage source on top of the host feedback', () => {
-        const inlineFeedback = signal<Feedback[]>([{ gradingInstruction: instruction } as Feedback, { gradingInstruction: { id: 2 } as GradingInstruction } as Feedback]);
-        service.register(host);
-        service.registerUsageSource(inlineFeedback);
-
-        expect(service.appliedInstructionCounts().get(1)).toBe(2);
-        expect(service.appliedInstructionCounts().get(2)).toBe(1);
-
-        inlineFeedback.set([]);
-        expect(service.appliedInstructionCounts().get(1)).toBe(1);
-        expect(service.appliedInstructionCounts().has(2)).toBe(false);
-    });
-
-    it('should count feedback of a usage source without a registered host', () => {
-        service.registerUsageSource(signal<Feedback[]>([{ gradingInstruction: instruction } as Feedback]));
-
-        expect(service.appliedInstructionCounts().get(1)).toBe(1);
-        // The checkbox may only add to and remove from the host list, so its state does not follow a usage source.
-        expect(service.isApplied(instruction)).toBe(false);
-    });
-
-    it('should stop counting a usage source once it is unregistered', () => {
-        const inlineFeedback = signal<Feedback[]>([{ gradingInstruction: instruction } as Feedback]);
-        service.registerUsageSource(inlineFeedback);
-
-        service.unregisterUsageSource(inlineFeedback);
-
-        expect(service.appliedInstructionCounts().size).toBe(0);
-    });
-
     it('should only clear the registration for the host that is currently active', () => {
         const otherHost: GradingInstructionSelectionHost = {
             appliedInstructionIds: signal<ReadonlySet<number>>(new Set()),
             appliedInstructionCounts: signal<ReadonlyMap<number, number>>(new Map()),
+            removableInstructionIds: signal<ReadonlySet<number>>(new Set()),
             applyInstruction: vi.fn(),
             unapplyInstruction: vi.fn(),
         };

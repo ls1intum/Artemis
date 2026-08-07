@@ -202,6 +202,13 @@ describe('UnreferencedFeedbackComponent', () => {
             comp.applyInstruction(documentationInstruction);
             comp.applyInstruction(cameraInstruction);
 
+            expect(comp.appliedInstructionCounts()).toEqual(
+                new Map([
+                    [1, 2],
+                    [2, 1],
+                ]),
+            );
+
             comp.unapplyInstruction(documentationInstruction);
 
             expect(comp.unreferencedFeedback).toHaveLength(1);
@@ -235,6 +242,100 @@ describe('UnreferencedFeedbackComponent', () => {
             comp.applyInstruction(cameraInstruction);
 
             expect(comp.pointsSummary()).toEqual({ awarded: 4, deducted: -2, total: 2 });
+        });
+
+        it('should ignore structured-instruction credits beyond usageCount', () => {
+            const limitedInstruction = { id: 3, credits: 3, feedback: 'limited', usageCount: 1 } as GradingInstruction;
+            fixture.componentRef.setInput('gradingCriteria', [{ id: 3, title: 'Limited', structuredGradingInstructions: [limitedInstruction] } as GradingCriterion]);
+
+            // Drag/drop can still create multiple cards for the same instruction; only the first counts.
+            comp.applyInstruction(limitedInstruction);
+            comp.applyInstruction(limitedInstruction);
+
+            expect(comp.pointsSummary()).toEqual({ awarded: 3, deducted: 0, total: 3 });
+            expect(comp.feedbackGroups()[0].points).toBe(3);
+        });
+
+        it('should cap the final score at maxPoints and floor negatives at zero', () => {
+            fixture.componentRef.setInput('maxPoints', 5);
+            comp.applyInstruction(documentationInstruction); // +4
+            const bonus = { id: 4, credits: 4, feedback: 'bonus' } as GradingInstruction;
+            comp.applyInstruction(bonus); // +4 → raw 8, capped to 5
+
+            expect(comp.pointsSummary().total).toBe(5);
+
+            fixture.componentRef.setInput('maxPoints', 10);
+            comp.unreferencedFeedback = [];
+            comp.applyInstruction(cameraInstruction); // -2
+            expect(comp.pointsSummary().total).toBe(0);
+        });
+
+        it('should include referenced feedback from allFeedbacks in the final score', () => {
+            const referenced = {
+                credits: 5,
+                type: FeedbackType.MANUAL,
+                reference: 'file:Main.java',
+                gradingInstruction: documentationInstruction,
+            } as Feedback;
+            comp.applyInstruction(cameraInstruction); // -2 unreferenced
+            fixture.componentRef.setInput('allFeedbacks', [referenced, ...comp.unreferencedFeedback]);
+            fixture.componentRef.setInput('maxPoints', 10);
+
+            expect(comp.pointsSummary()).toEqual({ awarded: 5, deducted: -2, total: 3 });
+            // Group points still only cover the cards in this list, but usage is global.
+            expect(comp.feedbackGroups().find((group) => group.title === 'Camera')!.points).toBe(-2);
+        });
+
+        it('should not count an unreferenced instruction that was already used in referenced feedback', () => {
+            const limitedInstruction = { id: 5, credits: 2, feedback: 'once', usageCount: 1 } as GradingInstruction;
+            fixture.componentRef.setInput('gradingCriteria', [{ id: 5, title: 'Once', structuredGradingInstructions: [limitedInstruction] } as GradingCriterion]);
+
+            const referenced = {
+                credits: 2,
+                type: FeedbackType.MANUAL,
+                reference: 'file:Main.java',
+                gradingInstruction: limitedInstruction,
+            } as Feedback;
+            comp.applyInstruction(limitedInstruction);
+            fixture.componentRef.setInput('allFeedbacks', [referenced, ...comp.unreferencedFeedback]);
+
+            expect(comp.pointsSummary()).toEqual({ awarded: 2, deducted: 0, total: 2 });
+            expect(comp.feedbackGroups()[0].points).toBe(0);
+        });
+
+        it('should report an instruction applied to referenced feedback as applied but not removable', () => {
+            const referenced = {
+                credits: 4,
+                type: FeedbackType.MANUAL,
+                reference: 'file:Main.java',
+                gradingInstruction: documentationInstruction,
+            } as Feedback;
+            comp.applyInstruction(cameraInstruction);
+            fixture.componentRef.setInput('allFeedbacks', [referenced, ...comp.unreferencedFeedback]);
+
+            // Both are applied, but only the unreferenced one belongs to this list.
+            expect(comp.appliedInstructionIds()).toEqual(new Set([1, 2]));
+            expect(comp.removableInstructionIds()).toEqual(new Set([2]));
+        });
+
+        it('should cap the automatic test points before the manual points for programming exercises', () => {
+            const automatic = { credits: 12, type: FeedbackType.AUTOMATIC, text: 'testMethod', reference: undefined } as Feedback;
+            fixture.componentRef.setInput('capAutomaticTestSubtotal', true);
+            fixture.componentRef.setInput('maxPoints', 10);
+            comp.applyInstruction(cameraInstruction); // -2
+            fixture.componentRef.setInput('allFeedbacks', [automatic, ...comp.unreferencedFeedback]);
+
+            // The save path caps the 12 automatic points at 10 first, so the deduction lands on the capped subtotal.
+            expect(comp.pointsSummary()).toEqual({ awarded: 10, deducted: -2, total: 8 });
+        });
+
+        it('should not cap the automatic points separately for exercises that do not grade that way', () => {
+            const automatic = { credits: 12, type: FeedbackType.AUTOMATIC, text: 'suggestion' } as Feedback;
+            fixture.componentRef.setInput('maxPoints', 10);
+            comp.applyInstruction(cameraInstruction); // -2
+            fixture.componentRef.setInput('allFeedbacks', [automatic, ...comp.unreferencedFeedback]);
+
+            expect(comp.pointsSummary()).toEqual({ awarded: 12, deducted: -2, total: 10 });
         });
     });
 });
