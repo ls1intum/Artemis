@@ -6,7 +6,8 @@
                 <fa-icon [icon]="faUserShield" />
             </div>
             @if (!isNavbarCollapsed()) {
-                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.main"></div>
+                <!-- Short form: the full "Administration" does not fit beside the icon in the rail. -->
+                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.short"></div>
             }
         </div>
 
