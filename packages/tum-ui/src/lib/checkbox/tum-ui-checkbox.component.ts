@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, computed, forwardRef, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faMinus } from '@fortawesome/free-solid-svg-icons';
 
 export interface TumUiCheckboxChangeEvent {
     originalEvent: Event;
@@ -28,9 +28,21 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
 
     readonly checked = model(false);
 
+    /**
+     * Renders the partial-selection dash instead of the tick, for a select-all control whose rows are only
+     * partly selected. Purely visual: it never changes `checked`, the model, or what `changed` emits.
+     */
+    readonly indeterminate = input(false, { transform: booleanAttribute });
+
     readonly changed = output<TumUiCheckboxChangeEvent>();
 
     protected readonly faCheck = faCheck;
+    protected readonly faMinus = faMinus;
+
+    // Indeterminate takes visual precedence over checked, as a native `<input indeterminate>` does: the dash
+    // shows whenever indeterminate is set, the tick only when checked and NOT indeterminate.
+    protected readonly showDash = computed(() => this.indeterminate());
+    protected readonly showTick = computed(() => this.checked() && !this.indeterminate());
 
     private readonly cvaDisabled = signal(false);
     protected readonly isDisabled = computed(() => this.disabled() || this.cvaDisabled());
@@ -39,7 +51,8 @@ export class TumUiCheckboxComponent implements ControlValueAccessor {
         if (this.isDisabled()) {
             return 'tum:bg-disabled-background tum:border-control-border';
         }
-        if (this.checked()) {
+        // Both the checked tick and the indeterminate dash sit on a brand-filled box.
+        if (this.checked() || this.indeterminate()) {
             return 'tum:bg-primary tum:border-primary';
         }
         return 'tum:bg-control-background tum:border-control-border';

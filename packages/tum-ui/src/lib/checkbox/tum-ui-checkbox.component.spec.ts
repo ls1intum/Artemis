@@ -82,6 +82,46 @@ describe('TumUiCheckboxComponent', () => {
         fixture.detectChanges();
         expect(onChangeSpy).not.toHaveBeenCalled();
     });
+
+    function glyph(name: 'check' | 'minus'): Element | null {
+        return fixture.nativeElement.querySelector(`svg[data-icon="${name}"]`);
+    }
+
+    it('renders the dash on a filled box and sets the native indeterminate property when indeterminate', () => {
+        fixture.componentRef.setInput('indeterminate', true);
+        fixture.detectChanges();
+
+        // indeterminate has no HTML attribute — only the DOM property carries the mixed state to assistive tech.
+        expect(input().indeterminate).toBe(true);
+        expect(glyph('minus')).not.toBeNull();
+        expect(glyph('check')).toBeNull();
+    });
+
+    it('lets the dash win over the tick when both checked and indeterminate are set', () => {
+        fixture.componentRef.setInput('checked', true);
+        fixture.componentRef.setInput('indeterminate', true);
+        fixture.detectChanges();
+
+        expect(glyph('minus')).not.toBeNull();
+        expect(glyph('check')).toBeNull();
+    });
+
+    it('keeps indeterminate presentation-only: a user toggle still emits a plain boolean', () => {
+        const events: TumUiCheckboxChangeEvent[] = [];
+        component.changed.subscribe((event) => events.push(event));
+        fixture.componentRef.setInput('indeterminate', true);
+        fixture.detectChanges();
+
+        input().click();
+        fixture.detectChanges();
+
+        // Clicking a partial box reports checked=true from the native input (select-all-from-partial); the
+        // component neither reads nor mutates `indeterminate`, which the parent owns.
+        expect(events).toHaveLength(1);
+        expect(events[0].checked).toBe(true);
+        expect(component.checked()).toBe(true);
+        expect(component.indeterminate()).toBe(true);
+    });
 });
 
 @Component({

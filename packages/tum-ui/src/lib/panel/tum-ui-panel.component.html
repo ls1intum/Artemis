@@ -1,5 +1,5 @@
 <div class="tum-ui-panel-header" [class.tum-ui-panel-header-toggleable]="toggleable()">
-    <span [id]="headerId" class="tum-ui-panel-title">{{ header() }}</span>
+    <span [id]="headerId" class="tum-ui-panel-title">{{ header() }}<ng-content select="[tumUiPanelHeader]" /></span>
     @if (toggleable()) {
         <button
             type="button"
