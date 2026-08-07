@@ -20,6 +20,8 @@ export type { TumUiInputSize } from './lib/input/tum-ui-input.variants';
 export { TumUiMessageComponent, type TumUiMessageSeverity } from './lib/message/tum-ui-message.component';
 export { TumUiPaginatorComponent } from './lib/paginator/tum-ui-paginator.component';
 export { TumUiPanelComponent } from './lib/panel/tum-ui-panel.component';
+export { TumUiPopoverTriggerDirective } from './lib/popover/tum-ui-popover-trigger.directive';
+export { TumUiPopoverComponent } from './lib/popover/tum-ui-popover.component';
 export { TumUiProgressBarComponent, type TumUiProgressBarSeverity } from './lib/progress-bar/tum-ui-progress-bar.component';
 export { TumUiProgressSpinnerComponent } from './lib/progress-spinner/tum-ui-progress-spinner.component';
 export { TumUiRadioButtonComponent, type TumUiRadioButtonSelectEvent } from './lib/radio-button/tum-ui-radio-button.component';

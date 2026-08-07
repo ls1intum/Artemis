@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, computed, forwardRef, input, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faClock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
@@ -46,6 +46,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faLock = faLock;
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -62,6 +63,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     // `valueChange` notification below (Angular 22 NG1054).
     value = signal<dayjs.Dayjs | Date | null | undefined>(undefined);
     disabled = input<boolean>(false);
+    /**
+     * Marks the field read-only because a variant group governs its value: editing is disabled, a lock icon shows, and
+     * clicking emits {@link lockedClick} instead of opening the picker.
+     */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks a {@link lockedToGroup} field. */
+    lockedClick = output<void>();
     error = input<boolean>();
     warning = input<boolean>();
     requiredField = input<boolean>(false);
@@ -104,6 +112,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
         return !isInvalid;
     });
+
+    /** Disabled either explicitly via {@link disabled} or because the value is governed by the variant group. */
+    readonly effectiveDisabled = computed(() => this.disabled() || this.lockedToGroup());
 
     /**
      * Whether the field should render the red "invalid" border. Mirrors the conditions that show the

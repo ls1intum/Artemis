@@ -1,4 +1,18 @@
-<div class="frame">
+<div class="frame" [class.locked-to-group]="lockedToGroup()">
+    @if (lockedToGroup()) {
+        <div
+            class="timeline-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            [tumUiTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+            tumUiTooltipPlacement="top"
+        >
+            <fa-icon [icon]="faLock" class="timeline-lock-icon text-muted-color" />
+        </div>
+    }
     @let showInvalidBeforeTouchedValue = showInvalidBeforeTouched();
     @for (internalItem of internalTimelineItems(); track $index; let index = $index, first = $first, last = $last) {
         <div class="timeline-item-row">
@@ -46,13 +60,13 @@
                         placeholder="dd.mm.yyyy hh:mm"
                         keepInvalid="true"
                         showClear="true"
-                        [showIcon]="!readonly()"
+                        [showIcon]="!isReadonly()"
                         iconDisplay="input"
                         appendTo="body"
                         showOnFocus="false"
-                        [baseZIndex]="1050"
+                        [baseZIndex]="1060"
                         [invalid]="isInvalid"
-                        [disabled]="readonly()"
+                        [disabled]="isReadonly()"
                     />
                     @if (isInvalid) {
                         <i class="pi pi-info-circle timeline-datepicker-info-icon" [tumUiTooltip]="internalItem.violationKey" tumUiTooltipPlacement="right"></i>

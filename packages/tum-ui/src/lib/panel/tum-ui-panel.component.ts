@@ -19,6 +19,10 @@ let nextPanelId = 0;
 export class TumUiPanelComponent {
     private readonly translator = inject(TUM_UI_TRANSLATOR);
 
+    /**
+     * Header title text. Omit when projecting a `[tumUiPanelHeader]` slot instead, and set `toggleAriaLabel`
+     * alongside it — projected markup does not label the toggle.
+     */
     readonly header = input<string>('');
 
     /** Enables disclosure behavior for the projected content. */

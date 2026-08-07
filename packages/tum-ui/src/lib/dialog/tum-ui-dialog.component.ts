@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Dialog, DialogRef, DialogRole } from '@angular/cdk/dialog';
+import { Overlay } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumUiTranslatePipe } from '../i18n/tum-ui-translate.pipe';
@@ -31,6 +32,38 @@ const DIALOG_SIZE_CLASSES: Record<TumUiDialogSize, string> = {
 
 let nextDialogId = 0;
 
+// Page scroll lock shared by all dialogs, counted so nested dialogs unlock only once the last one closes.
+// CDK's own BlockScrollStrategy is deliberately not used: it pins the root with `position: fixed` and a
+// negative `top`, which makes the page behind the mask jump. Overflow plus a scrollbar-width pad holds the
+// page exactly where it was.
+let openDialogCount = 0;
+let previousRootOverflow = '';
+let previousRootPaddingRight = '';
+
+function lockPageScroll(): void {
+    if (openDialogCount++ > 0) {
+        return;
+    }
+    const root = document.documentElement;
+    previousRootOverflow = root.style.overflow;
+    previousRootPaddingRight = root.style.paddingRight;
+    // Reserve the scrollbar width so the page behind the mask does not reflow.
+    const scrollbarWidth = window.innerWidth - root.clientWidth;
+    root.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+        root.style.paddingRight = `${scrollbarWidth}px`;
+    }
+}
+
+function unlockPageScroll(): void {
+    if (openDialogCount === 0 || --openDialogCount > 0) {
+        return;
+    }
+    const root = document.documentElement;
+    root.style.overflow = previousRootOverflow;
+    root.style.paddingRight = previousRootPaddingRight;
+}
+
 /** Controlled modal dialog built on Angular CDK Dialog. */
 @Component({
     selector: 'tum-ui-dialog',
@@ -40,6 +73,7 @@ let nextDialogId = 0;
 })
 export class TumUiDialogComponent implements OnDestroy {
     private readonly dialog = inject(Dialog);
+    private readonly overlay = inject(Overlay);
     private readonly viewContainerRef = inject(ViewContainerRef);
 
     /** Controlled open state; dismissal writes `false`. */
@@ -72,11 +106,12 @@ export class TumUiDialogComponent implements OnDestroy {
     protected readonly titleId = `tum-ui-dialog-title-${nextDialogId++}`;
     protected readonly faXmark = faXmark;
     protected readonly labelledBy = computed(() => (this.showHeader() && (this.header()?.trim() || this.headerTemplate()) ? this.titleId : undefined));
-    protected readonly panelClasses = computed(() => {
-        const base =
-            'tum-ui-dialog tum:flex tum:max-h-[90dvh] tum:max-w-[90dvw] tum:flex-col tum:overflow-hidden tum:rounded-xl tum:border tum:border-border tum:bg-overlay-background tum:text-text tum:shadow-xl';
+    // Only the size varies. The rest of the panel's classes stay a static attribute on the template so the
+    // element never renders class-less for a frame: a host that transitions background-color would otherwise
+    // animate the panel in from transparent, showing the backdrop through it.
+    protected readonly sizeClasses = computed(() => {
         const size = this.size();
-        return size ? `${base} ${DIALOG_SIZE_CLASSES[size]}` : base;
+        return size ? DIALOG_SIZE_CLASSES[size] : '';
     });
 
     private dialogRef?: DialogRef;
@@ -104,6 +139,8 @@ export class TumUiDialogComponent implements OnDestroy {
         }
         const ref = this.dialog.open(this.panel(), {
             viewContainerRef: this.viewContainerRef,
+            // Page scrolling is held by lockPageScroll() instead — see the note on that function.
+            scrollStrategy: this.overlay.scrollStrategies.noop(),
             hasBackdrop: true,
             backdropClass: 'cdk-overlay-dark-backdrop',
             disableClose: true,
@@ -115,6 +152,7 @@ export class TumUiDialogComponent implements OnDestroy {
             restoreFocus: true,
         });
         this.dialogRef = ref;
+        lockPageScroll();
         ref.backdropClick.subscribe(() => {
             if (this.dismissableMask()) {
                 this.close();
@@ -126,6 +164,9 @@ export class TumUiDialogComponent implements OnDestroy {
             }
         });
         ref.closed.subscribe(() => {
+            // Released before the guard below: `closed` fires exactly once per opened dialog, so this covers the
+            // destroy-while-open path too, where ngOnDestroy has already cleared `dialogRef`.
+            unlockPageScroll();
             if (this.dialogRef !== ref) {
                 return;
             }

@@ -67,7 +67,9 @@
                         </div>
                     }
 
-                    @if (!sidebarDataInternal()?.ungroupedData || !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue())?.length) {
+                    @if (
+                        !sidebarDataInternal()?.ungroupedData || !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length
+                    ) {
                         <div
                             [jhiTranslate]="
                                 (sidebarDataBeforeFiltering()?.ungroupedData?.length ?? 0) > 0 && sidebarDataInternal().ungroupedData?.length === 0
@@ -102,8 +104,8 @@
                                 />
                             } @else {
                                 @for (
-                                    sidebarItem of sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue();
-                                    track sidebarItem.id;
+                                    sidebarItem of sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems';
+                                    track sidebarItem.trackId ?? sidebarItem.id;
                                     let last = $last
                                 ) {
                                     <div [class]="{ 'mb-2': !last }">

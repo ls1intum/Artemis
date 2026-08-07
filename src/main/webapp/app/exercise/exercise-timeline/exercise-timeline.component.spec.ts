@@ -100,6 +100,28 @@ describe('ExerciseTimeline', () => {
         expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
     });
 
+    it('should only check ordering against the items in orderCheckAgainst when provided', () => {
+        const buildItems = (withOrderCheckAgainst: boolean): TimelineItem[] => {
+            const releaseItem: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T10:00:00Z')) };
+            const dueItem: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(dayjs('2026-01-10T10:00:00Z')) };
+            const exampleSolutionItem: TimelineItem = {
+                kind: 'optional',
+                labelStringKey: 'exampleSolution',
+                date: signal(dayjs('2026-01-05T10:00:00Z')),
+                orderCheckAgainst: withOrderCheckAgainst ? [releaseItem] : undefined,
+            };
+            return [releaseItem, dueItem, exampleSolutionItem];
+        };
+
+        // Between release (Jan 1) and due (Jan 10): fails the default "all previous items" check (it's before dueItem)...
+        fixture.componentRef.setInput('timelineItems', buildItems(false));
+        expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: true });
+
+        // ...but is valid once the check is restricted to just [releaseItem] via orderCheckAgainst.
+        fixture.componentRef.setInput('timelineItems', buildItems(true));
+        expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: false });
+    });
+
     it('should update timeline item date', () => {
         const initialDate = dayjs('2026-01-01T10:00:00Z');
         const newDate = new Date('2026-01-02T10:00:00Z');
