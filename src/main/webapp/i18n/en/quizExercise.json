@@ -25,6 +25,7 @@
                     "topic": "Topic",
                     "competencies": "Competencies",
                     "competenciesPlaceholder": "Select competencies to assess...",
+                    "competenciesTooltip": "The quiz is generated using your selected competencies, their relationships, and linked lecture or exercise content. Link materials to competencies to include them.",
                     "optionalPrompt": "Optional prompt",
                     "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
                     "language": "Language",
@@ -105,6 +106,7 @@
             "endNow": {
                 "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
             },
+            "actionDisabledInGroup": "This quiz is part of an exercise group. Its dates are shared across all variants and cannot be changed individually.",
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
@@ -121,10 +123,12 @@
             "deleteQuestion": "Delete question",
             "refineQuestion": "Refine question",
             "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
+            "editNotPossibleStudentsStarted": "Editing is not possible because students have already participated in this quiz.",
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {
                 "title": "All quiz questions for course {{ param }}",
                 "export": "Export",
+                "loading": "Loading quiz questions…",
                 "questionTitle": "Short question Title",
                 "quizExerciseTitle": "Quiz Exercise Title"
             },
@@ -145,11 +149,11 @@
             "options": "Options",
             "explanation": "Explanation",
             "randomizeQuestionOrder": "Present Questions in Random Order",
-            "includedInOverallScoreCourseLabelShort": "Course Score Calculation",
+            "includedInOverallScoreCourseLabelShort": "Include in Course Score Calculation",
             "includedInOverallScoreExamLabelShort": "Exam Score Calculation",
-            "includedInScoreYes": "Include this exercise",
-            "includedInScoreBonus": "Include as bonus points",
-            "includedInScoreNo": "Do not include",
+            "includedInScoreYes": "Yes",
+            "includedInScoreBonus": "Bonus",
+            "includedInScoreNo": "No",
             "allowedNumberOfAttempts": "Allowed Number Of Attempts",
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
@@ -157,6 +161,8 @@
             "openForPractice": "Release For Practice",
             "startQuiz": "Start Quiz",
             "startBatch": "Start Batch",
+            "endQuiz": "End",
+            "batches": "Batches ({{ count }})",
             "showNow": "Set Visible",
             "duration": "Duration",
             "hours": "hours",

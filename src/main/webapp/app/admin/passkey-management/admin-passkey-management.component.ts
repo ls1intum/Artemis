@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TumUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -16,7 +16,7 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
     selector: 'jhi-admin-passkey-management',
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './admin-passkey-management.component.html',
-    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, TableViewComponent, FormsModule, ToggleSwitchModule, AdminTitleBarTitleDirective],
+    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, TableViewComponent, FormsModule, TumUiToggleSwitchComponent, AdminTitleBarTitleDirective],
 })
 export class AdminPasskeyManagementComponent implements OnInit {
     private readonly adminPasskeyService = inject(AdminPasskeyManagementService);

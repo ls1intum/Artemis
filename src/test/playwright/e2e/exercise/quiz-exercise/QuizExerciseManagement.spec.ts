@@ -12,13 +12,17 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
     test.describe('Quiz Exercise Creation', () => {
         let createdQuizId: number | undefined;
+        // Kept in scope so a test can look its quiz up by title when the create response body is gone
+        // (see the drag-and-drop test below).
+        let quizTitle: string;
 
         test.beforeEach('Create quiz exercise', async ({ login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
             createdQuizId = undefined;
+            quizTitle = 'Quiz Exercise ' + generateUUID();
             await login(admin, '/course-management/');
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createQuizExercise();
-            await quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
+            await quizExerciseCreation.setTitle(quizTitle);
         });
 
         test.afterEach('Delete created quiz', async ({ login, exerciseAPIRequests }) => {
@@ -71,10 +75,12 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');
-            await expect(page.getByText(title)).toBeVisible();
+            // The preview page lazy-mounts the question component; extend timeout to match
+            // the DnD/MC-Visual tests which already use 30s for the same reason.
+            await expect(page.getByText(title)).toBeVisible({ timeout: 30000 });
         });
 
-        test('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
+        test('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation, exerciseAPIRequests }) => {
             // DnD question creation involves a background image upload, two mouse drag
             // sequences, a Monaco editor mount, and a quiz save (with its own 60s response
             // wait). Cumulative cost routinely overruns the 60s @fast budget under multi-node
@@ -84,7 +90,10 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             const quizQuestionTitle = 'Quiz Question';
             await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             const response = await quizExerciseCreation.saveQuiz();
-            const quiz = await readResponseJson(response);
+            // The drag-and-drop background image is a disk-backed file, so this create response cannot be held
+            // in Node and Chrome discards it when the editor navigates away on save. Fall back to an idempotent
+            // lookup instead of failing the test on a body that no longer exists.
+            const quiz = await readResponseJson<QuizExercise>(response, () => exerciseAPIRequests.getQuizExerciseByTitle(course.id!, quizTitle));
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');

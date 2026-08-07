@@ -123,7 +123,7 @@ public class ConversationMessageResource {
         long timeNanoStart = System.nanoTime();
         Page<Post> posts;
 
-        final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        final var requestingUser = userRepository.getUserWithAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
@@ -248,6 +248,9 @@ public class ConversationMessageResource {
         if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");
         }
+
+        // students must never receive unverified Iris replies attached to a source post (the eager answers are serialized as-is)
+        conversationMessagingService.hidePendingIrisRepliesFromStudents(posts, courseId);
 
         log.debug("getSourcePostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
         List<PostResponseDTO> body = posts.stream().map(PostResponseDTO::from).toList();

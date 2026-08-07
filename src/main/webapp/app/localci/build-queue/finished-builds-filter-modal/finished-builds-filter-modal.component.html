@@ -1,4 +1,11 @@
-<div>
+<tum-ui-dialog
+    [(visible)]="visible"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    size="large"
+    [header]="'artemisApp.buildQueue.filter.title' | artemisTranslate"
+>
     <div>
         <div>
             <div class="finished-build-jobs-filter-border-bottom flex flex-row pb-1">
@@ -10,12 +17,12 @@
                 <ul class="grid grid-cols-2 gap-2 whitespace-nowrap list-none my-0 p-0 sm:grid-cols-4">
                     @for (status of this.buildStatusFilterValues; track status) {
                         <li class="flex items-center gap-2">
-                            <p-radiobutton
+                            <tum-ui-radio-button
                                 inputId="buildStatusFilter-{{ status }}"
                                 name="buildStatusFilter"
                                 [value]="status"
                                 [ngModel]="this.finishedBuildJobFilter.status"
-                                (onClick)="this.toggleBuildStatusFilter(status)"
+                                (selected)="this.toggleBuildStatusFilter(status)"
                             />
                             <label for="buildStatusFilter-{{ status }}">
                                 <span jhiTranslate="artemisApp.buildQueue.filter.buildStatus.{{ status }}"></span>
@@ -23,12 +30,12 @@
                         </li>
                     }
                     <li class="flex items-center gap-2">
-                        <p-radiobutton
+                        <tum-ui-radio-button
                             inputId="buildStatusFilter-none"
                             name="buildStatusFilter"
                             [value]="undefined"
                             [ngModel]="this.finishedBuildJobFilter.status"
-                            (onClick)="this.toggleBuildStatusFilter()"
+                            (selected)="this.toggleBuildStatusFilter()"
                         />
                         <label for="buildStatusFilter-none">
                             <span jhiTranslate="artemisApp.buildQueue.filter.none"></span>
@@ -44,16 +51,16 @@
                     </h5>
                 </div>
                 <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
-                    <p-autocomplete
-                        styleClass="w-full"
+                    <tum-ui-autocomplete
+                        [ariaLabel]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
+                        class="w-full"
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"
                         [suggestions]="buildAgentAddressSuggestions()"
                         [completeOnFocus]="true"
-                        (completeMethod)="searchBuildAgentAddresses($event)"
-                        (onSelect)="filterBuildAgentAddressChanged()"
-                        (onClear)="filterBuildAgentAddressChanged()"
-                        (onBlur)="filterBuildAgentAddressChanged()"
+                        (searchRequested)="searchBuildAgentAddresses($event)"
+                        (optionSelected)="filterBuildAgentAddressChanged()"
+                        (focusout)="filterBuildAgentAddressChanged()"
                     />
                 </div>
             }
@@ -98,9 +105,9 @@
             <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.lowerBound"></span>
-                    <input pInputText type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
+                    <input tumUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.upperBound"></span>
-                    <input pInputText type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
+                    <input tumUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
                     @if (!finishedBuildJobFilter.areDurationFiltersValid) {
                         <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.invalidState"></span>
                     }
@@ -108,8 +115,8 @@
             </div>
         </div>
     </div>
-    <div class="flex justify-end gap-2 mt-3">
-        <p-button severity="secondary" size="small" (onClick)="cancel()" [label]="'artemisApp.buildQueue.filter.close' | artemisTranslate" />
-        <p-button size="small" (onClick)="confirm()" [label]="'artemisApp.buildQueue.filter.apply' | artemisTranslate" />
-    </div>
-</div>
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" size="small" (clicked)="cancel()">{{ 'artemisApp.buildQueue.filter.close' | artemisTranslate }}</tum-ui-button>
+        <tum-ui-button size="small" (clicked)="confirm()">{{ 'artemisApp.buildQueue.filter.apply' | artemisTranslate }}</tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>

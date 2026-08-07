@@ -11,13 +11,7 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { DialogService } from 'primeng/dynamicdialog';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { ButtonGroupModule } from 'primeng/buttongroup';
-import { InputTextModule } from 'primeng/inputtext';
-import { Tag } from 'primeng/tag';
-import { TranslateService } from '@ngx-translate/core';
+import { TumUiButtonComponent, TumUiButtonGroupComponent, TumUiDialogComponent, TumUiInputDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,11 +59,12 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         RunningJobsTableComponent,
         QueuedJobsTableComponent,
         FinishedJobsTableComponent,
-        DialogModule,
-        ButtonModule,
-        ButtonGroupModule,
-        InputTextModule,
-        Tag,
+        FinishedBuildsFilterModalComponent,
+        TumUiDialogComponent,
+        TumUiButtonComponent,
+        TumUiButtonGroupComponent,
+        TumUiInputDirective,
+        TumUiTagComponent,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
@@ -79,8 +74,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private buildQueueService = inject(BuildOverviewService);
     private buildAgentsService = inject(BuildAgentsService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
 
     /** Reference to the statistics component for real-time updates */
     statisticsComponent = viewChild<BuildJobStatisticsComponent>('statisticsComponent');
@@ -177,6 +170,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /** Controls the visibility of the inline build logs dialog */
     buildLogsModalVisible = signal(false);
+
+    /** Controls the visibility of the finished-build-jobs filter dialog */
+    readonly filterModalVisible = signal(false);
 
     ngOnInit() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
@@ -564,25 +560,16 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     }
 
     openFilterModal() {
-        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
-            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
-            width: '60rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            dismissableMask: true,
-            data: {
-                finishedBuildJobFilter: this.finishedBuildJobFilter(),
-                buildAgentFilterable: true,
-                finishedBuildJobs: this.finishedBuildJobs(),
-            },
-        });
-        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
-            if (result) {
-                this.finishedBuildJobFilter.set(result);
-                this.loadFinishedBuildJobs();
-            }
-        });
+        this.filterModalVisible.set(true);
+    }
+
+    /**
+     * Applies the filter edited in the filter modal and reloads the finished build jobs.
+     * @param result the edited filter returned by the modal
+     */
+    onFilterConfirmed(result: FinishedBuildJobFilter) {
+        this.finishedBuildJobFilter.set(result);
+        this.loadFinishedBuildJobs();
     }
 
     /**

@@ -16,10 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-ui-date-picker.component';
-
+import { TumUiButtonDirective, TumUiDatePickerComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 /**
  * Admin component for managing data cleanup operations.
  * Allows scheduling and executing various cleanup tasks like deleting orphaned entities.
@@ -35,8 +32,8 @@ import { TumUiDatePickerComponent } from 'app/shared-ui/tum-ui/date-picker/tum-u
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         CleanupOperationModalComponent,
-        TableModule,
-        ButtonModule,
+        TumUiTableDirective,
+        TumUiButtonDirective,
         TumUiDatePickerComponent,
         FaIconComponent,
     ],
@@ -59,6 +56,12 @@ export class CleanupServiceComponent implements OnInit {
         deleteOldRatedResults: 'deleteRatedResults',
         deleteOldSubmissionVersions: 'deleteSubmissionVersions',
         deleteOldFeedback: 'deleteFeedback',
+        warnOldCoursesReset: 'warnOldCoursesReset',
+        resetOldCourses: 'resetOldCourses',
+        deleteOldCourseSubmissionVersions: 'deleteOldCourseSubmissionVersions',
+        warnNotEnrolledUsers: 'warnNotEnrolledUsers',
+        deleteNotEnrolledUsers: 'deleteNotEnrolledUsers',
+        deletePlagiarismCases: 'deletePlagiarismCases',
     };
 
     /** Whether the cleanup operation modal is visible */
@@ -77,6 +80,7 @@ export class CleanupServiceComponent implements OnInit {
             datesValid: signal(true),
             deleteFromValid: signal(true),
             deleteToValid: signal(true),
+            ageBased: true,
         },
         {
             name: 'deletePlagiarismComparisons',
@@ -113,6 +117,78 @@ export class CleanupServiceComponent implements OnInit {
             datesValid: signal(true),
             deleteFromValid: signal(true),
             deleteToValid: signal(true),
+        },
+        // Age-based operations: no admin-picked date range, driven by configurable server-side cutoffs. They render
+        // without date pickers and are always valid (deleteFromValid/deleteToValid stay true and are unused).
+        {
+            name: 'warnOldCoursesReset',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'resetOldCourses',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteOldFeedback',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteOldCourseSubmissionVersions',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'warnNotEnrolledUsers',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deleteNotEnrolledUsers',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
+        },
+        {
+            name: 'deletePlagiarismCases',
+            deleteFrom: undefined,
+            deleteTo: undefined,
+            lastExecuted: undefined,
+            datesValid: signal(true),
+            deleteFromValid: signal(true),
+            deleteToValid: signal(true),
+            ageBased: true,
         },
     ]);
 

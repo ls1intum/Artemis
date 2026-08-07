@@ -10,7 +10,7 @@
     }
 
     @if (notFound()) {
-        <p-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildQueue.detail.notFound" />
+        <tum-ui-message severity="warn" class="mb-3 block" jhiTranslate="artemisApp.buildQueue.detail.notFound" />
     }
 
     @if (buildJob()) {
@@ -44,7 +44,7 @@
                 </span>
                 <div class="flex flex-wrap items-center gap-2">
                     <h4 class="mb-0">{{ getJobName() }}</h4>
-                    <p-tag
+                    <tum-ui-tag
                         [value]="jobStatus()"
                         [severity]="
                             jobStatus() === 'SUCCESSFUL'
@@ -231,10 +231,10 @@
                 <div class="flex items-center justify-between border-b px-4 py-2">
                     <span class="font-semibold" jhiTranslate="artemisApp.buildQueue.detail.logsSection"></span>
                     @if (buildLogs()) {
-                        <p-button severity="secondary" size="small" [outlined]="true" (onClick)="downloadBuildLogs()">
+                        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="downloadBuildLogs()">
                             <fa-icon [icon]="faDownload" />
                             <span class="ms-1" jhiTranslate="artemisApp.buildQueue.logs.download"></span>
-                        </p-button>
+                        </tum-ui-button>
                     }
                 </div>
                 <div class="p-4">

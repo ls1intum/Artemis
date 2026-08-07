@@ -11,12 +11,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiPaginatorComponent, TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { TableModule } from 'primeng/table';
-import { Tag } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-
 /**
  * Admin component for managing user data exports in accordance with GDPR Art. 15.
  *
@@ -42,11 +38,12 @@ import { ButtonModule } from 'primeng/button';
         ArtemisTranslatePipe,
         FormsModule,
         AdminDataExportCreateModalComponent,
-        PaginatorModule,
+        TumUiPaginatorComponent,
         DeleteButtonDirective,
-        TableModule,
-        Tag,
-        ButtonModule,
+        TumUiTableDirective,
+        TumUiTagComponent,
+        TumUiButtonComponent,
+        TumUiButtonDirective,
     ],
 })
 export class AdminDataExportsComponent implements OnInit {
@@ -107,11 +104,21 @@ export class AdminDataExportsComponent implements OnInit {
     /**
      * Handles page change events from the paginator.
      *
-     * @param event The paginator state containing first index and rows per page
+     * @param page The 0-based page index emitted by the paginator
      */
-    onPageChange(event: PaginatorState): void {
-        this.first.set(event.first ?? 0);
-        this.rows.set(event.rows ?? 20);
+    onPageChange(page: number): void {
+        this.first.set(page * this.rows());
+        this.loadDataExports();
+    }
+
+    /**
+     * Handles page-size change events from the paginator, resetting to the first page.
+     *
+     * @param pageSize The new number of rows per page
+     */
+    onPageSizeChange(pageSize: number): void {
+        this.rows.set(pageSize);
+        this.first.set(0);
         this.loadDataExports();
     }
 

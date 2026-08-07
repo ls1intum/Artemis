@@ -1,6 +1,7 @@
 <h4>System</h4>
 @if (!updating() && systemMetrics()) {
-    <div class="flex flex-col gap-2">
+    <!-- Row separators: this label/value block reads as a table, so it gets the same row rhythm as one. -->
+    <div class="flex flex-col divide-y divide-surface-200 dark:divide-surface-700 [&>*]:py-2">
         <div class="flex justify-between">
             <span>Uptime</span>
             <span>{{ convertMillisecondsToDuration(systemMetrics()['process.uptime']) }}</span>
@@ -14,18 +15,18 @@
                 <span>Process CPU usage</span>
                 <span>{{ 100 * systemMetrics()['process.cpu.usage'] | number: '1.0-2' }} %</span>
             </div>
-            <p-progressbar [value]="toPercentage(systemMetrics()['process.cpu.usage'], 1)" [showValue]="false" color="var(--success)">
-                <ng-template #content>{{ toPercentage(systemMetrics()['process.cpu.usage'], 1) | number: '1.0-2' }} %</ng-template>
-            </p-progressbar>
+            <tum-ui-progress-bar [value]="toPercentage(systemMetrics()['process.cpu.usage'], 1)" [showValue]="false" severity="success">
+                {{ toPercentage(systemMetrics()['process.cpu.usage'], 1) | number: '1.0-2' }} %
+            </tum-ui-progress-bar>
         </div>
         <div>
             <div class="flex justify-between mb-1">
                 <span>System CPU usage</span>
                 <span>{{ 100 * systemMetrics()['system.cpu.usage'] | number: '1.0-2' }} %</span>
             </div>
-            <p-progressbar [value]="toPercentage(systemMetrics()['system.cpu.usage'], 1)" [showValue]="false" color="var(--success)">
-                <ng-template #content>{{ toPercentage(systemMetrics()['system.cpu.usage'], 1) | number: '1.0-2' }} %</ng-template>
-            </p-progressbar>
+            <tum-ui-progress-bar [value]="toPercentage(systemMetrics()['system.cpu.usage'], 1)" [showValue]="false" severity="success">
+                {{ toPercentage(systemMetrics()['system.cpu.usage'], 1) | number: '1.0-2' }} %
+            </tum-ui-progress-bar>
         </div>
         <div class="flex justify-between">
             <span>System CPU count</span>

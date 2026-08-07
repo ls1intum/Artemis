@@ -3,13 +3,13 @@ import { Databases } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DecimalPipe } from '@angular/common';
 import { filterNaN } from 'app/admin/metrics/filterNaN-util';
-import { TableModule } from 'primeng/table';
+import { TumUiTableDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-metrics-datasource',
     templateUrl: './metrics-datasource.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, TableModule, DecimalPipe],
+    imports: [TranslateDirective, TumUiTableDirective, DecimalPipe],
 })
 export class MetricsDatasourceComponent {
     /**

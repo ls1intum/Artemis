@@ -15,11 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
-import { TableModule } from 'primeng/table';
-import { SortEvent } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
+import { TumUiButtonDirective, TumUiPaginatorComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
@@ -49,10 +45,11 @@ enum NotificationState {
         FaIconComponent,
         DeleteButtonDirective,
         ItemCountComponent,
-        PaginatorModule,
-        TableModule,
-        ButtonModule,
-        TagModule,
+        TumUiPaginatorComponent,
+        TumUiTableDirective,
+        TumUiTableSortableColumnComponent,
+        TumUiButtonDirective,
+        TumUiTagComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -225,21 +222,20 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
         }
     }
 
-    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and loading it. */
-    onPageChange(event: PaginatorState): void {
-        this.loadPage((event.page ?? 0) + 1);
+    /** Handles a paginator page change by converting the 0-indexed page to the 1-indexed page and loading it. */
+    onPageChange(page: number): void {
+        this.loadPage(page + 1);
     }
 
     /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
-    onTableSort(event: SortEvent): void {
+    onTableSort(event: TumUiTableSortEvent): void {
         if (!event.field) {
             return;
         }
-        const reverse = (event.order ?? 1) === 1;
-        // PrimeNG re-emits `onSort` whenever the table's `[value]` changes (because `customSort` is enabled
-        // and a `sortField` is bound), not only on user interaction. Reloading unconditionally would assign a
-        // new `notifications` array in `onSuccess`, which changes `[value]` again and re-triggers `onSort` -
-        // an infinite fetch loop (issue #13263). Only react when the sort actually changed.
+        const reverse = event.order === 1;
+        // The controlled table re-runs its sort binding whenever `[sortField]`/`[sortOrder]` change, but only
+        // emits `sortChange` on a user click. Keeping this guard is still correct: reacting only when the sort
+        // actually changed avoids assigning a new `notifications` array unnecessarily (issue #13263).
         if (event.field === this.predicate() && reverse === this.reverse()) {
             return;
         }

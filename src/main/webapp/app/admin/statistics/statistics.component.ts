@@ -6,7 +6,7 @@ import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statisti
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { TumUiSelectButtonComponent } from '@tumaet/ui-angular';
 
 interface SpanOption {
     label: string;
@@ -20,7 +20,15 @@ interface SpanOption {
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, StatisticsGraphComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective, AdminTitleBarActionsDirective, SelectButtonModule, FormsModule],
+    imports: [
+        TranslateDirective,
+        StatisticsGraphComponent,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        AdminTitleBarActionsDirective,
+        TumUiSelectButtonComponent,
+        FormsModule,
+    ],
 })
 export class StatisticsComponent {
     /** Available graph types to display */

@@ -7,9 +7,8 @@ import { of, throwError } from 'rxjs';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { MockProvider } from 'ng-mocks';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClient } from '@angular/common/http';
-import { TableLazyLoadEvent } from 'primeng/table';
+import { TumUiTableQueryEvent } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -29,28 +28,15 @@ describe('OrganizationSelectorComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [
-                LocalStorageService,
-                SessionStorageService,
-                MockProvider(DynamicDialogRef),
-                MockProvider(AlertService),
-                {
-                    provide: DynamicDialogConfig,
-                    useValue: {
-                        data: {
-                            organizations: [organization1],
-                        },
-                    },
-                },
-                provideHttpClient(),
-                { provide: AccountService, useClass: MockAccountService },
-            ],
+            providers: [LocalStorageService, SessionStorageService, MockProvider(AlertService), provideHttpClient(), { provide: AccountService, useClass: MockAccountService }],
         })
             .overrideTemplate(OrganizationSelectorComponent, '')
             .compileComponents();
 
         fixture = TestBed.createComponent(OrganizationSelectorComponent);
         component = fixture.componentInstance;
+        // organization1 (id=5) is provided as an already-assigned organization
+        fixture.componentRef.setInput('assignedOrganizations', [organization1]);
         organizationService = TestBed.inject(OrganizationManagementService);
         vi.clearAllMocks();
     });
@@ -58,7 +44,7 @@ describe('OrganizationSelectorComponent', () => {
     it('should load organizations via paginated endpoint', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
-        component.loadOrganizations({} as TableLazyLoadEvent);
+        component.loadOrganizations({} as TumUiTableQueryEvent);
 
         expect(component).toBeTruthy();
         expect(component.isLoading()).toBe(false);
@@ -69,7 +55,7 @@ describe('OrganizationSelectorComponent', () => {
     it('should call getOrganizations without withCounts (uses default false)', () => {
         const spy = vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-        component.loadOrganizations({} as TableLazyLoadEvent);
+        component.loadOrganizations({} as TumUiTableQueryEvent);
 
         // No second argument means the service default (false) is used — no counts requested
         expect(spy).toHaveBeenCalledOnce();
@@ -77,7 +63,7 @@ describe('OrganizationSelectorComponent', () => {
     });
 
     it('should mark already-assigned organizations as disabled', () => {
-        // organization1 (id=5) is in the dialog config as already assigned
+        // organization1 (id=5) is provided via the assignedOrganizations input as already assigned
         expect(component.isAlreadyAssigned()(organization1)).toBe(true);
         expect(component.isAlreadyAssigned()(organization2)).toBe(false);
     });
@@ -85,28 +71,26 @@ describe('OrganizationSelectorComponent', () => {
     it('should handle error when loading organizations', () => {
         vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
 
-        component.loadOrganizations({} as TableLazyLoadEvent);
+        component.loadOrganizations({} as TumUiTableQueryEvent);
 
         expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(0);
         expect(component.organizations()).toHaveLength(0);
     });
 
-    it('should close modal with organization', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+    it('should emit the selected organization', () => {
+        const emitSpy = vi.spyOn(component.selected, 'emit');
 
         component.selectOrganization(organization1);
 
-        expect(closeSpy).toHaveBeenCalledWith(organization1);
+        expect(emitSpy).toHaveBeenCalledWith(organization1);
     });
 
-    it('should close modal with undefined on cancel', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+    it('should emit cancelled on cancel', () => {
+        const emitSpy = vi.spyOn(component.cancelled, 'emit');
 
-        component.closeModal(undefined);
+        component.cancel();
 
-        expect(closeSpy).toHaveBeenCalledWith(undefined);
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });
