@@ -20,6 +20,8 @@ import { ScienceEventType } from 'app/foundation/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -83,6 +85,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly scienceService = inject(ScienceService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly chatService = inject(IrisChatService);
+    private readonly accountService = inject(AccountService);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -122,6 +125,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         const lecture = this.lecture();
         return !!lecture && !lecture.isTutorialLecture && !!this.irisSettings()?.settings?.enabled;
     });
+
+    /**
+     * Whether the Iris panel opens collapsed. A user who declined AI gets a chat that says only that, so leaving the
+     * panel open would cost them lecture width on every visit. The exercise page makes the same call; it additionally
+     * exempts pages that show an editor, of which a lecture has none.
+     */
+    readonly irisPanelStartsCollapsed = computed(() => this.showIris() && this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI);
 
     readonly isLoading = signal(false);
     readonly lecture = signal<Lecture | undefined>(undefined);

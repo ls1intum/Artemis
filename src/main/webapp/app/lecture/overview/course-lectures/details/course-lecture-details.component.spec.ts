@@ -46,6 +46,11 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { FileService } from 'app/foundation/service/file.service';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
@@ -150,6 +155,7 @@ describe('CourseLectureDetailsComponent', () => {
                 // router URL in its constructor, which this test bed does not have. The chat panel itself pulls in
                 // PrimeNG's DialogService for the "About Iris" dialog.
                 MockProvider(DialogService),
+                { provide: AccountService, useClass: MockAccountService },
                 { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -285,6 +291,42 @@ describe('CourseLectureDetailsComponent', () => {
         expect(courseLecturesDetailsComponent.showIris()).toBe(true);
         expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeTruthy();
         expect(TestBed.inject(IrisChatService).openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, courseLecturesDetailsComponent.lecture()!.id);
+    });
+
+    /**
+     * `startsCollapsed` as the Iris panel itself received it, which is what the template binding decides. Read off the
+     * panels component's own content children: a `jhiPanel` sits on an `ng-template`, which is not an element and so
+     * never turns up in a `By.directive` query.
+     */
+    const irisPanelInput = (): boolean =>
+        (fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent)
+            .panels()
+            .find((panel) => panel.label() === 'artemisApp.courseOverview.exerciseDetails.iris')!
+            .startsCollapsed();
+
+    it('should open the iris panel collapsed for a user who declined AI', async () => {
+        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        // Their chat says only that they declined, so an open panel would cost them lecture width on every visit.
+        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeTruthy();
+        // Asserted on the panel input rather than the rendered rail: jsdom reports no width, so the panels always
+        // render in their narrow single-tab mode and never show a collapsed rail to look for.
+        expect(irisPanelInput()).toBeTruthy();
+    });
+
+    it('should open the iris panel expanded for a user who accepted AI', async () => {
+        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeFalsy();
+        expect(irisPanelInput()).toBeFalsy();
     });
 
     it('should not show the iris panel when iris is disabled for the course', async () => {
