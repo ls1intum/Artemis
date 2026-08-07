@@ -921,7 +921,8 @@ export class GradingComponent implements OnInit {
     }
 
     getPercentageInterval(gradeStep: GradeStep): number {
-        return gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
+        const raw = gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
+        return parseFloat(raw.toFixed(6));
     }
 
     getPointsInterval(gradeStep: GradeStep): number | undefined {
