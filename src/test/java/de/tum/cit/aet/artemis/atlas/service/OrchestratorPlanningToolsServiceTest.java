@@ -54,9 +54,11 @@ class OrchestratorPlanningToolsServiceTest {
         CourseCompetency competency = newCompetency(5L, "Algorithms and Complexity", "Desc", CompetencyTaxonomy.APPLY, course);
         ProgrammingExercise partial = exerciseInCourse(20L, "Hash Maps in Practice", course);
         ProgrammingExercise standalone = exerciseInCourse(21L, "Sorting Fundamentals", course);
+        // Inserted in reverse id order so the containsExactly assertion below proves the service sorts by exercise id
+        // rather than merely preserving the fixture's insertion order.
         Set<CompetencyExerciseLink> links = new LinkedHashSet<>();
-        links.add(new CompetencyExerciseLink(competency, partial, 0.5));
         links.add(new CompetencyExerciseLink(competency, standalone, 1.0));
+        links.add(new CompetencyExerciseLink(competency, partial, 0.5));
         competency.setExerciseLinks(links);
         when(courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(COURSE_ID)).thenReturn(Set.of(competency));
         when(exerciseRepository.findAllExercisesByCourseId(COURSE_ID)).thenReturn(Set.of(partial, standalone));
@@ -67,7 +69,7 @@ class OrchestratorPlanningToolsServiceTest {
             assertThat(entry.id()).isEqualTo(5L);
             assertThat(entry.exercises())
                     .extracting(CompetencyIndexDTO.ExerciseLinkRefDTO::title, CompetencyIndexDTO.ExerciseLinkRefDTO::type, CompetencyIndexDTO.ExerciseLinkRefDTO::weight)
-                    .containsExactlyInAnyOrder(tuple("Hash Maps in Practice", partial.getType(), 0.5), tuple("Sorting Fundamentals", standalone.getType(), 1.0));
+                    .containsExactly(tuple("Hash Maps in Practice", partial.getType(), 0.5), tuple("Sorting Fundamentals", standalone.getType(), 1.0));
         });
         assertThat(index.unassignedExercises()).isEmpty();
     }
