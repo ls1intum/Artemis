@@ -9,11 +9,7 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiToggleSwitchComponent } from 'app/shared-ui/tum-ui/toggle-switch/tum-ui-toggle-switch.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonComponent, TumUiMessageComponent, TumUiTagComponent, TumUiToggleSwitchComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -101,6 +97,19 @@ export class AdminFeatureToggleComponent implements OnInit {
 
     /** Icons */
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
+
+    /**
+     * Tint and border for a feature card: light green when the feature is active, muted grey when it is not.
+     *
+     * The contrast comes from the active state being tinted at all — the shades this replaces (`bg-surface-50` vs
+     * `bg-surface-100`) were one step apart and indistinguishable at a glance. Red is reserved for states that need
+     * attention, so a switched-off feature stays neutral rather than reading as a failure.
+     *
+     * The success token carries its own light/dark values; the surface shades need explicit `dark:` variants.
+     */
+    protected featureCardClasses(isActive: boolean): string {
+        return isActive ? 'bg-state-success/10 border-state-success/40' : 'bg-surface-100 border-surface-300 dark:bg-surface-800 dark:border-surface-600';
+    }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];

@@ -287,7 +287,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
                     .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/webjars/katex/**").permitAll()
+                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/assets/katex/**").permitAll()
                     // Information and health endpoints do not need authentication. `info` is fetched by the client before
                     // login (profile info, feature flags, version), and the health group is used by probes and the client
                     // status page. These must stay ahead of the `/management/**` admin rule below so they keep matching first.

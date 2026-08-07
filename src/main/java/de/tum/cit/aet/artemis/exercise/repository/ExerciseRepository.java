@@ -47,6 +47,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -55,6 +56,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             SELECT e
             FROM Exercise e
                 LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.course.id IN :courseIds
             """)
     Set<Exercise> findByCourseIds(@Param("courseIds") Set<Long> courseIds);
@@ -399,7 +401,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithExerciseGroupExamAndCourse(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "exerciseVariantGroup" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
     @Query("""
@@ -417,6 +419,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithDetailsForStudent(@Param("exerciseId") Long exerciseId);
@@ -759,9 +762,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id, evg.id, evg.maxPoints)
             FROM Exercise e
                 LEFT JOIN ProgrammingExercise p ON e.id = p.id
+                LEFT JOIN e.exerciseVariantGroup evg
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseId(@Param("courseId") long courseId);

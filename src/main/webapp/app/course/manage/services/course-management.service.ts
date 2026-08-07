@@ -300,6 +300,9 @@ export class CourseManagementService implements OnDestroy {
 
         // Save the participation results in the scores-storage.service.
         this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
+
+        // Save the per-variant-group achieved points (server-computed: capped and plagiarism-adjusted).
+        this.scoresStorageService.setStoredAchievedPointsPerVariantGroup(courseForDashboardDTO.course.id!, courseForDashboardDTO.achievedPointsPerVariantGroup);
     }
 
     /**
