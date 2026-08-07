@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { describe, expect, it, vi } from 'vitest';
-import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/modeling/exercise-timeline-stub.component';
+import { TimelineStubComponent } from 'test/helpers/stubs/modeling/timeline-stub.component';
 
 import { TextExerciseTimelineComponent } from './text-exercise-timeline.component';
 
@@ -14,7 +14,7 @@ describe('TextExerciseTimeline', () => {
             imports: [TextExerciseTimelineComponent],
         })
             .overrideComponent(TextExerciseTimelineComponent, {
-                set: { imports: [ExerciseTimelineStubComponent] },
+                set: { imports: [TimelineStubComponent] },
             })
             .compileComponents();
 
@@ -40,7 +40,7 @@ describe('TextExerciseTimeline', () => {
         fixture.detectChanges();
         const timelineStatus = { valid: false, empty: true };
         const emitSpy = vi.spyOn(component.timelineStatus, 'emit');
-        const exerciseTimeline = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;
+        const exerciseTimeline = fixture.debugElement.query(By.directive(TimelineStubComponent)).componentInstance as TimelineStubComponent;
 
         exerciseTimeline.timelineStatusChange.emit(timelineStatus);
 

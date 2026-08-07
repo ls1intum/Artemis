@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { describe, expect, it, vi } from 'vitest';
-import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/modeling/exercise-timeline-stub.component';
+import { TimelineStubComponent } from 'test/helpers/stubs/modeling/timeline-stub.component';
 
 import { ModelingExerciseTimelineComponent } from './modeling-exercise-timeline.component';
 
@@ -14,7 +14,7 @@ describe('ModelingExerciseTimeline', () => {
             imports: [ModelingExerciseTimelineComponent],
         })
             .overrideComponent(ModelingExerciseTimelineComponent, {
-                set: { imports: [ExerciseTimelineStubComponent] },
+                set: { imports: [TimelineStubComponent] },
             })
             .compileComponents();
 
@@ -40,7 +40,7 @@ describe('ModelingExerciseTimeline', () => {
         const timelineStatus = { valid: true, empty: false };
         const emitSpy = vi.spyOn(component.timelineStatus, 'emit');
 
-        const childComponent = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;
+        const childComponent = fixture.debugElement.query(By.directive(TimelineStubComponent)).componentInstance as TimelineStubComponent;
         childComponent.timelineStatusChange.emit(timelineStatus);
 
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith(timelineStatus);
