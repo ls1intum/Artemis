@@ -79,7 +79,7 @@ public class OIDCService extends OidcUserService {
         }
 
         // Check if user with given username already exists
-        Optional<User> localUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username);
+        Optional<User> localUser = userRepository.findOneWithAuthoritiesByLogin(username);
         User actualUser;
         if (localUser.isEmpty()) {
             try {
@@ -89,7 +89,7 @@ public class OIDCService extends OidcUserService {
             catch (DataIntegrityViolationException e) {
                 // Race condition which occurs when two users try to create same account
                 // In such case the account is already created so this value will be assigned
-                actualUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username)
+                actualUser = userRepository.findOneWithAuthoritiesByLogin(username)
                         .orElseThrow(() -> new OAuth2AuthenticationException("Failed to resolve concurrent OIDC user provisioning"));
             }
         }
@@ -154,9 +154,8 @@ public class OIDCService extends OidcUserService {
 
         newUserDto.setLangKey("en");
         newUserDto.setAuthorities(new HashSet<>(Set.of(Role.STUDENT.getAuthority())));
-        newUserDto.setGroups(new HashSet<>());
-
-        return userCreationService.createUser(newUserDto);
+        User createdUser = userCreationService.createUser(newUserDto);
+        createdUser.setInternal(false);
+        return userRepository.save(createdUser);
     }
-
 }

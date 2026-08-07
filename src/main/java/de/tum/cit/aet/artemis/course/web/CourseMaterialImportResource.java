@@ -84,7 +84,7 @@ public class CourseMaterialImportResource {
         }
 
         // Verify user has at least editor access to source course
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Course sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, user);
 
@@ -111,7 +111,7 @@ public class CourseMaterialImportResource {
         }
 
         // Verify user has at least editor access to source course
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Course sourceCourse = courseRepository.findByIdElseThrow(options.sourceCourseId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, user);
 

@@ -231,7 +231,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
@@ -315,7 +315,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<ResultDTO> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         if (!studentParticipation.getId().equals(participationId)) {
@@ -344,18 +344,20 @@ public class TextAssessmentResource extends AssessmentResource {
      *
      * @param submissionId    the id of the submission for which the current assessment should be canceled
      * @param participationId the participationId of the participation for which the assessment should get canceled
+     * @param resultId        the id of the result to cancel; without it the newest correction round is released
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PostMapping("participations/{participationId}/submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId,
+            @RequestParam(value = "resultId", required = false) Long resultId) {
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
         if (!submission.getParticipation().getId().equals(participationId)) {
             throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
                     "participationIdMismatch");
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
-        return super.cancelAssessment(submissionId);
+        return super.cancelAssessment(submissionId, resultId);
     }
 
     /**
@@ -394,12 +396,13 @@ public class TextAssessmentResource extends AssessmentResource {
         var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
         final var exercise = participation.getExercise();
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
         // return forbidden if caller is not allowed to assess
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(exercise, user, resultId);
+        textSubmissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation);
 
         Result result;
         if (resultId != null) {
@@ -469,7 +472,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutor
     public ResponseEntity<TextExampleResultDTO> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();

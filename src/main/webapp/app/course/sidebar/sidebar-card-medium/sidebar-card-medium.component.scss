@@ -33,7 +33,27 @@
 }
 
 .item-border {
-    border-width: 1px !important;
-    border-style: solid;
-    border-color: var(--bs-border-color) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+// The group container draws the single outline (see sidebar-accordion), so tiles drop their own.
+:host-context(.sidebar-group--connected) {
+    .rounded-3 {
+        border-radius: 0 !important;
+    }
+
+    .item-border {
+        border: 0 !important;
+    }
+}
+
+// Header of a connected variant group; the difficulty stripe is hidden so its text aligns with the nested tiles.
+.group-header {
+    border-left-color: transparent !important;
+    background-color: color-mix(in srgb, var(--purple) 4%, var(--module-bg)) !important;
+    background-image: linear-gradient(to bottom, color-mix(in srgb, var(--purple) 12%, var(--module-bg)), var(--module-bg)) !important;
+
+    &:hover {
+        background-image: linear-gradient(to bottom, color-mix(in srgb, var(--purple) 20%, var(--module-bg)), color-mix(in srgb, var(--purple) 5%, var(--module-bg))) !important;
+    }
 }

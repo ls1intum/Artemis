@@ -28,10 +28,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -130,8 +132,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Add submission policy to the programming exercise.
         programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
 
-        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
-                repositoryActionType);
+        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithAuthorities(), programmingExercise, repositoryActionType);
 
         return repositoryParticipationService.getRepositoryFromGitService(pullOnGet, programmingParticipation);
     }
@@ -210,12 +211,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     /**
      * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
-     * This enforces at least instructor access rights.
+     * Reading the participation repository requires read access to that participation. Selecting a different repository via {@code repositoryType} is an editor-level
+     * operation and therefore additionally requires at least editor rights for the exercise.
      *
      * @param participationId the participationId of the repository we want to get the files from
      * @param commitIdQuery   the commitId of the repository we want to get the files from (provided as a query parameter; preferred)
      * @param commitIdPath    the commitId of the repository we want to get the files from (provided as a legacy path variable; deprecated)
-     * @param repositoryType  the type of the repository (template, solution, tests)
+     * @param repositoryType  the type of the repository (template, solution, tests); requires at least editor rights for the exercise
      * @return a map with the file path as key and the file content as value
      */
     @GetMapping(value = { "repository-files-content", "repository-files-content/{commitId}" }, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -227,12 +229,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (commitId == null) {
             throw new BadRequestAlertException("A commitId must be provided", "repository", "commitIdMissing");
         }
+        if (participationId == null) {
+            throw new BadRequestAlertException("A participationId must be provided", "repository", "participationIdMissing");
+        }
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
-        repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
+        User user = userRepository.getUserWithAuthorities();
+        repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, programmingExercise, RepositoryActionType.READ);
+        if (repositoryType != null) {
+            // The check above only authorizes the participation repository itself. Selecting a different repository via repositoryType is an editor-level operation.
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+        }
 
-        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation)));
+        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation, null)));
     }
 
     /**

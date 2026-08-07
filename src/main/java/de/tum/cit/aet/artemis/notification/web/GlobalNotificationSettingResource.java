@@ -66,7 +66,7 @@ public class GlobalNotificationSettingResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GlobalNotificationSettingDTO> updateSetting(@PathVariable GlobalNotificationType notificationType,
             @RequestBody UpdateGlobalNotificationSettingDTO request) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         boolean enabled = request.enabled();
         return ResponseEntity.ok(GlobalNotificationSettingDTO.from(globalNotificationSettingService.createOrUpdateSetting(user, notificationType, enabled)));
     }
@@ -81,7 +81,7 @@ public class GlobalNotificationSettingResource {
     @GetMapping("global-notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         Map<String, Boolean> result = globalNotificationSettingRepository.getAllSettingsAsMap(user.getId());
         return ResponseEntity.ok(result);
     }
