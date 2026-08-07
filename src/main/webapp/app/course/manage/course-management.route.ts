@@ -303,25 +303,30 @@ export const courseManagementRoutes: Routes = [
                             authorities: IS_AT_LEAST_TUTOR,
                         },
                     },
-                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work
+                    // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work.
                     {
                         path: 'text-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'modeling-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'file-upload-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'quiz-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
                         path: 'programming-exercises',
+                        pathMatch: 'full',
                         redirectTo: 'exercises',
                     },
                     {
