@@ -184,11 +184,18 @@ export class AuditsComponent implements OnInit {
             const sort = (params.get('sort') ?? data['defaultSort']).split(',');
             this.predicate.set(sort[0]);
             this.ascending.set(sort[1] === 'asc');
-            if (params.get('from')) {
-                this.fromDate.set(this.datePipe.transform(params.get('from'), this.dateFormat)!);
-            }
-            if (params.get('to')) {
-                this.toDate.set(this.datePipe.transform(params.get('to'), this.dateFormat)!);
+            /*
+             * Read the two dates together rather than one at a time. A URL that carries only one of them is what
+             * clearing a picker produces, and the page treats a half-filled range as no filter at all
+             * (`hasDateRange`). Setting them independently would leave the missing half on the default `ngOnInit`
+             * seeded, pair it with the surviving date, and reload the very filter the user had just cleared. Only a
+             * URL carrying neither keeps those defaults, which is what a plain visit to the page gets.
+             */
+            const from = params.get('from');
+            const to = params.get('to');
+            if (from || to) {
+                this.fromDate.set(from ? this.datePipe.transform(from, this.dateFormat)! : '');
+                this.toDate.set(to ? this.datePipe.transform(to, this.dateFormat)! : '');
             }
             this.loadData();
         });

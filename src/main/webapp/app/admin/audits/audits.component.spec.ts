@@ -153,6 +153,46 @@ describe('AuditsComponent', () => {
             expect(comp.audits()).toHaveLength(1);
         });
 
+        it('should show all audits when reloading a URL that carries only one date', () => {
+            const query = vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
+            // What clearing the from picker leaves behind: `transition` drops the empty half from the URL.
+            mockActivatedRoute.setParameters({ sort: 'id,desc', to: '2026-06-20' });
+
+            comp.ngOnInit();
+
+            // The seeded default must not step in for the missing half and revive the filter the user cleared.
+            expect(comp.fromDate()).toBe('');
+            expect(comp.toDate()).toBe('2026-06-20');
+            expect(comp.hasDateRange()).toBe(false);
+            const params = query.mock.calls.at(-1)![0];
+            expect(params).not.toHaveProperty('fromDate');
+            expect(params).not.toHaveProperty('toDate');
+        });
+
+        it('should show all audits when reloading a URL that carries only the from date', () => {
+            const query = vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
+            mockActivatedRoute.setParameters({ sort: 'id,desc', from: '2026-06-17' });
+
+            comp.ngOnInit();
+
+            expect(comp.fromDate()).toBe('2026-06-17');
+            expect(comp.toDate()).toBe('');
+            expect(comp.hasDateRange()).toBe(false);
+            const params = query.mock.calls.at(-1)![0];
+            expect(params).not.toHaveProperty('fromDate');
+            expect(params).not.toHaveProperty('toDate');
+        });
+
+        it('should keep the default month range when the URL carries no date at all', () => {
+            const query = vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
+            mockActivatedRoute.setParameters({ sort: 'id,desc' });
+
+            comp.ngOnInit();
+
+            expect(comp.hasDateRange()).toBe(true);
+            expect(query).toHaveBeenLastCalledWith(expect.objectContaining({ fromDate: getDate(false), toDate: getDate() }));
+        });
+
         it('should leave a cleared date out of the URL instead of writing an empty parameter', () => {
             vi.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
             const navigate = TestBed.inject(Router).navigate as unknown as ReturnType<typeof vi.fn>;
