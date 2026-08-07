@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from './setup-passkey-modal.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,6 +18,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
 
 describe('SetupPasskeyModalComponent', () => {
     let component: SetupPasskeyModalComponent;
@@ -85,6 +87,56 @@ describe('SetupPasskeyModalComponent', () => {
 
         expect(localStorageServiceSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, savedDate);
         expect(component.visible()).toBe(false);
+    });
+
+    describe('UI rendering and footer controls', () => {
+        beforeEach(() => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_PASSKEY] } as unknown as ProfileInfo);
+            TestBed.inject(AccountService).userIdentity.set({ askToSetupPasskey: true } as User);
+        });
+
+        it('should render the dialog and footer buttons when visible', () => {
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('tum-ui-dialog')).toBeTruthy();
+            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            expect(buttons).toHaveLength(3);
+        });
+
+        it('should trigger remindMeIn30Days when clicking the remind button', () => {
+            const spy = vi.spyOn(component, 'remindMeIn30Days');
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            buttons[0].triggerEventHandler('clicked', null);
+
+            expect(spy).toHaveBeenCalledOnce();
+        });
+
+        it('should trigger closeModal when clicking the "Set up later" button', () => {
+            const spy = vi.spyOn(component, 'closeModal');
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            buttons[1].triggerEventHandler('clicked', null);
+
+            expect(spy).toHaveBeenCalledOnce();
+        });
+
+        it('should trigger setupPasskey when clicking the "Set up passkey" button', () => {
+            const spy = vi.spyOn(component, 'setupPasskey').mockResolvedValue();
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            const buttons = fixture.debugElement.queryAll(By.directive(TumUiButtonComponent));
+            buttons[2].triggerEventHandler('clicked', null);
+
+            expect(spy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('auto-open on authentication', () => {
