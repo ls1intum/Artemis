@@ -335,6 +335,14 @@ management:
         # Prompt, completion, and tool content is sensitive. Enable only for a protected tracing
         # deployment. Langfuse retains its existing opt-in behavior through this default.
         capture-content: ${management.langfuse.enabled:false}
+        # Ceiling for one serialized content attribute, in UTF-8 bytes. Sized for a saturated
+        # 256000-token agentic context (see artemis.hyperion.agent.context-window-tokens), which
+        # serializes to roughly a megabyte. A span whose content exceeds this keeps its metadata,
+        # loses that attribute, and is marked artemis.gen_ai.content.complete=false — so an
+        # omission is always visible rather than silent. Raise it if you pin a larger context
+        # window; keep it well under the OTLP collector's receive limit (4 MiB by default), since
+        # that limit applies to the whole export batch.
+        max-attribute-bytes: 2000000
     tracing:
       export:
         otlp:
