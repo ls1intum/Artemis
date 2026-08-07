@@ -93,10 +93,12 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithExerciseGroupsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.LockedExamSubmissionDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamForConductionDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
+import de.tum.cit.aet.artemis.exam.dto.UpcomingExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
@@ -1356,31 +1358,47 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        var exams = request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+        // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
+        // select for its course, so this guards the data-economy fix rather than just the response shape.
+        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(3);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
-            Exam exam = exams.get(i);
-            assertThat(exam.getEndDate()).as("for exam with index %d and id %d", i, exam.getId()).isAfterOrEqualTo(currentDay);
-            assertThat(exam.getCourse().isTestCourse()).as("for exam with index %d and id %d", i, exam.getId()).isFalse();
+            UpcomingExamDTO exam = exams.get(i);
+            // Every returned exam carries the fields the admin overview table renders, with real data.
+            assertThat(exam.id()).as("for exam with index %d", i).isNotNull();
+            assertThat(exam.title()).as("for exam with index %d and id %d", i, exam.id()).isNotBlank();
+            assertThat(exam.endDate()).as("for exam with index %d and id %d", i, exam.id()).isAfterOrEqualTo(currentDay);
+            assertThat(exam.course()).as("for exam with index %d and id %d", i, exam.id()).isNotNull();
+            assertThat(exam.course().id()).as("for exam with index %d and id %d", i, exam.id()).isNotNull();
+            // The DTO no longer carries isTestCourse, so verify the query's test-course exclusion against the database.
+            assertThat(examRepository.findByIdElseThrow(exam.id()).getCourse().isTestCourse()).as("for exam with index %d and id %d", i, exam.id()).isFalse();
         }
+        // The response content reflects a concrete created exam (title / course / dates), not just a 200 status.
+        UpcomingExamDTO createdExam = exams.stream().filter(exam -> exam.id().equals(exam1.getId())).findFirst().orElseThrow();
+        assertThat(createdExam.title()).isEqualTo(exam1.getTitle());
+        assertThat(createdExam.testExam()).isEqualTo(exam1.isTestExam());
+        assertThat(createdExam.course().id()).isEqualTo(course1.getId());
+        assertThat(createdExam.course().title()).isEqualTo(course1.getTitle());
+        assertThat(createdExam.visibleDate()).isNotNull();
+        assertThat(createdExam.startDate()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "USER")
     void testGetCurrentAndUpcomingExamsForbiddenForUser() throws Exception {
-        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCurrentAndUpcomingExamsForbiddenForInstructor() throws Exception {
-        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCurrentAndUpcomingExamsForbiddenForTutor() throws Exception {
-        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, UpcomingExamDTO.class);
     }
 
     @Test
@@ -2562,8 +2580,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExerciseGroupImportResultDTO importResult = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 mapper.writeValueAsString(exerciseGroupsJson), true, ExerciseGroupImportResultDTO.class, HttpStatus.OK, null, null, null);
 
-        QuizExercise importedQuizStub = (QuizExercise) importResult.exerciseGroups().getFirst().getExercises().iterator().next();
-        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizStub.getId());
+        long importedQuizId = importResult.exerciseGroups().getFirst().exercises().getFirst().id();
+        QuizExercise importedQuiz = quizExerciseRepository.findByIdElseThrow(importedQuizId);
         assertThat(importedQuiz.isRandomizeQuestionOrder()).isFalse();
         assertThat(importedQuiz.getAllowedNumberOfAttempts()).isEqualTo(5);
         assertThat(importedQuiz.getDuration()).isEqualTo(999);
@@ -2884,10 +2902,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam targetExam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(targetExam, "import-eg-content");
 
-        List<ExerciseGroup> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+        List<ExerciseGroupDTO> importedGroups = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 sourceExam.getExerciseGroups(), ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
-        List<Exercise> importedExercises = importedGroups.stream().filter(group -> !group.getExercises().isEmpty()).flatMap(group -> group.getExercises().stream()).toList();
+        // The response carries slim exercise summaries, so reload each imported exercise to assert on its content.
+        List<Exercise> importedExercises = importedGroups.stream().filter(group -> group.exercises() != null).flatMap(group -> group.exercises().stream())
+                .map(exercise -> exerciseRepository.findByIdElseThrow(exercise.id())).toList();
         assertThat(importedExercises).as("all four non-empty exercise groups imported an exercise").hasSize(4);
 
         Map<ExerciseType, Exercise> sourceByType = sourceExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())

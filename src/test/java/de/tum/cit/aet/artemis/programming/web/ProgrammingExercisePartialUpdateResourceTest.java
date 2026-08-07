@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -189,7 +190,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithAuthorities()).thenReturn(user("editor"));
         return new ProgrammingExercisePartialUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), mock(ExerciseService.class), updateService,
-                mock(ProgrammingExerciseTaskService.class), versionService, mutationGuard);
+                mock(ProgrammingExerciseTaskService.class), versionService, mutationGuard, mock(ExerciseVariantGroupService.class));
     }
 
     private ProgrammingExerciseMutationGuardService realGuard() {

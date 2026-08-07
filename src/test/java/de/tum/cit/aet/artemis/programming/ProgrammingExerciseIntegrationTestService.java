@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
@@ -1163,6 +1164,15 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setPackageName(null);
         programmingExercise.setShortName("testShortName");
         request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_packageNameIsTooLong_badRequest() throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setShortName("testShortName");
+        programmingExercise.setPackageName("a".repeat(MAX_PACKAGE_NAME_LENGTH + 1));
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(programmingExercise))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("packagenameTooLong"));
     }
 
     void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {

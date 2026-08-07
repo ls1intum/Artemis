@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -195,7 +196,7 @@ class ProgrammingExerciseUpdateResourceTest {
         return new ProgrammingExerciseUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), courseService, exerciseService,
                 mock(ProgrammingExerciseValidationService.class), updateService, mock(ProgrammingExerciseRepositoryService.class), mock(AuxiliaryRepositoryService.class),
                 Optional.<AthenaApi>empty(), mock(ModuleFeatureService.class), Optional.<SlideApi>empty(), Optional.<AutomaticAfterDueDateService>empty(), versionService,
-                mock(ParticipationRepository.class), mock(CompetencyExerciseLinkService.class), guard);
+                mock(ParticipationRepository.class), mock(CompetencyExerciseLinkService.class), guard, mock(ExerciseVariantGroupService.class));
     }
 
     private UpdateProgrammingExerciseDTO updateDto(long exerciseId) {

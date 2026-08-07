@@ -7,9 +7,17 @@ import { addE2EInitScript, installApiResponseCapture } from './utils';
 
 /**
  * Lazy-loaded Angular routes that e2e tests commonly hit. Pre-warming these on each
- * Playwright worker downloads the route chunks into Chromium's per-worker disk cache,
- * so subsequent test navigations don't race the chunk fetch (which under heavy
+ * Playwright worker makes the *server* side of the fetch cheap — the Angular dev server
+ * transforms and caches each module once instead of while a test is waiting on it — so
+ * subsequent test navigations don't race a cold chunk build (which under heavy
  * multi-node load occasionally fails and drops the user on `/courses`).
+ *
+ * Note it does NOT populate a browser cache, despite what this comment used to claim:
+ * `installApiResponseCapture` registers request interception on every context, and
+ * Playwright disables Chromium's HTTP cache whenever interception is active. Measured over
+ * 12 Iris attempts, every navigation re-downloads the `immutable` `vite/deps/*` bundles
+ * (24x for 199 unique URLs). Only the dev server's own transform cache is being warmed
+ * here (issue #13383).
  *
  * The list deliberately picks ONE representative URL per distinct lazy module: leaf
  * components like course-detail, course-update, iris-settings etc. are loaded
@@ -52,9 +60,11 @@ function readAdminJwt(): string | undefined {
 }
 
 /**
- * Visit each lazy-loaded route once with an authenticated browser context so Chromium
- * caches the JS chunks on disk. Subsequent tests in the same worker hit the cache
- * instead of refetching, eliminating the chunk-fetch race under load.
+ * Visit each lazy-loaded route once with an authenticated browser context so the Angular dev
+ * server has already built and cached each route's chunks. Subsequent tests in the same worker
+ * still refetch them over HTTP (see the note above), but the server answers from its transform
+ * cache instead of compiling while a test waits, which is what eliminates the chunk-fetch race
+ * under load.
  *
  * Best-effort: every navigation is `.catch`ed so a single slow route never breaks the
  * worker. Runs only once per worker (gated by the module-level `chunksWarmedOnThisWorker`
@@ -72,7 +82,7 @@ async function prewarmChunks(browser: Browser): Promise<void> {
     }
 
     // serviceWorkers: 'block' mirrors the global `use` option (manually created contexts don't inherit
-    // it) so the warm-up populates the same HTTP/disk caches the SW-free test contexts read from.
+    // it) so the warm-up exercises the same request path as the SW-free test contexts.
     const ctx = await browser.newContext({ ignoreHTTPSErrors: true, serviceWorkers: 'block' });
     try {
         const url = new URL(baseURL);

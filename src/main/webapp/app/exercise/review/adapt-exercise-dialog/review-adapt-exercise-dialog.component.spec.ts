@@ -95,7 +95,7 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(heading).not.toBeNull();
         expect(list.querySelectorAll('li')).toHaveLength(1);
         expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(1);
-        expect(fixture.nativeElement.querySelector('tum-ui-message[severity="warn"][role="alert"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('tum-ui-message[severity="warn"][role="status"]')).not.toBeNull();
         expect(fixture.nativeElement.textContent).toContain('adaptExercise.persistenceNotice');
     });
 

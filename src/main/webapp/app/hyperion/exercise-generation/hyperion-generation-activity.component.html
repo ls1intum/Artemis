@@ -119,7 +119,7 @@
         }
 
         @if (statusLoadFailed()) {
-            <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite">
+            <tum-ui-message severity="error" class="hyperion-activity-message" aria-live="polite">
                 <div class="hyperion-activity-message-content">
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"></span>
                     <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="retryStatus()" data-testid="hyperion-generation-status-retry">
@@ -130,7 +130,7 @@
         }
 
         @if (revertPartialRepositories(); as repositories) {
-            <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite" data-testid="hyperion-generation-revert-partial">
+            <tum-ui-message severity="error" class="hyperion-activity-message" aria-live="polite" data-testid="hyperion-generation-revert-partial">
                 <span jhiTranslate="artemisApp.hyperion.generationActivity.revertPartialFailed" [translateValues]="{ repositories }"></span>
             </tum-ui-message>
         }
@@ -178,7 +178,7 @@
                 </span>
             </div>
             @if (!currentVerdict.mechanicallyVerified && currentVerdict.reasons.length) {
-                <tum-ui-message severity="error" styleClass="hyperion-activity-message" role="alert" aria-live="polite">
+                <tum-ui-message severity="error" class="hyperion-activity-message" aria-live="polite">
                     <ul class="hyperion-activity-verdict-reasons" data-testid="hyperion-generation-verdict-reasons">
                         @for (reason of currentVerdict.reasons; track $index) {
                             <li>{{ reason }}</li>
@@ -222,11 +222,10 @@
                                 @for (file of group.files; track file.repo + ':' + file.path) {
                                     @if (canNavigateFileChange(file)) {
                                         <tum-ui-button
-                                            class="hyperion-activity-file"
+                                            class="hyperion-activity-file w-full"
                                             size="small"
                                             severity="secondary"
                                             variant="text"
-                                            styleClass="w-full"
                                             [ariaLabel]="fileChangeAccessibleLabel(file)"
                                             [tumUiTooltip]="file.path"
                                             tumUiTooltipPlacement="right"

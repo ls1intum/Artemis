@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -418,21 +419,29 @@ public final class RepositoryExportTestUtil {
             throw new IllegalArgumentException("Expected a full 40-character commit hash but got: " + commitHash);
         }
         ObjectId commitId = ObjectId.fromString(commitHash);
-        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
-            // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
-            // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
-            // which is heavily contended under parallel CI. Prefer the cheap ref check for the common case where the
-            // pushed commit is HEAD, then inspect the object database for older commits.
-            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                var repository = git.getRepository();
-                return commitId.equals(repository.resolve("HEAD")) || repository.getObjectDatabase().has(commitId);
-            }
-            catch (Exception e) {
-                log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
-                return false;
-            }
-        });
+        // Open the bare repo once and reuse the handle across polls instead of calling Git.open() every 100ms:
+        // re-opening re-scans the ref/pack-index on every iteration, which is expensive under parallel CI test
+        // execution and was itself causing this wait to time out (see waitForBareRepositoryReady for details).
+        try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+            Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
+                // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
+                // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
+                // which is heavily contended under parallel CI (it holds pack locks until a GC runs, see JGitConfig) and
+                // could make the poll time out. ObjectDatabase.has(...) inspects loose objects and pack indexes only, so
+                // it confirms the commit landed without mapping the pack data.
+                try {
+                    return git.getRepository().getObjectDatabase().has(commitId);
+                }
+                catch (Exception e) {
+                    log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
+                    return false;
+                }
+            });
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException("Failed to open bare repository " + repo.remoteBareGitRepoFile, e);
+        }
     }
 
     /**
@@ -444,24 +453,32 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
-        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+        // Open the bare repo once and reuse the handle across polls instead of calling Git.open() every 100ms:
+        // re-opening re-scans the directory, config, and pack index on every iteration, which is expensive under
+        // parallel CI test execution and was itself causing this wait to time out on an otherwise-true condition.
+        try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+            Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
                 // Resolve HEAD (a cheap ref read) and confirm the referenced commit object is present via
                 // ObjectDatabase.has(...). We deliberately avoid RevWalk.parseCommit here: parsing reads the commit
                 // object data and memory-maps the pack through JGit's contended process-wide WindowCache (see
                 // waitForBareRepositoryToContainCommit), which made this wait flaky under parallel CI.
-                var headRef = git.getRepository().resolve("HEAD");
-                if (headRef == null) {
-                    log.debug("Bare repository HEAD is null, waiting...");
+                try {
+                    var headRef = git.getRepository().resolve("HEAD");
+                    if (headRef == null) {
+                        log.debug("Bare repository HEAD is null, waiting...");
+                        return false;
+                    }
+                    return git.getRepository().getObjectDatabase().has(headRef);
+                }
+                catch (Exception e) {
+                    log.debug("Bare repository not ready yet: {}", e.getMessage());
                     return false;
                 }
-                return git.getRepository().getObjectDatabase().has(headRef);
-            }
-            catch (Exception e) {
-                log.debug("Bare repository not ready yet: {}", e.getMessage());
-                return false;
-            }
-        });
+            });
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException("Failed to open bare repository " + repo.remoteBareGitRepoFile, e);
+        }
     }
 
     /**

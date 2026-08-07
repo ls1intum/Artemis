@@ -3,10 +3,10 @@ import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiDialogComponent } from 'app/shared-ui/tum-ui/dialog/tum-ui-dialog.component';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+/**
+ * Represents a formatted build agent for display in the health modal.
+ */
 interface FormattedBuildAgent {
     displayName: string;
     name: string;

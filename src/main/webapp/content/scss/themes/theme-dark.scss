@@ -198,4 +198,5 @@ input:-webkit-autofill:active {
     --overview-card-bg: #16191d;
     --overview-card-nested-bg: #343a42;
     --overview-card-hover-bg: #434c56;
+    --overview-card-hover-color: #{$body-color};
 }

@@ -8,8 +8,8 @@
         }
     </p>
 
-    <!-- role/aria-live are set explicitly: p-message carried them on its host, the kit message leaves the live-region semantics to the caller. -->
-    <tum-ui-message severity="warn" role="alert" aria-live="polite">
+    <!-- tum-ui-message owns [attr.role]: it resolves to alert only for severity error, and status otherwise. -->
+    <tum-ui-message severity="warn" aria-live="polite">
         <span jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></span>
     </tum-ui-message>
 

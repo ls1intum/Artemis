@@ -15,7 +15,7 @@
         </tum-ui-button>
     </div>
     @if (buildAgents()) {
-        <div class="flex justify-between items-center border-b pb-2 mb-3">
+        <div class="flex justify-between items-center border-b border-surface pb-2 mb-3">
             <p class="mb-0">
                 {{ buildAgents().length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds() }}
                 <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span> ·

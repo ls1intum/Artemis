@@ -79,12 +79,12 @@
                     }
                 </div>
                 @if (generationAgentDiscoveryFailed()) {
-                    <tum-ui-message severity="warn" styleClass="mb-3 block">
+                    <tum-ui-message severity="warn" class="mb-3 block">
                         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.discoveryUnavailable"></span>
                     </tum-ui-message>
                 }
                 @if (unavailableGenerationAgents()) {
-                    <tum-ui-message severity="warn" styleClass="mb-3 block">
+                    <tum-ui-message severity="warn" class="mb-3 block">
                         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.partialUnavailable" [translateValues]="{ count: unavailableGenerationAgents() }"></span>
                     </tum-ui-message>
                 }
@@ -193,14 +193,7 @@
     </div>
 
     <!-- Modal -->
-    <tum-ui-dialog
-        [modal]="true"
-        [(visible)]="buildLogsModalVisible"
-        [style]="{ width: '90dvw', height: '90dvh' }"
-        [contentStyle]="{ overflow: 'auto' }"
-        [draggable]="false"
-        [dismissableMask]="true"
-    >
+    <tum-ui-dialog [(visible)]="buildLogsModalVisible" size="full" [dismissableMask]="true">
         <ng-template #header>
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId() }}</span>
