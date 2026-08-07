@@ -100,6 +100,15 @@ public class OrchestratorPlanningToolsService {
         return new CompetencyIndexResponseDTO(entries, unassigned);
     }
 
+    /**
+     * Projects a competency onto its index entry. Linked exercises are ordered by exercise id and lecture units by
+     * name, so the rendered index the LLM sees is stable across runs — an unstable ordering would change the prompt
+     * (and therefore the model's plan) for an unchanged course. Lecture units without a name are dropped, mirroring
+     * the equivalent projection in {@link OrchestratorReadToolsService} so both tools expose the same set.
+     *
+     * @param competency the competency to project, with exercise and lecture-unit links already fetched
+     * @return the index entry for this competency
+     */
     private static CompetencyIndexDTO toIndexEntry(CourseCompetency competency) {
         List<CompetencyIndexDTO.ExerciseLinkRefDTO> exercises = competency.getExerciseLinks().stream()
                 .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId()))

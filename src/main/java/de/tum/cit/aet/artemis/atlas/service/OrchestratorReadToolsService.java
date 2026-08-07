@@ -149,6 +149,14 @@ public class OrchestratorReadToolsService {
         }
     }
 
+    /**
+     * Projects a competency onto its detail view. Exercises and lecture units are ordered by id so repeated
+     * inspections of an unchanged competency yield an identical tool response, and lecture units without a name are
+     * dropped to match the competency index built by {@link OrchestratorPlanningToolsService}.
+     *
+     * @param competency the competency to project, with exercise and lecture-unit links already fetched
+     * @return the detail view for this competency
+     */
     private static CompetencyDetailDTO toDetail(CourseCompetency competency) {
         List<CompetencyDetailDTO.ExerciseRefDTO> exercises = competency.getExerciseLinks().stream()
                 .sorted(Comparator.comparing((CompetencyExerciseLink link) -> link.getExercise().getId())).map(link -> {
