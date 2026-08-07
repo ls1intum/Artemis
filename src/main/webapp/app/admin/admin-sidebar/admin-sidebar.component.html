@@ -6,7 +6,8 @@
                 <fa-icon [icon]="faUserShield" />
             </div>
             @if (!isNavbarCollapsed()) {
-                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.main"></div>
+                <!-- Short form: the full "Administration" does not fit beside the icon in the rail. -->
+                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.short"></div>
             }
         </div>
 
@@ -18,7 +19,7 @@
                     <!-- Group Header -->
                     @if (!isNavbarCollapsed()) {
                         <li class="nav-group-header pt-2 pb-1">
-                            <span class="px-3 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
+                            <span class="px-2 text-[0.7rem] font-semibold tracking-wider uppercase text-muted-color" [jhiTranslate]="group.translation"></span>
                         </li>
                     } @else if (groupIndex > 0) {
                         <li>
@@ -30,16 +31,16 @@
                     @for (item of group.items; track item.routerLink) {
                         <li>
                             <a
-                                class="nav-link-sidebar flex items-center px-3 py-2 whitespace-nowrap no-underline"
+                                class="nav-link-sidebar flex items-center px-2 py-2 whitespace-nowrap no-underline"
                                 [attr.id]="item.testId"
                                 [class.collapsed]="isNavbarCollapsed()"
                                 [routerLink]="item.routerLink"
                                 routerLinkActive="active"
                                 [title]="item.title"
                             >
-                                <fa-icon [fixedWidth]="true" [icon]="item.icon" class="ms-2 me-3" />
+                                <fa-icon [fixedWidth]="true" [icon]="item.icon" />
                                 @if (!isNavbarCollapsed()) {
-                                    <span class="auto-collapse" [jhiTranslate]="item.translation"></span>
+                                    <span class="auto-collapse ms-2" [jhiTranslate]="item.translation"></span>
                                 }
                             </a>
                         </li>

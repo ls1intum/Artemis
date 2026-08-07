@@ -187,6 +187,7 @@
             },
             "admin": {
                 "main": "Administration",
+                "short": "Admin",
                 "loginWithPasskeyToUseAdminFeatures": "Mit Passkey anmelden um Admin-Funktionen zu nutzen",
                 "setupPasskey": "Passkey registrieren",
                 "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
