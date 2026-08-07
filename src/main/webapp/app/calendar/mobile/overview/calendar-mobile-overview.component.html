@@ -1,20 +1,20 @@
 <div class="frame">
     <div class="header">
-        <!-- Outlined like the desktop overview's arrows: a filled primary made these two the loudest thing on the page. -->
+        <!-- Every control in this row is outlined, the same way the desktop overview renders its own. -->
         <button pButton size="small" outlined (click)="goToPrevious()" data-testid="previous-button">
             <div class="chevron">
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         </button>
-        <button pButton size="small" severity="secondary" (click)="filterPopover.toggle($event)">
+        <button pButton size="small" outlined (click)="filterPopover.toggle($event)">
             <fa-icon [icon]="faFilter" />
         </button>
-        <button data-testid="today-button" pButton size="small" severity="secondary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
+        <button data-testid="today-button" pButton size="small" outlined (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         @let currentCourseId = courseId();
         @let subscriptionToken = calendarSubscriptionToken();
         @if (currentCourseId && subscriptionToken) {
             <div>
-                <button data-testid="subscribe-button" pButton size="small" severity="secondary" (click)="subscriptionPopover.open($event)">
+                <button data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
                     <fa-icon [icon]="faArrowUpFromBracket" />
                 </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" [isMobile]="true" #subscriptionPopover />
