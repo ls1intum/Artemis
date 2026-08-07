@@ -227,6 +227,16 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
+        });
+
+        it('should keep an empty Other group so Add Feedback stays with it when criterion groups exist', () => {
+            comp.applyInstruction(documentationInstruction);
+
+            const groups = comp.feedbackGroups();
+            expect(groups.map((group) => group.title)).toEqual(['Documentation', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups[1].feedbacks).toHaveLength(0);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
         });
 
         it('should not show a group header for a single uncategorized block', () => {
@@ -235,6 +245,7 @@ describe('UnreferencedFeedbackComponent', () => {
 
             expect(comp.feedbackGroups()).toHaveLength(1);
             expect(comp.showGroupHeaders()).toBe(false);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(false);
         });
 
         it('should summarize awarded, deducted and resulting points', () => {

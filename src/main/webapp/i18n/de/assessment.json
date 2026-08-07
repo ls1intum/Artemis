@@ -94,7 +94,8 @@
                 "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
                 "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
                 "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
-                "removeAssessmentInstructionLink": "Möchtest du den Link zum Bewertungsanweisung entfernen?"
+                "removeAssessmentInstructionLink": "Möchtest du den Link zum Bewertungsanweisung entfernen?",
+                "incompleteFeedback": "Gib für jeden Feedback-Eintrag einen Text ein, bevor du speicherst oder absendest."
             },
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",

@@ -110,6 +110,28 @@ export class AssessmentHeaderComponent {
         return !this.assessmentsAreValid() || !this.isAssessor() || this.saveBusy() || this.submitBusy() || this.cancelBusy();
     }
 
+    /**
+     * Save/submit stay disabled while a feedback item is missing its text (or score). The shortcut tooltip would not
+     * explain that, so those buttons show an explicit reason instead while that is the blocker.
+     */
+    private get blockedByIncompleteFeedback(): boolean {
+        return !this.assessmentsAreValid() && this.isAssessor() && !this.saveBusy() && !this.submitBusy() && !this.cancelBusy();
+    }
+
+    get saveTooltip(): string {
+        if (this.blockedByIncompleteFeedback && !Result.hasNonEmptyAssessmentNote(this.result())) {
+            return this.translateService.instant('artemisApp.assessment.messages.incompleteFeedback');
+        }
+        return this.translateService.instant('artemisApp.assessment.button.control') + ' + S';
+    }
+
+    get submitTooltip(): string {
+        if (this.blockedByIncompleteFeedback) {
+            return this.translateService.instant('artemisApp.assessment.messages.incompleteFeedback');
+        }
+        return this.translateService.instant('artemisApp.assessment.button.control') + ' + Enter';
+    }
+
     get overrideDisabled() {
         if (this.overrideVisible) {
             return !this.assessmentsAreValid() || this.submitBusy();

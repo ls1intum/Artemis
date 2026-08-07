@@ -141,6 +141,24 @@ describe('AssessmentHeaderComponent', () => {
 
             expect(component.saveDisabled).toBe(true);
         });
+
+        it('should explain incomplete feedback when that is why save is disabled', () => {
+            fixture.componentRef.setInput('assessmentsAreValid', false);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.detectChanges();
+
+            expect(component.saveTooltip).toBe('artemisApp.assessment.messages.incompleteFeedback');
+            expect(component.submitTooltip).toBe('artemisApp.assessment.messages.incompleteFeedback');
+        });
+
+        it('should keep the keyboard-shortcut tooltip when assessments are valid', () => {
+            fixture.componentRef.setInput('assessmentsAreValid', true);
+            fixture.componentRef.setInput('isAssessor', true);
+            fixture.detectChanges();
+
+            expect(component.saveTooltip).toBe('artemisApp.assessment.button.control + S');
+            expect(component.submitTooltip).toBe('artemisApp.assessment.button.control + Enter');
+        });
     });
 
     describe('submitDisabled', () => {

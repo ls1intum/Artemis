@@ -94,7 +94,8 @@
                 "saveFailed": "Saving your assessment failed!",
                 "updateAfterComplaintSuccessful": "The assessment was updated successfully.",
                 "updateAfterComplaintFailed": "Updating the assessment failed.",
-                "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?"
+                "removeAssessmentInstructionLink": "Do you want to remove the link to the assessment instruction?",
+                "incompleteFeedback": "Enter feedback text for every feedback item before saving or submitting."
             },
             "dashboard": {
                 "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",

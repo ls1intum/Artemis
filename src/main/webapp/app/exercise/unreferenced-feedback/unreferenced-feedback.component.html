@@ -1,7 +1,9 @@
 <div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
-        <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
-    </button>
+    @if (!placeAddButtonWithOtherGroup()) {
+        <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+            <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
+        </button>
+    }
 
     <!-- Section header: the title on the leading edge, the point balance of this list on the trailing edge. -->
     <div class="unreferenced-feedback__header">
@@ -50,6 +52,11 @@
                     }
                     <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
                 </header>
+            }
+            @if (placeAddButtonWithOtherGroup() && group.translateTitle) {
+                <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+                    <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
+                </button>
             }
             <div class="unreferenced-feedback__cards">
                 @for (feedback of group.feedbacks; track feedback) {

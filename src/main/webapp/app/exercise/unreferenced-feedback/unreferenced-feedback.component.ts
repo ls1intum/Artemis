@@ -124,7 +124,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         }
 
         const ungrouped = feedbacks.filter((feedback) => !alreadyGrouped.has(feedback));
-        if (ungrouped.length > 0) {
+        if (ungrouped.length > 0 || groups.length > 0) {
             groups.push(toGroup('artemisApp.assessment.detail.otherFeedback', true, ungrouped, contributingCredits));
         }
         return groups;
@@ -138,6 +138,12 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
         const groups = this.feedbackGroups();
         return groups.length > 1 || (groups.length === 1 && !groups[0].translateTitle);
     });
+
+    /**
+     * True while at least one criterion group is shown. Add Feedback then sits next to Other feedback, because that
+     * is the only group new free-text items land in.
+     */
+    readonly placeAddButtonWithOtherGroup = computed(() => this.feedbackGroups().some((group) => !group.translateTitle));
 
     /**
      * Awarded / deducted / final points for the assessment, using the same structured-grading usage and
