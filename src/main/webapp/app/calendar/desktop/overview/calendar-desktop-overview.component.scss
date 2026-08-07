@@ -65,28 +65,39 @@
                 all: unset;
             }
         }
+    }
 
-        .exam-chip {
-            background-color: var(--pastel-teal);
-        }
+    /*
+     * Shared by the chips in the bar and the options in the dropdown, so a category reads the same in both. Declared
+     * at this level rather than inside `.chips-section` for that reason.
+     */
+    .filter-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-        .lecture-chip {
-            background-color: var(--pastel-blue);
-        }
+    .legend-circle {
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 0.25rem;
+        flex: 0 0 auto;
+    }
 
-        .tutorial-chip {
-            background-color: var(--pastel-purple);
-        }
+    .exam-chip {
+        background-color: var(--pastel-teal);
+    }
 
-        .exercise-chip {
-            background-color: var(--pastel-cyan);
-        }
+    .lecture-chip {
+        background-color: var(--pastel-blue);
+    }
 
-        .legend-circle {
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 0.25rem;
-        }
+    .tutorial-chip {
+        background-color: var(--pastel-purple);
+    }
+
+    .exercise-chip {
+        background-color: var(--pastel-cyan);
     }
 
     /*

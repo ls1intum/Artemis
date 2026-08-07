@@ -10,6 +10,15 @@
             [placeholder]="filterComponentPlaceholder()"
             [showHeader]="false"
         >
+            <!-- The colour is what identifies a category in the grid, so the options carry it too — on a narrow bar the
+                 chips are gone and the dropdown is all the user has. -->
+            <ng-template #item let-option>
+                <span class="filter-option">
+                    <span class="legend-circle" [class]="option.colorClassName"></span>
+                    <span>{{ option.name }}</span>
+                </span>
+            </ng-template>
+
             <ng-template #selecteditems>
                 @if (selectedFilterOptions().length) {
                     <!-- Stands in for the chips once the bar is too narrow for them; the count keeps the selection visible. -->
