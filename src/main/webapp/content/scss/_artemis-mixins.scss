@@ -100,8 +100,14 @@
         line-height: var(--title-bar-content-height);
     }
 
-    .p-togglebutton-content {
+    /*
+     * Element-qualified on purpose: PrimeNG's own rule for this class is injected after our stylesheets, so a bare
+     * class selector loses to it on source order. It pads each option by 12px a side, which on a crowded bar (the
+     * calendar's week/month switch) is width the row needs.
+     */
+    .p-togglebutton .p-togglebutton-content {
         padding-block: 0;
+        padding-inline: 0.375rem;
     }
 
     .p-select {

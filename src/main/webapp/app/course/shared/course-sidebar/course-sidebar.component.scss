@@ -40,8 +40,13 @@ $transition-color-length: 0.2s;
     margin-left: -0.9rem;
 }
 
+/*
+ * Open, the toggle is pushed towards the right edge; collapsed it centres in the rail like every icon above it, so
+ * the nudge and the padding that align it in the open state have to go.
+ */
 .double-arrow.menu-closed {
-    transform: translate(16px);
+    transform: none;
+    padding-right: 0;
 }
 
 .double-arrow {
@@ -68,6 +73,10 @@ $transition-color-length: 0.2s;
 
 .menu-closed .double-arrow-icon {
     transform: rotate(0deg);
+
+    /* The 40px minimum is what reserves room for the label beside it when open; collapsed it just offsets the pair. */
+    justify-content: center;
+    min-width: 0;
 }
 
 .me-negative {
@@ -110,6 +119,28 @@ $transition-color-length: 0.2s;
 
     > .d-flex {
         justify-content: center;
+    }
+}
+
+.sidebar-container.collapsed {
+    /*
+     * The bottom items share their row with the collapse toggle while the sidebar is open, so the link is only as wide
+     * as its content — collapsed, that left the settings icon short of the centre the icons above it sit on. The
+     * dropdown toggle is a plain `.nav-link`, so it needs centring of its own.
+     */
+    .nav-link-sidebar,
+    .three-dots {
+        width: 100%;
+    }
+
+    .three-dots {
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Set the expand toggle apart from the last item rather than having it read as another entry. */
+    .double-arrow {
+        margin-top: 0.75rem;
     }
 }
 

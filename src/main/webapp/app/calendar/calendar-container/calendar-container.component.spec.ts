@@ -15,17 +15,21 @@ class StubCalendarMobileOverviewComponent {}
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
+import dayjs from 'dayjs/esm';
 
 describe('CalendarContainerComponent', () => {
     let component: CalendarContainerComponent;
     let fixture: ComponentFixture<CalendarContainerComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;
+    let observedQueries: string[];
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
     beforeEach(async () => {
+        observedQueries = [];
         breakpoint$ = new BehaviorSubject<BreakpointState>({
             matches: false,
             breakpoints: { [Breakpoints.Handset]: false },
@@ -34,7 +38,16 @@ describe('CalendarContainerComponent', () => {
         await TestBed.configureTestingModule({
             imports: [CalendarContainerComponent, StubCalendarDesktopOverviewComponent, StubCalendarMobileOverviewComponent],
             providers: [
-                { provide: BreakpointObserver, useValue: { observe: () => breakpoint$.asObservable(), isMatched: () => false } },
+                {
+                    provide: BreakpointObserver,
+                    useValue: {
+                        observe: (query: string) => {
+                            observedQueries.push(query);
+                            return breakpoint$.asObservable();
+                        },
+                        isMatched: () => false,
+                    },
+                },
                 { provide: ActivatedRoute, useValue: { parent: { paramMap: of({ get: () => '42' }) } } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -63,6 +76,25 @@ describe('CalendarContainerComponent', () => {
         const mobile = fixture.nativeElement.querySelector('jhi-calendar-mobile-overview');
         expect(desktop).toBeTruthy();
         expect(mobile).toBeFalsy();
+    });
+
+    it('should hand over to the mobile overview before the app-wide handset breakpoint', () => {
+        // The calendar's title bar is denser than any other page's, so it switches at a width of its own.
+        expect(observedQueries).toEqual(['(max-width: 1024px)']);
+    });
+
+    it('should keep the displayed period across the switch, which recreates the overview', () => {
+        const viewState = fixture.debugElement.injector.get(CalendarViewStateService);
+        const october = dayjs('2026-10-01').startOf('month');
+        viewState.firstDateOfDisplayedMonth.set(october);
+
+        breakpoint$.next({ matches: true, breakpoints: { [Breakpoints.Handset]: true } });
+        fixture.detectChanges();
+        breakpoint$.next({ matches: false, breakpoints: { [Breakpoints.Handset]: false } });
+        fixture.detectChanges();
+
+        // The service is provided by the container, so it outlives both overviews.
+        expect(fixture.debugElement.injector.get(CalendarViewStateService).firstDateOfDisplayedMonth()).toBe(october);
     });
 
     it('should render mobile overview when screen is small', () => {

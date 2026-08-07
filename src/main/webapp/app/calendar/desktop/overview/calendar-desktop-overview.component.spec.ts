@@ -9,6 +9,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-view-state.service';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
@@ -74,6 +75,8 @@ describe('CalendarDesktopOverviewComponent', () => {
                 { provide: CalendarService, useValue: calendarServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                // Normally provided by the calendar container, which holds the displayed period across a resize.
+                CalendarViewStateService,
             ],
         }).compileComponents();
 
@@ -151,6 +154,20 @@ describe('CalendarDesktopOverviewComponent', () => {
         expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
         expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBe(true);
         expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBe(true);
+    });
+
+    it('should navigate the period held by the shared view state, not one of its own', () => {
+        // The container recreates this component whenever the viewport crosses the mobile breakpoint, so a period
+        // kept in the component would be lost on every resize and the user thrown back to the current month.
+        const viewState = TestBed.inject(CalendarViewStateService);
+        const monthBefore = viewState.firstDateOfDisplayedMonth();
+
+        const { element: actions } = renderProjected('actions');
+        actions.query(By.css('#next-button')).nativeElement.click();
+        fixture.detectChanges();
+
+        expect(viewState.firstDateOfDisplayedMonth().isSame(monthBefore.add(1, 'month'), 'month')).toBeTruthy();
+        expect(component.firstDateOfCurrentMonth()).toBe(viewState.firstDateOfDisplayedMonth());
     });
 
     it('should go to today', () => {

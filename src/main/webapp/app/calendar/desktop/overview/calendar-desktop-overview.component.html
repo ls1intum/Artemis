@@ -46,7 +46,7 @@
         @if (currentCourseId && subscriptionToken) {
             <div>
                 <button data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
-                    <fa-icon [icon]="faShareNodes" />
+                    <fa-icon [icon]="faArrowUpFromBracket" />
                     <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
