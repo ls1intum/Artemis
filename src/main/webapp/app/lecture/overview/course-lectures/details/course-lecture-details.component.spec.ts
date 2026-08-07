@@ -166,7 +166,9 @@ describe('CourseLectureDetailsComponent', () => {
                  * run as an unhandled rejection, without failing a single test.
                  */
                 { provide: WebsocketService, useClass: MockWebsocketService },
-                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
+                // `AttachmentVideoUnitComponent` is rendered for attachment units and subscribes to `pointOut$` in its
+                // constructor, so the mock has to expose the stream as well as `openChat`.
+                { provide: IrisChatService, useValue: { openChat: vi.fn(), pointOut$: EMPTY } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
