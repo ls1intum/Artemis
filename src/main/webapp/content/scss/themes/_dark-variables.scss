@@ -125,6 +125,14 @@ $table-color: $body-color;
 $artemis-dark: #353d47;
 $link-color: #3e8acc;
 
+// Per-exercise-type accent colors: the light theme's hues, lightened to stay legible on the dark $body-bg.
+$exercise-accent-programming: #818cf8;
+$exercise-accent-quiz: #fbbf24;
+$exercise-accent-modeling: #38bdf8;
+$exercise-accent-text: #34d399;
+$exercise-accent-fileupload: #f472b6;
+$exercise-accent-group: #a78bfa;
+
 // Border
 $border-color: lighten($body-bg, 10);
 
