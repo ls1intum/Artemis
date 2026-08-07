@@ -48,6 +48,8 @@ import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-ba
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
 import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
@@ -156,6 +158,14 @@ describe('CourseLectureDetailsComponent', () => {
                 // PrimeNG's DialogService for the "About Iris" dialog.
                 MockProvider(DialogService),
                 { provide: AccountService, useClass: MockAccountService },
+                /*
+                 * `DiscussionSectionComponent` declares `providers: [MetisService]`, and ng-mocks carries a mocked
+                 * component's providers over, so rendering it builds the real `MetisService`. Its constructor
+                 * subscribes to a notification topic as soon as it has a user, and the websocket service opens a
+                 * connection for the first subscriber — which in jsdom throws on the relative broker URL and fails the
+                 * run as an unhandled rejection, without failing a single test.
+                 */
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
