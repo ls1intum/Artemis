@@ -12,17 +12,20 @@ import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
-import { TumUiTabsComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tabs.component';
-import { TumUiTabListComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tab-list.component';
-import { TumUiTabComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tab.component';
-import { TumUiTabPanelsComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tab-panels.component';
-import { TumUiTabPanelComponent } from 'app/shared-ui/tum-ui/tabs/tum-ui-tab-panel.component';
-import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
-import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import {
+    TumUiButtonDirective,
+    TumUiMessageComponent,
+    TumUiPaginatorComponent,
+    TumUiTabComponent,
+    TumUiTabListComponent,
+    TumUiTabPanelComponent,
+    TumUiTabPanelsComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+    TumUiTabsComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
