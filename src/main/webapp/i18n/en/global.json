@@ -187,6 +187,7 @@
             },
             "admin": {
                 "main": "Administration",
+                "short": "Admin",
                 "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
                 "setupPasskey": "Setup passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
