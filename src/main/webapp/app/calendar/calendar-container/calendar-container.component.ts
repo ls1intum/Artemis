@@ -13,7 +13,7 @@ import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-v
  * title bar than any other, and they are already down to icons before the handset breakpoint (960px in landscape) is
  * reached. Handing over to the mobile overview a little earlier keeps that row readable.
  */
-const CALENDAR_MOBILE_BREAKPOINT = '(max-width: 1024px)';
+const CALENDAR_MOBILE_BREAKPOINT = '(max-width: 800px)';
 
 @Component({
     selector: 'jhi-calendar-container',

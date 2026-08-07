@@ -1312,6 +1312,28 @@ body.transparent-background {
 }
 
 /*
+ * Opt-in for a control a narrow bar drops rather than shrinks. Below the threshold there is no room left for
+ * secondary controls once the title and the primary action have taken theirs, and squeezing them just leaves a row of
+ * unreadable stubs — course management exercises put its search and its import and export buttons in this class, all
+ * three of which its "+" dialog offers as tabs anyway.
+ *
+ * Only mark a control whose action stays reachable another way at that width: `display: none` takes it out of the
+ * accessibility tree and the tab order, which is correct here precisely because it is genuinely unavailable, not
+ * merely invisible.
+ */
+/* stylelint-disable-next-line no-duplicate-selectors */
+.title-bar-optional-control.title-bar-optional-control {
+    /*
+     * The class is repeated to raise its specificity to two classes. Marked controls are component hosts, and Angular
+     * compiles a component's own `:host { display: … }` to `tag[_nghost-x]` — a tag plus an attribute, which outranks
+     * a single class no matter where the rule sits, so a plain `.title-bar-optional-control` never applied.
+     */
+    @container title-bar (max-width: 40rem) {
+        display: none;
+    }
+}
+
+/*
  * Opt-in for a label that gives way before the bar does. A page projecting several labelled controls into a title bar
  * runs out of room long before the bar reaches a phone width, because the sidebar takes its share: on course
  * management the search field was squeezed from 236px to 82px while every label still rendered in full. Marking the

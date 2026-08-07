@@ -80,7 +80,7 @@ describe('CalendarContainerComponent', () => {
 
     it('should hand over to the mobile overview before the app-wide handset breakpoint', () => {
         // The calendar's title bar is denser than any other page's, so it switches at a width of its own.
-        expect(observedQueries).toEqual(['(max-width: 1024px)']);
+        expect(observedQueries).toEqual(['(max-width: 800px)']);
     });
 
     it('should keep the displayed period across the switch, which recreates the overview', () => {

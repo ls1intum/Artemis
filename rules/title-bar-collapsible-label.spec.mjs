@@ -30,6 +30,7 @@ const walk = (dir, extension, out = []) => {
 const relative = (file) => file.slice(repoRoot.length + 1);
 
 const LABEL_CLASS = 'title-bar-collapsible-label';
+const OPTIONAL_CLASS = 'title-bar-optional-control';
 const CONTAINER_MIXIN = 'title-bar-size-container';
 const CONTROLS_MIXIN = 'title-bar-compact-controls';
 
@@ -65,15 +66,23 @@ describe('collapsible title bar labels', () => {
         expect(offenders, `these style projected title bar controls but never become a size container, so ${LABEL_CLASS} cannot work in them`).toEqual([]);
     });
 
-    it('only marks labels that sit inside a title bar', () => {
+    it('queries that container from the drop-on-narrow class too', () => {
+        const global = readFileSync(globalFile, 'utf8');
+        const rule = global.match(new RegExp(`\\.${OPTIONAL_CLASS}\\s*\\{([\\s\\S]*?)\\n\\}\\n`));
+        expect(rule, `.${OPTIONAL_CLASS} is not defined in global.scss`).toBeTruthy();
+        expect(rule[1], `.${OPTIONAL_CLASS} must drop its control inside an @container title-bar query`).toMatch(/@container\s+title-bar\s*\(/);
+        expect(rule[1]).toMatch(/display:\s*none/);
+    });
+
+    it('only marks elements that sit inside a title bar', () => {
         // The markers a template uses to render into one of the bars: the shell bar's slots, or a self-rendered bar.
         const insideABar = /titleBarActions|titleBarTitle|titleBarToolbar|page-top-bar|controlsViewContainer/;
         const offenders = walk(webapp, '.html')
             .filter((file) => {
                 const content = readFileSync(file, 'utf8');
-                return content.includes(LABEL_CLASS) && !insideABar.test(content);
+                return (content.includes(LABEL_CLASS) || content.includes(OPTIONAL_CLASS)) && !insideABar.test(content);
             })
             .map(relative);
-        expect(offenders, `${LABEL_CLASS} only collapses inside a title bar; elsewhere the query never matches`).toEqual([]);
+        expect(offenders, `these classes only work inside a title bar; elsewhere the query never matches`).toEqual([]);
     });
 });

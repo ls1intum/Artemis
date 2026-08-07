@@ -25,14 +25,15 @@
             [allowEmpty]="false"
             [itemTemplate]="viewItem"
         />
-        <jhi-search-filter (newSearchEvent)="onSearchChange($event)" />
+        <jhi-search-filter class="title-bar-optional-control" (newSearchEvent)="onSearchChange($event)" />
         <!-- These all route to editor-only workflows, so they stay hidden from tutors. -->
         @if (course()?.isAtLeastEditor) {
-            <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
+            <!-- Both of these are tabs of the "+" dialog as well, so a narrow bar can drop them. -->
+            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'import-exercise-button'" (clicked)="openImportModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
             </tum-ui-button>
-            <tum-ui-button size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
+            <tum-ui-button class="title-bar-optional-control" size="small" severity="secondary" [attr.data-testid]="'export-exercise-button'" (clicked)="openQuizExportDialog()">
                 <fa-icon [icon]="faFileExport" />
                 <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
             </tum-ui-button>

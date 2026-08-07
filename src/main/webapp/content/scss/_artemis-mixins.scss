@@ -101,10 +101,30 @@
     }
 
     /*
-     * Element-qualified on purpose: PrimeNG's own rule for this class is injected after our stylesheets, so a bare
-     * class selector loses to it on source order. It pads each option by 12px a side, which on a crowded bar (the
-     * calendar's week/month switch) is width the row needs.
+     * A select button option is padded twice by PrimeNG: 4px on the option and 12px on the content inside it. On a
+     * crowded bar (the calendar's week/month switch) that is width the row needs, so the outer pad goes entirely and
+     * the inner one halves.
+     *
+     * The content selector is element-qualified on purpose: PrimeNG's own rule for that class is injected after our
+     * stylesheets, so a bare class selector loses to it on source order.
      */
+    .p-togglebutton {
+        padding-inline: 0;
+    }
+
+    /*
+     * The TUM UI select button reserves 16px a side per option. Once the bar is narrow enough that its options are
+     * down to icons, that is more padding than icon — on a phone the four view options of course management alone
+     * took 203px of a 282px row and pushed it past the bar — so halve it there. The class is repeated to outrank the
+     * component's own rule, which view encapsulation compiles to a class plus an attribute.
+     */
+    @container title-bar (max-width: 40rem) {
+        /* stylelint-disable-next-line no-duplicate-selectors */
+        .tum-ui-select-button-option.tum-ui-select-button-option {
+            padding-inline: 0.5rem;
+        }
+    }
+
     .p-togglebutton .p-togglebutton-content {
         padding-block: 0;
         padding-inline: 0.375rem;

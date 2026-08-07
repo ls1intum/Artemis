@@ -41,8 +41,10 @@ describe('regions that have to stay flexible', () => {
         const scss = read('app/course/shared/course-title-bar/course-title-bar.component.scss');
         const actions = scss.match(/\.title-bar-actions\s*\{([\s\S]*?)\n {4}\}/);
         expect(actions, '.title-bar-actions is not defined in the course title bar').toBeTruthy();
-        // Without this the wrapper keeps its automatic minimum size, and a page whose controls could give way (the
-        // calendar filter and its chips) instead pushes the whole row past the right edge of the bar.
-        expect(actions[1]).toMatch(/min-width:\s*0/);
+        // The automatic minimum (`auto`) is what has to go: with it the wrapper keeps its content width, and a page
+        // whose controls could give way (the calendar filter and its chips) pushes the row past the bar instead.
+        // Either `0` or `min-content` does that — the latter also stops controls that cannot shrink, such as a select
+        // button, from being squeezed until they clip their own options.
+        expect(actions[1]).toMatch(/min-width:\s*(0|min-content)/);
     });
 });
