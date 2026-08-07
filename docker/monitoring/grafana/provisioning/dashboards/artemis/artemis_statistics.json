@@ -1,9 +1,12 @@
 {
+    "uid": "d9vRDInMz",
     "annotations": {
         "list": [
             {
                 "builtIn": 1,
-                "datasource": "-- Grafana --",
+                "datasource": {
+                    "uid": "-- Grafana --"
+                },
                 "enable": true,
                 "hide": true,
                 "iconColor": "rgba(0, 211, 255, 1)",
@@ -26,9 +29,14 @@
     "panels": [
         {
             "aliasColors": {},
+            "autoMigrateFrom": "graph",
             "bars": false,
             "dashLength": 10,
             "dashes": false,
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_default"
+            },
             "fieldConfig": {
                 "defaults": {
                     "links": []
@@ -71,6 +79,10 @@
             "steppedLine": false,
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus_default"
+                    },
                     "expr": "sum(artemis_instance_websocket_users)",
                     "instant": false,
                     "interval": "",
@@ -86,7 +98,7 @@
                 "sort": 0,
                 "value_type": "individual"
             },
-            "type": "graph",
+            "type": "timeseries",
             "xaxis": {
                 "mode": "time",
                 "show": true,
@@ -113,9 +125,14 @@
         },
         {
             "aliasColors": {},
+            "autoMigrateFrom": "graph",
             "bars": false,
             "dashLength": 10,
             "dashes": false,
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_default"
+            },
             "fieldConfig": {
                 "defaults": {
                     "links": []
@@ -158,6 +175,10 @@
             "steppedLine": false,
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus_default"
+                    },
                     "expr": "artemis_instance_websocket_users",
                     "instant": false,
                     "interval": "",
@@ -173,7 +194,7 @@
                 "sort": 0,
                 "value_type": "individual"
             },
-            "type": "graph",
+            "type": "timeseries",
             "xaxis": {
                 "mode": "time",
                 "show": true,
@@ -200,9 +221,14 @@
         },
         {
             "aliasColors": {},
+            "autoMigrateFrom": "graph",
             "bars": false,
             "dashLength": 10,
             "dashes": false,
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_default"
+            },
             "fieldConfig": {
                 "defaults": {
                     "links": []
@@ -245,6 +271,10 @@
             "steppedLine": false,
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus_default"
+                    },
                     "expr": "sum by (instance_name) (artemis_health)",
                     "interval": "",
                     "legendFormat": "{{instance_name}}",
@@ -259,7 +289,7 @@
                 "sort": 0,
                 "value_type": "individual"
             },
-            "type": "graph",
+            "type": "timeseries",
             "xaxis": {
                 "mode": "time",
                 "show": true,
@@ -285,9 +315,14 @@
         },
         {
             "aliasColors": {},
+            "autoMigrateFrom": "graph",
             "bars": false,
             "dashLength": 10,
             "dashes": false,
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus_default"
+            },
             "fill": 1,
             "fillGradient": 0,
             "gridPos": {
@@ -324,6 +359,10 @@
             "steppedLine": false,
             "targets": [
                 {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus_default"
+                    },
                     "expr": "sum by (healthindicator) (artemis_health)",
                     "interval": "",
                     "legendFormat": "{{healthindicator}}",
@@ -338,7 +377,7 @@
                 "sort": 0,
                 "value_type": "individual"
             },
-            "type": "graph",
+            "type": "timeseries",
             "xaxis": {
                 "mode": "time",
                 "show": true,
@@ -364,8 +403,7 @@
         }
     ],
     "refresh": "30s",
-    "schemaVersion": 34,
-    "style": "dark",
+    "schemaVersion": 42,
     "tags": [],
     "templating": {
         "list": []
@@ -389,7 +427,6 @@
     },
     "timezone": "",
     "title": "Artemis Statistics",
-    "uid": "d9vRDInMz",
-    "version": 1,
-    "weekStart": ""
+    "weekStart": "",
+    "version": 2
 }

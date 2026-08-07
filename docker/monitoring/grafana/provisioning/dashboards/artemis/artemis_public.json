@@ -1,4 +1,5 @@
 {
+    "uid": "hsG-aUQ4k",
     "annotations": {
         "list": [
             {
@@ -24,8 +25,6 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 3,
-    "iteration": 1686231801578,
     "links": [],
     "liveNow": false,
     "panels": [
@@ -57,8 +56,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -123,8 +121,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -189,8 +186,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -255,8 +251,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -321,8 +316,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -417,8 +411,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -521,7 +514,8 @@
                         "last"
                     ],
                     "displayMode": "list",
-                    "placement": "right"
+                    "placement": "right",
+                    "showLegend": true
                 },
                 "orientation": "auto",
                 "showValue": "always",
@@ -589,8 +583,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -693,7 +686,8 @@
                         "last"
                     ],
                     "displayMode": "list",
-                    "placement": "right"
+                    "placement": "right",
+                    "showLegend": true
                 },
                 "orientation": "auto",
                 "showValue": "always",
@@ -755,7 +749,9 @@
                     },
                     "custom": {
                         "align": "auto",
-                        "displayMode": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
                         "inspect": false
                     },
                     "mappings": [],
@@ -763,8 +759,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -856,7 +851,9 @@
                     },
                     "custom": {
                         "align": "auto",
-                        "displayMode": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
                         "inspect": false
                     },
                     "mappings": [],
@@ -864,8 +861,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -970,7 +966,9 @@
                     },
                     "custom": {
                         "align": "auto",
-                        "displayMode": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
                         "inspect": false
                     },
                     "mappings": [],
@@ -978,8 +976,7 @@
                         "mode": "absolute",
                         "steps": [
                             {
-                                "color": "green",
-                                "value": null
+                                "color": "green"
                             },
                             {
                                 "color": "red",
@@ -1058,8 +1055,8 @@
             "type": "table"
         }
     ],
-    "schemaVersion": 36,
-    "style": "dark",
+    "refresh": "",
+    "schemaVersion": 42,
     "tags": [],
     "templating": {
         "list": [
@@ -1099,7 +1096,6 @@
     "timepicker": {},
     "timezone": "",
     "title": "Artemis Public Statistics",
-    "uid": "hsG-aUQ4k",
-    "version": 7,
-    "weekStart": ""
+    "weekStart": "",
+    "version": 8
 }

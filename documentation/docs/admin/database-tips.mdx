@@ -42,7 +42,7 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
 ```yaml
    services:
        mysql:
-           image: docker.io/library/mysql:9.5.0
+           image: docker.io/library/mysql:9.7.2
            environment:
                - MYSQL_DATABASE=Artemis
                - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -50,16 +50,15 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
                - 3306:3306
            command: >
                mysqld
-                   --lower_case_table_names=1 --skip-ssl
+                   --lower_case_table_names=1 --tls-version=''
                    --character_set_server=utf8mb4
                    --collation-server=utf8mb4_unicode_ci
                    --explicit_defaults_for_timestamp
-                   --default-authentication-plugin=mysql_native_password
            networks:
                - db-migration
 
        postgres:
-           image: docker.io/library/postgres:18.3-alpine
+           image: docker.io/library/postgres:18.4-alpine
            environment:
                - POSTGRES_USER=root
                - POSTGRES_DB=Artemis
