@@ -699,13 +699,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
             return oldTitle;
         }, course);
 
-        ProgrammingExercise importedExercise = importResult.importedExercise();
+        var importedExercise = importResult.importedExercise();
         String oldTitle = (String) importResult.additionalData();
 
         assertThat(importedExercise).isNotNull();
-        assertThat(importedExercise.getTitle()).isEqualTo(newTitle);
-        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
-        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+        assertThat(importedExercise.title()).isEqualTo(newTitle);
+        assertThat(importedExercise.programmingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
+        assertThat(importedExercise.course()).isNotNull();
+        assertThat(importedExercise.course().id()).isEqualTo(course.getId());
 
         String projectKey = importResult.parsedExercise().getProjectKey();
         Path exercisePath = Path.of(repoClonePath, projectKey);
@@ -721,12 +722,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void importFromFile_validImportZip() throws Exception {
 
         ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> null, course);
-        ProgrammingExercise importedExercise = importResult.importedExercise();
+        var importedExercise = importResult.importedExercise();
 
         assertThat(importedExercise).isNotNull();
-        assertThat(importedExercise.getTitle()).isEqualTo(importResult.parsedExercise().getTitle());
-        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
-        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+        assertThat(importedExercise.title()).isEqualTo(importResult.parsedExercise().getTitle());
+        assertThat(importedExercise.programmingLanguage()).isEqualTo(importResult.parsedExercise().getProgrammingLanguage());
+        assertThat(importedExercise.course()).isNotNull();
+        assertThat(importedExercise.course().id()).isEqualTo(course.getId());
     }
 
     /**
@@ -746,7 +748,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         }, course);
 
         // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
-        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importResult.importedExercise().getId());
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importResult.importedExercise().id());
         assertThat(storedLinks).hasSize(1);
         assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
         assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
@@ -770,7 +772,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
-        Course targetCourse = courseUtilService.addEmptyCourse();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
                 targetCourse);
@@ -799,9 +801,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // Get participations from the imported exercise
         TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository
-                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
+                .findByProgrammingExerciseId(importResult.importedExercise().id()).orElseThrow();
         SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository
-                .findByProgrammingExerciseId(importResult.importedExercise().getId()).orElseThrow();
+                .findByProgrammingExerciseId(importResult.importedExercise().id()).orElseThrow();
 
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
