@@ -9,6 +9,7 @@ import { PageableResult, SearchTermPageableSearch } from 'app/foundation/paginat
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -462,7 +463,7 @@ export class CourseManagementService implements OnDestroy {
      * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
      * @param search         pagination, search term, and sort info
      */
-    getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<User>> {
+    getPagedUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, search: SearchTermPageableSearch): Observable<PageableResult<CourseRoleMember>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -471,7 +472,7 @@ export class CourseManagementService implements OnDestroy {
             searchTerm: search.searchTerm,
         };
         return this.http
-            .get<User[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params, observe: 'response' })
+            .get<CourseRoleMember[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/paged`, { params, observe: 'response' })
             .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
     }
 

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
@@ -518,10 +519,11 @@ public class CourseAccessResource {
      */
     @GetMapping("courses/{courseId}/{courseRoleSlug}/paged")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<User>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, SearchTermPageableSearchDTO<String> search) {
+    public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug,
+            SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
         CourseRole role = CourseRole.fromRole(Role.fromString(courseRoleSlug));
-        Page<User> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
+        Page<CourseRoleMemberDTO> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

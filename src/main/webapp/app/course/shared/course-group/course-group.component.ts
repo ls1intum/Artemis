@@ -22,6 +22,7 @@ import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { Button, ButtonDirective } from 'primeng/button';
+import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 
 @Component({
     selector: 'jhi-course-group',
@@ -44,8 +45,8 @@ export class CourseGroupComponent {
 
     private readonly tableViewRef = viewChild(TableViewComponent);
     private lazyLoadGeneration = 0;
-    readonly profilePictureTemplate = viewChild<CellTemplateRef<User>>('profilePictureTemplate');
-    readonly loginTemplate = viewChild<CellTemplateRef<User>>('loginTemplate');
+    readonly profilePictureTemplate = viewChild<CellTemplateRef<CourseRoleMember>>('profilePictureTemplate');
+    readonly loginTemplate = viewChild<CellTemplateRef<CourseRoleMember>>('loginTemplate');
     private readonly addUsersModal = viewChild(UserRegistrationModalComponent);
     private readonly importDialog = viewChild(UsersImportDialogComponent);
 
@@ -76,7 +77,7 @@ export class CourseGroupComponent {
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    readonly rows = signal<User[]>([]);
+    readonly rows = signal<CourseRoleMember[]>([]);
     readonly totalRows = signal<number>(0);
     /** Unfiltered total — only updated when no search term is active, so the export button stays visible during searches. */
     readonly totalMembers = signal<number>(0);
@@ -115,7 +116,7 @@ export class CourseGroupComponent {
         searchPlaceholder: 'artemisApp.course.courseGroup.searchForUsers',
     };
 
-    readonly columns = computed<ColumnDef<User>[]>(() => [
+    readonly columns = computed<ColumnDef<CourseRoleMember>[]>(() => [
         {
             headerKey: 'artemisApp.course.courseGroup.profilePicture',
             width: '5rem',
@@ -192,11 +193,11 @@ export class CourseGroupComponent {
     /**
      * Remove user from course group.
      *
-     * @param user User that should be removed from the currently viewed course group
+     * @param member Member that should be removed from the currently viewed course group
      */
-    removeFromGroup(user: User): void {
-        if (user.login) {
-            this.removeUserFromGroup()(user.login).subscribe({
+    removeFromGroup(member: CourseRoleMember): void {
+        if (member.login) {
+            this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
                     this.tableViewRef()?.reload();
