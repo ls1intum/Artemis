@@ -280,13 +280,13 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
     void shouldImportExerciseFromSharingPlatform() throws Exception {
-        userUtilService.addInstructor("sharing-import-instructors", INSTRUCTOR_NAME);
         // Expectations have to be registered before the first request: the details call and the import each fetch the
         // basket item once.
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN, ExpectedCount.twice());
         ImportProgrammingExerciseRequestDTO exerciseDetails = loadExerciseDetails();
 
         Course course = courseUtilService.addEmptyCourse();
+        userUtilService.addInstructorToCourse(INSTRUCTOR_NAME, course);
         Competency competency = competencyUtilService.createCompetency(course);
         SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exerciseDetails, course.getId(), correctSharingInfo());
 
@@ -299,9 +299,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
             assertThat(response.get("id").asLong()).isPositive();
             assertThat(response.get("type").asText()).isEqualTo("programming");
             assertThat(response.get("title").asText()).isEqualTo(exerciseDetails.title());
-            // The nested course with its group names drives the client access rights and the follow-up navigation.
+            // The nested course drives the follow-up navigation, so it must not be flattened to an id.
             assertThat(response.get("course").get("id").asLong()).isEqualTo(course.getId());
-            assertThat(response.get("course").get("instructorGroupName").asText()).isEqualTo(course.getInstructorGroupName());
+            assertThat(response.get("course").get("title").asText()).isEqualTo(course.getTitle());
 
             long importedExerciseId = response.get("id").asLong();
             savedExercise = programmingExerciseRepository.findByIdElseThrow(importedExerciseId);

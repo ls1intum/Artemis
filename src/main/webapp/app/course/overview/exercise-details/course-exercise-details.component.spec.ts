@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -66,20 +66,8 @@ import { ProblemStatementComponent } from 'app/course/overview/exercise-details/
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { Component, input } from '@angular/core';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 
-// Simple mock to avoid ng-mocks issues with signal-based viewChild
-@Component({
-    selector: 'jhi-exercise-chatbot-button',
-    template: '',
-    standalone: true,
-})
-class MockIrisExerciseChatbotButtonComponent {
-    readonly mode = input<ChatServiceMode>();
-}
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -209,9 +197,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
-        }).overrideComponent(CourseExerciseDetailsComponent, {
-            remove: { imports: [IrisExerciseChatbotButtonComponent] },
-            add: { imports: [MockIrisExerciseChatbotButtonComponent] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
@@ -692,6 +677,31 @@ describe('CourseExerciseDetailsComponent', () => {
         participationWebsocketBehaviorSubject.next(changedParticipation);
 
         const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    it('should keep submission history while applying a live transition to finished', () => {
+        comp.exercise = { ...exercise } as Exercise;
+        const existingParticipation = {
+            id: 555,
+            exercise: comp.exercise,
+            initializationState: InitializationState.INITIALIZED,
+            submissions: [{ id: 1 } as Submission, { id: 2 } as Submission],
+        } as StudentParticipation;
+        comp.studentParticipations = [existingParticipation];
+
+        comp.subscribeForNewResults();
+
+        const changedParticipation = {
+            id: 555,
+            exercise: { id: comp.exercise!.id },
+            initializationState: InitializationState.FINISHED,
+            submissions: [{ id: 3 } as Submission],
+        } as StudentParticipation;
+        participationWebsocketBehaviorSubject.next(changedParticipation);
+
+        const merged = comp.studentParticipations.find((p) => p.id === 555);
+        expect(merged?.initializationState).toBe(InitializationState.FINISHED);
         expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
     });
 });

@@ -441,7 +441,7 @@ public class ProgrammingExerciseTaskService {
             String testIds = replacer.apply(testNames, testCases);
 
             // construct a new task using the testids
-            return "[task][%s](%s)".formatted(taskName, testIds);
+            return Matcher.quoteReplacement("[task][%s](%s)".formatted(taskName, testIds));
         });
     }
 
@@ -463,15 +463,15 @@ public class ProgrammingExerciseTaskService {
             // matchResult: Full UML diagram (everything between @startuml and @enduml)
             String diagram = matchResult.group();
             Matcher tests = TESTSCOLOR_PATTERN.matcher(diagram);
-            return tests.replaceAll(testsMatchResult -> {
+            return Matcher.quoteReplacement(tests.replaceAll(testsMatchResult -> {
                 // testsMatchResult: one testscolor instance, e.g. testsColor(testAttributes[BubbleSort])
                 String fullMatch = testsMatchResult.group();
                 // group 1: test name, e.g, testAttributes[BubbleSort]
                 String testName = testsMatchResult.group(1);
                 // id to insert, e.g., <testid>15</testid>
                 String testId = replacer.apply(testName, testCases);
-                return fullMatch.replace(testName, testId);
-            });
+                return Matcher.quoteReplacement(fullMatch.replace(testName, testId));
+            }));
         });
     }
 

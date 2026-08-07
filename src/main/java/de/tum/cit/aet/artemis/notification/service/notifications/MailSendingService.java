@@ -155,6 +155,26 @@ public class MailSendingService {
     }
 
     /**
+     * Builds and sends an e-mail to the specified recipient synchronously and reports whether it was actually sent.
+     * Unlike {@link #buildAndSendAsync}, this blocks until the send completes and returns {@code false} if mail is not
+     * configured, the template/subject could not be rendered, or the SMTP server rejected the message. Use this for the
+     * GDPR "warn before erase" flows, where an account/course must only be advanced to the "warned" state once a warning
+     * was really delivered, so that an SMTP outage warns nobody (and therefore erases nobody) rather than silently
+     * scheduling deletions for warnings that never arrived.
+     *
+     * @param recipient                  who should be contacted.
+     * @param subjectKey                 The locale key of the subject
+     * @param subjectArgs                The arguments to be substituted in the subject message (e.g., for {0}, {1} placeholders)
+     * @param contentTemplate            The thymeleaf .html file path to render
+     * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     * @return {@code true} if the e-mail was successfully handed to the SMTP server, {@code false} otherwise
+     */
+    public boolean buildAndSendSyncReporting(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
+            @NonNull Map<String, Object> additionalContextVariables) {
+        return buildAndSend(recipient, subjectKey, subjectArgs, contentTemplate, additionalContextVariables);
+    }
+
+    /**
      * Builds and sends an e-mail to the specified recipient
      *
      * @param recipient                  who should be contacted.
@@ -163,7 +183,7 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    private void buildAndSend(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
+    private boolean buildAndSend(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
             @NonNull Map<String, Object> additionalContextVariables) {
         String localeKey = recipient.langKey();
         if (localeKey == null) {
@@ -185,10 +205,10 @@ public class MailSendingService {
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
             log.error("Failed to build email with subject key '{}' and template '{}': {}", subjectKey, contentTemplate, ex.getMessage(), ex);
-            return;
+            return false;
         }
 
-        executeSend(recipient.email(), recipient.login(), subject, content, false, true);
+        return executeSend(recipient.email(), recipient.login(), subject, content, false, true);
     }
 
     /**
@@ -201,10 +221,10 @@ public class MailSendingService {
      * @param isMultipart    Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml         Whether the mail should support HTML tags
      */
-    private void executeSend(String recipientEmail, String recipientLogin, String subject, String content, boolean isMultipart, boolean isHtml) {
+    private boolean executeSend(String recipientEmail, String recipientLogin, String subject, String content, boolean isMultipart, boolean isHtml) {
         if (!mailConfigured) {
             log.debug("Skipping email to '{}' - mail not configured", recipientEmail);
-            return;
+            return false;
         }
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipientLogin, subject);
 
@@ -218,10 +238,12 @@ public class MailSendingService {
             message.setText(content, isHtml);
             javaMailSender.send(mimeMessage);
             log.info("Sent email with subject '{}' to user '{}'", subject, recipientLogin);
+            return true;
         }
         catch (MailException | MessagingException e) {
             log.error("Email could not be sent to user '{}'", recipientLogin, e);
             // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
+            return false;
         }
     }
 

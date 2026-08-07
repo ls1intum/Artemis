@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,12 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -42,12 +47,15 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     private ProgrammingExercise programmingExercise;
 
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother1");
-        additionalEmptyCourse = courseUtilService.addEmptyCourse();
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        userUtilService.addInstructor(TEST_PREFIX + "other" + "instructor42");
+        additionalEmptyCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
         programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
@@ -61,7 +69,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExerciseBasis_baseReferencesGotCloned() {
-        final var newlyImported = importExerciseBase();
+        // Re-fetch the imported exercise with all references eagerly initialized instead of relying on lazy proxies:
+        // the import runs without an open session, so a returned lazy collection could not be read here.
+        final var newlyImported = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importExerciseBase());
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
         assertThat(newlyImported).isNotSameAs(programmingExercise);
@@ -77,10 +87,11 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
         assertThat(newlyImported.getNumberOfSubmissions()).isNull();
-        assertThat(newlyImported.getAttachments()).isNull();
-        assertThat(newlyImported.getTutorParticipations()).isNull();
-        assertThat(newlyImported.getExampleSubmissions()).isNull();
-        assertThat(newlyImported.getStudentParticipations()).isNull();
+        // Student-facing data is not copied, so these collections are empty on the imported exercise.
+        assertThat(newlyImported.getAttachments()).isEmpty();
+        assertThat(newlyImported.getTutorParticipations()).isEmpty();
+        assertThat(newlyImported.getExampleSubmissions()).isEmpty();
+        assertThat(newlyImported.getStudentParticipations()).isEmpty();
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
         assertThat(programmingExercise.getTestCases()).noneMatch(testCase -> newTestCaseIDs.contains(testCase.getId()));
@@ -140,7 +151,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
@@ -170,7 +181,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     private void testSearchTermMatchesId() throws Exception {
-        final Course course = courseUtilService.addEmptyCourse();
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
@@ -198,8 +209,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
-        programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork", false);
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA, TEST_PREFIX);
+        programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork",
+                TEST_PREFIX);
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming/programming-exercises", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }
@@ -224,9 +236,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13", TEST_PREFIX);
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Python", TEST_PREFIX);
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12", TEST_PREFIX);
         final var searchPython = pageableSearchUtilService.configureSearch("Python");
         final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage()).hasSize(1);
@@ -248,7 +260,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExercise.setTitle(title);
         programmingExerciseRepository.save(programmingExercise);
 
-        var otherCourse = courseUtilService.addCourseInOtherInstructionGroupAndExercise("Programming");
+        var otherCourse = courseUtilService.addCourseWithExercise("Programming");
         var otherProgrammingExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         otherProgrammingExercise.setTitle(title);
         programmingExerciseRepository.save(otherProgrammingExercise);
@@ -299,6 +311,54 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
         assertThat(programmingExercise.getBuildConfig().getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(importedExercise.getBuildConfig().getBuildPlanAccessSecret());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void findForCreationById_assemblesTheCompleteGraphFromItsSeparateQueries() {
+        // findForCreationById combines three queries: the main graph plus one each for the grading criteria (with their
+        // structured instructions) and the competency links, which would otherwise multiply the main query's result set.
+        // Creation and import return its result without an open session, so every part has to be initialized here -
+        // dropping one of the extra lookups makes the corresponding assertion fail with a LazyInitializationException.
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(programmingExercise));
+        var expectedCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
+        assertThat(expectedCriteria).as("precondition: the exercise has grading criteria").isNotEmpty();
+        assertThat(expectedCriteria).as("precondition: the criteria carry structured instructions").anyMatch(criterion -> !criterion.getStructuredGradingInstructions().isEmpty());
+
+        var loaded = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+
+        assertThat(loaded.getGradingCriteria()).hasSameSizeAs(expectedCriteria);
+        assertThat(loaded.getGradingCriteria()).as("the nested grading instructions are initialized as well")
+                .anyMatch(criterion -> !criterion.getStructuredGradingInstructions().isEmpty());
+        // The Atlas competency import adds to this collection after the import returns, so it must be readable.
+        assertThat(loaded.getCompetencyLinks()).isNotNull();
+        // The main graph is still part of the same result.
+        assertThat(loaded.getBuildConfig()).isNotNull();
+        assertThat(loaded.getTemplateParticipation()).isNotNull();
+        assertThat(loaded.getSolutionParticipation()).isNotNull();
+        assertThat(loaded.getCategories()).isNotNull();
+        assertThat(loaded.getAuxiliaryRepositories()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExerciseBasis_doesNotRollBackWhenItFailsPartway() {
+        // The import deliberately runs without a surrounding transaction, so a failure partway does NOT roll back what was
+        // already written - the caller (e.g. ExamImportService) reports such an exercise as incomplete instead. Pin that
+        // documented trade-off: re-introducing @Transactional would roll the exercise back and fail this test, forcing a
+        // conscious decision rather than a silent behavior change.
+        doThrow(new RuntimeException("simulated failure while setting up the solution participation")).when(programmingExerciseParticipationService)
+                .setupInitialSolutionParticipation(any());
+
+        final var toBeImported = createToBeImported();
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported))
+                .withMessageContaining("simulated failure");
+
+        // The exercise is persisted before the participations are set up, so it survives the failure.
+        assertThat(toBeImported.getId()).as("the new exercise was persisted before the failure").isNotNull();
+        assertThat(programmingExerciseRepository.findById(toBeImported.getId())).as("the partially imported exercise is not rolled back").isPresent();
+        // The source exercise must not be affected by the failed import.
+        assertThat(programmingExerciseRepository.findById(programmingExercise.getId())).isPresent();
     }
 
     private ProgrammingExercise importExerciseBase() {

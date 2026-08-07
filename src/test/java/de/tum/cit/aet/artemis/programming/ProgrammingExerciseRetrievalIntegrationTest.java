@@ -109,15 +109,11 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.solutionParticipation()).isNotNull();
         assertThat(response.solutionParticipation().type()).isEqualTo("solution");
 
-        // The nested course must not be flattened to an id: client access rights are computed from the group names.
+        // The nested course must not be flattened to an id: the client renders display links off it.
         assertThat(response.course()).isNotNull();
         assertThat(response.course().id()).isEqualTo(course.getId());
         assertThat(response.course().title()).isEqualTo(course.getTitle());
         assertThat(response.course().shortName()).isEqualTo(course.getShortName());
-        assertThat(response.course().studentGroupName()).isEqualTo(course.getStudentGroupName());
-        assertThat(response.course().teachingAssistantGroupName()).isEqualTo(course.getTeachingAssistantGroupName());
-        assertThat(response.course().editorGroupName()).isEqualTo(course.getEditorGroupName());
-        assertThat(response.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
         // Read by the presentation-score control on the programming grading form.
         assertThat(response.course().presentationScore()).isEqualTo(course.getPresentationScore());
         assertThat(response.exerciseGroup()).isNull();
@@ -144,13 +140,11 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.exerciseGroup().exam().numberOfCorrectionRoundsInExam()).isEqualTo(exam.getNumberOfCorrectionRoundsInExam());
         assertThat(response.exerciseGroup().exam().publishResultsDate()).isEqualTo(exam.getPublishResultsDate());
         assertThat(response.exerciseGroup().exam().exampleSolutionPublicationDate()).isEqualTo(exam.getExampleSolutionPublicationDate());
-        // Exam navigation and access rights walk exerciseGroup.exam.course; a flat exam id kills both.
+        // Exam navigation walks exerciseGroup.exam.course; a flat exam id kills it.
         assertThat(response.exerciseGroup().exam().course()).isNotNull();
         assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(exam.getCourse().getId());
-        assertThat(response.exerciseGroup().exam().course().instructorGroupName()).isEqualTo(exam.getCourse().getInstructorGroupName());
-        assertThat(response.exerciseGroup().exam().course().editorGroupName()).isEqualTo(exam.getCourse().getEditorGroupName());
-        assertThat(response.exerciseGroup().exam().course().teachingAssistantGroupName()).isEqualTo(exam.getCourse().getTeachingAssistantGroupName());
-        assertThat(response.exerciseGroup().exam().course().studentGroupName()).isEqualTo(exam.getCourse().getStudentGroupName());
+        assertThat(response.exerciseGroup().exam().course().title()).isEqualTo(exam.getCourse().getTitle());
+        assertThat(response.exerciseGroup().exam().course().shortName()).isEqualTo(exam.getCourse().getShortName());
     }
 
     @Test
@@ -217,7 +211,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.title()).isEqualTo(exercise.getTitle());
         assertThat(response.maxPoints()).isEqualTo(exercise.getMaxPoints());
         assertThat(response.course()).isNotNull();
-        assertThat(response.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+        assertThat(response.course().title()).isEqualTo(course.getTitle());
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -249,7 +243,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(submission.results().getFirst().participation()).isNull();
         assertThat(response.testRepositoryUri()).isEqualTo(exercise.getTestRepositoryUri());
         assertThat(response.course()).isNotNull();
-        assertThat(response.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+        assertThat(response.course().title()).isEqualTo(course.getTitle());
     }
 
     @Test
@@ -272,7 +266,7 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getProgrammingExerciseWithAuxiliaryRepository_carriesAuxiliaryRepositoriesAndCourseGroups() throws Exception {
+    void getProgrammingExerciseWithAuxiliaryRepository_carriesAuxiliaryRepositoriesAndNestedCourse() throws Exception {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
 
         ProgrammingExerciseResponseDTO response = request.get(EXERCISE_BASE + exercise.getId() + "/with-auxiliary-repository", HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
@@ -285,10 +279,10 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(returnedAuxiliaryRepository.name()).isEqualTo(auxiliaryRepository.getName());
         assertThat(returnedAuxiliaryRepository.checkoutDirectory()).isEqualTo(auxiliaryRepository.getCheckoutDirectory());
         assertThat(returnedAuxiliaryRepository.description()).isEqualTo(auxiliaryRepository.getDescription());
-        // The VCS access log button is gated on the nested course group names.
+        // The VCS access log button is gated on the nested course being present at all.
         assertThat(response.course()).isNotNull();
-        assertThat(response.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
-        assertThat(response.course().editorGroupName()).isEqualTo(course.getEditorGroupName());
+        assertThat(response.course().id()).isEqualTo(course.getId());
+        assertThat(response.course().title()).isEqualTo(course.getTitle());
 
         // The auxiliary repository ids must survive a second read: the client sends them back on the next update.
         ProgrammingExerciseResponseDTO secondResponse = request.get(EXERCISE_BASE + exercise.getId() + "/with-auxiliary-repository", HttpStatus.OK,

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Drops schema that no entity maps and no code references any more.
+
+    Determined by diffing the Hibernate mapping model (built from all annotated classes) against the
+    schema Liquibase produces, then verifying every candidate against the whole repository - server,
+    client, tests and generated OpenAPI - not just src/main/java.
+
+    Three of these were already tracked in the code:
+      - Result.java              "TODO: drop the legacy feedbacks_order DB column"
+      - ProgrammingExercise.java "TODO: delete publish_build_plan_url from exercise using liquibase"
+      - DragAndDropQuestion.java / ShortAnswerQuestion.java  correct_mappings_order, issue #12807
+
+    Note on the initial schema: the four dropped tables are still created by
+    00000000000000_initial_schema.xml, which cannot be edited - it consists of only three changesets
+    covering the entire schema, so changing it would invalidate a checksum already recorded on every
+    installation. Fresh installations therefore create these tables and drop them again here, which
+    costs milliseconds. Same reasoning for the dropped columns.
+
+    DROP COLUMN is INSTANT on MySQL 8.0.29+, so table size is irrelevant - feedback (42.8M rows /
+    8.5GB) drops as quickly as a small table. No space is reclaimed until a table is next rebuilt.
+    -->
+
+    <!-- ===================================================================== -->
+    <!-- Ordering columns orphaned by @OrderColumn removals                    -->
+    <!-- ===================================================================== -->
+
+    <!-- #12610 stopped ordering result.feedbacks to avoid the @OrderColumn null-index race. -->
+    <changeSet id="20260728223939-01-drop-feedback-feedbacks-order" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="feedback" columnName="feedbacks_order"/>
+        </preConditions>
+        <dropColumn tableName="feedback" columnName="feedbacks_order"/>
+    </changeSet>
+
+    <!-- #12640 converted the quiz mapping collections to bidirectional mappedBy; tracked in #12807. -->
+    <changeSet id="20260728223939-02-drop-drag-and-drop-mapping-order" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="drag_and_drop_mapping" columnName="correct_mappings_order"/>
+        </preConditions>
+        <dropColumn tableName="drag_and_drop_mapping" columnName="correct_mappings_order"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-03-drop-short-answer-mapping-order" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="short_answer_mapping" columnName="correct_mappings_order"/>
+        </preConditions>
+        <dropColumn tableName="short_answer_mapping" columnName="correct_mappings_order"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Legacy exercise columns                                               -->
+    <!-- ===================================================================== -->
+
+    <changeSet id="20260728223939-04-drop-exercise-publish-build-plan-url" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="publish_build_plan_url"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="publish_build_plan_url"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-05-drop-exercise-allowed-per-tutor-batch-count" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allowed_per_tutor_batch_count"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="allowed_per_tutor_batch_count"/>
+    </changeSet>
+
+    <!-- Legacy quiz fields. The client's "isVisibleBeforeStart" occurrences are a dropdown string
+         literal and stale spec fixtures, not part of the client model. -->
+    <changeSet id="20260728223939-06-drop-exercise-is-planned-to-start" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="is_planned_to_start"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="is_planned_to_start"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-07-drop-exercise-is-visible-before-start" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="is_visible_before_start"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="is_visible_before_start"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Other orphaned columns                                                -->
+    <!-- ===================================================================== -->
+
+    <changeSet id="20260728223939-08-drop-jhi-user-external-llm-usage-accepted" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="jhi_user" columnName="external_llm_usage_accepted"/>
+        </preConditions>
+        <dropColumn tableName="jhi_user" columnName="external_llm_usage_accepted"/>
+    </changeSet>
+
+    <!-- Unrelated to the client's Apollon assessment.modelElementId, which is a different concept. -->
+    <changeSet id="20260728223939-09-drop-plagiarism-submission-element-model-element-id" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="plagiarism_submission_element" columnName="model_element_id"/>
+        </preConditions>
+        <dropColumn tableName="plagiarism_submission_element" columnName="model_element_id"/>
+    </changeSet>
+
+    <!-- Testwise coverage was removed; no "testwise" reference remains anywhere in the codebase. -->
+    <changeSet id="20260728223939-10-drop-build-config-testwise-coverage-enabled" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="programming_exercise_build_config" columnName="testwise_coverage_enabled"/>
+        </preConditions>
+        <dropColumn tableName="programming_exercise_build_config" columnName="testwise_coverage_enabled"/>
+    </changeSet>
+
+    <!-- The Exercise <-> TeamAssignmentConfig relation is owned by exercise.team_assignment_config_id;
+         TeamAssignmentConfig.exercise is the mappedBy side. This column has no foreign key, only a
+         stray UNIQUE index which is dropped along with it. -->
+    <changeSet id="20260728223939-11-drop-team-assignment-config-exercise-id" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="team_assignment_config" columnName="exercise_id"/>
+        </preConditions>
+        <dropColumn tableName="team_assignment_config" columnName="exercise_id"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-12-drop-tutor-participation-points" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="tutor_participation" columnName="points"/>
+        </preConditions>
+        <dropColumn tableName="tutor_participation" columnName="points"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Iris session legacy columns - completing a staged deletion            -->
+    <!-- ===================================================================== -->
+    <!--
+    20260410144433 replaced iris_session.exercise_id / lecture_id with the polymorphic entity_id plus
+    chat_mode, and renamed the old columns rather than dropping them ("rename-first delete policy...
+    the actual dropColumn happens in a later release once we are confident no rollback is needed").
+    That release is this one.
+
+    Verified against production before dropping: of 359,948 rows with legacy_exercise_id, 359,947 have
+    entity_id equal to it; of 75,346 with legacy_lecture_id, 75,345 match. The two exceptions are
+    pre-existing inconsistencies where the discriminator disagreed with the populated legacy column,
+    so the migration derived entity_id from the other one. Their values are recorded here so the
+    information survives the drop:
+
+      iris_session 634671  chat_mode=COURSE_CHAT   entity_id=531   legacy_lecture_id=1824
+      iris_session 676908  chat_mode=LECTURE_CHAT  entity_id=1824  legacy_exercise_id=19195
+    -->
+
+    <changeSet id="20260728223939-13-drop-iris-session-legacy-exercise-id" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="iris_session" columnName="legacy_exercise_id"/>
+        </preConditions>
+        <dropColumn tableName="iris_session" columnName="legacy_exercise_id"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-14-drop-iris-session-legacy-lecture-id" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="iris_session" columnName="legacy_lecture_id"/>
+        </preConditions>
+        <dropColumn tableName="iris_session" columnName="legacy_lecture_id"/>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- Dead tables                                                           -->
+    <!-- ===================================================================== -->
+    <!--
+    Testwise coverage was removed from the product; competency_learning_path is orphaned because
+    LearningPath.competencies is @Transient. None of the four is mapped by an entity and none is
+    referenced anywhere in the codebase. All their foreign keys point outward, so nothing live
+    references them - dropped children first.
+    -->
+
+    <changeSet id="20260728223939-15-drop-testwise-coverage-report-entry" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="testwise_coverage_report_entry"/>
+        </preConditions>
+        <dropTable tableName="testwise_coverage_report_entry"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-16-drop-coverage-file-report" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="coverage_file_report"/>
+        </preConditions>
+        <dropTable tableName="coverage_file_report"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-17-drop-coverage-report" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="coverage_report"/>
+        </preConditions>
+        <dropTable tableName="coverage_report"/>
+    </changeSet>
+
+    <changeSet id="20260728223939-18-drop-competency-learning-path" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="competency_learning_path"/>
+        </preConditions>
+        <dropTable tableName="competency_learning_path"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -17,12 +17,30 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Client Guidelines',
-                    items: ['guidelines/client-development', 'guidelines/client-theming', 'guidelines/client-tests', 'guidelines/tum-ui-kit'],
+                    items: [
+                        'guidelines/client-development',
+                        'guidelines/client-theming',
+                        'guidelines/client-tests',
+                        'guidelines/tum-ui-kit',
+                        {
+                            type: 'doc',
+                            label: 'TUM UI component reference',
+                            id: 'tum-ui',
+                        },
+                    ],
                 },
                 {
                     type: 'category',
                     label: 'Server Guidelines',
-                    items: ['guidelines/server-development', 'guidelines/rest-api', 'guidelines/server-tests', 'guidelines/database', 'guidelines/caching', 'guidelines/performance', 'guidelines/criteria-builder'],
+                    items: [
+                        'guidelines/server-development',
+                        'guidelines/rest-api',
+                        'guidelines/server-tests',
+                        'guidelines/database',
+                        'guidelines/caching',
+                        'guidelines/performance',
+                        'guidelines/criteria-builder',
+                    ],
                 },
                 {
                     type: 'category',
@@ -38,6 +56,7 @@ const sidebars: SidebarsConfig = {
         'builds-and-dependencies',
         'e2e-testing-playwright',
         'spring-ai',
+        'ai-pipelines',
         'aeolus',
         'openapi',
         'docker-compose',

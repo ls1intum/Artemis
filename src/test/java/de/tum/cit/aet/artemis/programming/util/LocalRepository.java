@@ -11,6 +11,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ResetCommand.ResetType;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -138,6 +139,7 @@ public class LocalRepository {
 
     /**
      * Configures the local and origin repositories instantiating the origin repository as a bare repository and making sure the default branch name is set correctly.
+     * If the origin repository already contains commits, the working copy continues that history instead of starting a new one.
      *
      * @param repoBasePath           The base path where the repositories will be created
      * @param localRepoFileName      name of the local repository to be used as the prefix for the folder
@@ -153,7 +155,8 @@ public class LocalRepository {
         workingCopyGitRepo = initialize(localRepoPath, defaultBranch, false);
 
         remoteBareGitRepoFile = originRepositoryFolder.toAbsolutePath().toFile();
-        // Create a bare remote repository.
+        boolean originHasHistory = hasCommits(originRepositoryFolder);
+        // Create a bare remote repository. This is a no-op for an origin repository that already exists.
         remoteBareGitRepo = initialize(remoteBareGitRepoFile.toPath(), defaultBranch, true);
 
         workingCopyGitRepo.remoteAdd().setName("origin").setUri(new URIish(remoteBareGitRepoFile.toURI().toString())).call();
@@ -164,6 +167,15 @@ public class LocalRepository {
         refUpdate.setForceUpdate(true);
         refUpdate.link("refs/heads/" + defaultBranch);
 
+        if (originHasHistory) {
+            // The origin repository was already created and filled elsewhere, e.g. when the participation was created
+            // (see ParticipationUtilService#ensureLocalVcRepositoryExists). Adopt its history: an unrelated initial commit could only be pushed as a
+            // non-fast-forward, and JGit reports that in the push result instead of throwing, so the working copy would silently diverge from the origin.
+            workingCopyGitRepo.fetch().setRemote("origin").call();
+            workingCopyGitRepo.reset().setMode(ResetType.HARD).setRef("origin/" + defaultBranch).call();
+            return;
+        }
+
         // Push a file to the remote repository to create the default branch there.
         // This is needed because the local CI system only considers pushes that update the existing default branch.
         Path filePath = localRepoPath.resolve("test.txt");
@@ -171,6 +183,22 @@ public class LocalRepository {
         workingCopyGitRepo.add().addFilepattern("test.txt").call();
         GitService.commit(workingCopyGitRepo).setMessage("Initial commit").call();
         workingCopyGitRepo.push().setRemote("origin").call();
+    }
+
+    /**
+     * Checks whether the given folder already holds a git repository that has at least one commit on its current branch.
+     *
+     * @param repositoryFolder the folder of the (bare) repository to inspect
+     * @return true if the repository exists and is not empty, false otherwise
+     * @throws IOException if reading the repository fails
+     */
+    private static boolean hasCommits(Path repositoryFolder) throws IOException {
+        if (!Files.exists(repositoryFolder.resolve(Constants.HEAD))) {
+            return false;
+        }
+        try (Repository repository = new FileRepositoryBuilder().setGitDir(repositoryFolder.toFile()).build()) {
+            return repository.resolve(Constants.HEAD) != null;
+        }
     }
 
     // This method tries to build a valid, but unique (random) LocalVCRepositoryUri from the given base path and local repository file name.

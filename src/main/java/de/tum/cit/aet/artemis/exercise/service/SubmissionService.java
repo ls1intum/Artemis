@@ -2,18 +2,21 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -38,13 +41,12 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -67,7 +69,7 @@ public class SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    private final Optional<ExamDateApi> examDateApi;
+    private static final String ENTITY_NAME = "submission";
 
     private final ExerciseDateService exerciseDateService;
 
@@ -97,8 +99,8 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -106,7 +108,6 @@ public class SubmissionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
-        this.examDateApi = examDateApi;
         this.exerciseDateService = exerciseDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
@@ -161,7 +162,7 @@ public class SubmissionService {
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -174,7 +175,7 @@ public class SubmissionService {
      * @return the locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
     }
 
     /**
@@ -704,12 +705,7 @@ public class SubmissionService {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
-            if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
-                throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
-            }
+            checkThatAssessmentIsPossibleElseThrow(exercise, null);
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
@@ -725,6 +721,59 @@ public class SubmissionService {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
+        }
+    }
+
+    /**
+     * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
+     * student and, for programming exercises, that the tests have run once more on the final submissions.
+     * <p>
+     * This is the shared gate every endpoint that opens an assessment goes through, for all exercise types: without it
+     * tutors can start grading while students are still working, and would grade a submission the student then replaces
+     * (see issue #13358). It is a no-op for course exercises (they are covered by
+     * {@link #checkIfExerciseDueDateIsReached}) and for instructor test runs, which happen before the exam starts and
+     * must stay assessable.
+     * <p>
+     * NOTE: the check is exam-wide, i.e. based on the latest individual end date of all student exams, not on the
+     * individual student behind the given participation. Granting one student more working time therefore postpones
+     * assessment of the whole exercise. For test exams the latest individual end date is derived from the start of the
+     * availability window rather than from each attempt, so the gate opens earlier than the last attempt can end; test
+     * exams cannot be assessed anyway, as they are validated to zero correction rounds.
+     *
+     * @param exercise      the exercise whose submission a tutor wants to assess
+     * @param participation the participation the submission belongs to, or {@code null} if no specific participation is
+     *                          addressed (then test runs cannot be detected, which is correct for endpoints that never
+     *                          serve test run submissions)
+     * @throws AccessForbiddenAlertException if assessment is not possible yet, carrying the date from which on it is
+     */
+    public void checkThatAssessmentIsPossibleElseThrow(Exercise exercise, @Nullable Participation participation) {
+        if (!exercise.isExamExercise()) {
+            return;
+        }
+        if (participation instanceof StudentParticipation studentParticipation && studentParticipation.isTestRun()) {
+            return;
+        }
+
+        var examAssessmentDates = exerciseDateService.getExamAssessmentDates(exercise);
+        if (examAssessmentDates == null) {
+            // the exam has no dates yet, so there is nothing to wait for; this matches the previous behaviour
+            return;
+        }
+        final ZonedDateTime now = ZonedDateTime.now();
+        if (now.isBefore(examAssessmentDates.latestExamEndDate())) {
+            log.debug("Assessment of exam exercise '{}' is not possible yet, the exam is over for all students at {}.", exercise.getTitle(),
+                    examAssessmentDates.latestExamEndDate());
+            throw new AccessForbiddenAlertException(
+                    "Assessment is not possible yet, the exam of exercise '" + exercise.getTitle() + "' is still running until " + examAssessmentDates.latestExamEndDate(),
+                    ENTITY_NAME, "assessmentNotPossibleExamRunning", Map.of("date", ISO_OFFSET_DATE_TIME.format(examAssessmentDates.latestExamEndDate())), true);
+        }
+        if (now.isBefore(examAssessmentDates.assessmentPossibleFrom())) {
+            log.debug("Assessment of exam exercise '{}' is not possible yet, the tests still run on the final submissions until {}.", exercise.getTitle(),
+                    examAssessmentDates.assessmentPossibleFrom());
+            throw new AccessForbiddenAlertException(
+                    "Assessment is not possible yet, the tests of exercise '" + exercise.getTitle() + "' still run on the final submissions until "
+                            + examAssessmentDates.assessmentPossibleFrom(),
+                    ENTITY_NAME, "assessmentNotPossibleTestsPending", Map.of("date", ISO_OFFSET_DATE_TIME.format(examAssessmentDates.assessmentPossibleFrom())), true);
         }
     }
 

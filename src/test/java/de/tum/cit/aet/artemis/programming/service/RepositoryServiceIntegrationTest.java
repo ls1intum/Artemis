@@ -6,7 +6,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
@@ -19,6 +22,8 @@ import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -42,6 +47,8 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     private String seededContent;
 
+    private ProgrammingExerciseStudentParticipation participation;
+
     @BeforeEach
     void setUp() throws Exception {
         projectKey = ("RSV" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)).toUpperCase();
@@ -60,6 +67,9 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         localRepository.workingCopyGitRepo.push().setRemote("origin").call();
 
         repositoryUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
+        participation = new ProgrammingExerciseStudentParticipation();
+        participation.setProgrammingExercise(new ProgrammingExercise());
+        participation.setRepositoryUri(repositoryUri);
     }
 
     @AfterEach
@@ -86,5 +96,61 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
 
         assertThat(filesAfterDeadline).containsEntry(seededFilePath, seededContent);
         assertThat(filesBeforeDeadline).isEmpty();
+    }
+
+    @Test
+    void getSelectedFilesContentSkipsBlobAbovePerFileLimit() throws Exception {
+        String smallFilePath = "src/Small.java";
+        String largeFilePath = "src/Large.java";
+        FileUtils.writeStringToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(smallFilePath).toFile(), "class Small {}", StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(largeFilePath).toFile(),
+                new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES + 1]);
+        String commitHash = commitAndPushSelectedFiles();
+
+        Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation,
+                Set.of(smallFilePath, largeFilePath));
+
+        assertThat(files).containsOnlyKeys(smallFilePath);
+    }
+
+    @Test
+    void getSelectedFilesContentEnforcesAggregateLimit() throws Exception {
+        Set<String> filePaths = new HashSet<>();
+        byte[] content = new byte[(int) RepositoryService.MAX_SELECTED_FILE_SIZE_BYTES];
+        Arrays.fill(content, (byte) 'a');
+        for (int i = 0; i < 6; i++) {
+            String filePath = "src/File" + i + ".java";
+            FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(filePath).toFile(), content);
+            filePaths.add(filePath);
+        }
+        String commitHash = commitAndPushSelectedFiles();
+
+        Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation, filePaths);
+
+        assertThat(files).hasSize(5);
+        assertThat(files.values().stream().mapToLong(value -> value.getBytes(StandardCharsets.UTF_8).length).sum())
+                .isEqualTo(RepositoryService.MAX_SELECTED_FILES_TOTAL_SIZE_BYTES);
+    }
+
+    @Test
+    void getSelectedFilesContentDetectsBinariesByContent() throws Exception {
+        String shellScriptPath = "run.sh";
+        String binaryFilePath = "plain.txt";
+        String shellScript = "#!/bin/sh\necho hello\n";
+        FileUtils.writeStringToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(shellScriptPath).toFile(), shellScript, StandardCharsets.UTF_8);
+        FileUtils.writeByteArrayToFile(localRepository.workingCopyGitRepoFile.toPath().resolve(binaryFilePath).toFile(), new byte[] { 0, 1, 2 });
+        String commitHash = commitAndPushSelectedFiles();
+
+        Map<String, String> files = repositoryService.getFilesContentAtCommit(participation.getProgrammingExercise(), commitHash, null, participation,
+                Set.of(shellScriptPath, binaryFilePath));
+
+        assertThat(files).containsOnly(Map.entry(shellScriptPath, shellScript));
+    }
+
+    private String commitAndPushSelectedFiles() throws Exception {
+        localRepository.workingCopyGitRepo.add().addFilepattern(".").call();
+        var commit = de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopyGitRepo).setMessage("add selected files").call();
+        localRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        return commit.getName();
     }
 }

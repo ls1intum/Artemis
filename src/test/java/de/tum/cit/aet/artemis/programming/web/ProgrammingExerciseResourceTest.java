@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExerciseJsonFromZip;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,7 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -29,12 +31,15 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -66,11 +71,25 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
 
-    @Autowired
-    private UserUtilService userUtilService;
+    /** The timeline a variant group owns in the tests below; its members must keep exactly these dates. */
+    private static final ZonedDateTime GROUP_BASE_DATE = ZonedDateTime.parse("2099-01-01T00:00:00Z");
+
+    private static final ZonedDateTime GROUP_RELEASE_DATE = GROUP_BASE_DATE.plusDays(1);
+
+    private static final ZonedDateTime GROUP_START_DATE = GROUP_BASE_DATE.plusDays(2);
+
+    private static final ZonedDateTime GROUP_DUE_DATE = GROUP_BASE_DATE.plusDays(7);
+
+    private static final ZonedDateTime GROUP_ASSESSMENT_DUE_DATE = GROUP_BASE_DATE.plusDays(14);
+
+    /** Stays with the exercise rather than the group; the update only re-derives it from the group's due date. */
+    private static final ZonedDateTime EXERCISE_BUILD_AND_TEST_DATE = GROUP_DUE_DATE.plusHours(1);
+
+    /** Title an update request sets alongside the (rejected) timeline change, to prove the rest of the update still lands. */
+    private static final String RENAMED_VARIANT_TITLE = "Renamed variant";
 
     @Autowired
-    protected UserTestRepository userTestRepository;
+    private UserUtilService userUtilService;
 
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -91,13 +110,16 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
-    private CourseTestRepository courseRepository;
+    private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     @Autowired
     private ExamTestRepository examRepository;
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
@@ -138,18 +160,10 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @BeforeEach
     void setup() {
-        String studentParticipationGroupName = TEST_PREFIX + "studentParticipationGroup";
-
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<String> student1Groups = new HashSet<>(student1.getGroups());
-        student1Groups.add(studentParticipationGroupName);
-        student1.setGroups(student1Groups);
-        userTestRepository.save(student1);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setStudentGroupName(studentParticipationGroupName);
-        course = courseRepository.save(course);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
 
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -169,11 +183,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
-
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepo");
         localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
@@ -203,11 +212,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportRepositoryWithFullHistory() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
-
         var localRepo = new LocalRepository(defaultBranch);
         var originRepoPath = tempPath.resolve("testOriginRepo");
         localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
@@ -295,12 +299,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testExportedExerciseJsonWithCategories() throws Exception {
-        // GIVEN
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
-
         /*
          * The factory method populateUnreleasedProgrammingExercise() will call
          * programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2"))).
@@ -363,8 +361,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // GIVEN
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         // Create a programming exercise and explicitly clear all categories
         // (The factory method populateUnreleasedProgrammingExercise() normally adds "cat1" and "cat2")
@@ -403,8 +400,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProblemStatement_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
-        addInstructorToCourse();
-
         String tooLongProblemStatement = "a".repeat(100_001);
 
         request.patchWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement", tooLongProblemStatement, String.class,
@@ -414,8 +409,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testCreateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
-        addInstructorToCourse();
-
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
 
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
@@ -430,8 +423,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_withTooLongProblemStatement_shouldReturnBadRequest() throws Exception {
-        addInstructorToCourse();
-
         programmingExercise.setProblemStatement("a".repeat(100_001));
 
         request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
@@ -441,8 +432,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_preservesBuildAndTestDateOffset() throws Exception {
-        addInstructorToCourse();
-
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // Setup exercise with an AFTER_DUE_DATE phase
@@ -478,9 +467,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExercise_preservesExamBuildAndTestDateOffset() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        course = programmingExercise.getExerciseGroup().getExam().getCourse();
-        addInstructorToCourse();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
@@ -520,9 +507,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testUpdateProgrammingExerciseTimeline_preservesExamBuildAndTestDateOffset() throws Exception {
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        course = programmingExercise.getExerciseGroup().getExam().getCourse();
-        addInstructorToCourse();
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
@@ -637,13 +622,11 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(response.assessmentType()).isEqualTo(programmingExercise.getAssessmentType());
         assertThat(response.includedInOverallScore()).isEqualTo(programmingExercise.getIncludedInOverallScore());
         assertThat(response.testRepositoryUri()).isEqualTo(programmingExercise.getTestRepositoryUri());
-        // the nested course is mandatory: access rights are computed from the group names, not from a flat course id
+        // the nested course is mandatory: the client renders display links off it, not off a flat course id
         assertThat(response.course()).isNotNull();
         assertThat(response.course().id()).isEqualTo(course.getId());
-        assertThat(response.course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
-        assertThat(response.course().teachingAssistantGroupName()).isEqualTo(course.getTeachingAssistantGroupName());
-        assertThat(response.course().editorGroupName()).isEqualTo(course.getEditorGroupName());
-        assertThat(response.course().studentGroupName()).isEqualTo(course.getStudentGroupName());
+        assertThat(response.course().title()).isEqualTo(course.getTitle());
+        assertThat(response.course().shortName()).isEqualTo(course.getShortName());
         assertThat(response.exerciseGroup()).isNull();
     }
 
@@ -672,7 +655,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(response.exerciseGroup().exam().title()).isEqualTo(exerciseGroup.getExam().getTitle());
         assertThat(response.exerciseGroup().exam().course()).isNotNull();
         assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(course.getId());
-        assertThat(response.exerciseGroup().exam().course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+        assertThat(response.exerciseGroup().exam().course().title()).isEqualTo(course.getTitle());
     }
 
     /**
@@ -961,10 +944,97 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
     }
 
+    /**
+     * A variant group owns the shared timeline of its members, but the general update endpoint applies the request's dates
+     * straight onto the managed entity — so without a server-side guard a stale client or a direct request could
+     * desynchronize a member from its group, changing student availability and build scheduling. The dates here are
+     * incidental among many other fields, so the server overwrites them from the group rather than rejecting the request:
+     * the unrelated part of the edit still lands, and the member's timeline self-heals.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExerciseCannotChangeVariantGroupTimeline() throws Exception {
+        attachProgrammingExerciseToVariantGroup();
+        requestTimelineShiftAlongsideUnownedChange();
+
+        request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+
+        assertTimelinePinnedToGroup();
+    }
+
+    /**
+     * The re-evaluate endpoint runs the same field-copy step as the general update before persisting, so it needs the
+     * same guard: otherwise re-evaluating a grouped exercise is a second way to desynchronize its timeline.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testReEvaluateProgrammingExerciseCannotChangeVariantGroupTimeline() throws Exception {
+        attachProgrammingExerciseToVariantGroup();
+        requestTimelineShiftAlongsideUnownedChange();
+
+        request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+
+        assertTimelinePinnedToGroup();
+    }
+
+    // The /timeline guard for group members is covered by ExerciseVariantGroupIntegrationTest.
+
+    /** Puts {@link #programmingExercise} into a variant group whose timeline it already matches. */
+    private void attachProgrammingExerciseToVariantGroup() throws JsonProcessingException {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setReleaseDate(GROUP_RELEASE_DATE);
+        group.setStartDate(GROUP_START_DATE);
+        group.setDueDate(GROUP_DUE_DATE);
+        group.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        // Without an AFTER_DUE_DATE phase the automatic service clears the build-and-test date on every update, which
+        // would hide whether the group guard leaves that exercise-owned date alone.
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        programmingExercise.setExerciseVariantGroup(exerciseVariantGroupRepository.save(group));
+        programmingExercise.setReleaseDate(GROUP_RELEASE_DATE);
+        programmingExercise.setStartDate(GROUP_START_DATE);
+        programmingExercise.setDueDate(GROUP_DUE_DATE);
+        programmingExercise.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE);
+        // The group does not own this date, so it stays with the exercise (re-derived from the group's due date).
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(EXERCISE_BUILD_AND_TEST_DATE);
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    /** Moves every group-owned date on the in-memory exercise, alongside a change the group does not own. */
+    private void requestTimelineShiftAlongsideUnownedChange() {
+        programmingExercise.setTitle(RENAMED_VARIANT_TITLE);
+        programmingExercise.setReleaseDate(GROUP_RELEASE_DATE.plusDays(2));
+        programmingExercise.setStartDate(GROUP_START_DATE.plusDays(2));
+        programmingExercise.setDueDate(GROUP_DUE_DATE.plusDays(2));
+        programmingExercise.setAssessmentDueDate(GROUP_ASSESSMENT_DUE_DATE.plusDays(2));
+    }
+
+    private void assertTimelinePinnedToGroup() {
+        var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(exerciseFromDb.getReleaseDate().toInstant()).as("the group's release date wins over the request's").isCloseTo(GROUP_RELEASE_DATE.toInstant(),
+                within(1, SECONDS));
+        assertThat(exerciseFromDb.getStartDate().toInstant()).as("the group's start date wins over the request's").isCloseTo(GROUP_START_DATE.toInstant(), within(1, SECONDS));
+        assertThat(exerciseFromDb.getDueDate().toInstant()).as("the group's due date wins over the request's").isCloseTo(GROUP_DUE_DATE.toInstant(), within(1, SECONDS));
+        assertThat(exerciseFromDb.getAssessmentDueDate().toInstant()).as("the group's assessment due date wins over the request's").isCloseTo(GROUP_ASSESSMENT_DUE_DATE.toInstant(),
+                within(1, SECONDS));
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).as("the exercise-owned build-and-test date is left alone")
+                .isCloseTo(EXERCISE_BUILD_AND_TEST_DATE.toInstant(), within(1, SECONDS));
+        assertThat(exerciseFromDb.getTitle()).as("the rest of the update still applies").isEqualTo(RENAMED_VARIANT_TITLE);
+    }
+
+    /**
+     * Grants the mock instructor at least instructor rights on {@link #course}. Since course membership moved from
+     * group-name strings to explicit user course roles, the role row has to be written rather than a group name set.
+     */
     private void addInstructorToCourse() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        course.setInstructorGroupName(instructor.getGroups().iterator().next());
-        courseRepository.save(course);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 }

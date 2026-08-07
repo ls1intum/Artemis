@@ -17,19 +17,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 /**
  * Light, cycle-free course projection embedded in programming-exercise responses.
  * <p>
- * The unchanged Angular client reads {@code exercise.course} for display links, for access rights (the four group
- * names), for course-level complaint configuration and, on the programming grading form, for
- * {@code course.presentationScore}. It carries every component of {@link CourseForQuizExerciseDTO} plus
- * {@code presentationScore}, which that shared record does not have and which must not be added to it.
+ * The unchanged Angular client reads {@code exercise.course} for display links, for course-level complaint
+ * configuration and, on the programming grading form, for {@code course.presentationScore}. It carries every
+ * component of {@link CourseForQuizExerciseDTO} plus {@code presentationScore}, which that shared record does not
+ * have and which must not be added to it.
  *
  * @param id                                    the course id
  * @param title                                 the course title
  * @param description                           the course description
  * @param shortName                             the course short name used in API paths
- * @param studentGroupName                      the student group name (access rights)
- * @param teachingAssistantGroupName            the tutor group name (access rights)
- * @param editorGroupName                       the editor group name (access rights)
- * @param instructorGroupName                   the instructor group name (access rights)
  * @param startDate                             when the course starts
  * @param endDate                               when the course ends
  * @param enrollmentStartDate                   when enrollment opens
@@ -53,12 +49,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * @param presentationScore                     the course presentation score (read by the grading form)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingExerciseCourseDTO(Long id, String title, String description, String shortName, String studentGroupName, String teachingAssistantGroupName,
-        String editorGroupName, String instructorGroupName, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate,
-        ZonedDateTime unenrollmentEndDate, String semester, boolean testCourse, Language language, ProgrammingLanguage defaultProgrammingLanguage, Boolean onlineCourse,
-        CourseInformationSharingConfiguration courseInformationSharingConfiguration, Integer maxComplaints, Integer maxTeamComplaints, int maxComplaintTimeDays,
-        int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean complaintsEnabled, boolean requestMoreFeedbackEnabled,
-        Integer accuracyOfScores, Integer presentationScore) implements Serializable {
+public record ProgrammingExerciseCourseDTO(Long id, String title, String description, String shortName, ZonedDateTime startDate, ZonedDateTime endDate,
+        ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate, String semester, boolean testCourse, Language language,
+        ProgrammingLanguage defaultProgrammingLanguage, Boolean onlineCourse, CourseInformationSharingConfiguration courseInformationSharingConfiguration, Integer maxComplaints,
+        Integer maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, int maxComplaintTextLimit, int maxComplaintResponseTextLimit,
+        boolean complaintsEnabled, boolean requestMoreFeedbackEnabled, Integer accuracyOfScores, Integer presentationScore) implements Serializable {
 
     /**
      * Creates a {@link ProgrammingExerciseCourseDTO} from a {@link Course}.
@@ -70,8 +65,7 @@ public record ProgrammingExerciseCourseDTO(Long id, String title, String descrip
         if (course == null) {
             return null;
         }
-        return new ProgrammingExerciseCourseDTO(course.getId(), course.getTitle(), course.getDescription(), course.getShortName(), course.getStudentGroupName(),
-                course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
+        return new ProgrammingExerciseCourseDTO(course.getId(), course.getTitle(), course.getDescription(), course.getShortName(), course.getStartDate(), course.getEndDate(),
                 course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.getSemester(), course.isTestCourse(), course.getLanguage(),
                 course.getDefaultProgrammingLanguage(), course.isOnlineCourse(), course.getCourseInformationSharingConfiguration(), course.getMaxComplaints(),
                 course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(), course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(),

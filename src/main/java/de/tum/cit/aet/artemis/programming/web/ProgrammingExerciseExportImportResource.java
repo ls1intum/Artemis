@@ -226,9 +226,10 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
         programmingExerciseValidationService.validateDockerFlags(newExercise);
+        programmingExerciseValidationService.validatePackageName(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
         log.debug("REST request to import programming exercise {} into course {}", sourceExerciseId, course.getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
@@ -321,7 +322,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExerciseResponseDTO> importProgrammingExerciseFromFile(@PathVariable long courseId,
             @RequestPart("programmingExercise") ImportProgrammingExerciseRequestDTO programmingExerciseRequest, @RequestPart("file") MultipartFile zipFile) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         // Legacy archives carry fields the current model no longer has; the request record ignores them while keeping
         // the template and solution repository URIs the import needs.
         ProgrammingExercise programmingExercise = programmingExerciseRequest.toEntity();
@@ -399,7 +400,7 @@ public class ProgrammingExerciseExportImportResource {
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
 
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
         if (repositoryExportOptions.exportAllParticipants()) {
             // only instructors are allowed to download all repos
@@ -438,7 +439,7 @@ public class ProgrammingExerciseExportImportResource {
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
 
         // Only instructors or higher may override the anonymization setting

@@ -21,6 +21,18 @@ export interface CourseActionItem {
     action?: (item?: CourseActionItem) => void;
 }
 
+/**
+ * Longest sidebar item label, in characters, that the navigation sidebar is sized to show in full — in every
+ * language, so German is the case that matters. The width lives in `--sidebar-nav-width` (tailwind.css) and is
+ * deliberately the narrowest that fits, so a longer label would be cut off rather than widen the sidebar.
+ *
+ * This is a guard rail, not a guarantee: glyph widths differ, so a short label with wide letters can still be wider
+ * than a longer one — "Benachrichtigung" (16) needs more room than "LTI Konfiguration" (17). The width therefore
+ * carries headroom over the measured minimum, and `rules/sidebar-item-label-length.spec.mjs` keeps every label,
+ * English and German, within this cap. If a new label needs more, widen the sidebar deliberately and raise both.
+ */
+export const MAX_SIDEBAR_ITEM_LABEL_LENGTH = 17;
+
 export interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;

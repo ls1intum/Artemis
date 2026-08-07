@@ -162,15 +162,11 @@ class ProgrammingExerciseDtoMappingTest {
     }
 
     @Test
-    void responseDtoOfCourseExerciseCarriesTheNestedCourseWithGroupNames() {
+    void responseDtoOfCourseExerciseCarriesTheNestedCourse() {
         Course course = new Course();
         course.setId(5L);
         course.setTitle("Software Engineering");
         course.setShortName("SE");
-        course.setStudentGroupName("se-students");
-        course.setTeachingAssistantGroupName("se-tutors");
-        course.setEditorGroupName("se-editors");
-        course.setInstructorGroupName("se-instructors");
         course.setPresentationScore(2);
 
         ProgrammingExercise exercise = new ProgrammingExercise();
@@ -184,10 +180,8 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.exerciseGroup()).isNull();
         assertThat(dto.course()).isNotNull();
         assertThat(dto.course().id()).isEqualTo(5L);
-        assertThat(dto.course().studentGroupName()).isEqualTo("se-students");
-        assertThat(dto.course().teachingAssistantGroupName()).isEqualTo("se-tutors");
-        assertThat(dto.course().editorGroupName()).isEqualTo("se-editors");
-        assertThat(dto.course().instructorGroupName()).isEqualTo("se-instructors");
+        assertThat(dto.course().title()).isEqualTo("Software Engineering");
+        assertThat(dto.course().shortName()).isEqualTo("SE");
         assertThat(dto.course().presentationScore()).isEqualTo(2);
         assertThat(dto.categories()).containsExactly("[\"easy\"]");
         assertThat(dto.gradingInstructionFeedbackUsed()).isTrue();
@@ -198,7 +192,6 @@ class ProgrammingExerciseDtoMappingTest {
         Course course = new Course();
         course.setId(9L);
         course.setTitle("Exam course");
-        course.setInstructorGroupName("exam-instructors");
 
         Exam exam = new Exam();
         exam.setId(3L);
@@ -230,7 +223,7 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.exerciseGroup().exam().exampleSolutionPublicationDate()).isEqualTo(exam.getExampleSolutionPublicationDate());
         assertThat(dto.exerciseGroup().exam().course()).isNotNull();
         assertThat(dto.exerciseGroup().exam().course().id()).isEqualTo(9L);
-        assertThat(dto.exerciseGroup().exam().course().instructorGroupName()).isEqualTo("exam-instructors");
+        assertThat(dto.exerciseGroup().exam().course().title()).isEqualTo("Exam course");
     }
 
     // --- Request DTOs: write-side defaults the entity does not provide ---------------------------------------------

@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
@@ -63,13 +64,17 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final SubmissionService submissionService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
+            SubmissionService submissionService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionService = submissionService;
     }
 
     /**
@@ -85,10 +90,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     public ResponseEntity<ProgrammingAssessmentResultDTO> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdateDTO assessmentUpdate,
             @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
+        // NOTE: no assessment availability check here. A complaint can only exist once the results have been published,
+        // which is long after the exam is over, so the check could only ever reject a legitimate complaint response
+        // (e.g. after an instructor moved the exam dates during the review period). The other exercise types do not
+        // gate their complaint responses either.
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException();
         }
@@ -107,12 +116,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
+     * @param resultId     the id of the result to cancel; without it the newest correction round is released
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
     @PutMapping("programming-submissions/{submissionId}/cancel-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
-        return super.cancelAssessment(submissionId);
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        return super.cancelAssessment(submissionId, resultId);
     }
 
     /**
@@ -132,7 +142,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result newManualResult = manualResultBody.toEntity();
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
         Result existingManualResult = participation.getSubmissions().stream()
@@ -155,6 +165,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
+        submissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
