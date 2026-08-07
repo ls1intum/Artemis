@@ -13,6 +13,17 @@
     p-multiselect {
         min-width: 0;
         max-width: 30rem;
+
+        /*
+         * Outlined like the buttons beside it, from the tokens their own outline comes from, so the row reads as one
+         * family of controls and the dark theme follows without a rule of its own.
+         */
+        border-color: var(--p-button-outlined-primary-border-color);
+
+        /* ::ng-deep because the chevron belongs to PrimeNG's own view, which a page-scoped selector never reaches. */
+        ::ng-deep .p-multiselect-dropdown svg {
+            color: var(--p-button-outlined-primary-color);
+        }
     }
 
     /* The buttons keep their label width; only the filter above shrinks. */
@@ -28,11 +39,18 @@
      * room for them. Same threshold as `.title-bar-collapsible-label`, so the filter and the subscribe button give way
      * together rather than one at a time.
      */
-    .filter-compact {
-        display: none;
+    /* The funnel sits left of the chips at any width; only the count next to it is reserved for the narrow bar. */
+    .filter-indicator {
+        display: inline-flex;
         align-items: center;
         gap: 0.25rem;
+        margin-inline-end: 0.375rem;
         line-height: normal;
+        color: var(--p-button-outlined-primary-color);
+    }
+
+    .filter-count {
+        display: none;
     }
 
     /* The label itself is normalised by `title-bar-compact-controls`; a page stylesheet cannot reach into PrimeNG's view. */
@@ -113,8 +131,8 @@
             display: none;
         }
 
-        .filter-compact {
-            display: inline-flex;
+        .filter-count {
+            display: inline;
         }
     }
 }

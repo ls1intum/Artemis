@@ -21,10 +21,13 @@
 
             <ng-template #selecteditems>
                 @if (selectedFilterOptions().length) {
-                    <!-- Stands in for the chips once the bar is too narrow for them; the count keeps the selection visible. -->
-                    <span class="filter-compact">
+                    <!--
+                        The funnel names the control at any width. Once the bar is too narrow for the chips, the count
+                        beside it stands in for them, so the size of the selection stays visible.
+                    -->
+                    <span class="filter-indicator">
                         <fa-icon [icon]="faFilter" />
-                        <span>{{ selectedFilterOptions().length }}</span>
+                        <span class="filter-count">{{ selectedFilterOptions().length }}</span>
                     </span>
                     <div class="chips-section">
                         @for (optionWithMetadata of selectedFilterOptions(); track optionWithMetadata.option) {
