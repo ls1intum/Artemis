@@ -10,10 +10,10 @@ import { CalendarViewStateService } from 'app/calendar/shared/service/calendar-v
  * Switches between the two calendar overviews.
  *
  * The breakpoint is the calendar's own rather than the app-wide handset one, which in landscape is 960px — far wider
- * than this page needs. With its controls down to icons the desktop bar still fits at a 574px bar, 20px to spare;
- * below that the month title starts to truncate, which is where the mobile overview takes over.
+ * than this page needs. With its controls down to icons the desktop bar holds well below that; the handover sits
+ * just above the width where the month title starts to truncate, with room to spare rather than at the exact edge.
  */
-const CALENDAR_MOBILE_BREAKPOINT = '(max-width: 650px)';
+const CALENDAR_MOBILE_BREAKPOINT = '(max-width: 670px)';
 
 @Component({
     selector: 'jhi-calendar-container',

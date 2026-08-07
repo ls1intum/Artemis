@@ -1,6 +1,7 @@
 <div class="frame">
     <div class="header">
-        <button pButton size="small" (click)="goToPrevious()" data-testid="previous-button">
+        <!-- Outlined like the desktop overview's arrows: a filled primary made these two the loudest thing on the page. -->
+        <button pButton size="small" outlined (click)="goToPrevious()" data-testid="previous-button">
             <div class="chevron">
                 <fa-icon [icon]="faChevronLeft" />
             </div>
@@ -19,7 +20,7 @@
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" [isMobile]="true" #subscriptionPopover />
             </div>
         }
-        <button pButton size="small" (click)="goToNext()" data-testid="next-button">
+        <button pButton size="small" outlined (click)="goToNext()" data-testid="next-button">
             <div class="chevron">
                 <fa-icon [icon]="faChevronRight" />
             </div>
