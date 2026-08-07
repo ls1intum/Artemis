@@ -18,7 +18,7 @@ import { IrisAskUserService } from 'app/iris/overview/ask-user/services/iris-ask
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 /**
  * Button that lets a student start the editor-controlled in-class ask-user quiz for an exercise, reflecting

@@ -12,10 +12,10 @@ export function mockCourseSettings(courseId: number = 1, enabled: boolean = true
         courseId,
         settings: {
             enabled,
-            promptingModeEnabled: true,
+            askUserModeEnabled: true,
             customInstructions: 'Test instructions',
             variant: 'default',
-            promptingModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
+            askUserModeSettings: { minQuestions: 3, maxQuestions: 5, timeLimitQuestion: 20, timeLimitInClass: 15 },
             rateLimit: { requests: 100, timeframeHours: 24 },
         },
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },

@@ -4,7 +4,7 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-iris-in-class-quiz-start-warning',

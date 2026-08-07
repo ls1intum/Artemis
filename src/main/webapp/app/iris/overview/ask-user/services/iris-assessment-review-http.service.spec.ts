@@ -39,7 +39,7 @@ describe('IrisAssessmentReviewHttpService', () => {
     });
 
     it('should accept assessment answers', () => {
-        service.acceptAnswers(7).subscribe((response) => expect(response.status).toBe(200));
+        service.acceptAnswers(7).subscribe((response) => expect(response.status).toBe(204));
 
         const request = httpMock.expectOne('api/iris/assessments/7/accept');
         expect(request.request.method).toBe('PATCH');
@@ -48,7 +48,7 @@ describe('IrisAssessmentReviewHttpService', () => {
     });
 
     it('should reject assessment answers', () => {
-        service.rejectAnswers(7).subscribe((response) => expect(response.status).toBe(200));
+        service.rejectAnswers(7).subscribe((response) => expect(response.status).toBe(204));
 
         const request = httpMock.expectOne('api/iris/assessments/7/reject');
         expect(request.request.method).toBe('PATCH');

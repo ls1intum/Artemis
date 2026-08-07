@@ -27,8 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiButtonDirective, TumUiTableDirective } from '@tumaet/ui-angular';
 
 /**
  * A student participation enriched with the router links and repository URI needed to

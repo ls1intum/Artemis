@@ -16,8 +16,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { IrisAssessmentReviewResolvedData } from 'app/iris/overview/ask-user/services/iris-assessment-review-resolver.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiTableDirective } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiButtonComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-iris-assessment-review',

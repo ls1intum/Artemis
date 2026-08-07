@@ -10,7 +10,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 /**
  * Button that links to the Iris assessment review page for a participation, showing the current verdict

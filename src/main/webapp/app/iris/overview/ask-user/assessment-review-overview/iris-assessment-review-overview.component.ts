@@ -26,9 +26,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-import { TumUiPaginatorComponent } from 'app/shared-ui/tum-ui/paginator/tum-ui-paginator.component';
+import { TumUiButtonDirective, TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
 
 /**
  * Filter properties for a result

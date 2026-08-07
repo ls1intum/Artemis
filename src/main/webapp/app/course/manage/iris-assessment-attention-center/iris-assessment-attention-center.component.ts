@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 /**
  * Displays a box on the course detail page that draws instructors'/tutors' attention to Iris assessments
