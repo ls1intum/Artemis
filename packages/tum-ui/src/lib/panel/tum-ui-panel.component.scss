@@ -16,6 +16,10 @@
 .tum-ui-panel-title {
     line-height: 1;
     font-weight: 600;
+
+    // Let projected `[tumUiPanelHeader]` markup use the full row width.
+    flex: 1;
+    min-width: 0;
 }
 
 .tum-ui-panel-toggler {

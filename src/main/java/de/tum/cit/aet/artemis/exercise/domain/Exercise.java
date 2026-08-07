@@ -143,6 +143,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercise_variant_group_id")
+    @JsonIgnoreProperties("exercises")
+    private ExerciseVariantGroup exerciseVariantGroup;
+
     // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
     // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -365,6 +370,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setExerciseGroup(ExerciseGroup exerciseGroup) {
         this.exerciseGroup = exerciseGroup;
+    }
+
+    public @Nullable ExerciseVariantGroup getExerciseVariantGroup() {
+        return exerciseVariantGroup;
+    }
+
+    public void setExerciseVariantGroup(@Nullable ExerciseVariantGroup exerciseVariantGroup) {
+        this.exerciseVariantGroup = exerciseVariantGroup;
     }
 
     @JsonIgnore
@@ -847,12 +860,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
-    /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     *
-     * @throws BadRequestAlertException if the dates are not valid
-     */
+    /** Validates the dates of this exercise. Subclasses extend it with type-specific checks. */
     public void validateDates() {
+        validateBaseDates();
+    }
+
+    /** Validates the date ordering shared by every exercise type. {@code final} so it stays callable on a QuizExercise whose lazy {@code quizBatches} are uninitialized. */
+    public final void validateBaseDates() {
         // All fields are optional, so there is no error if none of them is set
         if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
