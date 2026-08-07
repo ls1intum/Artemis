@@ -90,10 +90,22 @@ public record ProgrammingManualResultRequestDTO(Long id, Double score, Boolean s
         /**
          * Builds the feedback entity this item describes.
          * <p>
-         * {@code setDetailText} is called before {@code setHasLongFeedbackText} because the former resets the flag
-         * (and creates a long feedback row for an oversized text). That is exactly the order in which Jackson applied
-         * the two setters when this endpoint still bound the entity directly, so the long-feedback behavior is
-         * unchanged.
+         * {@code setDetailText} runs first because it computes {@code hasLongFeedbackText}: a detail text over
+         * {@link de.tum.cit.aet.artemis.core.config.Constants#FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH} attaches a new
+         * {@link de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText} and sets the flag. The client value must
+         * therefore never downgrade that computed {@code true}, which is why only an incoming {@code true} is applied.
+         * Both directions are needed:
+         * <ul>
+         * <li>Feedback the tutor just typed carries no flag — the client leaves the property out, and an absent
+         * property reads as {@code false} on a {@code boolean} component. Writing that {@code false} back drops the
+         * attached row out of {@code ResultService}'s long-feedback bookkeeping, the cascade then inserts it a second
+         * time, and the unique index on {@code long_feedback_text.feedback_id} rejects the save. Before this endpoint
+         * took a record the property was simply absent from the request and Jackson never called the setter, so the
+         * computed value stood.</li>
+         * <li>Feedback that already owns a long feedback row is posted with the truncated preview, which computes
+         * {@code false}; {@code ResultService} re-attaches the stored row only for a feedback with an id and the flag
+         * set, so the incoming {@code true} has to win there.</li>
+         * </ul>
          *
          * @return the feedback entity
          */
@@ -102,7 +114,9 @@ public record ProgrammingManualResultRequestDTO(Long id, Double score, Boolean s
             feedback.setId(id);
             feedback.setText(text);
             feedback.setDetailText(detailText);
-            feedback.setHasLongFeedbackText(hasLongFeedbackText);
+            if (hasLongFeedbackText) {
+                feedback.setHasLongFeedbackText(true);
+            }
             feedback.setReference(reference);
             feedback.setCredits(credits);
             feedback.setPositive(positive);

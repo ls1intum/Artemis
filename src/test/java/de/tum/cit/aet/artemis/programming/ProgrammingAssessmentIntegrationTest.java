@@ -47,6 +47,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO.ProgrammingManualFeedbackDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -794,6 +797,41 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(longFeedbackTexts).hasSize(1);
         assertThat(longFeedbackTexts.getFirst().getText()).isEqualTo(longText);
         assertThat(longFeedbackTexts.getFirst().getFeedback().getId()).isEqualTo(feedbackId);
+    }
+
+    /**
+     * The other half of the long-feedback contract: feedback the tutor has just typed. It has no id and no
+     * {@code hasLongFeedbackText} — the client leaves the property out, which reads as {@code false} on the request
+     * record. {@code Feedback#setDetailText} computed {@code true} for the oversized text and attached a long feedback
+     * row, so writing that {@code false} back hid the row from {@code ResultService}, the cascade inserted it twice and
+     * the unique index on {@code long_feedback_text.feedback_id} rejected the save with a 500.
+     */
+    @ParameterizedTest(name = "{displayName} [{index}] submit={0}")
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void creatingALongManualFeedbackStoresExactlyOneLongFeedbackRow(boolean submit) throws Exception {
+        var longText = "abc".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH);
+        var newFeedback = new ProgrammingManualFeedbackDTO(null, null, longText, false, null, 0.0, null, FeedbackType.MANUAL_UNREFERENCED, null, null, null);
+        var body = new ProgrammingManualResultRequestDTO(null, 0.0, null, true, List.of(newFeedback), null);
+
+        String url = "/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results";
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("submit", String.valueOf(submit));
+        var savedResult = request.putWithResponseBodyAndParams(url, body, ProgrammingAssessmentResultDTO.class, HttpStatus.OK, params);
+
+        assertThat(savedResult.feedbacks()).hasSize(1);
+        assertThat(savedResult.feedbacks().getFirst().hasLongFeedbackText()).isTrue();
+
+        // fresh-session assert: the flag on the stored row and exactly one long feedback text holding the full text
+        var storedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(savedResult.id());
+        assertThat(storedResult.getFeedbacks()).hasSize(1);
+        var storedFeedback = storedResult.getFeedbacks().iterator().next();
+        assertThat(storedFeedback.getHasLongFeedbackText()).isTrue();
+        assertThat(storedFeedback.getDetailText()).hasSizeLessThanOrEqualTo(Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH);
+        var longFeedbackTexts = longFeedbackTextRepository.findByFeedbackIds(List.of(storedFeedback.getId()));
+        assertThat(longFeedbackTexts).hasSize(1);
+        assertThat(longFeedbackTexts.getFirst().getText()).isEqualTo(longText);
+        assertThat(longFeedbackTexts.getFirst().getFeedback().getId()).isEqualTo(storedFeedback.getId());
     }
 
     private void assessmentDueDatePassed() {
