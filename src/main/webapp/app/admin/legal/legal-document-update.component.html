@@ -42,6 +42,7 @@
             <span jhiTranslate="entity.action.save"></span>
         </button>
         <tum-ui-select-button
+            [attr.aria-label]="'settings.form.language' | artemisTranslate"
             size="small"
             [options]="LANGUAGE_OPTIONS"
             [ngModel]="currentLanguage()"

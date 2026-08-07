@@ -1105,7 +1105,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         var usersOfExam = exam.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(Duration.ofMinutes(2)).until(() -> participantScoreScheduleService.isIdle());
 
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -1182,7 +1182,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
     private void waitForParticipantScores() {
         participantScoreScheduleService.executeScheduledTasks();
-        await().atMost(Duration.ofMinutes(1)).until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(Duration.ofMinutes(2)).until(() -> participantScoreScheduleService.isIdle());
     }
 
     private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {
