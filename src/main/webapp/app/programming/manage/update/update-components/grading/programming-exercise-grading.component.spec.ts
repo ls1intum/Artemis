@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -24,6 +25,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 /**
  * Typed view onto the `viewChild` signals so the spec can stub them without a blanket
@@ -95,6 +97,21 @@ describe('ProgrammingExerciseGradingComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
+    });
+
+    it('should render the group date notice first in the controls next to the timeline', () => {
+        fixture.componentRef.setInput('exercisePartOfExerciseGroup', true);
+        const editGroupDatesSpy = vi.spyOn(comp.editGroupDates, 'emit');
+        fixture.detectChanges();
+
+        const timelineControls = fixture.debugElement.query(By.css('jhi-programming-exercise-update-timeline .section'));
+        const notice = timelineControls.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+        expect(timelineControls.nativeElement.firstElementChild).toBe(notice.nativeElement);
+
+        (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+        expect(editGroupDatesSpy).toHaveBeenCalledOnce();
     });
 
     it('should create a grading summary', () => {

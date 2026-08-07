@@ -46,6 +46,7 @@ import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -72,6 +73,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
         ModelingExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
         ExerciseGroupTimelineLockComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

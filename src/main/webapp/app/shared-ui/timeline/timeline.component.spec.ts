@@ -62,6 +62,19 @@ describe('ExerciseTimeline', () => {
         });
     });
 
+    it('should disable individual items without affecting the other timeline controls', () => {
+        fixture.componentRef.setInput('timelineItems', [
+            { kind: 'optional', labelStringKey: 'release', date: signal(undefined), disabled: true },
+            { kind: 'optional', labelStringKey: 'due', date: signal(undefined) },
+        ] satisfies TimelineItem[]);
+
+        expect(component.internalTimelineItems().map((item) => item.isDisabled)).toEqual([true, false]);
+
+        fixture.componentRef.setInput('readonly', true);
+
+        expect(component.internalTimelineItems().map((item) => item.isDisabled)).toEqual([true, true]);
+    });
+
     it('should expose and emit timeline status changes', () => {
         const timelineItems: TimelineItem[] = [
             { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T10:00:00Z')) },

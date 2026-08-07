@@ -3,6 +3,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -53,6 +54,7 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 // Mock ResizeObserver globally
 class MockResizeObserverClass {
@@ -250,6 +252,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
                         ExerciseGroupTimelineLockStubComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
             })
@@ -268,6 +271,28 @@ describe('ModelingExerciseUpdateComponent', () => {
         if (fixture) {
             fixture.destroy();
         }
+    });
+
+    it('should render the group date notice first in the grading controls', async () => {
+        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+        comp = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+        variantLock.locked = () => true;
+        const openModalSpy = vi.spyOn(variantLock, 'openModal');
+        fixture.detectChanges();
+
+        const gradingOptions = fixture.debugElement.query(By.css('.col-12.col-md'));
+        const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+        expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+        expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+
+        (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+        expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
     describe('save', () => {

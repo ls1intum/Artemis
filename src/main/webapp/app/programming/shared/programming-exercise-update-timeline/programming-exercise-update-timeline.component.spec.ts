@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -18,6 +19,7 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { Course } from 'app/course/shared/entities/course.model';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
@@ -164,6 +166,27 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.isDatePickerForDueDateVisible()).toBe(false);
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBe(false);
+    });
+
+    it('should show the group notice, disable group-managed dates, and keep the programming-specific build-and-test date editable', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('exercisePartOfExerciseGroup', true);
+        const editGroupDatesSpy = vi.spyOn(component.editGroupDates, 'emit');
+        fixture.detectChanges();
+
+        const buildAndTestItem = component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
+        const groupManagedItems = component.timelineItems().filter((item) => item.labelStringKey !== 'artemisApp.exercise.dateForRunningTestsAfterDueDate');
+        const controls = fixture.debugElement.query(By.css('.section'));
+        const notice = controls.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+        expect(controls.nativeElement.firstElementChild).toBe(notice.nativeElement);
+        expect(buildAndTestItem?.disabled).toBeFalsy();
+        expect(groupManagedItems.length).toBeGreaterThan(0);
+        expect(groupManagedItems.every((item) => item.disabled)).toBe(true);
+
+        notice.componentInstance.editGroupDates.emit();
+
+        expect(editGroupDatesSpy).toHaveBeenCalledOnce();
     });
 
     it('should display enabling to run tests after due date toggle if in exam mode and no current mode record is available', () => {

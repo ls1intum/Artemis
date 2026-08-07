@@ -43,6 +43,7 @@ import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -71,6 +72,7 @@ import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-
         FormFooterComponent,
         ArtemisTranslatePipe,
         FileUploadExerciseTimelineComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit {

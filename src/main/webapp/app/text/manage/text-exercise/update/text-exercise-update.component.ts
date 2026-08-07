@@ -48,6 +48,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -76,6 +77,7 @@ import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/tex
         FeatureOverlayComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
         TextExerciseTimelineComponent,
+        ExerciseGroupDateNoticeComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {

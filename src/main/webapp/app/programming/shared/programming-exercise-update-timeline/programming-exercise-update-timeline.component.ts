@@ -21,12 +21,13 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
 import { isEqual } from 'lodash-es';
 import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
     styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent, ExerciseGroupDateNoticeComponent],
 })
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -45,10 +46,8 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     customizeBuildPlan = input<boolean | undefined>(undefined);
     skipAutomaticAfterDueDatePreview = input(false);
     exercise = input.required<ProgrammingExercise>();
-    /** When true the dates are governed by the exercise's variant group (see {@link TimelineComponent}). */
-    lockedToGroup = input<boolean>(false);
-    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
-    lockedClick = output<void>();
+    exercisePartOfExerciseGroup = input<boolean>(false);
+    editGroupDates = output<void>();
 
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
@@ -191,11 +190,13 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     private computeTimelineItems(): TimelineItem[] {
         const timelineItems: TimelineItem[] = [];
+        const exercisePartOfExerciseGroup = this.exercisePartOfExerciseGroup();
         if (this.isDatePickerForReleaseDateVisible()) {
             timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.releaseDate',
                 date: this.releaseDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForStartDateVisible()) {
@@ -203,6 +204,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.startDate',
                 date: this.startDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForDueDateVisible()) {
@@ -210,6 +212,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dueDate',
                 date: this.dueDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForRunningTestsAfterDueDateVisible()) {
@@ -224,6 +227,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.assessmentDueDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
         if (this.isDatePickerForExampleSolutionPublicationDateVisible()) {
@@ -231,6 +235,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.exampleSolutionPublicationDate,
+                disabled: exercisePartOfExerciseGroup,
             });
         }
 

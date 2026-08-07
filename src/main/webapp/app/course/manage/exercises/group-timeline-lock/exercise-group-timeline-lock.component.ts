@@ -7,9 +7,8 @@ import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/gro
 import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
- * Renders a grouped exercise's timeline pickers as read-only "locked-to-group" fields; clicking one opens
- * {@link ExerciseGroupEditModalComponent}. Saving persists the group timeline and re-emits the exercise with the
- * shared dates applied.
+ * Owns the group timeline edit modal for an exercise update form. The host shows an explicit edit control and calls
+ * {@link openModal}. Saving persists the group timeline and re-emits the exercise with the shared dates applied.
  */
 @Component({
     selector: 'jhi-exercise-group-timeline-lock',

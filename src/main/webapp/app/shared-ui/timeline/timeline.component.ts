@@ -1,13 +1,8 @@
 import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DatePickerModule } from 'primeng/datepicker';
-// Still needed for the `pTooltip` on the invalid-date info icon; the lock overlay uses the kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faLock } from '@fortawesome/free-solid-svg-icons';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,9 +12,10 @@ export interface TimelineItem {
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
+    disabled?: boolean;
     /**
-     * Restricts the ordering check to these items. The default (no item may precede any earlier one) is too strict for
-     * e.g. a group's example solution publication date, which only needs `>= releaseDate`.
+     * Restricts the ordering check to these items when a date depends on only a subset of earlier timeline entries.
+     * By default, an item may not precede any earlier item.
      */
     orderCheckAgainst?: TimelineItem[];
 }
@@ -35,12 +31,13 @@ type InternalTimelineItem = TimelineItem & {
     isBeforePreviousDate: boolean;
     isOtherRequiredItemDateUndefined: boolean;
     isInvalidInput: boolean;
+    isDisabled: boolean;
     tooltip: string | undefined;
 };
 
 @Component({
     selector: 'jhi-timeline',
-    imports: [DatePickerModule, FormsModule, TooltipModule, TumUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
     templateUrl: './timeline.component.html',
     styleUrl: './timeline.component.scss',
 })
@@ -50,18 +47,11 @@ export class TimelineComponent {
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
     protected readonly Date = Date;
-    protected readonly faLock = faLock;
     /** Label keys of items whose typed text is non-empty but not a valid date. Drives the invalid state. */
     private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
-    /** Dates governed by the variant group: datepickers are disabled and clicks emit {@link lockedClick}. */
-    lockedToGroup = input<boolean>(false);
-    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
-    lockedClick = output<void>();
-    /** Effective read-only state: either explicitly {@link readonly} or locked to the variant group. */
-    isReadonly = computed<boolean>(() => this.readonly() || this.lockedToGroup());
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<TimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<TimelineStatus>();
@@ -146,6 +136,7 @@ export class TimelineComponent {
             const otherRequiredItem = item.otherRequiredItem;
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
+            const isDisabled = this.readonly() || (item.disabled ?? false);
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
@@ -168,6 +159,7 @@ export class TimelineComponent {
                 isBeforePreviousDate,
                 isOtherRequiredItemDateUndefined,
                 isInvalidInput,
+                isDisabled,
                 tooltip,
             };
         });

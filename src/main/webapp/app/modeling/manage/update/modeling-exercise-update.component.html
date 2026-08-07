@@ -109,13 +109,15 @@
                         [(startDate)]="modelingExercise.startDate"
                         [(dueDate)]="modelingExercise.dueDate"
                         [(assessmentDueDate)]="modelingExercise.assessmentDueDate"
-                        [lockedToGroup]="variantLock.locked()"
-                        (lockedClick)="variantLock.openModal()"
+                        [exercisePartOfExerciseGroup]="variantLock.locked()"
                         (timelineStatus)="timelineStatus.set($event)"
                     />
                 </div>
             }
             <div class="col-12 col-md">
+                @if (variantLock.locked()) {
+                    <jhi-exercise-group-date-notice class="mb-3" (editGroupDates)="variantLock.openModal()" />
+                }
                 <div class="mb-3">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ modelingExercise.course ? 'Course' : 'Exam' }}Label"></label>
                     <div>

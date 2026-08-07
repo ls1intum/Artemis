@@ -112,6 +112,7 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
+import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
 import { Component, input, output, signal, viewChild } from '@angular/core';
@@ -273,6 +274,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         MockMarkdownEditorMonacoComponent,
                         ExerciseGroupTimelineLockStubComponent,
                         FileUploadExerciseTimelineComponent,
+                        MockComponent(ExerciseGroupDateNoticeComponent),
                     ],
                 },
             })
@@ -326,6 +328,31 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(timeline.startDate()).toBe(exercise.startDate);
             expect(timeline.dueDate()).toBe(exercise.dueDate);
             expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+        });
+
+        it('should render the group date notice first in the grading controls', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const variantLock = fixture.debugElement.query(By.directive(ExerciseGroupTimelineLockStubComponent)).componentInstance as ExerciseGroupTimelineLockStubComponent;
+            variantLock.locked = () => true;
+            const openModalSpy = vi.spyOn(variantLock, 'openModal');
+            fixture.detectChanges();
+
+            const gradingOptions = fixture.debugElement.query(By.css('.grading-options'));
+            const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
+
+            expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
+            expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+
+            (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
+
+            expect(openModalSpy).toHaveBeenCalledOnce();
         });
 
         it('should validate dates when the timeline status changes', async () => {

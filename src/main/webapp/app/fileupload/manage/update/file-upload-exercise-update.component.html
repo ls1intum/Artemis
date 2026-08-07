@@ -103,12 +103,14 @@
                     [(startDate)]="fileUploadExercise().startDate"
                     [(dueDate)]="fileUploadExercise().dueDate"
                     [(assessmentDueDate)]="fileUploadExercise().assessmentDueDate"
-                    [lockedToGroup]="variantLock.locked()"
-                    (lockedClick)="variantLock.openModal()"
+                    [exercisePartOfExerciseGroup]="variantLock.locked()"
                     (timelineStatus)="timelineStatus.set($event)"
                 />
             }
             <div class="grading-options">
+                @if (variantLock.locked()) {
+                    <jhi-exercise-group-date-notice class="mb-3" (editGroupDates)="variantLock.openModal()" />
+                }
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ fileUploadExercise().course ? 'Course' : 'Exam' }}Label"></label>
                     <div>

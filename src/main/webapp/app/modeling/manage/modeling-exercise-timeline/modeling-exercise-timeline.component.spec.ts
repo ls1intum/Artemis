@@ -24,15 +24,24 @@ describe('ModelingExerciseTimeline', () => {
     });
 
     it('should expose timeline items for modeling exercises', () => {
-        expect(component.timelineItems).toHaveLength(4);
-        expect(component.timelineItems.map((item) => item.labelStringKey)).toEqual([
+        const timelineItems = component.timelineItems();
+
+        expect(timelineItems).toHaveLength(4);
+        expect(timelineItems.map((item) => item.labelStringKey)).toEqual([
             'artemisApp.exercise.releaseDate',
             'artemisApp.exercise.startDate',
             'artemisApp.exercise.dueDate',
             'artemisApp.exercise.assessmentDueDate',
         ]);
-        expect(component.timelineItems.map((item) => item.date)).toEqual([component.releaseDate, component.startDate, component.dueDate, component.assessmentDueDate]);
-        expect(component.timelineItems.every((item) => item.kind === 'optional')).toBe(true);
+        expect(timelineItems.map((item) => item.date)).toEqual([component.releaseDate, component.startDate, component.dueDate, component.assessmentDueDate]);
+        expect(timelineItems.every((item) => item.kind === 'optional')).toBe(true);
+    });
+
+    it('should disable group-managed dates', () => {
+        fixture.componentRef.setInput('exercisePartOfExerciseGroup', true);
+        fixture.detectChanges();
+
+        expect(component.timelineItems().every((item) => item.disabled)).toBe(true);
     });
 
     it('should forward timeline status changes from the child component', () => {

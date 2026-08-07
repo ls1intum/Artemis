@@ -12,9 +12,11 @@
                 }
             },
             "edit": "Gruppe bearbeiten",
+            "editGroupDates": "Gruppentermine bearbeiten",
             "delete": "Gruppe löschen",
             "timelineLocked": {
-                "tooltip": "Diese Termine werden von der Aufgabengruppe verwaltet. Zum Bearbeiten der Termine der Gruppe hier klicken."
+                "tooltip": "Diese Termine werden von der Aufgabengruppe verwaltet. Zum Bearbeiten der Termine der Gruppe hier klicken.",
+                "message": "Da diese Aufgabe Teil einer Aufgabengruppe ist, können einige ihrer Termine nicht einzeln geändert werden. Stattdessen..."
             },
             "deleted": "Gruppe gelöscht mit ID {{ param }}",
             "deleteDialog": {

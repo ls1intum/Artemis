@@ -60,8 +60,8 @@
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-                [lockedToGroup]="variantLock.locked()"
-                (lockedClick)="variantLock.openModal()"
+                [exercisePartOfExerciseGroup]="variantLock.locked()"
+                (editGroupDates)="variantLock.openModal()"
             />
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">
