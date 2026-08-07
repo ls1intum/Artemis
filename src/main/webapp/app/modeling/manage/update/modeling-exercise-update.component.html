@@ -1,4 +1,5 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="modelingExercise" (exerciseChange)="modelingExercise = $event" />
     <button type="submit" style="display: none" (click)="handleEnterKeyNavigation($event)"></button>
     <div class="d-flex align-items-center gap-2">
         @if (!modelingExercise.id) {
@@ -87,6 +88,8 @@
                     [error]="modelingExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
                     [disabled]="isImport()"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                 />
                 @if (isImport()) {
                     <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
@@ -106,6 +109,8 @@
                         [(startDate)]="modelingExercise.startDate"
                         [(dueDate)]="modelingExercise.dueDate"
                         [(assessmentDueDate)]="modelingExercise.assessmentDueDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                         (timelineStatus)="timelineStatus.set($event)"
                     />
                 </div>

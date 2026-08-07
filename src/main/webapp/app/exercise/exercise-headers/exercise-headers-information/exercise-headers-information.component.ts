@@ -100,6 +100,11 @@ export class ExerciseHeadersInformationComponent {
     readonly course = input<Course>();
     readonly submissionPolicy = input<SubmissionPolicy>();
     readonly isPractice = input<boolean>(false);
+    /**
+     * Whether the result-history trigger reacts to hover and click. False where the header is a read-only preview (e.g.
+     * the variant cards), keeping the tooltip and results popover inert without an outside style override.
+     */
+    readonly interactive = input<boolean>(true);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
