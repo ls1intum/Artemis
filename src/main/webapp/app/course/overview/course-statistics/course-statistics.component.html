@@ -70,7 +70,15 @@
                                 <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
                             </div>
 
-                            <p-chart type="doughnut" [data]="doughnutData()" [options]="doughnutOptions()" [responsive]="false" width="350px" height="350px" />
+                            <p-chart
+                                type="doughnut"
+                                [data]="doughnutData()"
+                                [options]="doughnutOptions()"
+                                [responsive]="false"
+                                width="350px"
+                                height="350px"
+                                [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
+                            />
                         </div>
                         <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
                             @for (entry of doughnutChartEntries(); track $index) {
@@ -221,6 +229,10 @@
                                             [data]="groupChartData().get(exerciseGroup.key)"
                                             [options]="groupChartOptions().get(exerciseGroup.key)!"
                                             (onDataSelect)="onSelect($event, exerciseGroup.key)"
+                                            [ariaLabel]="
+                                                'artemisApp.courseOverview.statistics.exerciseCount'
+                                                    | artemisTranslate: { number: exerciseGroup.value.length, type: exerciseGroup.key }
+                                            "
                                         />
                                     </div>
                                 </div>

@@ -146,11 +146,6 @@ export class IrisChatService implements OnDestroy {
     private pointOutSubject = new Subject<IrisPointOut>();
     public pointOut$ = this.pointOutSubject.asObservable();
 
-    // Emits when the floating Iris chat widget (exercise/lecture chatbot button popup) should close,
-    // e.g. when the lecture combined view opens in fullscreen and would otherwise overlay it.
-    private closeWidgetSubject = new Subject<void>();
-    public closeWidget$ = this.closeWidgetSubject.asObservable();
-
     private llmOptedOutSubject = new Subject<void>();
     public llmOptedOut$ = this.llmOptedOutSubject.asObservable();
 
@@ -1134,14 +1129,6 @@ export class IrisChatService implements OnDestroy {
      */
     public setShouldReopenChat(value: boolean): void {
         this.shouldReopenChatSubject.next(value);
-    }
-
-    /**
-     * Requests that the floating Iris chat widget (chatbot button popup) close itself. No-op if it
-     * is not open. Used when the combined view opens in fullscreen so the popup does not overlay it.
-     */
-    public requestCloseWidget(): void {
-        this.closeWidgetSubject.next();
     }
 
     /**

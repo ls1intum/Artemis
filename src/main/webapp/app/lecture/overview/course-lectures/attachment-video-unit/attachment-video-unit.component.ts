@@ -736,12 +736,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
-        if (isFullscreen) {
-            // Close the floating Iris chat widget (chatbot button popup) when entering fullscreen, so it does
-            // not overlay the combined view. The combined view has its own embedded Iris sidebar; this only
-            // closes the separate floating popup via the shared IrisChatService.
-            this.chatService.requestCloseWidget();
-        } else {
+        if (!isFullscreen) {
             // The view was closed before a point-out could be applied, so its target is now unreachable.
             // Dropping it here (on the close transition, not on the closed state, which a marker click starts
             // out in) keeps it from being applied on a later, unrelated reopen.

@@ -239,6 +239,8 @@ export default tseslint.config(
             'localRules/no-navigation-in-effect': 'error',
             'localRules/no-as-unknown-cast': 'error',
             'localRules/no-as-any-cast': 'error',
+            // Registered here as well as for .html, so inline `template:` strings are covered too.
+            'localRules/require-chart-accessible-name': 'error',
         },
     },
     // Force JSON.parse results to carry an explicit type. `JSON.parse` is declared to return `any`, which
@@ -577,6 +579,7 @@ export default tseslint.config(
         rules: {
             'localRules/no-raw-tailwind-color-palette': 'error',
             'localRules/no-primeng-component-classes': 'error',
+            'localRules/require-chart-accessible-name': 'error',
         },
     },
     {
