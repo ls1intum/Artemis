@@ -135,6 +135,7 @@ public final class FeatureUsageCatalogue {
         // ===== exercise =====
         feature("management", "exercise-management", "ExerciseResource", "AdminExerciseResource");
         feature("management", "versions", "ExerciseVersionResource");
+        feature("management", "variant-groups", "ExerciseVariantGroupResource");
         feature("management", "consistency-check", "ConsistencyCheckResource");
         feature("management", "review", "ExerciseReviewResource");
         feature("management", "problem-statement", "ProblemStatementRenderingResource");
