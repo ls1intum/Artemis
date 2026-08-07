@@ -259,6 +259,27 @@ class ProgrammingExerciseDtoMappingTest {
 
     // --- Request DTOs: write-side defaults the entity does not provide ---------------------------------------------
 
+    /**
+     * Variant group membership is owned by {@code PUT api/exercise/courses/{courseId}/exercises/{exerciseId}/variant-group},
+     * which rejects exam exercises, checks the exercise's course against the path course and adopts the group's shared
+     * timeline. The create and import request records therefore do not bind {@code exerciseVariantGroup} at all, so a
+     * body that carries one cannot smuggle a member past those guards. The programming update path is closed the same
+     * way, since {@code UpdateProgrammingExerciseDTO} has no such component either.
+     */
+    @Test
+    void createAndImportRequestsIgnoreAVariantGroupInTheBody() throws Exception {
+        String body = """
+                {"title":"Smuggled","shortName":"SMG","exerciseVariantGroup":{"id":42,"title":"Loop variants"}}""";
+
+        CreateProgrammingExerciseDTO createRequest = objectMapper.readValue(body, CreateProgrammingExerciseDTO.class);
+        ImportProgrammingExerciseRequestDTO importRequest = objectMapper.readValue(body, ImportProgrammingExerciseRequestDTO.class);
+
+        assertThat(createRequest.title()).isEqualTo("Smuggled");
+        assertThat(importRequest.title()).isEqualTo("Smuggled");
+        assertThat(createRequest.toEntity().getExerciseVariantGroup()).isNull();
+        assertThat(importRequest.toEntity().getExerciseVariantGroup()).isNull();
+    }
+
     @Test
     void createRequestToEntityPreservesTheFieldsWithoutEntityDefaults() {
         CreateProgrammingExerciseDTO dto = new CreateProgrammingExerciseDTO(null, "New exercise", "NEW", "new-exercise", "de.tum.in", "problem", "instructions",

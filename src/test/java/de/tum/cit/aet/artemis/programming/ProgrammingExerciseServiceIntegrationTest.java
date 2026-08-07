@@ -276,7 +276,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         var title = "importTableFieldSet-Programming";
         programmingExercise.setTitle(title);
         programmingExerciseRepository.save(programmingExercise);
-        var examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(title + "Exam", "IMPTBLEX", false);
+        var examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(title + "Exam", "IMPTBLEX", false, TEST_PREFIX);
 
         final var search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));

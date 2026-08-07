@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -60,10 +62,10 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exercise);
-        examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -402,8 +404,9 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.exerciseVariantGroup().title()).isEqualTo(group.getTitle());
         assertThat(response.exerciseVariantGroup().maxPoints()).isEqualTo(group.getMaxPoints());
         // The edit dialog saves these dates straight back, so a missing one would wipe the shared timeline.
-        assertThat(response.exerciseVariantGroup().releaseDate()).isEqualTo(group.getReleaseDate());
-        assertThat(response.exerciseVariantGroup().dueDate()).isEqualTo(group.getDueDate());
+        // Postgres stores timestamps at millisecond precision, so compare the instants with a tolerance.
+        assertThat(response.exerciseVariantGroup().releaseDate().toInstant()).isCloseTo(group.getReleaseDate().toInstant(), within(1, SECONDS));
+        assertThat(response.exerciseVariantGroup().dueDate().toInstant()).isCloseTo(group.getDueDate().toInstant(), within(1, SECONDS));
     }
 
     /**
