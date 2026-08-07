@@ -219,6 +219,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateSettingsForFeedbackRequest();
         programmingExerciseValidationService.validateBuildConfigSize(newExercise);
         programmingExerciseValidationService.validateDockerFlags(newExercise);
+        programmingExerciseValidationService.validatePackageName(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithAuthorities();

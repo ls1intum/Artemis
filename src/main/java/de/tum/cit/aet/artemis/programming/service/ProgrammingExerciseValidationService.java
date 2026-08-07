@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRE
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_DOCKER_FLAGS_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
@@ -177,6 +178,12 @@ public class ProgrammingExerciseValidationService {
         }
     }
 
+    public void validatePackageName(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        validatePackageName(programmingExercise, programmingLanguageFeature);
+    }
+
     private void validatePackageName(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         if (!programmingLanguageFeature.packageNameRequired()) {
             return;
@@ -184,6 +191,9 @@ public class ProgrammingExerciseValidationService {
         // Check if package name is set
         if (programmingExercise.getPackageName() == null) {
             throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
+        }
+        if (programmingExercise.getPackageName().length() > MAX_PACKAGE_NAME_LENGTH) {
+            throw new BadRequestAlertException("The package name is too long", "Exercise", "packagenameTooLong");
         }
 
         // Check if package name matches regex

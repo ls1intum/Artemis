@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
@@ -103,12 +104,14 @@ public class ProgrammingExerciseUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -125,6 +128,7 @@ public class ProgrammingExerciseUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.participationRepository = participationRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -322,7 +326,8 @@ public class ProgrammingExerciseUpdateResource {
 
     /**
      * Updates the existing ProgrammingExercise entity with values from the DTO.
-     * This includes updating competency links using the proper mechanism.
+     * This includes updating competency links using the proper mechanism and restoring the timeline of an owning
+     * variant group, so every caller persists a member with the group's dates.
      *
      * @param dto      the DTO containing updated values
      * @param exercise the existing exercise entity to update
@@ -416,6 +421,11 @@ public class ProgrammingExerciseUpdateResource {
 
         // Update competency links using the proper mechanism
         competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
+
+        // A variant group owns its members' shared dates, so pin those back to the group. The build-and-test date stays
+        // per exercise and is only re-derived from the shared due date. The dedicated timeline endpoint rejects group
+        // members outright instead.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         return exercise;
     }

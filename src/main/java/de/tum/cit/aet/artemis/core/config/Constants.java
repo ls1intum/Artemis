@@ -33,6 +33,8 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
+    public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
     /**
      * The maximum allowed length (in characters) of the build plan configuration stored for a programming exercise build config.
      */

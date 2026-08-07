@@ -22,6 +22,7 @@ import {
     EXERCISE_TITLE_NAME_REGEX,
     INVALID_DIRECTORY_NAME_PATTERN,
     INVALID_REPOSITORY_NAME_PATTERN,
+    MAX_PACKAGE_NAME_LENGTH,
     MAX_PENALTY_PATTERN,
     MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
     PACKAGE_NAME_PATTERN_FOR_DART,
@@ -46,6 +47,7 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -83,6 +85,7 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
+        ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
@@ -1509,6 +1512,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.packageName.undefined',
                 translateValues: {},
+            });
+            return;
+        }
+
+        if (this.programmingExercise.packageName.length > MAX_PACKAGE_NAME_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.packageName.maxlength',
+                translateValues: { max: MAX_PACKAGE_NAME_LENGTH },
             });
             return;
         }
