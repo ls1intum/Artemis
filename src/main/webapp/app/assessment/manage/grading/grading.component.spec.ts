@@ -1091,10 +1091,10 @@ describe('GradingComponent', () => {
             validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
         });
 
-        it('should round percentage intervals after cascading decimal values', () => {
+        it('should round percentage intervals to one decimal place', () => {
             comp.generateDefaultGradingScale();
 
-            comp.setPercentageInterval(11, 1.3);
+            comp.setPercentageInterval(11, 1.34);
 
             expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[11])).toBe(1.3);
         });
