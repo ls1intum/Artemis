@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -79,7 +80,8 @@ class ParticipationServiceFindParticipationScoresTest {
         participationService = new ParticipationService(Optional.<ContinuousIntegrationService>empty(), Optional.<VersionControlService>empty(),
                 mock(ParticipationTestRepository.class), studentParticipationRepository, programmingExerciseStudentParticipationRepository,
                 mock(ProgrammingExerciseTestRepository.class), mock(SubmissionTestRepository.class), mock(TeamRepository.class), mock(UriService.class),
-                mock(ParticipationVcsAccessTokenService.class), resultRepository, moduleFeatureService, Optional.of(irisSettingsApi));
+                mock(ParticipationVcsAccessTokenService.class), resultRepository, mock(TemplateProgrammingExerciseParticipationRepository.class), moduleFeatureService,
+                Optional.of(irisSettingsApi));
 
         search = new ParticipationScoreSearchDTO(0, 20, null, null, null, null, null, null);
         pageable = PageRequest.of(0, 20);

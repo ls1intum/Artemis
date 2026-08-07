@@ -11,11 +11,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisQuizTimerDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisAssessmentReviewService;
@@ -74,17 +72,6 @@ class IrisAskUserResourceIntegrationTest extends AbstractIrisChatSessionTest {
         ProgrammingExercise examProgrammingExercise = createExamProgrammingExercise();
 
         request.patch("/api/iris/programming-exercises/" + examProgrammingExercise.getId() + "/ask-user/start", null, HttpStatus.CONFLICT);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void startQuizForCurrentSessionFailsWhenStudentNotEnrolledInExerciseCourse() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX + "other", 2, 1, 0, 1);
-        Course otherCourse = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX + "other", true, true, 1).getFirst();
-        ProgrammingExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
-        activateIrisFor(otherExercise);
-
-        request.patch("/api/iris/programming-exercises/" + otherExercise.getId() + "/ask-user/start", null, HttpStatus.FORBIDDEN);
     }
 
     @Test

@@ -54,6 +54,7 @@ import { ContextSelectionComponent } from 'app/iris/overview/context-selection/c
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
 import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { formatDate } from '@angular/common';
 
 // Must match the constants in the component
 const PLACEHOLDER_CYCLE_INTERVAL_MS = 5000;
@@ -1472,6 +1473,20 @@ describe('IrisBaseChatbotComponent', () => {
             expect(component.relatedEntityRoute()).toBe('/courses/456/exercises/77');
             expect(component.relatedEntityLinkButtonLabel()).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
         });
+
+        it('should not display a related entity button when the committed context is a course-level chat', async () => {
+            chatService['contextService']['_committed'].set({ mode: ChatServiceMode.COURSE, entityId: 456 });
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.relatedEntityLinkButtonLabel()).toBeUndefined();
+            expect(fixture.nativeElement.querySelector('.related-entity-button')).toBeNull();
+        });
     });
 
     describe('LLM Selection Modal', () => {
@@ -1791,6 +1806,30 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should have hasHeaderContent true for widget layout', () => {
             expect(component.hasHeaderContent()).toBe(true);
+        });
+
+        it('should label a session without a title using the new-chat title and formatted creation date', () => {
+            const untitledSession: IrisSessionDTO = {
+                id: 14,
+                creationDate: new Date('2025-10-06T06:00:00.000Z'),
+                mode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 42,
+                entityName: 'Exercise 1',
+            };
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, untitledSession]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            const expectedLabel = `artemisApp.iris.chatHistory.newChat (${formatDate(untitledSession.creationDate, 'short', 'en')})`;
+            const untitledItem = component.sessionMenuItems().find((item) => item.label?.startsWith('artemisApp.iris.chatHistory.newChat ('));
+            expect(untitledItem?.label).toBe(expectedLabel);
         });
 
         it('should have proper aria attributes on the trigger button', () => {
@@ -2879,6 +2918,347 @@ describe('IrisBaseChatbotComponent', () => {
         it('should return true when the current run is FAILED', () => {
             const comp = createComponentWithRunState(IrisRunState.FAILED);
             expect(comp.shouldShowStatusBar()).toBe(true);
+        });
+    });
+
+    describe('showWidgetHeader', () => {
+        it('should always show the widget header in client layout', () => {
+            expect(component.layout()).toBe('client');
+            expect(component.showWidgetHeader()).toBe(true);
+        });
+    });
+
+    describe('scrolling for a new message that is not the initial load', () => {
+        it('should scroll smoothly when already scrolled to bottom and no anchor/draft is active', () => {
+            const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+            chatService.messages.next([mockClientMessage]);
+            fixture.detectChanges();
+            scrollSpy.mockClear();
+            component.isScrolledToBottom.set(true);
+
+            chatService.messages.next([mockClientMessage, mockServerMessage]);
+            fixture.detectChanges();
+
+            expect(scrollSpy).toHaveBeenCalledWith('smooth');
+        });
+    });
+
+    describe('focus after construction', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should focus the message textarea 150ms after construction once the user has already accepted', () => {
+            vi.useFakeTimers();
+            try {
+                accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+
+                const textarea = fixture.nativeElement.querySelector('textarea');
+                const focusSpy = vi.spyOn(textarea, 'focus');
+
+                vi.advanceTimersByTime(150);
+
+                // Both the acceptance-specific focus path and the general post-construction focus
+                // timeout target the textarea once accepted, so it is focused (at least) once.
+                expect(focusSpy).toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should focus the accept button 150ms after construction when the user has not accepted yet', () => {
+            vi.useFakeTimers();
+            try {
+                accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+
+                const acceptButton = fixture.nativeElement.querySelector('.p-chat .btn-primary') as HTMLButtonElement | null;
+                expect(acceptButton).not.toBeNull();
+                const focusSpy = vi.spyOn(acceptButton!, 'focus');
+
+                vi.advanceTimersByTime(150);
+
+                expect(focusSpy).toHaveBeenCalled();
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('day tick refresh interval', () => {
+        it('should refresh the day tick when the check interval detects a new day', () => {
+            vi.useFakeTimers();
+            try {
+                // Noon UTC keeps the local date stable across any test-runner timezone.
+                vi.setSystemTime(new Date('2025-01-01T12:00:00.000Z'));
+
+                fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+                component = fixture.componentInstance;
+                fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+                fixture.detectChanges();
+
+                const dayBefore = component.dayTick();
+
+                vi.setSystemTime(new Date('2025-01-02T12:05:00.000Z'));
+                // DAY_CHANGE_CHECK_INTERVAL_MS in the component is 60000ms.
+                vi.advanceTimersByTime(60000);
+
+                expect(component.dayTick()).not.toBe(dayBefore);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    describe('onboarding tour gating', () => {
+        it('should evaluate the onboarding predicate function it hands to showOnboardingIfNeeded', () => {
+            let capturedPredicate: (() => boolean) | undefined;
+            mockOnboardingService.showOnboardingIfNeeded.mockImplementation((predicate: () => boolean) => {
+                capturedPredicate = predicate;
+                return Promise.resolve();
+            });
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            expect(typeof capturedPredicate).toBe('function');
+            expect(capturedPredicate!()).toBe(true);
+        });
+    });
+
+    describe('onContextChangedDuringOnboarding', () => {
+        it('should emit a contextChanged onboarding event during onboarding step 1', () => {
+            mockOnboardingService.currentStep.set(1);
+            const nextSpy = vi.spyOn(mockOnboardingService.onboardingEvent$, 'next');
+
+            component.onContextChangedDuringOnboarding();
+
+            expect(nextSpy).toHaveBeenCalledExactlyOnceWith({ type: 'contextChanged' });
+        });
+
+        it('should not emit an onboarding event outside of step 1', () => {
+            mockOnboardingService.currentStep.set(0);
+            const nextSpy = vi.spyOn(mockOnboardingService.onboardingEvent$, 'next');
+
+            component.onContextChangedDuringOnboarding();
+
+            expect(nextSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onSend error handling', () => {
+        it('should reset isLoading when sendMessage errors', () => {
+            vi.spyOn(chatService, 'sendMessage').mockReturnValue(throwError(() => new Error('network failure')));
+            component.newMessageTextContent.set('Hello there');
+
+            component.onSend();
+
+            expect(component.isLoading()).toBe(false);
+        });
+    });
+
+    describe('resendMessage guards', () => {
+        it('should not resend a non-user message', () => {
+            const resendSpy = vi.spyOn(chatService, 'resendMessage');
+
+            component.resendMessage(mockServerMessage);
+
+            expect(resendSpy).not.toHaveBeenCalled();
+        });
+
+        it('should resend an unsent message by sending its text content when it has no id', () => {
+            const sendSpy = vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));
+            const message = mockUserMessageWithContent('Retry this');
+            message.id = undefined as unknown as number;
+
+            component.resendMessage(message);
+
+            expect(sendSpy).toHaveBeenCalledExactlyOnceWith('Retry this');
+        });
+
+        it('should not resend a message with neither an id nor text content', () => {
+            const resendSpy = vi.spyOn(chatService, 'resendMessage');
+            const sendSpy = vi.spyOn(chatService, 'sendMessage');
+            const message = { sender: IrisSender.USER, id: undefined, content: [] } as unknown as IrisUserMessage;
+
+            component.resendMessage(message);
+
+            expect(resendSpy).not.toHaveBeenCalled();
+            expect(sendSpy).not.toHaveBeenCalled();
+            expect(component.resendAnimationActive()).toBe(false);
+        });
+    });
+
+    describe('MCQ response persistence', () => {
+        it('should ignore an unsubmitted mcq answer change', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqAnswerChanged(mockServerMessage, { selectedIndex: 1, submitted: false });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an mcq answer change without a selected index', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqAnswerChanged(mockServerMessage, { selectedIndex: undefined, submitted: true });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an mcq answer change for a message without an id', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqAnswerChanged({ ...mockServerMessage, id: undefined } as IrisAssistantMessage, { selectedIndex: 0, submitted: true });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an mcq answer change when there is no current session', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqAnswerChanged({ ...mockServerMessage, id: 5 } as IrisAssistantMessage, { selectedIndex: 0, submitted: true });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should persist a submitted mcq answer change for the current session', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(55));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse').mockReturnValue(of({} as HttpResponse<void>));
+
+            component.onMcqAnswerChanged({ ...mockServerMessage, id: 12 } as IrisAssistantMessage, { selectedIndex: 2, submitted: true });
+
+            expect(saveSpy).toHaveBeenCalledExactlyOnceWith(55, 12, { selectedIndex: 2, submitted: true });
+        });
+
+        it('should ignore an unsubmitted mcq response save', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqResponseSaved(mockServerMessage, { selectedIndex: 1, submitted: false });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an mcq response save for a message without an id', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqResponseSaved({ ...mockServerMessage, id: undefined } as IrisAssistantMessage, { selectedIndex: 1, submitted: true });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should ignore an mcq response save when there is no current session', () => {
+            const saveSpy = vi.spyOn(httpService, 'saveMcqResponse');
+
+            component.onMcqResponseSaved({ ...mockServerMessage, id: 9 } as IrisAssistantMessage, { selectedIndex: 1, submitted: true });
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('should persist a submitted mcq response and report an error via the alert service on failure', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(77));
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            // Status 500 is intentionally silent in onError(); use 404 so the failure surfaces an alert.
+            vi.spyOn(httpService, 'saveMcqResponse').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+
+            component.onMcqResponseSaved({ ...mockServerMessage, id: 21 } as IrisAssistantMessage, { selectedIndex: 3, submitted: true });
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.404');
+        });
+    });
+
+    describe('copyMessage clipboard integration', () => {
+        const messageWithText = (id: number, text: string) => ({ id, content: [{ type: IrisMessageContentType.TEXT, textContent: text }] }) as IrisMessage;
+
+        afterEach(() => {
+            Reflect.deleteProperty(navigator, 'clipboard');
+        });
+
+        it('should copy via navigator.clipboard.writeText and mark the message as copied on success', async () => {
+            const writeText = vi.fn().mockResolvedValue(undefined);
+            Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+            component.copyMessage(messageWithText(101, 'Copy me'));
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(writeText).toHaveBeenCalledExactlyOnceWith('Copy me');
+            expect(component.isCopied(messageWithText(101, 'Copy me'))).toBe(true);
+        });
+
+        it('should fall back to clipboard.copy when navigator.clipboard.writeText rejects', async () => {
+            const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+            Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+            const copySpy = vi.spyOn(component['clipboard'], 'copy').mockReturnValue(true);
+
+            component.copyMessage(messageWithText(102, 'Fallback text'));
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(copySpy).toHaveBeenCalledExactlyOnceWith('Fallback text');
+            expect(component.isCopied(messageWithText(102, 'Fallback text'))).toBe(true);
+        });
+
+        it('should use clipboard.copy directly when navigator.clipboard is unavailable', () => {
+            Reflect.deleteProperty(navigator, 'clipboard');
+            const copySpy = vi.spyOn(component['clipboard'], 'copy').mockReturnValue(true);
+
+            component.copyMessage(messageWithText(103, 'Direct fallback'));
+
+            expect(copySpy).toHaveBeenCalledExactlyOnceWith('Direct fallback');
+            expect(component.isCopied(messageWithText(103, 'Direct fallback'))).toBe(true);
+        });
+
+        it('should reset the copied indicator after the feedback duration and cancel a pending reset on a new copy', () => {
+            vi.useFakeTimers();
+            try {
+                Reflect.deleteProperty(navigator, 'clipboard');
+                vi.spyOn(component['clipboard'], 'copy').mockReturnValue(true);
+
+                component.copyMessage(messageWithText(104, 'First'));
+                expect(component.isCopied(messageWithText(104, 'First'))).toBe(true);
+
+                vi.advanceTimersByTime(1000);
+                component.copyMessage(messageWithText(105, 'Second')); // cancels the pending reset from the first copy
+                vi.advanceTimersByTime(1000);
+                expect(component.isCopied(messageWithText(105, 'Second'))).toBe(true);
+
+                vi.advanceTimersByTime(500);
+                expect(component.isCopied(messageWithText(105, 'Second'))).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should clear a pending copy-reset timeout when the component is destroyed', () => {
+            Reflect.deleteProperty(navigator, 'clipboard');
+            vi.spyOn(component['clipboard'], 'copy').mockReturnValue(true);
+            component.copyMessage(messageWithText(106, 'Pending'));
+            const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+            fixture.destroy();
+
+            expect(clearTimeoutSpy).toHaveBeenCalled();
         });
     });
 });

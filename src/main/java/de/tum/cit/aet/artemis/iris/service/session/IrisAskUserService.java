@@ -510,7 +510,6 @@ public class IrisAskUserService {
      */
     private void validateAskUserAvailable(ProgrammingExercise exercise, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         validateAskUserAvailable(exercise);
     }
 

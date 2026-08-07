@@ -18,7 +18,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -732,5 +733,155 @@ describe('CourseExerciseDetailsComponent', () => {
         const merged = comp.studentParticipations.find((p) => p.id === 555);
         expect(merged?.initializationState).toBe(InitializationState.FINISHED);
         expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2, 3]);
+    });
+
+    it('should leave unrelated participations untouched when merging a websocket submission delta', () => {
+        comp.exercise = { ...exercise } as Exercise;
+        const targetParticipation = { id: 555, exercise: comp.exercise, submissions: [{ id: 1 } as Submission] } as StudentParticipation;
+        const unrelatedParticipation = { id: 777, exercise: comp.exercise, submissions: [{ id: 9 } as Submission] } as StudentParticipation;
+        comp.studentParticipations = [targetParticipation, unrelatedParticipation];
+
+        comp.subscribeForNewResults();
+
+        const changedParticipation = { id: 555, exercise: { id: comp.exercise!.id }, submissions: [{ id: 2 } as Submission] } as StudentParticipation;
+        participationWebsocketBehaviorSubject.next(changedParticipation);
+
+        const untouched = comp.studentParticipations.find((p) => p.id === 777);
+        expect(untouched).toBe(unrelatedParticipation);
+    });
+
+    it('should expose the number of practice results, the sorted history results getter, and the sidebar toggle', () => {
+        expect(comp.numberOfPracticeResults()).toBe(0);
+        expect(comp.sortedHistoryResults).toEqual([]);
+
+        const toggleFn = vi.fn();
+        comp.setSidebarToggle(true, toggleFn);
+        expect(comp.isSidebarCollapsed()).toBe(true);
+        expect(comp.showSidebarToggle()).toBe(true);
+        comp.toggleSidebar();
+        expect(toggleFn).toHaveBeenCalledOnce();
+    });
+
+    it('should update the live quiz status badge override', () => {
+        comp.onLiveQuizStatusChange(LiveQuizParticipationStatus.PARTICIPATING);
+        expect(comp.liveQuizStatus()).toBe(LiveQuizParticipationStatus.PARTICIPATING);
+
+        comp.onLiveQuizStatusChange(undefined);
+        expect(comp.liveQuizStatus()).toBeUndefined();
+    });
+
+    it('should toggle showMoreResults', () => {
+        expect(comp.showMoreResults()).toBe(false);
+        comp.toggleShowMoreResults();
+        expect(comp.showMoreResults()).toBe(true);
+        comp.toggleShowMoreResults();
+        expect(comp.showMoreResults()).toBe(false);
+    });
+
+    it('should return the success badge for a rated result', () => {
+        expect(comp.exerciseRatedBadge({ rated: true } as Result)).toBe('bg-success');
+    });
+
+    describe('onQuizSubmitted', () => {
+        it('should do nothing when there is no graded participation', () => {
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(undefined);
+            comp.studentParticipations = [];
+
+            comp.onQuizSubmitted({ id: 1 } as QuizSubmission);
+
+            expect(comp.studentParticipations).toEqual([]);
+        });
+
+        it('should merge a live quiz submission into the graded participation, preserving prior attempts', () => {
+            const graded = { id: 10, testRun: false, submissions: [{ id: 1 } as Submission] } as StudentParticipation;
+            vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) => participations?.find((p) => p.testRun === testRun));
+            comp.studentParticipations = [graded];
+
+            comp.onQuizSubmitted({ id: 2 } as QuizSubmission);
+
+            const merged = comp.studentParticipations.find((p) => p.id === 10);
+            expect(merged?.submissions?.map((s) => s.id)).toEqual([1, 2]);
+        });
+    });
+
+    describe('instructor action items', () => {
+        it('should include the participation item for tutor actions on non-quiz exercises', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as Exercise;
+
+            const items = comp.createTutorActions();
+
+            expect(items.map((i) => i.translation)).toEqual(['entity.action.view', 'entity.action.scores', 'artemisApp.exercise.participations']);
+        });
+
+        it('should include quiz preview/solution items for tutor actions on quiz exercises', () => {
+            comp.exercise = { ...exercise, type: ExerciseType.QUIZ } as Exercise;
+
+            const items = comp.createTutorActions();
+
+            expect(items.map((i) => i.translation)).toEqual(['entity.action.view', 'entity.action.scores', 'artemisApp.quizExercise.preview', 'artemisApp.quizExercise.solution']);
+        });
+
+        it('should build editor actions per exercise type', () => {
+            const quizExerciseService = TestBed.inject(QuizExerciseService);
+            vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
+
+            comp.exercise = { ...exercise, type: ExerciseType.QUIZ } as Exercise;
+            expect(comp.createEditorActions().map((i) => i.translation)).toEqual(['artemisApp.courseOverview.exerciseDetails.instructorActions.statistics', 'entity.action.edit']);
+
+            comp.exercise = { ...exercise, type: ExerciseType.MODELING } as Exercise;
+            expect(comp.createEditorActions().map((i) => i.translation)).toEqual(['artemisApp.courseOverview.exerciseDetails.instructorActions.statistics']);
+
+            comp.exercise = { ...programmingExercise };
+            expect(comp.createEditorActions().map((i) => i.translation)).toEqual(['artemisApp.programmingExercise.configureGrading.shortTitle']);
+
+            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as Exercise;
+            expect(comp.createEditorActions()).toEqual([]);
+        });
+
+        it('should not add a quiz edit item for a quiz status that is not editable', () => {
+            const quizExerciseService = TestBed.inject(QuizExerciseService);
+            vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.OPEN_FOR_PRACTICE);
+
+            comp.exercise = { ...exercise, type: ExerciseType.QUIZ } as Exercise;
+
+            const items = comp.createEditorActions();
+
+            expect(items.map((i) => i.translation)).toEqual(['artemisApp.courseOverview.exerciseDetails.instructorActions.statistics']);
+        });
+
+        it('should assemble instructor actions from tutor, editor and re-evaluate items based on access rights', () => {
+            const quizExerciseService = TestBed.inject(QuizExerciseService);
+            vi.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.OPEN_FOR_PRACTICE);
+
+            comp.exercise = {
+                ...exercise,
+                type: ExerciseType.QUIZ,
+                isAtLeastTutor: true,
+                isAtLeastEditor: true,
+                isAtLeastInstructor: true,
+            } as Exercise;
+
+            comp.createInstructorActions();
+
+            const translations = comp.instructorActionItems().map((i) => i.translation);
+            expect(translations).toContain('entity.action.re-evaluate');
+            expect(translations).toContain('artemisApp.courseOverview.exerciseDetails.instructorActions.statistics');
+            expect(translations).toContain('entity.action.view');
+            expect(translations).toContain('artemisApp.quizExercise.preview');
+        });
+
+        it('should not include any instructor actions without the corresponding access rights', () => {
+            comp.exercise = {
+                ...exercise,
+                type: ExerciseType.TEXT,
+                isAtLeastTutor: false,
+                isAtLeastEditor: false,
+                isAtLeastInstructor: false,
+            } as Exercise;
+
+            comp.createInstructorActions();
+
+            expect(comp.instructorActionItems()).toEqual([]);
+        });
     });
 });

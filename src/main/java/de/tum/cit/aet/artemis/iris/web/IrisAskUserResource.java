@@ -58,7 +58,7 @@ public class IrisAskUserResource {
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         irisAskUserService.startQuizForCurrentSession(programmingExercise, user);
         return ResponseEntity.ok().build();
@@ -78,7 +78,7 @@ public class IrisAskUserResource {
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         irisAskUserService.startInClassQuizForCurrentSession(programmingExercise, user);
         return ResponseEntity.ok().build();
@@ -97,7 +97,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         irisAskUserService.registerDefocusForCurrentSession(exercise, user);
         return ResponseEntity.ok().build();
@@ -117,7 +117,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         return ResponseEntity.ok(irisAskUserService.startTimerForCurrentSession(exercise, user));
     }
@@ -134,7 +134,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         return ResponseEntity.ok(irisAskUserService.hasLatestSubmissionWithPointsBeforeDueDateIfExists(exercise, user));
     }
@@ -152,7 +152,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         return ResponseEntity.ok(irisAskUserService.isQuizAlreadyDone(exercise, user, inClass));
     }
@@ -169,7 +169,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         irisAskUserService.stopTimerForCurrentSession(exercise, user);
         return ResponseEntity.ok().build();
@@ -187,7 +187,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         return ResponseEntity.ok(irisAskUserService.isQuizStarted(exercise, user, false));
     }
@@ -204,7 +204,7 @@ public class IrisAskUserResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         irisSettingsService.ensureAskUserModeEnabledForExerciseOrElseThrow(exercise);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUser();
 
         return ResponseEntity.ok(irisAskUserService.isQuizStarted(exercise, user, true));
 

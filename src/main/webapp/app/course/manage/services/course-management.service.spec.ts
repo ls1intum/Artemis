@@ -4,12 +4,15 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
+import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
+import { CourseForArchiveDTO } from 'app/course/shared/entities/course-for-archive-dto';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
@@ -35,6 +38,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import dayjs from 'dayjs/esm';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -216,6 +220,150 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-organizations`, returnedFromService, course);
+    });
+
+    it('should get course statistics for the detail view', () => {
+        const detailViewDto = { numberOfStudents: 10 } as CourseManagementDetailViewDto;
+        courseManagementService
+            .getCourseStatisticsForDetailView(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(detailViewDto));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/management-detail` });
+        req.flush(detailViewDto);
+    });
+
+    it('should find course with exercises, lectures and competencies', () => {
+        courseManagementService
+            .findWithExercisesAndLecturesAndCompetencies(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(course));
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-lectures-competencies`, returnedFromService, course);
+    });
+
+    it('should find all courses for dropdown', () => {
+        returnedFromService = [{ ...course }];
+        courseManagementService
+            .findAllForDropdown()
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dropdown` });
+        req.flush(returnedFromService);
+    });
+
+    it('should find one course for registration', () => {
+        courseManagementService
+            .findOneForRegistration(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(course));
+        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-enrollment`, returnedFromService, course);
+    });
+
+    it('should get courses for archive', () => {
+        const archiveDtos = [{ id: 1, title: 'Course 1', semester: 'WS24', color: '#fff', icon: 'icon' } as CourseForArchiveDTO];
+        courseManagementService
+            .getCoursesForArchive()
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(archiveDtos));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-archive` });
+        req.flush(archiveDtos);
+    });
+
+    it('should search users with the given roles', () => {
+        const users = [{ id: 1, login: 'user1' } as UserPublicInfoDTO];
+        courseManagementService
+            .searchUsers(course.id!, 'user', ['students', 'tutors'])
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/users/search?loginOrName=user&roles=students,tutors` });
+        req.flush(users);
+    });
+
+    it('should search members for user mentions', () => {
+        const members = [{ id: 1, login: 'user1' } as UserNameAndLoginDTO];
+        courseManagementService
+            .searchMembersForUserMentions(course.id!, 'user')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(members));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/members/search?loginOrName=user` });
+        req.flush(members);
+    });
+
+    it('should search students by login or name', () => {
+        const students = [new User(1, 'student1')];
+        courseManagementService
+            .searchStudents(course.id!, 'student')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(students));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/students/search?loginOrName=student` });
+        req.flush(students);
+    });
+
+    it('should bulk add users to a course role and return the ones not found', () => {
+        const studentDtos = [{ login: 'student1' } as StudentDTO];
+        const notFound = [{ login: 'student2' } as StudentDTO];
+        courseManagementService
+            .addUsersToCourseRole(course.id!, studentDtos, 'students')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(notFound));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/students` });
+        expect(req.request.body).toEqual(studentDtos);
+        req.flush(notFound);
+    });
+
+    it('should convert course dates for client requests', () => {
+        const startDate = dayjs('2024-01-01T00:00:00Z');
+        const endDate = dayjs('2024-02-01T00:00:00Z');
+        const clientCourse = { id: 5, startDate, endDate } as Course;
+
+        const converted = CourseManagementService.convertCourseDatesFromClient(clientCourse);
+
+        expect(converted.id).toBe(5);
+        expect(converted.startDate).toBe(startDate.toJSON());
+        expect(converted.endDate).toBe(endDate.toJSON());
+        expect(converted.enrollmentStartDate).toBeUndefined();
+        expect(converted.enrollmentEndDate).toBeUndefined();
+        expect(converted.unenrollmentEndDate).toBeUndefined();
+    });
+
+    describe('getCoursesForNotifications', () => {
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should fetch and cache courses for notifications when none are cached yet', () => {
+            vi.useFakeTimers();
+            const notificationCourses = [{ ...course }];
+            const subject = courseManagementService.getCoursesForNotifications();
+            expect(subject.getValue()).toBeUndefined();
+
+            vi.advanceTimersByTime(500);
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-notifications` });
+            req.flush(notificationCourses);
+
+            expect(subject.getValue()).toEqual(notificationCourses);
+        });
+
+        it('should not issue a second request while courses are already cached', () => {
+            vi.useFakeTimers();
+            courseManagementService['coursesForNotifications'].next([{ ...course }]);
+
+            courseManagementService.getCoursesForNotifications();
+            vi.advanceTimersByTime(500);
+
+            httpMock.expectNone({ method: 'GET', url: `${resourceUrl}/for-notifications` });
+        });
+
+        it('should reset the fetching flag when the request for notifications fails', () => {
+            vi.useFakeTimers();
+            courseManagementService.getCoursesForNotifications();
+            vi.advanceTimersByTime(500);
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-notifications` });
+            req.flush('server error', { status: 500, statusText: 'Server Error' });
+
+            expect(courseManagementService['fetchingCoursesForNotifications']).toBe(false);
+        });
     });
 
     it('should find all courses for dashboard', () => {

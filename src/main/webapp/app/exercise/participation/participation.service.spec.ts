@@ -60,8 +60,101 @@ describe('Participation Service', () => {
     });
 
     it('should cleanup build plan', () => {
-        service.cleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
-        httpMock.expectOne({ method: 'PUT' });
+        const returnedFromService = Object.assign({}, participationDefault, { initializationDate: currentDate.toDate() });
+        let result: StudentParticipation | undefined;
+        service
+            .cleanupBuildPlan(participationDefault)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp.body ?? undefined));
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+
+        expect(dayjs.isDayjs(result?.initializationDate)).toBe(true);
+    });
+
+    it('should start quiz participation', () => {
+        const returnedFromService = Object.assign({ initializationDate: currentDate.toDate() }, participationDefault);
+        let result: StudentParticipation | undefined;
+
+        service
+            .startQuizParticipation(42)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp.body ?? undefined));
+
+        const req = httpMock.expectOne('api/quiz/quiz-exercises/42/start-participation');
+        expect(req.request.method).toBe('POST');
+        req.flush(returnedFromService);
+
+        expect(dayjs.isDayjs(result?.initializationDate)).toBe(true);
+    });
+
+    describe('getQuizParticipationResult', () => {
+        it('should GET quiz participation result without submissionId param', () => {
+            service.getQuizParticipationResult(1, 2).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/quiz/quiz-exercises/1/participations/2/result');
+            expect(req.request.method).toBe('GET');
+            expect(req.request.params.has('submissionId')).toBe(false);
+            req.flush(participationDefault);
+        });
+
+        it('should GET quiz participation result with submissionId param', () => {
+            service.getQuizParticipationResult(1, 2, 99).subscribe();
+
+            const req = httpMock.expectOne((r) => r.url === 'api/quiz/quiz-exercises/1/participations/2/result');
+            expect(req.request.params.get('submissionId')).toBe('99');
+            req.flush(participationDefault);
+        });
+    });
+
+    describe('shouldPreferPractice', () => {
+        it('should return true when exercise due date is in the past', () => {
+            const exercise: Exercise = { dueDate: dayjs().subtract(1, 'day') } as unknown as Exercise;
+            expect(service.shouldPreferPractice(exercise)).toBe(true);
+        });
+
+        it('should return false when exercise due date is in the future', () => {
+            const exercise: Exercise = { dueDate: dayjs().add(1, 'day') } as unknown as Exercise;
+            expect(service.shouldPreferPractice(exercise)).toBe(false);
+        });
+
+        it('should return false when exercise has no due date', () => {
+            const exercise: Exercise = { dueDate: undefined } as unknown as Exercise;
+            expect(service.shouldPreferPractice(exercise)).toBe(false);
+        });
+
+        it('should return false when exercise is undefined', () => {
+            expect(service.shouldPreferPractice(undefined)).toBe(false);
+        });
+    });
+
+    describe('getSpecificStudentParticipation', () => {
+        it('should return the testRun participation when testRun is true', () => {
+            const nonTestRun: StudentParticipation = { id: 1, testRun: false };
+            const testRun: StudentParticipation = { id: 2, testRun: true };
+
+            const result = service.getSpecificStudentParticipation([nonTestRun, testRun], true);
+
+            expect(result?.id).toBe(2);
+        });
+
+        it('should return the non-testRun participation when testRun is false', () => {
+            const nonTestRun: StudentParticipation = { id: 1, testRun: false };
+            const testRun: StudentParticipation = { id: 2, testRun: true };
+
+            const result = service.getSpecificStudentParticipation([nonTestRun, testRun], false);
+
+            expect(result?.id).toBe(1);
+        });
+
+        it('should return undefined when no participation matches', () => {
+            const testRun: StudentParticipation = { id: 2, testRun: true };
+
+            const result = service.getSpecificStudentParticipation([testRun], false);
+
+            expect(result).toBeUndefined();
+        });
     });
 
     it('should merge student participations for programming exercises', () => {
@@ -149,6 +242,59 @@ describe('Participation Service', () => {
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
+    });
+
+    it('should merge student participations with a testRun group for student type', () => {
+        const participation1: StudentParticipation = {
+            id: 1,
+            type: ParticipationType.STUDENT,
+            student: { id: 1, login: 'student1', internal: true },
+            testRun: false,
+        };
+        const participation2: StudentParticipation = {
+            id: 2,
+            type: ParticipationType.STUDENT,
+            student: { id: 2, login: 'student2', internal: true },
+            testRun: true,
+        };
+
+        const mergedParticipations = service.mergeStudentParticipations([participation1, participation2]);
+
+        expect(mergedParticipations).toHaveLength(2);
+        expect(mergedParticipations[0].id).toBe(participation1.id);
+        expect(mergedParticipations[1].id).toBe(participation2.id);
+    });
+
+    it('should carry over participantIdentifier and participantName when merging participations', () => {
+        const participation1: StudentParticipation = {
+            id: 1,
+            type: ParticipationType.STUDENT,
+            participantIdentifier: 'identifier1',
+            participantName: 'Participant One',
+        };
+
+        const mergedParticipation = service.mergeStudentParticipations([participation1])[0];
+
+        expect(mergedParticipation.participantIdentifier).toBe('identifier1');
+        expect(mergedParticipation.participantName).toBe('Participant One');
+    });
+
+    it('should convert an array of participation dates from server', () => {
+        const isoDate = '2024-06-01T10:00:00Z';
+        const participations: StudentParticipation[] = [
+            { id: 1, initializationDate: dayjs(isoDate) as any },
+            { id: 2, initializationDate: dayjs(isoDate) as any },
+        ];
+
+        const result = ParticipationService.convertParticipationArrayDatesFromServer(participations);
+
+        expect(result).toHaveLength(2);
+        result.forEach((participation) => expect(dayjs.isDayjs(participation.initializationDate)).toBe(true));
+    });
+
+    it('should return an empty array when converting undefined participations', () => {
+        const result = ParticipationService.convertParticipationArrayDatesFromServer(undefined);
+        expect(result).toEqual([]);
     });
 
     it('should update a Participation', () => {
@@ -324,6 +470,37 @@ describe('Participation Service', () => {
             expect(req.request.body[0].id).toBe(10);
             expect(req.request.body[0].exerciseId).toBe(5);
             req.flush([]);
+        });
+
+        it('should convert dates and set access rights for the returned participations', () => {
+            const exercise: Exercise = {
+                id: 5,
+                type: ExerciseType.TEXT,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                secondCorrectionEnabled: false,
+                studentAssignedTeamIdComputed: false,
+            };
+            const participation: StudentParticipation = { id: 10, individualDueDate: dayjs('2024-12-31') };
+            const returnedParticipation = {
+                id: 10,
+                initializationDate: currentDate.toDate(),
+                individualDueDate: currentDate.toDate(),
+                exercise,
+            };
+
+            let result: StudentParticipation[] | undefined;
+            service
+                .updateIndividualDueDates(exercise, [participation])
+                .pipe(take(1))
+                .subscribe((resp) => (result = resp.body ?? undefined));
+
+            const req = httpMock.expectOne('api/exercise/exercises/5/participations/update-individual-due-date');
+            req.flush([returnedParticipation]);
+
+            expect(result).toHaveLength(1);
+            expect(dayjs.isDayjs(result?.[0].initializationDate)).toBe(true);
+            expect(dayjs.isDayjs(result?.[0].individualDueDate)).toBe(true);
+            expect(result?.[0].exercise?.isAtLeastTutor).toBe(false);
         });
     });
 
