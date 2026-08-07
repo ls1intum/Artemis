@@ -4,7 +4,8 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
-import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -27,7 +28,7 @@ describe('CourseGroupComponent', () => {
     let courseManagementService: CourseManagementService;
 
     const courseGroup = CourseRoleSlug.STUDENTS;
-    const course = {
+    const course: Course = {
         id: 123,
         title: 'Course Title',
         isAtLeastInstructor: true,
@@ -82,7 +83,9 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should return empty string when course has no title', () => {
-            fixture.componentRef.setInput('course', { ...course, title: undefined });
+            const courseWithoutTitle = deepClone(course);
+            courseWithoutTitle.title = undefined;
+            fixture.componentRef.setInput('course', courseWithoutTitle);
             fixture.detectChanges();
             expect(comp.exportFileName()).toBe('');
         });
@@ -139,7 +142,9 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should not call API when course id is missing', () => {
-            fixture.componentRef.setInput('course', { ...course, id: undefined });
+            const courseWithoutId = deepClone(course);
+            courseWithoutId.id = undefined;
+            fixture.componentRef.setInput('course', courseWithoutId);
             const getSpy = vi.spyOn(courseManagementService, 'getPagedUsersInCourseRole');
 
             comp.onLazyLoad(mockLazyEvent);
@@ -182,7 +187,7 @@ describe('CourseGroupComponent', () => {
             const removeFn = vi.fn();
             fixture.componentRef.setInput('removeUserFromGroup', removeFn);
 
-            const userWithoutLogin = { ...user1 };
+            const userWithoutLogin = deepClone(user1);
             delete userWithoutLogin.login;
             comp.removeFromGroup(userWithoutLogin);
 
@@ -205,12 +210,10 @@ describe('CourseGroupComponent', () => {
 
     describe('exportUserInformation', () => {
         it('should call getAllUsersInCourseRole and export CSV with results', () => {
-            const userWithDetails = {
-                ...user1,
-                name: 'User One',
-                email: 'user1@example.com',
-                visibleRegistrationNumber: '123456',
-            };
+            const userWithDetails = deepClone(user1);
+            userWithDetails.name = 'User One';
+            userWithDetails.email = 'user1@example.com';
+            userWithDetails.visibleRegistrationNumber = '123456';
             vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [userWithDetails] })));
             const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 
@@ -237,7 +240,9 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should not call API when course id is missing', () => {
-            fixture.componentRef.setInput('course', { ...course, id: undefined });
+            const courseWithoutId = deepClone(course);
+            courseWithoutId.id = undefined;
+            fixture.componentRef.setInput('course', courseWithoutId);
             const getSpy = vi.spyOn(courseManagementService, 'getAllUsersInCourseRole');
 
             comp.exportUserInformation();
@@ -246,12 +251,10 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should trim whitespace from exported values', () => {
-            const userWithSpaces = {
-                ...user1,
-                name: '  John Doe  ',
-                email: '  john@example.com  ',
-                visibleRegistrationNumber: '  REG001  ',
-            };
+            const userWithSpaces = deepClone(user1);
+            userWithSpaces.name = '  John Doe  ';
+            userWithSpaces.email = '  john@example.com  ';
+            userWithSpaces.visibleRegistrationNumber = '  REG001  ';
             vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [userWithSpaces] })));
             const exportSpy = vi.spyOn(csvUtils, 'exportUserInformationAsCsv').mockImplementation(() => {});
 

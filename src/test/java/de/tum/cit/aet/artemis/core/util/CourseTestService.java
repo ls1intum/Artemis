@@ -3496,7 +3496,7 @@ public class CourseTestService {
         params.add("searchTerm", userPrefix + "student");
         List<UserForRegistrationDTO> result = request.getList("/api/course/courses/" + course.getId() + "/students/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
                 params);
-        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(NUMBER_OF_STUDENTS);
         assertThat(result).allMatch(u -> u.login().startsWith(userPrefix + "student"));
     }
 

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.account.repository;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
 
 import jakarta.persistence.criteria.Join;
@@ -230,10 +231,11 @@ public class UserSpecs {
         if (searchTerm == null || searchTerm.isBlank()) {
             return (root, query, cb) -> cb.conjunction();
         }
-        String pattern = "%" + searchTerm.toLowerCase() + "%";
+        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        String pattern = "%" + escaped + "%";
         return (root, query, cb) -> {
             var fullName = cb.lower(cb.concat(cb.concat(cb.coalesce(root.get(User_.FIRST_NAME), ""), " "), cb.coalesce(root.get(User_.LAST_NAME), "")));
-            return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern), cb.like(fullName, pattern));
+            return cb.or(cb.like(cb.lower(root.get(User_.LOGIN)), pattern, '\\'), cb.like(fullName, pattern, '\\'));
         };
     }
 }

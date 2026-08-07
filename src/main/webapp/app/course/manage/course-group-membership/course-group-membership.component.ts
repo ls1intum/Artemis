@@ -22,7 +22,7 @@ export class CourseGroupMembershipComponent implements OnInit {
     course = signal<Course | undefined>(undefined);
     courseRoleSlug = signal<CourseRoleSlug | undefined>(undefined);
     isAdmin = signal(false);
-    paramSub: Subscription;
+    paramSub?: Subscription;
 
     ngOnInit(): void {
         this.loadAll();

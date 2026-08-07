@@ -12,7 +12,7 @@
 <!-- Import / export buttons rendered in the table caption bar -->
 <ng-template #tableActionsTemplate>
     @if (course().isAtLeastInstructor) {
-        <div class="d-flex gap-1 align-items-center">
+        <div class="flex items-center gap-1">
             <p-button size="small" (onClick)="openAddUsersModal()">
                 <i class="pi pi-user-plus"></i>
                 <span jhiTranslate="artemisApp.course.courseGroup.addUsers"></span>

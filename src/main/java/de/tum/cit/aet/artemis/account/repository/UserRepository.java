@@ -1699,8 +1699,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         Sort.Direction dir = search.getSortingOrder() == SortingOrder.DESCENDING ? Sort.Direction.DESC : Sort.Direction.ASC;
         Sort sort = switch (search.getSortedColumn() != null ? search.getSortedColumn() : "") {
             case "visibleRegistrationNumber" -> Sort.by(dir, "registrationNumber").and(Sort.by("id"));
+            case "login" -> Sort.by(dir, "login").and(Sort.by("id"));
+            case "email" -> Sort.by(dir, "email").and(Sort.by("id"));
             case "name", "" -> Sort.by(dir, "firstName").and(Sort.by(dir, "lastName")).and(Sort.by("id"));
-            default -> Sort.by(dir, search.getSortedColumn()).and(Sort.by("id"));
+            default -> Sort.by(dir, "firstName").and(Sort.by(dir, "lastName")).and(Sort.by("id"));
         };
         Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize(), sort);
         Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginOrFullName(search.getSearchTerm()));

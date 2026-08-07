@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -43,10 +43,27 @@ export class CourseGroupComponent {
     private readonly courseManagementService = inject(CourseManagementService);
 
     private readonly tableViewRef = viewChild(TableViewComponent);
+    private lazyLoadGeneration = 0;
     readonly profilePictureTemplate = viewChild<CellTemplateRef<User>>('profilePictureTemplate');
     readonly loginTemplate = viewChild<CellTemplateRef<User>>('loginTemplate');
     private readonly addUsersModal = viewChild(UserRegistrationModalComponent);
     private readonly importDialog = viewChild(UsersImportDialogComponent);
+
+    constructor() {
+        // The parent route reuses this component when only the role slug (e.g. members/:courseRoleSlug) changes,
+        // so the table's own initial lazy load never re-fires on its own. Reload it whenever the role changes,
+        // skipping the very first run since the table already performs its initial load.
+        let isFirstRun = true;
+        effect(() => {
+            this.courseRoleSlug();
+            this.course();
+            if (isFirstRun) {
+                isFirstRun = false;
+                return;
+            }
+            this.tableViewRef()?.reset();
+        });
+    }
 
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
@@ -137,9 +154,13 @@ export class CourseGroupComponent {
             return;
         }
         const search = buildDbQueryFromLazyEvent(event);
+        const generation = ++this.lazyLoadGeneration;
         this.isLoading.set(true);
         this.courseManagementService.getPagedUsersInCourseRole(courseId, slug, search).subscribe({
             next: (result) => {
+                if (generation !== this.lazyLoadGeneration) {
+                    return;
+                }
                 this.rows.set(result.content);
                 this.totalRows.set(result.totalElements);
                 if (!search.searchTerm) {
@@ -148,7 +169,9 @@ export class CourseGroupComponent {
                 this.isLoading.set(false);
             },
             error: () => {
-                this.isLoading.set(false);
+                if (generation === this.lazyLoadGeneration) {
+                    this.isLoading.set(false);
+                }
             },
         });
     }
@@ -198,14 +221,12 @@ export class CourseGroupComponent {
                 if (users.length === 0) {
                     return;
                 }
-                const exportRows: ExportUserInformationRow[] = users.map(
-                    (user: User): ExportUserInformationRow => ({
-                        [NAME_KEY]: user.name?.trim() ?? '',
-                        [USERNAME_KEY]: user.login?.trim() ?? '',
-                        [EMAIL_KEY]: user.email?.trim() ?? '',
-                        [REGISTRATION_NUMBER_KEY]: user.visibleRegistrationNumber?.trim() ?? '',
-                    }),
-                );
+                const exportRows: ExportUserInformationRow[] = users.map((user: User): ExportUserInformationRow => ({
+                    [NAME_KEY]: user.name?.trim() ?? '',
+                    [USERNAME_KEY]: user.login?.trim() ?? '',
+                    [EMAIL_KEY]: user.email?.trim() ?? '',
+                    [REGISTRATION_NUMBER_KEY]: user.visibleRegistrationNumber?.trim() ?? '',
+                }));
                 exportUserInformationAsCsv(exportRows, [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY], this.exportFileName());
             },
         });
