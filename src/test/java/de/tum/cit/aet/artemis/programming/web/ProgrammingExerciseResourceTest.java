@@ -76,6 +76,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     /** Title an update request sets alongside the (rejected) timeline change, to prove the rest of the update still lands. */
     private static final String RENAMED_VARIANT_TITLE = "Renamed variant";
 
+    /**
+     * Fixed timeline for exercises built as request payloads below. The dates only have to satisfy the ordering rules of
+     * {@code validateDates()}, so pinning them keeps the payload independent of the wall clock.
+     */
+    private static final ZonedDateTime PAYLOAD_RELEASE_DATE = ZonedDateTime.parse("2099-02-01T00:00:00Z");
+
+    private static final ZonedDateTime PAYLOAD_DUE_DATE = PAYLOAD_RELEASE_DATE.plusDays(8);
+
     @Autowired
     private UserUtilService userUtilService;
 
@@ -403,7 +411,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         // directly. This path is intentionally left unchanged; the test guards that invalid values are still rejected.
         addInstructorToCourse();
 
-        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(PAYLOAD_RELEASE_DATE, PAYLOAD_DUE_DATE, course);
         var validPhases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                 new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"))), "ubuntu:latest");
         newExercise.getBuildConfig().setBuildPlanConfiguration(validPhases.toBuildPlanConfiguration());
@@ -550,6 +558,81 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(fromDb.getPlagiarismDetectionConfig().getId()).isEqualTo(configId);
         assertThat(fromDb.getPlagiarismDetectionConfig().getSimilarityThreshold()).isEqualTo(37);
         assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumScore()).isEqualTo(4);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getMinimumSize()).isEqualTo(9);
+        assertThat(fromDb.getPlagiarismDetectionConfig().getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(12);
+    }
+
+    /**
+     * The other update tests all start from an exercise that already owns a config, so they only cover the in-place
+     * branch of {@code PlagiarismDetectionConfigHelper.applyToExercise}. This one starts with no association at all, so
+     * it covers the branch that builds a new config from the DTO and persists it through the exercise cascade.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_missingPlagiarismDetectionConfig_createsFromSubmittedValues() throws Exception {
+        prepareExerciseWithoutPlagiarismDetectionConfig();
+        programmingExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
+
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.OK);
+
+        assertCreatedPlagiarismDetectionConfig(updated.getId());
+    }
+
+    /**
+     * Re-evaluate runs the same apply-and-persist step as the general update, so the create branch must hold there too.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testReEvaluateProgrammingExercise_missingPlagiarismDetectionConfig_createsFromSubmittedValues() throws Exception {
+        prepareExerciseWithoutPlagiarismDetectionConfig();
+        programmingExercise.setPlagiarismDetectionConfig(submittedPlagiarismDetectionConfig());
+
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+
+        assertCreatedPlagiarismDetectionConfig(updated.getId());
+    }
+
+    /**
+     * Loads {@link #programmingExercise}, gives it a valid build plan configuration and drops its plagiarism detection
+     * config, asserting that the association really is gone before the request under test runs.
+     */
+    private void prepareExerciseWithoutPlagiarismDetectionConfig() throws Exception {
+        addInstructorToCourse();
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        setValidBuildPlanConfiguration();
+
+        programmingExercise.setPlagiarismDetectionConfig(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        assertThat(programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow()
+                .getPlagiarismDetectionConfig()).as("the exercise must start without a plagiarism detection config").isNull();
+    }
+
+    /** The (valid) values the request submits for an exercise that has no plagiarism detection config yet. */
+    private PlagiarismDetectionConfig submittedPlagiarismDetectionConfig() {
+        var config = new PlagiarismDetectionConfig();
+        config.setContinuousPlagiarismControlEnabled(true);
+        config.setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
+        config.setSimilarityThreshold(55);
+        config.setMinimumScore(8);
+        config.setMinimumSize(16);
+        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(13);
+        return config;
+    }
+
+    /** Asserts that the exercise now owns a persisted config carrying exactly the submitted values. */
+    private void assertCreatedPlagiarismDetectionConfig(long exerciseId) {
+        var fromDb = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(exerciseId).orElseThrow();
+        PlagiarismDetectionConfig createdConfig = fromDb.getPlagiarismDetectionConfig();
+        assertThat(createdConfig).as("the resource must create the missing config").isNotNull();
+        assertThat(createdConfig.getId()).as("the created config must be persisted").isNotNull();
+        assertThat(createdConfig.isContinuousPlagiarismControlEnabled()).isTrue();
+        assertThat(createdConfig.isContinuousPlagiarismControlPostDueDateChecksEnabled()).isTrue();
+        assertThat(createdConfig.getSimilarityThreshold()).isEqualTo(55);
+        assertThat(createdConfig.getMinimumScore()).isEqualTo(8);
+        assertThat(createdConfig.getMinimumSize()).isEqualTo(16);
+        assertThat(createdConfig.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod()).isEqualTo(13);
     }
 
     /**
