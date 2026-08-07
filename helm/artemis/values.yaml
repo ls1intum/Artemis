@@ -252,12 +252,16 @@ hadesAdapter:
   deploy: true
   image:
     repository: ghcr.io/ls1intum/hades-artemis-adapter
-    # Upstream publishes git-SHA tags (e.g. "76270ce") plus "latest". Pin a SHA
-    # for reproducible deployments; "latest" is convenient for per-PR previews.
-    tag: "latest"
-    pullPolicy: Always
-  # Port the adapter listens on (POST /adapter/logs, /adapter/test-results).
+    # Pin an immutable version tag for reproducible, controlled rollouts.
+    tag: "1.1.0"
+    # Immutable version tags don't need Always (avoids surprise upgrades on restart).
+    pullPolicy: IfNotPresent
+  # Port the adapter listens on (POST /adapter/logs, /adapter/test-results, GET /health).
   port: 8082
+  # How long the adapter waits for BOTH build logs and test results before
+  # forwarding partial data (Go duration; "0" = wait forever). The upstream
+  # default is 15s, which can be tight if NATS log batching lags behind results.
+  resultWaitTimeout: "30s"
   # Path Hades' result parser posts results to; forwarded to Artemis.
   ingestPath: /adapter/test-results
   # How the adapter reaches Artemis to POST results. Empty -> the in-cluster

@@ -39,6 +39,8 @@ spec:
               value: {{ include "artemis.hadesAdapterArtemisBaseUrl" . | quote }}
             - name: ARTEMIS_NEW_RESULT_ENDPOINT
               value: {{ .Values.hadesAdapter.newResultEndpoint | quote }}
+            - name: RESULT_WAIT_TIMEOUT
+              value: {{ .Values.hadesAdapter.resultWaitTimeout | quote }}
             # Shared with Artemis: the token Artemis validates on the new-result callback.
             - name: ARTEMIS_AUTH_TOKEN
               valueFrom:
@@ -49,11 +51,13 @@ spec:
             - name: http
               containerPort: {{ .Values.hadesAdapter.port }}
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: http
             initialDelaySeconds: 30
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /health
               port: http
             initialDelaySeconds: 10
           resources:

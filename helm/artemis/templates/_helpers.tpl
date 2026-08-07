@@ -130,12 +130,14 @@ jdbc:postgresql://{{ include "artemis.dbHost" . }}:{{ include "artemis.dbPort" .
 {{- end }}
 
 {{/* Effective Hades adapter endpoint Artemis hands to the result parser. When the adapter is
-     deployed by this chart and the user didn't override it, point at the in-cluster adapter. */}}
+     deployed by this chart and the user didn't override it, point at the in-cluster adapter.
+     MUST be the fully-qualified service DNS name: the Hades build/parse containers run in the
+     Hades namespace, so a bare service name would not resolve. */}}
 {{- define "artemis.hadesAdapterEndpoint" -}}
 {{- if .Values.artemis.config.hades.adapterEndpoint -}}
 {{- .Values.artemis.config.hades.adapterEndpoint -}}
 {{- else if .Values.hadesAdapter.deploy -}}
-http://{{ include "artemis.hadesAdapterName" . }}:{{ .Values.hadesAdapter.port }}{{ .Values.hadesAdapter.ingestPath }}
+http://{{ include "artemis.hadesAdapterName" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.hadesAdapter.port }}{{ .Values.hadesAdapter.ingestPath }}
 {{- else -}}
 {{- required "artemis.config.hades.adapterEndpoint is required when hadesAdapter.deploy=false" .Values.artemis.config.hades.adapterEndpoint -}}
 {{- end -}}

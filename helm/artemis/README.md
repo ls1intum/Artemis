@@ -311,8 +311,9 @@ The existing Gateway must expose an HTTPS listener for the hostname and (for `ss
 | Key | Default | Description |
 |-----|---------|-------------|
 | `hadesAdapter.deploy` | `true` | Deploy the adapter next to Artemis and auto-wire it. |
-| `hadesAdapter.image.repository` / `tag` | `ghcr.io/ls1intum/hades-artemis-adapter` / `latest` | Adapter image (upstream uses git-SHA tags; pin one for reproducibility). |
-| `hadesAdapter.port` | `8082` | Adapter listen port. |
+| `hadesAdapter.image.repository` / `tag` | `ghcr.io/ls1intum/hades-artemis-adapter` / `1.1.0` | Adapter image (pinned immutable tag). |
+| `hadesAdapter.port` | `8082` | Adapter listen port (`/adapter/logs`, `/adapter/test-results`, `/health`). |
+| `hadesAdapter.resultWaitTimeout` | `30s` | How long the adapter waits for logs+results before forwarding partial data (Go duration; `0` = forever). |
 | `hadesAdapter.ingestPath` | `/adapter/test-results` | Path Hades' result parser posts to (used to auto-compute `adapterEndpoint`). |
 | `hadesAdapter.artemisBaseUrl` | `""` (→ `http://<release>-http:8080`) | How the adapter reaches Artemis to POST results. |
 | `hadesAdapter.newResultEndpoint` | `api/.../new-result` | Relative Artemis endpoint the adapter forwards to. |
