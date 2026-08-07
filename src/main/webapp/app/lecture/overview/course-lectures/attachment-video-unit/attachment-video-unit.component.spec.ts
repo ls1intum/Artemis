@@ -1289,6 +1289,47 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeDefined();
         });
 
+        it('gives up on a timestamp target when the playlist resolved but the transcript came back empty', () => {
+            // The video player only renders with a resolved playlist *and* a transcript. Without the latter the unit
+            // falls back to the bare iframe, so no seekable player is coming — treating the playlist alone as proof of
+            // one would leave the target pending forever and make the waiting pipeline sit out its full ack timeout.
+            component['fullscreenState'].set(true);
+            component.isLoading.set(false);
+            component['isTranscriptLoading'].set(false);
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([]);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c15', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c15', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('keeps a timestamp target pending while the transcript request is still in flight', () => {
+            // The transcript is requested just before the loading flag clears and settles only after it, so an empty
+            // transcript is not yet an answer at this point. Judging by the loading flag alone would report a
+            // perfectly good point-out as not applied.
+            component['fullscreenState'].set(true);
+            component.isLoading.set(false);
+            component['isTranscriptLoading'].set(true);
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([]);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c16', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeDefined();
+
+            // Once the request settles without segments the answer is final and the target is released right away.
+            component['isTranscriptLoading'].set(false);
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c16', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
         it('waits for the YouTube player itself, not merely for its wrapper component', () => {
             // Angular creates the wrapper long before the YouTube iframe API hands over the real player, and a seek in
             // between is silently dropped. Treating the wrapper's existence as readiness would acknowledge a

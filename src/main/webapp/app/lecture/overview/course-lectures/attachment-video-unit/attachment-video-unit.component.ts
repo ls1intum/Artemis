@@ -125,6 +125,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+    /**
+     * Whether the transcript request is still in flight. It is started just before the loading flag clears, so an empty
+     * transcript only means "there is none" once this has settled too — see {@link isPointOutUnreachable}.
+     */
+    private readonly isTranscriptLoading = signal<boolean>(false);
 
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
@@ -469,10 +474,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Slides: the unit either has no PDF at all, or its PDF failed to load, in which case the viewer is replaced by an
      * error message for as long as the view stays open. That the URL has not arrived yet is not decisive.
      *
-     * Video: only a resolved playlist or a working YouTube video yields a player that can be seeked; anything else
-     * falls back to a bare iframe, which cannot. The playlist is resolved before the loading flag clears, so once it
-     * has, its absence is final. A resolved playlist still awaiting its transcript is left pending rather than
-     * dropped — that wait is short and ends in a real player.
+     * Video: only a seekable player can hold a timestamp, and anything else falls back to a bare iframe, which cannot.
+     * The conditions below mirror the template's, since a player that is never rendered can never be seeked either:
+     * the video player needs a resolved playlist *and* a transcript, while the YouTube player needs neither and renders
+     * on the video id alone. A playlist without a transcript therefore ends in the iframe, not in a player — waiting on
+     * it would block until the server-side ack timeout, which is the very thing this method exists to prevent.
+     *
+     * Both requests must have settled before their outcome counts. The transcript is requested just before the loading
+     * flag clears and settles after it, so an empty transcript is only final once its own request has finished too;
+     * judging by the loading flag alone would drop a perfectly good point-out in that window.
      * @param pointOut the pending navigation target
      * @return whether it can be given up on
      */
@@ -480,8 +490,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
             return true;
         }
-        const hasSeekableVideo = !!this.playlistUrl() || (!!this.youtubeVideoId() && !this.youtubePlayerFailed());
-        return pointOut.timestamp != undefined && !this.isLoading() && !hasSeekableVideo;
+        const hasSeekableVideo = (!!this.playlistUrl() && this.hasTranscript()) || (!!this.youtubeVideoId() && !this.youtubePlayerFailed());
+        return pointOut.timestamp != undefined && !this.isLoading() && !this.isTranscriptLoading() && !hasSeekableVideo;
     }
 
     /**
@@ -544,6 +554,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
             this.isLoading.set(true);
+            this.isTranscriptLoading.set(false);
 
             const src = this.lectureUnit().videoSource;
 
@@ -603,6 +614,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        this.isTranscriptLoading.set(true);
         this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
@@ -612,10 +624,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             .subscribe({
                 next: (segments) => {
                     this.transcriptSegments.set(segments);
+                    this.isTranscriptLoading.set(false);
                 },
                 error: () => {
                     // Failed to fetch transcript, video player will work without it
                     this.transcriptSegments.set([]);
+                    this.isTranscriptLoading.set(false);
                 },
             });
     }

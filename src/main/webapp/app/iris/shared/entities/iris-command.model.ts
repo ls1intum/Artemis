@@ -25,7 +25,9 @@ export interface IrisCommand {
  * Mirrors the server IrisCommandAckDTO record.
  * The client's reply to a server-pushed {@link IrisCommand}: whether it was carried out on the client.
  */
-export class IrisCommandAckDTO {
-    correlationId!: string;
-    applied!: boolean;
+export interface IrisCommandAckDTO {
+    /** Correlates the reply with the command that asked for it. */
+    correlationId: string;
+    /** Whether the client carried the command out. */
+    applied: boolean;
 }
