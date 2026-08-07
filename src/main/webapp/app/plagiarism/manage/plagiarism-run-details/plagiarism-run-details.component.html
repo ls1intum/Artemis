@@ -45,7 +45,14 @@
         </div>
         <div class="plagiarism-run-details-info">
             <div style="height: 400px">
-                <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onSelect($event)" />
+                <p-chart
+                    type="bar"
+                    [data]="chartData()"
+                    [options]="chartOptions()"
+                    [plugins]="dataLabelsPlugin"
+                    (onDataSelect)="onSelect($event)"
+                    [ariaLabel]="'artemisApp.plagiarism.similarityDistribution' | artemisTranslate"
+                />
             </div>
         </div>
     </div>

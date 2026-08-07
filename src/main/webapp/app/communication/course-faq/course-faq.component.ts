@@ -13,6 +13,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/foundation/util/global.utils';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -25,7 +26,16 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
     templateUrl: './course-faq.component.html',
     styleUrls: ['../../course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbDropdownModule, TranslateDirective, FontAwesomeModule, CommonModule],
+    imports: [
+        CourseTitleBarActionsDirective,
+        CourseFaqAccordionComponent,
+        CustomExerciseCategoryBadgeComponent,
+        SearchFilterComponent,
+        NgbDropdownModule,
+        TranslateDirective,
+        FontAwesomeModule,
+        CommonModule,
+    ],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');

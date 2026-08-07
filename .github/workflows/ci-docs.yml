@@ -17,7 +17,7 @@ env:
 
 jobs:
   build:
-    name: Build Docusaurus site
+    name: Build documentation site
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -27,16 +27,21 @@ jobs:
 
       - uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:
-          package_json_file: documentation/package.json
+          package_json_file: package.json
           run_install: false
 
       - uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
-          cache-dependency-path: documentation/pnpm-lock.yaml
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            documentation/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install client dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install documentation dependencies
         working-directory: documentation
         run: pnpm install --frozen-lockfile
 
@@ -44,9 +49,18 @@ jobs:
         working-directory: documentation
         run: pnpm run lint
 
-      - name: Build Docusaurus site
+      - name: Documentation Type Check
         working-directory: documentation
-        run: pnpm run build
+        run: pnpm run typecheck
+
+      - name: Build documentation site
+        run: pnpm run docs:build
+
+      - name: Install documentation browser
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      - name: Test documentation integration
+        run: pnpm run docs:integration:test
 
       # Only on the deploy paths (develop push / manual redeploy); the deploy job consumes this.
       # Uploading the artifact needs no extra permissions — `pages: write` lives on the deploy job.

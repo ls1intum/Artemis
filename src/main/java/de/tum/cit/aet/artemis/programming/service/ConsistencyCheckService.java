@@ -6,11 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
@@ -85,22 +87,35 @@ public class ConsistencyCheckService {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
         }
         else {
-            if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri())) {
+            if (!hasValidRepository(programmingExercise.getVcsTemplateRepositoryUri())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_REPO_MISSING));
             }
-            if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri())) {
+            if (!hasValidRepository(programmingExercise.getVcsTestRepositoryUri())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
             }
-            if (!versionControl.repositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri())) {
+            if (!hasValidRepository(programmingExercise.getVcsSolutionRepositoryUri())) {
                 result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
             }
             for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
-                if (!versionControl.repositoryUriIsValid(auxiliaryRepository.getVcsRepositoryUri())) {
+                if (!hasValidRepository(auxiliaryRepository.getVcsRepositoryUri())) {
                     result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.AUXILIARY_REPO_MISSING));
                 }
             }
         }
         return result;
+    }
+
+    /**
+     * Checks if a valid repository exists behind the given URI. This requires that the URI is not null (a null URI typically means the stored URI could not be parsed),
+     * that it is syntactically valid, and that a valid git repository exists for it in the VCS. The repository check is required because a syntactically valid URI can
+     * still point to a repository that is missing or corrupt, which breaks operations such as starting the exercise (see issue #12840).
+     *
+     * @param repositoryUri the repository URI to check, may be null
+     * @return true if a valid repository exists, false otherwise
+     */
+    private boolean hasValidRepository(@Nullable LocalVCRepositoryUri repositoryUri) {
+        VersionControlService versionControl = versionControlService.orElseThrow();
+        return versionControl.repositoryUriIsValid(repositoryUri) && versionControl.isValidGitRepository(repositoryUri);
     }
 
     /**
