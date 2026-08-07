@@ -236,6 +236,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
     private createFeedback(): Feedback {
         const feedback = new Feedback();
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        feedback.credits = 0;
 
         // Assign the next id to the unreferenced feedback
         if (this.addReferenceIdForExampleSubmission()) {

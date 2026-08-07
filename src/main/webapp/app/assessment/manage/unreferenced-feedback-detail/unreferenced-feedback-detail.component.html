@@ -36,7 +36,6 @@
                         [step]="CREDITS_STEP"
                         [(ngModel)]="feedback().credits"
                         (ngModelChange)="emitChanges()"
-                        [required]="!feedback().gradingInstruction"
                         [attr.aria-label]="'artemisApp.exercise.score' | artemisTranslate"
                     />
                     <tum-ui-input-group-addon>
