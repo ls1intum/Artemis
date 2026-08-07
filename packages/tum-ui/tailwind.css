@@ -1,0 +1,165 @@
+@import './themes.css' layer(tum-ui-theme);
+@import 'tailwindcss/theme.css' prefix(tum);
+@import 'tailwindcss/utilities.css' prefix(tum) source(none);
+@import '@angular/cdk/overlay-prebuilt.css' layer(tum-ui-cdk);
+@import './tailwind-theme.css';
+
+@source './src';
+@source not './src/**/*.mdx';
+@source not './src/**/*.spec.ts';
+@source not './src/**/*.stories.ts';
+
+:where(
+    tum-ui-autocomplete,
+    tum-ui-button,
+    tum-ui-button-group,
+    tum-ui-calendar,
+    tum-ui-card,
+    tum-ui-checkbox,
+    tum-ui-chip,
+    tum-ui-confirm-dialog,
+    tum-ui-date-picker,
+    tum-ui-dialog,
+    tum-ui-icon-field,
+    tum-ui-input-group,
+    tum-ui-input-group-addon,
+    tum-ui-input-number,
+    tum-ui-message,
+    tum-ui-paginator,
+    tum-ui-panel,
+    tum-ui-popover,
+    tum-ui-progress-bar,
+    tum-ui-progress-spinner,
+    tum-ui-radio-button,
+    tum-ui-select,
+    tum-ui-select-button,
+    tum-ui-tab,
+    tum-ui-tab-list,
+    tum-ui-tab-panel,
+    tum-ui-tab-panels,
+    tum-ui-table,
+    tum-ui-table-virtual-scroll,
+    tum-ui-tabs,
+    tum-ui-tag,
+    tum-ui-toggle-switch,
+    tum-ui-tooltip-content,
+    .tum-ui-btn,
+    .tum-ui-input,
+    .tum-ui-popover-panel,
+    .tum-ui-table
+) {
+    font-family: var(--tumaet-ui-font-family);
+    font-size: var(--tumaet-ui-font-size-base);
+    line-height: var(--tumaet-ui-line-height-base);
+}
+
+:where(
+        tum-ui-autocomplete,
+        tum-ui-button,
+        tum-ui-calendar,
+        tum-ui-checkbox,
+        tum-ui-chip,
+        tum-ui-date-picker,
+        tum-ui-dialog,
+        tum-ui-input-number,
+        tum-ui-paginator,
+        tum-ui-panel,
+        tum-ui-radio-button,
+        tum-ui-select,
+        tum-ui-select-button,
+        tum-ui-table,
+        tum-ui-toggle-switch
+    )
+    :where(button, input, select, textarea) {
+    font: inherit;
+}
+
+.tum-ui-button-group {
+    display: inline-flex;
+}
+
+.tum-ui-button-group > tum-ui-button,
+.tum-ui-button-group > button:not(.tum-ui-btn) {
+    margin: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:not(:first-of-type, :last-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn, :first-of-type, :last-of-type) {
+    border-radius: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:first-of-type:not(:only-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn):first-of-type:not(:only-of-type) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:last-of-type:not(:only-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn):last-of-type:not(:only-of-type) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tum-ui-button-group > tum-ui-button:not(:last-of-type) .tum-ui-btn,
+.tum-ui-button-group > button:not(.tum-ui-btn):not(:last-of-type) {
+    border-inline-end: 0 none;
+}
+
+.tum-ui-button-group .tum-ui-btn:focus-visible,
+.tum-ui-button-group > button:not(.tum-ui-btn):focus-visible {
+    position: relative;
+    z-index: 1;
+}
+
+.tum-ui-input-group > .tum-ui-input:not(:first-child) {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tum-ui-input-group > :not(:first-child) {
+    --tum-ui-input-group-start-radius: 0;
+}
+
+.tum-ui-input-group > :not(:last-child) {
+    --tum-ui-input-group-end-radius: 0;
+}
+
+.tum-ui-input-group > :is(.tum-ui-input, tum-ui-input-number) {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.tum-ui-input-group > .tum-ui-input:not(:last-child) {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:first-child) > .tum-ui-input-number-input {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:last-child) > .tum-ui-input-number-input {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:last-child) > .tum-ui-input-number-button-group > .tum-ui-input-number-increment {
+    border-start-end-radius: 0;
+}
+
+.tum-ui-input-group > tum-ui-input-number:not(:last-child) > .tum-ui-input-number-button-group > .tum-ui-input-number-decrement {
+    border-end-end-radius: 0;
+}
+
+.tum-ui-icon-field > .tum-ui-input {
+    width: 100%;
+}
+
+.tum-ui-icon-field[data-has-icon][data-position='left'] > .tum-ui-input {
+    padding-inline-start: calc(var(--tumaet-ui-spacing) * 10);
+}
+
+.tum-ui-icon-field[data-has-icon][data-position='right'] > .tum-ui-input {
+    padding-inline-end: calc(var(--tumaet-ui-spacing) * 10);
+}

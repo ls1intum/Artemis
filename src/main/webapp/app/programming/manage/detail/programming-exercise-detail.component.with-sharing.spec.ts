@@ -53,7 +53,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -136,7 +136,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
-                { provide: DialogService, useValue: { open: vi.fn() } },
                 { provide: Router, useClass: MockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -147,10 +146,15 @@ describe('ProgrammingExerciseDetailComponent', () => {
             // their own dependencies (e.g. DialogService) or crash on missing inputs (doughnut chart).
             .overrideComponent(ProgrammingExerciseDetailComponent, {
                 remove: {
-                    imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent],
+                    imports: [ExerciseDetailStatisticsComponent, DetailOverviewListComponent, DocumentationButtonComponent, ConsistencyCheckComponent],
                 },
                 add: {
-                    imports: [MockComponent(ExerciseDetailStatisticsComponent), MockComponent(DetailOverviewListComponent), MockComponent(DocumentationButtonComponent)],
+                    imports: [
+                        MockComponent(ExerciseDetailStatisticsComponent),
+                        MockComponent(DetailOverviewListComponent),
+                        MockComponent(DocumentationButtonComponent),
+                        MockComponent(ConsistencyCheckComponent),
+                    ],
                 },
             })
             .compileComponents();

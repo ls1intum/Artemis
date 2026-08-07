@@ -331,12 +331,12 @@
             "progress": "Exercise {{ current }} of {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "exerciseType": "Type",
-            "examOverview": "Exam Overview",
             "examStatus": "Status",
             "examExercises": "Exam Exercises:",
             "exercisePoints": "Points",
             "exerciseName": "Name",
             "navigation": {
+                "exerciseButton": "Exercise {{ number }}: {{ title }}",
                 "nextButton": "Next",
                 "previousButton": "Previous"
             },
@@ -346,8 +346,6 @@
             "goToExamManagement": "Go to exam management page",
             "goToExamBack": "Go back to continue the exam",
             "submitProgrammingExercise": "Continue",
-            "submitOtherExercise": "Save & continue",
-            "submitLastExercise": "Save",
             "uploadFile": "Upload",
             "greeting": "Welcome to {{ title }}.",
             "finish": "This is the end of {{ title }}.",
@@ -737,7 +735,9 @@
                     "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
                     "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups."
                 },
-                "importSuccessful": "Exercise Groups successfully imported!"
+                "importSuccessful": "Exercise Groups successfully imported!",
+                "moveUp": "Move exercise group up",
+                "moveDown": "Move exercise group down"
             },
             "quizPool": "Quiz Pool",
             "delete": {

@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -132,13 +133,15 @@ public class ModelingExerciseResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -160,6 +163,7 @@ public class ModelingExerciseResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -237,7 +241,7 @@ public class ModelingExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
@@ -260,7 +264,7 @@ public class ModelingExerciseResource {
                 .findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(updateModelingExerciseDTO.id());
 
         // Check that the user is authorized to update the exercise
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
         // Forbid changing the course the exercise belongs to.
@@ -384,7 +388,7 @@ public class ModelingExerciseResource {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         // Notify AtlasML about the modeling exercise deletion before actual deletion
         atlasMLApi.ifPresent(api -> {
             try {
@@ -431,7 +435,7 @@ public class ModelingExerciseResource {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
@@ -506,7 +510,7 @@ public class ModelingExerciseResource {
                 ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
                 : Set.of();
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         ModelingExercise exerciseForReevaluation = update(updateModelingExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -622,6 +626,9 @@ public class ModelingExerciseResource {
         exercise.setDueDate(updateModelingExerciseDTO.dueDate());
         exercise.setAssessmentDueDate(updateModelingExerciseDTO.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(updateModelingExerciseDTO.exampleSolutionPublicationDate());
+
+        // A variant group owns its members' timeline, so pin the dates back to the group before validating.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();

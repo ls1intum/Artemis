@@ -4,7 +4,6 @@ import static org.mockito.Mockito.lenient;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.AfterEach;
@@ -190,11 +189,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
         instructor2Login = testPrefix + "instructor2";
         instructor2 = users.stream().filter(user -> instructor2Login.equals(user.getLogin())).findFirst().orElseThrow();
-        // Remove instructor2 from the instructor group of the course.
-        instructor2.setGroups(Set.of());
-        userTestRepository.save(instructor2);
-
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(testPrefix);
+        // Explicitly remove instructor2 (not in course by design)
+        userUtilService.unenrollUserFromCourse(instructor2, course);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
