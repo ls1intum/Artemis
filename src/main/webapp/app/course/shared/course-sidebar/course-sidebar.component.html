@@ -9,10 +9,10 @@
                     </li>
                 }
                 <li ngbDropdownToggle class="nav-item">
-                    <div [hidden]="!anyItemHidden()" class="three-dots nav-link px-3">
-                        <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                    <div [hidden]="!anyItemHidden()" class="three-dots nav-link px-2">
+                        <fa-icon [fixedWidth]="true" [icon]="faEllipsis" />
                         <span
-                            class="more"
+                            class="more ms-2"
                             [ngClass]="{ 'auto-collapse': !isNavbarCollapsed(), 'sidebar-collapsed-course-overview': isNavbarCollapsed() }"
                             [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
                         ></span>
@@ -28,7 +28,7 @@
                         @for (courseActionItem of courseActionItems(); track courseActionItem) {
                             <li class="nav-item">
                                 <a
-                                    class="nav-link nav-link-sidebar px-3 py-2"
+                                    class="nav-link nav-link-sidebar px-2 py-2"
                                     [ngClass]="{ collapsed: isNavbarCollapsed() }"
                                     (click)="courseActionItemClick.emit(courseActionItem)"
                                     [title]="courseActionItem.title"
@@ -50,7 +50,7 @@
                     @for (courseActionItem of courseActionItems(); track courseActionItem; let i = $index) {
                         <a
                             [id]="'action-item-' + i"
-                            class="nav-link nav-link-sidebar px-3"
+                            class="nav-link nav-link-sidebar px-2"
                             [ngClass]="{ collapsed: isNavbarCollapsed() }"
                             (click)="courseActionItemClick.emit(courseActionItem)"
                             [title]="courseActionItem.title"
@@ -67,7 +67,7 @@
                 <li class="nav-item" [hidden]="bottomItem.hidden">
                     <div class="d-flex align-items-center justify-content-between">
                         <a
-                            class="nav-link nav-link-sidebar px-3 py-2"
+                            class="nav-link nav-link-sidebar px-2 py-2"
                             [id]="bottomItem.testId ?? ''"
                             [ngClass]="{
                                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && bottomItem.title === 'Communication',
@@ -82,10 +82,10 @@
                         >
                             <div class="d-flex align-items-center">
                                 @if (bottomItem.icon) {
-                                    <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" class="ms-2 me-3" [style.color]="bottomItem.iconColor" />
+                                    <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" [style.color]="bottomItem.iconColor" />
                                 }
                                 @if (!isNavbarCollapsed()) {
-                                    <span class="auto-collapse text-truncate" [jhiTranslate]="bottomItem.translation"></span>
+                                    <span class="auto-collapse text-truncate ms-2" [jhiTranslate]="bottomItem.translation"></span>
                                 }
                             </div>
                         </a>
@@ -128,23 +128,23 @@
     <!-- TEMPLATES -->
     <ng-template #navIconAndText let-sidebarItem>
         @if (sidebarItem.icon) {
-            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" [style.color]="sidebarItem.iconColor" />
+            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" [style.color]="sidebarItem.iconColor" />
         }
         @if (!isNavbarCollapsed()) {
-            <span class="auto-collapse" [jhiTranslate]="sidebarItem.translation"></span>
+            <span class="auto-collapse ms-2" [jhiTranslate]="sidebarItem.translation"></span>
         }
     </ng-template>
 
     <ng-template #navIconAndTextHidden let-sidebarItem>
         @if (sidebarItem.icon) {
-            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" [style.color]="sidebarItem.iconColor" />
-            <span [jhiTranslate]="sidebarItem.translation"></span>
+            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" [style.color]="sidebarItem.iconColor" />
+            <span class="ms-2" [jhiTranslate]="sidebarItem.translation"></span>
         }
     </ng-template>
 
     <ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">
         <a
-            class="nav-link nav-link-sidebar px-3 py-2"
+            class="nav-link nav-link-sidebar px-2 py-2"
             [id]="sidebarItem.testId ?? ''"
             [ngClass]="{
                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && sidebarItem.title === 'Communication',
