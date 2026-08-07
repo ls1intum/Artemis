@@ -90,4 +90,27 @@ class LocalVCServicePathValidationTest {
         assertThatThrownBy(() -> localVCService.repositoryExists(crossProjectUri)).isInstanceOf(LocalVCInternalException.class)
                 .hasMessageContaining("outside the local VC base path");
     }
+
+    @Test
+    void isValidGitRepository_withPathEscapingBaseDirectory_returnsFalseWithoutTouchingTheFileSystem() {
+        // A broken stored URI reaches this check, so it must apply the same containment validation as repositoryExists. It reports the repository as invalid rather
+        // than throwing, because the caller uses the result to fall back to a repaired, canonical URI.
+        LocalVCRepositoryUri escapingUri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "x/../../../../../../../../../../etc/passwd");
+
+        assertThat(localVCService.isValidGitRepository(escapingUri)).isFalse();
+    }
+
+    @Test
+    void isValidGitRepository_withPathEscapingProjectDirectoryButWithinBase_returnsFalse() {
+        LocalVCRepositoryUri crossProjectUri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "../EVIL");
+
+        assertThat(localVCService.isValidGitRepository(crossProjectUri)).isFalse();
+    }
+
+    @Test
+    void isValidGitRepository_withValidUriButMissingRepository_returnsFalse() {
+        LocalVCRepositoryUri validUri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+
+        assertThat(localVCService.isValidGitRepository(validUri)).isFalse();
+    }
 }

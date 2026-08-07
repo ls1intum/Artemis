@@ -102,7 +102,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
         this.question.spots!.forEach((spot) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const spotCounter = (this.questionStatistic as ShortAnswerQuestionStatistic).shortAnswerSpotCounters?.find((sCounter) => {
-                return spot.id === sCounter.spot?.id;
+                return spot.id === sCounter.spotId;
             })!;
             this.addData(spotCounter.ratedCounter!, spotCounter.unRatedCounter!);
         });

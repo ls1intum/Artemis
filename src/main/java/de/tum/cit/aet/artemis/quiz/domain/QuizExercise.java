@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -362,86 +361,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Override
     public ExerciseType getExerciseType() {
         return QUIZ;
-    }
-
-    /**
-     * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, 'question.points', adding Questions and Answers)
-     *
-     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
-     */
-    public void undoUnallowedChanges(QuizExercise originalQuizExercise) {
-
-        // reset unchangeable attributes: ( dueDate, releaseDate, question.points)
-        this.setDueDate(originalQuizExercise.getDueDate());
-        this.setReleaseDate(originalQuizExercise.getReleaseDate());
-        this.setStartDate(originalQuizExercise.getStartDate());
-
-        // cannot update batches
-        this.setQuizBatches(originalQuizExercise.getQuizBatches());
-
-        // remove added Questions, which are not allowed to be added
-        Set<QuizQuestion> addedQuizQuestions = new HashSet<>();
-
-        // check every question
-        for (QuizQuestion quizQuestion : quizQuestions) {
-            // check if the quizQuestion were already in the originalQuizExercise -> if not it's an added quizQuestion
-            if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
-                // find original unchanged quizQuestion
-                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
-                // reset score (not allowed changing)
-                quizQuestion.setPoints(originalQuizQuestion.getPoints());
-                // correct invalid = null to invalid = false
-                if (quizQuestion.isInvalid() == null) {
-                    quizQuestion.setInvalid(false);
-                }
-                // reset invalid if the quizQuestion is already invalid
-                quizQuestion.setInvalid(quizQuestion.isInvalid() || (originalQuizQuestion.isInvalid() != null && originalQuizQuestion.isInvalid()));
-
-                // undo all not allowed changes in the answers of the QuizQuestion
-                quizQuestion.undoUnallowedChanges(originalQuizQuestion);
-
-            }
-            else {
-                // quizQuestion is added (not allowed), mark quizQuestion for remove
-                addedQuizQuestions.add(quizQuestion);
-            }
-        }
-        // remove all added quizQuestions
-        quizQuestions.removeAll(addedQuizQuestions);
-    }
-
-    /**
-     * check if an update of the Results and Statistics is necessary after the re-evaluation of this quiz
-     *
-     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
-     * @return a boolean which is true if an update is necessary and false if not
-     */
-    public boolean checkIfRecalculationIsNecessary(QuizExercise originalQuizExercise) {
-
-        boolean updateOfResultsAndStatisticsNecessary = false;
-
-        // check every question
-        for (QuizQuestion quizQuestion : quizQuestions) {
-            // check if the quizQuestion were already in the originalQuizExercise
-            if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
-                // find original unchanged quizQuestion
-                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
-
-                // check if a quizQuestion is set invalid or if the scoringType has changed
-                // if true an update of the Statistics and Results is necessary
-                updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary || (quizQuestion.isInvalid() && originalQuizQuestion.isInvalid() == null)
-                        || (quizQuestion.isInvalid() && !originalQuizQuestion.isInvalid()) || !Objects.equals(quizQuestion.getScoringType(), originalQuizQuestion.getScoringType());
-
-                // check if the quizQuestion-changes make an update of the statistics and results necessary
-                updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary || quizQuestion.isUpdateOfResultsAndStatisticsNecessary(originalQuizQuestion);
-            }
-        }
-        // check if a question was deleted (not allowed added questions are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (quizQuestions.size() != originalQuizExercise.getQuizQuestions().size()) {
-            updateOfResultsAndStatisticsNecessary = true;
-        }
-        return updateOfResultsAndStatisticsNecessary;
     }
 
     /**

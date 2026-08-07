@@ -568,7 +568,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
         CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
                 HttpStatus.CREATED);
 
-        var otherCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var otherCourse = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, TextExercise.class);
         exerciseVersionService.createExerciseVersion(otherExercise);
         CommentThreadDTO otherThread = request.postWithResponseBody(reviewThreadsPath(otherExercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
@@ -663,7 +663,7 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private TextExercise createExerciseWithVersion() {
-        var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        var course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         exerciseVersionService.createExerciseVersion(exercise);
         return exercise;

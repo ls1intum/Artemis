@@ -10,6 +10,8 @@
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
             "500": "Interner Serverfehler."
         },
+        "assessmentNotPossibleExamRunning": "Die Bewertung ist noch nicht möglich: Du kannst beginnen, sobald die Klausur für alle Studierenden am {{ date }} beendet ist.",
+        "assessmentNotPossibleTestsPending": "Die Bewertung ist noch nicht möglich: Die Tests müssen noch einmal auf den endgültigen Abgaben ausgeführt werden. Du kannst ab {{ date }} bewerten.",
         "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "examExerciseNotIncludedInScore": "Eine Klausuraufgabe muss im Ergebnis enthalten sein!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
@@ -106,6 +108,8 @@
         "courseTitleTooLong": "Der Kurstitel ist zu lang (max. 255 Zeichen), bitte nutze einen kürzeren Kurstitel.",
         "courseIdUndefined": "Die Kurs-ID ist nicht definiert, bitte stelle sicher, dass der Kurs existiert.",
         "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt.",
+        "quizNotIndividual": "Nur Quizaufgaben im Einzelmodus können einer Aufgabengruppe hinzugefügt werden.",
+        "timelineManagedByVariantGroup": "Diese Aufgabe gehört zu einer Aufgabengruppe, die den gemeinsamen Zeitplan verwaltet. Bitte ändere die Termine stattdessen in der Aufgabengruppe.",
         "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
         "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch.",
         "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass jeder Schlüssel oder Wert nicht länger als 1000 Zeichen ist.",

@@ -68,7 +68,7 @@ class ExerciseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLoca
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 

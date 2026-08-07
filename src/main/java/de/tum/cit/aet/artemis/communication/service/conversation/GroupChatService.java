@@ -53,7 +53,7 @@ public class GroupChatService {
      * @return the newly created group chat
      */
     public GroupChat startGroupChat(Course course, Set<User> startingMembers) {
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
         var participantIds = startingMembers.stream().map(User::getId).toList();
         // Try to find an existing group chat with exactly the same participants (no more, no less)
         var existingChatBetweenUsers = groupChatRepository.findGroupChatWithExactParticipants(course.getId(), participantIds, startingMembers.size());

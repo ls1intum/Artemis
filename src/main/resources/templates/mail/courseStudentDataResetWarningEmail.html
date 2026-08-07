@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.courseStudentDataResetWarning.title(${courseTitle})}">Upcoming deletion of student data in your Artemis course</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+        <span th:text="#{email.courseStudentDataResetWarning.text(${courseTitle}, ${gracePeriodDays})}">
+            For data-privacy reasons, all student data of your course will be permanently deleted after the grace period. The course material will be preserved.
+        </span>
+    </p>
+    <p>
+        <span th:text="#{email.courseStudentDataResetWarning.downloadHint}">An archive of the course has been created. Please download it if you want to keep a personal backup</span>:
+        <a th:with="url=(@{|${baseUrl}/course-management/${courseId}|})" th:href="${url}" th:text="${url}">Link</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}" />
+
+</body>
+</html>
