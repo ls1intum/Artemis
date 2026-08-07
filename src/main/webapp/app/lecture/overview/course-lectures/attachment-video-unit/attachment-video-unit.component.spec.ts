@@ -1289,6 +1289,36 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeDefined();
         });
 
+        it('waits for the YouTube player itself, not merely for its wrapper component', () => {
+            // Angular creates the wrapper long before the YouTube iframe API hands over the real player, and a seek in
+            // between is silently dropped. Treating the wrapper's existence as readiness would acknowledge a
+            // navigation that never happened, so the target stays pending until the player reports ready.
+            const isPlayerReady = signal(false);
+            const seekTo = vi.fn(() => isPlayerReady());
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: () => ({ isPlayerReady, seekTo }),
+                writable: true,
+                configurable: true,
+            });
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, youtubeVideoId: 'dQw4w9WgXcQ' });
+            component['fullscreenState'].set(true);
+            component.isLoading.set(false);
+            component.playlistUrl.set(undefined);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c14', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(seekTo).not.toHaveBeenCalled();
+            expect(ackSpy).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeDefined();
+
+            isPlayerReady.set(true);
+            fixture.detectChanges();
+
+            expect(seekTo).toHaveBeenCalledWith(42, false);
+            expect(ackSpy).toHaveBeenCalledWith('c14', true);
+        });
+
         describe('interaction with slide/video synchronization', () => {
             // PDF page 1/2/3 carry display page numbers 7/8/9; the video shows slide 7 from 0s, slide 8 from 10s
             // and slide 9 from 20s. So page 2 and timestamp 12 mean the same slide, while page 2 and timestamp 25

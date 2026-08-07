@@ -66,6 +66,14 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
     private youtubePlayer: YoutubePlayerApi | null = null;
+    /**
+     * Whether the YouTube player has been handed over and can take a seek. Angular creates this wrapper component
+     * well before the iframe API calls back with {@link onPlayerReady}, and {@link seekTo} silently does nothing in
+     * between — so callers that must wait for a real player (the Iris point-out) read this signal, not the wrapper's
+     * mere existence.
+     */
+    private readonly playerReadyState = signal(false);
+    readonly isPlayerReady = this.playerReadyState.asReadonly();
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
     private destroyed = false;
@@ -227,6 +235,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.hasEverPlayed.set(false); // Reset for new video
         // Use the Angular wrapper when available so seek calls can be queued reliably.
         this.youtubePlayer = this.playerComponent() ?? this.youtubePlayer ?? event?.target ?? null;
+        this.playerReadyState.set(this.youtubePlayer !== null);
         const initial = this.startSeconds();
         if (initial !== undefined && this.youtubePlayer) {
             if (!this.playerComponent() && this.lastInitialTimestamp !== initial) {
@@ -255,10 +264,17 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.playerFailed.emit();
     }
 
-    seekTo(seconds: number, _resumePlayback = true): void {
-        if (!this.youtubePlayer) return;
+    /**
+     * Seeks the video to the given position.
+     * @param seconds the position to seek to
+     * @return whether the player was there to take the seek, so a caller reporting the outcome onwards (the Iris
+     *         point-out ack) does not count a call made before {@link onPlayerReady} as a navigation.
+     */
+    seekTo(seconds: number, _resumePlayback = true): boolean {
+        if (!this.youtubePlayer) return false;
         this.youtubePlayer.seekTo(seconds, true);
         this.updateCurrentSegment(seconds);
+        return true;
     }
 
     getCurrentSlideNumber(): number | undefined {

@@ -70,6 +70,18 @@ describe('YouTubePlayerComponent', () => {
         expect(updateSpy).toHaveBeenCalledWith(12);
     });
 
+    it('reports readiness and seek success only once the player has been handed over', () => {
+        // The component exists from the moment Angular creates it, but a seek before onPlayerReady goes nowhere.
+        expect(component.isPlayerReady()).toBe(false);
+        expect(component.seekTo(12)).toBe(false);
+
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, seekTo: vi.fn() };
+        component.onPlayerReady({} as any);
+
+        expect(component.isPlayerReady()).toBe(true);
+        expect(component.seekTo(12)).toBe(true);
+    });
+
     it('emits playerFailed when readiness timeout elapses without onPlayerReady', () => {
         vi.useFakeTimers();
         const emitSpy = vi.spyOn(component.playerFailed, 'emit');

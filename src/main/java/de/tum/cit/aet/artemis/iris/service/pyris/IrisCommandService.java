@@ -63,10 +63,10 @@ public class IrisCommandService {
     /**
      * How long to wait for the addressed tab to report back before treating a command as not carried out. The tab answers either way as soon as it has tried, so this is a backstop
      * for a tab that went away (closed, reloaded, connection lost) rather than a budget the normal case spends. It still has to cover the full path — node to broker to browser,
-     * the navigation itself, and back — on a weak connection with a busy renderer. Pyris' own timeout on the command call must stay above it, so a slow client surfaces as "not
-     * applied" rather than as a transport error.
+     * the navigation itself, and back — and the navigation is the slow part: the client may have to open the combined view, wait for the viewer to render and its document to
+     * load, and only then seek. Pyris' own timeout on the command call must stay above this value, so a slow client surfaces as "not applied" rather than as a transport error.
      */
-    private static final long ACK_TIMEOUT_SECONDS = 2;
+    private static final long ACK_TIMEOUT_SECONDS = 5;
 
     private final IrisCommandCoordinationService coordinationService;
 

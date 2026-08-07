@@ -343,7 +343,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // A rendered viewer whose document is still loading reports 0 pages and would reject every target, so wait
             // for the page count as well — otherwise a perfectly valid point-out would be reported as not applied.
             const pdfReady = pointOut.page == undefined || (this.pdfViewer()?.getTotalPages() ?? 0) > 0;
-            const videoReady = pointOut.timestamp == undefined || this.videoPlayer() !== undefined || this.youtubePlayer() !== undefined;
+            // Same for the YouTube player: Angular creates its wrapper component long before the iframe API hands the
+            // real player over, and a seek in between is silently dropped. So wait for the player itself, not for the
+            // component — reading its readiness signal here re-runs this effect once it flips.
+            const videoReady = pointOut.timestamp == undefined || this.videoPlayer() !== undefined || (this.youtubePlayer()?.isPlayerReady() ?? false);
             if (!pdfReady || !videoReady) {
                 return;
             }
@@ -419,7 +422,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             if (videoPlayer) {
                 videoPlayer.seekTo(timestamp, false);
             } else {
-                this.youtubePlayer()?.seekTo(timestamp, false);
+                // The YouTube player reports whether it was ready to take the seek; a dropped seek is not a navigation.
+                applied = (this.youtubePlayer()?.seekTo(timestamp, false) ?? false) && applied;
             }
         }
         return applied;
