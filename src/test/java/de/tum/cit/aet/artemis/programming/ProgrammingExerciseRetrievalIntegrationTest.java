@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -44,6 +47,9 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionTestRepository;
+
+    @Autowired
+    private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     private Course course;
 
@@ -373,6 +379,71 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(resultRepository.existsById(firstResult.getId())).isTrue();
         assertThat(resultRepository.existsById(secondResult.getId())).isTrue();
         assertThat(resultRepository.existsById(templateResult.getId())).isTrue();
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Exercise variant groups (#12974)
+    // ---------------------------------------------------------------------------------------------------------------
+
+    /**
+     * Both read paths fetch-join {@code exerciseVariantGroup}, so the group has to reach the client: the programming
+     * edit form locks its timeline inputs on {@code exercise.exerciseVariantGroup.id} and opens the group edit dialog
+     * from the nested dates. Dropping the slot silently unlocks a timeline the group owns.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getProgrammingExercise_carriesTheVariantGroupTheTimelineLockReads() throws Exception {
+        ExerciseVariantGroup group = attachVariantGroup();
+
+        ProgrammingExerciseResponseDTO response = request.get(EXERCISE_BASE + exercise.getId(), HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+
+        assertThat(response.exerciseVariantGroup()).isNotNull();
+        assertThat(response.exerciseVariantGroup().id()).isEqualTo(group.getId());
+        assertThat(response.exerciseVariantGroup().title()).isEqualTo(group.getTitle());
+        assertThat(response.exerciseVariantGroup().maxPoints()).isEqualTo(group.getMaxPoints());
+        // The edit dialog saves these dates straight back, so a missing one would wipe the shared timeline.
+        assertThat(response.exerciseVariantGroup().releaseDate()).isEqualTo(group.getReleaseDate());
+        assertThat(response.exerciseVariantGroup().dueDate()).isEqualTo(group.getDueDate());
+    }
+
+    /**
+     * The course-management exercise table reads the same slot off the list endpoint to render the group column.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getProgrammingExercisesForCourse_carriesTheVariantGroup() throws Exception {
+        ExerciseVariantGroup group = attachVariantGroup();
+
+        List<ProgrammingExerciseListItemDTO> exercises = request.getList("/api/programming/courses/" + course.getId() + "/programming-exercises", HttpStatus.OK,
+                ProgrammingExerciseListItemDTO.class);
+
+        ProgrammingExerciseListItemDTO listItem = exercises.stream().filter(item -> exercise.getId().equals(item.id())).findFirst().orElseThrow();
+        assertThat(listItem.exerciseVariantGroup()).isNotNull();
+        assertThat(listItem.exerciseVariantGroup().id()).isEqualTo(group.getId());
+        assertThat(listItem.exerciseVariantGroup().title()).isEqualTo(group.getTitle());
+    }
+
+    /**
+     * An exercise without a group must not emit an empty object: {@code exerciseVariantGroup.id !== undefined} is what
+     * the client's lock is computed from, so a present-but-blank slot would lock a free timeline.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getProgrammingExercise_withoutVariantGroup_omitsTheSlotEntirely() throws Exception {
+        request.performMvcRequest(MockMvcRequestBuilders.get(new URI(EXERCISE_BASE + exercise.getId()))).andExpect(status().isOk())
+                .andExpect(jsonPath("$.exerciseVariantGroup").doesNotExist());
+    }
+
+    private ExerciseVariantGroup attachVariantGroup() {
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setTitle("Loop variants");
+        group.setMaxPoints(12.0);
+        group.setReleaseDate(ZonedDateTime.now().minusDays(3));
+        group.setDueDate(ZonedDateTime.now().plusDays(3));
+        ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);
+        exercise.setExerciseVariantGroup(savedGroup);
+        programmingExerciseRepository.save(exercise);
+        return savedGroup;
     }
 
     /**

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * @param exerciseGroup                              the nested exercise group; populated for exam exercises
  * @param templateParticipation                      the template participation
  * @param solutionParticipation                      the solution participation
+ * @param exerciseVariantGroup                       the variant group owning the shared timeline, when fetched
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseListItemDTO(Long id, String type, String title, String shortName, ProgrammingLanguage programmingLanguage, Set<String> categories,
@@ -54,7 +56,8 @@ public record ProgrammingExerciseListItemDTO(Long id, String type, String title,
         ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType, Double maxPoints, Double bonusPoints,
         IncludedInOverallScore includedInOverallScore, Boolean presentationScoreEnabled, ExerciseMode mode, Boolean teamMode, Boolean testCasesChanged, Boolean allowOfflineIde,
         Boolean allowOnlineEditor, Boolean allowOnlineIde, String projectKey, ProgrammingExerciseCourseDTO course, ProgrammingExerciseExamGroupDTO exerciseGroup,
-        TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation) implements Serializable {
+        TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation, ExerciseVariantGroupReferenceDTO exerciseVariantGroup)
+        implements Serializable {
 
     /**
      * Creates a {@link ProgrammingExerciseListItemDTO} from the given exercise. Every lazy slot is guarded, so
@@ -78,6 +81,6 @@ public record ProgrammingExerciseListItemDTO(Long id, String type, String title,
                 exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getPresentationScoreEnabled(), exercise.getMode(), exercise.isTeamMode(),
                 exercise.getTestCasesChanged(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineEditor(), exercise.isAllowOnlineIde(), exercise.getProjectKey(), course,
                 exerciseGroup, TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()),
-                TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()));
+                TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()));
     }
 }

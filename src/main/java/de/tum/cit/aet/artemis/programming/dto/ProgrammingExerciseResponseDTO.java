@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param exerciseGroup                              the nested exercise group; populated for exam exercises
  * @param templateParticipation                      the template participation
  * @param solutionParticipation                      the solution participation
+ * @param exerciseVariantGroup                       the variant group owning the shared timeline, when fetched
  * @param studentParticipations                      the student participations; {@code null} when not loaded
  * @param auxiliaryRepositories                      the auxiliary repositories; {@code null} when not loaded
  */
@@ -103,7 +105,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         Boolean testCasesChanged, Boolean allowOnlineEditor, Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed,
         UpdateProgrammingExerciseBuildConfigDTO buildConfig, SubmissionPolicyDTO submissionPolicy, ProgrammingExerciseCourseDTO course,
         ProgrammingExerciseExamGroupDTO exerciseGroup, TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation,
-        List<ProgrammingExerciseStudentParticipationDTO> studentParticipations, List<AuxiliaryRepositoryDTO> auxiliaryRepositories) implements Serializable {
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup, List<ProgrammingExerciseStudentParticipationDTO> studentParticipations,
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositories) implements Serializable {
 
     /**
      * The constant Jackson subtype id of {@link ProgrammingExercise}.
@@ -183,7 +186,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                 exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()), submissionPolicy, course,
                 exerciseGroup, TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation()),
-                TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()), studentParticipations, auxiliaryRepositories);
+                TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation()), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
+                studentParticipations, auxiliaryRepositories);
     }
 
     /**

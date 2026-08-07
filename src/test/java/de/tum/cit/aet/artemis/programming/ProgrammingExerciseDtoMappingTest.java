@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPena
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
@@ -185,6 +187,35 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.course().presentationScore()).isEqualTo(2);
         assertThat(dto.categories()).containsExactly("[\"easy\"]");
         assertThat(dto.gradingInstructionFeedbackUsed()).isTrue();
+    }
+
+    /**
+     * {@code exerciseVariantGroup} is a LAZY association. An unfetched proxy has to map to {@code null} rather than
+     * throw, because the read paths that do not fetch-join it must keep working — and the entity wire omits it there
+     * too, so the DTO stays byte-for-byte compatible with what the client used to receive.
+     */
+    @Test
+    void responseDtoMapsTheVariantGroupAndDegradesAnUnfetchedOneToNull() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(7L);
+
+        assertThat(ProgrammingExerciseResponseDTO.of(exercise).exerciseVariantGroup()).isNull();
+
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setId(11L);
+        group.setTitle("Loop variants");
+        group.setMaxPoints(12.0);
+        group.setDueDate(ZonedDateTime.now().plusDays(2));
+        exercise.setExerciseVariantGroup(group);
+
+        var dto = ProgrammingExerciseResponseDTO.of(exercise).exerciseVariantGroup();
+        assertThat(dto).isNotNull();
+        assertThat(dto.id()).isEqualTo(11L);
+        assertThat(dto.title()).isEqualTo("Loop variants");
+        assertThat(dto.maxPoints()).isEqualTo(12.0);
+        assertThat(dto.dueDate()).isEqualTo(group.getDueDate());
+        // The member collection must never travel: it would drag the whole exercise graph back into the response.
+        assertThat(ProgrammingExerciseListItemDTO.of(exercise).exerciseVariantGroup()).isEqualTo(dto);
     }
 
     @Test
