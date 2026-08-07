@@ -1,4 +1,9 @@
-<div class="d-flex justify-content-between">
+<!--
+    Same frame as the exercises shell, including `horizontal-scroll`: that is what lets the content pane take its
+    height from the filled shell rather than from `dynamic-content-height`'s viewport arithmetic, which ends 3px short
+    of the divider above the footer.
+-->
+<div class="d-flex horizontal-scroll justify-content-between">
     @if (course()) {
         @if (sidebarData(); as currentSidebarData) {
             <div [class.sidebar-collapsed]="isCollapsed()">

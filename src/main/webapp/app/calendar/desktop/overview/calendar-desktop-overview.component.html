@@ -12,6 +12,11 @@
         >
             <ng-template #selecteditems>
                 @if (selectedFilterOptions().length) {
+                    <!-- Stands in for the chips once the bar is too narrow for them; the count keeps the selection visible. -->
+                    <span class="filter-compact">
+                        <fa-icon [icon]="faFilter" />
+                        <span>{{ selectedFilterOptions().length }}</span>
+                    </span>
                     <div class="chips-section">
                         @for (optionWithMetadata of selectedFilterOptions(); track optionWithMetadata.option) {
                             <div class="chip" [attr.data-testid]="'chip-' + optionWithMetadata.option">
@@ -40,14 +45,10 @@
         @let subscriptionToken = calendarSubscriptionToken();
         @if (currentCourseId && subscriptionToken) {
             <div>
-                <button
-                    data-testid="subscribe-button"
-                    pButton
-                    size="small"
-                    outlined
-                    (click)="subscriptionPopover.open($event)"
-                    jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
-                ></button>
+                <button data-testid="subscribe-button" pButton size="small" outlined (click)="subscriptionPopover.open($event)">
+                    <fa-icon [icon]="faShareNodes" />
+                    <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
+                </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
             </div>
         }

@@ -3,6 +3,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFilter, faShareNodes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarDesktopWeekPresentationComponent } from 'app/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
@@ -45,6 +46,9 @@ interface FilterOptionAndMetadata {
     styleUrl: './calendar-desktop-overview.component.scss',
 })
 export class CalendarDesktopOverviewComponent extends CalendarOverviewComponent {
+    protected readonly faFilter = faFilter;
+    protected readonly faShareNodes = faShareNodes;
+
     private static readonly FILTER_OPTION_NAME_KEY_MAP: Record<CalendarEventFilterOption, string> = {
         exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
         lectureEvents: 'artemisApp.calendar.filterOption.lectures',

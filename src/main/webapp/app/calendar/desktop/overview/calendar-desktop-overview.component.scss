@@ -23,6 +23,18 @@
         flex: 0 0 auto;
     }
 
+    /*
+     * The compact filter: an icon and the number of selected options, in place of the chips once the bar no longer has
+     * room for them. Same threshold as `.title-bar-collapsible-label`, so the filter and the subscribe button give way
+     * together rather than one at a time.
+     */
+    .filter-compact {
+        display: none;
+        align-items: center;
+        gap: 0.25rem;
+        line-height: normal;
+    }
+
     /* The label itself is normalised by `title-bar-compact-controls`; a page stylesheet cannot reach into PrimeNG's view. */
     .chips-section {
         display: flex;
@@ -74,6 +86,24 @@
             width: 0.75rem;
             height: 0.75rem;
             border-radius: 0.25rem;
+        }
+    }
+
+    /*
+     * Last in the block on purpose: `.chips-section` above declares the same property at the same specificity, so the
+     * hiding rule has to come after it to win.
+     */
+    @container title-bar (max-width: 68rem) {
+        p-multiselect {
+            max-width: 5.5rem;
+        }
+
+        .chips-section {
+            display: none;
+        }
+
+        .filter-compact {
+            display: inline-flex;
         }
     }
 }
