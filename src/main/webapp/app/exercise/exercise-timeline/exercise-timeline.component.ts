@@ -1,8 +1,13 @@
 import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DatePickerModule } from 'primeng/datepicker';
+// Still needed for the `pTooltip` on the invalid-date info icon; the lock overlay uses the kit tooltip.
 import { TooltipModule } from 'primeng/tooltip';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faLock } from '@fortawesome/free-solid-svg-icons';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +17,11 @@ export interface TimelineItem {
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
     otherRequiredItem?: TimelineItem;
+    /**
+     * Restricts the ordering check to these items. The default (no item may precede any earlier one) is too strict for
+     * e.g. a group's example solution publication date, which only needs `>= releaseDate`.
+     */
+    orderCheckAgainst?: TimelineItem[];
 }
 
 export interface ExerciseTimelineStatus {
@@ -30,7 +40,7 @@ type InternalTimelineItem = TimelineItem & {
 
 @Component({
     selector: 'jhi-exercise-timeline',
-    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
+    imports: [DatePickerModule, FormsModule, TooltipModule, TumUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './exercise-timeline.component.html',
     styleUrl: './exercise-timeline.component.scss',
 })
@@ -40,12 +50,18 @@ export class ExerciseTimelineComponent {
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
     protected readonly Date = Date;
-    /** Label keys of items whose currently-typed text is non-empty but not a valid date. Drives the
-     *  invalid (red border + tooltip) state so a malformed entry is flagged instead of silently dropped. */
+    protected readonly faLock = faLock;
+    /** Label keys of items whose typed text is non-empty but not a valid date. Drives the invalid state. */
     private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
+    /** Dates governed by the variant group: datepickers are disabled and clicks emit {@link lockedClick}. */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
+    lockedClick = output<void>();
+    /** Effective read-only state: either explicitly {@link readonly} or locked to the variant group. */
+    isReadonly = computed<boolean>(() => this.readonly() || this.lockedToGroup());
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<ExerciseTimelineStatus>();
@@ -76,17 +92,14 @@ export class ExerciseTimelineComponent {
             this.setDateIfChanged(item, undefined);
             this.setInvalidInput(item, false);
         }
-        // A non-empty, not-yet-parseable value is left untouched while the user is still typing; it is
-        // only flagged as invalid once they leave the field (see handleBlur).
+        // A not-yet-parseable value is left alone while typing and only flagged on blur (see handleBlur).
     }
 
     handleBlur(item: TimelineItem, event: Event) {
         const input = (event.target as HTMLInputElement).value;
         const inputWasCleared = input === '';
         const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
-        // Previously an invalid entry was silently reverted to the last valid value, leaving the user
-        // unaware of the mistake (PR #13009 review). Instead keep the entered text (keepInvalid) and flag
-        // the field invalid so the red border + tooltip explain the problem and the form blocks saving.
+        // Keep the entered text (keepInvalid) and flag it instead of silently reverting it (PR #13009 review).
         this.setInvalidInput(item, currentInputIsInvalidDate && !inputWasCleared);
     }
 
@@ -125,7 +138,7 @@ export class ExerciseTimelineComponent {
             const date = item.date();
             const isBeforePreviousDate =
                 date !== undefined &&
-                items.slice(0, index).some((previousItem) => {
+                (item.orderCheckAgainst ?? items.slice(0, index)).some((previousItem) => {
                     const previousDate = previousItem.date();
                     return previousDate !== undefined && date.isBefore(previousDate);
                 });
