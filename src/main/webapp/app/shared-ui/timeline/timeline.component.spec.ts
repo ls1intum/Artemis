@@ -3,21 +3,21 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 
-import { ExerciseTimelineComponent, TimelineItem } from './exercise-timeline.component';
+import { TimelineComponent, TimelineItem } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseTimeline', () => {
-    let component: ExerciseTimelineComponent;
-    let fixture: ComponentFixture<ExerciseTimelineComponent>;
+    let component: TimelineComponent;
+    let fixture: ComponentFixture<TimelineComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseTimelineComponent],
+            imports: [TimelineComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ExerciseTimelineComponent);
+        fixture = TestBed.createComponent(TimelineComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('timelineItems', []);
         await fixture.whenStable();

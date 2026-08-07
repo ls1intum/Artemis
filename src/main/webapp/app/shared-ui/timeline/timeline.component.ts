@@ -24,7 +24,7 @@ export interface TimelineItem {
     orderCheckAgainst?: TimelineItem[];
 }
 
-export interface ExerciseTimelineStatus {
+export interface TimelineStatus {
     valid: boolean;
     empty: boolean;
 }
@@ -39,12 +39,12 @@ type InternalTimelineItem = TimelineItem & {
 };
 
 @Component({
-    selector: 'jhi-exercise-timeline',
+    selector: 'jhi-timeline',
     imports: [DatePickerModule, FormsModule, TooltipModule, TumUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
-    templateUrl: './exercise-timeline.component.html',
-    styleUrl: './exercise-timeline.component.scss',
+    templateUrl: './timeline.component.html',
+    styleUrl: './timeline.component.scss',
 })
-export class ExerciseTimelineComponent {
+export class TimelineComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
@@ -63,8 +63,8 @@ export class ExerciseTimelineComponent {
     /** Effective read-only state: either explicitly {@link readonly} or locked to the variant group. */
     isReadonly = computed<boolean>(() => this.readonly() || this.lockedToGroup());
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
-    timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
-    timelineStatusChange = output<ExerciseTimelineStatus>();
+    timelineStatus = computed<TimelineStatus>(() => this.computeExerciseTimelineStatus());
+    timelineStatusChange = output<TimelineStatus>();
 
     constructor() {
         effect(() => {
@@ -173,7 +173,7 @@ export class ExerciseTimelineComponent {
         });
     }
 
-    private computeExerciseTimelineStatus(): ExerciseTimelineStatus {
+    private computeExerciseTimelineStatus(): TimelineStatus {
         const items = this.internalTimelineItems();
         return {
             valid: items.every((item) => !item.isBeforePreviousDate && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
