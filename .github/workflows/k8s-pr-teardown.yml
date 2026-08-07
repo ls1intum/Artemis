@@ -1,0 +1,69 @@
+name: Teardown PR Kubernetes environment
+
+# Removes a PR's ephemeral environment (namespace artemis-pr-<N>) when the PR is
+# closed, when the "ready for review" label is removed, or when the PR goes stale.
+# Stale is covered for free: pullrequest-stale.yml (actions/stale) removes the
+# "ready for review" label when a PR goes stale -> fires the `unlabeled` event here.
+on:
+  pull_request_target:
+    types: [closed, unlabeled]
+
+concurrency:
+  group: k8s-pr-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  READY_LABEL: "ready for review"
+
+jobs:
+  teardown:
+    name: Remove PR environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Closed always tears down; unlabeled only for the "ready for review" label.
+    if: >-
+      github.event.action == 'closed' ||
+      (github.event.action == 'unlabeled' && github.event.label.name == 'ready for review')
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      NAMESPACE: artemis-pr-${{ github.event.pull_request.number }}
+    steps:
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Authenticate to the cluster
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' "${{ secrets.KUBECONFIG }}" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Uninstall release and delete namespace
+        run: |
+          set -Eeuo pipefail
+          if ! kubectl get ns "$NAMESPACE" >/dev/null 2>&1; then
+            echo "Namespace $NAMESPACE not found; nothing to do."
+            exit 0
+          fi
+          helm uninstall artemis --namespace "$NAMESPACE" --ignore-not-found --wait --timeout 5m || true
+          # Don't block on finalizers; the GC cron backstops anything stuck Terminating.
+          kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=false
+
+      - name: Update PR comment
+        if: always()
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- k8s-pr-deploy -->';
+            const body = `${marker}\n:wastebasket: PR environment removed.`;
+            const prNumber = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: prNumber });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });

@@ -4,9 +4,9 @@ A Helm chart that deploys a **multi-node [Artemis](https://github.com/ls1intum/A
 backed by **PostgreSQL** and the **[Hades](https://github.com/ls1intum/hades)** build system, and exposed through the
 **Kubernetes Gateway API** (HTTP(S) + git-over-SSH).
 
-It is designed as the foundation for spinning up a **fresh Artemis instance per pull request**. It deploys only the
-components required to run a clustered Artemis; everything else (Hades itself, Keycloak, the AI services, ...) runs
-outside the chart.
+It is designed as the foundation for spinning up a **fresh Artemis instance per pull request** (see
+**[PR-DEPLOYMENTS.md](./PR-DEPLOYMENTS.md)** for the GitHub Actions automation). It deploys only the components required to
+run a clustered Artemis; everything else (Hades itself, Keycloak, the AI services, ...) runs outside the chart.
 
 ---
 

@@ -1,0 +1,254 @@
+name: Deploy PR to Kubernetes
+
+# Spins up a distinct, throwaway Artemis environment for a pull request in its own
+# namespace (artemis-pr-<N>) once CI has passed AND the PR carries the "ready for
+# review" label. Reachable at https://pr-<N>.artemis.envoy.stud.k8s.aet.cit.tum.de.
+# Teardown lives in k8s-pr-teardown.yml; orphan cleanup in k8s-pr-gc.yml.
+#
+# Two triggers cover both orderings:
+#   - workflow_run(CI completed): a labeled PR gets a new green build -> (re)deploy.
+#   - pull_request_target(labeled): the label is added after CI already went green.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  pull_request_target:
+    types: [labeled]
+
+# Serialize per PR branch (the only key both events share). Never cancel a running
+# deploy - killing `helm --wait` mid-run leaves the release stuck in pending-upgrade.
+concurrency:
+  group: k8s-pr-${{ github.event.pull_request.head.ref || github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+permissions: {}
+
+env:
+  READY_LABEL: "ready for review"
+  BASE_DOMAIN: artemis.envoy.stud.k8s.aet.cit.tum.de
+  INTERNAL_REPO: ls1intum/Artemis
+
+jobs:
+  deploy:
+    name: Deploy PR environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      # Resolve PR number / head SHA / labels / CI status from whichever event fired,
+      # then decide: deploy | ci-failed (comment only) | skip.
+      - name: Resolve context
+        id: ctx
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const READY = process.env.READY_LABEL;
+            const INTERNAL = process.env.INTERNAL_REPO;
+            let prNumber, headSha, headRepoFull, labels = [], ciSuccess = false, ciFailed = false;
+
+            if (context.eventName === 'workflow_run') {
+              const run = context.payload.workflow_run;
+              headSha = run.head_sha;
+              const pulls = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: context.repo.owner, repo: context.repo.repo, commit_sha: headSha,
+              });
+              const pr = pulls.data.find(p => p.state === 'open');
+              if (!pr) { core.info('No open PR for this commit; skipping.'); core.setOutput('mode', 'skip'); return; }
+              prNumber = pr.number;
+              headRepoFull = pr.head.repo ? pr.head.repo.full_name : '';
+              labels = pr.labels.map(l => l.name);
+              ciSuccess = run.conclusion === 'success';
+              ciFailed = run.conclusion === 'failure';
+            } else {
+              // pull_request_target: labeled
+              if (context.payload.label.name !== READY) { core.setOutput('mode', 'skip'); return; }
+              const pr = context.payload.pull_request;
+              prNumber = pr.number;
+              headSha = pr.head.sha;
+              headRepoFull = pr.head.repo ? pr.head.repo.full_name : '';
+              labels = pr.labels.map(l => l.name);
+              // Was the whole CI umbrella green for this exact commit?
+              const runs = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner, repo: context.repo.repo, head_sha: headSha, event: 'pull_request',
+              });
+              const ci = runs.data.workflow_runs.find(r => r.name === 'CI');
+              ciSuccess = !!ci && ci.conclusion === 'success';
+            }
+
+            const internal = headRepoFull === INTERNAL;   // fork PRs have no pushed image
+            const hasLabel = labels.includes(READY);
+
+            core.setOutput('pr_number', String(prNumber));
+            core.setOutput('head_sha', headSha);
+            core.setOutput('namespace', `artemis-pr-${prNumber}`);
+            core.setOutput('hostname', `pr-${prNumber}.${process.env.BASE_DOMAIN}`);
+
+            if (internal && hasLabel && ciSuccess) {
+              core.setOutput('mode', 'deploy');
+            } else if (ciFailed && internal && hasLabel) {
+              core.setOutput('mode', 'ci-failed');
+            } else {
+              core.info(`Not deploying (internal=${internal} hasLabel=${hasLabel} ciSuccess=${ciSuccess}).`);
+              core.setOutput('mode', 'skip');
+            }
+
+      # A green build never arrived for this labeled PR - tell reviewers the env is stale.
+      - name: Comment on CI failure
+        if: steps.ctx.outputs.mode == 'ci-failed'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- k8s-pr-deploy -->';
+            const body = `${marker}\n:warning: CI failed on \`${{ steps.ctx.outputs.head_sha }}\`. The environment ` +
+              `at https://${{ steps.ctx.outputs.hostname }} (if any) still runs the **previous** commit and was not updated.`;
+            const prNumber = Number('${{ steps.ctx.outputs.pr_number }}');
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: prNumber });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: prNumber, body });
+
+      - name: Checkout base (chart)
+        if: steps.ctx.outputs.mode == 'deploy'
+        uses: actions/checkout@v6
+
+      - name: Setup Helm
+        if: steps.ctx.outputs.mode == 'deploy'
+        uses: azure/setup-helm@v4
+
+      - name: Setup kubectl
+        if: steps.ctx.outputs.mode == 'deploy'
+        uses: azure/setup-kubectl@v4
+
+      - name: Authenticate to the cluster
+        if: steps.ctx.outputs.mode == 'deploy'
+        run: |
+          mkdir -p "$HOME/.kube"
+          printf '%s' "${{ secrets.KUBECONFIG }}" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      # Capacity guard: don't starve the cluster. Skip (and comment) if at/over the cap,
+      # but always allow re-deploying an env that already exists.
+      - name: Capacity check
+        if: steps.ctx.outputs.mode == 'deploy'
+        id: capacity
+        env:
+          NAMESPACE: ${{ steps.ctx.outputs.namespace }}
+          MAX_PR_ENVS: ${{ vars.MAX_PR_ENVS }}
+        run: |
+          set -Eeuo pipefail
+          exists=$(kubectl get ns "$NAMESPACE" --ignore-not-found -o name | wc -l | tr -d ' ')
+          count=$(kubectl get ns -o name | grep -c '^namespace/artemis-pr-' || true)
+          max="${MAX_PR_ENVS:-0}"
+          if [ "$exists" = "0" ] && [ "$max" != "0" ] && [ "$count" -ge "$max" ]; then
+            echo "over_capacity=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::PR-env capacity reached ($count/$max); not deploying $NAMESPACE."
+          else
+            echo "over_capacity=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment capacity reached
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'true'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- k8s-pr-deploy -->';
+            const body = `${marker}\n:hourglass_flowing_sand: PR-environment capacity is currently reached, so this PR ` +
+              `was not deployed. It will deploy automatically once a slot frees up (on the next CI run).`;
+            const prNumber = Number('${{ steps.ctx.outputs.pr_number }}');
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: prNumber });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: prNumber, body });
+
+      # Create the namespace WITH the Rancher project annotation set at creation time so
+      # Rancher assigns the project (and injects its ResourceQuota/LimitRange) from the start.
+      - name: Create namespace in the Rancher project
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        env:
+          NAMESPACE: ${{ steps.ctx.outputs.namespace }}
+          RANCHER_PROJECT_ID: ${{ vars.RANCHER_PROJECT_ID }}
+        run: |
+          set -Eeuo pipefail
+          kubectl apply -f - <<EOF
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: ${NAMESPACE}
+            annotations:
+              field.cattle.io/projectId: "${RANCHER_PROJECT_ID}"
+          EOF
+          echo "Waiting for Rancher to inject the project ResourceQuota/LimitRange..."
+          for _ in $(seq 1 60); do
+            if kubectl -n "$NAMESPACE" get resourcequota,limitrange -o name 2>/dev/null | grep -q .; then
+              echo "quota/limitrange present."; break
+            fi
+            sleep 2
+          done
+
+      - name: Deploy Helm release
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        env:
+          NAMESPACE: ${{ steps.ctx.outputs.namespace }}
+          HOSTNAME: ${{ steps.ctx.outputs.hostname }}
+          PR_NUMBER: ${{ steps.ctx.outputs.pr_number }}
+          ACME_EMAIL: ${{ vars.PR_DEPLOY_ACME_EMAIL }}
+          ACME_SERVER: ${{ vars.PR_DEPLOY_ACME_SERVER }}
+          HADES_URL: ${{ vars.HADES_URL }}
+          HADES_AUTH_KEY: ${{ secrets.HADES_AUTH_KEY }}
+        run: |
+          set -Eeuo pipefail
+          # Ephemeral per-PR secrets (throwaway env - no shared secret sprawl).
+          JWT_SECRET="$(openssl rand -base64 64 | tr -d '\n')"
+          ADMIN_PW="$(openssl rand -hex 24)"
+          GIT_PW="$(openssl rand -hex 24)"
+          DB_PW="$(openssl rand -hex 24)"
+          REGISTRY_PW="$(openssl rand -hex 24)"
+          BROKER_PW="$(openssl rand -hex 24)"
+          RESULT_TOKEN="$(openssl rand -hex 24)"
+
+          helm upgrade --install artemis ./helm/artemis \
+            --namespace "$NAMESPACE" \
+            --atomic --wait --timeout 20m \
+            --set-string image.tag="pr-${PR_NUMBER}" \
+            --set-string gateway.hostname="$HOSTNAME" \
+            --set-string gateway.className="envoy" \
+            --set-string gateway.ssh.mode="none" \
+            --set gateway.tls.certManagerIssuer.create=true \
+            --set-string gateway.tls.certManagerIssuer.email="$ACME_EMAIL" \
+            --set-string gateway.tls.certManagerIssuer.server="$ACME_SERVER" \
+            --set artemis.replicaCount=1 \
+            --set-string sharedStorage.storageClassName="longhorn" \
+            --set-string sharedStorage.size="2Gi" \
+            --set-string artemis.config.hades.url="$HADES_URL" \
+            --set-string artemis.config.hades.authKey="$HADES_AUTH_KEY" \
+            --set-string artemis.config.hades.artemisAuthenticationTokenValue="$RESULT_TOKEN" \
+            --set-string artemis.config.admin.password="$ADMIN_PW" \
+            --set-string artemis.config.jwtBase64Secret="$JWT_SECRET" \
+            --set-string artemis.config.versionControl.buildAgentGitPassword="$GIT_PW" \
+            --set-string postgresql.auth.password="$DB_PW" \
+            --set-string registry.password="$REGISTRY_PW" \
+            --set-string broker.auth.password="$BROKER_PW"
+
+      - name: Comment deployment URL
+        if: steps.ctx.outputs.mode == 'deploy' && steps.capacity.outputs.over_capacity == 'false'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const marker = '<!-- k8s-pr-deploy -->';
+            const url = `https://${{ steps.ctx.outputs.hostname }}`;
+            const body = `${marker}\n:rocket: **PR environment deployed** → ${url}\n\n` +
+              `Admin login is \`artemis_admin\` (password is generated per deploy). ` +
+              `The environment is removed automatically when the PR is closed, the \`ready for review\` label is removed, ` +
+              `or the PR goes stale.`;
+            const prNumber = Number('${{ steps.ctx.outputs.pr_number }}');
+            const { data: comments } = await github.rest.issues.listComments({ ...context.repo, issue_number: prNumber });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) await github.rest.issues.updateComment({ ...context.repo, comment_id: existing.id, body });
+            else await github.rest.issues.createComment({ ...context.repo, issue_number: prNumber, body });
