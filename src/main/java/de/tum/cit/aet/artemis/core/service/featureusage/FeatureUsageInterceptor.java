@@ -1,0 +1,79 @@
+package de.tum.cit.aet.artemis.core.service.featureusage;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+
+/**
+ * Counts one use of a feature per API request.
+ * <p>
+ * A {@link HandlerInterceptor} rather than a filter, because only here is the resolved handler method available, and the
+ * handler method is what identifies the feature. It is also what bounds the data: the set of handler methods is fixed at
+ * roughly a thousand, whereas a filter would see raw paths. That distinction is not theoretical. Micrometer's
+ * {@code http.server.requests} exhausts even a raised URI tag budget in production, because the LocalVC git servlet
+ * bypasses Spring MVC and every repository path becomes its own tag value.
+ * <p>
+ * The clock and the role are read in {@code preHandle} rather than in {@code afterCompletion}, so an asynchronous
+ * dispatch that completes on a different thread still reports the right role and the full duration.
+ * <p>
+ * Registered ahead of the other interceptors in {@code WebConfigurer}, so a request that a later interceptor rejects is
+ * still counted, as an error. Requests rejected earlier, by the security filter chain, never reach any interceptor and
+ * are therefore not counted at all: the error count measures failures of the feature, not failed attempts to reach it.
+ */
+@Profile(PROFILE_CORE)
+@Component
+@Lazy
+public class FeatureUsageInterceptor implements HandlerInterceptor {
+
+    private static final String START_NANOS_ATTRIBUTE = FeatureUsageInterceptor.class.getName() + ".startNanos";
+
+    private static final String CALLER_ROLE_ATTRIBUTE = FeatureUsageInterceptor.class.getName() + ".callerRole";
+
+    private final FeatureUsageRegistry registry;
+
+    private final FeatureUsageCollector collector;
+
+    public FeatureUsageInterceptor(FeatureUsageRegistry registry, FeatureUsageCollector collector) {
+        this.registry = registry;
+        this.collector = collector;
+    }
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!collector.isEnabled()) {
+            return true;
+        }
+        request.setAttribute(START_NANOS_ATTRIBUTE, System.nanoTime());
+        request.setAttribute(CALLER_ROLE_ATTRIBUTE, SecurityUtils.getCurrentUserHighestRole());
+        return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
+        if (!collector.isEnabled() || !(handler instanceof HandlerMethod handlerMethod)) {
+            return;
+        }
+        if (!(request.getAttribute(START_NANOS_ATTRIBUTE) instanceof Long startNanos)) {
+            return;
+        }
+        Long featureId = registry.restFeatureId(handlerMethod.getMethod());
+        if (featureId == null) {
+            // not part of the inventory, for instance a handler registered after the startup pass
+            return;
+        }
+        Role callerRole = request.getAttribute(CALLER_ROLE_ATTRIBUTE) instanceof Role role ? role : Role.ANONYMOUS;
+        boolean failed = ex != null || response.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
+        collector.recordUsage(featureId, callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
+    }
+}

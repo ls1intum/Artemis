@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
@@ -43,6 +47,8 @@ public class CourseNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseNotificationService.class);
 
+    private static final String NOTIFICATION_MODULE = "notification";
+
     private final CourseNotificationRegistryService courseNotificationRegistryService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
@@ -55,16 +61,19 @@ public class CourseNotificationService {
 
     private final Map<NotificationChannelOption, CourseNotificationBroadcastService> serviceMap;
 
+    private final FeatureUsageCollector featureUsageCollector;
+
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
             UserCourseNotificationStatusService userCourseNotificationStatusService, CourseNotificationWebappService webappService, CourseNotificationPushService pushService,
-            CourseNotificationEmailService emailService) {
+            CourseNotificationEmailService emailService, FeatureUsageCollector featureUsageCollector) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
         this.serviceMap = Map.of(NotificationChannelOption.WEBAPP, webappService, NotificationChannelOption.PUSH, pushService, NotificationChannelOption.EMAIL, emailService);
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     /**
@@ -90,6 +99,13 @@ public class CourseNotificationService {
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
             var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
             service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+
+            if (!filteredRecipients.isEmpty()) {
+                // One count per notification that actually reached somebody on this channel, which is what answers
+                // whether a channel is worth maintaining. Sends that every recipient has switched off are not usage.
+                featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, "course-notification/" + supportedChannel.name().toLowerCase(Locale.ROOT),
+                        Role.ANONYMOUS, false, 0);
+            }
 
             // We keep track of the notified users so that we only create notification status entries for them
             setOfNotifiedUsers.addAll(filteredRecipients);

@@ -17,6 +17,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
@@ -208,6 +209,20 @@ public class MailService {
         context.setVariable(VERSION_INFO, versionInfo);
         context.setVariable(SHOULD_RECOMMEND_UPGRADE, shouldRecommendUpgrade);
         prepareTemplateAndSendEmail(admin, "mail/vulnerabilityScanResultEmail", "email.vulnerabilityScan.title", context);
+    }
+
+    /**
+     * Sends the weekly feature usage digest email.
+     *
+     * @param recipient the admin recipient to notify
+     * @param digest    the aggregated usage summary to include in the email
+     */
+    public void sendFeatureUsageDigestEmail(MailRecipientDTO recipient, FeatureUsageDigestDTO digest) {
+        log.debug("Sending feature usage digest email to admin email address '{}'", recipient.email());
+        Locale locale = Locale.forLanguageTag(recipient.langKey());
+        Context context = createBaseContext(recipient, locale);
+        context.setVariable("digest", digest);
+        prepareTemplateAndSendEmail(recipient, "mail/featureUsageDigestEmail", "email.featureUsageDigest.title", context);
     }
 
     /**

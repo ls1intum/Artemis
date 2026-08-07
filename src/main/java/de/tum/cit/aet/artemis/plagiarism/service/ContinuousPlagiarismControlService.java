@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.ZonedDateTime;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -17,6 +19,9 @@ import org.springframework.stereotype.Service;
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -44,6 +49,8 @@ public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);
 
+    private static final String PLAGIARISM_MODULE = "plagiarism";
+
     private static final Predicate<Exercise> isBeforeDueDateOrAfterWithPostDueDateChecksEnabled = exercise -> exercise.getDueDate() == null
             || exercise.getDueDate().isAfter(ZonedDateTime.now()) || exercise.getPlagiarismDetectionConfig().isContinuousPlagiarismControlPostDueDateChecksEnabled();
 
@@ -61,9 +68,14 @@ public class ContinuousPlagiarismControlService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    /**
+     * Optional because this service only needs the scheduling profile, which can in principle run without core.
+     */
+    private final Optional<FeatureUsageCollector> featureUsageCollector;
+
     public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
             PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository) {
+            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository, Optional<FeatureUsageCollector> featureUsageCollector) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
@@ -71,6 +83,7 @@ public class ContinuousPlagiarismControlService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.plagiarismPostService = plagiarismPostService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     /**
@@ -90,9 +103,20 @@ public class ContinuousPlagiarismControlService {
             updatePlagiarismCases(result, exercise);
 
             log.info("Finished continuous plagiarism control for exercise: exerciseId={}, elapsed={}.", exercise.getId(), TimeLogUtil.formatDurationFrom(startTime));
+
+            // Nothing else makes this job visible: it is purely scheduled, so without this the admin page cannot tell a
+            // deployment that relies on continuous plagiarism control from one where nobody ever switched it on. Recorded
+            // as a success unconditionally, because the method above silences per exercise failures on purpose so the run
+            // continues for the other exercises; those failures are in the log, not here.
+            recordUsage(exercise, (System.nanoTime() - startTime) / 1_000_000);
         });
 
         log.debug("Continuous plagiarism control done.");
+    }
+
+    private void recordUsage(Exercise exercise, long durationMs) {
+        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, PLAGIARISM_MODULE,
+                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), Role.ANONYMOUS, false, durationMs));
     }
 
     /**

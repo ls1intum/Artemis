@@ -29,6 +29,11 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
  */
 public final class SecurityUtils {
 
+    /**
+     * Roles in descending order of precedence, matching the role hierarchy declared in {@code SecurityConfiguration}.
+     */
+    private static final Role[] ROLES_BY_PRECEDENCE = { Role.SUPER_ADMIN, Role.ADMIN, Role.INSTRUCTOR, Role.EDITOR, Role.TEACHING_ASSISTANT, Role.STUDENT };
+
     private SecurityUtils() {
     }
 
@@ -205,5 +210,26 @@ public final class SecurityUtils {
      */
     public static boolean hasCurrentUserThisAuthority(String authority) {
         return hasCurrentUserAnyOfAuthorities(authority);
+    }
+
+    /**
+     * Returns the highest global role of the current user.
+     * <p>
+     * This is a <i>global</i> authority, not a role within a particular course: a user who instructs any course carries
+     * {@code ROLE_INSTRUCTOR} everywhere. Reads only the security context, so it costs no database access.
+     *
+     * @return the highest role held by the current user, or {@link Role#ANONYMOUS} if there is no authenticated user
+     */
+    public static Role getCurrentUserHighestRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return Role.ANONYMOUS;
+        }
+        for (Role role : ROLES_BY_PRECEDENCE) {
+            if (getAuthorities(authentication).anyMatch(role.getAuthority()::equals)) {
+                return role;
+            }
+        }
+        return Role.ANONYMOUS;
     }
 }

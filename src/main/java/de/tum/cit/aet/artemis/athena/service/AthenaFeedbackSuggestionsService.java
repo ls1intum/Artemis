@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -37,9 +38,12 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -61,6 +65,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);
 
+    private static final String ATHENA_MODULE = "athena";
+
     private final AthenaConnector<RequestDTO, ResponseDTOText> textAthenaConnector;
 
     private final AthenaConnector<RequestDTO, ResponseDTOProgramming> programmingAthenaConnector;
@@ -79,6 +85,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
+    private final Optional<FeatureUsageCollector> featureUsageCollector;
+
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
 
@@ -91,10 +99,11 @@ public class AthenaFeedbackSuggestionsService {
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
      * @param learnerProfileApi         API for learner profile operations
      * @param courseCompetencyApi       API for course competency operations
+     * @param featureUsageCollector     counts feedback suggestion requests for the feature usage analysis
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
-            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, Optional<FeatureUsageCollector> featureUsageCollector) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
@@ -104,6 +113,7 @@ public class AthenaFeedbackSuggestionsService {
         this.learnerProfileApi = learnerProfileApi;
         this.resultRepository = resultRepository;
         this.courseCompetencyApi = courseCompetencyApi;
+        this.featureUsageCollector = featureUsageCollector;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -218,9 +228,11 @@ public class AthenaFeedbackSuggestionsService {
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                 LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
+        final long startNanos = System.nanoTime();
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
+        recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000);
         return response.data.stream().toList();
     }
 
@@ -244,9 +256,11 @@ public class AthenaFeedbackSuggestionsService {
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
+        final long startNanos = System.nanoTime();
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
+        recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000);
         return response.data.stream().toList();
     }
 
@@ -275,10 +289,31 @@ public class AthenaFeedbackSuggestionsService {
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
+        final long startNanos = System.nanoTime();
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
+        recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000);
         return response.data;
+    }
+
+    /**
+     * Counts one successful feedback suggestion request for the feature usage analysis.
+     * <p>
+     * Split by exercise type and by graded, because those are different features in practice: graded suggestions support
+     * a tutor assessing, non-graded ones give a student preliminary feedback, and a deployment can easily use one and not
+     * the other.
+     * <p>
+     * Only successes are counted here. A failing Athena call propagates to the REST endpoint that asked for it, and that
+     * endpoint's own error count already records it.
+     *
+     * @param exercise   the exercise the suggestions were requested for
+     * @param isGraded   whether grade suggestions were requested
+     * @param durationMs how long the call to Athena took
+     */
+    private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs) {
+        String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");
+        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, Role.ANONYMOUS, false, durationMs));
     }
 
     /**

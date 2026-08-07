@@ -28,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
@@ -70,10 +71,13 @@ class CourseNotificationServiceTest {
     @Mock
     private CourseNotificationEmailService emailService;
 
+    @Mock
+    private FeatureUsageCollector featureUsageCollector;
+
     @BeforeEach
     void setUp() {
         courseNotificationService = new CourseNotificationService(courseNotificationRegistryService, courseNotificationSettingService, courseNotificationRepository,
-                courseNotificationParameterRepository, userCourseNotificationStatusService, webappService, pushService, emailService);
+                courseNotificationParameterRepository, userCourseNotificationStatusService, webappService, pushService, emailService, featureUsageCollector);
     }
 
     @Test

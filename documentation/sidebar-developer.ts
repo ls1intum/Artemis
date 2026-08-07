@@ -52,6 +52,7 @@ const sidebars: SidebarsConfig = {
         'local-user-management',
         'open-source',
         'system-design',
+        'feature-usage',
         'test-servers',
         'builds-and-dependencies',
         'e2e-testing-playwright',

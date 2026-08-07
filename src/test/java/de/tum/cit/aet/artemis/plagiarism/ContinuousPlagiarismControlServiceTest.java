@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -60,7 +61,7 @@ class ContinuousPlagiarismControlServiceTest {
     private final PlagiarismResultRepository plagiarismResultRepository = mock();
 
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository);
+            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, Optional.empty());
 
     @Test
     void shouldExecuteChecks() throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {

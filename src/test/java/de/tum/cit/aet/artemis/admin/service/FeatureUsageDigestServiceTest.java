@@ -1,0 +1,172 @@
+package de.tum.cit.aet.artemis.admin.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleCallsDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleSummaryDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
+import de.tum.cit.aet.artemis.admin.repository.FeatureUsageStatisticsRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+
+/**
+ * Tests the roll-up behind the weekly email.
+ * <p>
+ * The digest is built from the same report the admin page shows, so the risk is not in the numbers themselves but in the
+ * aggregation: a module must not look half unused because of endpoints that no longer exist, and a module nobody touched
+ * has to end up on the quiet list rather than in a row of zeros.
+ */
+class FeatureUsageDigestServiceTest {
+
+    private static final LocalDate FROM = LocalDate.now(ZoneOffset.UTC).minusDays(6);
+
+    private FeatureUsageQueryService queryService;
+
+    private FeatureUsageStatisticsRepository repository;
+
+    private FeatureUsageDigestService service;
+
+    @BeforeEach
+    void init() {
+        queryService = mock(FeatureUsageQueryService.class);
+        repository = mock(FeatureUsageStatisticsRepository.class);
+        service = new FeatureUsageDigestService(queryService, repository);
+        when(repository.findModuleCallsBetween(any(), any())).thenReturn(List.of());
+    }
+
+    @Test
+    void shouldRollUpCallsAndFeatureCountsPerModule() {
+        givenOverview(entry("programming", 100, 5, false), entry("programming", 50, 0, false), entry("programming", 0, 0, false), entry("quiz", 7, 0, false));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        FeatureUsageModuleSummaryDTO programming = moduleOf(digest, "programming");
+        assertThat(programming.callCount()).isEqualTo(150);
+        assertThat(programming.errorCount()).isEqualTo(5);
+        assertThat(programming.usedFeatures()).isEqualTo(2);
+        assertThat(programming.trackedFeatures()).isEqualTo(3);
+        assertThat(programming.unusedFeatures()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldOrderActiveModulesByCalls() {
+        givenOverview(entry("quiz", 7, 0, false), entry("programming", 100, 0, false), entry("exam", 40, 0, false));
+
+        assertThat(service.buildWeeklyDigest().activeModules()).extracting(FeatureUsageModuleSummaryDTO::module).containsExactly("programming", "exam", "quiz");
+    }
+
+    @Test
+    void shouldListModulesWithoutAnyUsageSeparately() {
+        givenOverview(entry("programming", 100, 0, false), entry("lecture", 0, 0, false), entry("quiz", 0, 0, false));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // what matters about these is only that they are on the list, so they are names rather than rows of zeros
+        assertThat(digest.quietModules()).containsExactly("lecture", "quiz");
+        assertThat(digest.activeModules()).extracting(FeatureUsageModuleSummaryDTO::module).containsExactly("programming");
+    }
+
+    @Test
+    void shouldExcludeRetiredFeaturesFromEveryModuleCount() {
+        givenOverview(entry("programming", 100, 0, false), entry("programming", 0, 0, true), entry("programming", 0, 0, true));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // a module is not two thirds unused because it stopped offering two endpoints a release ago
+        FeatureUsageModuleSummaryDTO programming = moduleOf(digest, "programming");
+        assertThat(programming.trackedFeatures()).isEqualTo(1);
+        assertThat(programming.unusedFeatures()).isZero();
+        assertThat(digest.trackedFeatures()).isEqualTo(1);
+        assertThat(digest.usedFeatures()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldDropAModuleThatOnlyHasRetiredFeatures() {
+        givenOverview(entry("programming", 100, 0, false), entry("lti", 0, 0, true));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        assertThat(digest.quietModules()).isEmpty();
+        assertThat(digest.activeModules()).extracting(FeatureUsageModuleSummaryDTO::module).containsExactly("programming");
+    }
+
+    @Test
+    void shouldCompareAgainstTheEquallyLongWindowBefore() {
+        givenOverview(entry("programming", 150, 0, false));
+        when(repository.findModuleCallsBetween(FROM.minusDays(7), FROM.minusDays(1))).thenReturn(List.of(new FeatureUsageModuleCallsDTO("programming", 100)));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        assertThat(moduleOf(digest, "programming").previousCallCount()).isEqualTo(100);
+        assertThat(moduleOf(digest, "programming").changePercent()).isEqualTo(50);
+        assertThat(digest.previousTotalCalls()).isEqualTo(100);
+    }
+
+    @Test
+    void shouldReportNoChangeWhenThereIsNothingToCompareAgainst() {
+        givenOverview(entry("programming", 150, 0, false));
+
+        // "no previous data" and "no change" are different things in a digest, so the absence has to stay distinguishable
+        assertThat(moduleOf(service.buildWeeklyDigest(), "programming").changePercent()).isNull();
+    }
+
+    @Test
+    void shouldReportADrop() {
+        givenOverview(entry("exam", 20, 0, false));
+        when(repository.findModuleCallsBetween(any(), any())).thenReturn(List.of(new FeatureUsageModuleCallsDTO("exam", 100)));
+
+        assertThat(moduleOf(service.buildWeeklyDigest(), "exam").changePercent()).isEqualTo(-80);
+    }
+
+    @Test
+    void shouldBeEmptyWhenNothingWasRecorded() {
+        givenOverview(entry("programming", 0, 0, false));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // the template says so explicitly instead of presenting a table of zeros as a finding
+        assertThat(digest.isEmpty()).isTrue();
+    }
+
+    @Test
+    void shouldCoverExactlyOneWeek() {
+        givenOverview(entry("programming", 1, 0, false));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        assertThat(digest.days()).isEqualTo(7);
+        assertThat(digest.from()).isEqualTo(FROM);
+        assertThat(digest.to()).isEqualTo(LocalDate.now(ZoneOffset.UTC));
+    }
+
+    private void givenOverview(FeatureUsageEntryDTO... entries) {
+        List<FeatureUsageEntryDTO> features = List.of(entries);
+        long unused = features.stream().filter(feature -> !feature.retired() && feature.callCount() == 0).count();
+        long retired = features.stream().filter(FeatureUsageEntryDTO::retired).count();
+        long total = features.stream().mapToLong(FeatureUsageEntryDTO::callCount).sum();
+        when(queryService.getOverview(anyInt(), any()))
+                .thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, features.size(), unused, retired, total, Instant.now(), Instant.now(), features, List.of()));
+    }
+
+    private static FeatureUsageEntryDTO entry(String module, long callCount, long errorCount, boolean retired) {
+        return new FeatureUsageEntryDTO(0, FeatureKind.REST, module, "GET api/" + module + "/" + callCount + "-" + retired, null, callCount, errorCount, 0, 0, 0, null,
+                Instant.now(), retired);
+    }
+
+    private static FeatureUsageModuleSummaryDTO moduleOf(FeatureUsageDigestDTO digest, String module) {
+        return digest.activeModules().stream().filter(summary -> summary.module().equals(module)).findFirst().orElseThrow();
+    }
+}
