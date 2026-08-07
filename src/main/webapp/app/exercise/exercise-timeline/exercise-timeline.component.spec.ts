@@ -115,11 +115,11 @@ describe('ExerciseTimeline', () => {
 
         // Between release (Jan 1) and due (Jan 10): fails the default "all previous items" check (it's before dueItem)...
         fixture.componentRef.setInput('timelineItems', buildItems(false));
-        expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: true });
+        expect(component.internalTimelineItems()[2]).toMatchObject({ violationKey: 'artemisApp.exercise.timelineDateOrderTooltip' });
 
         // ...but is valid once the check is restricted to just [releaseItem] via orderCheckAgainst.
         fixture.componentRef.setInput('timelineItems', buildItems(true));
-        expect(component.internalTimelineItems()[2]).toMatchObject({ isBeforePreviousDate: false });
+        expect(component.internalTimelineItems()[2]).toMatchObject({ violationKey: undefined });
     });
 
     it('should update timeline item date', () => {
