@@ -15,8 +15,8 @@
 #   bash supporting_scripts/analyze_slow_queries_runtime.sh
 #
 # Outputs:
-#   slow-query-report.json   – raw JSON copied from the teardown hook's output
-#   slow-query-summary.md    – Markdown summary for the PR comment
+#   slow-query-report.html   – full, sortable, self-contained HTML report (uploaded as the CI artifact)
+#   slow-query-summary.md    – Markdown summary (top 20 per section) for the PR comment
 #
 # Exit code is always 0 (informational step; a missing/failed report is reported via Markdown,
 # never fails the CI job).
@@ -24,7 +24,7 @@
 set -euo pipefail
 
 REPORT_SOURCE="src/test/playwright/test-reports/slow-query-report.json"
-REPORT_JSON="slow-query-report.json"
+REPORT_HTML="slow-query-report.html"
 REPORT_MD="slow-query-summary.md"
 
 echo "=== Slow-Query Report Collection ==="
@@ -40,21 +40,21 @@ if [ ! -s "${REPORT_SOURCE}" ]; then
     exit 0
 fi
 
-cp "${REPORT_SOURCE}" "${REPORT_JSON}"
 echo "✅ Report found. Analyzing..."
 
 # Link the "more not shown" note straight to this run's Artifacts section, so readers don't
-# have to guess where the full JSON lives. Only set when running under GitHub Actions.
+# have to guess where the full report lives. Only set when running under GitHub Actions.
 RUN_URL=""
 if [ -n "${GITHUB_RUN_ID:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
     RUN_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 fi
 
 # ------------------------------------------------------------------
-# Delegate formatting to the Python script
+# Delegate formatting to the Python script: Markdown summary to stdout (for the PR comment),
+# full untruncated HTML report to a file (for the CI artifact).
 # ------------------------------------------------------------------
 python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_JSON}" "${RUN_URL}" > "${REPORT_MD}"
+    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" > "${REPORT_MD}"
 
 echo ""
 echo "=== Summary preview ==="

@@ -162,7 +162,7 @@ jobs:
         continue-on-error: true
         with:
           name: Slow Query Report Phase 1
-          path: slow-query-report.json
+          path: slow-query-report.html
           if-no-files-found: warn
 
       - name: E2E Teardown
@@ -373,7 +373,7 @@ jobs:
         continue-on-error: true
         with:
           name: Slow Query Report Phase 2
-          path: slow-query-report.json
+          path: slow-query-report.html
           if-no-files-found: warn
 
       - name: E2E Teardown
@@ -584,7 +584,7 @@ jobs:
         continue-on-error: true
         with:
           name: Slow Query Report All PR
-          path: slow-query-report.json
+          path: slow-query-report.html
           if-no-files-found: warn
 
       - name: E2E Teardown
@@ -766,7 +766,7 @@ jobs:
         continue-on-error: true
         with:
           name: Slow Query Report Non-PR
-          path: slow-query-report.json
+          path: slow-query-report.html
           if-no-files-found: warn
 
       - name: E2E Teardown
