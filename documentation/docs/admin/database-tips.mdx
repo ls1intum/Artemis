@@ -39,10 +39,24 @@ This dump is called `Artemis.sql` in the following steps.
 and run the following commands to convert the `Artemis.sql` dump into `Artemis.pg.sql` that is usable by PostgreSQL.
 
 **docker-compose.yml with helper containers for MySQL and PostgreSQL:**
+
+<Callout variant={CalloutVariant.warning}>
+
+  The temporary MySQL helper below is deliberately pinned to **8.0** and is *not* kept in sync with the
+  MySQL version Artemis itself runs on. `pgloader` only implements the `mysql_native_password`
+  authentication plugin, which MySQL removed in 8.4. Against any MySQL 8.4 or 9.x container, the
+  `pgloader` step below fails with `Condition QMYND:MYSQL-UNSUPPORTED-AUTHENTICATION was signalled`,
+  and neither `caching_sha2_password` (the default) nor `sha256_password` is a usable alternative.
+  This container is a throwaway format converter that only ever talks to `pgloader` on a local Docker
+  network, so running an older MySQL here is safe — but do not copy this snippet as a template for a
+  real Artemis deployment.
+
+</Callout>
+
 ```yaml
    services:
        mysql:
-           image: docker.io/library/mysql:9.7.2
+           image: docker.io/library/mysql:8.0.46
            environment:
                - MYSQL_DATABASE=Artemis
                - MYSQL_ALLOW_EMPTY_PASSWORD=yes
@@ -50,10 +64,11 @@ and run the following commands to convert the `Artemis.sql` dump into `Artemis.p
                - 3306:3306
            command: >
                mysqld
-                   --lower_case_table_names=1 --tls-version=''
+                   --lower_case_table_names=1 --skip-ssl
                    --character_set_server=utf8mb4
                    --collation-server=utf8mb4_unicode_ci
                    --explicit_defaults_for_timestamp
+                   --default-authentication-plugin=mysql_native_password
            networks:
                - db-migration
 
