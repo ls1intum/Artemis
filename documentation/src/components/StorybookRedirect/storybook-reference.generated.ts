@@ -66,6 +66,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-confirm-dialog--docs';
         case 'overlays-dialog':
             return 'overlays-dialog--docs';
+        case 'overlays-popover':
+            return 'overlays-popover--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
         default:

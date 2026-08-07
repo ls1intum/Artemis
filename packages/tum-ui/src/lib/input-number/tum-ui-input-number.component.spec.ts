@@ -314,3 +314,119 @@ describe('TumUiInputNumberComponent (external CVA writes)', () => {
         expect(input().value).toBe('1,234');
     });
 });
+
+@Component({
+    template: `<tum-ui-input-number
+        [(ngModel)]="value"
+        [min]="0"
+        [max]="9999"
+        [step]="step()"
+        [maxFractionDigits]="maxFractionDigits()"
+        [locale]="locale()"
+        [showButtons]="true"
+    />`,
+    imports: [TumUiInputNumberComponent, FormsModule, FontAwesomeTestingModule],
+})
+class DecimalHostComponent {
+    value?: number;
+    readonly step = signal(1);
+    readonly maxFractionDigits = signal(1);
+    readonly locale = signal<string | undefined>('en');
+}
+
+describe('TumUiInputNumberComponent (maxFractionDigits)', () => {
+    let fixture: ComponentFixture<DecimalHostComponent>;
+    let host: DecimalHostComponent;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [DecimalHostComponent] }).compileComponents();
+        fixture = TestBed.createComponent(DecimalHostComponent);
+        host = fixture.componentInstance;
+        fixture.detectChanges();
+        await fixture.whenStable();
+    });
+
+    function input(): HTMLInputElement {
+        return fixture.debugElement.query(By.css('input')).nativeElement;
+    }
+    function type(text: string): void {
+        input().value = text;
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+    }
+    function blur(): void {
+        input().dispatchEvent(new FocusEvent('blur'));
+        fixture.detectChanges();
+    }
+    function buttons(): HTMLButtonElement[] {
+        return fixture.debugElement.queryAll(By.css('.tum-ui-input-number-button')).map((d) => d.nativeElement);
+    }
+
+    it('switches the inputmode to decimal so mobile keyboards offer a separator', () => {
+        expect(input().getAttribute('inputmode')).toBe('decimal');
+        host.maxFractionDigits.set(0);
+        fixture.detectChanges();
+        expect(input().getAttribute('inputmode')).toBe('numeric');
+    });
+
+    it('formats a fractional model value', async () => {
+        host.value = 12.5;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(input().value).toBe('12.5');
+    });
+
+    it('parses a typed decimal', () => {
+        type('12.5');
+        expect(host.value).toBe(12.5);
+    });
+
+    it('does not erase a trailing decimal separator while it is being typed', () => {
+        type('12.');
+        // The separator survives so the user can carry on typing the fraction; the model already reads the integer.
+        expect(input().value).toBe('12.');
+        expect(host.value).toBe(12);
+        type('12.5');
+        expect(host.value).toBe(12.5);
+    });
+
+    it('truncates the fraction to maxFractionDigits', () => {
+        type('12.55');
+        expect(host.value).toBe(12.5);
+        blur();
+        expect(input().value).toBe('12.5');
+    });
+
+    it('uses the locale decimal separator and ignores the grouping separator', () => {
+        host.locale.set('de');
+        fixture.detectChanges();
+        // In German "." groups thousands and "," is the decimal separator.
+        type('1.234,5');
+        expect(host.value).toBe(1234.5);
+        blur();
+        expect(input().value).toBe('1.234,5');
+    });
+
+    it('steps by a fractional step without accumulating float error', () => {
+        host.step.set(0.1);
+        fixture.detectChanges();
+        type('0.2');
+        expect(host.value).toBe(0.2);
+        buttons()[0].click(); // 0.2 + 0.1 would be 0.30000000000000004 unrounded
+        fixture.detectChanges();
+        expect(host.value).toBe(0.3);
+    });
+
+    it('applies grouping to the integer part on blur', () => {
+        type('1234.5');
+        blur();
+        expect(input().value).toBe('1,234.5');
+    });
+
+    it('still clamps to [min,max] on blur', () => {
+        type('99999.9');
+        blur();
+        expect(host.value).toBe(9999);
+    });
+});

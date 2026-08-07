@@ -24,11 +24,14 @@
                     <!-- The communication page renders its title (and sidebar toggle) inside its own sidebar, mirroring the student view, so the container title bar is hidden there. -->
                     @if (!hasSidebar()) {
                         <jhi-course-title-bar [pageTitle]="pageTitle()">
-                            <div class="controls">
-                                @if (course()?.isAtLeastInstructor && isSettingsPage()) {
-                                    <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
-                                }
-                                @if (isSettingsPage()) {
+                            <!-- Only rendered on the settings page; its contents are all gated by isSettingsPage(). Skipping
+                                 the (otherwise empty) div on other pages avoids a phantom right-aligned flex item (margin-left:
+                                 auto) that would push projected title-bar actions away from the right edge. -->
+                            @if (isSettingsPage()) {
+                                <div class="controls">
+                                    @if (course()?.isAtLeastInstructor) {
+                                        <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                                    }
                                     <button
                                         id="reset-course"
                                         *jhiHasAnyAuthority="'ROLE_ADMIN'"
@@ -69,8 +72,8 @@
                                     >
                                         <fa-icon [icon]="faTrash" />
                                     </button>
-                                }
-                            </div>
+                                </div>
+                            }
                         </jhi-course-title-bar>
                     }
 
@@ -82,6 +85,7 @@
                         [ngClass]="{
                             'module-bg rounded rounded-3 scrollable-content': !hasSidebar(),
                             'p-3': !hasSidebar() && !removePadding(),
+                            'sidebar-body': hasSidebar(),
                         }"
                         cdkScrollable
                     >

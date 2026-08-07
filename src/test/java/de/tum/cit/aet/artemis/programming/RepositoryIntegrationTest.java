@@ -35,6 +35,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,6 +107,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private final String textFileWithBinaryExtensionName = "gradlew.sh";
 
     private final String textFileWithBinaryExtensionContent = "#!/bin/sh\necho hello\n";
+
+    private final String testRepositoryOnlyContent = "// content that only exists in the test repository";
 
     private final String currentLocalFolderName = "currentFolderName";
 
@@ -388,6 +392,69 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommitParticipationNotFound() throws Exception {
         request.getMap(filesContentBaseUrl + "abc&participationId=" + UUID.randomUUID().getLeastSignificantBits(), HttpStatus.NOT_FOUND, String.class, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFilesAtCommitWithoutParticipationIdBadRequest() throws Exception {
+        request.getMap(filesContentBaseUrl + "HEAD", HttpStatus.BAD_REQUEST, String.class, String.class);
+    }
+
+    /**
+     * Selecting a repository via {@code repositoryType} is an editor-level operation. A plain student may read only their own participation repository, so every repository
+     * type must be rejected with 403.
+     */
+    @ParameterizedTest
+    @EnumSource(RepositoryType.class)
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesAtCommitWithRepositoryTypeRequiresEditorForStudent(RepositoryType repositoryType) throws Exception {
+        prepareRepository();
+        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId() + "&repositoryType=" + repositoryType.name(), HttpStatus.FORBIDDEN,
+                String.class, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesAtCommitWithRepositoryTypeRequiresEditorForTutor() throws Exception {
+        prepareRepository();
+        String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.FORBIDDEN, String.class, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetFilesAtCommitWithRepositoryTypeAllowedForEditor() throws Exception {
+        String markerFileName = commitFileOnlyInTestRepository();
+
+        var files = request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.OK, String.class, String.class);
+
+        assertThat(files).containsEntry(markerFileName, testRepositoryOnlyContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFilesAtCommitWithRepositoryTypeAllowedForInstructor() throws Exception {
+        String markerFileName = commitFileOnlyInTestRepository();
+
+        var files = request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.OK, String.class, String.class);
+
+        assertThat(files).containsEntry(markerFileName, testRepositoryOnlyContent);
+    }
+
+    /**
+     * Commits a file that exists only in the test repository. Its presence in a response therefore proves the response was served from the test repository and not from the
+     * participation repository, which the setup seeds with the same default content.
+     *
+     * @return the name of the committed file
+     */
+    private String commitFileOnlyInTestRepository() throws Exception {
+        String markerFileName = "TestRepositoryMarker.java";
+        FileUtils.writeStringToFile(testsRepository.workingCopyGitRepoFile.toPath().resolve(markerFileName).toFile(), testRepositoryOnlyContent, StandardCharsets.UTF_8);
+        testsRepository.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(testsRepository.workingCopyGitRepo).setMessage("add test repository marker").call();
+        testsRepository.workingCopyGitRepo.push().setRemote("origin").call();
+        return markerFileName;
     }
 
     private void prepareRepository() throws GitAPIException, IOException {
