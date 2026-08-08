@@ -34,11 +34,14 @@ import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
@@ -63,6 +66,26 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     /** Size of the "realistic course" being profiled. */
     private static final int CONTENT_PER_TYPE = 20;
+
+    /** A modestly sized problem statement; real programming exercises are commonly several times this. */
+    private static final String PROBLEM_STATEMENT = """
+            # Task
+            Implement the following methods and make all tests pass. Read the description carefully before you start.
+
+            ## Background
+            This exercise practises the concepts from the lecture. You may use the standard library, but no external
+            dependencies. Pay attention to the edge cases listed below, they are all covered by the test suite.
+
+            ## Requirements
+            1. Implement `solve(input)` so that it returns the expected output for every input in the specification.
+            2. Handle the empty input, a single element, and inputs containing duplicates.
+            3. Keep the asymptotic runtime within the bound stated in the lecture slides.
+            4. Do not modify the provided test files.
+
+            ## Hints
+            - Start with the simplest case and extend from there.
+            - The provided sample tests are not exhaustive; the grading run adds more.
+            """;
 
     /** Measured repetitions per endpoint, reported as a median. */
     private static final int MEASURED_RUNS = 5;
@@ -96,7 +119,13 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     private ParticipationUtilService participationUtilService;
 
     @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
     private FaqRepository faqRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository exerciseRepository;
 
     private Course course;
 
@@ -109,11 +138,28 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         for (int i = 0; i < CONTENT_PER_TYPE; i++) {
-            var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),
-                    ZonedDateTime.now().plusDays(4));
-            // A student who has actually worked in the course: every exercise carries a participation with a submission
-            // and a result. Without these the exercise payload is a fraction of its real size and the profile lies.
-            participationUtilService.createParticipationSubmissionAndResult(exercise.getId(), student, 10.0, 0.0, 80, true);
+            // A realistic mix: programming exercises carry considerably more than text exercises, and seeding only text
+            // exercises understates the payload. Every exercise also gets a problem statement, which real ones have.
+            Exercise exercise;
+            if (i % 2 == 0) {
+                exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+                exercise.setMaxPoints(10.0);
+                exercise.setBonusPoints(0.0);
+                exercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+                exercise.setDueDate(ZonedDateTime.now().plusDays(2));
+            }
+            else {
+                exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),
+                        ZonedDateTime.now().plusDays(4));
+            }
+            exercise.setProblemStatement(PROBLEM_STATEMENT);
+            exercise = exerciseRepository.save(exercise);
+            // A student who has actually worked in the course: without participations the exercise payload is a
+            // fraction of its real size. Only the text exercises get one — a programming participation needs template
+            // repository infrastructure that this profile does not otherwise require.
+            if (exercise instanceof TextExercise) {
+                participationUtilService.createParticipationSubmissionAndResult(exercise.getId(), student, 10.0, 0.0, 80, true);
+            }
             Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
             lectureUtilService.createAttachmentVideoUnit(lecture, false);
             competencyUtilService.createCompetency(course);
@@ -343,7 +389,15 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         // The colon matters: "student" alone also matches "studentParticipations" and "studentAssignedTeamIdComputed"
         assertThat(body).as("the participations must not carry the student, which the client already knows").doesNotContain("\"student\":");
         assertThat(body).as("nor the derived participant fields that come with it").doesNotContain("\"participantName\":");
-        log.info("exercises-for-overview response size: {} bytes for {} exercises", body.length(), CONTENT_PER_TYPE);
+        var root = new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
+        var totals = new java.util.TreeMap<String, Integer>();
+        root.get("exercises").forEach(exercise -> exercise.properties().forEach(e -> totals.merge(e.getKey(), e.getValue().toString().length(), Integer::sum)));
+        StringBuilder out = new StringBuilder(String.format(Locale.ROOT,
+                "%nexercises-for-overview: %,d bytes for %d exercises%n%n| Field | Total bytes | Share |%n|---|---:|---:|%n", body.length(), CONTENT_PER_TYPE));
+        int sum = totals.values().stream().mapToInt(Integer::intValue).sum();
+        totals.entrySet().stream().sorted(java.util.Map.Entry.<String, Integer>comparingByValue().reversed())
+                .forEach(e -> out.append(String.format(Locale.ROOT, "| %s | %,d | %.1f%% |%n", e.getKey(), e.getValue(), 100.0 * e.getValue() / sum)));
+        log.info(out.toString());
     }
 
     private void replay(List<Endpoint> pattern) throws Exception {
