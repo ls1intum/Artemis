@@ -251,6 +251,20 @@ class IrisCitationServiceTest {
         assertThat(stamped).isEqualTo("A [cite:L:42::30:60:Locks:First.::2] and B [cite:L:7:2:::Threads:Second.:8:]");
     }
 
+    /**
+     * The citation pattern accepts any run of digits, so a model inventing an ID beyond {@code long} produces a well-formed citation that cannot name a lecture unit. It
+     * has to be skipped rather than throw: the lookup already ignores it, and a valid citation next to it is enough to reach the stamping loop, where an escaping
+     * {@link NumberFormatException} would abort stamping for the whole answer — and with it the persistence of the assistant message.
+     */
+    @Test
+    void stampCitationVersions_skipsAnOversizedEntityIdAndStampsTheValidCitationBesideIt() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("Bad [cite:L:99999999999999999999:1:::Key:Summary.] and good [cite:L:42:7:::Deadlocks:A summary.]");
+
+        assertThat(stamped).isEqualTo("Bad [cite:L:99999999999999999999:1:::Key:Summary.] and good [cite:L:42:7:::Deadlocks:A summary.:3:]");
+    }
+
     @Test
     void stampCitationVersions_returnsTextUnchangedWhenNothingToStamp() {
         assertThat(citationService.stampCitationVersions("No citations here.")).isEqualTo("No citations here.");

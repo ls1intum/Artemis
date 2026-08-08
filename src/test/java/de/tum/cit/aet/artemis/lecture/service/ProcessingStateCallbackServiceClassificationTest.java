@@ -117,6 +117,41 @@ class ProcessingStateCallbackServiceClassificationTest {
         assertThat(state.getTranscriptionVersion()).isEqualTo(2);
     }
 
+    /**
+     * A transcript can contain anything a speaker said, including the characters used to separate the serialized fields. If those were merely delimited, one segment
+     * spelling out the delimiters of a second one would serialize identically to the two of them, the hash would match, and the version would stay put for material that
+     * changed — leaving citations pinned to it looking current.
+     */
+    @Test
+    void segmentsWhoseTextSpellsOutTheFieldSeparatorsStillCountAsChanged() {
+        var state = processingState();
+
+        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello\n0.0|10.0|1|World")));
+        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello"), segment(0, 10, "World")));
+
+        assertThat(state.getTranscriptionVersion()).isEqualTo(2);
+    }
+
+    @Test
+    void textDifferingOnlyInLineBreaksCountsAsChanged() {
+        var state = processingState();
+
+        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello\nthere")));
+        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello there")));
+
+        assertThat(state.getTranscriptionVersion()).isEqualTo(2);
+    }
+
+    @Test
+    void shiftingTextAcrossTheSegmentBoundaryCountsAsChanged() {
+        var state = processingState();
+
+        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hello"), segment(10, 20, "there")));
+        ProcessingStateCallbackService.bumpTranscriptionVersionIfContentChanged(state, List.of(segment(0, 10, "Hellothere"), segment(10, 20, "")));
+
+        assertThat(state.getTranscriptionVersion()).isEqualTo(2);
+    }
+
     private static LectureUnitProcessingState processingState() {
         var unit = new AttachmentVideoUnit();
         unit.setId(1L);

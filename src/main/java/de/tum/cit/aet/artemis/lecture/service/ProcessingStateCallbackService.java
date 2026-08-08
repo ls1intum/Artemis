@@ -454,6 +454,11 @@ public class ProcessingStateCallbackService {
      * <p>
      * The segments are serialized into a canonical string rather than reusing their JSON representation, so that the hash depends only on the transcribed content and not
      * on how the JSON converter happens to format it.
+     * <p>
+     * The transcript is the one field that can hold anything a speaker said, delimiters and line breaks included, so it is written with its length in front of it instead of
+     * being separated by a character it may itself contain. Without that, two different transcriptions could serialize to the same string — for instance one segment whose
+     * text spells out the delimiters of a second one — and an identical hash would leave the version untouched for material that did change, which is precisely the case
+     * this version exists to catch.
      *
      * @param segments the transcription segments; may be {@code null} or empty
      * @return the hex-encoded SHA-256 hash, or an empty string when there are no segments
@@ -464,7 +469,9 @@ public class ProcessingStateCallbackService {
         }
         var canonical = new StringBuilder();
         for (LectureTranscriptionSegment segment : segments) {
-            canonical.append(segment.startTime()).append('|').append(segment.endTime()).append('|').append(segment.slideNumber()).append('|').append(segment.text()).append('\n');
+            String text = segment.text() == null ? "" : segment.text();
+            canonical.append(segment.startTime()).append('|').append(segment.endTime()).append('|').append(segment.slideNumber()).append('|').append(text.length()).append('|')
+                    .append(text).append('\n');
         }
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

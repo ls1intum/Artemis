@@ -584,6 +584,36 @@ class LectureContentProcessingServiceTest {
             assertThat(result.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         }
 
+        /**
+         * The retry replaces the failed row instead of reusing it. The transcription version has no other home to be recovered from — unlike the attachment version, which
+         * the attachment itself carries — so letting it start over would make an Iris citation pinned to version 1 look current after the next transcription, and send a
+         * student to a timestamp in material that has since changed.
+         */
+        @Test
+        void shouldCarryTheTranscriptionVersionOverToTheReplacementState() {
+            testState.setPhase(ProcessingPhase.FAILED);
+            testState.setId(42L);
+            testState.setTranscriptionVersion(3);
+            testState.setTranscriptionContentHash("abc123");
+
+            AtomicReference<LectureUnitProcessingState> savedState = new AtomicReference<>();
+            when(processingStateRepository.save(any(LectureUnitProcessingState.class))).thenAnswer(inv -> {
+                savedState.set(inv.getArgument(0));
+                return inv.getArgument(0);
+            });
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenAnswer(inv -> Optional.ofNullable(savedState.get()));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            LectureUnitProcessingState result = service.retryProcessing(testUnit);
+
+            verify(processingStateRepository).delete(testState);
+            assertThat(result).isNotNull();
+            assertThat(result).isNotSameAs(testState);
+            // The counter has to continue from where the failed run left it, so the next transcription becomes 4 rather than 1 again
+            assertThat(result.getTranscriptionVersion()).isEqualTo(3);
+            assertThat(result.getTranscriptionContentHash()).isEqualTo("abc123");
+        }
+
         @Test
         void shouldNotRetryIfNotFailed() {
             testState.setPhase(ProcessingPhase.DONE);

@@ -71,8 +71,10 @@ public class LectureUnitProcessingState extends DomainObject {
      * Monotonic version of this unit's transcription, incremented whenever a transcription with different content is stored.
      * <p>
      * Iris citations pin this value so that a cited video timestamp can be checked against the transcription it was generated from.
-     * It lives here rather than on {@link LectureTranscription} because that row is deleted and recreated when the video changes,
-     * which would reset a per-row counter; this row survives.
+     * It lives here rather than on {@link LectureTranscription} because that row is deleted and recreated on every video change,
+     * which would reset a per-row counter. This row outlives those, but is itself replaced when a failed run is retried manually,
+     * so {@code LectureContentProcessingService} carries this value and its hash over to the replacement — the counter has to be
+     * monotonic for the lifetime of the unit, not of the row.
      */
     @Column(name = "transcription_version")
     private Integer transcriptionVersion;

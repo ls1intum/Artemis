@@ -192,7 +192,11 @@ public class IrisCitationService {
         if (isAlreadyStamped(rest)) {
             return match.group();
         }
-        var ingested = ingestedVersions.get(Long.parseLong(match.group("entityId")));
+        Long entityId = parseEntityId(match.group("entityId"));
+        if (entityId == null) {
+            return match.group();
+        }
+        var ingested = ingestedVersions.get(entityId);
         if (ingested == null) {
             return match.group();
         }
@@ -242,13 +246,26 @@ public class IrisCitationService {
     }
 
     private Set<Long> extractEntityIds(String text) {
-        return CITATION_PATTERN.matcher(text).results().map(match -> match.group("entityId")).map(id -> {
-            try {
-                return Long.parseLong(id);
-            }
-            catch (NumberFormatException ex) {
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
+        return CITATION_PATTERN.matcher(text).results().map(match -> match.group("entityId")).map(IrisCitationService::parseEntityId).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    /**
+     * Reads a citation's entity ID.
+     * <p>
+     * The citation pattern accepts any run of digits, so a model that invents an ID far beyond {@code long} still produces a well-formed citation — one that simply cannot
+     * name a lecture unit. Both the lookup and the stamping run over the same matches and must therefore agree on that; letting the exception escape here would abort
+     * stamping for the whole answer, and with it the persistence of the assistant message, over one unusable ID among otherwise valid citations.
+     *
+     * @param entityId the digits captured from the citation
+     * @return the ID, or {@code null} when it does not fit in a {@code long}
+     */
+    private static @Nullable Long parseEntityId(String entityId) {
+        try {
+            return Long.parseLong(entityId);
+        }
+        catch (NumberFormatException ex) {
+            return null;
+        }
     }
 }
