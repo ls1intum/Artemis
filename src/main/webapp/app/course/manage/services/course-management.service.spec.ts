@@ -32,6 +32,9 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
 import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
+const courseDateFields = ['startDate', 'endDate', 'enrollmentStartDate', 'enrollmentEndDate', 'unenrollmentEndDate'] as const satisfies readonly (keyof Course)[];
+type CourseDateField = (typeof courseDateFields)[number];
+
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
@@ -191,54 +194,60 @@ describe('Course Management Service', () => {
             enrollmentStartDate: '2026-10-14T14:00:00Z',
             enrollmentEndDate: '2026-11-01T13:00:00Z',
             unenrollmentEndDate: '2026-12-01T18:00:00Z',
-        } as const;
-        const serverCourse = { ...course, ...isoDates } as any;
+        } satisfies Record<CourseDateField, string>;
+        const serverCourse = { ...course, ...isoDates };
 
+        let body: Course | undefined;
         courseManagementService
             .find(course.id!)
             .pipe(take(1))
-            .subscribe((res) => {
-                const body = res.body!;
-                for (const field of Object.keys(isoDates) as (keyof typeof isoDates)[]) {
-                    const value = body[field];
-                    expect(dayjs.isDayjs(value)).toBe(true);
-                    expect((value as dayjs.Dayjs).isValid()).toBe(true);
-                    expect((value as dayjs.Dayjs).toISOString()).toBe(dayjs(isoDates[field]).toISOString());
-                }
-            });
+            .subscribe((res) => (body = res.body!));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` }).flush(serverCourse as any);
 
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` });
-        req.flush(serverCourse);
+        expect(body).toBeDefined();
+        const areDayjs = Object.fromEntries(courseDateFields.map((field) => [field, dayjs.isDayjs(body![field])]));
+        expect(areDayjs).toEqual({
+            startDate: true,
+            endDate: true,
+            enrollmentStartDate: true,
+            enrollmentEndDate: true,
+            unenrollmentEndDate: true,
+        });
+        // Hardcoded expected instants so dayjs is checked against an independent oracle, not against itself.
+        const actualIso = Object.fromEntries(courseDateFields.map((field) => [field, (body![field] as dayjs.Dayjs).toISOString()]));
+        expect(actualIso).toEqual({
+            startDate: '2026-10-14T14:00:00.000Z',
+            endDate: '2027-02-01T00:00:00.000Z',
+            enrollmentStartDate: '2026-10-14T14:00:00.000Z',
+            enrollmentEndDate: '2026-11-01T13:00:00.000Z',
+            unenrollmentEndDate: '2026-12-01T18:00:00.000Z',
+        });
     });
 
-    it('should leave null or absent course date fields as undefined on find', () => {
-        // start/end are explicitly null, the three enrollment fields are absent: both paths must yield undefined.
-        const serverCourse = {
-            ...course,
+    it('should convert null course date fields to undefined on find', () => {
+        // setCourseDates cannot distinguish null, undefined or absent (truthy check), so null for all five covers the same branch.
+        const nullDates = {
             startDate: null,
             endDate: null,
-            enrollmentStartDate: undefined,
-            enrollmentEndDate: undefined,
-            unenrollmentEndDate: undefined,
-        } as any;
-        delete serverCourse.enrollmentStartDate;
-        delete serverCourse.enrollmentEndDate;
-        delete serverCourse.unenrollmentEndDate;
+            enrollmentStartDate: null,
+            enrollmentEndDate: null,
+            unenrollmentEndDate: null,
+        } satisfies Record<CourseDateField, null>;
+        const serverCourse = { ...course, ...nullDates };
 
+        let body: Course | undefined;
         courseManagementService
             .find(course.id!)
             .pipe(take(1))
-            .subscribe((res) => {
-                const body = res.body!;
-                expect(body.startDate).toBeUndefined();
-                expect(body.endDate).toBeUndefined();
-                expect(body.enrollmentStartDate).toBeUndefined();
-                expect(body.enrollmentEndDate).toBeUndefined();
-                expect(body.unenrollmentEndDate).toBeUndefined();
-            });
+            .subscribe((res) => (body = res.body!));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` }).flush(serverCourse as any);
 
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}` });
-        req.flush(serverCourse);
+        expect(body).toBeDefined();
+        expect(body!.startDate).toBeUndefined();
+        expect(body!.endDate).toBeUndefined();
+        expect(body!.enrollmentStartDate).toBeUndefined();
+        expect(body!.enrollmentEndDate).toBeUndefined();
+        expect(body!.unenrollmentEndDate).toBeUndefined();
     });
 
     it('should set accessRights with by using the AccountService', () => {
