@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,11 +14,11 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
 
 class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -40,11 +39,8 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     private ProgrammingExercise programmingExercise;
 
-    @MockitoSpyBean
-    private ExerciseVersionService exerciseVersionService;
-
-    @MockitoSpyBean
-    private ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
+    @Autowired
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @BeforeEach
     void init() {
@@ -104,7 +100,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         // analogous to the build plan editor for external CI systems, the template and solution build is triggered
         verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());
         // the change is recorded in the exercise version history, like the full update path
-        verify(exerciseVersionService).createExerciseVersion(any(), any());
+        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).isNotEmpty();
     }
 
     @Test
@@ -307,11 +303,14 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         programmingExercise.setAllowFeedbackRequests(false);
         programmingExerciseRepository.save(programmingExercise);
 
+        // only assert on calls made by the request itself, not by the exercise setup
+        clearInvocations(instanceMessageSendService);
+
         // a plan without an after-due-date phase leaves the build and test date null (unchanged) and the feedback flag
-        // untouched, so the exercise must not be re-saved and rescheduled
+        // untouched, so the exercise must not be rescheduled (scheduleOperations delegates to this send call)
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("test")), 240), HttpStatus.OK);
 
-        verify(programmingExerciseCreationScheduleService, never()).scheduleOperations(anyLong());
+        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
     }
 
     @Test
