@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlace
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
@@ -72,37 +74,22 @@ public final class CourseScoreCalculator {
      */
     private static MaxAndReachablePointsDTO calculateMaxAndReachablePoints(CourseScoreSettingsDTO settings, @Nullable GradedPresentationConfigDTO presentationConfig,
             Set<ExerciseCourseScoreDTO> exercises, ZonedDateTime calculationTime) {
-        if (exercises.isEmpty()) {
-            return new MaxAndReachablePointsDTO(0, 0, 0);
-        }
+        var completelyIncludedNonVariants = exercises.stream().filter(exercise -> !isExerciseVariant(exercise))
+                .filter(exercise -> includeIntoScoreCalculation(exercise, calculationTime))
+                .filter(exercise -> exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY).toList();
 
-        double maxPoints = 0.0;
-        double reachableMaxPoints = 0.0;
-        double reachablePresentationPoints = 0.0;
-
-        // Non-variant exercises are summed individually.
-        for (var exercise : exercises) {
-            if (isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise, calculationTime)) {
-                continue;
-            }
-            if (exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPoints += exercise.maxPoints();
-                if (isAssessmentDone(exercise, calculationTime)) {
-                    reachableMaxPoints += exercise.maxPoints();
-                }
-            }
-        }
+        double maxPoints = completelyIncludedNonVariants.stream().mapToDouble(ExerciseCourseScoreDTO::maxPoints).sum();
+        double reachableMaxPoints = completelyIncludedNonVariants.stream().filter(exercise -> isAssessmentDone(exercise, calculationTime))
+                .mapToDouble(ExerciseCourseScoreDTO::maxPoints).sum();
 
         // Variant groups each contribute at most their configured maxPoints.
         MaxAndReachablePointsDTO variantGroupPoints = calculateVariantGroupMaxAndReachablePoints(exercises, calculationTime);
         maxPoints += variantGroupPoints.maxPoints();
         reachableMaxPoints += variantGroupPoints.reachablePoints();
 
-        if (presentationConfig != null) {
-            reachablePresentationPoints = calculateReachablePresentationPoints(presentationConfig, reachableMaxPoints, settings.accuracyOfScores());
-            maxPoints += reachablePresentationPoints;
-            reachableMaxPoints += reachablePresentationPoints;
-        }
+        double reachablePresentationPoints = calculateReachablePresentationPoints(presentationConfig, reachableMaxPoints, settings.accuracyOfScores());
+        maxPoints += reachablePresentationPoints;
+        reachableMaxPoints += reachablePresentationPoints;
 
         return new MaxAndReachablePointsDTO(maxPoints, reachableMaxPoints, reachablePresentationPoints);
     }
@@ -119,17 +106,12 @@ public final class CourseScoreCalculator {
         var maxPointsPerGroup = new VariantGroupCappedSum();
         var reachableMaxPointsPerGroup = new VariantGroupCappedSum();
 
-        for (var exercise : exercises) {
-            if (!isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise, calculationTime)) {
-                continue;
-            }
-            if (exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
-                if (isAssessmentDone(exercise, calculationTime)) {
-                    reachableMaxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints());
-                }
-            }
-        }
+        var completelyIncludedVariants = exercises.stream().filter(CourseScoreCalculator::isExerciseVariant)
+                .filter(exercise -> includeIntoScoreCalculation(exercise, calculationTime))
+                .filter(exercise -> exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY).toList();
+        completelyIncludedVariants.forEach(exercise -> maxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints()));
+        completelyIncludedVariants.stream().filter(exercise -> isAssessmentDone(exercise, calculationTime))
+                .forEach(exercise -> reachableMaxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints()));
 
         return new MaxAndReachablePointsDTO(maxPointsPerGroup.total(), reachableMaxPointsPerGroup.total(), 0.0);
     }
@@ -151,33 +133,24 @@ public final class CourseScoreCalculator {
         CourseScoreSettingsDTO settings = context.settings();
         Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
-        double pointsAchievedByStudentInCourse = 0.0;
-
         // Non-variant exercises are summed individually.
-        for (ExerciseCourseScoreDTO exercise : context.exercises()) {
-            if (isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise, context.calculationTime())) {
-                continue;
-            }
-            CourseGradeScoreDTO gradeScore = gradeScorePerExercise.get(exercise.id());
-            if (gradeScore != null) {
-                pointsAchievedByStudentInCourse += calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), settings);
-            }
-        }
+        double pointsAchievedByStudentInCourse = context.exercises().stream().filter(exercise -> !isExerciseVariant(exercise))
+                .filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
+                .flatMapToDouble(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id())).stream()
+                        .mapToDouble(gradeScore -> calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), settings)))
+                .sum();
 
         // Exercise variants: the points a student earns across a group's variants are capped at the group's configured maxPoints.
         VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(context, gradeScorePerExercise, plagiarismCasesForStudent);
         pointsAchievedByStudentInCourse += variantGroupAchievedPoints.total();
         double pointsCappedAwayFromVariantGroups = variantGroupAchievedPoints.uncappedTotal() - variantGroupAchievedPoints.total();
 
-        double presentationScore = 0.0;
-        if (context.usesGradedPresentations()) {
-            presentationScore = calculatePresentationPoints(context.presentationConfig(), context.maxAndReachablePoints().reachablePresentationPoints(),
-                    studentInput.gradedPresentationScoreSum(), settings.accuracyOfScores());
-            pointsAchievedByStudentInCourse += presentationScore;
-        }
-        else if (settings.presentationScore() != null && settings.presentationScore() > 0.0) {
-            presentationScore = studentInput.basicPresentationScoreCount();
-        }
+        double gradedPresentationScore = calculatePresentationPoints(context.presentationConfig(), context.maxAndReachablePoints().reachablePresentationPoints(),
+                studentInput.gradedPresentationScoreSum(), settings.accuracyOfScores());
+        double basicPresentationScore = Optional.ofNullable(settings.presentationScore()).filter(requiredScore -> !context.usesGradedPresentations())
+                .filter(requiredScore -> requiredScore > 0).map(requiredScore -> (double) studentInput.basicPresentationScoreCount()).orElse(0.0);
+        double presentationScore = gradedPresentationScore + basicPresentationScore;
+        pointsAchievedByStudentInCourse += gradedPresentationScore;
 
         return buildStudentScores(settings, context.maxAndReachablePoints(), pointsAchievedByStudentInCourse, pointsAchievedByStudentInCourse + pointsCappedAwayFromVariantGroups,
                 presentationScore);
@@ -197,17 +170,10 @@ public final class CourseScoreCalculator {
     private static VariantGroupCappedSum calculateVariantGroupAchievedPoints(CourseScoreContextDTO context, Map<Long, CourseGradeScoreDTO> gradeScorePerExercise,
             Map<Long, PlagiarismCaseScoreDTO> plagiarismCasesForStudent) {
         var achievedPointsPerGroup = new VariantGroupCappedSum();
-        for (ExerciseCourseScoreDTO exercise : context.exercises()) {
-            if (!isExerciseVariant(exercise) || !includeIntoScoreCalculation(exercise, context.calculationTime())) {
-                continue;
-            }
-            CourseGradeScoreDTO gradeScore = gradeScorePerExercise.get(exercise.id());
-            if (gradeScore != null) {
-                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()),
-                        context.settings());
-                achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), pointsAchievedFromExercise);
-            }
-        }
+        context.exercises().stream().filter(CourseScoreCalculator::isExerciseVariant).filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
+                .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
+                        .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
+                                calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
         return achievedPointsPerGroup;
     }
 
@@ -229,17 +195,10 @@ public final class CourseScoreCalculator {
         Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
         var achievedPointsPerGroup = new VariantGroupCappedSum();
-        for (ExerciseCourseScoreDTO exercise : context.exercises()) {
-            if (exercise.variantGroupId() == null || !includeIntoScoreCalculation(exercise, context.calculationTime())) {
-                continue;
-            }
-            CourseGradeScoreDTO gradeScore = gradeScorePerExercise.get(exercise.id());
-            if (gradeScore != null) {
-                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()),
-                        context.settings());
-                achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), pointsAchievedFromExercise);
-            }
-        }
+        context.exercises().stream().filter(exercise -> exercise.variantGroupId() != null).filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
+                .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
+                        .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
+                                calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
         return achievedPointsPerGroup.cappedPointsPerGroup();
     }
 
@@ -290,11 +249,9 @@ public final class CourseScoreCalculator {
             CourseScoreSettingsDTO settings) {
         int accuracy = settings.accuracyOfScores();
         double pointsAchievedFromExercise = roundToNDecimalPlaces(score * SCORE_NORMALIZATION_VALUE * exercise.maxPoints(), accuracy);
-        double plagiarismPointDeductionPercentage = plagiarismCaseForExercise != null ? plagiarismCaseForExercise.pointDeduction() : 0.0;
-        if (plagiarismPointDeductionPercentage > 0.0) {
-            pointsAchievedFromExercise = roundToNDecimalPlaces(pointsAchievedFromExercise * (100.0 - plagiarismPointDeductionPercentage) / 100.0, accuracy);
-        }
-        return pointsAchievedFromExercise;
+        double plagiarismPointDeductionPercentage = Optional.ofNullable(plagiarismCaseForExercise).filter(plagiarismCase -> plagiarismCase.pointDeduction() > 0)
+                .map(PlagiarismCaseScoreDTO::pointDeduction).orElse(0);
+        return roundToNDecimalPlaces(pointsAchievedFromExercise * (100.0 - plagiarismPointDeductionPercentage) / 100.0, accuracy);
     }
 
     /**
@@ -308,11 +265,9 @@ public final class CourseScoreCalculator {
      */
     public static double calculatePresentationPoints(@Nullable GradedPresentationConfigDTO presentationConfig, double reachablePresentationPoints, double presentationScoreSum,
             int accuracyOfScores) {
-        if (presentationConfig == null || presentationConfig.presentationsNumber() <= 0 || presentationScoreSum <= 0.0) {
-            return 0.0;
-        }
-        double presentationPointAvg = presentationScoreSum / presentationConfig.presentationsNumber();
-        return roundToNDecimalPlaces(reachablePresentationPoints * presentationPointAvg / 100.0, accuracyOfScores);
+        return Stream.ofNullable(presentationConfig).filter(config -> config.presentationsNumber() > 0).filter(config -> presentationScoreSum > 0.0)
+                .mapToDouble(config -> roundToNDecimalPlaces(reachablePresentationPoints * presentationScoreSum / config.presentationsNumber() / 100.0, accuracyOfScores))
+                .findFirst().orElse(0.0);
     }
 
     /**
@@ -327,12 +282,10 @@ public final class CourseScoreCalculator {
      * @return the reachable presentation points, or 0 when the course has no graded presentations
      */
     public static double calculateReachablePresentationPoints(@Nullable GradedPresentationConfigDTO presentationConfig, double baseReachablePoints, int accuracyOfScores) {
-        if (presentationConfig == null || presentationConfig.presentationsWeight() <= 0.0 || baseReachablePoints <= 0.0) {
-            return 0.0;
-        }
-        double presentationsWeight = presentationConfig.presentationsWeight();
-        double reachablePointsWithPresentation = -baseReachablePoints / (presentationsWeight - 100.0) * 100.0;
-        return roundToNDecimalPlaces(reachablePointsWithPresentation * presentationsWeight / 100.0, accuracyOfScores);
+        return Stream.ofNullable(presentationConfig).filter(config -> config.presentationsWeight() > 0.0).filter(config -> baseReachablePoints > 0.0).mapToDouble(config -> {
+            double reachablePointsWithPresentation = -baseReachablePoints / (config.presentationsWeight() - 100.0) * 100.0;
+            return roundToNDecimalPlaces(reachablePointsWithPresentation * config.presentationsWeight() / 100.0, accuracyOfScores);
+        }).findFirst().orElse(0.0);
     }
 
     /**
@@ -392,7 +345,7 @@ public final class CourseScoreCalculator {
     }
 
     private static boolean isAutomaticAssessmentDone(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
-        return isAssessedAutomatically(exercise)
-                && (exercise.buildAndTestStudentSubmissionsAfterDueDate() == null || calculationTime.isAfter(exercise.buildAndTestStudentSubmissionsAfterDueDate()));
+        boolean finalBuildFinished = Optional.ofNullable(exercise.buildAndTestStudentSubmissionsAfterDueDate()).map(calculationTime::isAfter).orElse(true);
+        return isAssessedAutomatically(exercise) && finalBuildFinished;
     }
 }
