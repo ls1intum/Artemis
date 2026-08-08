@@ -1275,6 +1275,29 @@ public class ExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams-for-overview : Get the exams of a course that are visible to the requesting user.
+     * <p>
+     * These used to arrive as part of the (expensive) for-dashboard course load, which meant every course visit paid for
+     * them even when the user never opened the exams tab. The visibility rules are unchanged: registered users, at least
+     * tutors, and test exams, filtered to exams whose visible date has passed for plain students.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the exams visible to the user as body
+     */
+    @GetMapping("courses/{courseId}/exams-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<Exam>> getExamsForCourseOverview(@PathVariable long courseId) {
+        log.debug("REST request to get the exams of course {} for the course overview", courseId);
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Set<Exam> exams = examRepository.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now());
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            exams = examRepository.filterVisibleExams(exams);
+        }
+        return ResponseEntity.ok(exams);
+    }
+
+    /**
      * GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
      * For the content see {@link ExamSidebarDataDTO}
      *

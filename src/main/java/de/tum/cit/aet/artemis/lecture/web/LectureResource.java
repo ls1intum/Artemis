@@ -311,6 +311,26 @@ public class LectureResource {
     }
 
     /**
+     * GET /courses/:courseId/lectures-for-overview : get the lectures of a course for the student course overview.
+     * <p>
+     * The lectures come with their attachments filtered to the ones the user may see. Previously the course overview got
+     * these as part of the (expensive) for-dashboard course load, which meant every course visit paid for them even when
+     * the user never opened the lectures tab.
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures-for-overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<Lecture>> getLecturesForCourseOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get the lectures of course {} for the course overview", courseId);
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
+        return ResponseEntity.ok(lectureService.filterLecturesWithActiveAttachments(course, lectures, user));
+    }
+
+    /**
      * GET /courses/:courseId/lectures : get all the lectures of a course with their attachment units and slides
      * NOTE: the response does not include other types of lecture units except attachment video units
      *
