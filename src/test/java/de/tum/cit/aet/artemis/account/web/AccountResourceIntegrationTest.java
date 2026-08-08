@@ -604,14 +604,14 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
     void passwordResetFinishInvalidPassword() throws Throwable {
-        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM("", "", "" );
+        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM("0123456789", "0123456789", "" );
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
     void passwordResetFinishUnknownKey() throws Throwable {
-        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM("", "", getValidPassword());
+        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM("0123456789", "0123456789", getValidPassword());
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
     }
     @Test
