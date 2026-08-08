@@ -38,11 +38,15 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * It runs only on the scheduling node ({@code @Profile(PROFILE_SCHEDULING)}) and only when Weaviate is
  * enabled, so writes are serialized cluster-wide rather than raced across nodes as the previous
  * fire-and-forget {@code @Async} writes were. Rows are claimed in id (enqueue) order with
- * {@code FOR UPDATE SKIP LOCKED} and processed sequentially, so multiple pending rows for the same entity
- * apply latest-wins. On a confirmed write the row is deleted and, for an upsert, the
- * {@code searchable_entity_sync_state} ledger is refreshed; on failure the row survives with an incremented
- * attempt count and an exponentially backed-off {@code next_attempt_at}, so a Weaviate outage self-heals when
- * Weaviate recovers.
+ * {@code FOR UPDATE SKIP LOCKED} and processed sequentially. On a confirmed write the row is deleted and, for
+ * an upsert, the {@code searchable_entity_sync_state} ledger is refreshed; on failure the row survives with an
+ * incremented attempt count and an exponentially backed-off {@code next_attempt_at}, so a Weaviate outage
+ * self-heals when Weaviate recovers.
+ * <p>
+ * A confirmed per-entity write drops all older outbox rows for that entity ({@link #collapseSupersededRows}).
+ * Without this, a failed older row deferred by backoff could wake up after a newer row for the same entity
+ * already succeeded and overwrite it. This preserves latest-wins for a single writer; two scheduling nodes at
+ * once are a misconfiguration, and a later reconcile pass is the backstop.
  * <p>
  * A drain is triggered two ways: a periodic {@link #scheduledDrain()} tick (the cross-node path and safety
  * net) and an after-commit {@link #onOutboxEnqueued(WeaviateOutboxEnqueuedEvent)} nudge for the freshness of
@@ -171,6 +175,7 @@ public class WeaviateOutboxDispatcher {
     private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
         try {
             searchableEntityWeaviateService.applyOutboxEntry(entry);
+            collapseSupersededRows(entry);
             recordSuccess(entry, now);
             outboxRepository.delete(entry);
         }
@@ -179,6 +184,16 @@ public class WeaviateOutboxDispatcher {
             entry.recordFailedAttempt(nextAttempt);
             outboxRepository.save(entry);
             log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), entry.getAttempts(), nextAttempt, e.getMessage());
+        }
+    }
+
+    /**
+     * Drops every older outbox row for this entity once its write is confirmed, so a row deferred by backoff
+     * cannot later retry and overwrite the newer state. Bulk deletes (null entity id) are skipped.
+     */
+    private void collapseSupersededRows(WeaviateOutboxEntry entry) {
+        if (entry.getEntityId() != null) {
+            outboxRepository.deleteSupersededByEntity(entry.getEntityType(), entry.getEntityId(), entry.getId());
         }
     }
 

@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -46,4 +48,18 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
     List<WeaviateOutboxEntry> claimBatchForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
+
+    /**
+     * Deletes outbox rows for {@code (entityType, entityId)} with an id below {@code appliedId}. Called after a
+     * per-entity write is confirmed so an older row deferred by backoff cannot retry and overwrite it
+     * (latest-wins). {@code flushAutomatically} writes any pending same-entity change before the delete runs.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId   the database id of the entity
+     * @param appliedId  the id of the row just applied; rows with a smaller id are removed
+     */
+    @Transactional // ok because of the modifying delete
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM WeaviateOutboxEntry e WHERE e.entityType = :entityType AND e.entityId = :entityId AND e.id < :appliedId")
+    void deleteSupersededByEntity(@Param("entityType") String entityType, @Param("entityId") Long entityId, @Param("appliedId") Long appliedId);
 }
