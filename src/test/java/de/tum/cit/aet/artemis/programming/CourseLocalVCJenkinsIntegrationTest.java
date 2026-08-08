@@ -273,20 +273,44 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseTabAccess() throws Exception {
-        courseTestService.testGetCourseTabAccess();
+    void testGetCourseAvailableTabs() throws Exception {
+        courseTestService.testGetCourseAvailableTabs();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseTabAccessWithVisibleExam() throws Exception {
-        courseTestService.testGetCourseTabAccessWithVisibleExam();
+    void testGetCourseAvailableTabsWithVisibleExam() throws Exception {
+        courseTestService.testGetCourseAvailableTabsWithVisibleExam();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseTabAccessForbidden() throws Exception {
-        courseTestService.testGetCourseTabAccessForbidden();
+    void testGetCourseForOverviewIsLean() throws Exception {
+        courseTestService.testGetCourseForOverviewIsLean();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForOverviewForbidden() throws Exception {
+        courseTestService.testGetCourseForOverviewForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExercisesForOverview() throws Exception {
+        courseTestService.testGetCourseExercisesForOverview();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExercisesForOverviewForbidden() throws Exception {
+        courseTestService.testGetCourseExercisesForOverviewForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseAvailableTabsForbidden() throws Exception {
+        courseTestService.testGetCourseAvailableTabsForbidden();
     }
 
     @Test

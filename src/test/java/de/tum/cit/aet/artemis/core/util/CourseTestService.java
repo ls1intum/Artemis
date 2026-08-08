@@ -123,13 +123,15 @@ import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestReposit
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
-import de.tum.cit.aet.artemis.course.dto.CourseTabAccessDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -1067,36 +1069,78 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseTabAccess() throws Exception {
+    public void testGetCourseAvailableTabs() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
-        CourseTabAccessDTO access = request.get("/api/course/courses/" + courses.getFirst().getId() + "/access", HttpStatus.OK, CourseTabAccessDTO.class);
+        CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courses.getFirst().getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
 
         // The created course has lectures and competencies, but no exams visible to the student
-        assertThat(access.lecturesEnabled()).as("lectures tab accessible").isTrue();
-        assertThat(access.competenciesOrPrerequisites()).as("competencies tab accessible").isTrue();
-        assertThat(access.examsVisible()).as("no exam is visible to the student").isFalse();
-        assertThat(access.tutorialGroups()).as("no tutorial groups").isFalse();
-        assertThat(access.faqAccepted()).as("no accepted FAQs").isFalse();
+        assertThat(tabs.lectures()).as("lectures tab available").isTrue();
+        assertThat(tabs.competencies()).as("competencies tab available").isTrue();
+        assertThat(tabs.exams()).as("no exam is visible to the student").isFalse();
+        assertThat(tabs.tutorialGroups()).as("no tutorial groups").isFalse();
+        assertThat(tabs.faq()).as("no accepted FAQs").isFalse();
     }
 
     // Test
-    public void testGetCourseTabAccessWithVisibleExam() throws Exception {
+    public void testGetCourseAvailableTabsWithVisibleExam() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
-        // A visible exam the student is registered for must make the exams tab accessible (the user-scoped visibility check)
+        // A visible exam the student is registered for must make the exams tab available (the user-scoped visibility check)
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         examUtilService.registerUsersForExamAndSaveExam(exam, userPrefix, 1, 1);
 
-        CourseTabAccessDTO access = request.get("/api/course/courses/" + course.getId() + "/access", HttpStatus.OK, CourseTabAccessDTO.class);
+        CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + course.getId() + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
 
-        assertThat(access.examsVisible()).as("a visible exam the student is registered for makes the exams tab accessible").isTrue();
+        assertThat(tabs.exams()).as("a visible exam the student is registered for makes the exams tab available").isTrue();
     }
 
     // Test
-    public void testGetCourseTabAccessForbidden() throws Exception {
+    public void testGetCourseForOverviewIsLean() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course expected = courses.getFirst();
+
+        CourseForOverviewDTO overview = request.get("/api/course/courses/" + expected.getId() + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class);
+
+        assertThat(overview.course().getId()).isEqualTo(expected.getId());
+        assertThat(overview.course().getTitle()).isEqualTo(expected.getTitle());
+        // The whole point of this endpoint: none of the expensive content comes along
+        assertThat(overview.course().getExercises()).as("no exercises are loaded").isNullOrEmpty();
+        assertThat(overview.course().getLectures()).as("no lectures are loaded").isNullOrEmpty();
+        assertThat(overview.course().getExams()).as("no exams are loaded").isNullOrEmpty();
+    }
+
+    // Test
+    public void testGetCourseForOverviewForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(false);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/for-overview", HttpStatus.FORBIDDEN, CourseForOverviewDTO.class);
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverview() throws Exception {
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
+        Course course = courses.getFirst();
+
+        CourseExercisesForOverviewDTO exercises = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        assertThat(exercises.exercises()).as("the course exercises are returned").isNotEmpty();
+        assertThat(exercises.exercises()).allSatisfy(exercise -> assertThat(exercise.getId()).isNotNull());
+        assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverviewForbidden() throws Exception {
         Course course = createCourseWithEnrollmentEnabled(true);
         unenrollStudent1FromAllCourses();
-        request.get("/api/course/courses/" + course.getId() + "/access", HttpStatus.FORBIDDEN, CourseTabAccessDTO.class);
+        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.FORBIDDEN, CourseExercisesForOverviewDTO.class);
+    }
+
+    // Test
+    public void testGetCourseAvailableTabsForbidden() throws Exception {
+        Course course = createCourseWithEnrollmentEnabled(true);
+        unenrollStudent1FromAllCourses();
+        request.get("/api/course/courses/" + course.getId() + "/available-tabs", HttpStatus.FORBIDDEN, CourseAvailableTabsDTO.class);
     }
 
     private Course createCourseWithEnrollmentEnabled(boolean enrollmentEnabled) throws Exception {

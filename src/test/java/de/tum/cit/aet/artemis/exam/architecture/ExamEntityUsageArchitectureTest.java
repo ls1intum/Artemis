@@ -16,9 +16,14 @@ class ExamEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     }
 
     // TODO: Reduce this to 0 by returning DTOs instead of entities
+    // NOTE: temporarily increased by the course-overview per-tab load split (PR #12999): the overview now fetches
+    // the course's visible exams directly instead of receiving them inside the (expensive) for-dashboard course. The
+    // payload the client receives is unchanged — only the endpoint serving it moved — so this is a relocation of an
+    // existing entity exposure, not a new one. It is resolved by the ongoing Course/Exercise/Lecture/Exam DTO
+    // migration, which owns lowering this back down.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 10;
+        return 11;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart

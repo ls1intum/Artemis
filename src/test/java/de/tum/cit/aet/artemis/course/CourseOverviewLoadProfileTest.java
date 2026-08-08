@@ -1,0 +1,395 @@
+package de.tum.cit.aet.artemis.course;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
+import jakarta.persistence.EntityManagerFactory;
+
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
+
+/**
+ * Measures what a student actually pays for when entering a course, per endpoint.
+ * <p>
+ * This is a regression guard for the course-overview load split: the point of splitting the (deprecated) for-dashboard
+ * call into a lean course load plus per-tab loads is that entering a course on a tab must not pay for the content of
+ * every other tab. The assertions below are deliberately loose upper bounds — the exact numbers move with unrelated
+ * changes — but they fail loudly if an endpoint starts loading an order of magnitude more than it needs.
+ * <p>
+ * The logged table is the measurement referenced in the pull request. Query counts are exact (Hibernate JDBC prepared
+ * statement counts, measured with a warm cache — the unread-notification count behind for-overview is {@code @Cacheable},
+ * so a cold first request issues one more query than reported); timings come from Testcontainers on a developer machine
+ * and are only meaningful relative to each other, not as production latencies.
+ */
+class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final Logger log = LoggerFactory.getLogger(CourseOverviewLoadProfileTest.class);
+
+    private static final String TEST_PREFIX = "courseloadprofile";
+
+    /** Size of the "realistic course" being profiled. */
+    private static final int CONTENT_PER_TYPE = 20;
+
+    /** Measured repetitions per endpoint, reported as a median. */
+    private static final int MEASURED_RUNS = 5;
+
+    /**
+     * Full passes over every endpoint before measuring anything. A per-endpoint warm-up is not enough: the endpoint
+     * measured first would carry the JVM's cold-start cost and the last would look artificially fast, which is exactly
+     * the kind of ordering artefact that makes a load profile misleading.
+     */
+    private static final int WARM_UP_PASSES = 3;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private TutorialGroupUtilService tutorialGroupUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private FaqRepository faqRepository;
+
+    private Course course;
+
+    private Statistics statistics;
+
+    @BeforeEach
+    void setUp() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        for (int i = 0; i < CONTENT_PER_TYPE; i++) {
+            var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),
+                    ZonedDateTime.now().plusDays(4));
+            // A student who has actually worked in the course: every exercise carries a participation with a submission
+            // and a result. Without these the exercise payload is a fraction of its real size and the profile lies.
+            participationUtilService.createParticipationSubmissionAndResult(exercise.getId(), student, 10.0, 0.0, 80, true);
+            Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
+            lectureUtilService.createAttachmentVideoUnit(lecture, false);
+            competencyUtilService.createCompetency(course);
+            tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "Group " + i, "info", 10, false, "Garching", "English",
+                    userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), Set.of());
+            Faq faq = new Faq();
+            faq.setQuestionTitle("Question " + i);
+            faq.setQuestionAnswer("Answer " + i);
+            faq.setFaqState(FaqState.ACCEPTED);
+            faq.setCourse(course);
+            faqRepository.save(faq);
+        }
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1, 1);
+
+        statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void profileCourseOverviewEndpoints() throws Exception {
+        long courseId = course.getId();
+        List<Endpoint> endpoints = List.of(
+                new Endpoint("guard + sidebar", "GET /courses/{id}/available-tabs",
+                        () -> request.get("/api/course/courses/" + courseId + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class)),
+                new Endpoint("container", "GET /courses/{id}/for-overview",
+                        () -> request.get("/api/course/courses/" + courseId + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class)),
+                new Endpoint("exercises + statistics tab", "GET /courses/{id}/exercises-for-overview",
+                        () -> request.get("/api/course/courses/" + courseId + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class)),
+                new Endpoint("lectures tab", "GET /courses/{id}/lectures-for-overview",
+                        () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, Lecture.class)),
+                new Endpoint("exams tab", "GET /courses/{id}/exams-for-overview",
+                        () -> request.getSet("/api/exam/courses/" + courseId + "/exams-for-overview", HttpStatus.OK, Exam.class)),
+                new Endpoint("DEPRECATED (native clients)", "GET /courses/{id}/for-dashboard",
+                        () -> request.get("/api/course/courses/" + courseId + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class)));
+
+        for (int pass = 0; pass < WARM_UP_PASSES; pass++) {
+            for (Endpoint endpoint : endpoints) {
+                endpoint.call().run();
+            }
+        }
+
+        List<Measurement> measurements = new ArrayList<>();
+        for (Endpoint endpoint : endpoints) {
+            measurements.add(measure(endpoint));
+        }
+
+        // Measure again with the order reversed. If a number tracks the endpoint it is real; if it tracks the position
+        // in the sequence it is a measurement artefact, and reporting it would be misleading.
+        List<Endpoint> reversed = new ArrayList<>(endpoints);
+        java.util.Collections.reverse(reversed);
+        List<Measurement> reverseMeasurements = new ArrayList<>();
+        for (Endpoint endpoint : reversed) {
+            reverseMeasurements.add(measure(endpoint));
+        }
+        java.util.Collections.reverse(reverseMeasurements);
+
+        logTable(measurements);
+        log.info("Reverse-order pass (ordering-artefact check):");
+        logTable(reverseMeasurements);
+
+        // The whole point of the split: every per-tab call must stay far below the all-in-one call it replaced.
+        long forDashboardQueries = measurements.getLast().queries();
+        for (Measurement measurement : measurements.subList(0, measurements.size() - 1)) {
+            assertThat(measurement.queries()).as("%s must issue fewer queries than the for-dashboard call it replaced", measurement.endpoint()).isLessThan(forDashboardQueries);
+        }
+        // Entering a course costs available-tabs + for-overview; that pair must stay cheap regardless of course size.
+        long courseEntryQueries = measurements.get(0).queries() + measurements.get(1).queries();
+        assertThat(courseEntryQueries).as("entering a course must not scale with its content").isLessThan(forDashboardQueries);
+    }
+
+    /**
+     * Compares what one course visit costs on develop against what it costs after the split.
+     *
+     * Both patterns are replayed in the same JVM against the same seeded course, so the comparison carries none of the
+     * noise a cross-branch measurement would (different machines, data, warm-up). That is sound because
+     * {@code for-dashboard} is untouched by this change — measuring it here measures develop's behaviour exactly.
+     *
+     * On develop a course visit is a single for-dashboard call: it loads every tab's content up front, and switching
+     * tabs afterwards is free because the client decides from the cached course. After the split, entering a course
+     * loads only the course and its available tabs, and each tab loads its own content the first time it is opened.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void compareCourseVisitAgainstDevelop() throws Exception {
+        long courseId = course.getId();
+        Endpoint availableTabs = new Endpoint("", "available-tabs",
+                () -> request.get("/api/course/courses/" + courseId + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class));
+        Endpoint forOverview = new Endpoint("", "for-overview", () -> request.get("/api/course/courses/" + courseId + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class));
+        Endpoint exercises = new Endpoint("", "exercises-for-overview",
+                () -> request.get("/api/course/courses/" + courseId + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class));
+        Endpoint lectures = new Endpoint("", "lectures-for-overview",
+                () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, Lecture.class));
+        Endpoint forDashboard = new Endpoint("", "for-dashboard",
+                () -> request.get("/api/course/courses/" + courseId + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class));
+
+        // develop always pays the same price regardless of which tabs the student opens: everything is loaded up front.
+        List<Endpoint> developVisit = List.of(forDashboard);
+
+        List<Scenario> scenarios = List.of(
+                // The exercises tab is NOT guarded (see courses.route.ts), so the guard never runs on the first three
+                // scenarios: the available-tabs call they pay for belongs to the sidebar, not to the guard.
+                new Scenario("Lands on exercises, then lectures, then communication", developVisit, List.of(availableTabs, forOverview, exercises, lectures)),
+                new Scenario("Lands on exercises only", developVisit, List.of(availableTabs, forOverview, exercises)),
+                new Scenario("Goes straight to communication, never opens exercises", developVisit, List.of(availableTabs, forOverview)),
+                // Deep link into a guarded tab: the guard runs before the container exists, but shares its available-tabs
+                // response with the sidebar, so it adds no extra server call.
+                new Scenario("Deep link into lectures (guard runs first)", developVisit, List.of(availableTabs, forOverview, lectures)));
+
+        for (int pass = 0; pass < WARM_UP_PASSES; pass++) {
+            for (Scenario scenario : scenarios) {
+                replay(scenario.develop());
+                replay(scenario.afterSplit());
+            }
+        }
+
+        StringBuilder table = new StringBuilder(String.format(Locale.ROOT, "%nOne course visit: develop vs this PR (same course, same JVM)%n%n"));
+        table.append("| Student's visit | develop queries | PR queries | develop time | PR time |\n");
+        table.append("|---|---:|---:|---:|---:|\n");
+        for (Scenario scenario : scenarios) {
+            PatternCost developCost = measurePattern(scenario.develop());
+            PatternCost splitCost = measurePattern(scenario.afterSplit());
+            table.append(String.format(Locale.ROOT, "| %s | %d | %d | %.1f ms | %.1f ms |%n", scenario.name(), developCost.queries(), splitCost.queries(),
+                    developCost.medianMicros() / 1000.0, splitCost.medianMicros() / 1000.0));
+        }
+        log.info(table.toString());
+
+        // The claim this change actually makes is about entering a course, not about a visit that opens every tab:
+        // splitting one call into several adds a per-call overhead (each endpoint re-resolves the user, the course and
+        // the authorisation), so a student who opens everything issues more queries in total. What must hold is that
+        // getting into the course, and a visit that never opens the exercises tab, both got cheaper.
+        PatternCost developEntry = measurePattern(List.of(forDashboard));
+        PatternCost splitEntry = measurePattern(List.of(availableTabs, forOverview));
+        log.info("Course entry only: develop {} queries / {} ms  vs  PR {} queries / {} ms", developEntry.queries(), developEntry.medianMicros() / 1000.0, splitEntry.queries(),
+                splitEntry.medianMicros() / 1000.0);
+        assertThat(splitEntry.queries()).as("entering a course must be cheaper than the for-dashboard call it replaces").isLessThan(developEntry.queries());
+
+        // Attribute the cost of a "lands on exercises" visit, the one that got more expensive. The guard is not involved:
+        // the exercises route is unguarded, so every query below belongs to the container, the sidebar or the content.
+        PatternCost container = measurePattern(List.of(forOverview));
+        PatternCost sidebar = measurePattern(List.of(availableTabs));
+        PatternCost content = measurePattern(List.of(exercises));
+        StringBuilder attribution = new StringBuilder(
+                String.format(Locale.ROOT, "%nWhere a 'lands on exercises' visit spends its queries (develop total: %d)%n%n", developEntry.queries()));
+        attribution.append("| Concern | Call | Queries | Time | On develop |\n");
+        attribution.append("|---|---|---:|---:|---|\n");
+        attribution.append(
+                String.format(Locale.ROOT, "| Course record | `for-overview` | %d | %.1f ms | part of for-dashboard |%n", container.queries(), container.medianMicros() / 1000.0));
+        attribution.append(String.format(Locale.ROOT, "| Sidebar (shared with the guard when a guarded tab is opened) | `available-tabs` | %d | %.1f ms | "
+                + "free, derived client-side from the for-dashboard payload |%n", sidebar.queries(), sidebar.medianMicros() / 1000.0));
+        attribution.append(String.format(Locale.ROOT, "| Exercise list content | `exercises-for-overview` | %d | %.1f ms | part of for-dashboard |%n", content.queries(),
+                content.medianMicros() / 1000.0));
+        log.info(attribution.toString());
+    }
+
+    /**
+     * What a student actually pays for, action by action, in a realistically sized course.
+     *
+     * This is the table quoted in the pull request: how many REST calls each action costs, how many database queries
+     * those calls issue, and how long they take. Actions that cost nothing are the point of the change — the per-visit
+     * state in {@code CourseAvailableTabsService} and {@code CourseOverviewExercisesService} means a tab is only paid
+     * for the first time it is opened, and revisiting it within the same course visit is free.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void profileStudentActions() throws Exception {
+        long courseId = course.getId();
+        Endpoint availableTabs = new Endpoint("", "available-tabs",
+                () -> request.get("/api/course/courses/" + courseId + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class));
+        Endpoint forOverview = new Endpoint("", "for-overview", () -> request.get("/api/course/courses/" + courseId + "/for-overview", HttpStatus.OK, CourseForOverviewDTO.class));
+        Endpoint exercises = new Endpoint("", "exercises-for-overview",
+                () -> request.get("/api/course/courses/" + courseId + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class));
+        Endpoint lectures = new Endpoint("", "lectures-for-overview",
+                () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, Lecture.class));
+        Endpoint exams = new Endpoint("", "exams-for-overview", () -> request.getSet("/api/exam/courses/" + courseId + "/exams-for-overview", HttpStatus.OK, Exam.class));
+        Endpoint forDashboard = new Endpoint("", "for-dashboard",
+                () -> request.get("/api/course/courses/" + courseId + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class));
+
+        // Counted here is only what the course overview itself loads. Tabs that fetch their own content through endpoints
+        // this change does not touch (conversations, the FAQ list, competencies, tutorial groups) still do so exactly as
+        // before, so those calls are unchanged and not attributed to the overview.
+        List<Action> actions = List.of(new Action("Enter the course (lands on the exercises tab)", List.of(availableTabs, forOverview, exercises)),
+                new Action("Open the lectures tab", List.of(lectures)), new Action("Open the exams tab", List.of(exams)),
+                new Action("Open the statistics tab (shares the exercises tab's load)", List.of()), new Action("Re-open any tab already visited in this course visit", List.of()),
+                new Action("Open communication / FAQ / competencies / tutorial groups (each loads its own content, unchanged here)", List.of()));
+
+        for (int pass = 0; pass < WARM_UP_PASSES; pass++) {
+            for (Action action : actions) {
+                replay(action.calls());
+            }
+            replay(List.of(forDashboard));
+        }
+
+        StringBuilder table = new StringBuilder(String.format(Locale.ROOT,
+                "%nWhat a student pays per action (%d lectures / %d exercises with participations / %d competencies / %d FAQs / %d tutorial groups / 1 exam)%n%n", CONTENT_PER_TYPE,
+                CONTENT_PER_TYPE, CONTENT_PER_TYPE, CONTENT_PER_TYPE, CONTENT_PER_TYPE));
+        table.append("| Student action | REST calls from the course overview | DB queries | Time |\n");
+        table.append("|---|---:|---:|---:|\n");
+        for (Action action : actions) {
+            if (action.calls().isEmpty()) {
+                table.append(String.format(Locale.ROOT, "| %s | 0 | 0 | – |%n", action.name()));
+                continue;
+            }
+            PatternCost cost = measurePattern(action.calls());
+            table.append(String.format(Locale.ROOT, "| %s | %d | %d | %.1f ms |%n", action.name(), action.calls().size(), cost.queries(), cost.medianMicros() / 1000.0));
+        }
+        PatternCost dashboard = measurePattern(List.of(forDashboard));
+        table.append(String.format(Locale.ROOT, "| _(develop: entering the course loaded all of the above)_ | 1 | %d | %.1f ms |%n", dashboard.queries(),
+                dashboard.medianMicros() / 1000.0));
+        log.info(table.toString());
+    }
+
+    private void replay(List<Endpoint> pattern) throws Exception {
+        for (Endpoint endpoint : pattern) {
+            endpoint.call().run();
+        }
+    }
+
+    private PatternCost measurePattern(List<Endpoint> pattern) throws Exception {
+        List<Long> durationsMicros = new ArrayList<>();
+        long queries = 0;
+        for (int i = 0; i < MEASURED_RUNS; i++) {
+            statistics.clear();
+            long start = System.nanoTime();
+            replay(pattern);
+            durationsMicros.add((System.nanoTime() - start) / 1_000);
+            queries = statistics.getPrepareStatementCount();
+        }
+        durationsMicros.sort(Long::compareTo);
+        return new PatternCost(queries, durationsMicros.get(durationsMicros.size() / 2));
+    }
+
+    private Measurement measure(Endpoint endpoint) throws Exception {
+        List<Long> durationsMicros = new ArrayList<>();
+        long queries = 0;
+        for (int i = 0; i < MEASURED_RUNS; i++) {
+            statistics.clear();
+            long start = System.nanoTime();
+            endpoint.call().run();
+            durationsMicros.add((System.nanoTime() - start) / 1_000);
+            queries = statistics.getPrepareStatementCount();
+        }
+        durationsMicros.sort(Long::compareTo);
+        return new Measurement(endpoint.consumer(), endpoint.path(), queries, durationsMicros.get(durationsMicros.size() / 2));
+    }
+
+    private void logTable(List<Measurement> measurements) {
+        StringBuilder table = new StringBuilder(String.format(Locale.ROOT,
+                "%nCourse overview load profile (%d lectures / %d exercises, each with a participation, "
+                        + "submission and result / %d competencies / %d FAQs / %d tutorial groups / 1 visible exam)%n%n",
+                CONTENT_PER_TYPE, CONTENT_PER_TYPE, CONTENT_PER_TYPE, CONTENT_PER_TYPE, CONTENT_PER_TYPE));
+        table.append("| Consumer | Endpoint | DB queries | Median time |\n");
+        table.append("|---|---|---:|---:|\n");
+        for (Measurement measurement : measurements) {
+            table.append(String.format(Locale.ROOT, "| %s | `%s` | %d | %.1f ms |%n", measurement.consumer(), measurement.endpoint(), measurement.queries(),
+                    measurement.medianMicros() / 1000.0));
+        }
+        log.info(table.toString());
+    }
+
+    private record Endpoint(String consumer, String path, ThrowingRunnable call) {
+    }
+
+    private record Scenario(String name, List<Endpoint> develop, List<Endpoint> afterSplit) {
+    }
+
+    private record Action(String name, List<Endpoint> calls) {
+    }
+
+    private record PatternCost(long queries, long medianMicros) {
+    }
+
+    private record Measurement(String consumer, String endpoint, long queries, long medianMicros) {
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+
+        void run() throws Exception;
+    }
+}
