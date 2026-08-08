@@ -198,8 +198,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
     private TrackedSessionBasedPyrisJob handleIntermediateResultStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate, S session,
             String sessionTitle) {
+        // Intermediate messages are persisted and, once the session is reloaded, get their citation metadata resolved just like final ones - so their citations become
+        // clickable and have to be pinned too. The extra lookup only happens for a message that actually contains a lecture citation; stampCitationVersions returns
+        // immediately otherwise, which keeps the frequent citation-free intermediate updates off the database.
+        var result = irisCitationService.map(service -> service.stampCitationVersions(statusUpdate.result())).orElse(statusUpdate.result());
+
         var message = new IrisMessage();
-        for (var content : parseResultContents(statusUpdate.result())) {
+        for (var content : parseResultContents(result)) {
             message.addContent(content);
         }
         message.setIntermediate(true);

@@ -228,8 +228,11 @@ export function parseCitation(raw: string): IrisCitationParsed | undefined {
 
 /**
  * Reads the two trailing version fields of a citation block.
- * A summary that itself ends in two colon-separated numbers would be misread here, but Pyris strips colons from keywords and
- * summaries before emitting a citation, so that shape cannot occur in practice.
+ *
+ * Known limitation: the fields are positional, while the summary is by design "everything up to the closing bracket" and may
+ * contain colons. A summary that holds at least three colons and ends in two colon-separated numbers is therefore
+ * indistinguishable from a stamped citation, and gets truncated at the presumed version fields. The server leaves such a
+ * citation unpinned for the same reason, so the two ends agree. Accepted as rare enough not to warrant a marker in the format.
  * @param parts The colon-separated parts of the citation block.
  * @returns The parsed versions, or undefined when the block carries no version fields.
  */

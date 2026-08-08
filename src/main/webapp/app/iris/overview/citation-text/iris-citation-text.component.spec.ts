@@ -333,6 +333,7 @@ describe('IrisCitationTextComponent', () => {
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', timestamp: '120' } });
             expect(warning).not.toHaveBeenCalled();
         });
+
         it('compares a video citation against the transcription, not against the slides', () => {
             // The slides happen to sit at exactly the pinned number, which must not make the citation look unchanged
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 2 }));
@@ -341,6 +342,17 @@ describe('IrisCitationTextComponent', () => {
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+        });
+
+        // A citation with only an end time is linked to the page, so it must also be compared against the slides. The marker says so,
+        // which is what keeps this in step with the server rather than depending on both sides reading the timestamps alike.
+        it('compares a citation carrying only an end time against the slides', () => {
+            getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3, videoVersion: 9 }));
+
+            clickCitation('[cite:L:42:7::180:Key:Summary:3:]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            expect(warning).not.toHaveBeenCalled();
         });
 
         it('opens the unit only and warns when the material is gone', () => {
@@ -508,6 +520,15 @@ describe('Iris citation util', () => {
 
             expect(parsed?.versions).toBeUndefined();
             expect(parsed?.summary).toBe('Summary:with:colon::');
+        });
+
+        // Documents the accepted limitation of the positional format: this summary is indistinguishable from a stamped citation.
+        // The server refuses to stamp such a citation for the same reason, so both ends agree on treating it as already stamped.
+        it('misreads a summary that ends in two colon-separated numbers as version fields', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Ratios:3:1]');
+
+            expect(parsed?.versions).toEqual({ attachmentVersion: '3', videoVersion: '1' });
+            expect(parsed?.summary).toBe('Ratios');
         });
     });
 });

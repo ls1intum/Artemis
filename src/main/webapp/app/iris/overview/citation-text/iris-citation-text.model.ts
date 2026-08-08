@@ -15,8 +15,10 @@ export const CITATION_REGEX = /\[cite:[LF]:[^:[\]]+:[^:[\]]*:[^:[\]]*:[^:[\]]*:[
 export const CITATION_VERSION_FIELD_REGEX = /^\d*$/;
 
 /**
- * Versions of the material a citation was generated from. Both parts are optional: a slide citation only pins the attachment
- * version, a video citation only pins the transcription version.
+ * Versions of the material a citation was generated from. Exactly one part is filled: a slide citation only pins the attachment
+ * version, a video citation only pins the transcription version. Which part is filled is therefore also what says which kind of
+ * material the citation is about - the server settled that when it stamped the marker, and the client reads it rather than
+ * deriving it a second time from the timestamps.
  */
 export type IrisCitationVersions = {
     attachmentVersion?: string;

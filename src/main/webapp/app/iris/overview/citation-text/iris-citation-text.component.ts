@@ -306,10 +306,13 @@ export class IrisCitationTextComponent {
         if (parsed.page) {
             attrs.push(`data-page="${escapeHtml(parsed.page)}"`);
         }
-        // Kept on the element rather than put into the link: it is only needed to compare against the version the server reports on click.
-        const pinnedVersion = parsed.start ? parsed.versions?.videoVersion : parsed.versions?.attachmentVersion;
-        if (pinnedVersion) {
-            attrs.push(`data-pinned-version="${escapeHtml(pinnedVersion)}"`);
+        // Kept on the element rather than put into the link: only needed to compare against the version the server reports on click. Which slot the version sits in is
+        // what says whether it is about slides or a video - re-deriving that from the timestamp would be a second, drifting answer to a question the server has settled.
+        const videoVersion = parsed.versions?.videoVersion;
+        const attachmentVersion = parsed.versions?.attachmentVersion;
+        if (videoVersion || attachmentVersion) {
+            attrs.push(`data-pinned-version="${escapeHtml(videoVersion ?? attachmentVersion!)}"`);
+            attrs.push(`data-pinned-kind="${videoVersion ? 'video' : 'attachment'}"`);
         }
 
         return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
@@ -331,7 +334,8 @@ export class IrisCitationTextComponent {
         }
 
         const pinnedVersion = element.getAttribute('data-pinned-version');
-        if (!pinnedVersion) {
+        const pinnedKind = element.getAttribute('data-pinned-kind');
+        if (!pinnedVersion || !pinnedKind) {
             this.navigateToLectureUnit(element, courseId, lectureId, unitId, true);
             return;
         }
@@ -341,8 +345,8 @@ export class IrisCitationTextComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (versions) => {
-                    // A citation is about either a video or a slide, mirroring how the citation marker discriminates the two.
-                    const currentVersion = element.getAttribute('data-timestamp') ? versions.videoVersion : versions.attachmentVersion;
+                    // Which kind of material this citation is about was decided when the marker was stamped, so it is read here rather than derived again.
+                    const currentVersion = pinnedKind === 'video' ? versions.videoVersion : versions.attachmentVersion;
                     if (currentVersion === undefined || currentVersion === null) {
                         // A version can only have been pinned for material that was processed, so a missing version means it is gone.
                         this.alertService.warning(CITATION_GONE_WARNING_KEY);

@@ -203,6 +203,45 @@ class IrisCitationServiceTest {
         assertThat(stamped).isEqualTo("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.:3:]");
     }
 
+    /**
+     * The version fields are read from the right, so an ordinary summary containing a colon still has to be stamped correctly.
+     */
+    @Test
+    void stampCitationVersions_stampsSummaryContainingColons() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Ratio:The split is 3:1]");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Ratio:The split is 3:1:3:]");
+    }
+
+    /**
+     * Documents the accepted limitation of the positional format: a summary holding at least three colons and ending in two colon-separated numbers is indistinguishable
+     * from an already stamped citation, so it is left unpinned and clicking it keeps the pre-feature behaviour. Pinned here so the limitation stays a known property
+     * instead of resurfacing as a bug report.
+     */
+    @Test
+    void stampCitationVersions_leavesCitationUnpinnedWhenTheSummaryLooksLikeVersionFields() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var text = "[cite:L:42:7:::Key:Ratios:3:1]";
+
+        assertThat(citationService.stampCitationVersions(text)).isEqualTo(text);
+    }
+
+    /**
+     * A citation carrying only an end time is rendered as a slide citation by the client, because it builds the link from the start time. Pinning has to follow that same
+     * choice, otherwise the pinned version describes material the click never navigates to.
+     */
+    @Test
+    void stampCitationVersions_pinsAttachmentVersionWhenOnlyAnEndTimeIsPresent() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, 2)));
+
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7::180:Deadlocks:A summary.]");
+
+        assertThat(stamped).isEqualTo("[cite:L:42:7::180:Deadlocks:A summary.:3:]");
+    }
+
     @Test
     void stampCitationVersions_stampsEveryCitationInTheText() {
         when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, 2), ingested(SECOND_LECTURE_UNIT_ID, 8, null)));

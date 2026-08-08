@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
  * <p>
  * Only processes lecture citations with format: {@code [cite:L:entityID:page:start:end:keyword:summary]}, optionally followed by two version fields:
  * {@code [cite:L:entityID:page:start:end:keyword:summary:attachmentVersion:videoVersion]}. A citation is about either a slide or a video, so exactly one of the two is
- * filled and the other stays empty.
+ * filled and the other stays empty — which slot carries the version is therefore also what says which kind of material the citation is about.
  * <p>
  * The version fields are appended by {@link #stampCitationVersions(String)} before the assistant message is persisted, and pin the citation to the version of the material
  * it was generated from. When a citation is clicked, the client fetches the versions the unit currently offers and compares them against the pinned ones. Markers without
@@ -79,7 +79,7 @@ public class IrisCitationService {
      * trustworthy version it is better to keep the citation unverified than to pin it to the wrong one.
      *
      * @param text the raw assistant answer; may be {@code null} or blank
-     * @return the text with version segments inserted, or the unchanged text when there is nothing to stamp
+     * @return the text with pinned-version fields appended, or the unchanged text when there is nothing to stamp
      */
     public String stampCitationVersions(String text) {
         if (text == null || text.isBlank() || lectureUnitRepositoryApi.isEmpty()) {
@@ -199,9 +199,10 @@ public class IrisCitationService {
         String page = match.group("page");
         String start = match.group("start");
         String end = match.group("end");
-        // A citation is about either a video or a slide, never both: a transcript segment carries a companion page number, but its
-        // timestamp is what the citation points at. This mirrors resolveCitationTypeClass on the client.
-        boolean isVideoCitation = !start.isBlank() || !end.isBlank();
+        // A citation is about either a video or a slide, never both: a transcript segment carries a companion page number, but its timestamp is what the citation points
+        // at. Deciding by the start time alone is what the client already does when it turns the citation into a link, so pinning follows the very position the click
+        // navigates to. An end time without a start time therefore counts as a slide citation, exactly as it is rendered.
+        boolean isVideoCitation = !start.isBlank();
         String attachmentVersion = !isVideoCitation && !page.isBlank() ? formatVersion(ingested.attachmentVersion()) : "";
         String videoVersion = isVideoCitation ? formatVersion(ingested.videoVersion()) : "";
         if (attachmentVersion.isEmpty() && videoVersion.isEmpty()) {
@@ -213,8 +214,11 @@ public class IrisCitationService {
     /**
      * Whether the given {@code keyword:summary} part already carries the two trailing version fields.
      * <p>
-     * Keeps stamping idempotent. A summary that itself ends in two colon-separated numbers would be misread here, but Pyris strips colons from keywords and summaries
-     * before emitting a citation, so that shape cannot occur in practice.
+     * Keeps stamping idempotent.
+     * <p>
+     * Known limitation: the version fields are positional, while the summary is by design "everything up to the closing bracket" and may contain colons. A summary that
+     * holds at least three colons and ends in two colon-separated numbers is therefore indistinguishable from a stamped citation — it is left unpinned here, and the
+     * client truncates it at the presumed version fields. Accepted as rare enough not to warrant a marker inside the format.
      *
      * @param rest everything between the end timestamp and the closing bracket
      * @return {@code true} when the last two fields are version fields and at least one of them is filled
