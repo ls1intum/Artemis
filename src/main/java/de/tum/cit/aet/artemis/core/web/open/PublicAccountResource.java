@@ -304,17 +304,17 @@ public class PublicAccountResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> finishPasswordReset(@RequestBody KeyIdKeySecretAndPasswordVM keyAndPassword) {
-        if (accountService.isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
+        if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        if (StringUtils.isEmpty(keyAndPassword.getKeyId())
-            || StringUtils.isEmpty(keyAndPassword.getKeySecret())
-            || keyAndPassword.getKeyId().length() < 10
-            || keyAndPassword.getKeySecret().length() < 10) {
+        if (StringUtils.isEmpty(keyAndPassword.keyId())
+            || StringUtils.isEmpty(keyAndPassword.keySecret())
+            || keyAndPassword.keyId().length() < 10
+            || keyAndPassword.keySecret().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(),
-            keyAndPassword.getKeyId(), keyAndPassword.getKeySecret());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(),
+            keyAndPassword.keyId(), keyAndPassword.keySecret());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");

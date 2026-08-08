@@ -550,10 +550,11 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
         String newPassword = getValidPassword();
-        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM();
-        finishResetData.setKeyId(recipientCaptor.getValue().resetKeyId());
-        finishResetData.setKeySecret(recipientCaptor.getValue().resetKeySecret());
-        finishResetData.setNewPassword(newPassword);
+        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM(
+            recipientCaptor.getValue().resetKeyId(),
+            recipientCaptor.getValue().resetKeySecret(),
+            newPassword
+        );
 
         // finish password reset
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
@@ -603,16 +604,14 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
     void passwordResetFinishInvalidPassword() throws Throwable {
-        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM();
-        finishResetData.setNewPassword("");
+        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM("", "", "" );
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
     void passwordResetFinishUnknownKey() throws Throwable {
-        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM();
-        finishResetData.setNewPassword(getValidPassword());
+        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM("", "", getValidPassword());
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
     }
     @Test
@@ -641,12 +640,13 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
         String newPassword = getValidPassword();
-        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM();
-        finishResetData.setKeyId(recipientCaptor.getValue().resetKeyId());
         final var badSecret = new StringBuilder(Objects.requireNonNull(recipientCaptor.getValue().resetKeySecret()));
         badSecret.setCharAt(0, badSecret.charAt(0) == 'a' ? 'b' : 'a');
-        finishResetData.setKeySecret(badSecret.toString());
-        finishResetData.setNewPassword(newPassword);
+        KeyIdKeySecretAndPasswordVM finishResetData = new KeyIdKeySecretAndPasswordVM(
+            recipientCaptor.getValue().resetKeyId(),
+            badSecret.toString(),
+            newPassword
+        );
 
         // finish password reset
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
