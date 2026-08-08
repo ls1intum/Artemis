@@ -45,6 +45,9 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
+/** Shown when a deep link points at a lecture unit that no longer exists. Worded for the mechanism rather than for one caller, since a citation is only one way to get here. */
+const DEEP_LINK_UNIT_GONE_ERROR_KEY = 'artemisApp.lectureUnit.deepLink.unitGone';
+
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
     completed: boolean;
@@ -152,6 +155,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
+    /** Whether the current navigation asked for a specific unit rather than the lecture as a whole, which is what makes a unit that cannot be found worth reporting. */
+    private isDeepLink = false;
+
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
 
@@ -201,6 +207,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const unitId = Number(params['unit']);
+            this.isDeepLink = params['deepLink'] === 'true';
             if (Number.isInteger(unitId) && unitId > 0) {
                 this.targetUnitId.set(unitId);
                 const timestamp = Number(params['timestamp']);
@@ -321,6 +328,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const targetUnit = this.lectureUnits().find((unit) => unit.id === targetUnitId);
         if (!targetUnit) {
+            // Only report while the loaded units actually belong to the lecture being opened: when switching from one lecture to another, the previous lecture's units are
+            // still in the signal for a moment and every target would look missing. A deep link that was followed to a unit which is gone is worth saying out loud, since
+            // landing on the lecture with nothing highlighted otherwise looks like the link simply did nothing.
+            if (this.isDeepLink && this.lecture()?.id === this.lectureId) {
+                this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
+            }
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);

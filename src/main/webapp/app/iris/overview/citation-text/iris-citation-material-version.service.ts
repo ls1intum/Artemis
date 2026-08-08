@@ -4,10 +4,14 @@ import { Observable } from 'rxjs';
 
 /**
  * The versions of the material a lecture unit currently offers. A missing value means that kind of material does not exist for the unit.
+ * <p>
+ * `hasVideo` separates the two reasons a `videoVersion` can be missing: the video is gone, or the video is still there while its transcription is not. Only the first is
+ * material that no longer exists.
  */
 export interface LectureUnitMaterialVersions {
     attachmentVersion?: number;
     videoVersion?: number;
+    hasVideo?: boolean;
 }
 
 /**

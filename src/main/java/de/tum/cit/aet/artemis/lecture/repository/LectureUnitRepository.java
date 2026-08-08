@@ -134,7 +134,8 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO(
                 a.version,
-                CASE WHEN t.id IS NOT NULL THEN ps.transcriptionVersion ELSE NULL END)
+                CASE WHEN t.id IS NOT NULL THEN ps.transcriptionVersion ELSE NULL END,
+                CASE WHEN avu.videoSource IS NOT NULL THEN TRUE ELSE FALSE END)
             FROM LectureUnit lu
                 LEFT JOIN AttachmentVideoUnit avu ON avu.id = lu.id
                 LEFT JOIN avu.attachment a

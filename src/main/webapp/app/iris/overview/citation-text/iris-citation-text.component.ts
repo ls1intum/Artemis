@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -12,10 +13,17 @@ import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitation
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
 
 /**
- * Translation keys for the warnings shown when the cited material changed after the answer was written.
+ * Translation keys for the notices shown when the cited material is no longer the one the answer was written against.
  */
 const CITATION_STALE_WARNING_KEY = 'artemisApp.iris.citation.outdated.stale';
-const CITATION_GONE_WARNING_KEY = 'artemisApp.iris.citation.outdated.gone';
+const CITATION_GONE_ERROR_KEY = 'artemisApp.iris.citation.outdated.gone';
+const CITATION_UNVERIFIED_WARNING_KEY = 'artemisApp.iris.citation.outdated.unverified';
+
+/**
+ * Statuses that mean the unit itself cannot be reached, rather than that the check failed. The lecture page reports these once it has loaded its units, so the click stays
+ * silent for them and does not say the same thing twice in two different words.
+ */
+const UNIT_UNREACHABLE_STATUSES = [403, 404];
 
 /**
  * Component that processes text containing citation markers and renders them as interactive citation bubbles.
@@ -347,28 +355,45 @@ export class IrisCitationTextComponent {
                 next: (versions) => {
                     // Which kind of material this citation is about was decided when the marker was stamped, so it is read here rather than derived again.
                     const currentVersion = pinnedKind === 'video' ? versions.videoVersion : versions.attachmentVersion;
-                    if (currentVersion === undefined || currentVersion === null) {
-                        // A version can only have been pinned for material that was processed, so a missing version means it is gone.
-                        this.alertService.warning(CITATION_GONE_WARNING_KEY);
-                        this.navigateToLectureUnit(element, courseId, lectureId, unitId, false);
+                    if (currentVersion !== undefined && currentVersion !== null) {
+                        const isUnchanged = String(currentVersion) === pinnedVersion;
+                        if (!isUnchanged) {
+                            this.alertService.warning(CITATION_STALE_WARNING_KEY);
+                        }
+                        this.navigateToLectureUnit(element, courseId, lectureId, unitId, isUnchanged);
                         return;
                     }
-                    const isUnchanged = String(currentVersion) === pinnedVersion;
-                    if (!isUnchanged) {
-                        this.alertService.warning(CITATION_STALE_WARNING_KEY);
+                    // A version can only have been pinned for material that was processed, so a missing one means the material is no longer what it was. A video whose
+                    // transcription is missing is the one case where it may still be entirely intact: the transcription is deleted and rewritten whenever the video
+                    // changes, so during that window the video plays while nothing can be compared against it. Calling that "gone" over a visibly playing video would be
+                    // false, so it is reported as unverifiable instead.
+                    const isUnverifiableVideo = pinnedKind === 'video' && !!versions.hasVideo;
+                    if (isUnverifiableVideo) {
+                        this.alertService.warning(CITATION_UNVERIFIED_WARNING_KEY);
+                    } else {
+                        this.alertService.error(CITATION_GONE_ERROR_KEY);
                     }
-                    this.navigateToLectureUnit(element, courseId, lectureId, unitId, isUnchanged);
+                    this.navigateToLectureUnit(element, courseId, lectureId, unitId, false);
                 },
-                // Losing the check must not cost the student the link; navigating as before is the safe degradation.
-                error: () => this.navigateToLectureUnit(element, courseId, lectureId, unitId, true),
+                error: (response: HttpErrorResponse) => {
+                    // An unreachable unit is an answer, not a failed check, and the lecture page words it better once it knows which units it has. Anything else means
+                    // the check was lost: the link is kept, but not the exact position, because a page number that could not be verified may well be the wrong one.
+                    if (!UNIT_UNREACHABLE_STATUSES.includes(response.status)) {
+                        this.alertService.warning(CITATION_UNVERIFIED_WARNING_KEY);
+                    }
+                    this.navigateToLectureUnit(element, courseId, lectureId, unitId, false);
+                },
             });
     }
 
     /**
      * Navigates to the cited lecture unit, jumping to the exact page or timestamp only when the material is unchanged.
+     * <p>
+     * The `deepLink` flag tells the lecture page that a specific unit was asked for rather than the lecture as a whole, so that it can say so when it cannot find it. It is
+     * set for every citation, including ones carrying no pinned version: whether the unit still exists is a question that does not need versions to answer.
      */
     private navigateToLectureUnit(element: HTMLElement, courseId: string, lectureId: string, unitId: string, includeExactPosition: boolean): void {
-        const queryParams: Record<string, string> = { unit: unitId };
+        const queryParams: Record<string, string> = { unit: unitId, deepLink: 'true' };
         if (includeExactPosition) {
             const timestamp = element.getAttribute('data-timestamp');
             const page = element.getAttribute('data-page');

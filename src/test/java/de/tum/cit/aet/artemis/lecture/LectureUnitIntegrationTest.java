@@ -631,6 +631,35 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
         assertThat(versions.attachmentVersion()).isEqualTo(4);
         assertThat(versions.videoVersion()).isEqualTo(2);
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheTranscriptionIsMissingButTheVideoIsNot_reportsTheVideoAsStillPresent() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        // The state a unit is in while its video is being re-transcribed: the transcription row is deleted and rewritten, the video itself never goes away
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Nothing is left to compare a cited timestamp against, but the video is still there — which is what keeps the client from calling it gone
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whenTheVideoWasRemoved_reportsNoVideo() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.DONE);
+        lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));
+        unit.setVideoSource(null);
+        attachmentVideoUnitRepository.save(unit);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isFalse();
     }
 
     @Test

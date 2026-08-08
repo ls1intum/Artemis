@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -290,13 +290,18 @@ describe('IrisCitationTextComponent', () => {
 
         let navigate: ReturnType<typeof vi.spyOn>;
         let warning: ReturnType<typeof vi.spyOn>;
+        let error: ReturnType<typeof vi.spyOn>;
         let getMaterialVersions: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
             navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
             warning = vi.spyOn(TestBed.inject(AlertService), 'warning').mockImplementation(() => undefined as any);
+            error = vi.spyOn(TestBed.inject(AlertService), 'error').mockImplementation(() => undefined as any);
             getMaterialVersions = vi.spyOn(TestBed.inject(IrisCitationMaterialVersionService), 'getMaterialVersions');
         });
+
+        /** Every citation navigation carries this, so the lecture page knows a specific unit was asked for and can say so when it cannot find it. */
+        const unitOnly = { unit: '42', deepLink: 'true' };
 
         const clickCitation = (text: string, citationInfo: IrisCitationMetaDTO[]) => {
             const el = render(text, citationInfo);
@@ -312,7 +317,7 @@ describe('IrisCitationTextComponent', () => {
             clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
 
             expect(getMaterialVersions).toHaveBeenCalledWith(42);
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -321,16 +326,16 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.stale');
         });
 
         it('jumps to the timestamp when the transcription still has the pinned version', () => {
-            getMaterialVersions.mockReturnValue(of({ videoVersion: 2 }));
+            getMaterialVersions.mockReturnValue(of({ videoVersion: 2, hasVideo: true }));
 
             clickCitation('[cite:L:42::120:180:Key:Summary::2]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', timestamp: '120' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: '120' } });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -340,8 +345,8 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:120:180:Key:Summary::2]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
-            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
         });
 
         // A citation with only an end time is linked to the page, so it must also be compared against the slides. The marker says so,
@@ -351,33 +356,58 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7::180:Key:Summary:3:]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
             expect(warning).not.toHaveBeenCalled();
         });
 
-        it('opens the unit only and warns when the material is gone', () => {
+        it('opens the unit only and reports an error when the material is gone', () => {
             getMaterialVersions.mockReturnValue(of({}));
 
             clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42' } });
-            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
+        });
+
+        // While a video is being re-transcribed its transcription row is gone but the video plays as always, so calling it gone would be plainly false to anyone looking
+        // at the page. There is simply nothing left to compare the cited timestamp against.
+        it('reports an unverifiable citation rather than a gone one when the video outlived its transcription', () => {
+            getMaterialVersions.mockReturnValue(of({ hasVideo: true }));
+
+            clickCitation('[cite:L:42::120:180:Key:Summary::2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
+            expect(error).not.toHaveBeenCalled();
         });
 
         it('does not ask the server for a citation written before versions existed', () => {
             clickCitation('[cite:L:42:7:::Key:Summary]', [meta()]);
 
             expect(getMaterialVersions).not.toHaveBeenCalled();
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
             expect(warning).not.toHaveBeenCalled();
         });
 
-        it('still navigates when the version lookup fails', () => {
-            getMaterialVersions.mockReturnValue(throwError(() => new Error('offline')));
+        it('withholds the exact position when the check could not be made', () => {
+            getMaterialVersions.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '7' } });
+            // An unverified page number may well be the wrong one, so the link is kept while the jump is not
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
+        });
+
+        // An unreachable unit is an answer, not a failed check: the lecture page words it better once it knows which units it has, so the click stays quiet.
+        it.each([403, 404])('says nothing itself when the unit is unreachable (%i)', (status) => {
+            getMaterialVersions.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+
+            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(warning).not.toHaveBeenCalled();
+            expect(error).not.toHaveBeenCalled();
         });
 
         it('does not navigate when the lecture unit is gone', () => {
