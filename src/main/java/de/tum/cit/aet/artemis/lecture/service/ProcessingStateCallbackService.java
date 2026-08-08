@@ -398,12 +398,12 @@ public class ProcessingStateCallbackService {
         // Update with latest data
         transcription.setLanguage(checkpoint.language());
         transcription.setSegments(checkpoint.segments());
-        bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
 
         if (checkpoint.isEnriched()) {
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
             log.info("Enriched transcription saved for unit {}, transitioning to INGESTING", lectureUnitId);
 
+            bumpTranscriptionVersionIfContentChanged(state, checkpoint.segments());
             transcriptionRepository.save(transcription);
 
             // Transition: TRANSCRIBING → INGESTING (keep same job token — Iris continues the pipeline)
@@ -426,11 +426,15 @@ public class ProcessingStateCallbackService {
     }
 
     /**
-     * Increments the unit's transcription version when the stored segments differ from the ones written last.
+     * Increments the unit's transcription version when the completed segments differ from the ones written last.
      * <p>
      * The version is what Iris citations pin a video timestamp to, so it must change exactly when the timestamps do. Comparing the content hash first is what keeps the
      * repeated checkpoint writes of a single transcription run from inflating the version, and keeps a re-run that produces identical segments from invalidating citations
      * that are still perfectly accurate.
+     * <p>
+     * Only the enriched checkpoint gets here, because only it is the transcription a citation can point at: it is the one saved as COMPLETED. A run first sends the raw
+     * segments, which carry the same speech but no slide numbers and are therefore a different content hash — hashing them too would advance the version on the way to a
+     * result that may well be identical to the previous one, and mark every citation of that video stale for nothing.
      * <p>
      * The counter deliberately lives on the processing state and not on the transcription: the transcription row is deleted and recreated when the video changes, which
      * would restart the count at 1 and make a citation pinned to version 1 look unchanged.

@@ -1,13 +1,12 @@
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
-import { CITATION_REGEX, CITATION_VERSION_FIELD_REGEX, CitationRenderOptions, IrisCitationParsed, IrisCitationVersions } from './iris-citation-text.model';
+import { CITATION_REGEX, CITATION_VERSION_FIELD_REGEX, CitationRenderOptions, IrisCitationParsed, IrisCitationVersion } from './iris-citation-text.model';
 
 /**
  * Citation parsing constants.
  */
 const CITE_PREFIX = '[cite:';
 const CITE_AMOUNT_PARTS = 7;
-const CITE_AMOUNT_PARTS_WITH_VERSIONS = 9;
-const CITE_AMOUNT_VERSION_FIELDS = 2;
+const CITE_AMOUNT_PARTS_WITH_VERSION = 8;
 const INDEX_TYPE_IN_CITE_PARTS = 0;
 const INDEX_ENTITY_ID_IN_CITE_PARTS = 1;
 const INDEX_PAGE_IN_CITE_PARTS = 2;
@@ -216,40 +215,35 @@ export function parseCitation(raw: string): IrisCitationParsed | undefined {
 
     const keyword = parts[INDEX_KEYWORD_IN_CITE_PARTS] ?? '';
 
-    // The two version fields sit at the very end, so they are read from the right. A summary may contain colons, which is why the
-    // summary is whatever remains between the keyword and the version fields. Citations written before versions existed have no
-    // such fields and keep parsing exactly as before.
-    const versions = parseTrailingVersions(parts);
-    const summaryEnd = versions ? parts.length - CITE_AMOUNT_VERSION_FIELDS : parts.length;
+    // The version field sits at the very end, so it is read from the right. A summary may contain colons, which is why the summary
+    // is whatever remains between the keyword and the version field. Citations written before versions existed have no such field
+    // and keep parsing exactly as before.
+    const pinnedVersion = parseTrailingVersion(parts);
+    const summaryEnd = pinnedVersion ? parts.length - 1 : parts.length;
     const summary = summaryEnd > INDEX_SUMMARY_IN_CITE_PARTS ? parts.slice(INDEX_SUMMARY_IN_CITE_PARTS, summaryEnd).join(':') : '';
 
-    return { type, entityId, page, start, end, keyword, summary, versions };
+    return { type, entityId, page, start, end, keyword, summary, pinnedVersion };
 }
 
 /**
- * Reads the two trailing version fields of a citation block.
+ * Reads the trailing version field of a citation block.
  *
- * The fields are positional, while the summary is by design "everything up to the closing bracket". A summary holding at least
- * three colons and ending in two colon-separated numbers would therefore be indistinguishable from a stamped citation. The Pyris
- * citation prompt tells the model to keep colons out of keywords and summaries, so this is not expected to occur - but nothing
- * enforces it, which is why this parser stays colon-tolerant. Should it slip through, the summary is truncated at the presumed
- * version fields; the server refuses to stamp such a citation for the same reason, so the two ends agree on the reading.
+ * The field is positional, while the summary is by design "everything up to the closing bracket" and may itself contain colons.
+ * The "va"/"vt" tag is what tells the two apart: a summary ending in a number is not a version field, so it stays part of the
+ * summary and the citation is treated as unpinned - which is also how the server reads it when it decides whether a citation is
+ * already stamped, so the two ends agree.
  * @param parts The colon-separated parts of the citation block.
- * @returns The parsed versions, or undefined when the block carries no version fields.
+ * @returns The pinned version, or undefined when the block carries no version field.
  */
-function parseTrailingVersions(parts: string[]): IrisCitationVersions | undefined {
-    if (parts.length < CITE_AMOUNT_PARTS_WITH_VERSIONS) {
+function parseTrailingVersion(parts: string[]): IrisCitationVersion | undefined {
+    if (parts.length < CITE_AMOUNT_PARTS_WITH_VERSION) {
         return undefined;
     }
-    const attachmentVersion = parts[parts.length - CITE_AMOUNT_VERSION_FIELDS];
-    const videoVersion = parts[parts.length - 1];
-    if (!attachmentVersion && !videoVersion) {
+    const match = CITATION_VERSION_FIELD_REGEX.exec(parts[parts.length - 1]);
+    if (!match) {
         return undefined;
     }
-    if (!CITATION_VERSION_FIELD_REGEX.test(attachmentVersion) || !CITATION_VERSION_FIELD_REGEX.test(videoVersion)) {
-        return undefined;
-    }
-    return { attachmentVersion: attachmentVersion || undefined, videoVersion: videoVersion || undefined };
+    return { kind: match[1] === 't' ? 'video' : 'attachment', version: match[2] };
 }
 
 /**

@@ -1,28 +1,30 @@
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 
 /**
- * Matches citation blocks in the form "[cite:TYPE:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY]", optionally followed by two version
- * fields: "[cite:TYPE:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY:ATTACHMENT_VERSION:VIDEO_VERSION]".
- * The version fields need no expression of their own: the trailing summary group already accepts colons and therefore covers them.
+ * Matches citation blocks in the form "[cite:TYPE:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY]", optionally followed by one version
+ * field: "[cite:TYPE:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY:va3]" for slides, ":vt3" for a video.
+ * The version field needs no expression of its own: the trailing summary group already accepts colons and therefore covers it.
  * Keep in sync with Artemis server regex in src/main/java/de/tum/cit/aet/artemis/iris/service/IrisCitationService.java
  * and the regex defined in Pyris.
  */
 export const CITATION_REGEX = /\[cite:[LF]:[^:[\]]+:[^:[\]]*:[^:[\]]*:[^:[\]]*:[^:[\]]*:[^[\]]*\]/g;
 
 /**
- * A version field is a plain number, or empty when the citation is not about that kind of material.
+ * A version field is one of the two tags followed by a number: "va" for the attachment a slide citation is about, "vt" for the
+ * transcription a video citation is about. The tag is what makes the field distinguishable from a summary, which may contain
+ * colons and may well end in a number - reading such a summary as a version would let a citation of changed material pass as
+ * current. Keep in sync with VERSION_FIELD_PATTERN in IrisCitationService.java.
  */
-export const CITATION_VERSION_FIELD_REGEX = /^\d*$/;
+export const CITATION_VERSION_FIELD_REGEX = /^v([at])(\d+)$/;
 
 /**
- * Versions of the material a citation was generated from. Exactly one part is filled: a slide citation only pins the attachment
- * version, a video citation only pins the transcription version. Which part is filled is therefore also what says which kind of
- * material the citation is about - the server settled that when it stamped the marker, and the client reads it rather than
- * deriving it a second time from the timestamps.
+ * Version of the material a citation was generated from, together with which kind of material that is. A citation is about either
+ * a slide or a video, never both, so there is exactly one - the server settled which when it stamped the marker, and the client
+ * reads it rather than deriving it a second time from the timestamps.
  */
-export type IrisCitationVersions = {
-    attachmentVersion?: string;
-    videoVersion?: string;
+export type IrisCitationVersion = {
+    kind: 'attachment' | 'video';
+    version: string;
 };
 
 /**
@@ -36,7 +38,7 @@ export type IrisCitationParsed = {
     end: string;
     keyword: string;
     summary: string;
-    versions?: IrisCitationVersions;
+    pinnedVersion?: IrisCitationVersion;
 };
 
 /**

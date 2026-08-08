@@ -314,7 +314,7 @@ describe('IrisCitationTextComponent', () => {
         it('jumps to the exact page when the slides still have the pinned version', () => {
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3 }));
 
-            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             expect(getMaterialVersions).toHaveBeenCalledWith(42);
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
@@ -324,7 +324,7 @@ describe('IrisCitationTextComponent', () => {
         it('opens the unit only and warns when the slides changed', () => {
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 4 }));
 
-            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.stale');
@@ -333,7 +333,7 @@ describe('IrisCitationTextComponent', () => {
         it('jumps to the timestamp when the transcription still has the pinned version', () => {
             getMaterialVersions.mockReturnValue(of({ videoVersion: 2, hasVideo: true }));
 
-            clickCitation('[cite:L:42::120:180:Key:Summary::2]', [meta()]);
+            clickCitation('[cite:L:42::120:180:Key:Summary:vt2]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: '120' } });
             expect(warning).not.toHaveBeenCalled();
@@ -343,7 +343,7 @@ describe('IrisCitationTextComponent', () => {
             // The slides happen to sit at exactly the pinned number, which must not make the citation look unchanged
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 2 }));
 
-            clickCitation('[cite:L:42:7:120:180:Key:Summary::2]', [meta()]);
+            clickCitation('[cite:L:42:7:120:180:Key:Summary:vt2]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
             expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
@@ -354,7 +354,7 @@ describe('IrisCitationTextComponent', () => {
         it('compares a citation carrying only an end time against the slides', () => {
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 3, videoVersion: 9 }));
 
-            clickCitation('[cite:L:42:7::180:Key:Summary:3:]', [meta()]);
+            clickCitation('[cite:L:42:7::180:Key:Summary:va3]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
             expect(warning).not.toHaveBeenCalled();
@@ -363,7 +363,7 @@ describe('IrisCitationTextComponent', () => {
         it('opens the unit only and reports an error when the material is gone', () => {
             getMaterialVersions.mockReturnValue(of({}));
 
-            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
             expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
@@ -374,7 +374,7 @@ describe('IrisCitationTextComponent', () => {
         it('reports an unverifiable citation rather than a gone one when the video outlived its transcription', () => {
             getMaterialVersions.mockReturnValue(of({ hasVideo: true }));
 
-            clickCitation('[cite:L:42::120:180:Key:Summary::2]', [meta()]);
+            clickCitation('[cite:L:42::120:180:Key:Summary:vt2]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
@@ -392,7 +392,7 @@ describe('IrisCitationTextComponent', () => {
         it('withholds the exact position when the check could not be made', () => {
             getMaterialVersions.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             // An unverified page number may well be the wrong one, so the link is kept while the jump is not
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
@@ -403,7 +403,7 @@ describe('IrisCitationTextComponent', () => {
         it.each([403, 404])('says nothing itself when the unit is unreachable (%i)', (status) => {
             getMaterialVersions.mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
 
-            clickCitation('[cite:L:42:7:::Key:Summary:3:]', [meta()]);
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
             expect(warning).not.toHaveBeenCalled();
@@ -411,7 +411,7 @@ describe('IrisCitationTextComponent', () => {
         });
 
         it('does not navigate when the lecture unit is gone', () => {
-            clickCitation('[cite:L:42:7:::Key:Summary:3:]', []);
+            clickCitation('[cite:L:42:7:::Key:Summary:va3]', []);
 
             expect(navigate).not.toHaveBeenCalled();
         });
@@ -511,7 +511,7 @@ describe('Iris citation util', () => {
 
     describe('Citation revisions', () => {
         it('parses the pinned attachment version of a slide citation', () => {
-            expect(parseCitation('[cite:L:42:7:::Key:Summary:3:]')).toEqual({
+            expect(parseCitation('[cite:L:42:7:::Key:Summary:va3]')).toEqual({
                 type: 'L',
                 entityId: '42',
                 page: '7',
@@ -519,46 +519,51 @@ describe('Iris citation util', () => {
                 end: '',
                 keyword: 'Key',
                 summary: 'Summary',
-                versions: { attachmentVersion: '3', videoVersion: undefined },
+                pinnedVersion: { kind: 'attachment', version: '3' },
             });
         });
 
         it('parses the pinned transcription version of a video citation', () => {
-            expect(parseCitation('[cite:L:42:7:120:180:Key:Summary::2]')?.versions).toEqual({
-                attachmentVersion: undefined,
-                videoVersion: '2',
-            });
+            expect(parseCitation('[cite:L:42:7:120:180:Key:Summary:vt2]')?.pinnedVersion).toEqual({ kind: 'video', version: '2' });
         });
 
-        it('keeps a summary containing colons intact in front of the version fields', () => {
-            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon:3:]');
+        it('keeps a summary containing colons intact in front of the version field', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon:va3]');
 
             expect(parsed?.keyword).toBe('Key');
             expect(parsed?.summary).toBe('Summary:with:colon');
-            expect(parsed?.versions).toEqual({ attachmentVersion: '3', videoVersion: undefined });
+            expect(parsed?.pinnedVersion).toEqual({ kind: 'attachment', version: '3' });
         });
 
-        it('treats trailing non-numeric fields as part of the summary', () => {
+        it('treats a trailing untagged field as part of the summary', () => {
             const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon]');
 
-            expect(parsed?.versions).toBeUndefined();
+            expect(parsed?.pinnedVersion).toBeUndefined();
             expect(parsed?.summary).toBe('Summary:with:colon');
         });
 
-        it('does not read two empty trailing fields as version fields', () => {
+        it('does not read empty trailing fields as a version field', () => {
             const parsed = parseCitation('[cite:L:42:7:::Key:Summary:with:colon::]');
 
-            expect(parsed?.versions).toBeUndefined();
+            expect(parsed?.pinnedVersion).toBeUndefined();
             expect(parsed?.summary).toBe('Summary:with:colon::');
         });
 
-        // Documents the accepted limitation of the positional format: this summary is indistinguishable from a stamped citation.
-        // The server refuses to stamp such a citation for the same reason, so both ends agree on treating it as already stamped.
-        it('misreads a summary that ends in two colon-separated numbers as version fields', () => {
-            const parsed = parseCitation('[cite:L:42:7:::Key:Ratios:3:1]');
+        // The tag is what a summary cannot accidentally produce. A trailing number alone used to be read as a version, which let a
+        // citation of changed slides pass as current whenever the unrelated number happened to match.
+        it.each(['[cite:L:42:7:::Key:Ratios:3:1]', '[cite:L:42:7:::Key:Chapter 3:1]'])('leaves a colon-numeric summary entirely in the summary (%s)', (raw) => {
+            const parsed = parseCitation(raw);
 
-            expect(parsed?.versions).toEqual({ attachmentVersion: '3', videoVersion: '1' });
-            expect(parsed?.summary).toBe('Ratios');
+            expect(parsed?.pinnedVersion).toBeUndefined();
+            expect(parsed?.summary).toBe(raw.slice('[cite:L:42:7:::Key:'.length, -1));
+        });
+
+        // A stamped citation whose summary happens to contain colons is still read correctly: only the tagged last field is taken off.
+        it('reads the version off a stamped citation whose summary contains colons and numbers', () => {
+            const parsed = parseCitation('[cite:L:42:7:::Key:Ratios:3:vt1]');
+
+            expect(parsed?.pinnedVersion).toEqual({ kind: 'video', version: '1' });
+            expect(parsed?.summary).toBe('Ratios:3');
         });
     });
 });

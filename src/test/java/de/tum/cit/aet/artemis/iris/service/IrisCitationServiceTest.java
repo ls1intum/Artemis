@@ -149,7 +149,7 @@ class IrisCitationServiceTest {
 
         var stamped = citationService.stampCitationVersions("See [cite:L:42:7:::Deadlocks:A summary.] for details.");
 
-        assertThat(stamped).isEqualTo("See [cite:L:42:7:::Deadlocks:A summary.:3:] for details.");
+        assertThat(stamped).isEqualTo("See [cite:L:42:7:::Deadlocks:A summary.:va3] for details.");
     }
 
     @Test
@@ -159,7 +159,7 @@ class IrisCitationServiceTest {
         var stamped = citationService.stampCitationVersions("[cite:L:42:7:120:180:Deadlocks:A summary.]");
 
         // A transcript segment carries a companion page number, but only the video revision is pinned: the timestamp is what the citation points at.
-        assertThat(stamped).isEqualTo("[cite:L:42:7:120:180:Deadlocks:A summary.::2]");
+        assertThat(stamped).isEqualTo("[cite:L:42:7:120:180:Deadlocks:A summary.:vt2]");
     }
 
     /**
@@ -189,7 +189,7 @@ class IrisCitationServiceTest {
     void stampCitationVersions_isIdempotent() {
         when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
 
-        var alreadyStamped = "[cite:L:42:7:::Deadlocks:A summary.:3:]";
+        var alreadyStamped = "[cite:L:42:7:::Deadlocks:A summary.:va3]";
 
         assertThat(citationService.stampCitationVersions(alreadyStamped)).isEqualTo(alreadyStamped);
     }
@@ -200,7 +200,7 @@ class IrisCitationServiceTest {
 
         var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.]");
 
-        assertThat(stamped).isEqualTo("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.:3:]");
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Costs:A price of $5 and a backslash \\ stay intact.:va3]");
     }
 
     /**
@@ -212,21 +212,33 @@ class IrisCitationServiceTest {
 
         var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Ratio:The split is 3:1]");
 
-        assertThat(stamped).isEqualTo("[cite:L:42:7:::Ratio:The split is 3:1:3:]");
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Ratio:The split is 3:1:va3]");
     }
 
     /**
-     * Documents the accepted limitation of the positional format: a summary holding at least three colons and ending in two colon-separated numbers is indistinguishable
-     * from an already stamped citation, so it is left unpinned and clicking it keeps the pre-feature behaviour. Pinned here so the limitation stays a known property
-     * instead of resurfacing as a bug report.
+     * The tag is what keeps a summary from being mistaken for a version. Without it, a summary ending in colon-separated numbers read as an already stamped citation: it
+     * was left unpinned here, while the client read those very numbers as the pinned versions and would have called the citation current whenever they happened to match
+     * the ones the unit currently has.
      */
     @Test
-    void stampCitationVersions_leavesCitationUnpinnedWhenTheSummaryLooksLikeVersionFields() {
+    void stampCitationVersions_stampsSummaryThatEndsInColonSeparatedNumbers() {
         when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
 
-        var text = "[cite:L:42:7:::Key:Ratios:3:1]";
+        var stamped = citationService.stampCitationVersions("[cite:L:42:7:::Key:Ratios:3:1]");
 
-        assertThat(citationService.stampCitationVersions(text)).isEqualTo(text);
+        assertThat(stamped).isEqualTo("[cite:L:42:7:::Key:Ratios:3:1:va3]");
+    }
+
+    /**
+     * Stamping the same text twice must not append a second version field, not even when the summary itself ends in numbers.
+     */
+    @Test
+    void stampCitationVersions_isIdempotentForASummaryThatEndsInColonSeparatedNumbers() {
+        when(lectureUnitRepositoryApi.findIngestedVersionsByIds(anyCollection())).thenReturn(List.of(ingested(LECTURE_UNIT_ID, 3, null)));
+
+        var alreadyStamped = "[cite:L:42:7:::Key:Ratios:3:1:va3]";
+
+        assertThat(citationService.stampCitationVersions(alreadyStamped)).isEqualTo(alreadyStamped);
     }
 
     /**
@@ -239,7 +251,7 @@ class IrisCitationServiceTest {
 
         var stamped = citationService.stampCitationVersions("[cite:L:42:7::180:Deadlocks:A summary.]");
 
-        assertThat(stamped).isEqualTo("[cite:L:42:7::180:Deadlocks:A summary.:3:]");
+        assertThat(stamped).isEqualTo("[cite:L:42:7::180:Deadlocks:A summary.:va3]");
     }
 
     @Test
@@ -248,7 +260,7 @@ class IrisCitationServiceTest {
 
         var stamped = citationService.stampCitationVersions("A [cite:L:42::30:60:Locks:First.] and B [cite:L:7:2:::Threads:Second.]");
 
-        assertThat(stamped).isEqualTo("A [cite:L:42::30:60:Locks:First.::2] and B [cite:L:7:2:::Threads:Second.:8:]");
+        assertThat(stamped).isEqualTo("A [cite:L:42::30:60:Locks:First.:vt2] and B [cite:L:7:2:::Threads:Second.:va8]");
     }
 
     /**
@@ -262,7 +274,7 @@ class IrisCitationServiceTest {
 
         var stamped = citationService.stampCitationVersions("Bad [cite:L:99999999999999999999:1:::Key:Summary.] and good [cite:L:42:7:::Deadlocks:A summary.]");
 
-        assertThat(stamped).isEqualTo("Bad [cite:L:99999999999999999999:1:::Key:Summary.] and good [cite:L:42:7:::Deadlocks:A summary.:3:]");
+        assertThat(stamped).isEqualTo("Bad [cite:L:99999999999999999999:1:::Key:Summary.] and good [cite:L:42:7:::Deadlocks:A summary.:va3]");
     }
 
     @Test

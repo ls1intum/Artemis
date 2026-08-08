@@ -345,6 +345,39 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getRetryCount()).isZero(); // Reset for ingestion phase
         }
 
+        /**
+         * A run always sends the raw segments before the enriched ones, and the raw segments carry the same speech without slide numbers — a different content hash. Were
+         * every checkpoint to advance the version, a retranscription that ends up with exactly the previous transcript would still move the version twice and mark every
+         * citation of that video stale, sending students to a "material has changed" warning for material that did not.
+         */
+        @Test
+        void shouldNotAdvanceTheVersionWhenARerunEndsWithTheSameTranscription() {
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(transcriptionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            String rawJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":0}]}";
+            String enrichedJson = "{\"language\":\"en\",\"segments\":[{\"startTime\":0.0,\"endTime\":5.0,\"text\":\"Hello\",\"slideNumber\":1}]}";
+
+            // A first, complete run: raw segments followed by the enriched ones
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
+
+            // The unit is transcribed again and Pyris produces exactly the same transcript
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, rawJson);
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            callbackService.handleCheckpointData(testUnit.getId(), TEST_JOB_TOKEN, enrichedJson);
+
+            assertThat(testState.getTranscriptionVersion()).isEqualTo(1);
+        }
+
         @Test
         void shouldIgnoreCheckpointWithStaleToken() {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);

@@ -328,10 +328,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const targetUnit = this.lectureUnits().find((unit) => unit.id === targetUnitId);
         if (!targetUnit) {
-            // Only report while the loaded units actually belong to the lecture being opened: when switching from one lecture to another, the previous lecture's units are
-            // still in the signal for a moment and every target would look missing. A deep link that was followed to a unit which is gone is worth saying out loud, since
-            // landing on the lecture with nothing highlighted otherwise looks like the link simply did nothing.
-            if (this.isDeepLink && this.lecture()?.id === this.lectureId) {
+            // While switching from one lecture to another the previous lecture's units are still in the signal, so every target looks missing for a moment. Keep the target
+            // pending until the requested lecture has loaded — clearing it here would leave the deep link with nothing to jump to once the right units arrive, and the unit
+            // that is genuinely gone could never be reported.
+            if (this.lecture()?.id !== this.lectureId) {
+                return;
+            }
+            // A deep link that was followed to a unit which is gone is worth saying out loud, since landing on the lecture with nothing highlighted otherwise looks like the
+            // link simply did nothing.
+            if (this.isDeepLink) {
                 this.alertService.error(DEEP_LINK_UNIT_GONE_ERROR_KEY);
             }
             this.targetUnitId.set(undefined);

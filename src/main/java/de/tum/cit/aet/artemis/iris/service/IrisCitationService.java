@@ -30,38 +30,45 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 /**
  * Parses Iris citation payloads from chat contents and resolves lecture name and lecture unit name for the referenced lecture units.
  * <p>
- * Only processes lecture citations with format: {@code [cite:L:entityID:page:start:end:keyword:summary]}, optionally followed by two version fields:
- * {@code [cite:L:entityID:page:start:end:keyword:summary:attachmentVersion:videoVersion]}. A citation is about either a slide or a video, so exactly one of the two is
- * filled and the other stays empty — which slot carries the version is therefore also what says which kind of material the citation is about.
+ * Only processes lecture citations with format: {@code [cite:L:entityID:page:start:end:keyword:summary]}, optionally followed by one version field:
+ * {@code [cite:L:entityID:page:start:end:keyword:summary:va3]} for slides, {@code :vt3} for a video. A citation is about either a slide or a video, never both, so the tag
+ * carries which kind of material it is about along with the version, in a single field.
  * <p>
- * The version fields are appended by {@link #stampCitationVersions(String)} before the assistant message is persisted, and pin the citation to the version of the material
- * it was generated from. When a citation is clicked, the client fetches the versions the unit currently offers and compares them against the pinned ones. Markers without
- * the two fields (written before this feature existed) keep behaving exactly as before.
+ * The tag exists because the summary is by design "everything up to the closing bracket" and may contain colons: a trailing field of plain digits would be
+ * indistinguishable from a summary that happens to end in a number, and reading such a summary as a version would let a citation of changed material pass as current. A
+ * field that has to start with {@code va} or {@code vt} cannot be produced by a number at the end of a sentence.
+ * <p>
+ * The version field is appended by {@link #stampCitationVersions(String)} before the assistant message is persisted, and pins the citation to the version of the material
+ * it was generated from. When a citation is clicked, the client fetches the versions the unit currently offers and compares them against the pinned one. Markers without
+ * the field (written before this feature existed) keep behaving exactly as before.
  */
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)
 public class IrisCitationService {
 
-    /**
-     * Fields a stamped citation has after the end timestamp at minimum: keyword, summary, attachment version and video version. A summary may itself contain colons, so a
-     * stamped citation can have more.
-     */
-    private static final int MIN_TRAILING_FIELDS_WHEN_STAMPED = 4;
+    /** Fields a stamped citation has after the end timestamp at minimum: keyword, summary and the version field. A summary may itself contain colons, so it can have more. */
+    private static final int MIN_TRAILING_FIELDS_WHEN_STAMPED = 3;
 
     // Keep in sync with the Iris client regex in src/main/webapp/app/iris/overview/citation-text/iris-citation-text.model.ts and the regex defined in Pyris.
-    // The version fields need no expression of their own: the trailing summary group already accepts colons and therefore covers them.
+    // The version field needs no expression of its own: the trailing summary group already accepts colons and therefore covers it.
     private static final Pattern CITATION_PATTERN = Pattern.compile("\\[cite:L:(?<entityId>\\d+):[^:\\]]*:[^:\\]]*:[^:\\]]*:[^:\\]]*:[^\\]]*\\]");
 
     /**
-     * Splits a lecture citation into the parts needed for stamping. The trailing {@code rest} group holds {@code keyword:summary}, plus the two version fields once
-     * stamped; summaries may contain colons, which is why it is matched greedily up to the closing bracket.
+     * Splits a lecture citation into the parts needed for stamping. The trailing {@code rest} group holds {@code keyword:summary}, plus the version field once stamped;
+     * summaries may contain colons, which is why it is matched greedily up to the closing bracket.
      */
     private static final Pattern STAMPABLE_CITATION_PATTERN = Pattern
             .compile("\\[cite:L:(?<entityId>\\d+):(?<page>[^:\\]]*):(?<start>[^:\\]]*):(?<end>[^:\\]]*):(?<rest>[^\\]]*)\\]");
 
-    /** A version field is a plain number, or empty when the citation is not about that kind of material. */
-    private static final Pattern VERSION_FIELD_PATTERN = Pattern.compile("\\d*");
+    /** Tag of a version field pinning a slide citation to the version of its attachment. */
+    private static final String ATTACHMENT_VERSION_TAG = "va";
+
+    /** Tag of a version field pinning a video citation to the version of its transcription. */
+    private static final String VIDEO_VERSION_TAG = "vt";
+
+    /** A version field is one of the two tags followed by a number. Nothing else counts as one, which is what keeps a numeric summary from being read as a version. */
+    private static final Pattern VERSION_FIELD_PATTERN = Pattern.compile("v[at]\\d+");
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
@@ -207,42 +214,32 @@ public class IrisCitationService {
         // at. Deciding by the start time alone is what the client already does when it turns the citation into a link, so pinning follows the very position the click
         // navigates to. An end time without a start time therefore counts as a slide citation, exactly as it is rendered.
         boolean isVideoCitation = !start.isBlank();
-        String attachmentVersion = !isVideoCitation && !page.isBlank() ? formatVersion(ingested.attachmentVersion()) : "";
-        String videoVersion = isVideoCitation ? formatVersion(ingested.videoVersion()) : "";
-        if (attachmentVersion.isEmpty() && videoVersion.isEmpty()) {
+        String versionField = isVideoCitation ? formatVersionField(VIDEO_VERSION_TAG, ingested.videoVersion())
+                : page.isBlank() ? "" : formatVersionField(ATTACHMENT_VERSION_TAG, ingested.attachmentVersion());
+        if (versionField.isEmpty()) {
             return match.group();
         }
-        return "[cite:L:" + match.group("entityId") + ":" + page + ":" + start + ":" + end + ":" + rest + ":" + attachmentVersion + ":" + videoVersion + "]";
+        return "[cite:L:" + match.group("entityId") + ":" + page + ":" + start + ":" + end + ":" + rest + ":" + versionField + "]";
     }
 
     /**
-     * Whether the given {@code keyword:summary} part already carries the two trailing version fields.
+     * Whether the given {@code keyword:summary} part already carries the trailing version field.
      * <p>
      * Keeps stamping idempotent.
-     * <p>
-     * The version fields are positional, while the summary is by design "everything up to the closing bracket". A summary holding at least three colons and ending in two
-     * colon-separated numbers would therefore be indistinguishable from a stamped citation. The Pyris citation prompt tells the model to keep colons out of keywords and
-     * summaries, so this is not expected to occur — but nothing enforces it, which is why the surrounding parser stays colon-tolerant. Should it slip through, the citation
-     * is simply left unpinned here and behaves as it did before this feature; no wrong version is ever pinned.
      *
      * @param rest everything between the end timestamp and the closing bracket
-     * @return {@code true} when the last two fields are version fields and at least one of them is filled
+     * @return {@code true} when the last field is a version field
      */
     private static boolean isAlreadyStamped(String rest) {
         var parts = rest.split(":", -1);
         if (parts.length < MIN_TRAILING_FIELDS_WHEN_STAMPED) {
             return false;
         }
-        String attachmentVersion = parts[parts.length - 2];
-        String videoVersion = parts[parts.length - 1];
-        if (attachmentVersion.isEmpty() && videoVersion.isEmpty()) {
-            return false;
-        }
-        return VERSION_FIELD_PATTERN.matcher(attachmentVersion).matches() && VERSION_FIELD_PATTERN.matcher(videoVersion).matches();
+        return VERSION_FIELD_PATTERN.matcher(parts[parts.length - 1]).matches();
     }
 
-    private static String formatVersion(@Nullable Integer version) {
-        return version == null ? "" : String.valueOf(version);
+    private static String formatVersionField(String tag, @Nullable Integer version) {
+        return version == null ? "" : tag + version;
     }
 
     private Set<Long> extractEntityIds(String text) {

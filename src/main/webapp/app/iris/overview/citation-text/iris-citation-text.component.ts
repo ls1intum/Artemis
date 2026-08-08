@@ -314,13 +314,12 @@ export class IrisCitationTextComponent {
         if (parsed.page) {
             attrs.push(`data-page="${escapeHtml(parsed.page)}"`);
         }
-        // Kept on the element rather than put into the link: only needed to compare against the version the server reports on click. Which slot the version sits in is
-        // what says whether it is about slides or a video - re-deriving that from the timestamp would be a second, drifting answer to a question the server has settled.
-        const videoVersion = parsed.versions?.videoVersion;
-        const attachmentVersion = parsed.versions?.attachmentVersion;
-        if (videoVersion || attachmentVersion) {
-            attrs.push(`data-pinned-version="${escapeHtml(videoVersion ?? attachmentVersion!)}"`);
-            attrs.push(`data-pinned-kind="${videoVersion ? 'video' : 'attachment'}"`);
+        // Kept on the element rather than put into the link: only needed to compare against the version the server reports on click. The tag of the version field is what
+        // says whether it is about slides or a video - re-deriving that from the timestamp would be a second, drifting answer to a question the server has settled.
+        const pinnedVersion = parsed.pinnedVersion;
+        if (pinnedVersion) {
+            attrs.push(`data-pinned-version="${escapeHtml(pinnedVersion.version)}"`);
+            attrs.push(`data-pinned-kind="${pinnedVersion.kind}"`);
         }
 
         return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
