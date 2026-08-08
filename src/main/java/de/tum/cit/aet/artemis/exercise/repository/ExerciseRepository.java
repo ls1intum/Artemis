@@ -52,6 +52,24 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    /**
+     * Loads the course exercises without any of their associations, for callers that only need to name them.
+     * <p>
+     * Unlike {@link #findByCourseIdWithCategories} this joins nothing: no categories, no variant group, no course. The
+     * entity is still loaded rather than projected because the exercise type is polymorphic and comes from the entity
+     * hierarchy, and because reusing {@code isVisibleToStudents()} on the entity keeps the visibility rule in exactly
+     * one place instead of duplicating it in SQL.
+     *
+     * @param courseId the course whose exercises should be loaded
+     * @return the exercises of the course, without associations
+     */
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+            """)
+    Set<Exercise> findAllWithoutAssociationsByCourseId(@Param("courseId") long courseId);
+
     @Query("""
             SELECT e
             FROM Exercise e
