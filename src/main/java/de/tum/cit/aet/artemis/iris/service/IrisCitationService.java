@@ -216,9 +216,10 @@ public class IrisCitationService {
      * <p>
      * Keeps stamping idempotent.
      * <p>
-     * Known limitation: the version fields are positional, while the summary is by design "everything up to the closing bracket" and may contain colons. A summary that
-     * holds at least three colons and ends in two colon-separated numbers is therefore indistinguishable from a stamped citation — it is left unpinned here, and the
-     * client truncates it at the presumed version fields. Accepted as rare enough not to warrant a marker inside the format.
+     * The version fields are positional, while the summary is by design "everything up to the closing bracket". A summary holding at least three colons and ending in two
+     * colon-separated numbers would therefore be indistinguishable from a stamped citation. The Pyris citation prompt tells the model to keep colons out of keywords and
+     * summaries, so this is not expected to occur — but nothing enforces it, which is why the surrounding parser stays colon-tolerant. Should it slip through, the citation
+     * is simply left unpinned here and behaves as it did before this feature; no wrong version is ever pinned.
      *
      * @param rest everything between the end timestamp and the closing bracket
      * @return {@code true} when the last two fields are version fields and at least one of them is filled
