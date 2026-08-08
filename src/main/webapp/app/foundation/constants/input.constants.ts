@@ -1,5 +1,6 @@
 export const DATE_FORMAT = 'YYYY-MM-DD';
 export const DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm';
+export const DEFAULT_JPA_STRING_COLUMN_LENGTH = 255;
 
 // Note: The values in Constants.java (server) need to be the same
 
@@ -36,6 +37,7 @@ export const COURSE_SHORT_NAME_MAX_LENGTH = 24;
  * Keep in sync with PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH in Constants.java.
  */
 export const PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
+export const PROGRAMMING_EXERCISE_NAME_MAX_LENGTH = DEFAULT_JPA_STRING_COLUMN_LENGTH;
 /** Programming exercise titles must only contain alphanumeric characters, or whitespaces, or '_' or '-' **/
 export const EXERCISE_TITLE_NAME_PATTERN = '^[a-zA-Z0-9-_ ]+';
 export const EXERCISE_TITLE_NAME_REGEX = new RegExp(EXERCISE_TITLE_NAME_PATTERN);
@@ -82,3 +84,5 @@ export const PACKAGE_NAME_PATTERN_FOR_DART =
  * Keep in sync with MAX_PROBLEM_STATEMENT_LENGTH in ProgrammingExerciseCreationUpdateService.
  */
 export const MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH = 100 * 1000;
+/** Maximum package name character length. Keep in sync with MAX_PACKAGE_NAME_LENGTH in Constants.java **/
+export const MAX_PACKAGE_NAME_LENGTH = 100;

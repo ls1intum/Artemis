@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
+import { TumUiTableSortEvent } from '@tumaet/ui-angular';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';

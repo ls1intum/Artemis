@@ -70,7 +70,15 @@
                                 <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
                             </div>
 
-                            <p-chart type="doughnut" [data]="doughnutData()" [options]="doughnutOptions()" [responsive]="false" width="350px" height="350px" />
+                            <p-chart
+                                type="doughnut"
+                                [data]="doughnutData()"
+                                [options]="doughnutOptions()"
+                                [responsive]="false"
+                                width="350px"
+                                height="350px"
+                                [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
+                            />
                         </div>
                         <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
                             @for (entry of doughnutChartEntries(); track $index) {
@@ -81,12 +89,31 @@
                             }
                         </div>
                         <div class="col-md-3">
-                            <h5
-                                class="fw-bolder"
-                                id="absolute-course-score"
-                                jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
-                                [translateValues]="{ number: overallPoints() }"
-                            ></h5>
+                            @if (courseHasExerciseVariants()) {
+                                <h5 class="fw-bolder" id="total-course-score">
+                                    <span jhiTranslate="artemisApp.courseOverview.statistics.yourTotalPoints" [translateValues]="{ number: overallPointsTotal() }"></span>
+                                    <fa-icon
+                                        class="me-1"
+                                        [icon]="faQuestionCircle"
+                                        ngbTooltip="{{ 'artemisApp.courseOverview.statistics.yourTotalPointsHelp' | artemisTranslate }}"
+                                    />
+                                </h5>
+                                <h5 class="fw-bolder" id="credited-course-score">
+                                    <span jhiTranslate="artemisApp.courseOverview.statistics.yourCreditedPoints" [translateValues]="{ number: overallPoints() }"></span>
+                                    <fa-icon
+                                        class="me-1"
+                                        [icon]="faQuestionCircle"
+                                        ngbTooltip="{{ 'artemisApp.courseOverview.statistics.yourCreditedPointsHelp' | artemisTranslate }}"
+                                    />
+                                </h5>
+                            } @else {
+                                <h5
+                                    class="fw-bolder"
+                                    id="absolute-course-score"
+                                    jhiTranslate="artemisApp.courseOverview.statistics.yourPoints"
+                                    [translateValues]="{ number: overallPoints() }"
+                                ></h5>
+                            }
                             <h5 class="fw-bolder" id="reachable-course-score">
                                 <span
                                     jhiTranslate="artemisApp.courseOverview.statistics.reachablePoints"
@@ -202,6 +229,10 @@
                                             [data]="groupChartData().get(exerciseGroup.key)"
                                             [options]="groupChartOptions().get(exerciseGroup.key)!"
                                             (onDataSelect)="onSelect($event, exerciseGroup.key)"
+                                            [ariaLabel]="
+                                                'artemisApp.courseOverview.statistics.exerciseCount'
+                                                    | artemisTranslate: { number: exerciseGroup.value.length, type: exerciseGroup.key }
+                                            "
                                         />
                                     </div>
                                 </div>

@@ -44,6 +44,8 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "pyrislectureingestiontest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private PyrisWebhookService pyrisWebhookService;
 
@@ -81,15 +83,15 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
         activateIrisGlobally();
 
         int numberOfSlides = 2;
@@ -105,7 +107,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("temp/example.txt");
-        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         enableIrisFor(lecture1.getCourse());
@@ -118,7 +120,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("temp/example.txt");
-        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());

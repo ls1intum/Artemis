@@ -14,6 +14,7 @@ import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
 import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /** Per-bar metadata used for tooltips and click navigation, keyed by the bar's chart name. */
 interface ExamScoreLookupEntry {
@@ -24,10 +25,16 @@ interface ExamScoreLookupEntry {
 
 type NameToValueMap = { [name: string]: ExamScoreLookupEntry };
 
+/** Vertical space each horizontal bar needs to stay readable, including the gap to its neighbour. */
+const BAR_HEIGHT_PX = 34;
+
+/** Space the x-axis (ticks and labels) and the chart's own padding need on top of the bars. */
+const AXIS_AND_PADDING_HEIGHT_PX = 48;
+
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    imports: [TranslateDirective, ChartModule],
+    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -52,6 +59,13 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.barColors());
 
     readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+
+    /**
+     * Height of the chart box, derived from the number of bars (the exercise group plus one bar per exercise).
+     * A fixed height squeezed groups with several exercises into unreadable slivers.
+     */
+    readonly chartHeight = computed(() => AXIS_AND_PADDING_HEIGHT_PX + Math.max(this.chartEntries().length, 1) * BAR_HEIGHT_PX);
+
     readonly chartOptions = computed(() =>
         barChartOptions({
             horizontal: true,
