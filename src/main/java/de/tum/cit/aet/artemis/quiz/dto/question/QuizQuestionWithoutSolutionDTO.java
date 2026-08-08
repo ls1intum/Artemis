@@ -11,13 +11,14 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+// Note: Only one of the three questions will be non-null depending on the question type
 @Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuizQuestionWithoutSolutionDTO.class),
         @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuizQuestionWithoutSolutionDTO.class),
         @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuizQuestionWithoutSolutionDTO.class) }, oneOf = { MultipleChoiceQuizQuestionWithoutSolutionDTO.class,
                 DragAndDropQuizQuestionWithoutSolutionDTO.class, ShortAnswerQuizQuestionWithoutSolutionDTO.class })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// Note: Only one of the three questions will be non-null depending on the question type
 public record QuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @Nullable @JsonUnwrapped MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionWithoutSolutionDTO,
         @Nullable @JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO,
@@ -47,18 +48,25 @@ public record QuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO 
 
 }
 
-// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here
+// These definitions are used for OpenAPI generation because polymorphic types with @JsonUnwrapped do not work here.
+// The pinned single-value "type" enum is what makes the oneOf branches mutually exclusive.
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "multiple-choice" }, defaultValue = "multiple-choice"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+record MultipleChoiceQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @JsonUnwrapped MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionWithoutSolutionDTO) {
 }
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "drag-and-drop" }, defaultValue = "drag-and-drop"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DragAndDropQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+record DragAndDropQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO) {
 }
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO, String explanation,
+record ShortAnswerQuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
         @JsonUnwrapped ShortAnswerQuestionWithoutMappingDTO shortAnswerQuestionWithoutMappingDTO) {
 }
