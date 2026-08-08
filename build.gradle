@@ -392,7 +392,7 @@ dependencies {
     implementation "io.micrometer:micrometer-commons"
     implementation "io.micrometer:micrometer-observation"
 
-    // Micrometer-to-OpenTelemetry tracing and OTLP export (version managed by Spring Boot BOM)
+    // Micrometer-to-OpenTelemetry tracing and OTLP export.
     implementation "org.springframework.boot:spring-boot-starter-opentelemetry:${spring_boot_version}"
     // Used directly by the Langfuse-only exporter below.
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
