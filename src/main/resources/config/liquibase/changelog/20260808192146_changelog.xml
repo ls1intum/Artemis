@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        weaviate_outbox stores the intent of every SearchableEntities write (upsert or delete) as a durable
+        row. A single-writer dispatcher on the scheduling node claims rows with FOR UPDATE SKIP LOCKED and
+        performs the actual Weaviate write with retry/backoff, so a Weaviate outage or node death no longer
+        loses the write. UPSERT rows carry a payload snapshot (the property map the call site already built);
+        bulk delete rows carry their parameters as JSON.
+
+        searchable_entity_sync_state records, per (entity_type, entity_id), the content hash last confirmed
+        written to Weaviate. The dispatcher refreshes it on a successful upsert; a later reconcile pass reads it
+        to detect never-indexed or drifted entities.
+    -->
+    <changeSet id="20260808192146-1" author="nayerkotry">
+        <createTable tableName="weaviate_outbox">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="operation" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_type" type="varchar(64)"/>
+            <column name="entity_id" type="bigint"/>
+            <column name="payload" type="longtext"/>
+            <column name="params" type="text"/>
+            <column defaultValueNumeric="0" name="attempts" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_attempt_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- The claim query filters on next_attempt_at (<= now) and orders by id; id is already the PK. -->
+        <createIndex indexName="idx_weaviate_outbox_next_attempt_at" tableName="weaviate_outbox">
+            <column name="next_attempt_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260808192146-2" author="nayerkotry">
+        <createTable tableName="searchable_entity_sync_state">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="entity_type" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_hash" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="synced_at" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="searchable_entity_sync_state" columnNames="entity_type, entity_id"
+                             constraintName="uc_searchable_entity_sync_state_type_entity"/>
+    </changeSet>
+</databaseChangeLog>
