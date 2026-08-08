@@ -4,11 +4,12 @@ import { faChalkboardUser, faPlus, faXmark } from '@fortawesome/free-solid-svg-i
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { SelectModule } from 'primeng/select';
 import { ChipModule } from 'primeng/chip';
@@ -56,7 +57,7 @@ function iconForMode(mode: ChatServiceMode): IconDefinition {
 export class ContextSelectionComponent {
     private readonly chatService = inject(IrisChatService);
     private readonly lectureService = inject(LectureService);
-    private readonly courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private readonly exerciseService = inject(ExerciseService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
 
@@ -74,8 +75,8 @@ export class ContextSelectionComponent {
      * read off a course object that the course overview happened to have loaded — which silently produced an empty
      * picker as soon as the overview stopped loading that content.
      */
-    private readonly lecturesSignal = signal<Lecture[]>([]);
-    private readonly exercisesSignal = signal<Exercise[]>([]);
+    private readonly lecturesSignal = signal<LectureForOverview[]>([]);
+    private readonly exercisesSignal = signal<ExerciseTitle[]>([]);
     private optionsLoadedForCourseId?: number;
 
     readonly lectures = this.lecturesSignal.asReadonly();
@@ -115,11 +116,11 @@ export class ContextSelectionComponent {
         this.lectureService
             .findAllByCourseIdForOverview(courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (res) => this.lecturesSignal.set(res.body ?? []), error: () => this.lecturesSignal.set([]) });
-        this.courseOverviewExercisesService
-            .loadIfNeeded(courseId)
+            .subscribe({ next: (lectures) => this.lecturesSignal.set(lectures), error: () => this.lecturesSignal.set([]) });
+        this.exerciseService
+            .getTitlesForCourse(courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (data) => this.exercisesSignal.set(data.exercises ?? []), error: () => this.exercisesSignal.set([]) });
+            .subscribe({ next: (exercises) => this.exercisesSignal.set(exercises), error: () => this.exercisesSignal.set([]) });
     }
 
     readonly supportedExercises = computed(() => this.exercises().filter((e) => e.type && e.type in EXERCISE_TYPE_TO_CHAT_MODE));
@@ -145,7 +146,7 @@ export class ContextSelectionComponent {
                         value: `${ChatServiceMode.LECTURE}:${lecture.id}`,
                         faIcon: faChalkboardUser,
                         mode: ChatServiceMode.LECTURE,
-                        entityId: lecture.id!,
+                        entityId: lecture.id,
                     })),
             });
         }
@@ -160,7 +161,7 @@ export class ContextSelectionComponent {
                         value: `${EXERCISE_TYPE_TO_CHAT_MODE[exercise.type!]}:${exercise.id}`,
                         faIcon: getIcon(exercise.type) as IconDefinition,
                         mode: EXERCISE_TYPE_TO_CHAT_MODE[exercise.type!],
-                        entityId: exercise.id!,
+                        entityId: exercise.id,
                     })),
             });
         }

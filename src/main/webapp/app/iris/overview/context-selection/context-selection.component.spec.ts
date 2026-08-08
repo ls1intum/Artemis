@@ -5,9 +5,8 @@ import { WritableSignal, signal } from '@angular/core';
 import { ContextSelectionComponent } from './context-selection.component';
 import { ChatServiceMode, IrisChatService, SessionContext } from 'app/iris/overview/services/iris-chat.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
-import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -25,7 +24,7 @@ describe('ContextSelectionComponent', () => {
         stagePendingContext: ReturnType<typeof vi.fn>;
     };
     let lectureServiceMock: { findAllByCourseIdForOverview: ReturnType<typeof vi.fn> };
-    let exercisesServiceMock: { loadIfNeeded: ReturnType<typeof vi.fn> };
+    let exerciseServiceMock: { getTitlesForCourse: ReturnType<typeof vi.fn> };
     let entityTitleServiceMock: { getTitle: ReturnType<typeof vi.fn> };
 
     const courseId = 42;
@@ -47,8 +46,8 @@ describe('ContextSelectionComponent', () => {
             stagePendingContext: vi.fn(),
         };
 
-        lectureServiceMock = { findAllByCourseIdForOverview: vi.fn().mockReturnValue(of(new HttpResponse({ body: lectures }))) };
-        exercisesServiceMock = { loadIfNeeded: vi.fn().mockReturnValue(of({ exercises })) };
+        lectureServiceMock = { findAllByCourseIdForOverview: vi.fn().mockReturnValue(of(lectures)) };
+        exerciseServiceMock = { getTitlesForCourse: vi.fn().mockReturnValue(of(exercises)) };
         entityTitleServiceMock = { getTitle: vi.fn().mockReturnValue(of('Resolved Title')) };
 
         await TestBed.configureTestingModule({
@@ -56,7 +55,7 @@ describe('ContextSelectionComponent', () => {
             providers: [
                 { provide: IrisChatService, useValue: chatServiceMock },
                 { provide: LectureService, useValue: lectureServiceMock },
-                { provide: CourseOverviewExercisesService, useValue: exercisesServiceMock },
+                { provide: ExerciseService, useValue: exerciseServiceMock },
                 { provide: EntityTitleService, useValue: entityTitleServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -74,7 +73,7 @@ describe('ContextSelectionComponent', () => {
     describe('data loading', () => {
         it('should not load any options until the picker is opened', () => {
             expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
-            expect(exercisesServiceMock.loadIfNeeded).not.toHaveBeenCalled();
+            expect(exerciseServiceMock.getTitlesForCourse).not.toHaveBeenCalled();
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
@@ -83,7 +82,7 @@ describe('ContextSelectionComponent', () => {
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledExactlyOnceWith(courseId);
-            expect(exercisesServiceMock.loadIfNeeded).toHaveBeenCalledExactlyOnceWith(courseId);
+            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
             expect(component.lectures()).toHaveLength(2);
             expect(component.exercises()).toHaveLength(3);
         });
@@ -93,12 +92,12 @@ describe('ContextSelectionComponent', () => {
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledOnce();
-            expect(exercisesServiceMock.loadIfNeeded).toHaveBeenCalledOnce();
+            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledOnce();
         });
 
         it('should leave the options empty when loading fails', () => {
             lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('network')));
-            exercisesServiceMock.loadIfNeeded.mockReturnValue(throwError(() => new Error('network')));
+            exerciseServiceMock.getTitlesForCourse.mockReturnValue(throwError(() => new Error('network')));
 
             component.loadContextOptions();
 
@@ -114,7 +113,7 @@ describe('ContextSelectionComponent', () => {
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
-            expect(exercisesServiceMock.loadIfNeeded).not.toHaveBeenCalled();
+            expect(exerciseServiceMock.getTitlesForCourse).not.toHaveBeenCalled();
         });
     });
 
@@ -205,7 +204,7 @@ describe('ContextSelectionComponent', () => {
         });
 
         it('should not include lectures group when there are no lectures', () => {
-            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of(new HttpResponse({ body: [] })));
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of([]));
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
             component.loadContextOptions();
@@ -216,8 +215,8 @@ describe('ContextSelectionComponent', () => {
         });
 
         it('should not include exercises group when there are no supported exercises', () => {
-            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of(new HttpResponse({ body: [] })));
-            exercisesServiceMock.loadIfNeeded.mockReturnValue(of({ exercises: [{ id: 99, type: ExerciseType.FILE_UPLOAD }] }));
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of([]));
+            exerciseServiceMock.getTitlesForCourse.mockReturnValue(of([{ id: 99, type: ExerciseType.FILE_UPLOAD }]));
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
             component.loadContextOptions();
