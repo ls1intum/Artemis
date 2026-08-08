@@ -116,6 +116,8 @@ class GenerationAttemptLoop {
 
     private final SpecFidelityCriticService specFidelityCritic;
 
+    private final RepairPromptComposer repairPrompts;
+
     private final GenerationJobService jobService;
 
     private final StagedGenerationRunner stagedGenerationRunner;
@@ -283,6 +285,7 @@ class GenerationAttemptLoop {
         this.baselineGradedTestNames = context.baselineGradedTestNames();
         this.reviewBrief = context.sourceBrief();
         this.authoringBrief = GenerationOrchestrationService.renderAuthoringBrief(context.sourceBrief());
+        this.repairPrompts = new RepairPromptComposer(maxGenerationAttempts, mode, authoringBrief, specFidelityCritic);
         this.systemPrompt = context.systemPrompt();
         this.baseTools = context.baseTools();
         this.tools = context.tools();
@@ -389,7 +392,8 @@ class GenerationAttemptLoop {
                 emit("The semantic repair broke mechanical verification; allowing one narrow mechanical correction without reopening semantic scope.");
             }
             emit("Verification rejected the exercise; asking the agent to fix the issues and try again.");
-            currentPrompt = mechanicalRejectionPrompt(attempt);
+            currentPrompt = repairPrompts.mechanicalRejection(attempt, specSnapshot.get(), verification.report(), repairScheduler.roundsStarted() > 0 ? lastSemanticRepair : null,
+                    specFidelityReport);
         }
         if (terminationReason == null) {
             // Reachable only when the derived attempt cap is non-positive; record and log it rather than leaving a campaign's termination reason absent.
@@ -740,7 +744,8 @@ class GenerationAttemptLoop {
                 pendingSemanticRepair.report().findings().stream().map(SpecFidelityReport.Finding::kind).distinct().toList());
         emit(adoptWitnesses ? "The exercise is verified; offering the AI the contract tests an independent reviewer prepared for it."
                 : "Mechanical verification passed, but the exercise review found requirements or quality issues; asking the AI to correct them.");
-        currentPrompt = adoptWitnesses ? witnessAdoptionPrompt(attempt, specSnapshot.get(), repairBatch.get()) : semanticRepairPrompt(attempt, repairBatch.get());
+        currentPrompt = adoptWitnesses ? repairPrompts.witnessAdoption(attempt, specSnapshot.get(), repairBatch.get())
+                : repairPrompts.semanticRepair(attempt, specSnapshot.get(), repairBatch.get());
         return LoopStep.NEXT_ATTEMPT;
     }
 
@@ -904,56 +909,6 @@ class GenerationAttemptLoop {
             return adaptationChanges == null ? SpecFidelityReport.qualityReviewUnavailable("The full-artifact reviewer failed before it could assess the candidate.")
                     : SpecFidelityReport.adaptationScopeUnavailable("The adaptation-scope reviewer failed before it could assess every changed line.");
         }
-    }
-
-    /** Frames the prompt built after {@code completedAttempt}, which drives the attempt after it. */
-    private String attemptFraming(int completedAttempt) {
-        int upcomingAttempt = completedAttempt + 1;
-        boolean finalAttempt = upcomingAttempt >= maxGenerationAttempts;
-        return "Repair attempt " + upcomingAttempt + " of " + maxGenerationAttempts
-                + (finalAttempt ? " — this is the FINAL attempt; prioritise the blocking findings (especially any repeated from earlier reviews) over cosmetic ones. " : ". ");
-    }
-
-    /**
-     * The prompt for the one witness-adoption round. Framed as an offer rather than a defect list, because the candidate already passed every gate, and declining is allowed so
-     * the agent is not pushed into restating a case its suite already makes.
-     */
-    private String witnessAdoptionPrompt(int completedAttempt, @Nullable String specSnapshotForPrompt, SemanticRepairBatch batch) {
-        return attemptFraming(completedAttempt)
-                + "Your previous attempt is fully verified and accepted; nothing is broken. An independent reviewer derived the tests below from the "
-                + "approved specification and the server has already run each one against your reference solution, which passes them. Add each test to the graded suite unless an "
-                + "existing assertion already distinguishes exactly the same wrong implementation, in which case leave the suite as it is and say which test covers it. Change "
-                + "nothing else: the solution, template, statement and every existing test stay as they are. When you add a test, add its exact method name to test-plan.json with "
-                + "the same approved seam, weight, and visibility as the witness it strengthens. Then call the structured `verify` tool, and call submit when it "
-                + "reports MECHANICAL PRECHECK: PASS.\n\nThe instructor source requirements are:\n" + authoringBrief
-                + GenerationReviewSupport.specContractSection(specSnapshotForPrompt) + specFidelityCritic.renderForRetryPrompt(batch.report());
-    }
-
-    private String semanticRepairPrompt(int completedAttempt, SemanticRepairBatch batch) {
-        String scopeGuidance = mode == GenerationMode.ADAPT ? " Preserve all content outside the requested adaptation." : "";
-        return attemptFraming(completedAttempt) + "Your previous attempt passed mechanical verification, but the automated full-artifact review found review blockers."
-                + scopeGuidance
-                + " Preserve the mechanically correct work: do not restart or rewrite unrelated files. Begin with only the artifact(s) explicitly implicated by each finding's evidence. "
-                + batch.guidance()
-                + "After that smallest edit, call the structured `verify` tool; expand the repair surface only if its report identifies a concrete cross-artifact inconsistency caused by the edit. "
-                + "Keep every unaffected requirement, API, test, and example. The template is expected to fail behavioural and structural tests at approved TODOs and absent "
-                + "student-creates types—never make those tests pass merely because a raw template build exits non-zero. `verify`, not a raw build exit code, is the acceptance verdict. "
-                + "If you add, rename, or remove a behavioral test, update test-plan.json in the same edit so it maps every exact test method name. "
-                + "Call submit when it reports MECHANICAL PRECHECK: PASS.\n\nThe instructor " + "source requirements are:\n" + authoringBrief
-                + GenerationReviewSupport.specContractSection(specSnapshot.get()) + specFidelityCritic.renderForRetryPrompt(batch.report());
-    }
-
-    private String mechanicalRejectionPrompt(int completedAttempt) {
-        String semanticCorrectionGuidance = repairScheduler.roundsStarted() > 0 && lastSemanticRepair != null ? "\n\nThis rejection followed a "
-                + lastSemanticRepair.surface().name().toLowerCase(Locale.ROOT)
-                + " quality repair. Before changing production code, audit the new assertion against the frozen contract. If the assertion invents behavior the contract does not "
-                + "require, fix or remove the unsupported assertion first. " + lastSemanticRepair.guidance() : "";
-        return attemptFraming(completedAttempt) + "Your previous attempt was rejected by the differential verifier:\n" + verification.report()
-                + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
-                + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
-                + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
-                + authoringBrief + GenerationReviewSupport.specContractSection(specSnapshot.get()) + semanticCorrectionGuidance
-                + specFidelityCritic.renderForRetryPrompt(specFidelityReport);
     }
 
     private GenerationOutcome cancelledOutcome(AgentLoopResult cancelledResult) {

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.mock;
 
@@ -22,6 +23,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -53,18 +55,22 @@ class GenerationJobServiceClusterTest {
     @BeforeAll
     void startCluster() {
         String clusterName = "hyperion-job-service-cluster-test-" + System.nanoTime();
-        firstMember = Hazelcast.newHazelcastInstance(clusterConfig(clusterName));
-        secondMember = Hazelcast.newHazelcastInstance(clusterConfig(clusterName));
+        firstMember = Hazelcast.newHazelcastInstance(clusterConfig(clusterName, List.of()));
+        int firstMemberPort = firstMember.getCluster().getLocalMember().getSocketAddress().getPort();
+        secondMember = Hazelcast.newHazelcastInstance(clusterConfig(clusterName, List.of("127.0.0.1:" + firstMemberPort)));
         await().atMost(Duration.ofSeconds(60))
                 .untilAsserted(() -> assertThat(firstMember.getCluster().getMembers()).hasSize(2).hasSameSizeAs(secondMember.getCluster().getMembers()));
         assertThat(localMemberId(firstMember)).isNotEqualTo(localMemberId(secondMember));
     }
 
     /**
-     * Joins over TCP/IP on the loopback interface: multicast is unavailable or noisy on CI, and auto-detection could join a stray member from another build. Port auto-increment
-     * lets a concurrently running suite take the next free port.
+     * Joins over TCP/IP on the loopback interface: multicast is unavailable or noisy on CI, and auto-detection could join a stray member from another build.
+     * <p>
+     * {@code seedMembers} must name the founding member's <em>actual</em> port. A bare host scans only the three ports from 5701, which the Spring contexts running in this JVM
+     * have usually taken by the time this test starts; both members then bind above that range and each forms its own single-member cluster. The founding member is started
+     * with no seeds and its bound port is read back for the second.
      */
-    private static Config clusterConfig(String clusterName) {
+    private static Config clusterConfig(String clusterName, List<String> seedMembers) {
         Config config = new Config();
         config.setClusterName(clusterName);
         NetworkConfig network = config.getNetworkConfig();
@@ -73,7 +79,7 @@ class GenerationJobServiceClusterTest {
         JoinConfig join = network.getJoin();
         join.getAutoDetectionConfig().setEnabled(false);
         join.getMulticastConfig().setEnabled(false);
-        join.getTcpIpConfig().setEnabled(true).setMembers(List.of("127.0.0.1"));
+        join.getTcpIpConfig().setEnabled(true).setMembers(seedMembers);
         return config;
     }
 
@@ -154,8 +160,7 @@ class GenerationJobServiceClusterTest {
         firstNode.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
 
         assertThat(secondNode.hasActiveJob(exerciseId)).isTrue();
-        assertThat(org.assertj.core.api.Assertions.catchThrowable(() -> secondNode.startJob(user("other"), exercise(exerciseId), "generate", GenerationMode.GENERATE)))
-                .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
+        assertThatThrownBy(() -> secondNode.startJob(user("other"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isInstanceOf(ConflictException.class);
     }
 
     /** The cancel hook closes over live sandbox objects and is therefore node-local, so cancellation depends on the cluster-wide interrupt topic reaching the owner. */
@@ -177,7 +182,8 @@ class GenerationJobServiceClusterTest {
     @Test
     void recoverWedgedSlot_becomesPossibleFromTheSurvivingNodeOnlyAfterTheOwnerLeavesTheCluster() {
         long exerciseId = 905L;
-        HazelcastInstance doomedMember = Hazelcast.newHazelcastInstance(clusterConfig(firstMember.getConfig().getClusterName()));
+        HazelcastInstance doomedMember = Hazelcast.newHazelcastInstance(
+                clusterConfig(firstMember.getConfig().getClusterName(), List.of("127.0.0.1:" + firstMember.getCluster().getLocalMember().getSocketAddress().getPort())));
         try {
             await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(firstMember.getCluster().getMembers()).hasSize(3));
             // Three members now, so both services must expect three or admission fails closed on the topology check.

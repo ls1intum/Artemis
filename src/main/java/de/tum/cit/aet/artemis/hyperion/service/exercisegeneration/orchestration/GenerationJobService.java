@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,6 +113,8 @@ public class GenerationJobService {
     private IMap<String, Boolean> cancellationMap;
 
     private GenerationJobReplayStore replayStore;
+
+    private GenerationJobReaper reaper;
 
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
@@ -255,6 +256,7 @@ public class GenerationJobService {
         ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
         cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
         localNodeId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
+        reaper = new GenerationJobReaper(this, hazelcastInstance, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
     }
 
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
@@ -336,8 +338,8 @@ public class GenerationJobService {
                 return;
             }
             Instant now = Instant.now();
-            if (shouldClearAsStale(existing, staleBefore(now))) {
-                if (reclaimStaleJob(key, existing, now)) {
+            if (reaper.shouldClearAsStale(existing, reaper.staleBefore(now))) {
+                if (reaper.reclaimStaleJob(key, existing, now)) {
                     return;
                 }
             }
@@ -368,8 +370,8 @@ public class GenerationJobService {
             JobInfo existing = jobMap.get(key);
             if (existing != null) {
                 Instant now = Instant.now();
-                if (shouldClearAsStale(existing, staleBefore(now))) {
-                    if (!reclaimStaleJob(key, existing, now)) {
+                if (reaper.shouldClearAsStale(existing, reaper.staleBefore(now))) {
+                    if (!reaper.reclaimStaleJob(key, existing, now)) {
                         throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
                     }
                 }
@@ -583,7 +585,7 @@ public class GenerationJobService {
         }
     }
 
-    private void interruptCluster(String jobId) {
+    void interruptCluster(String jobId) {
         // The hook closes over live sandbox objects, so it can only run on the node holding them: run it here and broadcast, so cancellation is prompt even when the request hits
         // a different core node than the one running the sandbox.
         runLocalCancelHook(jobId);
@@ -766,7 +768,7 @@ public class GenerationJobService {
             if (job == null || job.cancellable()) {
                 return Optional.empty();
             }
-            return Optional.of(new WedgedSlotInfo(exerciseId, job.jobId(), slotKind(job), job.ownerNodeId(), job.startedAt(), !ownerMemberIsPresent(job)));
+            return Optional.of(new WedgedSlotInfo(exerciseId, job.jobId(), slotKind(job), job.ownerNodeId(), job.startedAt(), !reaper.ownerMemberIsPresent(job)));
         }
         finally {
             unlockJobSlot(key);
@@ -793,11 +795,11 @@ public class GenerationJobService {
         try {
             verifyMajorityDataMemberTopology();
             JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(token) || job.cancellable() || ownerMemberIsPresent(job)) {
+            if (job == null || !job.jobId().equals(token) || job.cancellable() || reaper.ownerMemberIsPresent(job)) {
                 return false;
             }
             if (isGenerationJob(job)) {
-                return stopActiveJob(key, job, Instant.now());
+                return reaper.stopActiveJob(key, job, Instant.now());
             }
             return jobMap.remove(key, job);
         }
@@ -882,139 +884,24 @@ public class GenerationJobService {
     /** Cancels stale jobs and terminalizes jobs whose owner has left the Hazelcast cluster. */
     @Scheduled(fixedDelayString = "${artemis.hyperion.agent.stale-job-scan-ms:60000}")
     public void clearStaleJobs() {
-        Instant now = Instant.now();
-        Instant staleBefore = staleBefore(now);
-        for (Map.Entry<String, JobInfo> entry : jobMap.entrySet()) {
-            JobInfo job = entry.getValue();
-            if (job == null || !shouldClearAsStale(job, staleBefore)) {
-                continue;
-            }
-            String key = entry.getKey();
-            lockJobSlot(key);
-            try {
-                JobInfo current = jobMap.get(key);
-                if (current == null || !current.jobId().equals(job.jobId()) || !shouldClearAsStale(current, staleBefore)) {
-                    continue;
-                }
-                reclaimStaleJob(key, current, Instant.now());
-            }
-            finally {
-                unlockJobSlot(key);
-            }
-        }
+        reaper.sweep();
     }
 
-    /**
-     * Reclaims a cancellable stale job only after its owner leaves the cluster. Non-cancellable and external mutation slots fail closed because their durable writes may still be
-     * running after membership loss.
-     */
-    private boolean reclaimStaleJob(String key, JobInfo current, Instant now) {
-        // Membership loss neither fences nor hard-cancels an external request, so clearing its slot here could overlap a partitioned writer with a new generation.
-        if (isExternalMutationJob(current)) {
-            return false;
-        }
-        if (!current.cancellable()) {
-            // A durable persistence/revert mutation may still be in flight, so retain the slot: a replacement claim must conflict rather than race the old owner's un-fenced
-            // Git/DB writes. Only an absent owner is logged; a live owner with a merely stale heartbeat is not actionable.
-            if (!ownerMemberIsPresent(current)) {
-                log.warn(
-                        "Retaining non-cancellable generation slot for job {} (exercise {}) after its owner {} left the Hazelcast cluster: cluster departure does not prove that "
-                                + "the in-flight persistence/revert mutation has stopped. The slot stays claimed and blocks generation, revert and ordinary REST edits of this "
-                                + "exercise until an operator recovers it: read it with GET /api/admin/exercises/{}/hyperion-wedged-slot and, once the old owner and its Git/DB "
-                                + "requests are confirmed quiescent, release it with DELETE /api/admin/exercises/{}/hyperion-wedged-slots/{}?reason=...",
-                        current.jobId(), current.exerciseId(), current.ownerNodeId(), current.exerciseId(), current.exerciseId(), current.jobId());
-            }
-            return false;
-        }
-        if (ownerMemberIsPresent(current)) {
-            signalStaleLiveOwner(current, now);
-            return false;
-        }
-        stopActiveJob(key, current, now);
-        return true;
-    }
-
-    private boolean ownerMemberIsPresent(JobInfo job) {
-        if (job.ownerNodeId() == null) {
-            return true;
-        }
-        try {
-            return hazelcastInstance.getCluster().getMembers().stream().anyMatch(member -> member.getUuid().toString().equals(job.ownerNodeId()));
-        }
-        catch (RuntimeException e) {
-            log.warn("Could not determine whether the owner of stale generation job {} is still a cluster member; retaining its slot", job.jobId(), e);
-            return true;
-        }
-    }
-
-    private void signalStaleLiveOwner(JobInfo current, Instant now) {
-        boolean alreadyCancelled = Boolean.TRUE.equals(cancellationMap.get(current.jobId()));
-        cancellationMap.set(current.jobId(), Boolean.TRUE);
-        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
-        if (!alreadyCancelled) {
-            interruptCluster(current.jobId());
-        }
-    }
-
-    /** @return whether this call was the one that removed the slot */
-    private boolean stopActiveJob(String key, JobInfo current, Instant now) {
-        cancellationMap.set(current.jobId(), Boolean.TRUE, Math.max(1, maxJobDuration.toSeconds()), TimeUnit.SECONDS);
-        replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
-        replayStore.sealUsageIncomplete(current.jobId());
-        boolean released = jobMap.remove(key, current);
-        if (released) {
-            replayStore.retainAfterJobCleared(current.exerciseId(), current.jobId());
-        }
-        retainUncertainBudgetReservation(current);
-        interruptCluster(current.jobId());
-        if (isGenerationJob(current)) {
-            publishExerciseState(current.exerciseId(), current.jobId(), false);
-        }
-        return released;
+    static boolean isExternalMutationJob(JobInfo job) {
+        return job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
     }
 
     static boolean isGenerationJob(JobInfo job) {
         return !job.jobId().startsWith(REVERT_JOB_PREFIX) && !job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
     }
 
-    private boolean isExternalMutationJob(JobInfo job) {
-        return job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX);
-    }
-
-    private void publishExerciseState(long exerciseId, String jobId, boolean running) {
+    void publishExerciseState(long exerciseId, String jobId, boolean running) {
         try {
             eventPublisher.publishEvent(new ExerciseGenerationStateChangedEvent(new ExerciseGenerationStateDTO(exerciseId, jobId, running)));
         }
         catch (RuntimeException e) {
             log.warn("Could not publish shared generation state for exercise {} and job {}", exerciseId, jobId, e);
         }
-    }
-
-    private void retainUncertainBudgetReservation(JobInfo job) {
-        if (isGenerationJob(job) && generationBudgetService != null) {
-            generationBudgetService.retainReservationForBudgetWindow(job.budgetReservationId());
-        }
-    }
-
-    @Nullable
-    private Instant staleBefore(Instant now) {
-        return staleJobTimeout == null || staleJobTimeout.isZero() || staleJobTimeout.isNegative() ? null : now.minus(staleJobTimeout);
-    }
-
-    private boolean shouldClearAsStale(JobInfo job, @Nullable Instant staleBefore) {
-        return (staleBefore != null && !job.lastHeartbeatOrStartedAt().isAfter(staleBefore)) || !ownerMemberIsPresent(job);
-    }
-
-    private String stoppedMessage(JobInfo job, Instant now) {
-        if (job.deadlineAt() != null && !job.deadlineAt().isAfter(now)) {
-            return "Generation stopped because it exceeded the configured time limit. Nothing was changed.";
-        }
-        return "Generation stopped because the owning node stopped sending heartbeats. Review the exercise and repositories before use if this happened while saving.";
-    }
-
-    private ExerciseGenerationEventDTO.TerminationReason stoppedTerminationReason(JobInfo job, Instant now) {
-        return job.deadlineAt() != null && !job.deadlineAt().isAfter(now) ? ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED
-                : ExerciseGenerationEventDTO.TerminationReason.CANCELLED;
     }
 
     private static String key(long exerciseId) {
@@ -1029,12 +916,12 @@ public class GenerationJobService {
      * such stalls take that scheduler with them. The mutations under the lock are value-guarded compare-and-set operations, so an expired lease loses a race rather than
      * corrupting state.
      */
-    private void lockJobSlot(String key) {
+    void lockJobSlot(String key) {
         jobMap.lock(key, LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
     }
 
     /** Releases the lock, tolerating a lease that already expired: that is diagnostic, not a reason to replace the caller's outcome with an exception. */
-    private void unlockJobSlot(String key) {
+    void unlockJobSlot(String key) {
         try {
             jobMap.unlock(key);
         }

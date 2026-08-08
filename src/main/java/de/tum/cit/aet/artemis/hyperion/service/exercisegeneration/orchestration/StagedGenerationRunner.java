@@ -375,7 +375,7 @@ public class StagedGenerationRunner {
                             TerminationReason.NO_ADMISSIBLE_CONCEPT);
                 }
                 selectedConcept = fallback.concept();
-                conceptFindings.addAll(conceptAdmissionNotes(fallback));
+                conceptFindings.addAll(SpecificationReviewPrompts.conceptAdmissionNotes(fallback));
                 emit(progress, "No exercise concept was admitted outright. Continuing with candidate " + fallback.candidate()
                         + ", the one the review rejected least, and attaching every objection for instructor review.");
                 log.info("Exercise {}: no concept was admitted; proceeding with candidate {} ({} failed selection axes) and {} finding(s) attached", exercise.getId(),
@@ -436,7 +436,7 @@ public class StagedGenerationRunner {
                 }
                 AgentLoopResult result;
                 if (freshSemanticSpecAttempt) {
-                    String userPrompt = freshSemanticSpecPrompt(sourceBrief, selectedConcept);
+                    String userPrompt = SpecificationReviewPrompts.freshSemanticSpecPrompt(sourceBrief, selectedConcept);
                     if (continuous) {
                         AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, userPrompt, tools, allocation, cancelled, usageSink, progress);
                         result = session.result();
@@ -449,7 +449,7 @@ public class StagedGenerationRunner {
                 }
                 else {
                     String stageBriefPrompt = switch (stage) {
-                        case SPEC -> specPromptWithSelectedConcept(briefPrompt, selectedConcept);
+                        case SPEC -> SpecificationReviewPrompts.specPromptWithSelectedConcept(briefPrompt, selectedConcept);
                         // Statement authoring starts from the raw instructor authority plus the typed SPEC/visible-test handoff below, not the turn-0 workspace listing, which is
                         // useful only while building executable artifacts.
                         case STATEMENT -> sourceBrief;
@@ -517,7 +517,8 @@ public class StagedGenerationRunner {
                                 review = specificationReviewer.reviewSpecification(sourceBrief, selectedConcept, specSnapshot, usageSink, cancelled);
                             }
                             previousSpecificationReview = review;
-                            transcriptWriter.writeAudit(exercise.getId(), "spec-review-" + ++specificationReviewNumber, specificationReviewAudit(review));
+                            transcriptWriter.writeAudit(exercise.getId(), "spec-review-" + ++specificationReviewNumber,
+                                    SpecificationReviewPrompts.specificationReviewAudit(review));
                             if (cancelled.getAsBoolean()) {
                                 return finish(exercise, AgentLoopResult.Status.CANCELLED, totalTurns, lastFinalMessage, archivedConversation, conversation);
                             }
@@ -550,7 +551,7 @@ public class StagedGenerationRunner {
                                                     + "concerns for instructor review.";
                                 }
                                 else {
-                                    unresolvedSpecificationFindings = unresolvedInconclusiveReviewFindings(review);
+                                    unresolvedSpecificationFindings = SpecificationReviewPrompts.unresolvedInconclusiveReviewFindings(review);
                                     reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification and attaching that "
                                             + "uncertainty for instructor review.";
                                 }
@@ -562,7 +563,7 @@ public class StagedGenerationRunner {
                                 log.info("Specification review rejected the candidate for exercise {}: {}", exercise.getId(), reviewFeedback);
                                 semanticSpecRefinementsUsed++;
                                 semanticSpecFeedback = reviewFeedback;
-                                gateFeedback = semanticSpecRefinementPrompt(reviewFeedback);
+                                gateFeedback = SpecificationReviewPrompts.semanticSpecRefinementPrompt(reviewFeedback);
                                 String rejectedDirection = "SUFFICIENT".equals(review.learningFitDirection()) ? null : review.learningFitDirection();
                                 boolean repeatedLearningFitFailure = rejectedDirection != null && rejectedDirection.equals(previousRejectedLearningFitDirection);
                                 previousRejectedLearningFitDirection = rejectedDirection;
@@ -620,7 +621,7 @@ public class StagedGenerationRunner {
                                         else {
                                             selectedConcept = replacementFallback.concept();
                                             conceptFindings.clear();
-                                            conceptFindings.addAll(conceptAdmissionNotes(replacementFallback));
+                                            conceptFindings.addAll(SpecificationReviewPrompts.conceptAdmissionNotes(replacementFallback));
                                             emit(progress, "No replacement concept was admitted outright. Continuing with candidate " + replacementFallback.candidate()
                                                     + ", the one the review rejected least, and attaching every objection for instructor review.");
                                             log.info("Exercise {}: no replacement concept was admitted; proceeding with candidate {} ({} failed selection axes)", exercise.getId(),
@@ -693,7 +694,8 @@ public class StagedGenerationRunner {
                                 conversation);
                     }
                     semanticSpecRefinementsUsed++;
-                    gateFeedback = semanticSpecFeedback == null ? gate.observation() : semanticSpecCorrectionPrompt(semanticSpecFeedback, gate.observation());
+                    gateFeedback = semanticSpecFeedback == null ? gate.observation()
+                            : SpecificationReviewPrompts.semanticSpecCorrectionPrompt(semanticSpecFeedback, gate.observation());
                     semanticSpecFeedback = null;
                     emit(progress, "Phase " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after its review or consistency check");
                     allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));
@@ -725,92 +727,6 @@ public class StagedGenerationRunner {
 
         }
         return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings);
-    }
-
-    /**
-     * Renders one instructor-facing note per objection the concept review raised, led by a note naming the candidate the run actually proceeded with.
-     * <p>
-     * Findings are carried verbatim, never summarized, so that the broad selection review ({@code "Candidate N: ..."}) and the focused admission audit
-     * ({@code "Selected concept failed focused admission: ..."}) stay distinguishable, and so a reviewer can still see the objections raised against candidates this run did not
-     * build.
-     */
-    private static List<String> conceptAdmissionNotes(ExerciseConceptSelector.ConceptFallback fallback) {
-        List<String> notes = new ArrayList<>();
-        notes.add("The concept review admitted no candidate. This exercise was built from candidate " + fallback.candidate()
-                + ", which the review rejected least, so the design below is a draft the review objected to rather than one it approved.");
-        fallback.findings().stream().filter(finding -> !finding.isBlank()).map(String::strip).forEach(notes::add);
-        return List.copyOf(notes);
-    }
-
-    private static List<String> unresolvedInconclusiveReviewFindings(SpecFidelityCriticService.SpecificationReview review) {
-        if (review.riskHistory().isEmpty()) {
-            return List.of("The automated specification quality review was inconclusive, so the mechanically checked contract requires instructor review.");
-        }
-        return review.riskHistory().stream().map(finding -> "Unresolved specification-review hypothesis from grounded evidence: " + finding).toList();
-    }
-
-    private static String semanticSpecRefinementPrompt(String reviewFeedback) {
-        return reviewFeedback + """
-
-
-                Treat the cited findings as review hypotheses, not instructions to patch isolated sentences. Re-read the whole current SPEC.md and confirm each finding
-                against it. Preserve the selected concept's central situation, constraint, student-owned behavior, unaffected identifiers, ownership, and accepted semantic
-                choices. Plan the smallest coherent contract revision, then replace SPEC.md with one complete `write_file` call rather than accumulating local edits. Reconcile
-                every affected rule, example, policy algorithm, public API, ownership row, testing seam, and diagram decision together. Reviewer feedback deliberately supplies no
-                replacement theme, identifier, API, or formula. Keep every required section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no
-                decision valid. Resolve the grounded batch; if a finding is contradicted by the complete contract, preserve the correct contract and let the next fresh review
-                adjudicate it. Replay every changed example through its named policy, then call the structured verify tool before finishing.
-                """;
-    }
-
-    private static String specificationReviewAudit(SpecFidelityCriticService.SpecificationReview review) {
-        if (!review.complete()) {
-            return "The specification review did not produce a complete grounded verdict."
-                    + (review.auditSummary().isBlank() ? "" : "\n\nValidation detail: " + review.auditSummary());
-        }
-        if (review.accepted()) {
-            return "The specification review accepted the candidate with no blocking findings." + (review.auditSummary().isBlank() ? "" : "\n\n" + review.auditSummary());
-        }
-        return (review.auditSummary().isBlank() ? "" : review.auditSummary() + "\n\n") + review.feedback();
-    }
-
-    private static String freshSemanticSpecPrompt(String sourceBrief, @Nullable String selectedConcept) {
-        return """
-                Create a fresh specification from the instructor brief and newly reviewed concept below. A previous plan was discarded; it is deliberately absent from this fresh
-                context. Instantiate the selected generator-authored concept coherently in one complete SPEC.md without adding unrelated complexity, then call the structured
-                verify tool.
-
-                INSTRUCTOR BRIEF:
-                """ + sourceBrief.strip() + "\n\nNEWLY SELECTED GENERATOR-AUTHORED CONCEPT:\n"
-                + (selectedConcept == null ? "No reviewed replacement concept is available; preserve the instructor brief exactly." : selectedConcept.strip());
-    }
-
-    private static String specPromptWithSelectedConcept(String briefPrompt, @Nullable String selectedConcept) {
-        if (selectedConcept == null || selectedConcept.isBlank()) {
-            return briefPrompt;
-        }
-        return briefPrompt + """
-
-
-                SELECTED GENERATOR-AUTHORED CONCEPT (planning input, not yet an approved contract):
-                ---
-                """ + selectedConcept.strip() + """
-
-                ---
-                Instantiate this concept coherently in SPEC.md. The instructor brief remains authoritative, and the normal specification reviewer must still approve the result.
-                """;
-    }
-
-    private static String semanticSpecCorrectionPrompt(String reviewFeedback, String mechanicalFeedback) {
-        return """
-                The semantic revision is incomplete and does not yet pass SPEC.md's mechanical consistency check. Continue the SAME bounded revision; do not merely patch the
-                parser-visible symptom or open unrelated design choices. Re-read the whole current file, finish every original semantic repair coherently, and use one full
-                write_file rewrite if incremental edits have left mixed vocabulary or identifiers. Preserve unaffected domain, API, ownership, examples, and grading intent.
-                Keep every required section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no decision valid. Call the structured verify
-                tool and finish only after it passes.
-
-                ORIGINAL SEMANTIC REVIEW:
-                """ + reviewFeedback + "\n\nMECHANICAL DEFECT IN THE CURRENT REVISION:\n" + mechanicalFeedback;
     }
 
     /** Builds the outcome on every exit path and writes the session transcript (best-effort, no-op unless a transcript directory is configured). */
