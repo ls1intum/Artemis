@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- PointCounter ownership must be structurally valid before the numeric normalization can be applied safely. -->
+    <changeSet id="20260807151850-1" author="uddin">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0"><![CDATA[
+                SELECT COUNT(*)
+                FROM quiz_statistic_counter c
+                LEFT JOIN quiz_statistic qs ON qs.id = c.quiz_point_statistic_id
+                LEFT JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                WHERE c.discriminator = 'PC'
+                  AND (c.quiz_point_statistic_id IS NULL OR qs.id IS NULL OR qs.discriminator <> 'QP' OR e.id IS NULL)
+            ]]></sqlCheck>
+        </preConditions>
+    </changeSet>
+
+    <!-- Reject counter sums that cannot be represented by the Java Integer fields after merging normalized buckets. -->
+    <changeSet id="20260807151850-2a" author="uddin" dbms="postgresql">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0"><![CDATA[
+                WITH totals AS (
+                    SELECT qs.id AS statistic_id, COALESCE(SUM(q.points), 0.0) AS overall_points
+                    FROM quiz_statistic qs
+                    JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                    LEFT JOIN quiz_question q ON q.exercise_id = e.id
+                    WHERE qs.discriminator = 'QP'
+                    GROUP BY qs.id
+                ), normalized AS (
+                    SELECT c.quiz_point_statistic_id AS statistic_id,
+                           CASE
+                               WHEN c.points IS NULL
+                                    OR c.points::text IN ('NaN', 'Infinity', '-Infinity')
+                                    OR c.points < 0
+                                    OR c.points <> FLOOR(c.points)
+                                    OR c.points > FLOOR(t.overall_points + 0.5)
+                                   THEN 0.0
+                               ELSE c.points
+                           END AS normalized_points,
+                           GREATEST(COALESCE(c.rated_counter, 0), 0)::bigint AS rated_counter,
+                           GREATEST(COALESCE(c.un_rated_counter, 0), 0)::bigint AS unrated_counter
+                    FROM quiz_statistic_counter c
+                    JOIN totals t ON t.statistic_id = c.quiz_point_statistic_id
+                    WHERE c.discriminator = 'PC'
+                ), merged AS (
+                    SELECT statistic_id, normalized_points, SUM(rated_counter) AS rated_counter, SUM(unrated_counter) AS unrated_counter
+                    FROM normalized
+                    GROUP BY statistic_id, normalized_points
+                )
+                SELECT COUNT(*)
+                FROM merged
+                WHERE rated_counter > 2147483647 OR unrated_counter > 2147483647
+            ]]></sqlCheck>
+        </preConditions>
+    </changeSet>
+
+    <changeSet id="20260807151850-2b" author="uddin" dbms="mysql">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0"><![CDATA[
+                WITH totals AS (
+                    SELECT qs.id AS statistic_id, COALESCE(SUM(q.points), 0.0) AS overall_points
+                    FROM quiz_statistic qs
+                    JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                    LEFT JOIN quiz_question q ON q.exercise_id = e.id
+                    WHERE qs.discriminator = 'QP'
+                    GROUP BY qs.id
+                ), normalized AS (
+                    SELECT c.quiz_point_statistic_id AS statistic_id,
+                           CASE
+                               WHEN c.points IS NULL
+                                    OR c.points < 0
+                                    OR c.points <> FLOOR(c.points)
+                                    OR c.points > FLOOR(t.overall_points + 0.5)
+                                   THEN 0.0
+                               ELSE c.points
+                           END AS normalized_points,
+                           CAST(GREATEST(COALESCE(c.rated_counter, 0), 0) AS SIGNED) AS rated_counter,
+                           CAST(GREATEST(COALESCE(c.un_rated_counter, 0), 0) AS SIGNED) AS unrated_counter
+                    FROM quiz_statistic_counter c
+                    JOIN totals t ON t.statistic_id = c.quiz_point_statistic_id
+                    WHERE c.discriminator = 'PC'
+                ), merged AS (
+                    SELECT statistic_id, normalized_points, SUM(rated_counter) AS rated_counter, SUM(unrated_counter) AS unrated_counter
+                    FROM normalized
+                    GROUP BY statistic_id, normalized_points
+                )
+                SELECT COUNT(*)
+                FROM merged
+                WHERE rated_counter > 2147483647 OR unrated_counter > 2147483647
+            ]]></sqlCheck>
+        </preConditions>
+    </changeSet>
+
+    <!-- Backfill point statistics into the discriminator-dependent quiz_statistic.counters JSON column. Existing ids are preserved; merged buckets prefer the id of an already-valid target bucket. -->
+    <changeSet id="20260807151850-3a" author="uddin" dbms="postgresql">
+        <sql><![CDATA[
+            WITH totals AS (
+                SELECT qs.id AS statistic_id, COALESCE(SUM(q.points), 0.0) AS overall_points
+                FROM quiz_statistic qs
+                JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                LEFT JOIN quiz_question q ON q.exercise_id = e.id
+                WHERE qs.discriminator = 'QP'
+                GROUP BY qs.id
+            ), normalized AS (
+                SELECT c.id AS source_id,
+                       c.quiz_point_statistic_id AS statistic_id,
+                       c.points AS source_points,
+                       CASE
+                           WHEN c.points IS NULL
+                                OR c.points::text IN ('NaN', 'Infinity', '-Infinity')
+                                OR c.points < 0
+                                OR c.points <> FLOOR(c.points)
+                                OR c.points > FLOOR(t.overall_points + 0.5)
+                               THEN 0.0
+                           ELSE c.points
+                       END AS normalized_points,
+                       GREATEST(COALESCE(c.rated_counter, 0), 0)::bigint AS rated_counter,
+                       GREATEST(COALESCE(c.un_rated_counter, 0), 0)::bigint AS unrated_counter
+                FROM quiz_statistic_counter c
+                JOIN totals t ON t.statistic_id = c.quiz_point_statistic_id
+                WHERE c.discriminator = 'PC'
+            ), merged AS (
+                SELECT statistic_id,
+                       normalized_points,
+                       COALESCE(MIN(source_id) FILTER (WHERE source_points = normalized_points), MIN(source_id)) AS id,
+                       SUM(rated_counter) AS rated_counter,
+                       SUM(unrated_counter) AS unrated_counter
+                FROM normalized
+                GROUP BY statistic_id, normalized_points
+            ), aggregated AS (
+                SELECT statistic_id,
+                       jsonb_agg(jsonb_build_object(
+                           'id', id,
+                           'points', normalized_points,
+                           'ratedCounter', rated_counter,
+                           'unRatedCounter', unrated_counter
+                       ) ORDER BY normalized_points) AS counters
+                FROM merged
+                GROUP BY statistic_id
+            )
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE(a.counters, '[]'::jsonb)
+            FROM totals t
+            LEFT JOIN aggregated a ON a.statistic_id = t.statistic_id
+            WHERE qs.id = t.statistic_id;
+        ]]></sql>
+    </changeSet>
+
+    <changeSet id="20260807151850-3b" author="uddin" dbms="mysql">
+        <sql><![CDATA[
+            WITH totals AS (
+                SELECT qs.id AS statistic_id, COALESCE(SUM(q.points), 0.0) AS overall_points
+                FROM quiz_statistic qs
+                JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                LEFT JOIN quiz_question q ON q.exercise_id = e.id
+                WHERE qs.discriminator = 'QP'
+                GROUP BY qs.id
+            ), normalized AS (
+                SELECT c.id AS source_id,
+                       c.quiz_point_statistic_id AS statistic_id,
+                       c.points AS source_points,
+                       CASE
+                           WHEN c.points IS NULL
+                                OR c.points < 0
+                                OR c.points <> FLOOR(c.points)
+                                OR c.points > FLOOR(t.overall_points + 0.5)
+                               THEN 0.0
+                           ELSE c.points
+                       END AS normalized_points,
+                       CAST(GREATEST(COALESCE(c.rated_counter, 0), 0) AS SIGNED) AS rated_counter,
+                       CAST(GREATEST(COALESCE(c.un_rated_counter, 0), 0) AS SIGNED) AS unrated_counter
+                FROM quiz_statistic_counter c
+                JOIN totals t ON t.statistic_id = c.quiz_point_statistic_id
+                WHERE c.discriminator = 'PC'
+            ), merged AS (
+                SELECT statistic_id,
+                       normalized_points,
+                       COALESCE(MIN(CASE WHEN source_points = normalized_points THEN source_id END), MIN(source_id)) AS id,
+                       SUM(rated_counter) AS rated_counter,
+                       SUM(unrated_counter) AS unrated_counter
+                FROM normalized
+                GROUP BY statistic_id, normalized_points
+            ), ordered AS (
+                SELECT statistic_id,
+                       JSON_ARRAYAGG(JSON_OBJECT(
+                           'id', id,
+                           'points', normalized_points,
+                           'ratedCounter', rated_counter,
+                           'unRatedCounter', unrated_counter
+                       )) OVER (
+                           PARTITION BY statistic_id
+                           ORDER BY normalized_points
+                           ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                       ) AS counters,
+                       ROW_NUMBER() OVER (PARTITION BY statistic_id ORDER BY normalized_points DESC) AS aggregate_row_number
+                FROM merged
+            )
+            UPDATE quiz_statistic qs
+            LEFT JOIN ordered o ON o.statistic_id = qs.id AND o.aggregate_row_number = 1
+            SET qs.counters = COALESCE(o.counters, JSON_ARRAY())
+            WHERE qs.discriminator = 'QP';
+        ]]></sql>
+    </changeSet>
+
+    <!-- PostgreSQL postcondition: every normalized merged bucket is present exactly once and every QP row has a JSON array. -->
+    <changeSet id="20260807151850-4a" author="uddin" dbms="postgresql">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0"><![CDATA[
+                WITH totals AS (
+                    SELECT qs.id AS statistic_id, COALESCE(SUM(q.points), 0.0) AS overall_points
+                    FROM quiz_statistic qs
+                    JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                    LEFT JOIN quiz_question q ON q.exercise_id = e.id
+                    WHERE qs.discriminator = 'QP'
+                    GROUP BY qs.id
+                ), normalized AS (
+                    SELECT c.id AS source_id,
+                           c.quiz_point_statistic_id AS statistic_id,
+                           c.points AS source_points,
+                           CASE
+                               WHEN c.points IS NULL
+                                    OR c.points::text IN ('NaN', 'Infinity', '-Infinity')
+                                    OR c.points < 0
+                                    OR c.points <> FLOOR(c.points)
+                                    OR c.points > FLOOR(t.overall_points + 0.5)
+                                   THEN 0.0
+                               ELSE c.points
+                           END AS normalized_points,
+                           GREATEST(COALESCE(c.rated_counter, 0), 0)::bigint AS rated_counter,
+                           GREATEST(COALESCE(c.un_rated_counter, 0), 0)::bigint AS unrated_counter
+                    FROM quiz_statistic_counter c
+                    JOIN totals t ON t.statistic_id = c.quiz_point_statistic_id
+                    WHERE c.discriminator = 'PC'
+                ), merged AS (
+                    SELECT statistic_id,
+                           normalized_points,
+                           COALESCE(MIN(source_id) FILTER (WHERE source_points = normalized_points), MIN(source_id)) AS id,
+                           SUM(rated_counter) AS rated_counter,
+                           SUM(unrated_counter) AS unrated_counter
+                    FROM normalized
+                    GROUP BY statistic_id, normalized_points
+                ), mismatches AS (
+                    SELECT t.statistic_id
+                    FROM totals t
+                    JOIN quiz_statistic qs ON qs.id = t.statistic_id
+                    WHERE qs.counters IS NULL
+                       OR jsonb_typeof(qs.counters) <> 'array'
+                       OR jsonb_array_length(qs.counters) <> (SELECT COUNT(*) FROM merged m WHERE m.statistic_id = t.statistic_id)
+                    UNION ALL
+                    SELECT m.statistic_id
+                    FROM merged m
+                    JOIN quiz_statistic qs ON qs.id = m.statistic_id
+                    WHERE NOT qs.counters @> jsonb_build_array(jsonb_build_object(
+                        'id', m.id,
+                        'points', m.normalized_points,
+                        'ratedCounter', m.rated_counter,
+                        'unRatedCounter', m.unrated_counter
+                    ))
+                )
+                SELECT COUNT(*) FROM mismatches
+            ]]></sqlCheck>
+        </preConditions>
+    </changeSet>
+
+    <!-- MySQL postcondition equivalent to the PostgreSQL containment and cardinality checks. -->
+    <changeSet id="20260807151850-4b" author="uddin" dbms="mysql">
+        <preConditions onFail="HALT">
+            <sqlCheck expectedResult="0"><![CDATA[
+                WITH totals AS (
+                    SELECT qs.id AS statistic_id, COALESCE(SUM(q.points), 0.0) AS overall_points
+                    FROM quiz_statistic qs
+                    JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                    LEFT JOIN quiz_question q ON q.exercise_id = e.id
+                    WHERE qs.discriminator = 'QP'
+                    GROUP BY qs.id
+                ), normalized AS (
+                    SELECT c.id AS source_id,
+                           c.quiz_point_statistic_id AS statistic_id,
+                           c.points AS source_points,
+                           CASE
+                               WHEN c.points IS NULL
+                                    OR c.points < 0
+                                    OR c.points <> FLOOR(c.points)
+                                    OR c.points > FLOOR(t.overall_points + 0.5)
+                                   THEN 0.0
+                               ELSE c.points
+                           END AS normalized_points,
+                           CAST(GREATEST(COALESCE(c.rated_counter, 0), 0) AS SIGNED) AS rated_counter,
+                           CAST(GREATEST(COALESCE(c.un_rated_counter, 0), 0) AS SIGNED) AS unrated_counter
+                    FROM quiz_statistic_counter c
+                    JOIN totals t ON t.statistic_id = c.quiz_point_statistic_id
+                    WHERE c.discriminator = 'PC'
+                ), merged AS (
+                    SELECT statistic_id,
+                           normalized_points,
+                           COALESCE(MIN(CASE WHEN source_points = normalized_points THEN source_id END), MIN(source_id)) AS id,
+                           SUM(rated_counter) AS rated_counter,
+                           SUM(unrated_counter) AS unrated_counter
+                    FROM normalized
+                    GROUP BY statistic_id, normalized_points
+                ), mismatches AS (
+                    SELECT t.statistic_id
+                    FROM totals t
+                    JOIN quiz_statistic qs ON qs.id = t.statistic_id
+                    WHERE qs.counters IS NULL
+                       OR JSON_TYPE(qs.counters) <> 'ARRAY'
+                       OR JSON_LENGTH(qs.counters) <> (SELECT COUNT(*) FROM merged m WHERE m.statistic_id = t.statistic_id)
+                    UNION ALL
+                    SELECT m.statistic_id
+                    FROM merged m
+                    JOIN quiz_statistic qs ON qs.id = m.statistic_id
+                    WHERE NOT JSON_CONTAINS(qs.counters, JSON_OBJECT(
+                        'id', m.id,
+                        'points', m.normalized_points,
+                        'ratedCounter', m.rated_counter,
+                        'unRatedCounter', m.unrated_counter
+                    ))
+                )
+                SELECT COUNT(*) FROM mismatches
+            ]]></sqlCheck>
+        </preConditions>
+    </changeSet>
+
+    <!-- H2 intentionally has no backfill: it is only used with freshly-created ephemeral schemas. All dialects converge on the same final schema. -->
+    <changeSet id="20260807151850-5" author="uddin">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="quiz_statistic_counter"/>
+        </preConditions>
+        <dropTable tableName="quiz_statistic_counter"/>
+    </changeSet>
+
+</databaseChangeLog>

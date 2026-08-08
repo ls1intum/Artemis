@@ -410,17 +410,14 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             quizPointStatistic.addScore(i);
         }
         // delete old PointCounter
-        Set<PointCounter> pointCounterToDelete = new HashSet<>();
+        List<PointCounter> pointCountersToDelete = new ArrayList<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
-            if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if (pointCounter.getPoints() > quizPoints || pointCounter.getPoints() < 0 || quizQuestions == null
-                        || quizQuestions.isEmpty()/* || (pointCounter.getPoints()% scoreStep) != 0 */) {
-                    pointCounterToDelete.add(pointCounter);
-                    pointCounter.setQuizPointStatistic(null);
-                }
+            if (pointCounter.getPoints() > quizPoints || pointCounter.getPoints() < 0 || quizQuestions == null
+                    || quizQuestions.isEmpty()/* || (pointCounter.getPoints()% scoreStep) != 0 */) {
+                pointCountersToDelete.add(pointCounter);
             }
         }
-        quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
+        quizPointStatistic.getPointCounters().removeAll(pointCountersToDelete);
     }
 
     /**
@@ -485,13 +482,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Override
     public void reconnectJSONIgnoreAttributes() {
         QuizConfiguration.super.reconnectJSONIgnoreAttributes();
-
-        // reconnect pointCounters
-        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
-            }
-        }
 
         // reconnect quizBatches
         if (getQuizBatches() != null) {

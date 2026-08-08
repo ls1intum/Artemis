@@ -83,10 +83,10 @@ record QuizQuestionWithStatisticsDTO(@JsonUnwrapped QuizQuestionWithSolutionDTO 
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuizPointStatisticDTO(Set<PointCounterDTO> pointCounters, @JsonUnwrapped QuizStatisticDTO quizStatistic) {
+record QuizPointStatisticDTO(List<PointCounterDTO> pointCounters, @JsonUnwrapped QuizStatisticDTO quizStatistic) {
 
     public static QuizPointStatisticDTO of(QuizPointStatistic quizPointStatistic) {
-        Set<PointCounterDTO> pointCounterDTOs = quizPointStatistic.getPointCounters().stream().map(PointCounterDTO::of).collect(java.util.stream.Collectors.toSet());
+        List<PointCounterDTO> pointCounterDTOs = quizPointStatistic.getPointCounters().stream().map(PointCounterDTO::of).toList();
         QuizStatisticDTO quizStatisticDTO = QuizStatisticDTO.of(quizPointStatistic);
         return new QuizPointStatisticDTO(pointCounterDTOs, quizStatisticDTO);
     }

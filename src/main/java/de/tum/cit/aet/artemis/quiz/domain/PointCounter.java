@@ -1,42 +1,58 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A PointCounter.
+ * Counts rated and unrated results for one integer point bucket of a {@link QuizPointStatistic}.
+ * <p>
+ * Point counters are stored as a JSON list in {@code quiz_statistic.counters}. Their ids are local to the owning statistic and remain stable while the bucket exists.
  */
-@Entity
-@DiscriminatorValue(value = "PC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class PointCounter extends QuizStatisticCounter {
+public class PointCounter {
 
-    @Column(name = "points")
-    private Double points;
+    @JsonProperty("id")
+    private Long id;
 
-    @ManyToOne
-    @JsonIgnore
-    private QuizPointStatistic quizPointStatistic;
+    @JsonProperty("points")
+    private double points;
 
-    public Double getPoints() {
+    @JsonProperty("ratedCounter")
+    private int ratedCounter;
+
+    @JsonProperty("unRatedCounter")
+    private int unRatedCounter;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public double getPoints() {
         return points;
     }
 
-    public void setPoints(Double points) {
+    public void setPoints(double points) {
         this.points = points;
     }
 
-    public QuizPointStatistic getQuizPointStatistic() {
-        return quizPointStatistic;
+    public int getRatedCounter() {
+        return ratedCounter;
     }
 
-    public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
-        this.quizPointStatistic = quizPointStatistic;
+    public void setRatedCounter(int ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public int getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public void setUnRatedCounter(int unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 
     @Override

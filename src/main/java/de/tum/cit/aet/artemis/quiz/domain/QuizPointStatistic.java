@@ -1,14 +1,17 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,32 +24,60 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizPointStatistic extends QuizStatistic {
 
-    // No @Cache: counters are incremented on every evaluation while instructors watch live statistics, same class of bug as #12574.
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "quizPointStatistic")
-    private Set<PointCounter> pointCounters = new HashSet<>();
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "counters")
+    private List<PointCounter> pointCounters = new ArrayList<>();
 
     @OneToOne(mappedBy = "quizPointStatistic", fetch = FetchType.LAZY)
     @JsonIgnore
     private QuizExercise quiz;
 
-    public Set<PointCounter> getPointCounters() {
+    public List<PointCounter> getPointCounters() {
         return pointCounters;
     }
 
+    /**
+     * Adds a point counter and assigns a statistic-scoped id when necessary.
+     *
+     * @param pointCounter the point counter to add
+     * @return this statistic
+     */
     public QuizPointStatistic addPointCounters(PointCounter pointCounter) {
-        this.pointCounters.add(pointCounter);
-        pointCounter.setQuizPointStatistic(this);
+        if (pointCounter.getId() == null) {
+            pointCounter.setId(nextPointCounterId());
+        }
+        pointCounters.add(pointCounter);
+        pointCounters.sort(Comparator.comparingDouble(PointCounter::getPoints));
         return this;
     }
 
     public QuizPointStatistic removePointCounters(PointCounter pointCounter) {
-        this.pointCounters.remove(pointCounter);
-        pointCounter.setQuizPointStatistic(null);
+        pointCounters.remove(pointCounter);
         return this;
     }
 
-    public void setPointCounters(Set<PointCounter> pointCounters) {
-        this.pointCounters = pointCounters;
+    public void setPointCounters(List<PointCounter> pointCounters) {
+        this.pointCounters = pointCounters == null ? new ArrayList<>() : new ArrayList<>(pointCounters);
+        assignMissingCounterIds();
+        this.pointCounters.sort(Comparator.comparingDouble(PointCounter::getPoints));
+    }
+
+    private void assignMissingCounterIds() {
+        for (PointCounter pointCounter : pointCounters) {
+            if (pointCounter.getId() == null) {
+                pointCounter.setId(nextPointCounterId());
+            }
+        }
+    }
+
+    private long nextPointCounterId() {
+        long highestId = 0;
+        for (PointCounter pointCounter : pointCounters) {
+            if (pointCounter.getId() != null) {
+                highestId = Math.max(highestId, pointCounter.getId());
+            }
+        }
+        return Math.incrementExact(highestId);
     }
 
     public QuizExercise getQuiz() {

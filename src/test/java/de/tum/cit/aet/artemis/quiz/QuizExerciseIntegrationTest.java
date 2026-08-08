@@ -961,9 +961,12 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).extracting(PointCounter::getId).doesNotContainNull();
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).extracting(PointCounter::getPoints).isSorted();
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithRecalculatedStatistics, Map.of(0.0, pc30, 3.0, pc20, 4.0, pc20, 6.0, pc20, 7.0, pc10));
+        List<Long> pointCounterIds = quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters().stream().map(PointCounter::getId).toList();
 
         // add more submissions and recalculate
         for (int i = numberOfParticipants; i <= 14; i++) {
@@ -976,6 +979,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).extracting(PointCounter::getId).containsExactlyElementsOf(pointCounterIds);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
 
         assertQuizPointStatisticsPointCounters(quizExerciseWithRecalculatedStatistics, Map.of(0.0, pc50, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10, 9.0, pc10));
@@ -2663,9 +2667,10 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(quizExercise.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(quizExercise2.getQuizPointStatistic().getParticipantsUnrated());
 
         for (int i = 0; i < quizExercise.getQuizPointStatistic().getPointCounters().size(); i++) {
-            PointCounter pointCounterBefore = quizExercise.getQuizPointStatistic().getPointCounters().iterator().next();
-            PointCounter pointCounterAfter = quizExercise2.getQuizPointStatistic().getPointCounters().iterator().next();
+            PointCounter pointCounterBefore = quizExercise.getQuizPointStatistic().getPointCounters().get(i);
+            PointCounter pointCounterAfter = quizExercise2.getQuizPointStatistic().getPointCounters().get(i);
 
+            assertThat(pointCounterAfter.getId()).isEqualTo(pointCounterBefore.getId());
             assertThat(pointCounterAfter.getPoints()).isEqualTo(pointCounterBefore.getPoints());
             assertThat(pointCounterAfter.getRatedCounter()).isEqualTo(pointCounterBefore.getRatedCounter());
             assertThat(pointCounterAfter.getUnRatedCounter()).isEqualTo(pointCounterBefore.getUnRatedCounter());
