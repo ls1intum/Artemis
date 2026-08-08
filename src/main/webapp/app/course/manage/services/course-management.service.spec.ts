@@ -515,6 +515,18 @@ describe('Course Management Service', () => {
             expect(retrieved).toBe(false);
         });
     });
+
+    it('should not drop exercises a per-tab loader already published when the lean course lands afterwards', () => {
+        // The course record and the exercise list are separate requests that can finish in either order; the lean
+        // course must not wipe exercises that already arrived, or the exercises tab renders empty.
+        courseStorageService.updateCourse({ id: 7, exercises: [{ id: 99 }] } as Course);
+
+        courseManagementService.findCourseForOverview(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' }).flush({ course: { id: 7, title: 'Course' }, courseNotificationCount: 0 });
+
+        expect(courseStorageService.getCourse(7)?.exercises).toHaveLength(1);
+        expect(courseStorageService.getCourse(7)?.title).toBe('Course');
+    });
 });
 
 describe('CourseManagementService - authentication state changes', () => {

@@ -20,6 +20,12 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 
 function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
     return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
@@ -67,6 +73,10 @@ export class CourseExercisesComponent {
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
     private changeDetectorRef = inject(ChangeDetectorRef);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private websocketService = inject(WebsocketService);
+    private teamService = inject(TeamService);
+    private courseExerciseService = inject(CourseExerciseService);
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -82,6 +92,10 @@ export class CourseExercisesComponent {
     private readonly _activeExerciseDetails = signal<CourseExerciseDetailsComponent | undefined>(undefined);
     readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
+    private quizExercisesSubscription?: Subscription;
+    private quizExercisesChannel?: string;
+    private teamAssignmentUpdateListener?: Subscription;
 
     readonly course = this._course.asReadonly();
     readonly courseId = this._courseId.asReadonly();
@@ -129,12 +143,27 @@ export class CourseExercisesComponent {
         effect(() => {
             this._activeExerciseDetails()?.setSidebarToggle(this._isCollapsed(), () => this.toggleSidebar());
         });
+
+        this.destroyRef.onDestroy(() => {
+            this.exercisesLoadSubscription?.unsubscribe();
+            this.quizExercisesSubscription?.unsubscribe();
+            this.teamAssignmentUpdateListener?.unsubscribe();
+        });
     }
 
     private initializeAfterCourseIdSet(): void {
         this._course.set(this.courseStorageService.getCourse(this._courseId()));
         this.onCourseLoad();
         this.prepareSidebarData();
+
+        // The course container only loads the course itself; the exercises (with participations and scores) belong to
+        // this tab, so they are fetched here. The result is published on the stored course, which the subscription
+        // below picks up — the statistics tab shares the same load.
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this._courseId()).subscribe();
+
+        this.subscribeForQuizChanges();
+        void this.subscribeToTeamAssignmentUpdates();
 
         // Cancel previous course update subscription to avoid duplicates when courseId changes
         this.courseUpdateSubscription?.unsubscribe();
@@ -347,6 +376,57 @@ export class CourseExercisesComponent {
             return participation.id === otherParticipation.id;
         }
         return !!participation.testRun === !!otherParticipation.testRun;
+    }
+
+    /**
+     * Subscribes to quizzes that become visible so a newly started quiz appears at the top of the exercise list without
+     * a reload. This lives here rather than in the course container because the exercise list is this tab's data.
+     */
+    subscribeForQuizChanges(): void {
+        const channel = '/topic/courses/' + this._courseId() + '/quizExercises';
+        if (this.quizExercisesChannel === channel) {
+            return;
+        }
+        this.quizExercisesSubscription?.unsubscribe();
+        this.quizExercisesChannel = channel;
+        this.quizExercisesSubscription = this.websocketService.subscribe<QuizExercise>(channel).subscribe((quizExercise: QuizExercise) => {
+            const converted = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
+            const course = this._course();
+            if (!course?.exercises) {
+                return;
+            }
+            const exercises = course.exercises.filter((exercise) => exercise.id !== converted.id).concat(converted);
+            this._course.set({ ...course, exercises });
+            this.processExercises(exercises);
+            this.changeDetectorRef.markForCheck();
+        });
+    }
+
+    /**
+     * Receives team assignment changes and updates the affected exercise in the list.
+     */
+    async subscribeToTeamAssignmentUpdates(): Promise<void> {
+        const teamAssignmentUpdates = await this.teamService.teamAssignmentUpdates;
+        this.teamAssignmentUpdateListener = teamAssignmentUpdates.subscribe((teamAssignment: TeamAssignmentPayload) => {
+            const course = this._course();
+            if (!course?.exercises) {
+                return;
+            }
+            let didUpdate = false;
+            const exercises = course.exercises.map((exercise) => {
+                if (exercise.id !== teamAssignment.exerciseId) {
+                    return exercise;
+                }
+                didUpdate = true;
+                return { ...exercise, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+            });
+            if (!didUpdate) {
+                return;
+            }
+            this._course.set({ ...course, exercises });
+            this.processExercises(exercises);
+            this.changeDetectorRef.markForCheck();
+        });
     }
 
     updateSidebarData() {

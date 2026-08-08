@@ -161,6 +161,17 @@ export class ExamParticipationService {
             }),
         );
     }
+    /**
+     * Fetches the exams of a course that are visible to the current user, for the exams tab of the course overview.
+     * These used to arrive as part of the course itself, which made every course visit pay for them.
+     * @param courseId the course to fetch the exams for
+     */
+    public getExamsForOverview(courseId: number): Observable<Exam[]> {
+        return this.httpClient
+            .get<Exam[]>(`api/exam/courses/${courseId}/exams-for-overview`)
+            .pipe(map((exams: Exam[]) => exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined)));
+    }
+
     public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
         const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
         return this.httpClient.get<Exam[]>(url).pipe(

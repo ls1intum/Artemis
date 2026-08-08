@@ -6,6 +6,7 @@ import { ChartData, ChartOptions, TooltipItem } from 'chart.js';
 import { ChartModule } from 'primeng/chart';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -123,6 +124,7 @@ enum ChartBarTitle {
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
     controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
+    private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
@@ -137,6 +139,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private paramSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private translateSubscription?: Subscription;
+    private exercisesLoadSubscription?: Subscription;
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
@@ -317,6 +320,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.onCourseLoad();
         });
 
+        // The exercises and their scores are not part of the course itself; this tab and the exercises tab share one
+        // load, so whichever is opened first pays for it. The result arrives through the course update subscription
+        // above and through the ScoresStorageService.
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this.courseId).subscribe(() => {
+            this.calculateCourseGrade();
+        });
+
         // update titles based on the initial language selection
         this.updateExerciseTitles();
 
@@ -325,8 +335,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.updateExerciseTitles();
             this.groupExercisesByType(this.courseExercises);
         });
-
-        this.calculateCourseGrade();
     }
 
     private updateExerciseTitles() {
@@ -350,6 +358,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {

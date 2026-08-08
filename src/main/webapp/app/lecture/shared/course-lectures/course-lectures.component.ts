@@ -56,12 +56,15 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
+    private lecturesSubscription?: Subscription;
     private multiLaunchSubscription?: Subscription;
     private queryParamsSubscription?: Subscription;
 
     readonly course = signal<Course | undefined>(undefined);
     readonly courseId = signal<number>(undefined!);
 
+    /** The lectures of the course, loaded by this tab rather than shipped with the course. */
+    readonly lectures = signal<Lecture[] | undefined>(undefined);
     readonly lectureSelected = signal(true);
     readonly sidebarData = signal<SidebarData | undefined>(undefined);
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
@@ -90,22 +93,40 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
 
         this.course.set(this.courseStorageService.getCourse(this.courseId()));
-        this.prepareSidebarData();
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId()).subscribe((course: Course) => {
             this.course.set(course);
-            this.prepareSidebarData();
         });
 
         this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
             this.isMultiLaunch = isMultiLaunch;
         });
 
-        // If no lecture is selected navigate to the lastSelected or upcoming lecture
-        this.navigateToLecture();
+        this.loadLectures();
+    }
+
+    /**
+     * Loads the lectures of this course. They used to arrive as part of the (expensive) course load, which made every
+     * course visit pay for them even when the lectures tab was never opened. The redirect to the last selected or
+     * upcoming lecture has to wait for them, so it runs once they arrive.
+     */
+    private loadLectures(): void {
+        this.lecturesSubscription?.unsubscribe();
+        this.lecturesSubscription = this.lectureService.findAllByCourseIdForOverview(this.courseId()).subscribe({
+            next: (res) => {
+                this.lectures.set(res.body ?? []);
+                this.prepareSidebarData();
+                // If no lecture is selected navigate to the lastSelected or upcoming lecture
+                this.navigateToLecture();
+            },
+            error: () => {
+                this.lectures.set([]);
+                this.prepareSidebarData();
+            },
+        });
     }
 
     navigateToLecture() {
-        const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course()?.lectures);
+        const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.lectures());
         const lastSelectedLecture = this.getLastSelectedLecture();
         const lectureId = this.route.firstChild?.snapshot?.params?.lectureId;
         if (!lectureId && lastSelectedLecture) {
@@ -130,7 +151,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                 this.processLectures(lectures);
             });
         } else {
-            const lectures = this.course()?.lectures;
+            const lectures = this.lectures();
             if (!lectures) {
                 return;
             }
@@ -183,6 +204,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
+        this.lecturesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.multiLaunchSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();

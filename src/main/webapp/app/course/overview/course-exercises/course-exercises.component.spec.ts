@@ -38,6 +38,8 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -103,6 +105,7 @@ describe('CourseExercisesComponent', () => {
                         resetLocalCache: vi.fn(),
                     },
                 },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

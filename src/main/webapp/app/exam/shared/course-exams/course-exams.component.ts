@@ -53,6 +53,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
     private parentParamSubscription?: Subscription;
+    private examsSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
@@ -60,6 +61,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExams?: StudentExam[];
     studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
+    /** The exams of the course visible to the user, loaded by this tab rather than shipped with the course. */
+    readonly exams = signal<Exam[] | undefined>(undefined);
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
     studentExamState?: Subscription;
@@ -126,15 +129,23 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.examParticipationService.setShouldUpdateTestExams(false);
             });
 
-        const currentCourse = this.course();
-        if (currentCourse?.exams) {
-            // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
-            this.expandAttemptsMap = new Map(currentCourse.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
-            this.updateExams();
-        }
-
-        // If no exam is selected navigate to the last selected or upcoming Exam
-        this.navigateToExam();
+        this.examsSubscription = this.examParticipationService.getExamsForOverview(this.courseId()).subscribe({
+            next: (exams) => {
+                this.exams.set(exams);
+                // The Map is used to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
+                this.expandAttemptsMap = new Map(exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
+                this.updateExams();
+                // updateExams only refreshes the sidebar once its own async student-exam fetch resolves; render what we
+                // already have right away so the list is not empty until then
+                this.prepareSidebarData();
+                // If no exam is selected navigate to the last selected or upcoming Exam
+                this.navigateToExam();
+            },
+            error: () => {
+                this.exams.set([]);
+                this.navigateToExam();
+            },
+        });
     }
 
     navigateToExam() {
@@ -154,10 +165,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     private updateExams(): void {
-        const currentCourse = this.course();
-        if (currentCourse?.exams) {
-            // Loading the exams from the course
-            const exams = currentCourse.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
+        const loadedExams = this.exams();
+        if (loadedExams) {
+            const exams = loadedExams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
             // add new exams to the attempt map
             exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
 
@@ -178,6 +188,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * unsubscribe from all subscriptions
      */
     ngOnDestroy(): void {
+        this.examsSubscription?.unsubscribe();
         if (this.parentParamSubscription) {
             this.parentParamSubscription.unsubscribe();
         }
@@ -290,7 +301,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        if (!this.course()?.exams) {
+        if (!this.exams()) {
             return;
         }
 

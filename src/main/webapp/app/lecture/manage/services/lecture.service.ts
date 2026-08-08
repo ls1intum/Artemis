@@ -71,6 +71,19 @@ export class LectureService {
         );
     }
 
+    /**
+     * Fetches the lectures of a course for the student course overview, with the attachments the user may see.
+     * These used to arrive as part of the course itself, which made every course visit pay for them.
+     * @param courseId the course to fetch the lectures for
+     */
+    findAllByCourseIdForOverview(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-for-overview`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
+    }
+
     findAllTutorialLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/tutorial-lectures`, {

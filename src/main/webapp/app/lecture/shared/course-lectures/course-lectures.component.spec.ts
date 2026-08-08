@@ -32,6 +32,8 @@ describe('CourseLecturesComponent', () => {
                 MockProvider(CourseOverviewService),
                 MockProvider(LectureService, {
                     find: () => of(new HttpResponse({ body: new Lecture() })),
+                    // The lectures tab loads its own lectures instead of reading them off the course
+                    findAllByCourseIdForOverview: () => of(new HttpResponse({ body: [] as Lecture[] })),
                 }),
                 {
                     provide: ActivatedRoute,
@@ -59,6 +61,19 @@ describe('CourseLecturesComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should load the lectures of the course itself rather than reading them off the course', async () => {
+        const lecture = new Lecture();
+        lecture.id = 7;
+        const loadSpy = vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockReturnValue(of(new HttpResponse({ body: [lecture] })));
+        vi.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([lecture]);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+
+        component.ngOnInit();
+
+        expect(loadSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(component.lectures()).toEqual([lecture]);
     });
 
     it('should handle multi-launch subscription', async () => {
@@ -92,7 +107,7 @@ describe('CourseLecturesComponent', () => {
         component.ngOnInit();
 
         expect(component.multiLaunchLectureIDs).toEqual([1, 2]);
-        expect(lectureService.find).toHaveBeenCalledTimes(4);
+        expect(lectureService.find).toHaveBeenCalledTimes(2);
         expect(lectureService.find).toHaveBeenCalledWith(1);
         expect(lectureService.find).toHaveBeenCalledWith(2);
     });

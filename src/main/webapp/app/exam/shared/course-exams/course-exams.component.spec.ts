@@ -150,9 +150,11 @@ describe('CourseExamsComponent', () => {
                 (examParticipationService as any).examIsStarted$ = of(false);
                 examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
                 examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
-                vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
-                    exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
-                });
+                vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({});
+                // The exams tab loads the visible exams itself instead of reading them off the course
+                vi.spyOn(examParticipationService, 'getExamsForOverview').mockReturnValue(
+                    of([visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam]),
+                );
                 vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
                     of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
                 );

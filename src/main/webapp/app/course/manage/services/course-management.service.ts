@@ -19,7 +19,9 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
-import { CourseTabAccess } from 'app/course/shared/entities/course-tab-access.model';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
+import { CourseForOverviewDTO } from 'app/course/shared/entities/course-for-overview-dto';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -249,8 +251,10 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * Finds one course using a GET request.
-     * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
+     * Finds one course with all of its content using a GET request.
+     *
+     * @deprecated The web client no longer uses this: the course overview loads {@link findCourseForOverview} and each
+     * tab loads what it needs. The endpoint stays for the iOS, Android and VS Code clients. Do not add new callers.
      * @param courseId the course to fetch
      */
     findOneForDashboard(courseId: number): Observable<EntityResponseType> {
@@ -273,36 +277,117 @@ export class CourseManagementService implements OnDestroy {
                 return res;
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined, true)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
         );
     }
 
     /**
-     * Fetches the lightweight per-tab access flags for a course, used by the {@link CourseOverviewGuard} to decide tab
-     * access without loading the full course. This issues a cheap request and is intentionally not cached.
-     * @param courseId the course to fetch the access flags for
+     * Fetches the course itself for the course overview container, without any of its content.
+     *
+     * This replaces {@link findOneForDashboard} for the web client: exercises, lectures, exams, participations and
+     * scores are loaded by the tab that needs them, so entering a course no longer pays for content the user may never
+     * open. The result is stored in the {@link CourseStorageService} exactly as before, so everything reading the course
+     * from there keeps working.
+     *
+     * @param courseId the course to fetch
      */
-    getCourseTabAccess(courseId: number): Observable<CourseTabAccess> {
-        return this.http.get<CourseTabAccess>(`${this.resourceUrl}/${courseId}/access`);
+    findCourseForOverview(courseId: number): Observable<EntityResponseType> {
+        return this.http.get<CourseForOverviewDTO>(`${this.resourceUrl}/${courseId}/for-overview`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CourseForOverviewDTO>): EntityResponseType => {
+                const dto = res.body;
+                if (dto?.course.id) {
+                    this.courseNotificationService.updateNotificationCountMap(dto.course.id, dto.courseNotificationCount);
+                }
+                // Unwrap the DTO so the rest of the pipe (and every consumer) keeps working with a plain course response
+                return res.clone({ body: dto?.course ?? null });
+            }),
+            map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
+            tap((res: EntityResponseType) => this.storeCoursePreservingLoadedContent(res.body ?? undefined)),
+        );
+    }
+
+    /**
+     * Stores the lean course without discarding content a per-tab loader has already published on it.
+     *
+     * The course record and the exercise list are fetched by separate requests that can complete in either order. A
+     * plain store would mean that whenever the (fast) course response lands after the (slow) exercise response, the
+     * exercises are silently dropped from the stored course and the exercises tab renders empty.
+     *
+     * @param course the freshly loaded lean course
+     */
+    private storeCoursePreservingLoadedContent(course?: Course): void {
+        if (!course) {
+            this.courseStorageService.updateCourse(undefined);
+            return;
+        }
+        const alreadyLoadedExercises = course.id !== undefined ? this.courseStorageService.getCourse(course.id)?.exercises : undefined;
+        this.courseStorageService.updateCourse(alreadyLoadedExercises ? { ...course, exercises: alreadyLoadedExercises } : course);
+    }
+
+    /**
+     * Fetches the user's exercises for a course together with the derived scores, and stores the scores in the
+     * {@link ScoresStorageService}. Prefer {@link CourseOverviewExercisesService} over calling this directly — it shares
+     * one response between the exercises tab and the statistics tab.
+     *
+     * @param courseId the course to fetch the exercises for
+     */
+    findCourseExercisesForOverview(courseId: number): Observable<CourseExercisesForOverviewDTO> {
+        return this.http.get<CourseExercisesForOverviewDTO>(`${this.resourceUrl}/${courseId}/exercises-for-overview`).pipe(
+            map((dto) => {
+                this.saveExerciseScoresInStorage(courseId, dto);
+                // Same conversions the course response applies to its exercises, so consumers see identical objects
+                dto.exercises = ExerciseService.convertExercisesDateFromServer(dto.exercises) ?? [];
+                dto.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
+                dto.exercises.forEach((exercise) => this.entityTitleService.setExerciseTitle(exercise));
+                return dto;
+            }),
+        );
+    }
+
+    /**
+     * Fetches which course overview tabs are available to the current user. Prefer
+     * {@link CourseAvailableTabsService} over calling this directly — it shares one response between the course sidebar
+     * and the {@link CourseOverviewGuard} so a course visit costs a single request.
+     * @param courseId the course to fetch the available tabs for
+     */
+    getCourseAvailableTabs(courseId: number): Observable<CourseAvailableTabs> {
+        return this.http.get<CourseAvailableTabs>(`${this.resourceUrl}/${courseId}/available-tabs`);
     }
 
     saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {
+        this.saveExerciseScoresInStorage(courseForDashboardDTO.course.id!, courseForDashboardDTO);
+    }
+
+    /**
+     * Stores the score parts of a course payload. Shared by the (deprecated) for-dashboard response, the courses list
+     * and the exercises-for-overview response, which all carry the same score fields.
+     *
+     * @param courseId the course the scores belong to
+     * @param scores   the score fields of the payload
+     */
+    private saveExerciseScoresInStorage(
+        courseId: number,
+        scores: Pick<
+            CourseForDashboardDTO,
+            'totalScores' | 'programmingScores' | 'modelingScores' | 'quizScores' | 'textScores' | 'fileUploadScores' | 'participationResults' | 'achievedPointsPerVariantGroup'
+        >,
+    ) {
         // Save the total scores in the scores-storage.service.
-        this.scoresStorageService.setStoredTotalScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.totalScores);
+        this.scoresStorageService.setStoredTotalScores(courseId, scores.totalScores);
 
         const scoresPerExerciseType: ScoresPerExerciseType = new Map();
-        scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseForDashboardDTO.programmingScores);
-        scoresPerExerciseType.set(ExerciseType.MODELING, courseForDashboardDTO.modelingScores);
-        scoresPerExerciseType.set(ExerciseType.QUIZ, courseForDashboardDTO.quizScores);
-        scoresPerExerciseType.set(ExerciseType.TEXT, courseForDashboardDTO.textScores);
-        scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, courseForDashboardDTO.fileUploadScores);
-        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, scoresPerExerciseType);
+        scoresPerExerciseType.set(ExerciseType.PROGRAMMING, scores.programmingScores);
+        scoresPerExerciseType.set(ExerciseType.MODELING, scores.modelingScores);
+        scoresPerExerciseType.set(ExerciseType.QUIZ, scores.quizScores);
+        scoresPerExerciseType.set(ExerciseType.TEXT, scores.textScores);
+        scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, scores.fileUploadScores);
+        this.scoresStorageService.setStoredScoresPerExerciseType(courseId, scoresPerExerciseType);
 
         // Save the participation results in the scores-storage.service.
-        this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
+        this.scoresStorageService.setStoredParticipationResults(scores.participationResults);
 
         // Save the per-variant-group achieved points (server-computed: capped and plagiarism-adjusted).
-        this.scoresStorageService.setStoredAchievedPointsPerVariantGroup(courseForDashboardDTO.course.id!, courseForDashboardDTO.achievedPointsPerVariantGroup);
+        this.scoresStorageService.setStoredAchievedPointsPerVariantGroup(courseId, scores.achievedPointsPerVariantGroup);
     }
 
     /**
