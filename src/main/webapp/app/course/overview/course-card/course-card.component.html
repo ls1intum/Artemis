@@ -49,7 +49,11 @@
                             <div class="chart-text">
                                 <h4 class="mb-0">{{ totalRelativeScore() }}%</h4>
                             </div>
+                            <!-- Decorative: the score it renders is shown as text on top of it, and its click target
+                                 duplicates the card's own link to the course, so hiding it from assistive
+                                 technology removes nothing and avoids announcing the score twice. -->
                             <p-chart
+                                aria-hidden="true"
                                 id="score-chart"
                                 class="chart-level"
                                 style="position: absolute"

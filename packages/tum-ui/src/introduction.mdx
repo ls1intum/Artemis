@@ -1,0 +1,14 @@
+import { Meta, Subtitle, Title } from '@storybook/addon-docs/blocks';
+import { tumUiGuideUrl } from '../.storybook/preview-guide-url';
+import * as IntroductionStories from './introduction.stories';
+
+<Meta of={IntroductionStories} />
+
+<Title />
+
+<Subtitle>Interactive reference for the reusable Angular components in the Artemis design system.</Subtitle>
+
+TUM UI is the target Artemis component system. Use the sidebar to inspect supported states,
+controls, accessibility results, and generated API documentation before introducing another
+component abstraction. Architecture, ownership, contribution rules, and local commands are
+documented in the <a href={tumUiGuideUrl} target="_top">TUM UI package guide</a>.

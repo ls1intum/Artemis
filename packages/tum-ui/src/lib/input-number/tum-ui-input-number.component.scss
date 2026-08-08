@@ -1,0 +1,64 @@
+:host {
+    display: inline-flex;
+    position: relative;
+}
+
+:host(.tum-ui-input-number-fluid) {
+    display: flex;
+    width: 100%;
+}
+
+.tum-ui-input-number-input {
+    flex: 1 1 auto;
+}
+
+:host(.tum-ui-input-number-fluid) .tum-ui-input-number-input {
+    width: 1%;
+}
+
+:host(.tum-ui-input-number-buttons) .tum-ui-input-number-input {
+    padding-inline-end: calc(var(--tumaet-ui-spacing) * 13);
+}
+
+.tum-ui-input-number-button-group {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    inset-block-start: 1px;
+    inset-inline-end: 1px;
+    height: calc(100% - 2px);
+    z-index: 1;
+}
+
+.tum-ui-input-number-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    width: calc(var(--tumaet-ui-spacing) * 10);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        color 0.2s;
+
+    &:disabled {
+        cursor: auto;
+    }
+
+    fa-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.tum-ui-input-number-increment {
+    border-start-end-radius: calc(var(--tumaet-ui-radius-md) - 1px);
+}
+
+.tum-ui-input-number-decrement {
+    border-end-end-radius: calc(var(--tumaet-ui-radius-md) - 1px);
+}
