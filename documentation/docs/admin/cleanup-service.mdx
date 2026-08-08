@@ -202,6 +202,28 @@ The switches are off by default deliberately, because the operations delete pers
 Inactivity for the not-enrolled-user cleanup is measured by the user's last login (`lastLoginDate`, recorded on every successful authentication), falling back to the account creation date for accounts that never logged in. This is a real activity signal, unlike the user row's last modification date (which is bumped by, for example, group synchronization). For existing accounts at the time of the upgrade, `lastLoginDate` is backfilled to the migration time, so no existing account is immediately eligible; the inactivity clock starts at deployment. The warning phase and the "logging in cancels the deletion" rule provide an additional safeguard against deleting an account the user still wants. Always review the count/preview before enabling these jobs.
 :::
 
+## Audit event retention
+
+The audit table (`jhi_persistent_audit_event`) is pruned by its own nightly job, independently of the operations above and with no kill switch: it holds no personal data beyond the acting user's login, and letting it grow without bound is not a useful default.
+
+Two retention periods apply, because the table mixes records with opposite characteristics:
+
+| What | Event types | Default | Property |
+| --- | --- | --- | --- |
+| The login record | `AUTHENTICATION_SUCCESS`, `AUTHENTICATION_FAILURE`, `AUTHENTICATION_PASSKEY_SUCCESS`, `SAML2_AUTHENTICATION_SUCCESS`, `LOGOUT_SUCCESS` | 365 days | `artemis.audit-events.general-retention-period` |
+| Everything else | Deliberate actions such as `DELETE_EXERCISE` or `RESET_EXAM`, plus any unrecognised or missing type | 1825 days | `artemis.audit-events.application-retention-period` |
+
+One row is written per login attempt, so the login record is the bulk of the table and tells you little a few weeks later.
+The remaining rows are rare and are what has to be reconstructed when a question is raised long after the fact, an exam dispute in particular.
+Anything not recognised as a login gets the long retention, so an event type added in a later version is over-retained rather than silently dropped.
+
+Both values must be positive and are validated when the configuration is bound, so a typo such as `0` or a negative number fails startup instead of being applied.
+This job has no kill switch and its deletions are irreversible, so a cutoff in the future would delete records written minutes ago.
+
+The job runs at 03:10 every night on the node with the scheduling profile active.
+It deletes in batches of 5000 rows, up to 200 batches per retention period per night, so a backlog that has accumulated over years is drained over several nights rather than in one very long transaction.
+The log line reports how many rows each period removed, and says explicitly when the per-run cap was reached and rows remain.
+
 ### Testing and assurance
 
 The correctness of these deletions is protected by server integration tests that run against a real database with no mocking of the deletion logic:

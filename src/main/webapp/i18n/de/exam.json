@@ -313,6 +313,7 @@
             "submittedColumn": "Abgegeben",
             "totalColumn": "Total",
             "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
+            "scoreDistributionTitle": "Verteilung der Gesamtergebnisse",
             "gradesBeforeBonus": "Noten vor Bonus",
             "gradesAfterBonus": "Noten nach Bonus",
             "noStudentResultAvailable": "Keine Studentenabgabe vorhanden",

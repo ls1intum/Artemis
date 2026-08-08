@@ -72,6 +72,7 @@ describe('UserManagementUpdateComponent', () => {
     let mockRouterState: RouterState;
 
     beforeEach(async () => {
+        parentRoute.data = of({ user: testUser });
         await TestBed.configureTestingModule({
             imports: [UserManagementUpdateComponent],
             providers: [{ provide: ActivatedRoute, useValue: mockRoute }, ...testBedProviders],
