@@ -2,13 +2,12 @@ import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/c
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { CourseOverviewService, SidebarLecture } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { forkJoin } from 'rxjs';
@@ -64,11 +63,11 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
 
     /** The lectures of the course, loaded by this tab rather than shipped with the course. */
-    readonly lectures = signal<Lecture[] | undefined>(undefined);
+    readonly lectures = signal<SidebarLecture[] | undefined>(undefined);
     readonly lectureSelected = signal(true);
     readonly sidebarData = signal<SidebarData | undefined>(undefined);
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
-    sortedLectures: Lecture[] = [];
+    sortedLectures: SidebarLecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
     readonly isCollapsed = signal(false);
     readonly pageTitle = signal<string>('');
@@ -112,8 +111,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private loadLectures(): void {
         this.lecturesSubscription?.unsubscribe();
         this.lecturesSubscription = this.lectureService.findAllByCourseIdForOverview(this.courseId()).subscribe({
-            next: (res) => {
-                this.lectures.set(res.body ?? []);
+            next: (lectures) => {
+                this.lectures.set(lectures);
                 this.prepareSidebarData();
                 // If no lecture is selected navigate to the lastSelected or upcoming lecture
                 this.navigateToLecture();
@@ -139,7 +138,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        const lectures: Lecture[] = [];
+        const lectures: SidebarLecture[] = [];
 
         if (this.multiLaunchLectureIDs?.length > 0) {
             const lectureObservables = this.multiLaunchLectureIDs.map((lectureId) => this.lectureService.find(lectureId));
@@ -159,7 +158,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         }
     }
 
-    processLectures(lectures: Lecture[]) {
+    processLectures(lectures: SidebarLecture[]) {
         const filteredLectures = lectures.filter((lecture) => !lecture.isTutorialLecture);
         this.sortedLectures = this.courseOverviewService.sortLectures(filteredLectures);
         this.sidebarLectures = this.courseOverviewService.mapLecturesToSidebarCardElements(this.sortedLectures);

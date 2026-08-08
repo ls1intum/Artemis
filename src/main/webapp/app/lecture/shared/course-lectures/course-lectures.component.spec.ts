@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -33,7 +34,7 @@ describe('CourseLecturesComponent', () => {
                 MockProvider(LectureService, {
                     find: () => of(new HttpResponse({ body: new Lecture() })),
                     // The lectures tab loads its own lectures instead of reading them off the course
-                    findAllByCourseIdForOverview: () => of(new HttpResponse({ body: [] as Lecture[] })),
+                    findAllByCourseIdForOverview: () => of([] as LectureForOverview[]),
                 }),
                 {
                     provide: ActivatedRoute,
@@ -64,9 +65,8 @@ describe('CourseLecturesComponent', () => {
     });
 
     it('should load the lectures of the course itself rather than reading them off the course', async () => {
-        const lecture = new Lecture();
-        lecture.id = 7;
-        const loadSpy = vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockReturnValue(of(new HttpResponse({ body: [lecture] })));
+        const lecture: LectureForOverview = { id: 7, title: 'Lecture 7' };
+        const loadSpy = vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockReturnValue(of([lecture]));
         vi.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([lecture]);
         vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
 

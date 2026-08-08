@@ -3,6 +3,8 @@ import { Injectable, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
@@ -166,10 +168,17 @@ export class ExamParticipationService {
      * These used to arrive as part of the course itself, which made every course visit pay for them.
      * @param courseId the course to fetch the exams for
      */
-    public getExamsForOverview(courseId: number): Observable<Exam[]> {
-        return this.httpClient
-            .get<Exam[]>(`api/exam/courses/${courseId}/exams-for-overview`)
-            .pipe(map((exams: Exam[]) => exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined)));
+    public getExamsForOverview(courseId: number): Observable<ExamForOverview[]> {
+        return this.httpClient.get<ExamForOverview[]>(`api/exam/courses/${courseId}/exams-for-overview`).pipe(
+            map((exams) =>
+                exams.map((exam) => ({
+                    ...exam,
+                    visibleDate: convertDateFromServer(exam.visibleDate),
+                    startDate: convertDateFromServer(exam.startDate),
+                    endDate: convertDateFromServer(exam.endDate),
+                })),
+            ),
+        );
     }
 
     public getRealExamSidebarData(courseId: number): Observable<Exam[]> {

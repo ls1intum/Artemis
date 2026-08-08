@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
@@ -153,7 +154,7 @@ describe('CourseExamsComponent', () => {
                 vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({});
                 // The exams tab loads the visible exams itself instead of reading them off the course
                 vi.spyOn(examParticipationService, 'getExamsForOverview').mockReturnValue(
-                    of([visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam]),
+                    of([visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam] as ExamForOverview[]),
                 );
                 vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
                     of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,

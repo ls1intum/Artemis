@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Lecture, LectureSeriesCreateLectureDTO, SimpleLectureDTO } from 'app/lecture/shared/entities/lecture.model';
+import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -76,11 +77,10 @@ export class LectureService {
      * These used to arrive as part of the course itself, which made every course visit pay for them.
      * @param courseId the course to fetch the lectures for
      */
-    findAllByCourseIdForOverview(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http.get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-for-overview`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
-            map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
-            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+    findAllByCourseIdForOverview(courseId: number): Observable<LectureForOverview[]> {
+        return this.http.get<LectureForOverview[]>(`api/lecture/courses/${courseId}/lectures-for-overview`).pipe(
+            map((lectures) => lectures.map((lecture) => ({ ...lecture, startDate: convertDateFromServer(lecture.startDate), endDate: convertDateFromServer(lecture.endDate) }))),
+            tap((lectures) => lectures.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title))),
         );
     }
 

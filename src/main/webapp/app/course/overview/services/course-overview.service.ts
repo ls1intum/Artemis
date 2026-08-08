@@ -73,6 +73,15 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     archivedChannels: { entityData: [] },
 };
 
+/**
+ * The lecture fields the sidebar renders. Structural on purpose: both the full `Lecture` entity (used for tutorial
+ * lectures) and the lighter `LectureForOverview` projection satisfy it, so the sidebar mapping works with either.
+ */
+export type SidebarLecture = Pick<Lecture, 'id' | 'title' | 'startDate' | 'endDate' | 'isTutorialLecture'>;
+
+/** The exam fields the sidebar renders; see {@link SidebarLecture}. */
+export type SidebarExam = Pick<Exam, 'id' | 'title' | 'moduleNumber' | 'startDate' | 'workingTime' | 'examMaxPoints' | 'testExam'>;
+
 @Injectable({
     providedIn: 'root',
 })

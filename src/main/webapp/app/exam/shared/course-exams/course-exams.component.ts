@@ -3,6 +3,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -62,9 +63,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     /** The exams of the course visible to the user, loaded by this tab rather than shipped with the course. */
-    readonly exams = signal<Exam[] | undefined>(undefined);
-    public realExamsOfCourse: Exam[] = [];
-    public testExamsOfCourse: Exam[] = [];
+    readonly exams = signal<ExamForOverview[] | undefined>(undefined);
+    public realExamsOfCourse: ExamForOverview[] = [];
+    public testExamsOfCourse: ExamForOverview[] = [];
     studentExamState?: Subscription;
 
     // Icons
@@ -72,8 +73,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faListAlt = faListAlt;
 
-    sortedRealExams?: Exam[];
-    sortedTestExams?: Exam[];
+    sortedRealExams?: ExamForOverview[];
+    sortedTestExams?: ExamForOverview[];
     testExamMap: Map<number, StudentExam[]> = new Map();
     examSelected = signal(true);
     accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
@@ -133,7 +134,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             next: (exams) => {
                 this.exams.set(exams);
                 // The Map is used to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
-                this.expandAttemptsMap = new Map(exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
+                this.expandAttemptsMap = new Map(exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id, false]));
                 this.updateExams();
                 // updateExams only refreshes the sidebar once its own async student-exam fetch resolves; render what we
                 // already have right away so the list is not empty until then
@@ -169,7 +170,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (loadedExams) {
             const exams = loadedExams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
             // add new exams to the attempt map
-            exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
+            exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id)).forEach((exam) => this.expandAttemptsMap.set(exam.id, false));
 
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
@@ -308,12 +309,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
         this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
         for (const testExam of this.sortedTestExams) {
-            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id!);
+            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id);
             orderedTestExamAttempts.forEach((attempt, index) => {
                 this.calculateIndividualWorkingTimeForTestExams(attempt, index === 0);
             });
             const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
-            this.testExamMap.set(testExam.id!, submittedAttempts);
+            this.testExamMap.set(testExam.id, submittedAttempts);
         }
 
         const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams, this.getAllStudentExamsForRealExams());
