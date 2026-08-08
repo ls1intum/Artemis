@@ -216,7 +216,7 @@ HTML_REPORT_CSS = """
 }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); }
-.wrapper { max-width: 1200px; margin: 0 auto; padding: 24px 32px 64px; }
+.wrapper { max-width: 100%; margin: 0; padding: 24px clamp(16px, 3vw, 48px) 64px; }
 h1 { margin-bottom: 4px; }
 h2 { margin-top: 40px; }
 .muted { color: var(--muted); }

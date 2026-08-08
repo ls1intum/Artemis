@@ -127,29 +127,30 @@ const test = baseTest.extend<
         },
         { scope: 'worker', auto: true },
     ],
+    // Bakes the Playwright test name into every request the context makes (see the
+    // `contextOptions` override below) so the server-side slow-query detector can associate
+    // captured queries with the test that triggered them (thesis objective 4.4). This must
+    // override `contextOptions`, not add a `page.route()` handler: most test setup (creating
+    // exercises, courses, submissions) goes through `page.request.*`/`context.request.*`,
+    // Playwright's Node-side APIRequestContext, which never passes through `page.route()` —
+    // that's why the slow-query report's Test column used to be blank for nearly every
+    // finding, since the heaviest queries come from exactly that setup traffic. Extending
+    // `contextOptions` instead of overriding the built-in `context` fixture keeps Playwright's
+    // own trace/video/screenshot machinery (which is wired to `contextOptions`) intact.
+    contextOptions: async ({ contextOptions }, use, testInfo) => {
+        await use({
+            ...contextOptions,
+            extraHTTPHeaders: {
+                ...contextOptions.extraHTTPHeaders,
+                'X-Playwright-Test-Name': testInfo.title,
+            },
+        });
+    },
     autoTestFixture: [
-        async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>, testInfo) => {
+        async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
             // Add shared init scripts that suppress overlays (notification popup, passkey modal)
             // which would block test interactions. See addE2EInitScript for details.
             await addE2EInitScript(page);
-
-            // Inject the test name as an HTTP header on every API request so the
-            // server-side slow-query detector can associate captured queries with the
-            // Playwright test that triggered them (thesis objective 4.4).
-            //
-            // Uses route.fallback() rather than route.continue(): page-scoped routes run before
-            // context-scoped ones (see installApiResponseCapture below), and route.continue()
-            // resolves the routing chain immediately — it would silently skip that context-level
-            // handler for every /api/ request. fallback() applies the header override and passes
-            // the request down the chain instead.
-            await page.route('**/api/**', async (route) => {
-                await route.fallback({
-                    headers: {
-                        ...route.request().headers(),
-                        'X-Playwright-Test-Name': testInfo.title,
-                    },
-                });
-            });
 
             // Node-held capture of non-GET /api response bodies for the whole context (covers popups too).
             // Works because serviceWorkers: 'block' keeps the Angular SW from handling /api fetches — with
