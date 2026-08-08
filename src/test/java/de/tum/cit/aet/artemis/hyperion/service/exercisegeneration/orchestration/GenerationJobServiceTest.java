@@ -389,6 +389,53 @@ class GenerationJobServiceTest {
         }
     }
 
+    /**
+     * The per-exercise lock is taken with a 30-second lease, so a stalled thread can still be inside a claim when another node acquires the expired lock and claims the slot.
+     * Interposing on the map reproduces that interleaving — an empty read followed by an occupied write — without making the test wait out a real lease.
+     */
+    @Test
+    void claimSlot_failsClosedWhenAnotherNodeFilledTheSlotAfterTheEmptyRead() {
+        long exerciseId = 452L;
+        String key = String.valueOf(exerciseId);
+        IMap<String, GenerationJobService.JobInfo> realJobMap = jobMap();
+        HazelcastInstance observedHazelcast = spy(hazelcastInstance);
+        IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(realJobMap);
+        doReturn(observedJobMap).when(observedHazelcast).getMap("hyperion-exercise-generation-jobs");
+        // The claimant reads an empty slot; by the time it writes, the winner under the expired lease already owns the exercise.
+        doReturn(null).when(observedJobMap).get(key);
+        GenerationJobService service = new GenerationJobService(observedHazelcast, event -> {
+        }, mock(LLMTokenUsageService.class));
+        service.init();
+        jobService.startJob(user("winner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        GenerationJobService.JobInfo winner = realJobMap.get(key);
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> service.startJob(user("straggler"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
+        assertThat(realJobMap.get(key)).isEqualTo(winner);
+    }
+
+    /** Same expired-lease interleaving on the refresh path: the heartbeat is reported lost rather than overwriting whichever job now holds the slot. */
+    @Test
+    void heartbeat_isReportedLostWhenTheSlotChangedAfterTheOwnershipCheck() {
+        long exerciseId = 453L;
+        String key = String.valueOf(exerciseId);
+        IMap<String, GenerationJobService.JobInfo> realJobMap = jobMap();
+        HazelcastInstance observedHazelcast = spy(hazelcastInstance);
+        IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(realJobMap);
+        doReturn(observedJobMap).when(observedHazelcast).getMap("hyperion-exercise-generation-jobs");
+        GenerationJobService service = new GenerationJobService(observedHazelcast, event -> {
+        }, mock(LLMTokenUsageService.class));
+        service.init();
+        String jobId = service.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        GenerationJobService.JobInfo owned = realJobMap.get(key);
+        // The ownership check still sees this node's job, but the slot has since been replaced.
+        doReturn(owned).when(observedJobMap).get(key);
+        GenerationJobService.JobInfo replacement = owned.withHeartbeat(Instant.now().minusSeconds(1));
+        realJobMap.set(key, replacement);
+
+        assertThat(service.heartbeat(exerciseId, jobId)).isFalse();
+        assertThat(realJobMap.get(key)).isEqualTo(replacement);
+    }
+
     @Test
     void clearStaleJobs_keepsExternalMutationAfterOwnerLeavesClusterUntilValueGuardedRecovery() {
         long exerciseId = 445L;
@@ -635,6 +682,21 @@ class GenerationJobServiceTest {
         jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), artifacts);
 
         assertThat(jobService.getRetainedArtifacts(owner, exercise)).contains(artifacts);
+    }
+
+    /** A reclaimed run can still be winding down while its replacement is under way; retaining then would expose its stale draft as the newer run's candidate. */
+    @Test
+    void retainUnsavedArtifacts_isRefusedForARunTheExerciseHasMovedPast() {
+        long exerciseId = 602L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String stragglerJobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.clearJob(exerciseId, stragglerJobId);
+        jobService.startJob(owner, exercise, "go again", GenerationMode.GENERATE);
+
+        jobService.retainUnsavedArtifacts(exerciseId, stragglerJobId, owner.getLogin(), retainedArtifacts(stragglerJobId));
+
+        assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
     }
 
     @Test

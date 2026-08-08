@@ -379,7 +379,10 @@ public class GenerationJobService {
                     throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
                 }
             }
-            jobMap.set(key, newJob);
+            if (jobMap.putIfAbsent(key, newJob) != null) {
+                // Only reachable if the lease expired mid-section and another node claimed the slot; losing the race is correct, overwriting its claim would not be.
+                throw new ConflictException(conflictMessage, ENTITY_NAME, errorKey);
+            }
         }
         finally {
             unlockJobSlot(key);
@@ -641,7 +644,10 @@ public class GenerationJobService {
                 // Cancellation already won this job under the same lock: the run is terminal as CANCELLED, so this must not flip it non-cancellable or let the caller persist.
                 return false;
             }
-            jobMap.set(key, job.withHeartbeat(Instant.now()).withCancellable(false));
+            if (!jobMap.replace(key, job, job.withHeartbeat(Instant.now()).withCancellable(false))) {
+                // The slot changed under an expired lease, so this node no longer owns the job and must not enter the phase that writes to Git and the database.
+                return false;
+            }
         }
         finally {
             unlockJobSlot(key);
@@ -698,8 +704,8 @@ public class GenerationJobService {
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
                 return false;
             }
-            jobMap.set(key, job.withHeartbeat(Instant.now()));
-            return true;
+            // Reports the heartbeat as lost if the slot changed under an expired lease, rather than overwriting whichever job now owns it.
+            return jobMap.replace(key, job, job.withHeartbeat(Instant.now()));
         }
         finally {
             unlockJobSlot(key);

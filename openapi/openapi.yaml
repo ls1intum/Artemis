@@ -476,8 +476,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationRetainedArtifacts'}
-        '404':
-          description: The caller's most recent run retained no unsaved candidate
+        '404': {description: The caller's most recent run retained no unsaved candidate}
   /api/hyperion/programming-exercises/generation/supported-languages:
     get:
       tags: [hyperion-exercise-generation]
@@ -1563,11 +1562,13 @@ components:
       type: object
       description: A file of a generated candidate that was not saved to the exercise
       properties:
-        repo: {type: string, description: Owning repository bucket, enum: [solution,
-            template, tests]}
+        repo:
+          type: string
+          description: Owning repository bucket
+          enum: [solution, template, tests]
         path: {type: string, description: Repository-relative file path}
-        content: {type: string, description: The file's text content as the agent left
-            it}
+        content: {type: string, description: The file's text content as the agent
+            left it}
       required: [content, path, repo]
     ExerciseGenerationRetainedArtifacts:
       type: object
@@ -1575,8 +1576,11 @@ components:
         read-only for inspection
       properties:
         jobId: {type: string}
-        completeness: {type: string, description: Whether the retained files are a complete
-            account of what the run produced, enum: [COMPLETE, PARTIAL]}
+        completeness:
+          type: string
+          description: Whether the retained files are a complete account of what the
+            run produced
+          enum: [COMPLETE, PARTIAL]
         problemStatement: {type: string}
         specDocument: {type: string}
         files:
@@ -1702,7 +1706,8 @@ components:
           type: string
           description: Category of the issue
           enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
-            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY, GENERATION_REVIEW_REQUIRED]
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY,
+            GENERATION_REVIEW_REQUIRED]
           example: METHOD_RETURN_TYPE_MISMATCH
         description: {type: string, description: Detailed description of the issue,
           example: Problem statement does not match test cases}

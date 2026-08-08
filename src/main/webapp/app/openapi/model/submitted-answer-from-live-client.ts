@@ -9,4 +9,3 @@ export interface SubmittedAnswerFromLiveClient {
     mappings?: Array<DragAndDropMappingFromLiveClient>;
     submittedTexts?: Array<ShortAnswerSubmittedTextFromLiveClient>;
 }
-

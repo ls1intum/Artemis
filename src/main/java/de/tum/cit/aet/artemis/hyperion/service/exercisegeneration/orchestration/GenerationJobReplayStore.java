@@ -585,7 +585,10 @@ final class GenerationJobReplayStore {
      * Retains the candidate a terminal run produced but never saved, so the work stays inspectable by the instructor who started the run — the only one allowed to read it back.
      * <p>
      * Written with the terminal-replay TTL immediately rather than promoted later, because unlike the transcript there is no live phase during which this value is useful.
-     * Overwrites any older snapshot for the exercise, matching the one-retained-run-per-exercise rule the transcript and file-change index already follow.
+     * Overwrites the exercise's older snapshot, matching the one-retained-run-per-exercise rule the transcript and file-change index already follow.
+     * <p>
+     * Only the exercise's current run may retain. A run that was reclaimed as stale can still be winding down while its replacement is under way, and without this guard that
+     * straggler would overwrite the newer run's slot — leaving a stale draft exposed as the retained candidate once the newer run saves and retains nothing of its own.
      */
     boolean retainUnsavedArtifacts(long exerciseId, String jobId, String userLogin, ExerciseGenerationRetainedArtifactsDTO artifacts) {
         if (artifacts.isEmpty()) {
@@ -594,6 +597,10 @@ final class GenerationJobReplayStore {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
+            GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
+            if (transcript != null && !transcript.jobId().equals(jobId)) {
+                return false;
+            }
             artifactMap().set(key, new GenerationJobService.JobArtifacts(jobId, userLogin, artifacts), terminalReplayTtlSeconds, TimeUnit.SECONDS);
             return true;
         }

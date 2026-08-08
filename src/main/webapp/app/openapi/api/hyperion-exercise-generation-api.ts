@@ -19,6 +19,7 @@ import { ExerciseGenerationRequest } from '../model/exercise-generation-request'
 import { ExerciseGenerationJobStart } from '../model/exercise-generation-job-start';
 import { ExerciseGenerationStatus } from '../model/exercise-generation-status';
 import { ExerciseGenerationEffortProfile } from '../model/exercise-generation-effort-profile';
+import { ExerciseGenerationRetainedArtifacts } from '../model/exercise-generation-retained-artifacts';
 import { ExerciseGenerationRevertResult } from '../model/exercise-generation-revert-result';
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +67,16 @@ export class HyperionExerciseGenerationApi {
     getGenerationEffortProfiles(): Observable<Array<ExerciseGenerationEffortProfile>> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/generation/effort-profiles`;
         return this.http.get<Array<ExerciseGenerationEffortProfile>>(url);
+    }
+
+    /**
+     *
+     *
+     * @param exerciseId
+     */
+    getRetainedGenerationArtifacts(exerciseId: number): Observable<ExerciseGenerationRetainedArtifacts> {
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/artifacts`;
+        return this.http.get<ExerciseGenerationRetainedArtifacts>(url);
     }
 
     /**
