@@ -256,6 +256,34 @@ describe('VideoPlayerComponent', () => {
         expect(playSpy).not.toHaveBeenCalled();
     });
 
+    it('refuses a target outside the video instead of letting it clamp to the end', async () => {
+        // Iris proposes the timestamp, so it can name one the video does not have. The browser would clamp such a seek
+        // to the end, which is not the position that was asked for — reporting it as applied would leave a point-out
+        // chip pointing at a place nobody was taken to.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
+
+        expect(component.seekTo(301, false)).toBe(false);
+        expect(component.seekTo(-1, false)).toBe(false);
+        expect(videoElement.currentTime).toBe(0);
+
+        expect(component.seekTo(300, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(300);
+    });
+
+    it('accepts a target while the duration is still unknown', async () => {
+        // Before metadata arrives the duration is NaN, which is nothing to judge the target against; the browser
+        // applies such a seek once the resource has loaded, so refusing it would report a good position as missed.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        // Stated explicitly rather than relying on what jsdom happens to report for a media element without a resource.
+        Object.defineProperty(videoElement, 'duration', { value: NaN, configurable: true });
+
+        expect(component.seekTo(42, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(42);
+    });
+
     it('applies initial timestamp after metadata is available', async () => {
         setInputs('https://cdn.example.com/m.m3u8', [], 12.5);
         await render();

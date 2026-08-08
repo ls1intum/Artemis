@@ -42,7 +42,7 @@ describe('YouTubePlayerComponent', () => {
         vi.useFakeTimers();
         const spy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
         // Simulate player ready + stub getCurrentTime()
-        (component as any).youtubePlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+        (component as any).youtubePlayer = { getCurrentTime: () => 15, getDuration: () => 600, seekTo: vi.fn() };
         component.onStateChange({ data: 1 /* PLAYING */ } as any);
         vi.advanceTimersByTime(300);
         expect(spy).toHaveBeenCalled();
@@ -51,7 +51,7 @@ describe('YouTubePlayerComponent', () => {
 
     it('stops polling on PAUSED and updates segment once', () => {
         vi.useFakeTimers();
-        (component as any).youtubePlayer = { getCurrentTime: () => 25, seekTo: vi.fn() };
+        (component as any).youtubePlayer = { getCurrentTime: () => 25, getDuration: () => 600, seekTo: vi.fn() };
         const spy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
         component.onStateChange({ data: 1 } as any); // start polling
         component.onStateChange({ data: 2 /* PAUSED */ } as any);
@@ -63,7 +63,7 @@ describe('YouTubePlayerComponent', () => {
 
     it('seekTo calls player.seekTo and updates segment immediately', () => {
         const seekSpy = vi.fn();
-        (component as any).youtubePlayer = { getCurrentTime: () => 15, seekTo: seekSpy };
+        (component as any).youtubePlayer = { getCurrentTime: () => 15, getDuration: () => 600, seekTo: seekSpy };
         const updateSpy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
         component.seekTo(12);
         expect(seekSpy).toHaveBeenCalledWith(12, true);
@@ -75,11 +75,36 @@ describe('YouTubePlayerComponent', () => {
         expect(component.isPlayerReady()).toBe(false);
         expect(component.seekTo(12)).toBe(false);
 
-        (component as any).youtubePlayer = { getCurrentTime: () => 0, seekTo: vi.fn() };
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 600, seekTo: vi.fn() };
         component.onPlayerReady({} as any);
 
         expect(component.isPlayerReady()).toBe(true);
         expect(component.seekTo(12)).toBe(true);
+    });
+
+    it('refuses a target outside the video instead of letting it clamp to the end', () => {
+        // Iris proposes the timestamp, so it can name one the video does not have. YouTube would clamp such a seek to
+        // the end, which is not the position that was asked for — reporting it as applied would leave a point-out
+        // chip pointing at a place nobody was taken to.
+        const seekSpy = vi.fn();
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 600, seekTo: seekSpy };
+
+        expect(component.seekTo(601)).toBe(false);
+        expect(component.seekTo(-1)).toBe(false);
+        expect(seekSpy).not.toHaveBeenCalled();
+
+        expect(component.seekTo(600)).toBe(true);
+        expect(seekSpy).toHaveBeenCalledWith(600, true);
+    });
+
+    it('accepts a target while the player cannot state a duration yet', () => {
+        // A duration of 0 is the player saying "not known", not "zero seconds long". Judging the target against it
+        // would refuse every seek made before the video data has loaded.
+        const seekSpy = vi.fn();
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 0, seekTo: seekSpy };
+
+        expect(component.seekTo(42)).toBe(true);
+        expect(seekSpy).toHaveBeenCalledWith(42, true);
     });
 
     it('emits playerFailed when readiness timeout elapses without onPlayerReady', () => {
@@ -102,7 +127,7 @@ describe('YouTubePlayerComponent', () => {
         const emitSpy = vi.spyOn(component.playerFailed, 'emit');
         component.ngAfterViewInit();
         vi.advanceTimersByTime(5_000);
-        (component as any).youtubePlayer = { getCurrentTime: () => 0, seekTo: vi.fn() };
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 600, seekTo: vi.fn() };
         component.onPlayerReady({} as any);
         vi.advanceTimersByTime(10_000);
         expect(emitSpy).not.toHaveBeenCalled();
@@ -110,8 +135,8 @@ describe('YouTubePlayerComponent', () => {
     });
 
     it('prefers the Angular playerComponent viewChild over the event target on ready', () => {
-        const viewChildPlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
-        const eventPlayer = { getCurrentTime: () => 0, seekTo: vi.fn() };
+        const viewChildPlayer = { getCurrentTime: () => 15, getDuration: () => 600, seekTo: vi.fn() };
+        const eventPlayer = { getCurrentTime: () => 0, getDuration: () => 600, seekTo: vi.fn() };
 
         (component as any).playerComponent = () => viewChildPlayer as any;
         component.onPlayerReady({ target: eventPlayer } as any);
@@ -177,7 +202,7 @@ describe('YouTubePlayerComponent', () => {
         await fixture.whenStable();
 
         // Player becomes ready at t=15
-        (component as any).playerComponent = () => ({ getCurrentTime: () => 15, seekTo: vi.fn() }) as any;
+        (component as any).playerComponent = () => ({ getCurrentTime: () => 15, getDuration: () => 600, seekTo: vi.fn() }) as any;
         component.onPlayerReady({} as any);
         expect(component['currentSegmentIndex']()).toBe(-1); // no segments yet
 
@@ -202,7 +227,7 @@ describe('YouTubePlayerComponent', () => {
     it.each([0, 3])('stops polling on state %s and updates the segment once more', (state) => {
         vi.useFakeTimers();
         const updateSpy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
-        (component as any).youtubePlayer = { getCurrentTime: () => 25, seekTo: vi.fn() };
+        (component as any).youtubePlayer = { getCurrentTime: () => 25, getDuration: () => 600, seekTo: vi.fn() };
 
         component.onStateChange({ data: 1 } as any);
         vi.advanceTimersByTime(250);
@@ -311,6 +336,7 @@ describe('YouTubePlayerComponent', () => {
         it('getCurrentTime: returns current time from YouTube player', () => {
             const mockPlayer = {
                 getCurrentTime: vi.fn().mockReturnValue(125.5),
+                getDuration: vi.fn().mockReturnValue(600),
                 seekTo: vi.fn(),
             };
             (component as any).youtubePlayer = mockPlayer;
@@ -339,6 +365,7 @@ describe('YouTubePlayerComponent', () => {
             // Simulate onPlayerReady
             const mockPlayer = {
                 getCurrentTime: vi.fn().mockReturnValue(0),
+                getDuration: vi.fn().mockReturnValue(600),
                 seekTo: vi.fn(),
             };
             component.onPlayerReady({ target: mockPlayer } as any);
@@ -355,6 +382,7 @@ describe('YouTubePlayerComponent', () => {
             // First video plays
             const mockPlayer1 = {
                 getCurrentTime: vi.fn().mockReturnValue(0),
+                getDuration: vi.fn().mockReturnValue(600),
                 seekTo: vi.fn(),
             };
             component.onPlayerReady({ target: mockPlayer1 } as any);
@@ -365,6 +393,7 @@ describe('YouTubePlayerComponent', () => {
             // New video loads
             const mockPlayer2 = {
                 getCurrentTime: vi.fn().mockReturnValue(0),
+                getDuration: vi.fn().mockReturnValue(600),
                 seekTo: vi.fn(),
             };
             component.onPlayerReady({ target: mockPlayer2 } as any);

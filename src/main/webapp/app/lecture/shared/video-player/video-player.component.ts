@@ -267,15 +267,22 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * Seeks the video to the given time and optionally resumes playback.
      * @param seconds the position to seek to
      * @param resumePlayback whether to start playing from there
-     * @return whether the media element was there to take the seek. Both players answer this question the same way so
-     *         that a caller passing the outcome onwards (the Iris point-out ack) can treat them alike; unlike the
-     *         YouTube player, this one is only missing its element before its own view exists.
+     * @return whether the video really moved to the requested position. A target outside the video is refused rather
+     *         than seeked to: the browser would clamp it to the end, which is not the position that was asked for, and
+     *         a caller passing the outcome onwards (the Iris point-out ack) must not report that as a navigation.
+     *         An unknown duration — metadata not loaded yet, or a live stream, where it is Infinity — is not a
+     *         rejection; there is nothing to judge the target against, and the browser applies the seek once it can.
      */
     seekTo(seconds: number, resumePlayback = true): boolean {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
 
         if (!videoElement) {
+            return false;
+        }
+
+        const duration = videoElement.duration;
+        if (seconds < 0 || (Number.isFinite(duration) && seconds > duration)) {
             return false;
         }
 

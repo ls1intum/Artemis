@@ -11,7 +11,7 @@ const READINESS_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
 
 /** Minimal shape of the YouTube player instance we interact with (subset of the YT.Player / Angular wrapper API). */
-type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'>;
+type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'getDuration' | 'seekTo'>;
 
 /** Minimal shape of the event emitted by the YouTube player's `ready` output. */
 interface YoutubePlayerReadyEvent {
@@ -267,11 +267,17 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     /**
      * Seeks the video to the given position.
      * @param seconds the position to seek to
-     * @return whether the player was there to take the seek, so a caller reporting the outcome onwards (the Iris
-     *         point-out ack) does not count a call made before {@link onPlayerReady} as a navigation.
+     * @return whether the video really moved to the requested position, so a caller reporting the outcome onwards (the
+     *         Iris point-out ack) counts neither a call made before {@link onPlayerReady} nor a target outside the
+     *         video as a navigation — the latter would be clamped to the end, which is not what was asked for. A
+     *         duration of 0 means the player cannot state one yet, which is nothing to judge the target against.
      */
     seekTo(seconds: number, _resumePlayback = true): boolean {
         if (!this.youtubePlayer) return false;
+        const duration = this.youtubePlayer.getDuration();
+        if (seconds < 0 || (duration > 0 && seconds > duration)) {
+            return false;
+        }
         this.youtubePlayer.seekTo(seconds, true);
         this.updateCurrentSegment(seconds);
         return true;
