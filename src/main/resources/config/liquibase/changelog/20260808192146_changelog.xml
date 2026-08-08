@@ -39,6 +39,11 @@
         <createIndex indexName="idx_weaviate_outbox_next_attempt_at" tableName="weaviate_outbox">
             <column name="next_attempt_at"/>
         </createIndex>
+        <!-- Supports the per-entity collapse delete (entity_type, entity_id) that enforces latest-wins across retries. -->
+        <createIndex indexName="idx_weaviate_outbox_entity" tableName="weaviate_outbox">
+            <column name="entity_type"/>
+            <column name="entity_id"/>
+        </createIndex>
     </changeSet>
 
     <changeSet id="20260808192146-2" author="nayerkotry">
