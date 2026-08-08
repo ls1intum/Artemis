@@ -31,9 +31,11 @@ import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -142,9 +144,9 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 new Endpoint("exercises + statistics tab", "GET /courses/{id}/exercises-for-overview",
                         () -> request.get("/api/course/courses/" + courseId + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class)),
                 new Endpoint("lectures tab", "GET /courses/{id}/lectures-for-overview",
-                        () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, Lecture.class)),
+                        () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, LectureForOverviewDTO.class)),
                 new Endpoint("exams tab", "GET /courses/{id}/exams-for-overview",
-                        () -> request.getSet("/api/exam/courses/" + courseId + "/exams-for-overview", HttpStatus.OK, Exam.class)),
+                        () -> request.getSet("/api/exam/courses/" + courseId + "/exams-for-overview", HttpStatus.OK, ExamForOverviewDTO.class)),
                 new Endpoint("DEPRECATED (native clients)", "GET /courses/{id}/for-dashboard",
                         () -> request.get("/api/course/courses/" + courseId + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class)));
 
@@ -204,7 +206,7 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         Endpoint exercises = new Endpoint("", "exercises-for-overview",
                 () -> request.get("/api/course/courses/" + courseId + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class));
         Endpoint lectures = new Endpoint("", "lectures-for-overview",
-                () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, Lecture.class));
+                () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, LectureForOverviewDTO.class));
         Endpoint forDashboard = new Endpoint("", "for-dashboard",
                 () -> request.get("/api/course/courses/" + courseId + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class));
 
@@ -285,8 +287,9 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         Endpoint exercises = new Endpoint("", "exercises-for-overview",
                 () -> request.get("/api/course/courses/" + courseId + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class));
         Endpoint lectures = new Endpoint("", "lectures-for-overview",
-                () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, Lecture.class));
-        Endpoint exams = new Endpoint("", "exams-for-overview", () -> request.getSet("/api/exam/courses/" + courseId + "/exams-for-overview", HttpStatus.OK, Exam.class));
+                () -> request.getSet("/api/lecture/courses/" + courseId + "/lectures-for-overview", HttpStatus.OK, LectureForOverviewDTO.class));
+        Endpoint exams = new Endpoint("", "exams-for-overview",
+                () -> request.getSet("/api/exam/courses/" + courseId + "/exams-for-overview", HttpStatus.OK, ExamForOverviewDTO.class));
         Endpoint forDashboard = new Endpoint("", "for-dashboard",
                 () -> request.get("/api/course/courses/" + courseId + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class));
 
