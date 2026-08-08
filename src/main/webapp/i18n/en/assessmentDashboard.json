@@ -13,6 +13,7 @@
             "pageHeaderExam": "Assessment Dashboard for exam",
             "pageHeaderExamTestRun": "Test Run Assessment Dashboard",
             "assessments": "Assessments",
+            "assessmentsChartAriaLabel": "Pie chart showing how the submissions are distributed across assessment states",
             "assessmentLocks": "Assessment Locks",
             "totalAssessmentsForCorrectionrounds": "Assessments for correction rounds",
             "complaints": "Complaints",

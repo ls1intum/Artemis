@@ -280,6 +280,7 @@
             },
             "lectureDetails": {
                 "description": "Beschreibung",
+                "lectureContent": "Vorlesungsinhalt",
                 "lectureUnits": "Vorlesungsinhalte",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
