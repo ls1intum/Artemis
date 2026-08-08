@@ -1120,6 +1120,32 @@ public class CourseTestService {
     public void testGetCourseExercisesForOverview() throws Exception {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
+        ZonedDateTime now = ZonedDateTime.now();
+
+        // Exercise both participation projections. The common fixture contains only individual exercises, while the
+        // endpoint also has a separate team query and must expose the requesting student's assigned team id.
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.plusDays(1), now.plusDays(2));
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+        User instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
+        var assignedTeam = teamUtilService.createTeam(Set.of(student), instructor, teamExercise, "overview-team");
+        participationUtilService.createParticipationSubmissionAndResult(teamExercise.getId(), assignedTeam, teamExercise.getMaxPoints(), teamExercise.getBonusPoints(), 60, true);
+        course.addExercises(teamExercise);
+
+        // Result creation schedules participant-score updates. Let the initial updates finish before changing result
+        // dates, otherwise the rescheduling can interrupt a task while it holds a database connection.
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        course.getExercises().forEach(exercise -> {
+            exercise.setReleaseDate(now.minusDays(3));
+            exercise.setDueDate(now.minusHours(6));
+            exercise.setAssessmentDueDate(now.minusHours(1));
+        });
+        exerciseRepo.saveAll(course.getExercises());
+        Set<Result> completedResults = course.getExercises().stream().flatMap(exercise -> resultRepo.findAllBySubmissionParticipationExerciseId(exercise.getId()).stream())
+                .collect(Collectors.toSet());
+        completedResults.forEach(result -> result.setCompletionDate(now.minusHours(12)));
+        resultRepo.saveAll(completedResults);
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
 
         CourseExercisesForOverviewDTO exercises = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
                 CourseExercisesForOverviewDTO.class);
@@ -1130,7 +1156,24 @@ public class CourseTestService {
             assertThat(exercise.title()).isNotNull();
             assertThat(exercise.type()).isNotNull();
         });
+        var projectedTeamExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst().orElseThrow();
+        assertThat(projectedTeamExercise.teamMode()).isTrue();
+        assertThat(projectedTeamExercise.studentAssignedTeamId()).isEqualTo(assignedTeam.getId());
+        assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
         assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
+        assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
+
+        // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
+        // the entity-based endpoint while native clients still use that path.
+        CourseForDashboardDTO dashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        assertThat(exercises.totalScores()).isEqualTo(dashboard.totalScores());
+        assertThat(exercises.textScores()).isEqualTo(dashboard.textScores());
+        assertThat(exercises.programmingScores()).isEqualTo(dashboard.programmingScores());
+        assertThat(exercises.modelingScores()).isEqualTo(dashboard.modelingScores());
+        assertThat(exercises.fileUploadScores()).isEqualTo(dashboard.fileUploadScores());
+        assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
+        assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
+        assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
     }
 
     // Test

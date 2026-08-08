@@ -27,8 +27,10 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
@@ -51,6 +53,72 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
+
+    /**
+     * Projects the scalar exercise data needed by the course overview and its score calculation. Categories and the
+     * requesting user's participations are deliberately queried separately so this row is not multiplied by either
+     * collection.
+     *
+     * @param courseId          the course whose exercises are projected
+     * @param calculationTime   the instant used for the student visibility rule
+     * @param includeUnreleased whether unreleased exercises are visible to the requesting user
+     * @param requireLtiLaunch  whether an online-course exercise requires a prior LTI launch by the user
+     * @param userLogin         the requesting user's login for the LTI-launch check
+     * @return the projected exercise details
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO(
+                TYPE(exercise),
+                exercise.id,
+                exercise.title,
+                exercise.maxPoints,
+                exercise.bonusPoints,
+                exercise.releaseDate,
+                exercise.startDate,
+                exercise.dueDate,
+                exercise.assessmentDueDate,
+                exercise.assessmentType,
+                exercise.difficulty,
+                exercise.mode,
+                exercise.includedInOverallScore,
+                exercise.presentationScoreEnabled,
+                programmingExercise.buildAndTestStudentSubmissionsAfterDueDate,
+                variantGroup.id,
+                variantGroup.title,
+                variantGroup.maxPoints,
+                variantGroup.releaseDate,
+                variantGroup.startDate,
+                variantGroup.dueDate,
+                variantGroup.assessmentDueDate,
+                variantGroup.exampleSolutionPublicationDate)
+            FROM Exercise exercise
+                LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
+                LEFT JOIN exercise.exerciseVariantGroup variantGroup
+            WHERE exercise.course.id = :courseId
+                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate < :calculationTime)
+                AND (:requireLtiLaunch = FALSE OR EXISTS (
+                    SELECT launch
+                    FROM LtiResourceLaunch launch
+                    WHERE launch.exercise = exercise
+                        AND launch.user.login = :userLogin
+                ))
+            """)
+    List<ExerciseForCourseOverviewDTO> findForCourseOverview(@Param("courseId") long courseId, @Param("calculationTime") ZonedDateTime calculationTime,
+            @Param("includeUnreleased") boolean includeUnreleased, @Param("requireLtiLaunch") boolean requireLtiLaunch, @Param("userLogin") String userLogin);
+
+    /**
+     * Projects categories independently from exercise details to keep both query result matrices narrow.
+     *
+     * @param exerciseIds the visible exercise ids
+     * @return one row per exercise/category pair
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO(exercise.id, category)
+            FROM Exercise exercise
+                JOIN exercise.categories category
+            WHERE exercise.id IN :exerciseIds
+            """)
+    List<ExerciseCategoryDTO> findCategoriesForCourseOverview(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Loads the course exercises without any of their associations, for callers that only need to name them.

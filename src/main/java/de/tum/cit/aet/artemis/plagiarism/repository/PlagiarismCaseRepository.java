@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
@@ -261,6 +262,27 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 AND plagiarismCase.student.id = :userId
             """)
     List<PlagiarismCase> findByStudentIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
+     * Projects only the plagiarism fields that affect one student's course score. Team cases are resolved to the
+     * requesting team member in the query, so the calculator receives the same shape for individual and team exercises.
+     *
+     * @param userId      the requesting student
+     * @param exerciseIds the visible course exercises
+     * @return score-relevant plagiarism cases for the student
+     */
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismCaseScoreDTO(
+                COALESCE(plagiarismCase.student.id, teamStudent.id),
+                plagiarismCase.exercise.id,
+                plagiarismCase.verdict,
+                plagiarismCase.verdictPointDeduction)
+            FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.team.students teamStudent
+            WHERE plagiarismCase.exercise.id IN :exerciseIds
+                AND (plagiarismCase.student.id = :userId OR teamStudent.id = :userId)
+            """)
+    List<PlagiarismCaseScoreDTO> findScoreInformationByStudentIdAndExerciseIds(@Param("userId") long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
             SELECT DISTINCT plagiarismCase

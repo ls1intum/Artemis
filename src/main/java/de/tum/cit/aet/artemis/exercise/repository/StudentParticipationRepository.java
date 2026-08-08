@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScor
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -872,6 +873,67 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
+    /**
+     * Projects the requesting user's individual participations and each latest submission's visible-result candidates
+     * for the course overview. The result side is bounded to the latest result and latest automatic fallback. Unlike the
+     * entity fetch used by the deprecated dashboard, this selects no repository URLs, student, team, feedback, or
+     * exercise entity.
+     *
+     * @param studentId       the requesting user
+     * @param exerciseIds     the visible individual exercises
+     * @param includeTestRuns whether practice participations should be included
+     * @return flat rows grouped by the overview service
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO(
+                participation.exercise.id,
+                participation.id,
+                TYPE(participation),
+                participation.initializationState,
+                participation.initializationDate,
+                participation.testRun,
+                participation.individualDueDate,
+                participation.presentationScore,
+                submission.id,
+                submission.submissionDate,
+                submission.submitted,
+                submission.type,
+                TYPE(submission),
+                result.id,
+                result.completionDate,
+                result.score,
+                result.rated,
+                result.successful,
+                result.assessmentType)
+            FROM StudentParticipation participation
+                LEFT JOIN participation.submissions submission
+                LEFT JOIN submission.results result
+            WHERE participation.student.id = :studentId
+                AND participation.exercise.id IN :exerciseIds
+                AND (participation.testRun = FALSE OR :includeTestRuns = TRUE)
+                AND (submission.submissionDate IS NULL OR submission.submissionDate = (
+                    SELECT MAX(innerSubmission.submissionDate)
+                    FROM Submission innerSubmission
+                    WHERE innerSubmission.participation = participation
+                ))
+                AND (result.id IS NULL
+                    OR result.id = (
+                        SELECT MAX(latestResult.id)
+                        FROM Result latestResult
+                        WHERE latestResult.submission = submission
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestAutomaticResult.id)
+                        FROM Result latestAutomaticResult
+                        WHERE latestAutomaticResult.submission = submission
+                            AND latestAutomaticResult.assessmentType IN (
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                    ))
+            """)
+    List<ParticipationOverviewRowDTO> findIndividualRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds,
+            @Param("includeTestRuns") boolean includeTestRuns);
+
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -990,6 +1052,62 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Set<StudentParticipation> findByStudentIdAndTeamExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
+
+    /**
+     * Team counterpart of {@link #findIndividualRowsForCourseOverview(long, Collection, boolean)}.
+     *
+     * @param studentId   the requesting user
+     * @param exerciseIds the visible team exercises
+     * @return flat rows grouped by the overview service
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO(
+                participation.exercise.id,
+                participation.id,
+                TYPE(participation),
+                participation.initializationState,
+                participation.initializationDate,
+                participation.testRun,
+                participation.individualDueDate,
+                participation.presentationScore,
+                submission.id,
+                submission.submissionDate,
+                submission.submitted,
+                submission.type,
+                TYPE(submission),
+                result.id,
+                result.completionDate,
+                result.score,
+                result.rated,
+                result.successful,
+                result.assessmentType)
+            FROM StudentParticipation participation
+                JOIN participation.team.students student
+                LEFT JOIN participation.submissions submission
+                LEFT JOIN submission.results result
+            WHERE student.id = :studentId
+                AND participation.exercise.id IN :exerciseIds
+                AND (submission.submissionDate IS NULL OR submission.submissionDate = (
+                    SELECT MAX(innerSubmission.submissionDate)
+                    FROM Submission innerSubmission
+                    WHERE innerSubmission.participation = participation
+                ))
+                AND (result.id IS NULL
+                    OR result.id = (
+                        SELECT MAX(latestResult.id)
+                        FROM Result latestResult
+                        WHERE latestResult.submission = submission
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestAutomaticResult.id)
+                        FROM Result latestAutomaticResult
+                        WHERE latestAutomaticResult.submission = submission
+                            AND latestAutomaticResult.assessmentType IN (
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                    ))
+            """)
+    List<ParticipationOverviewRowDTO> findTeamRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds);
 
     @Query("""
             SELECT DISTINCT p

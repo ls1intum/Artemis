@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.course.service.CourseOverviewExerciseService;
 import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -108,11 +109,13 @@ public class CourseOverviewResource {
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
+    private final CourseOverviewExerciseService courseOverviewExerciseService;
+
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository,
             Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
             QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository, CourseAvailableTabsService courseAvailableTabsService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -127,6 +130,7 @@ public class CourseOverviewResource {
         this.faqRepository = faqRepository;
         this.courseAvailableTabsService = courseAvailableTabsService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
+        this.courseOverviewExerciseService = courseOverviewExerciseService;
     }
 
     /**
@@ -213,8 +217,9 @@ public class CourseOverviewResource {
      * submissions, results and the derived scores.
      * <p>
      * Only the exercises tab (and the statistics tab, which reads the same scores) needs this, so it is loaded on demand
-     * rather than on every course entry. The computation is shared with the deprecated {@link #getCourseForDashboard},
-     * so the two cannot drift apart.
+     * rather than on every course entry. Exercise, participation, submission, result, and score inputs are projected
+     * directly from the database; the deprecated {@link #getCourseForDashboard} remains on its entity path for native
+     * clients.
      *
      * @param courseId the id of the course
      * @return the exercises and scores for the requesting user
@@ -226,15 +231,12 @@ public class CourseOverviewResource {
         log.debug("REST request to get the exercises of course {} for the course overview", courseId);
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesForUser(courseId, user);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
-        courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
-        GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
-        CourseForDashboardDTO scores = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId(), false);
-        logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/exercises-for-overview");
-        return ResponseEntity.ok(CourseExercisesForOverviewDTO.from(scores));
+        CourseExercisesForOverviewDTO overview = courseOverviewExerciseService.getCourseExercisesForOverview(course, user);
+        log.info("courses/{}/exercises-for-overview finished in {} for {} exercise(s) for user {}", courseId, TimeLogUtil.formatDurationFrom(timeNanoStart),
+                overview.exercises().size(), user.getLogin());
+        return ResponseEntity.ok(overview);
     }
 
     /**

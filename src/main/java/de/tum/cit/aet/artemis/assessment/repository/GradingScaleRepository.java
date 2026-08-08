@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -45,6 +46,21 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
             WHERE gradingScale.course.id = :courseId
             """)
     Optional<GradingScale> findByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Projects only the graded-presentation settings needed by the course score calculator.
+     *
+     * @param courseId the course whose grading scale is queried
+     * @return the presentation configuration, or empty if the course has no grading scale
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO(
+                COALESCE(gradingScale.presentationsNumber, 0),
+                COALESCE(gradingScale.presentationsWeight, 0.0))
+            FROM GradingScale gradingScale
+            WHERE gradingScale.course.id = :courseId
+            """)
+    Optional<GradedPresentationConfigDTO> findPresentationConfigByCourseId(@Param("courseId") long courseId);
 
     /**
      * Find a grading scale for exam by id

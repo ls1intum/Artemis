@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.persistence.EntityManagerFactory;
 
@@ -22,6 +24,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
@@ -35,13 +40,19 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
@@ -174,6 +185,10 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         }
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 1, 1);
+
+        // Result creation schedules asynchronous participant-score updates. Drain them before profiling so their
+        // repository work is not attributed to whichever overview endpoint happens to run first.
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.setStatisticsEnabled(true);
@@ -399,6 +414,34 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         // Results carry no feedbacks: only the scores export and the assessment views need them, and they load their own
         assertThat(body).as("results must not carry their feedbacks").doesNotContain("\"feedbacks\":");
         log.info("exercises-for-overview response size: {} bytes for {} exercises", body.length(), CONTENT_PER_TYPE);
+    }
+
+    /**
+     * Guards the database-to-server side of the optimization. Constructor projections must not silently regress to
+     * fetching the exercise graph and pruning it after Hibernate has already materialized it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotHydrateTheExerciseEntityGraph() throws Exception {
+        statistics.clear();
+
+        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        assertEntityWasNotLoaded(Exercise.class);
+        assertEntityWasNotLoaded(TextExercise.class);
+        assertEntityWasNotLoaded(ProgrammingExercise.class);
+        assertEntityWasNotLoaded(ExerciseVariantGroup.class);
+        assertEntityWasNotLoaded(Team.class);
+        assertEntityWasNotLoaded(StudentParticipation.class);
+        assertEntityWasNotLoaded(TextSubmission.class);
+        assertEntityWasNotLoaded(Result.class);
+        assertEntityWasNotLoaded(Feedback.class);
+        assertEntityWasNotLoaded(GradingScale.class);
+        assertEntityWasNotLoaded(PlagiarismCase.class);
+    }
+
+    private void assertEntityWasNotLoaded(Class<?> entityType) {
+        assertThat(statistics.getEntityStatistics(entityType.getName()).getLoadCount()).as("%s must stay projection-only", entityType.getSimpleName()).isZero();
     }
 
     private void replay(List<Endpoint> pattern) throws Exception {
