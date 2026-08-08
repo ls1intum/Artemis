@@ -25,11 +25,13 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -44,6 +46,54 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
+
+    /**
+     * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions
+     * available for practice, and an exam already visible to the user.
+     * <p>
+     * These six used to be six separate round trips, one per feature module, issued on every course entry to build the
+     * sidebar. The schema is shared regardless of which modules are enabled, so a single course-side query can answer
+     * all of them; a disabled module simply has no rows. Module enablement is still applied on top in
+     * {@code CourseAvailableTabsService}, so a disabled module hides its tab even when rows exist.
+     * <p>
+     * Each branch below is an independent existence check against an indexed {@code course_id} (plus one join for quiz
+     * questions and the user-scoped predicate for exams), so the planner satisfies them with index seeks and folding
+     * them together measured faster than issuing them separately rather than slower.
+     * <p>
+     * Iris enablement is deliberately not folded in: its flag lives inside a JSON column and the answer for a course
+     * without a settings row comes from {@code IrisCourseSettings.defaultSettings()} in Java, so expressing it here
+     * would need database-specific JSON extraction and would duplicate that default. It is a primary-key lookup anyway.
+     *
+     * @param courseId      the course to inspect
+     * @param userId        the user asking, for the user-scoped exam visibility check
+     * @param acceptedState the FAQ state that counts as visible to students
+     * @param now           the current time, used for quiz due dates and exam visibility
+     * @return which kinds of content the course has
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO(
+                CASE WHEN EXISTS (SELECT 1 FROM Lecture l WHERE l.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM CourseCompetency cc WHERE cc.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM TutorialGroup tg WHERE tg.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM Faq f WHERE f.course.id = :courseId AND f.faqState = :acceptedState) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM QuizQuestion q WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now)
+                    THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM Exam e
+                    WHERE e.course.id = :courseId
+                        AND e.visibleDate <= :now
+                        AND (
+                            e.testExam = TRUE
+                            OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                            OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                        )
+                ) THEN TRUE ELSE FALSE END
+            )
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    CourseContentAvailabilityDTO findContentAvailability(@Param("courseId") long courseId, @Param("userId") long userId, @Param("acceptedState") FaqState acceptedState,
+            @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT COUNT(c) > 0

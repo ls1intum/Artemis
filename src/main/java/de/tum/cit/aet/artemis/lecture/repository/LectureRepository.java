@@ -41,8 +41,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     Set<Long> findLectureIdsByCourseId(@Param("courseId") long courseId);
 
-    boolean existsByCourse_Id(long courseId);
-
     @Query("""
             SELECT new de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO(
                 lecture.id,
@@ -70,6 +68,25 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 AND lecture.isTutorialLecture
             """)
     Set<Lecture> findAllTutorialLecturesByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * Loads the lectures of a course with their attachments, but without lecture units.
+     * <p>
+     * This is what the course overview lecture list needs: attachments have to come along because they are eagerly
+     * mapped (they would otherwise be fetched one query per lecture) and because they drive the visibility filtering in
+     * {@code LectureService#filterLecturesWithActiveAttachments}. Lecture units are only needed on the lecture detail
+     * page and are deliberately left out here.
+     *
+     * @param courseId the course whose lectures should be loaded
+     * @return the lectures of the course, with attachments
+     */
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.attachments
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

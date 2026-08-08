@@ -45,10 +45,6 @@ public class ExamRepositoryApi extends AbstractExamApi {
         return examRepository.findByCourseIdForUser(courseId, userId, now);
     }
 
-    public boolean existsVisibleExamForUser(long courseId, long userId, ZonedDateTime now) {
-        return examRepository.existsVisibleExamForUser(courseId, userId, now);
-    }
-
     public Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {
         return examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
     }
