@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForImportListDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForQuestionPoolDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamIdAndTitleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
@@ -1277,24 +1278,18 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams-for-overview : Get the exams of a course that are visible to the requesting user.
      * <p>
-     * These used to arrive as part of the (expensive) for-dashboard course load, which meant every course visit paid for
-     * them even when the user never opened the exams tab. The visibility rules are unchanged: registered users, at least
-     * tutors, and test exams, filtered to exams whose visible date has passed for plain students.
+     * Projected to what the sidebar renders. The visibility rules are unchanged: an exam is returned once its visible
+     * date has passed and the user is registered for it, is at least a tutor in the course, or it is a test exam.
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the exams visible to the user as body
      */
     @GetMapping("courses/{courseId}/exams-for-overview")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<Exam>> getExamsForCourseOverview(@PathVariable long courseId) {
+    public ResponseEntity<Set<ExamForOverviewDTO>> getExamsForCourseOverview(@PathVariable long courseId) {
         log.debug("REST request to get the exams of course {} for the course overview", courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        Set<Exam> exams = examRepository.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now());
-        if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            exams = examRepository.filterVisibleExams(exams);
-        }
-        return ResponseEntity.ok(exams);
+        User user = userRepository.getUser();
+        return ResponseEntity.ok(examRepository.findAllForOverviewByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now()));
     }
 
     /**

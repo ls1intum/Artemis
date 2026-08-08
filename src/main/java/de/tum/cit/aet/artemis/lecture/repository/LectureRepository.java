@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 
 /**
  * Spring Data repository for the Lecture entity.
@@ -70,23 +71,27 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Lecture> findAllTutorialLecturesByCourseId(@Param("courseId") Long courseId);
 
     /**
-     * Loads the lectures of a course with their attachments, but without lecture units.
+     * Loads the lectures of a course as the course overview sidebar needs them: title, dates and the tutorial flag.
      * <p>
-     * This is what the course overview lecture list needs: attachments have to come along because they are eagerly
-     * mapped (they would otherwise be fetched one query per lecture) and because they drive the visibility filtering in
-     * {@code LectureService#filterLecturesWithActiveAttachments}. Lecture units are only needed on the lecture detail
-     * page and are deliberately left out here.
+     * Deliberately a projection rather than the entity. Lecture attachments are eagerly mapped, so loading whole
+     * lectures pulled them in on every course visit, only for the visibility filter to strip them and the sidebar to
+     * ignore what was left. Attachments belong to the lecture detail page, which loads them itself.
      *
      * @param courseId the course whose lectures should be loaded
-     * @return the lectures of the course, with attachments
+     * @return the lectures of the course, projected for the sidebar
      */
     @Query("""
-            SELECT lecture
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO(
+                lecture.id,
+                lecture.title,
+                lecture.startDate,
+                lecture.endDate,
+                lecture.isTutorialLecture
+            )
             FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments
             WHERE lecture.course.id = :courseId
             """)
-    Set<Lecture> findAllByCourseIdWithAttachments(@Param("courseId") long courseId);
+    Set<LectureForOverviewDTO> findAllForOverviewByCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

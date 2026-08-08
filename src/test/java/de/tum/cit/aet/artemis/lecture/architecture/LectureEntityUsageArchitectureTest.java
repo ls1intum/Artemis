@@ -22,14 +22,9 @@ class LectureEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
     // Remaining: LectureUnitResource#getLectureUnitById returns the polymorphic LectureUnit entity. Its only client
     // (learning-path lecture unit view) needs the unit's lecture/course and, for exercise units, feeds the full
     // dashboard exercise into CourseExerciseRowComponent. It cannot be reduced without the deferred exercise-dashboard DTO.
-    // NOTE: temporarily increased by the course-overview per-tab load split (PR #12999): the overview now fetches
-    // the course's lectures directly instead of receiving them inside the (expensive) for-dashboard course. The
-    // payload the client receives is unchanged — only the endpoint serving it moved — so this is a relocation of an
-    // existing entity exposure, not a new one. It is resolved by the ongoing Course/Exercise/Lecture/Exam DTO
-    // migration, which owns lowering this back down.
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 2;
+        return 1;
     }
 
     @Override

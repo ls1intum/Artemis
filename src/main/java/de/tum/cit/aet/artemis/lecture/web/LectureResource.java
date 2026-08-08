@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -313,21 +314,19 @@ public class LectureResource {
     /**
      * GET /courses/:courseId/lectures-for-overview : get the lectures of a course for the student course overview.
      * <p>
-     * The lectures come with their attachments filtered to the ones the user may see. Previously the course overview got
-     * these as part of the (expensive) for-dashboard course load, which meant every course visit paid for them even when
-     * the user never opened the lectures tab.
+     * Projected to what the sidebar renders — title, dates and the tutorial flag. Attachments are not included: they are
+     * eagerly mapped on the entity, so returning whole lectures loaded and serialised them on every visit for nothing.
+     * Lecture visibility does not depend on attachments; the attachment filter only ever removed attachments, never
+     * lectures, so dropping them here does not change which lectures a student sees.
      *
      * @param courseId the courseId of the course for which the lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
      */
     @GetMapping("courses/{courseId}/lectures-for-overview")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<Lecture>> getLecturesForCourseOverview(@PathVariable Long courseId) {
+    public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
         log.debug("REST request to get the lectures of course {} for the course overview", courseId);
-        User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
-        return ResponseEntity.ok(lectureService.filterLecturesWithActiveAttachments(course, lectures, user));
+        return ResponseEntity.ok(lectureRepository.findAllForOverviewByCourseId(courseId));
     }
 
     /**
