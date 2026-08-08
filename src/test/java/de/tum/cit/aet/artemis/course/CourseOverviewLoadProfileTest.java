@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
@@ -325,6 +326,24 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         table.append(String.format(Locale.ROOT, "| _(develop: entering the course loaded all of the above)_ | 1 | %d | %.1f ms |%n", dashboard.queries(),
                 dashboard.medianMicros() / 1000.0));
         log.info(table.toString());
+    }
+
+    /**
+     * Guards the size of what the course overview puts on the wire.
+     *
+     * The exercise payload dominates it, and the single largest item in that payload used to be the requesting user's
+     * own account serialised once per exercise, through each participation. This asserts it stays gone.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotRepeatTheRequestingUserOnEveryParticipation() throws Exception {
+        String body = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + course.getId() + "/exercises-for-overview")).andReturn().getResponse()
+                .getContentAsString();
+
+        // The colon matters: "student" alone also matches "studentParticipations" and "studentAssignedTeamIdComputed"
+        assertThat(body).as("the participations must not carry the student, which the client already knows").doesNotContain("\"student\":");
+        assertThat(body).as("nor the derived participant fields that come with it").doesNotContain("\"participantName\":");
+        log.info("exercises-for-overview response size: {} bytes for {} exercises", body.length(), CONTENT_PER_TYPE);
     }
 
     private void replay(List<Endpoint> pattern) throws Exception {

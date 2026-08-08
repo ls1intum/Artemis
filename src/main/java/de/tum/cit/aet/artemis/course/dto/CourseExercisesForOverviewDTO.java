@@ -1,12 +1,15 @@
 package de.tum.cit.aet.artemis.course.dto;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 
 /**
@@ -42,7 +45,11 @@ public record CourseExercisesForOverviewDTO(
      * @return the exercise-only view of it
      */
     public static CourseExercisesForOverviewDTO from(CourseForDashboardDTO dto) {
-        return new CourseExercisesForOverviewDTO(dto.course().getExercises(), dto.totalScores(), dto.textScores(), dto.programmingScores(), dto.modelingScores(),
-                dto.fileUploadScores(), dto.quizScores(), dto.participationResults(), dto.achievedPointsPerVariantGroup());
+        Set<Exercise> exercises = dto.course().getExercises();
+        // Every participation here belongs to the requesting user, so the student on it is the user the client already
+        // has. Serialising it once per exercise was two thirds of each participation and a third of the whole response.
+        exercises.stream().map(Exercise::getStudentParticipations).filter(Objects::nonNull).flatMap(Collection::stream).forEach(StudentParticipation::filterSensitiveInformation);
+        return new CourseExercisesForOverviewDTO(exercises, dto.totalScores(), dto.textScores(), dto.programmingScores(), dto.modelingScores(), dto.fileUploadScores(),
+                dto.quizScores(), dto.participationResults(), dto.achievedPointsPerVariantGroup());
     }
 }
