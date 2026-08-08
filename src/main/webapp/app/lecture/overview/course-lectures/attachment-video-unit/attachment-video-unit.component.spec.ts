@@ -1088,13 +1088,16 @@ describe('AttachmentVideoUnitComponent', () => {
             return { correlationId: 'corr', lectureUnitId: 1, ...overrides } as IrisPointOut;
         }
 
+        /** Mirrors the real viewer, which refuses to navigate to a page the loaded document does not have. */
+        const isPageInRange = (page: number, totalPages: number) => page >= 1 && page <= totalPages;
+
         /**
          * Installs a stand-in for the pdfViewer viewChild. Its page count comes from a real signal so that "the
          * document finished loading" re-runs the pending-point-out effect the same way it does in production, and
          * goToPage mirrors the real viewer by rejecting targets outside that range.
          */
         function mockPdfViewer(totalPages: WritableSignal<number>) {
-            const goToPage = vi.fn((page: number) => page >= 1 && page <= totalPages());
+            const goToPage = vi.fn((page: number) => isPageInRange(page, totalPages()));
             Object.defineProperty(component, 'pdfViewer', {
                 value: vi.fn().mockReturnValue({ goToPage, getTotalPages: () => totalPages() }),
                 writable: true,
@@ -1225,7 +1228,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(ackSpy).toHaveBeenCalledWith('c5', false);
             expect(ackSpy).not.toHaveBeenCalledWith('c6', false);
-            expect(component['pendingPointOut']()?.correlationId).toBe('c6');
+            expect(component['pendingPointOut']()!.correlationId).toBe('c6');
         });
 
         it('does not acknowledge a superseded marker click, which has nobody waiting on it', () => {
@@ -1384,7 +1387,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 let currentPage = 1;
                 let currentSlideNumber: number | undefined;
                 const goToPage = vi.fn((page: number) => {
-                    if (page < 1 || page > totalPages) {
+                    if (!isPageInRange(page, totalPages)) {
                         return false;
                     }
                     currentPage = page;
