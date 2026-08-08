@@ -263,13 +263,20 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
-    /** Seek the video to the given time and optionally resume playback. */
-    seekTo(seconds: number, resumePlayback = true): void {
+    /**
+     * Seeks the video to the given time and optionally resumes playback.
+     * @param seconds the position to seek to
+     * @param resumePlayback whether to start playing from there
+     * @return whether the media element was there to take the seek. Both players answer this question the same way so
+     *         that a caller passing the outcome onwards (the Iris point-out ack) can treat them alike; unlike the
+     *         YouTube player, this one is only missing its element before its own view exists.
+     */
+    seekTo(seconds: number, resumePlayback = true): boolean {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
 
         if (!videoElement) {
-            return;
+            return false;
         }
 
         videoElement.currentTime = seconds;
@@ -277,6 +284,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             void videoElement.play();
         }
         this.updateCurrentSegment(seconds);
+        return true;
     }
 
     getCurrentSlideNumber(): number | undefined {

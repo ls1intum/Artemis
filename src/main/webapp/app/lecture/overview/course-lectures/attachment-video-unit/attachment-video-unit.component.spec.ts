@@ -1397,6 +1397,8 @@ describe('AttachmentVideoUnitComponent', () => {
                 const seekTo = vi.fn((timestamp: number) => {
                     currentSlideNumber = slideAtTimestamp(timestamp);
                     component['onVideoSlideNumberChange'](currentSlideNumber);
+                    // A rendered player takes the seek, and its answer is what the point-out is acknowledged with.
+                    return true;
                 });
                 Object.defineProperty(component, 'pdfViewer', {
                     value: () => ({ goToPage, getTotalPages: () => totalPages, getCurrentPage: () => currentPage }),

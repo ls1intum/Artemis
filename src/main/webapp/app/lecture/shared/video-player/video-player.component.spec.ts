@@ -238,7 +238,7 @@ describe('VideoPlayerComponent', () => {
 
         const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
 
-        component.seekTo(42);
+        expect(component.seekTo(42)).toBe(true);
 
         expect(videoElement.currentTime).toBe(42);
         expect(playSpy).toHaveBeenCalled();
@@ -542,15 +542,15 @@ describe('VideoPlayerComponent', () => {
     });
 
     describe('Edge cases', () => {
-        it('seekTo does nothing when videoRef is undefined', async () => {
+        it('seekTo does nothing and reports no seek when videoRef is undefined', async () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
             // Force videoRef to return undefined
             vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
 
-            // Should not throw
-            expect(() => component.seekTo(10)).not.toThrow();
+            // Should not throw, and must not claim a seek nobody took
+            expect(component.seekTo(10)).toBe(false);
         });
 
         it('updateCurrentSegment does not update if same segment is current', async () => {

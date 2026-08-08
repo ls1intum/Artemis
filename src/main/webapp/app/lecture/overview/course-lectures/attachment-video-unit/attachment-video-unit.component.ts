@@ -423,13 +423,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             applied = this.pdfViewer()?.goToPage(page) ?? false;
         }
         if (timestamp != undefined) {
-            const videoPlayer = this.videoPlayer();
-            if (videoPlayer) {
-                videoPlayer.seekTo(timestamp, false);
-            } else {
-                // The YouTube player reports whether it was ready to take the seek; a dropped seek is not a navigation.
-                applied = (this.youtubePlayer()?.seekTo(timestamp, false) ?? false) && applied;
-            }
+            // Whichever player is rendered reports whether it was there to take the seek; a dropped seek is not a
+            // navigation. A player that answers false stops here rather than falling through to the other one — the
+            // template renders exactly one of them, so there is no second player to ask.
+            const seeked = this.videoPlayer()?.seekTo(timestamp, false) ?? this.youtubePlayer()?.seekTo(timestamp, false) ?? false;
+            applied = seeked && applied;
         }
         return applied;
     }
