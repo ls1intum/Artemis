@@ -1,21 +1,18 @@
-$menu-width-closed: 64px;
-$menu-width-open: 220px;
-
 /*
  * Width is driven by the runtime `collapsed` class and a custom (960px) breakpoint that interact via
  * `!important`, so it stays in SCSS rather than as Tailwind utilities (stateful + custom breakpoint override).
  */
 .sidebar-container {
-    width: $menu-width-open;
+    width: var(--sidebar-nav-width);
 
     &.collapsed {
-        width: $menu-width-closed !important;
+        width: var(--sidebar-nav-width-collapsed) !important;
     }
 }
 
 @media screen and (max-width: 960px) {
     .sidebar-container {
-        width: $menu-width-closed !important;
+        width: var(--sidebar-nav-width-collapsed) !important;
     }
 
     .auto-collapse {
@@ -25,6 +22,14 @@ $menu-width-open: 220px;
     .nav-group-header {
         display: none;
     }
+}
+
+/*
+ * Collapsed an item is nothing but its icon, so centre it in the rail. The gap to the label sits on the label rather
+ * than on the icon for exactly this reason: with the label gone there is no margin left to push the icon off-centre.
+ */
+.collapsed .nav-link-sidebar {
+    justify-content: center;
 }
 
 /*
