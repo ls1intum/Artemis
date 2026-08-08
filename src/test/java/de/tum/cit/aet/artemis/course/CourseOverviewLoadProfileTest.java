@@ -125,7 +125,7 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     private FaqRepository faqRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository exerciseRepository;
+    private de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository exerciseRepository;
 
     private Course course;
 
@@ -389,15 +389,16 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         // The colon matters: "student" alone also matches "studentParticipations" and "studentAssignedTeamIdComputed"
         assertThat(body).as("the participations must not carry the student, which the client already knows").doesNotContain("\"student\":");
         assertThat(body).as("nor the derived participant fields that come with it").doesNotContain("\"participantName\":");
-        var root = new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
-        var totals = new java.util.TreeMap<String, Integer>();
-        root.get("exercises").forEach(exercise -> exercise.properties().forEach(e -> totals.merge(e.getKey(), e.getValue().toString().length(), Integer::sum)));
-        StringBuilder out = new StringBuilder(String.format(Locale.ROOT,
-                "%nexercises-for-overview: %,d bytes for %d exercises%n%n| Field | Total bytes | Share |%n|---|---:|---:|%n", body.length(), CONTENT_PER_TYPE));
-        int sum = totals.values().stream().mapToInt(Integer::intValue).sum();
-        totals.entrySet().stream().sorted(java.util.Map.Entry.<String, Integer>comparingByValue().reversed())
-                .forEach(e -> out.append(String.format(Locale.ROOT, "| %s | %,d | %.1f%% |%n", e.getKey(), e.getValue(), 100.0 * e.getValue() / sum)));
-        log.info(out.toString());
+        // Everything the overview renders must be here...
+        assertThat(body).as("the exercise fields the overview renders").contains("\"title\":", "\"dueDate\":", "\"maxPoints\":", "\"difficulty\":", "\"categories\":",
+                "\"includedInOverallScore\":", "\"assessmentDueDate\":", "\"studentParticipations\":");
+        // ...and the long tail it never reads must not be, especially the programming configuration
+        assertThat(body).as("fields no overview consumer reads").doesNotContain("\"projectKey\":", "\"packageName\":", "\"programmingLanguage\":", "\"projectType\":",
+                "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"staticCodeAnalysisEnabled\":", "\"allowOnlineEditor\":", "\"allowOnlineIde\":",
+                "\"showTestNamesToStudents\":", "\"testCasesChanged\":", "\"secondCorrectionEnabled\":", "\"gradingInstructionFeedbackUsed\":");
+        // Results carry no feedbacks: only the scores export and the assessment views need them, and they load their own
+        assertThat(body).as("results must not carry their feedbacks").doesNotContain("\"feedbacks\":");
+        log.info("exercises-for-overview response size: {} bytes for {} exercises", body.length(), CONTENT_PER_TYPE);
     }
 
     private void replay(List<Endpoint> pattern) throws Exception {

@@ -1125,7 +1125,11 @@ public class CourseTestService {
                 CourseExercisesForOverviewDTO.class);
 
         assertThat(exercises.exercises()).as("the course exercises are returned").isNotEmpty();
-        assertThat(exercises.exercises()).allSatisfy(exercise -> assertThat(exercise.getId()).isNotNull());
+        assertThat(exercises.exercises()).allSatisfy(exercise -> {
+            assertThat(exercise.id()).isNotNull();
+            assertThat(exercise.title()).isNotNull();
+            assertThat(exercise.type()).isNotNull();
+        });
         assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
     }
 

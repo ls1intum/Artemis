@@ -28,14 +28,10 @@ class CourseEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchite
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
-    // NOTE: temporarily increased by 2 by the course-overview per-tab load split (PR #12999):
-    // CourseForOverviewDTO.course and CourseExercisesForOverviewDTO.exercises carry the same entities that
-    // CourseForDashboardDTO.course already carried — the split moves them onto separate endpoints so a course visit
-    // stops loading content the user never opens. Resolved by the ongoing Course/Exercise DTO migration, which owns
-    // lowering this back down; CourseExercisesForOverviewDTO in particular needs a polymorphic exercise DTO with
-    // participations, submissions and results (today's ExerciseDTO is only (id, type)).
+    // NOTE: raised by one for CourseForOverviewDTO.course, which carries the course record the overview container
+    // needs. The exercises alongside it are projected (ExerciseOverviewDTO), so only the course itself remains.
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        return 4;
+        return 3;
     }
 }

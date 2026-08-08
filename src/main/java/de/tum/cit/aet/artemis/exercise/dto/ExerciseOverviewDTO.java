@@ -1,0 +1,76 @@
+package de.tum.cit.aet.artemis.exercise.dto;
+
+import java.time.ZonedDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+
+/**
+ * An exercise as the course overview renders it: the exercise card, its filters, the statistics charts and the variant
+ * group grouping, and nothing else.
+ * <p>
+ * The entity carries a long tail of fields no overview consumer reads — the whole programming configuration among them
+ * (project key and type, package name, programming language, build and test settings, online editor flags, static code
+ * analysis) — and that tail grows with how richly an exercise is configured. Measured on a course of ten programming and
+ * ten text exercises, a third of the exercise payload was fields nothing rendered.
+ *
+ * @param type                          the exercise kind; the client discriminates on this and picks the icon from it
+ * @param id                            the id of the exercise
+ * @param title                         the title shown on the card
+ * @param maxPoints                     the attainable points, used by the card filter and the statistics charts
+ * @param bonusPoints                   the attainable bonus points
+ * @param releaseDate                   when the exercise was released, used for the date grouping
+ * @param startDate                     when work on the exercise may start, used for the date grouping
+ * @param dueDate                       the submission deadline, shown as the card subtitle and used for sorting
+ * @param assessmentDueDate             when assessment closes; the result display decides from it whether a result is final
+ * @param assessmentType                how the exercise is assessed; the programming result display branches on it
+ * @param difficulty                    shown on the card and filterable
+ * @param mode                          whether the exercise is worked on individually or in a team
+ * @param teamMode                      convenience flag derived from the mode, which the card reads directly
+ * @param includedInOverallScore        how the exercise counts, needed by the statistics charts
+ * @param categories                    the exercise categories, filterable on the card
+ * @param presentationScoreEnabled      whether presentation points apply, needed by the statistics charts
+ * @param studentAssignedTeamId         the team the user belongs to, for team exercises
+ * @param studentAssignedTeamIdComputed whether the assigned team was resolved, so the card can tell "no team" from
+ *                                          "not looked up"
+ * @param exerciseVariantGroup          the variant group this exercise belongs to, which drives the grouped card
+ * @param studentParticipations         the user's participations with their submissions and results
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Double maxPoints, Double bonusPoints, ZonedDateTime releaseDate, ZonedDateTime startDate,
+        ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, AssessmentType assessmentType, DifficultyLevel difficulty, ExerciseMode mode, boolean teamMode,
+        IncludedInOverallScore includedInOverallScore, Set<String> categories, Boolean presentationScoreEnabled, Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed,
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup, Set<ParticipationOverviewDTO> studentParticipations) {
+
+    /**
+     * Projects an exercise, together with the user's participations, for the course overview.
+     *
+     * @param exercise the exercise to project
+     * @return the projected exercise
+     */
+    public static ExerciseOverviewDTO of(Exercise exercise) {
+        return new ExerciseOverviewDTO(exercise.getExerciseType(), exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(),
+                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getAssessmentType(), exercise.getDifficulty(),
+                exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), exercise.getCategories(), exercise.getPresentationScoreEnabled(),
+                exercise.getStudentAssignedTeamId(), exercise.isStudentAssignedTeamIdComputed(), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
+                ParticipationOverviewDTO.of(exercise.getStudentParticipations()));
+    }
+
+    /**
+     * Projects the exercises of a course for the course overview.
+     *
+     * @param exercises the exercises to project
+     * @return the projected exercises
+     */
+    public static Set<ExerciseOverviewDTO> of(Set<Exercise> exercises) {
+        return exercises == null ? Set.of() : exercises.stream().map(ExerciseOverviewDTO::of).collect(Collectors.toSet());
+    }
+}
