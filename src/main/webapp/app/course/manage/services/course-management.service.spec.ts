@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -195,7 +196,8 @@ describe('Course Management Service', () => {
             enrollmentEndDate: '2026-11-01T13:00:00Z',
             unenrollmentEndDate: '2026-12-01T18:00:00Z',
         } satisfies Record<CourseDateField, string>;
-        const serverCourse = { ...course, ...isoDates };
+        const serverCourse = deepClone(course);
+        Object.assign(serverCourse, isoDates);
 
         let body: Course | undefined;
         courseManagementService
@@ -233,7 +235,8 @@ describe('Course Management Service', () => {
             enrollmentEndDate: null,
             unenrollmentEndDate: null,
         } satisfies Record<CourseDateField, null>;
-        const serverCourse = { ...course, ...nullDates };
+        const serverCourse = deepClone(course);
+        Object.assign(serverCourse, nullDates);
 
         let body: Course | undefined;
         courseManagementService
