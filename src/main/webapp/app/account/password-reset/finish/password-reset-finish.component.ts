@@ -71,12 +71,8 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
      */
     ngOnInit() {
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            if (params['keyId']) {
-                this.resetKeyId.set(params['keyId']);
-            }
-            if (params['keySecret']) {
-                this.resetKeySecret.set(params['keySecret']);
-            }
+            this.resetKeyId.set(params['keyId'] ?? '');
+            this.resetKeySecret.set(params['keySecret'] ?? '');
             this.initialized.set(true);
         });
     }
