@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.notification.dto;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -48,5 +49,18 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     public static MailRecipientDTO withResetSecretFrom(String resetKeySecret, User user) {
         return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(),
             user.getLastName(), user.getActivationKey(), user.getResetKeyId(), resetKeySecret);
+    }
+
+    @Override
+    public @NonNull String toString() {
+        return "MailRecipientDTO[" +
+               "email='" + email + '\'' +
+               ", langKey='" + langKey + '\'' +
+               ", login='" + login + '\'' +
+               ", firstName='" + firstName + '\'' +
+               ", lastName='" + lastName + '\'' +
+               ", activationKey='" + activationKey + '\'' +
+               ", resetKeyId='" + resetKeyId + '\'' +
+               ", resetKeySecret=***]";
     }
 }
