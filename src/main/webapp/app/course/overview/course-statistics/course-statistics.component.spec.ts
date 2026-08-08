@@ -433,6 +433,7 @@ describe('CourseStatisticsComponent', () => {
         const mockScoresPerExerciseType: Map<ExerciseType, CourseScores> = new Map<ExerciseType, CourseScores>();
         const mockCourseScores: CourseScores = new CourseScores(36, 36, 0, {
             absoluteScore: 20,
+            absoluteScoreTotal: 20,
             relativeScore: 0,
             currentRelativeScore: 0,
             presentationScore: 0,
@@ -455,6 +456,34 @@ describe('CourseStatisticsComponent', () => {
         expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.reachablePoints');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
         expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
+    });
+
+    it('should show total and credited points separately when the course has exercise variants', () => {
+        const variantExercise = {
+            type: 'modeling',
+            id: 901,
+            title: 'variant',
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 12,
+            exerciseVariantGroup: { id: 5, maxPoints: 5 },
+        } as Exercise;
+        const courseToAdd = { ...course, exercises: [variantExercise] } as Course;
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
+        // Credited (capped) 5, total (uncapped) 18.
+        const totalScores = new CourseScores(20, 20, 0, { absoluteScore: 5, absoluteScoreTotal: 18, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(totalScores);
+        fixture.detectChanges();
+        comp.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(comp.courseHasExerciseVariants()).toBe(true);
+        expect(comp.overallPoints()).toBe(5);
+        expect(comp.overallPointsTotal()).toBe(18);
+
+        // Two separate rows are shown instead of the single "Your points" row.
+        expect(fixture.debugElement.query(By.css('#total-course-score'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('#credited-course-score'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('#absolute-course-score'))).toBeNull();
     });
 
     it('should set the course after being notified about a course update', () => {
