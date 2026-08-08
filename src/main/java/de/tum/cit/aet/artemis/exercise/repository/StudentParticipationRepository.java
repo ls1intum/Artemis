@@ -90,6 +90,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             student.id,
             exercise.id,
             result.score,
+            result.rated,
             participation.presentationScore,
             de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
             FROM StudentParticipation participation
@@ -122,7 +123,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -151,7 +152,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // Quizzes do not support team exercises, so we can safely ignore them here
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -180,7 +181,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore, de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore, de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
             FROM StudentParticipation p
                 JOIN p.student u
                 JOIN p.exercise ex
@@ -200,7 +201,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -229,7 +230,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // Quizzes do not support team exercises, so we can safely ignore them here
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
