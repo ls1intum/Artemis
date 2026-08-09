@@ -202,7 +202,7 @@
         [isImport]="isImport()"
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || modelingExercise.exampleSolutionPublicationDateError)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"
