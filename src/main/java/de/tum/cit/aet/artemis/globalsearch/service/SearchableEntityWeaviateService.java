@@ -1,8 +1,13 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.slf4j.Logger;
@@ -75,9 +80,18 @@ public class SearchableEntityWeaviateService {
     private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
 
+    /**
+     * Safety bound on the number of {@code deleteMany} batches a single bulk delete will issue. Each batch removes
+     * up to Weaviate's {@code QUERY_MAXIMUM_RESULTS} cap (10&#8239;000 by default), so this covers scopes far larger
+     * than any real course while still terminating a pathological non-converging loop.
+     */
+    private static final int MAX_DELETE_ITERATIONS = 1000;
+
     private final WeaviateService weaviateService;
 
     private final WeaviateOutboxRepository outboxRepository;
+
+    private final SearchableEntityResolver resolver;
 
     private final ObjectMapper objectMapper;
 
@@ -85,10 +99,11 @@ public class SearchableEntityWeaviateService {
 
     private final boolean useHybridSearch;
 
-    public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, ObjectMapper objectMapper,
+    public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, ObjectMapper objectMapper,
             ApplicationEventPublisher eventPublisher) {
         this.weaviateService = weaviateService;
         this.outboxRepository = outboxRepository;
+        this.resolver = resolver;
         this.objectMapper = objectMapper;
         this.eventPublisher = eventPublisher;
         this.useHybridSearch = weaviateService.isVectorizerAvailable();
@@ -441,25 +456,79 @@ public class SearchableEntityWeaviateService {
         }
     }
 
+    /**
+     * SHA-256 of the canonical property-map JSON, recorded in the sync ledger so a later reconcile can detect drift.
+     */
+    private static String sha256Hex(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        }
+        catch (NoSuchAlgorithmException e) {
+            // SHA-256 is guaranteed to be available on every JVM.
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
     // ----- Dispatch path (called by WeaviateOutboxDispatcher on the scheduling node) -----
 
     /**
-     * Applies a claimed outbox entry to Weaviate. Switches on the entry's operation and calls the matching
-     * internal write. Any failure propagates to the dispatcher, which records a retry with backoff.
+     * Applies a claimed outbox entry to Weaviate and reports what it wrote so the dispatcher can refresh the sync
+     * ledger. Any failure propagates to the dispatcher, which records a retry with backoff.
+     * <p>
+     * An {@code UPSERT} does not replay the enqueue-time content: it re-derives the entity's current desired state
+     * from the database ({@link SearchableEntityResolver}). A present, indexable entity is upserted and its content
+     * hash returned; an entity that has since been deleted or hidden converges to a delete and returns
+     * {@link Optional#empty()}, so a stale or reordered upsert can never resurrect it. Delete operations always
+     * return empty.
      *
      * @param entry the claimed outbox entry
+     * @return the SHA-256 of the property map written for an upsert, or empty when the entry resolved to a delete
      */
-    void applyOutboxEntry(WeaviateOutboxEntry entry) {
-        switch (entry.getOperation()) {
-            case UPSERT -> upsertRow(entry.getEntityType(), entry.getEntityId(), deserializeMap(entry.getPayload()));
-            case DELETE_ENTITY -> deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
-            case DELETE_POSTS_FOR_CHANNEL -> doDeletePostsForChannel(longParam(entry, "channelId"));
-            case DELETE_POSTS_FOR_COURSE -> doDeletePostsForCourse(longParam(entry, "courseId"));
-            case DELETE_ANSWER_POSTS_FOR_POST -> doDeleteAnswerPostsForPost(longParam(entry, "postId"));
-            case DELETE_ALL_FOR_COURSE -> doDeleteAllForCourse(longParam(entry, "courseId"));
-            case DELETE_LECTURE_UNITS_FOR_LECTURE -> doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"));
-            default -> throw new IllegalStateException("Unhandled Weaviate outbox operation: " + entry.getOperation());
+    Optional<String> applyOutboxEntry(WeaviateOutboxEntry entry) {
+        return switch (entry.getOperation()) {
+            case UPSERT -> applyUpsert(entry);
+            case DELETE_ENTITY -> {
+                deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
+                yield Optional.empty();
+            }
+            case DELETE_POSTS_FOR_CHANNEL -> {
+                doDeletePostsForChannel(longParam(entry, "channelId"));
+                yield Optional.empty();
+            }
+            case DELETE_POSTS_FOR_COURSE -> {
+                doDeletePostsForCourse(longParam(entry, "courseId"));
+                yield Optional.empty();
+            }
+            case DELETE_ANSWER_POSTS_FOR_POST -> {
+                doDeleteAnswerPostsForPost(longParam(entry, "postId"));
+                yield Optional.empty();
+            }
+            case DELETE_ALL_FOR_COURSE -> {
+                doDeleteAllForCourse(longParam(entry, "courseId"));
+                yield Optional.empty();
+            }
+            case DELETE_LECTURE_UNITS_FOR_LECTURE -> {
+                doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"));
+                yield Optional.empty();
+            }
+        };
+    }
+
+    /**
+     * Re-derives the entity and either upserts its current property map (returning the written content hash) or,
+     * when it no longer exists or is no longer indexable, converges to a delete (returning {@link Optional#empty()}).
+     */
+    private Optional<String> applyUpsert(WeaviateOutboxEntry entry) {
+        Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
+        if (desired.isPresent()) {
+            Map<String, Object> properties = desired.get();
+            upsertRow(entry.getEntityType(), entry.getEntityId(), properties);
+            return Optional.of(sha256Hex(serializeMap(properties)));
         }
+        deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
+        return Optional.empty();
     }
 
     private Map<String, Object> deserializeMap(String json) {
@@ -552,16 +621,31 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Runs a {@code deleteMany} and treats a partial failure as a failure: if Weaviate reports rows it matched
-     * but could not delete, throws so the dispatcher keeps the outbox row and retries with backoff rather than
-     * leaving orphaned searchable rows. {@code deleteMany} is idempotent, so a retry is safe.
+     * Runs a {@code deleteMany} for the whole scope and treats a partial failure as a failure.
+     * <p>
+     * Weaviate caps a single {@code deleteMany} at {@code QUERY_MAXIMUM_RESULTS} (10&#8239;000 by default), so one
+     * call only removes the first batch of a larger scope and reports {@code failed == 0} for it. A busy course or
+     * channel can hold far more than that, so this loops until a call matches nothing, draining the scope fully.
+     * {@code deleteMany} is idempotent (it deletes by filter), so re-matching already-deleted rows across
+     * iterations is safe, and a partial failure ({@code failed > 0}) throws so the dispatcher keeps the outbox row
+     * and retries the whole drain with backoff rather than leaving orphaned searchable rows.
      */
     private void deleteManyOrThrow(Filter filter, String description) {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        var result = collection.data.deleteMany(filter);
-        if (result.failed() > 0) {
-            throw new WeaviateException("Failed to delete " + result.failed() + " of " + result.matches() + " " + description + " in Weaviate");
+        long totalDeleted = 0;
+        for (int iteration = 0; iteration < MAX_DELETE_ITERATIONS; iteration++) {
+            var result = collection.data.deleteMany(filter);
+            if (result.failed() > 0) {
+                throw new WeaviateException("Failed to delete " + result.failed() + " of " + result.matches() + " " + description + " in Weaviate");
+            }
+            totalDeleted += result.successful();
+            if (result.matches() == 0) {
+                log.debug("Deleted {} {}", totalDeleted, description);
+                return;
+            }
         }
-        log.debug("Deleted {} {}", result.successful(), description);
+        // The dispatcher is the only writer, so nothing adds rows during the drain; not converging within the cap
+        // means something is wrong (e.g. rows that keep matching but never delete). Fail so the row is retried.
+        throw new WeaviateException("Deletion of " + description + " did not converge within " + MAX_DELETE_ITERATIONS + " batches in Weaviate");
     }
 }
