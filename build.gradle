@@ -536,7 +536,7 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.85"
     implementation "org.bouncycastle:bcprov-jdk18on:1.84"
     // pulled transitively by sshd-git; pin to patched version
     implementation "org.bouncycastle:bcpg-jdk18on:1.84"
