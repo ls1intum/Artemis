@@ -63,7 +63,7 @@ jobs:
       # build/test run unless every changed file is markdown, LICENSE, or under documentation/.
       - id: relevant
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
         with:
           # On push/merge_group: diff against the previous commit. On PR: against base.ref.
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
@@ -77,7 +77,7 @@ jobs:
       #   Each area includes its own workflow/helper files so edited checks run themselves.
       - id: area
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
         with:
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
           filters: |
