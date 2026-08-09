@@ -1148,7 +1148,8 @@ public class CourseTestService {
         TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.plusDays(1), now.plusDays(2));
         User instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
         var assignedTeam = teamUtilService.createTeam(Set.of(student), instructor, teamExercise, "overview-team");
-        participationUtilService.createParticipationSubmissionAndResult(teamExercise.getId(), assignedTeam, teamExercise.getMaxPoints(), teamExercise.getBonusPoints(), 60, true);
+        Result teamRatedResult = participationUtilService.createParticipationSubmissionAndResult(teamExercise.getId(), assignedTeam, teamExercise.getMaxPoints(),
+                teamExercise.getBonusPoints(), 60, true);
         course.addExercises(teamExercise);
 
         // Result creation schedules participant-score updates. Let the initial updates finish before changing result
@@ -1213,6 +1214,47 @@ public class CourseTestService {
         assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
         assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
         assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
+
+        var programmingGradeBeforePendingSubmission = exercises.participationResults().stream()
+                .filter(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).findFirst().orElseThrow();
+        assertThat(programmingGradeBeforePendingSubmission.score()).as("the existing individual grade is meaningful").isPositive();
+        assertThat(programmingGradeBeforePendingSubmission.rated()).as("the existing individual grade is rated").isTrue();
+        StudentParticipation teamParticipation = (StudentParticipation) teamRatedResult.getSubmission().getParticipation();
+        var teamGradeBeforePendingSubmission = exercises.participationResults().stream().filter(result -> result.participationId().equals(teamParticipation.getId())).findFirst()
+                .orElseThrow();
+        assertThat(teamGradeBeforePendingSubmission.score()).as("the existing team grade matches the fixture").isEqualTo(60.0);
+        assertThat(teamGradeBeforePendingSubmission.rated()).as("the existing team grade is rated").isTrue();
+
+        // A pending build or assessment must not erase the last grade. The newest submissions deliberately have no
+        // result; the score projection must still select the prior rated result for both individual and team modes.
+        ProgrammingSubmission pendingProgrammingSubmission = new ProgrammingSubmission();
+        pendingProgrammingSubmission.setSubmissionDate(now.minusHours(7));
+        pendingProgrammingSubmission.setSubmitted(true);
+        pendingProgrammingSubmission.setParticipation(gradedProgrammingParticipation);
+        Long pendingProgrammingSubmissionId = submissionRepository.save(pendingProgrammingSubmission).getId();
+
+        TextSubmission pendingTeamSubmission = new TextSubmission();
+        pendingTeamSubmission.setSubmissionDate(now.minusHours(7));
+        pendingTeamSubmission.setSubmitted(true);
+        pendingTeamSubmission.setParticipation(teamParticipation);
+        submissionRepository.save(pendingTeamSubmission);
+
+        CourseExercisesForOverviewDTO whileSubmissionsPending = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+
+        assertThat(whileSubmissionsPending.totalScores()).as("a pending submission does not change the total score").isEqualTo(exercises.totalScores());
+        assertThat(whileSubmissionsPending.programmingScores()).as("the individual programming score is retained").isEqualTo(exercises.programmingScores());
+        assertThat(whileSubmissionsPending.textScores()).as("the team text score is retained").isEqualTo(exercises.textScores());
+        assertThat(whileSubmissionsPending.participationResults()).filteredOn(result -> result.participationId().equals(gradedProgrammingParticipation.getId())).singleElement()
+                .as("the complete prior individual grade remains while the newest submission is pending").isEqualTo(programmingGradeBeforePendingSubmission);
+        assertThat(whileSubmissionsPending.participationResults()).filteredOn(result -> result.participationId().equals(teamParticipation.getId())).singleElement()
+                .as("the complete prior team grade remains while the newest submission is pending").isEqualTo(teamGradeBeforePendingSubmission);
+        var programmingWhilePending = whileSubmissionsPending.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(programmingWhilePending.studentParticipations()).filteredOn(participation -> Boolean.FALSE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.submissions()).singleElement().satisfies(submission -> {
+                    assertThat(submission.id()).as("the UI still displays the newest pending submission").isEqualTo(pendingProgrammingSubmissionId);
+                    assertThat(submission.results()).as("the result collection is omitted while the newest submission is pending").isNull();
+                }));
     }
 
     // Test

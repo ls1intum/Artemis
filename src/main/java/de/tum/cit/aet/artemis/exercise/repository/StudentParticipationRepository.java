@@ -180,6 +180,98 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
+    /**
+     * Projects the latest rated result for each visible individual non-quiz participation in the course overview.
+     * Unlike the shared course-score query, a newer submission without a result does not suppress the preceding grade.
+     *
+     * @param exerciseIds the visible non-quiz exercise ids
+     * @param studentId   the requesting student
+     * @return one latest relevant grade per participation
+     */
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
+                CASE TYPE(ex)
+                    WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END)
+            FROM StudentParticipation p
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.id IN :exerciseIds
+                AND TYPE(ex) <> QuizExercise
+                AND p.testRun = FALSE
+                AND u.id = :studentId
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT newerResult
+                    FROM Result newerResult
+                    WHERE newerResult.submission.participation = p
+                        AND newerResult.rated = TRUE
+                        AND newerResult.completionDate IS NOT NULL
+                        AND newerResult.score IS NOT NULL
+                        AND newerResult.submission.submissionDate IS NOT NULL
+                        AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                        AND (newerResult.completionDate > r.completionDate
+                            OR (newerResult.completionDate = r.completionDate AND newerResult.id > r.id))
+                )
+            """)
+    Set<CourseGradeScoreDTO> findIndividualGradesForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("studentId") long studentId);
+
+    /**
+     * Projects the latest rated result for each visible team participation in the course overview, independently of
+     * any newer resultless submission.
+     *
+     * @param exerciseIds the visible team exercise ids
+     * @param studentId   the requesting student
+     * @return one latest relevant grade per participation
+     */
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
+                CASE TYPE(ex)
+                    WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END)
+            FROM StudentParticipation p
+                JOIN p.team t
+                JOIN t.students u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND u.id = :studentId
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT newerResult
+                    FROM Result newerResult
+                    WHERE newerResult.submission.participation = p
+                        AND newerResult.rated = TRUE
+                        AND newerResult.completionDate IS NOT NULL
+                        AND newerResult.score IS NOT NULL
+                        AND newerResult.submission.submissionDate IS NOT NULL
+                        AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                        AND (newerResult.completionDate > r.completionDate
+                            OR (newerResult.completionDate = r.completionDate AND newerResult.id > r.id))
+                )
+            """)
+    Set<CourseGradeScoreDTO> findTeamGradesForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("studentId") long studentId);
+
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
             SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore, de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)

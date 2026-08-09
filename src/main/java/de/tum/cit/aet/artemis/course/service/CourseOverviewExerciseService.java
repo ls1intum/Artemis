@@ -201,18 +201,20 @@ public class CourseOverviewExerciseService {
         }
 
         boolean hasIndividualQuiz = exerciseDetails.stream().anyMatch(exercise -> exercise.mode() == ExerciseMode.INDIVIDUAL && exercise.type() == ExerciseType.QUIZ);
-        boolean hasIndividualNonQuiz = exerciseDetails.stream().anyMatch(exercise -> exercise.mode() == ExerciseMode.INDIVIDUAL && exercise.type() != ExerciseType.QUIZ);
-        boolean hasTeamExercise = exerciseDetails.stream().anyMatch(exercise -> exercise.mode() == ExerciseMode.TEAM);
+        Set<Long> individualNonQuizExerciseIds = exerciseDetails.stream().filter(exercise -> exercise.mode() == ExerciseMode.INDIVIDUAL && exercise.type() != ExerciseType.QUIZ)
+                .map(ExerciseForCourseOverviewDTO::id).collect(Collectors.toSet());
+        Set<Long> teamExerciseIds = exerciseDetails.stream().filter(exercise -> exercise.mode() == ExerciseMode.TEAM).map(ExerciseForCourseOverviewDTO::id)
+                .collect(Collectors.toSet());
 
         List<CourseGradeScoreDTO> gradeScores = new ArrayList<>();
         if (hasIndividualQuiz) {
             gradeScores.addAll(studentParticipationRepository.findIndividualQuizGradesByCourseIdAndStudentId(Set.of(courseId), studentId));
         }
-        if (hasIndividualNonQuiz) {
-            gradeScores.addAll(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(courseId), studentId));
+        if (!individualNonQuizExerciseIds.isEmpty()) {
+            gradeScores.addAll(studentParticipationRepository.findIndividualGradesForCourseOverview(individualNonQuizExerciseIds, studentId));
         }
-        if (hasTeamExercise) {
-            gradeScores.addAll(studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(courseId), studentId));
+        if (!teamExerciseIds.isEmpty()) {
+            gradeScores.addAll(studentParticipationRepository.findTeamGradesForCourseOverview(teamExerciseIds, studentId));
         }
         return gradeScores.stream().filter(gradeScore -> visibleExerciseIds.contains(gradeScore.exerciseId())).toList();
     }
