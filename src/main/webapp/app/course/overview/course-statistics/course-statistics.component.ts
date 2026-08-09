@@ -27,7 +27,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, distinctUntilChanged, map } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -140,6 +140,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseUpdatesSubscription?: Subscription;
     private translateSubscription?: Subscription;
     private exercisesLoadSubscription?: Subscription;
+    private gradeSubscription?: Subscription;
     readonly course = signal<Course | undefined>(undefined);
     readonly numberOfAppliedFilters = signal<number>(0);
 
@@ -307,26 +308,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     ngOnInit() {
-        // Note: due to lazy loading and router outlet, we use parent 2x here
-        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = parseInt(params['courseId'], 10);
-        });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId));
-        this.onCourseLoad();
-
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course.set(course);
-            this.onCourseLoad();
-        });
-
-        // The exercises and their scores are not part of the course itself; this tab and the exercises tab share one
-        // load, so whichever is opened first pays for it. The result arrives through the course update subscription
-        // above and through the ScoresStorageService.
-        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this.courseId).subscribe(() => {
-            this.calculateCourseGrade();
-        });
-
         // update titles based on the initial language selection
         this.updateExerciseTitles();
 
@@ -335,6 +316,73 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.updateExerciseTitles();
             this.groupExercisesByType(this.courseExercises);
         });
+
+        // Note: due to lazy loading and router outlet, we use parent 2x here. Angular reuses this component when only
+        // the course parameter changes, so every distinct id must cancel and rebuild its course-scoped state.
+        this.paramSubscription = this.route.parent?.parent?.params
+            .pipe(
+                map((params) => parseInt(params['courseId'], 10)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
+    }
+
+    private activateCourse(courseId: number): void {
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
+        this.resetCourseState();
+
+        this.courseId = courseId;
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.onCourseLoad();
+
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+            this.course.set(course);
+            this.onCourseLoad();
+        });
+
+        // The exercises and their scores are not part of the course itself; this tab and the exercises tab share one
+        // load, so whichever is opened first pays for it. The result arrives through the course update subscription
+        // above and through the ScoresStorageService.
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(courseId).subscribe(() => {
+            this.calculateCourseGrade();
+        });
+    }
+
+    private resetCourseState(): void {
+        this.course.set(undefined);
+        this.courseExercises = [];
+        this.courseExercisesNotIncludedInScore = [];
+        this.courseExercisesFilteredByCategories = [];
+        this.currentlyHidingNotIncludedInScoreExercises.set(false);
+        this.filteredExerciseIDs.set([]);
+        this.numberOfAppliedFilters.set(0);
+        this.categoryFilter.filterMap.clear();
+        this.categoryFilter.setupCategoryFilter([]);
+
+        this.overallPoints.set(0);
+        this.overallPointsTotal.set(0);
+        this.totalRelativeScore.set(0);
+        this.overallMaxPoints.set(0);
+        this.reachablePoints.set(0);
+        this.currentRelativeScore.set(0);
+        this.overallPresentationScore.set(0);
+        this.reachablePresentationPoints.set(0);
+        this.overallPointsPerExercise = new Map();
+        this.relativeScoresPerExercise = new Map();
+        this.overallMaxPointsPerExercise = new Map();
+        this.reachablePointsPerExercise = new Map();
+        this.currentRelativeScoresPerExercise = new Map();
+        this.presentationScoresPerExercise = new Map();
+        this.presentationScoreEnabled = new Map();
+        this.exerciseGroupsInProgress = new Map();
+        this.ngxExerciseGroups.set(new Map());
+        this.doughnutChartEntries.set([]);
+
+        this.gradingScaleExists.set(false);
+        this.isBonus.set(false);
+        this.gradeDTO.set(undefined);
     }
 
     private updateExerciseTitles() {
@@ -359,10 +407,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();
         this.exercisesLoadSubscription?.unsubscribe();
+        this.gradeSubscription?.unsubscribe();
     }
 
     private calculateCourseGrade(): void {
-        this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore(), this.courseId).subscribe((gradeDTO) => {
+        this.gradeSubscription?.unsubscribe();
+        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore(), this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists.set(true);
                 this.gradeDTO.set(gradeDTO);

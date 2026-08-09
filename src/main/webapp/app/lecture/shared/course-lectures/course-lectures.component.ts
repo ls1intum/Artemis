@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, distinctUntilChanged, forkJoin, map } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseOverviewService, SidebarLecture } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { LtiService } from 'app/foundation/service/lti.service';
-import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
@@ -59,6 +58,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseUpdatesSubscription?: Subscription;
     private lecturesSubscription?: Subscription;
     private multiLaunchSubscription?: Subscription;
+    private multiLaunchLecturesSubscription?: Subscription;
     private queryParamsSubscription?: Subscription;
 
     readonly course = signal<Course | undefined>(undefined);
@@ -83,25 +83,41 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture'));
-        this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId.set(Number(params.courseId));
-        });
-
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
-            if (params['lectureIDs']) {
-                this.multiLaunchLectureIDs = params['lectureIDs'].split(',').map((id: string) => Number(id));
-            }
-        });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId()));
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId()).subscribe((course: Course) => {
-            this.course.set(course);
+            this.multiLaunchLectureIDs = params['lectureIDs'] ? params['lectureIDs'].split(',').map((id: string) => Number(id)) : [];
         });
 
         this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
             this.isMultiLaunch = isMultiLaunch;
         });
 
+        this.parentParamSubscription = this.route
+            .parent!.params.pipe(
+                map((params) => Number(params.courseId)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
+    }
+
+    /** Cancels the previous course's streams and starts this routed tab for the newly active course. */
+    private activateCourse(courseId: number): void {
+        this.courseUpdatesSubscription?.unsubscribe();
+        this.lecturesSubscription?.unsubscribe();
+        this.multiLaunchLecturesSubscription?.unsubscribe();
+
+        this.courseId.set(courseId);
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.lectures.set(undefined);
+        this.lectureSelected.set(true);
+        this.sidebarData.set(undefined);
+        this.accordionLectureGroups = DEFAULT_UNIT_GROUPS;
+        this.sortedLectures = [];
+        this.sidebarLectures = [];
+        this.pageTitle.set('');
+
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
+            this.course.set(course);
+        });
         this.loadLectures();
     }
 
@@ -145,13 +161,15 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         if (this.multiLaunchLectureIDs?.length > 0) {
             const lectureObservables = this.multiLaunchLectureIDs.map((lectureId) => this.lectureService.find(lectureId));
 
-            forkJoin(lectureObservables).subscribe((lectureResponses) => {
+            this.multiLaunchLecturesSubscription?.unsubscribe();
+            this.multiLaunchLecturesSubscription = forkJoin(lectureObservables).subscribe((lectureResponses) => {
                 lectureResponses.forEach((response) => {
                     lectures.push(response.body!);
                 });
                 this.processLectures(lectures);
             });
         } else {
+            this.multiLaunchLecturesSubscription?.unsubscribe();
             const lectures = this.lectures();
             if (!lectures) {
                 return;
@@ -208,6 +226,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.lecturesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.multiLaunchSubscription?.unsubscribe();
+        this.multiLaunchLecturesSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
     }
 }

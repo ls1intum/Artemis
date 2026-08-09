@@ -18,13 +18,17 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
-import { of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockComponent } from 'ng-mocks';
 import { ChartModule, UIChart } from 'primeng/chart';
+import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -37,6 +41,28 @@ describe('CourseStatisticsComponent', () => {
 
     const generateExerciseCategory = (type: ExerciseType, index: number) => {
         return { category: type + index.toString(), color: '#9f34eb' };
+    };
+
+    const createOverviewResponse = (exercises: Exercise[]): CourseExercisesForOverviewDTO => {
+        const emptyScores = () =>
+            new CourseScores(0, 0, 0, {
+                absoluteScore: 0,
+                absoluteScoreTotal: 0,
+                relativeScore: 0,
+                currentRelativeScore: 0,
+                presentationScore: 0,
+            });
+
+        return {
+            exercises,
+            totalScores: emptyScores(),
+            textScores: emptyScores(),
+            programmingScores: emptyScores(),
+            modelingScores: emptyScores(),
+            fileUploadScores: emptyScores(),
+            quizScores: emptyScores(),
+            participationResults: [],
+        };
     };
 
     const modelingExercises = [
@@ -336,7 +362,7 @@ describe('CourseStatisticsComponent', () => {
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: { parent: { params: of(1) } },
+                    useValue: { parent: { parent: { params: of({ courseId: '1' }) } } },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -367,6 +393,66 @@ describe('CourseStatisticsComponent', () => {
 
         expect(callbacks.title([{ label: 'artemisApp.courseOverview.statistics.missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
         expect(callbacks.label({ parsed: 400 })).toBe('400');
+    });
+
+    it('should cancel, reset, and reload when Angular reuses the statistics tab for another course', () => {
+        const params = new BehaviorSubject({ courseId: '1' });
+        const firstLoad = new Subject<CourseExercisesForOverviewDTO>();
+        const secondLoad = new Subject<CourseExercisesForOverviewDTO>();
+        const firstCourseUpdates = new Subject<Course>();
+        const secondCourseUpdates = new Subject<Course>();
+        const firstGrade = new Subject<GradeDTO>();
+        const secondGrade = new Subject<GradeDTO>();
+        (TestBed.inject(ActivatedRoute) as any).parent.parent.params = params.asObservable();
+        const loadSpy = vi.spyOn(TestBed.inject(CourseOverviewExercisesService), 'loadIfNeeded').mockImplementation((courseId) => (courseId === 1 ? firstLoad : secondLoad));
+        const courseUpdatesSpy = vi
+            .spyOn(courseStorageService, 'subscribeToCourseUpdates')
+            .mockImplementation((courseId) => (courseId === 1 ? firstCourseUpdates : secondCourseUpdates));
+        vi.spyOn(courseStorageService, 'getCourse').mockImplementation((courseId) => ({ id: courseId, title: `Course ${courseId}` }) as Course);
+        const gradeSpy = vi.spyOn(TestBed.inject(GradingService), 'matchPercentageToGradeStep').mockReturnValueOnce(firstGrade).mockReturnValueOnce(secondGrade);
+
+        comp.ngOnInit();
+        firstCourseUpdates.next({ ...course, id: 1, exercises: [modelingExercises[0]] });
+        firstLoad.next(createOverviewResponse([modelingExercises[0]]));
+        expect(comp.ngxExerciseGroups().size).toBe(1);
+        expect(firstLoad.observed).toBe(true);
+        expect(firstCourseUpdates.observed).toBe(true);
+        expect(firstGrade.observed).toBe(true);
+
+        params.next({ courseId: '2' });
+
+        expect(comp.courseId).toBe(2);
+        expect(comp.course()?.id).toBe(2);
+        expect(comp.ngxExerciseGroups().size).toBe(0);
+        expect(comp.overallPoints()).toBe(0);
+        expect(comp.overallPointsTotal()).toBe(0);
+        expect(comp.totalRelativeScore()).toBe(0);
+        expect(comp.filteredExerciseIDs()).toEqual([]);
+        expect(comp.gradeDTO()).toBeUndefined();
+        expect(comp.gradingScaleExists()).toBe(false);
+        expect(firstLoad.observed).toBe(false);
+        expect(firstCourseUpdates.observed).toBe(false);
+        expect(firstGrade.observed).toBe(false);
+        expect(secondLoad.observed).toBe(true);
+        expect(secondCourseUpdates.observed).toBe(true);
+        expect(loadSpy).toHaveBeenNthCalledWith(1, 1);
+        expect(loadSpy).toHaveBeenNthCalledWith(2, 2);
+        expect(courseUpdatesSpy).toHaveBeenNthCalledWith(1, 1);
+        expect(courseUpdatesSpy).toHaveBeenNthCalledWith(2, 2);
+
+        firstCourseUpdates.next({ ...course, id: 1, title: 'Stale course' });
+        firstLoad.next(createOverviewResponse([modelingExercises[1]]));
+        secondCourseUpdates.next({ ...course, id: 2, exercises: [] });
+        secondLoad.next(createOverviewResponse([]));
+        params.next({ courseId: '2' });
+
+        expect(comp.course()?.id).toBe(2);
+        expect(comp.course()?.title).not.toBe('Stale course');
+        expect(gradeSpy).toHaveBeenNthCalledWith(1, expect.any(Number), 1);
+        expect(gradeSpy).toHaveBeenNthCalledWith(2, NaN, 2);
+        expect(secondGrade.observed).toBe(true);
+        expect(loadSpy).toHaveBeenCalledTimes(2);
+        expect(courseUpdatesSpy).toHaveBeenCalledTimes(2);
     });
 
     it.each([
@@ -514,7 +600,7 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should set the course after being notified about a course update', () => {
-        comp.courseId = course.id!;
+        (TestBed.inject(ActivatedRoute) as any).parent.parent.params = of({ courseId: String(course.id) });
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.changeDetectorRef.detectChanges();

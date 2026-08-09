@@ -214,6 +214,72 @@ describe('CourseExamsComponent', () => {
         returnedFixture.destroy();
     });
 
+    it('should cancel, reset, and reload when Angular reuses the tab for another course', async () => {
+        const params = new BehaviorSubject({ courseId: '1' });
+        const firstExams = new Subject<ExamForOverview[]>();
+        const secondExams = new Subject<ExamForOverview[]>();
+        const firstStudentExams = new Subject<StudentExam[]>();
+        const secondStudentExams = new Subject<StudentExam[]>();
+        const firstRealExamSidebar = new Subject<Exam[]>();
+        const secondRealExamSidebar = new Subject<Exam[]>();
+        (TestBed.inject(ActivatedRoute) as any).parent.params = params.asObservable();
+        const examsSpy = vi.spyOn(examParticipationService, 'getExamsForOverview').mockImplementation((courseId) => (courseId === 1 ? firstExams : secondExams));
+        const studentExamsSpy = vi
+            .spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage')
+            .mockImplementation((courseId) => (courseId === 1 ? firstStudentExams : secondStudentExams));
+        vi.spyOn(courseStorageService, 'getCourse').mockImplementation((courseId) => ({ id: courseId, title: `Course ${courseId}` }) as Course);
+        vi.spyOn(examParticipationService, 'getRealExamSidebarData').mockImplementation((courseId) => (courseId === 1 ? firstRealExamSidebar : secondRealExamSidebar));
+        const oldExam = { ...visibleRealExam1, id: 41 } as ExamForOverview;
+        const newExam = { ...visibleRealExam2, id: 42 } as ExamForOverview;
+
+        component.ngOnInit();
+        firstExams.next([oldExam]);
+        firstStudentExams.next([studentExamForExam3AndSubmitted]);
+        component.setPageTitle('Old exam');
+        expect(component.exams()).toEqual([oldExam]);
+        expect(Object.values(component.accordionExamGroups).some((group) => group.entityData.length > 0)).toBe(true);
+        expect(firstExams.observed).toBe(true);
+        expect(firstStudentExams.observed).toBe(true);
+
+        params.next({ courseId: '2' });
+
+        expect(component.courseId()).toBe(2);
+        expect(component.course()?.id).toBe(2);
+        expect(component.exams()).toBeUndefined();
+        expect(component.realExamsOfCourse).toEqual([]);
+        expect(component.testExamsOfCourse).toEqual([]);
+        expect(component.expandAttemptsMap.size).toBe(0);
+        expect(component.sidebarExams).toEqual([]);
+        expect(component.sidebarData()).toBeUndefined();
+        expect(Object.values(component.accordionExamGroups).every((group) => group.entityData.length === 0)).toBe(true);
+        expect(component.pageTitle()).toBe('');
+        expect(firstExams.observed).toBe(false);
+        expect(firstStudentExams.observed).toBe(false);
+        expect(secondExams.observed).toBe(true);
+        expect(secondStudentExams.observed).toBe(true);
+        expect(examsSpy).toHaveBeenNthCalledWith(1, 1);
+        expect(examsSpy).toHaveBeenNthCalledWith(2, 2);
+        expect(studentExamsSpy).toHaveBeenNthCalledWith(1, 1);
+        expect(studentExamsSpy).toHaveBeenNthCalledWith(2, 2);
+
+        firstExams.next([{ ...oldExam, title: 'Stale exam' }]);
+        secondExams.next([newExam]);
+        secondStudentExams.next([]);
+        firstRealExamSidebar.next([{ id: 91 } as Exam]);
+        firstRealExamSidebar.complete();
+        secondRealExamSidebar.next([{ id: 92 } as Exam]);
+        secondRealExamSidebar.complete();
+        await Promise.resolve();
+        await Promise.resolve();
+        params.next({ courseId: '2' });
+
+        expect(component.exams()).toEqual([newExam]);
+        expect(component.studentExamsForRealExams.has(91)).toBe(false);
+        expect(component.studentExamsForRealExams.has(92)).toBe(true);
+        expect(examsSpy).toHaveBeenCalledTimes(2);
+        expect(studentExamsSpy).toHaveBeenCalledTimes(2);
+    });
+
     it('should replace and append test-exam attempts received while the tab is active', () => {
         const shouldUpdate = new BehaviorSubject(false);
         const currentStudentExam = new Subject<StudentExam>();
@@ -245,7 +311,7 @@ describe('CourseExamsComponent', () => {
         expect(resetUpdateSpy).toHaveBeenCalledTimes(2);
         expect(resetUpdateSpy).toHaveBeenNthCalledWith(1, false);
         expect(resetUpdateSpy).toHaveBeenNthCalledWith(2, false);
-        expect(prepareSidebarSpy).toHaveBeenCalledTimes(5);
+        expect(prepareSidebarSpy).toHaveBeenCalledTimes(4);
     });
 
     it('should expose an empty exam list and a non-selected state when the overview request fails', () => {

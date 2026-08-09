@@ -6,7 +6,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { HttpResponse } from '@angular/common/http';
@@ -95,6 +95,86 @@ describe('CourseLecturesComponent', () => {
 
         returnedComponent.ngOnDestroy();
         returnedFixture.destroy();
+    });
+
+    it('should cancel, reset, and reload when Angular reuses the tab for another course', () => {
+        const params = new BehaviorSubject({ courseId: '1' });
+        const firstLectures = new Subject<LectureForOverview[]>();
+        const secondLectures = new Subject<LectureForOverview[]>();
+        const firstCourseUpdates = new Subject<Course>();
+        const secondCourseUpdates = new Subject<Course>();
+        (TestBed.inject(ActivatedRoute) as any).parent.params = params.asObservable();
+        const loadSpy = vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockImplementation((courseId) => (courseId === 1 ? firstLectures : secondLectures));
+        const storage = TestBed.inject(CourseStorageService);
+        const courseUpdatesSpy = vi.spyOn(storage, 'subscribeToCourseUpdates').mockImplementation((courseId) => (courseId === 1 ? firstCourseUpdates : secondCourseUpdates));
+        vi.spyOn(storage, 'getCourse').mockImplementation((courseId) => ({ id: courseId, title: `Course ${courseId}` }) as Course);
+        vi.spyOn(courseOverviewService, 'sortLectures').mockImplementation((lectures) => lectures);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+        const oldGroups = { old: { entityData: [{ id: 11, title: 'Old lecture', size: 'M' as const }] } };
+        vi.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue(oldGroups);
+
+        component.ngOnInit();
+        firstLectures.next([{ id: 11, title: 'Old lecture' }]);
+        component.setPageTitle('Old lecture');
+        expect(component.lectures()?.[0].title).toBe('Old lecture');
+        expect(component.accordionLectureGroups).toBe(oldGroups);
+        expect(firstLectures.observed).toBe(true);
+        expect(firstCourseUpdates.observed).toBe(true);
+
+        params.next({ courseId: '2' });
+
+        expect(component.courseId()).toBe(2);
+        expect(component.course()?.id).toBe(2);
+        expect(component.lectures()).toBeUndefined();
+        expect(component.sidebarData()).toBeUndefined();
+        expect(component.sortedLectures).toEqual([]);
+        expect(component.sidebarLectures).toEqual([]);
+        expect(Object.values(component.accordionLectureGroups).every((group) => group.entityData.length === 0)).toBe(true);
+        expect(component.pageTitle()).toBe('');
+        expect(firstLectures.observed).toBe(false);
+        expect(firstCourseUpdates.observed).toBe(false);
+        expect(secondLectures.observed).toBe(true);
+        expect(secondCourseUpdates.observed).toBe(true);
+        expect(loadSpy).toHaveBeenNthCalledWith(1, 1);
+        expect(loadSpy).toHaveBeenNthCalledWith(2, 2);
+        expect(courseUpdatesSpy).toHaveBeenNthCalledWith(1, 1);
+        expect(courseUpdatesSpy).toHaveBeenNthCalledWith(2, 2);
+
+        firstLectures.next([{ id: 12, title: 'Stale lecture' }]);
+        secondLectures.next([{ id: 21, title: 'New lecture' }]);
+        params.next({ courseId: '2' });
+
+        expect(component.lectures()).toEqual([{ id: 21, title: 'New lecture' }]);
+        expect(loadSpy).toHaveBeenCalledTimes(2);
+        expect(courseUpdatesSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should cancel an in-flight multi-launch detail load when the course changes', () => {
+        const params = new BehaviorSubject({ courseId: '1' });
+        const firstDetail = new Subject<HttpResponse<Lecture>>();
+        const secondDetail = new Subject<HttpResponse<Lecture>>();
+        const route = TestBed.inject(ActivatedRoute) as any;
+        route.parent.params = params.asObservable();
+        route.queryParams = of({ lectureIDs: '7' });
+        vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockReturnValue(of([]));
+        vi.spyOn(lectureService, 'find').mockReturnValueOnce(firstDetail).mockReturnValueOnce(secondDetail);
+        vi.spyOn(courseOverviewService, 'sortLectures').mockImplementation((lectures) => lectures);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+
+        component.ngOnInit();
+        expect(firstDetail.observed).toBe(true);
+
+        params.next({ courseId: '2' });
+        expect(firstDetail.observed).toBe(false);
+        expect(secondDetail.observed).toBe(true);
+
+        firstDetail.next(new HttpResponse({ body: { id: 7, title: 'Stale detail' } as Lecture }));
+        firstDetail.complete();
+        secondDetail.next(new HttpResponse({ body: { id: 7, title: 'New detail' } as Lecture }));
+        secondDetail.complete();
+
+        expect(component.sortedLectures).toEqual([{ id: 7, title: 'New detail' }]);
+        expect(component.sortedLectures).not.toContainEqual(expect.objectContaining({ title: 'Stale detail' }));
     });
 
     it('should expose an empty sidebar when the lecture overview request fails', () => {

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
+import { Subscription, combineLatest, distinctUntilChanged, filter, interval, lastValueFrom, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import dayjs from 'dayjs/esm';
@@ -57,7 +57,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     course = signal<Course | undefined>(undefined);
     private parentParamSubscription?: Subscription;
     private examsSubscription?: Subscription;
-    private courseUpdatesSubscription?: Subscription;
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
@@ -98,22 +97,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
-        this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
-            this.courseId.set(Number(params.courseId));
-        });
-
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted.set(isStarted);
         });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId()));
-        this.prepareSidebarData();
-        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
-            .subscribe((response: StudentExam[]) => {
-                this.studentExams = response!;
-                this.prepareSidebarData();
-            });
 
         this.studentExamTestExamUpdateSubscription = combineLatest([
             this.examParticipationService.shouldUpdateTestExamsObservable,
@@ -132,7 +118,46 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.examParticipationService.setShouldUpdateTestExams(false);
             });
 
-        this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(this.courseId()).subscribe({
+        this.parentParamSubscription = this.route.parent?.params
+            .pipe(
+                map((params) => Number(params.courseId)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
+    }
+
+    /** Cancels all course-scoped work, clears rendered state, and loads the newly active course. */
+    private activateCourse(courseId: number): void {
+        this.examsSubscription?.unsubscribe();
+        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
+        this.unsubscribeFromExamStateSubscription();
+
+        this.courseId.set(courseId);
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.studentExams = undefined;
+        this.studentExamsForRealExams = new Map();
+        this.expandAttemptsMap = new Map();
+        this.exams.set(undefined);
+        this.realExamsOfCourse = [];
+        this.testExamsOfCourse = [];
+        this.sortedRealExams = undefined;
+        this.sortedTestExams = undefined;
+        this.testExamMap = new Map();
+        this.sidebarExams = [];
+        this.sidebarData.set(undefined);
+        this.accordionExamGroups = DEFAULT_UNIT_GROUPS;
+        this.examSelected.set(true);
+        this.pageTitle.set('');
+        this.withinWorkingTime = false;
+
+        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
+            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId)
+            .subscribe((response: StudentExam[]) => {
+                this.studentExams = response;
+                this.prepareSidebarData();
+            });
+
+        this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(courseId).subscribe({
             next: (exams) => {
                 this.exams.set(exams);
                 // The Map is used to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
@@ -170,6 +195,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private updateExams(): void {
         const loadedExams = this.exams();
         if (loadedExams) {
+            const requestedCourseId = this.courseId();
             const exams = loadedExams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
             // add new exams to the attempt map
             exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id)).forEach((exam) => this.expandAttemptsMap.set(exam.id, false));
@@ -177,7 +203,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
+            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(requestedCourseId)).then((studentExams) => {
+                if (this.courseId() !== requestedCourseId) {
+                    return;
+                }
                 studentExams.forEach((exam) => {
                     const studentExam = cloneDeep(exam) as StudentExam;
                     this.studentExamsForRealExams.set(studentExam.id!, studentExam);
@@ -194,9 +223,6 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.examsSubscription?.unsubscribe();
         if (this.parentParamSubscription) {
             this.parentParamSubscription.unsubscribe();
-        }
-        if (this.courseUpdatesSubscription) {
-            this.courseUpdatesSubscription.unsubscribe();
         }
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
