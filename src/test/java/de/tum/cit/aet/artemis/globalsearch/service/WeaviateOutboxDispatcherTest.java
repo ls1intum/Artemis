@@ -63,9 +63,9 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_upsert_writesWeaviate_refreshesSyncState_deletesRow() {
+    void testDrainUpsert_writesWeaviateRefreshesLedgerAndDeletesRow() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"entity_id\":1,\"type\":\"course\"}");
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
 
         dispatcher.drain();
@@ -81,9 +81,9 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_failedWrite_keepsRowWithIncrementedAttemptsAndBackoff_thenLaterRunSucceeds() {
+    void testDrainFailedWrite_keepsRowWithBackoffThenLaterRunSucceeds() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"entity_id\":1}");
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         doThrow(new RuntimeException("weaviate unavailable")).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
 
         ZonedDateTime before = ZonedDateTime.now();
@@ -105,10 +105,10 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_processesRowsInIdOrder_soLatestWins() {
+    void testDrain_processesRowsInIdOrderSoLatestWins() {
         WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"title\":\"old\"}");
         WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"title\":\"new\"}");
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
 
         dispatcher.drain();
@@ -121,9 +121,9 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_deleteEntity_clearsSyncLedgerRow() {
+    void testDrainDeleteEntity_clearsSyncLedgerRow() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(COURSE, 1L);
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
         dispatcher.drain();
 
@@ -134,10 +134,10 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_perEntitySuccess_collapsesOlderRowsForSameEntity() {
+    void testDrainPerEntitySuccess_collapsesOlderRowsForSameEntity() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 42L, "{\"title\":\"new\"}");
         entry.setId(10L);
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 42L)).thenReturn(Optional.empty());
 
         dispatcher.drain();
@@ -147,10 +147,10 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_bulkDelete_doesNotCollapse() {
+    void testDrainBulkDelete_doesNotCollapse() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}");
         entry.setId(10L);
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
         dispatcher.drain();
 
@@ -160,7 +160,7 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
-    void drain_backedOffOlderRow_cannotOverwriteNewerRowThatSucceededFirst() {
+    void testDrainBackedOffOlderRow_cannotOverwriteNewerRow() {
         // An older upsert is deferred by backoff (as after a transient failure) while a newer upsert for the
         // same course is due. The newer value must win permanently, even once the older row's backoff elapses.
         Map<String, String> weaviate = new HashMap<>();
@@ -189,7 +189,7 @@ class WeaviateOutboxDispatcherTest {
      * Backs the outbox and Weaviate mocks with in-memory state so a full drain can be exercised end to end.
      */
     private void wireInMemoryOutbox(List<WeaviateOutboxEntry> table, Map<String, String> weaviate) {
-        when(outboxRepository.claimBatchForDispatch(any(), anyInt())).thenAnswer(invocation -> {
+        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenAnswer(invocation -> {
             ZonedDateTime now = invocation.getArgument(0);
             int limit = invocation.getArgument(1);
             return table.stream().filter(entry -> !entry.getNextAttemptAt().isAfter(now)).sorted(Comparator.comparing(WeaviateOutboxEntry::getId)).limit(limit).toList();
