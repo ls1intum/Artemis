@@ -303,6 +303,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch() throws Exception {
+        courseTestService.testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseExercisesForOverviewForbidden() throws Exception {
         courseTestService.testGetCourseExercisesForOverviewForbidden();
     }

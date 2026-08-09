@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
  * A participation as the course overview renders it.
@@ -21,11 +22,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  * @param initializationDate  when the participation started
  * @param testRun             whether this is a test run rather than a graded attempt
  * @param individualDueDate   the student's own due date, when one was granted
+ * @param repositoryUri       the student's repository for a programming participation; needed by the code actions
  * @param submissions         the submissions of this participation
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationOverviewDTO(Long id, String type, InitializationState initializationState, ZonedDateTime initializationDate, Boolean testRun,
-        ZonedDateTime individualDueDate, Set<SubmissionOverviewDTO> submissions) {
+        ZonedDateTime individualDueDate, String repositoryUri, Set<SubmissionOverviewDTO> submissions) {
 
     /**
      * Projects a participation with its submissions and results for the course overview.
@@ -34,8 +36,9 @@ public record ParticipationOverviewDTO(Long id, String type, InitializationState
      * @return the projected participation
      */
     public static ParticipationOverviewDTO of(StudentParticipation participation) {
+        String repositoryUri = participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation ? programmingParticipation.getRepositoryUri() : null;
         return new ParticipationOverviewDTO(participation.getId(), participation.getType(), participation.getInitializationState(), participation.getInitializationDate(),
-                participation.isTestRun(), participation.getIndividualDueDate(), SubmissionOverviewDTO.of(participation.getSubmissions()));
+                participation.isTestRun(), participation.getIndividualDueDate(), repositoryUri, SubmissionOverviewDTO.of(participation.getSubmissions()));
     }
 
     /**

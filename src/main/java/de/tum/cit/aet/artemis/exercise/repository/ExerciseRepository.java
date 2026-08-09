@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseCategoryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
@@ -82,6 +83,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 exercise.mode,
                 exercise.includedInOverallScore,
                 exercise.presentationScoreEnabled,
+                exercise.allowFeedbackRequests,
+                programmingExercise.allowOnlineEditor,
+                programmingExercise.allowOfflineIde,
                 programmingExercise.buildAndTestStudentSubmissionsAfterDueDate,
                 variantGroup.id,
                 variantGroup.title,
@@ -121,22 +125,60 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     List<ExerciseCategoryDTO> findCategoriesForCourseOverview(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Loads the course exercises without any of their associations, for callers that only need to name them.
-     * <p>
-     * Unlike {@link #findByCourseIdWithCategories} this joins nothing: no categories, no variant group, no course. The
-     * entity is still loaded rather than projected because the exercise type is polymorphic and comes from the entity
-     * hierarchy, and because reusing {@code isVisibleToStudents()} on the entity keeps the visibility rule in exactly
-     * one place instead of duplicating it in SQL.
+     * Projects the three fields used by the Iris context picker and applies the same release/LTI visibility rules as
+     * the course overview. The online-course check is evaluated through the exercise's course in SQL, so no course or
+     * exercise entity has to be hydrated.
      *
-     * @param courseId the course whose exercises should be loaded
-     * @return the exercises of the course, without associations
+     * @param courseId          the course whose visible exercise titles are projected
+     * @param calculationTime   the instant used to evaluate release dates
+     * @param includeUnreleased whether the requesting user may see exercises before their release
+     * @param userLogin         the requesting user's login for the online-course LTI-launch check
+     * @return the visible exercise identifiers, titles, and types
      */
     @Query("""
-            SELECT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO(
+                exercise.id,
+                exercise.title,
+                TYPE(exercise))
+            FROM Exercise exercise
+            WHERE exercise.course.id = :courseId
+                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate < :calculationTime)
+                AND (:includeUnreleased = TRUE OR COALESCE(exercise.course.onlineCourse, FALSE) = FALSE OR EXISTS (
+                    SELECT launch
+                    FROM LtiResourceLaunch launch
+                    WHERE launch.exercise = exercise
+                        AND launch.user.login = :userLogin
+                ))
             """)
-    Set<Exercise> findAllWithoutAssociationsByCourseId(@Param("courseId") long courseId);
+    Set<ExerciseTitleDTO> findTitlesVisibleToUser(@Param("courseId") long courseId, @Param("calculationTime") ZonedDateTime calculationTime,
+            @Param("includeUnreleased") boolean includeUnreleased, @Param("userLogin") String userLogin);
+
+    /**
+     * Finds quiz exercises for which the requesting student's relevant batch has started. Synchronized quizzes use
+     * their shared batch; batched and individual quizzes use the batch linked to the student's submission. Returning
+     * only exercise ids keeps the batch projection to the single boolean the overview consumes.
+     *
+     * @param quizExerciseIds the visible quiz exercises to inspect
+     * @param studentId       the requesting student whose batch is relevant
+     * @param calculationTime the instant used to decide whether a batch has started
+     * @return the ids of quiz exercises with a started relevant batch
+     */
+    @Query("""
+            SELECT DISTINCT batch.quizExercise.id
+            FROM QuizBatch batch
+            WHERE batch.quizExercise.id IN :quizExerciseIds
+                AND batch.startTime IS NOT NULL
+                AND batch.startTime < :calculationTime
+                AND (batch.quizExercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED OR EXISTS (
+                    SELECT submission.id
+                    FROM QuizSubmission submission
+                        JOIN TREAT(submission.participation AS StudentParticipation) participation
+                    WHERE submission.quizBatch = batch.id
+                        AND participation.student.id = :studentId
+                ))
+            """)
+    Set<Long> findStartedQuizExerciseIdsForCourseOverview(@Param("quizExerciseIds") Set<Long> quizExerciseIds, @Param("studentId") long studentId,
+            @Param("calculationTime") ZonedDateTime calculationTime);
 
     @Query("""
             SELECT e

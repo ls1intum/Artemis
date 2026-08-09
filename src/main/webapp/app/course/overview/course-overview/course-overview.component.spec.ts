@@ -522,6 +522,31 @@ describe('CourseOverviewComponent', () => {
         expect(getSidebarItemsSpy).toHaveBeenCalled();
     });
 
+    it('should clear the previous course tab flags immediately and keep only safe sidebar items when the new tab request fails', async () => {
+        const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
+        const newCourseTabs = new Subject<CourseAvailableTabs>();
+        (route as any).params = paramsSubject.asObservable();
+        getCourseAvailableTabsStub.mockImplementation((courseId: number) =>
+            courseId === course1.id ? of(availableTabs({ exams: true, lectures: true, faq: true })) : newCourseTabs.asObservable(),
+        );
+        component.lectureEnabled = true;
+        await component.ngOnInit();
+        expect(component.availableTabs()?.exams).toBe(true);
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(true);
+
+        paramsSubject.next({ courseId: 999 });
+
+        expect(component.availableTabs()).toBeUndefined();
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exercises'))).toBe(true);
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(false);
+        expect(component.sidebarItems().some((item) => item.title?.includes('Lectures'))).toBe(false);
+        expect(component.sidebarItems().some((item) => item.title?.includes('FAQ'))).toBe(false);
+
+        newCourseTabs.error(new Error('network'));
+        expect(component.availableTabs()).toBeUndefined();
+        expect(component.sidebarItems().some((item) => item.title?.includes('Exams'))).toBe(false);
+    });
+
     it('should show the exams item when the exams tab is available', () => {
         component.availableTabs.set(availableTabs({ exams: true }));
         expect(component.getSidebarItems()[0].title).toContain('Exams');

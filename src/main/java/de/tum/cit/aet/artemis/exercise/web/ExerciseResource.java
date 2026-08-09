@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -137,9 +138,8 @@ public class ExerciseResource {
      * previously loaded the full course exercise payload — participations, submissions, results and scores included —
      * to fill a dropdown with these three fields.
      * <p>
-     * Visibility reuses {@code Exercise#isVisibleToStudents()} rather than restating it in SQL, so this endpoint cannot
-     * drift from the rule the rest of the application applies. Note it does not apply the LTI narrowing that online
-     * courses use elsewhere: those exercises are released, so their titles are not withheld.
+     * Visibility matches the course overview's release and online-course LTI-launch rules. The repository evaluates the
+     * rules while projecting the three returned scalars, so neither course nor exercise entities are hydrated.
      *
      * @param courseId the id of the course
      * @return the exercises of the course the user may see, as id, title and type
@@ -149,9 +149,8 @@ public class ExerciseResource {
     public ResponseEntity<Set<ExerciseTitleDTO>> getExerciseTitlesForCourse(@PathVariable long courseId) {
         log.debug("REST request to get the exercise titles of course {}", courseId);
         boolean seesUnreleased = authCheckService.isAtLeastTeachingAssistantInCourse(courseId);
-        Set<ExerciseTitleDTO> titles = exerciseRepository.findAllWithoutAssociationsByCourseId(courseId).stream()
-                .filter(exercise -> seesUnreleased || exercise.isVisibleToStudents())
-                .map(exercise -> new ExerciseTitleDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType())).collect(Collectors.toSet());
+        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        Set<ExerciseTitleDTO> titles = exerciseRepository.findTitlesVisibleToUser(courseId, ZonedDateTime.now(), seesUnreleased, userLogin);
         return ResponseEntity.ok(titles);
     }
 

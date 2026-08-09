@@ -16,6 +16,7 @@ import { ChipModule } from 'primeng/chip';
 import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { forkJoin } from 'rxjs';
 
 interface ContextOption {
     label: string;
@@ -86,7 +87,7 @@ export class ContextSelectionComponent {
     private readonly activeContextName = signal<string>('');
 
     constructor() {
-        effect(() => {
+        effect((onCleanup) => {
             const context = this.chatService.displayContext();
             if (!context || context.mode === ChatServiceMode.COURSE) {
                 this.activeContextName.set('');
@@ -96,11 +97,13 @@ export class ContextSelectionComponent {
                 this.activeContextName.set(context.entityName);
                 return;
             }
+            // Do not keep showing the previous entity's title while the current one is being resolved.
+            this.activeContextName.set('');
             const entityType = context.mode === ChatServiceMode.LECTURE ? EntityType.LECTURE : EntityType.EXERCISE;
-            this.entityTitleService
-                .getTitle(entityType, [context.entityId])
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe((title) => this.activeContextName.set(title));
+            const subscription = this.entityTitleService.getTitle(entityType, [context.entityId]).subscribe((title) => this.activeContextName.set(title));
+            // Effects can rerun many times during the component lifetime. Cancel the previous lookup so a slower
+            // response for an old context cannot overwrite the title of the newly selected context.
+            onCleanup(() => subscription.unsubscribe());
         });
     }
 
@@ -113,14 +116,24 @@ export class ContextSelectionComponent {
             return;
         }
         this.optionsLoadedForCourseId = courseId;
-        this.lectureService
-            .findAllByCourseIdForOverview(courseId)
+        forkJoin({
+            lectures: this.lectureService.findAllByCourseIdForOverview(courseId),
+            exercises: this.exerciseService.getTitlesForCourse(courseId),
+        })
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (lectures) => this.lecturesSignal.set(lectures), error: () => this.lecturesSignal.set([]) });
-        this.exerciseService
-            .getTitlesForCourse(courseId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (exercises) => this.exercisesSignal.set(exercises), error: () => this.exercisesSignal.set([]) });
+            .subscribe({
+                next: ({ lectures, exercises }) => {
+                    this.lecturesSignal.set(lectures);
+                    this.exercisesSignal.set(exercises);
+                },
+                error: () => {
+                    this.lecturesSignal.set([]);
+                    this.exercisesSignal.set([]);
+                    if (this.optionsLoadedForCourseId === courseId) {
+                        this.optionsLoadedForCourseId = undefined;
+                    }
+                },
+            });
     }
 
     readonly supportedExercises = computed(() => this.exercises().filter((e) => e.type && e.type in EXERCISE_TYPE_TO_CHAT_MODE));

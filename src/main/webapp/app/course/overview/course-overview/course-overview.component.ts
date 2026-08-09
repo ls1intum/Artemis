@@ -6,7 +6,6 @@ import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -44,7 +43,7 @@ function readComponentCollapsed(componentRef: unknown): boolean | undefined {
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [CdkScrollable, NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
+    imports: [CdkScrollable, NgClass, RouterOutlet, NgTemplateOutlet, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -187,11 +186,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * The value the guard already fetched for this course visit is reused, so a course visit costs exactly one
      * `available-tabs` request.
      *
-     * A failure here is deliberately not alerted: the parallel course load reports the same network problem, and the
-     * sidebar simply keeps its previous entries rather than collapsing to the always-available ones.
+     * A failure here is deliberately not alerted: the parallel course load reports the same network problem. The old
+     * course's flags are cleared before starting so an in-place course switch can never retain links that are not
+     * available in the new course; on failure the sidebar therefore stays at its safe, always-available baseline.
      */
     private loadAvailableTabs(): void {
         const courseId = this.courseId();
+        this.availableTabs.set(undefined);
+        this.sidebarItems.set(this.getSidebarItems());
         const tabs$ = this.courseAvailableTabsService.loadIfNeeded(courseId);
         this.availableTabsSubscription?.unsubscribe();
         this.availableTabsSubscription = tabs$.subscribe({

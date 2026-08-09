@@ -183,9 +183,11 @@ import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -1121,11 +1123,29 @@ public class CourseTestService {
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, NUMBER_OF_TUTORS);
         Course course = courses.getFirst();
         ZonedDateTime now = ZonedDateTime.now();
+        User student = userUtilService.getUserByLogin(userPrefix + "student1");
+
+        // Pin every programming action field read by the overview. The graded participation deliberately differs from
+        // the practice participation so the projection cannot accidentally copy the wrong repository.
+        ProgrammingExercise programmingExercise = course.getExercises().stream().filter(ProgrammingExercise.class::isInstance).map(ProgrammingExercise.class::cast).findFirst()
+                .orElseThrow();
+        programmingExercise.setAllowFeedbackRequests(true);
+        programmingExercise.setAllowOnlineEditor(true);
+        programmingExercise.setAllowOfflineIde(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        ProgrammingExerciseStudentParticipation gradedProgrammingParticipation = participationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(ProgrammingExerciseStudentParticipation.class::isInstance).map(ProgrammingExerciseStudentParticipation.class::cast)
+                .filter(participation -> student.getLogin().equals(participation.getParticipantIdentifier())).filter(participation -> !participation.isPracticeMode()).findFirst()
+                .orElseThrow();
+        String gradedRepositoryUri = "https://vcs.example.org/course/student1.git";
+        gradedProgrammingParticipation.setRepositoryUri(gradedRepositoryUri);
+        gradedProgrammingParticipation.setPresentationScore(100.0);
+        participationRepository.save(gradedProgrammingParticipation);
 
         // Exercise both participation projections. The common fixture contains only individual exercises, while the
         // endpoint also has a separate team query and must expose the requesting student's assigned team id.
         TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, now.minusDays(3), now.plusDays(1), now.plusDays(2));
-        User student = userUtilService.getUserByLogin(userPrefix + "student1");
         User instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
         var assignedTeam = teamUtilService.createTeam(Set.of(student), instructor, teamExercise, "overview-team");
         participationUtilService.createParticipationSubmissionAndResult(teamExercise.getId(), assignedTeam, teamExercise.getMaxPoints(), teamExercise.getBonusPoints(), 60, true);
@@ -1160,8 +1180,27 @@ public class CourseTestService {
         assertThat(projectedTeamExercise.teamMode()).isTrue();
         assertThat(projectedTeamExercise.studentAssignedTeamId()).isEqualTo(assignedTeam.getId());
         assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
+
+        var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
+        assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
+        assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.FALSE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.repositoryUri()).as("graded repository URI").isEqualTo(gradedRepositoryUri));
+        assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.TRUE.equals(participation.testRun())).singleElement()
+                .satisfies(participation -> assertThat(participation.repositoryUri()).as("practice repository is not confused with the graded repository").isNull());
+
+        var projectedQuizExercise = exercises.exercises().stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).findFirst().orElseThrow();
+        assertThat(projectedQuizExercise.quizEnded()).as("past quiz is marked as ended").isTrue();
+        assertThat(projectedQuizExercise.quizBatches()).as("the requesting student's synchronized quiz batch is represented by one minimal marker").singleElement()
+                .satisfies(batch -> assertThat(batch.started()).isTrue());
+        assertThat(projectedQuizExercise.allowOnlineEditor()).as("programming-only fields do not leak onto quizzes").isNull();
+        assertThat(projectedQuizExercise.allowOfflineIde()).as("programming-only fields do not leak onto quizzes").isNull();
+
         assertThat(exercises.totalScores()).as("the derived scores are returned").isNotNull();
         assertThat(exercises.totalScores().studentScores().absoluteScore()).as("the projection-backed calculator evaluates a non-zero result").isPositive();
+        assertThat(exercises.totalScores().studentScores().presentationScore()).as("the stateless calculator counts projected basic presentation scores").isEqualTo(1.0);
 
         // The new endpoint uses database projections and a stateless DTO calculator. Keep its score semantics pinned to
         // the entity-based endpoint while native clients still use that path.
@@ -1174,6 +1213,48 @@ public class CourseTestService {
         assertThat(exercises.quizScores()).isEqualTo(dashboard.quizScores());
         assertThat(exercises.participationResults()).containsExactlyInAnyOrderElementsOf(dashboard.participationResults());
         assertThat(exercises.achievedPointsPerVariantGroup()).isEqualTo(dashboard.achievedPointsPerVariantGroup());
+    }
+
+    // Test
+    public void testGetCourseExercisesForOverviewUsesCurrentStudentsQuizBatch() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        ZonedDateTime now = ZonedDateTime.now();
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(now.minusDays(1), now.plusDays(1), QuizMode.INDIVIDUAL, course);
+        quizExercise = exerciseRepo.save(quizExercise);
+        long quizExerciseId = quizExercise.getId();
+
+        QuizBatch otherStudentsStartedBatch = QuizExerciseFactory.generateQuizBatch(quizExercise, now.minusMinutes(5));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(otherStudentsStartedBatch, quizExercise);
+        QuizSubmission otherStudentsSubmission = new QuizSubmission();
+        otherStudentsSubmission.setQuizBatch(otherStudentsStartedBatch.getId());
+        otherStudentsSubmission.setSubmissionDate(now.minusMinutes(4));
+        otherStudentsSubmission.setSubmitted(false);
+        quizExerciseUtilService.saveQuizSubmission(quizExercise, otherStudentsSubmission, userPrefix + "student2");
+
+        QuizBatch currentStudentsFutureBatch = QuizExerciseFactory.generateQuizBatch(quizExercise, now.plusMinutes(5));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(currentStudentsFutureBatch, quizExercise);
+        QuizSubmission currentStudentsSubmission = new QuizSubmission();
+        currentStudentsSubmission.setQuizBatch(currentStudentsFutureBatch.getId());
+        currentStudentsSubmission.setSubmissionDate(now);
+        currentStudentsSubmission.setSubmitted(false);
+        quizExerciseUtilService.saveQuizSubmission(quizExercise, currentStudentsSubmission, userPrefix + "student1");
+
+        CourseExercisesForOverviewDTO beforeOwnBatchStarts = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+        var projectedQuizBeforeStart = beforeOwnBatchStarts.exercises().stream().filter(exercise -> exercise.id() == quizExerciseId).findFirst().orElseThrow();
+        assertThat(projectedQuizBeforeStart.quizEnded()).isFalse();
+        assertThat(projectedQuizBeforeStart.quizBatches()).as("another student's started batch is not exposed").isNullOrEmpty();
+        assertThat(projectedQuizBeforeStart.studentParticipations()).as("only the requesting student's participation is exposed").singleElement()
+                .satisfies(participation -> assertThat(participation.id()).isEqualTo(currentStudentsSubmission.getParticipation().getId()));
+
+        currentStudentsFutureBatch.setStartTime(now.minusMinutes(1));
+        quizExerciseUtilService.setQuizBatchExerciseAndSave(currentStudentsFutureBatch, quizExercise);
+
+        CourseExercisesForOverviewDTO afterOwnBatchStarts = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK,
+                CourseExercisesForOverviewDTO.class);
+        var projectedQuizAfterStart = afterOwnBatchStarts.exercises().stream().filter(exercise -> exercise.id() == quizExerciseId).findFirst().orElseThrow();
+        assertThat(projectedQuizAfterStart.quizBatches()).as("the requesting student's started batch is exposed as one minimal marker").singleElement()
+                .satisfies(batch -> assertThat(batch.started()).isTrue());
     }
 
     // Test

@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -12,6 +14,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
  * An exercise as the course overview renders it: the exercise card, its filters, the statistics charts and the variant
@@ -38,6 +42,11 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
  * @param includedInOverallScore        how the exercise counts, needed by the statistics charts
  * @param categories                    the exercise categories, filterable on the card
  * @param presentationScoreEnabled      whether presentation points apply, needed by the statistics charts
+ * @param allowFeedbackRequests         whether the student may request automatic feedback from the exercise card
+ * @param allowOnlineEditor             whether a programming exercise can be opened in the online editor
+ * @param allowOfflineIde               whether a programming exercise can be cloned and worked on locally
+ * @param quizEnded                     whether a quiz has ended, used by its action and result status
+ * @param quizBatches                   a single started marker when the requesting student's relevant batch has begun
  * @param studentAssignedTeamId         the team the user belongs to, for team exercises
  * @param studentAssignedTeamIdComputed whether the assigned team was resolved, so the card can tell "no team" from
  *                                          "not looked up"
@@ -47,7 +56,8 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Double maxPoints, Double bonusPoints, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, AssessmentType assessmentType, DifficultyLevel difficulty, ExerciseMode mode, boolean teamMode,
-        IncludedInOverallScore includedInOverallScore, Set<String> categories, Boolean presentationScoreEnabled, Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed,
+        IncludedInOverallScore includedInOverallScore, Set<String> categories, Boolean presentationScoreEnabled, boolean allowFeedbackRequests, Boolean allowOnlineEditor,
+        Boolean allowOfflineIde, Boolean quizEnded, Set<QuizBatchOverviewDTO> quizBatches, Long studentAssignedTeamId, boolean studentAssignedTeamIdComputed,
         ExerciseVariantGroupReferenceDTO exerciseVariantGroup, Set<ParticipationOverviewDTO> studentParticipations) {
 
     /**
@@ -57,9 +67,15 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
      * @return the projected exercise
      */
     public static ExerciseOverviewDTO of(Exercise exercise) {
+        ProgrammingExercise programmingExercise = exercise instanceof ProgrammingExercise programming ? programming : null;
+        QuizExercise quizExercise = exercise instanceof QuizExercise quiz ? quiz : null;
+        Set<QuizBatchOverviewDTO> quizBatches = quizExercise != null && Hibernate.isInitialized(quizExercise.getQuizBatches()) && quizExercise.getQuizBatches() != null
+                && quizExercise.getQuizBatches().stream().anyMatch(batch -> batch.isStarted()) ? Set.of(QuizBatchOverviewDTO.STARTED) : Set.of();
         return new ExerciseOverviewDTO(exercise.getExerciseType(), exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getAssessmentType(), exercise.getDifficulty(),
                 exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), exercise.getCategories(), exercise.getPresentationScoreEnabled(),
+                exercise.getAllowFeedbackRequests(), programmingExercise == null ? null : programmingExercise.isAllowOnlineEditor(),
+                programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(), quizExercise == null ? null : quizExercise.isQuizEnded(), quizBatches,
                 exercise.getStudentAssignedTeamId(), exercise.isStudentAssignedTeamIdComputed(), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
                 ParticipationOverviewDTO.of(exercise.getStudentParticipations()));
     }

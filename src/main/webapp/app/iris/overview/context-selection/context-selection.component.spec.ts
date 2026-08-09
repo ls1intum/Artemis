@@ -6,8 +6,8 @@ import { ContextSelectionComponent } from './context-selection.component';
 import { ChatServiceMode, IrisChatService, SessionContext } from 'app/iris/overview/services/iris-chat.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { EntityTitleService } from 'app/core/navbar/entity-title.service';
-import { of, throwError } from 'rxjs';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { Subject, of, throwError } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -105,6 +105,28 @@ describe('ContextSelectionComponent', () => {
             expect(component.exercises()).toHaveLength(0);
         });
 
+        it.each(['lectures', 'exercises'] as const)('should retry both option requests after loading %s fails', (failedRequest) => {
+            if (failedRequest === 'lectures') {
+                lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('lecture network')));
+            } else {
+                exerciseServiceMock.getTitlesForCourse.mockReturnValue(throwError(() => new Error('exercise network')));
+            }
+
+            component.loadContextOptions();
+
+            expect(component.lectures()).toEqual([]);
+            expect(component.exercises()).toEqual([]);
+            lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of(lectures));
+            exerciseServiceMock.getTitlesForCourse.mockReturnValue(of(exercises));
+
+            component.loadContextOptions();
+
+            expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledTimes(2);
+            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledTimes(2);
+            expect(component.lectures()).toEqual(lectures);
+            expect(component.exercises()).toEqual(exercises);
+        });
+
         it('should not load anything when no course is known', () => {
             chatServiceMock.getCourseId.mockReturnValue(undefined);
             fixture = TestBed.createComponent(ContextSelectionComponent);
@@ -137,6 +159,25 @@ describe('ContextSelectionComponent', () => {
             await fixture.whenStable();
 
             expect(component.activeChip()?.label).toBe('Named Lecture');
+        });
+
+        it('should cancel an old title lookup so it cannot overwrite a newer context', () => {
+            const firstLookup = new Subject<string>();
+            const secondLookup = new Subject<string>();
+            entityTitleServiceMock.getTitle.mockReturnValueOnce(firstLookup).mockReturnValueOnce(secondLookup);
+
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.LECTURE, entityId: 1 });
+            fixture.detectChanges();
+            chatServiceMock.displayContext.set({ mode: ChatServiceMode.TEXT_EXERCISE, entityId: 11 });
+            fixture.detectChanges();
+
+            firstLookup.next('Stale lecture title');
+            expect(component.activeChip()?.label).toBe('');
+
+            secondLookup.next('Current exercise title');
+            expect(component.activeChip()?.label).toBe('Current exercise title');
+            expect(entityTitleServiceMock.getTitle).toHaveBeenNthCalledWith(1, EntityType.LECTURE, [1]);
+            expect(entityTitleServiceMock.getTitle).toHaveBeenNthCalledWith(2, EntityType.EXERCISE, [11]);
         });
 
         it('should render no chip for the course context', () => {

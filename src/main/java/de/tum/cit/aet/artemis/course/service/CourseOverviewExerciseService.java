@@ -104,6 +104,7 @@ public class CourseOverviewExerciseService {
         List<ExerciseForCourseOverviewDTO> exerciseDetails = exerciseRepository.findForCourseOverview(courseId, calculationTime, includeUnreleased, requireLtiLaunch,
                 user.getLogin());
         Set<Long> exerciseIds = exerciseDetails.stream().map(ExerciseForCourseOverviewDTO::id).collect(Collectors.toSet());
+        Set<Long> startedQuizExerciseIds = loadStartedQuizExerciseIds(exerciseDetails, studentId, calculationTime);
 
         Map<Long, Set<String>> categoriesByExercise = loadCategories(exerciseIds);
         Map<Long, Long> teamAssignmentByExercise = loadTeamAssignments(exerciseDetails, studentId);
@@ -122,12 +123,14 @@ public class CourseOverviewExerciseService {
                 overviewParticipations.basicPresentationScoreCount());
 
         CourseScoresDTO totalScores = calculateScores(totalContext, studentInput);
-        Map<ExerciseType, CourseScoresDTO> scoresByType = calculateScoresByType(settings, scoreExercises, calculationTime, studentInput);
+        Map<ExerciseType, CourseScoresDTO> scoresByType = calculateScoresByType(settings, scoreExercises, calculationTime, studentInput,
+                overviewParticipations.basicPresentationScoreCountByType());
         Set<ParticipationResultDTO> participationResults = buildParticipationResults(overviewParticipations.rowsByParticipationId(), gradeScores);
         Map<Long, Double> achievedPointsPerVariantGroup = CourseScoreCalculator.calculateAchievedPointsPerVariantGroup(totalContext, studentInput);
 
-        Set<ExerciseOverviewDTO> exercises = exerciseDetails.stream().map(exercise -> exercise.toOverviewDTO(categoriesByExercise.getOrDefault(exercise.id(), Set.of()),
-                teamAssignmentByExercise.get(exercise.id()), overviewParticipations.participationsByExerciseId().getOrDefault(exercise.id(), Set.of())))
+        Set<ExerciseOverviewDTO> exercises = exerciseDetails.stream()
+                .map(exercise -> exercise.toOverviewDTO(categoriesByExercise.getOrDefault(exercise.id(), Set.of()), teamAssignmentByExercise.get(exercise.id()),
+                        overviewParticipations.participationsByExerciseId().getOrDefault(exercise.id(), Set.of()), calculationTime, startedQuizExerciseIds.contains(exercise.id())))
                 .collect(Collectors.toSet());
 
         return new CourseExercisesForOverviewDTO(exercises, totalScores, scoresByType.get(ExerciseType.TEXT), scoresByType.get(ExerciseType.PROGRAMMING),
@@ -141,6 +144,12 @@ public class CourseOverviewExerciseService {
         }
         return exerciseRepository.findCategoriesForCourseOverview(exerciseIds).stream()
                 .collect(Collectors.groupingBy(ExerciseCategoryDTO::exerciseId, Collectors.mapping(ExerciseCategoryDTO::category, Collectors.toSet())));
+    }
+
+    private Set<Long> loadStartedQuizExerciseIds(List<ExerciseForCourseOverviewDTO> exerciseDetails, long studentId, ZonedDateTime calculationTime) {
+        Set<Long> quizExerciseIds = exerciseDetails.stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).map(ExerciseForCourseOverviewDTO::id)
+                .collect(Collectors.toSet());
+        return quizExerciseIds.isEmpty() ? Set.of() : exerciseRepository.findStartedQuizExerciseIdsForCourseOverview(quizExerciseIds, studentId, calculationTime);
     }
 
     private Map<Long, Long> loadTeamAssignments(List<ExerciseForCourseOverviewDTO> exerciseDetails, long studentId) {
@@ -170,6 +179,7 @@ public class CourseOverviewExerciseService {
         Map<Long, ExerciseForCourseOverviewDTO> detailsById = exerciseDetails.stream().collect(Collectors.toMap(ExerciseForCourseOverviewDTO::id, Function.identity()));
         Map<Long, List<ParticipationOverviewRowDTO>> rowsByParticipationId = rows.stream().collect(Collectors.groupingBy(ParticipationOverviewRowDTO::participationId));
         Map<Long, Set<ParticipationOverviewDTO>> participationsByExerciseId = new HashMap<>();
+        Map<ExerciseType, Long> basicPresentationScoreCountByType = new HashMap<>();
         long basicPresentationScoreCount = 0;
         for (List<ParticipationOverviewRowDTO> participationRows : rowsByParticipationId.values()) {
             ParticipationOverviewRowDTO firstRow = participationRows.getFirst();
@@ -178,9 +188,10 @@ public class CourseOverviewExerciseService {
             participationsByExerciseId.computeIfAbsent(firstRow.exerciseId(), ignored -> new HashSet<>()).add(participation);
             if (!firstRow.isTestRun() && firstRow.presentationScore() != null && firstRow.presentationScore() > 0.0) {
                 basicPresentationScoreCount++;
+                basicPresentationScoreCountByType.merge(exercise.type(), 1L, Long::sum);
             }
         }
-        return new OverviewParticipations(participationsByExerciseId, rowsByParticipationId, basicPresentationScoreCount);
+        return new OverviewParticipations(participationsByExerciseId, rowsByParticipationId, basicPresentationScoreCount, basicPresentationScoreCountByType);
     }
 
     private List<CourseGradeScoreDTO> loadGradeScores(List<ExerciseForCourseOverviewDTO> exerciseDetails, long courseId, long studentId) {
@@ -207,13 +218,13 @@ public class CourseOverviewExerciseService {
     }
 
     private Map<ExerciseType, CourseScoresDTO> calculateScoresByType(CourseScoreSettingsDTO settings, Set<ExerciseCourseScoreDTO> exercises, ZonedDateTime calculationTime,
-            StudentCourseScoreInputDTO studentInput) {
+            StudentCourseScoreInputDTO studentInput, Map<ExerciseType, Long> basicPresentationScoreCountByType) {
         Map<ExerciseType, CourseScoresDTO> scoresByType = new HashMap<>();
-        StudentCourseScoreInputDTO inputWithoutPresentations = studentInput.withoutPresentations();
         for (ExerciseType exerciseType : ExerciseType.values()) {
             Set<ExerciseCourseScoreDTO> exercisesOfType = exercises.stream().filter(exercise -> exercise.type() == exerciseType).collect(Collectors.toSet());
             CourseScoreContextDTO context = CourseScoreCalculator.createContext(settings, null, exercisesOfType, calculationTime);
-            scoresByType.put(exerciseType, calculateScores(context, inputWithoutPresentations));
+            StudentCourseScoreInputDTO inputForType = studentInput.forExerciseType(basicPresentationScoreCountByType.getOrDefault(exerciseType, 0L));
+            scoresByType.put(exerciseType, calculateScores(context, inputForType));
         }
         return scoresByType;
     }
@@ -234,7 +245,7 @@ public class CourseOverviewExerciseService {
         }).orElse(Set.of());
 
         return new ParticipationOverviewDTO(firstRow.participationId(), firstRow.participationType(), firstRow.initializationState(), firstRow.initializationDate(),
-                firstRow.testRun(), firstRow.individualDueDate(), submissions);
+                firstRow.testRun(), firstRow.individualDueDate(), firstRow.repositoryUri(), submissions);
     }
 
     private Optional<SubmissionOverviewDTO> visibleSubmission(ParticipationOverviewRowDTO submissionRow, List<ParticipationOverviewRowDTO> submissionRows,
@@ -311,6 +322,6 @@ public class CourseOverviewExerciseService {
     }
 
     private record OverviewParticipations(Map<Long, Set<ParticipationOverviewDTO>> participationsByExerciseId, Map<Long, List<ParticipationOverviewRowDTO>> rowsByParticipationId,
-            long basicPresentationScoreCount) {
+            long basicPresentationScoreCount, Map<ExerciseType, Long> basicPresentationScoreCountByType) {
     }
 }

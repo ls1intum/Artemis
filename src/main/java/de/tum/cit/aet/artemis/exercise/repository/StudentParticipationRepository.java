@@ -876,8 +876,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     /**
      * Projects the requesting user's individual participations and each latest submission's visible-result candidates
      * for the course overview. The result side is bounded to the latest result and latest automatic fallback. Unlike the
-     * entity fetch used by the deprecated dashboard, this selects no repository URLs, student, team, feedback, or
-     * exercise entity.
+     * entity fetch used by the deprecated dashboard, this selects only the programming participation's clone URL from
+     * subtype-specific data and selects no student, team, feedback, or exercise entity.
      *
      * @param studentId       the requesting user
      * @param exerciseIds     the visible individual exercises
@@ -894,6 +894,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 participation.testRun,
                 participation.individualDueDate,
                 participation.presentationScore,
+                TREAT(participation AS ProgrammingExerciseStudentParticipation).repositoryUri,
                 submission.id,
                 submission.submissionDate,
                 submission.submitted,
@@ -1070,6 +1071,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 participation.testRun,
                 participation.individualDueDate,
                 participation.presentationScore,
+                TREAT(participation AS ProgrammingExerciseStudentParticipation).repositoryUri,
                 submission.id,
                 submission.submissionDate,
                 submission.submitted,

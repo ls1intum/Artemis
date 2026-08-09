@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationOverviewRowDTO(long exerciseId, long participationId, String participationType, @Nullable InitializationState initializationState,
         @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
-        @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted, @Nullable SubmissionType submissionType,
+        @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted, @Nullable SubmissionType submissionType,
         @Nullable String submissionExerciseType, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated,
         @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType) {
 
@@ -36,12 +36,13 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
      */
     public ParticipationOverviewRowDTO(long exerciseId, long participationId, Class<? extends Participation> participationType, @Nullable InitializationState initializationState,
             @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
-            @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted, @Nullable SubmissionType submissionType,
-            @Nullable Class<? extends Submission> submissionExerciseType, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore,
-            @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType) {
+            @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted,
+            @Nullable SubmissionType submissionType, @Nullable Class<? extends Submission> submissionExerciseType, @Nullable Long resultId,
+            @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful,
+            @Nullable AssessmentType resultAssessmentType) {
         this(exerciseId, participationId, participationTypeName(participationType), initializationState, initializationDate, testRun, individualDueDate, presentationScore,
-                submissionId, submissionDate, submitted, submissionType, submissionTypeName(submissionExerciseType), resultId, resultCompletionDate, resultScore, resultRated,
-                resultSuccessful, resultAssessmentType);
+                repositoryUri, submissionId, submissionDate, submitted, submissionType, submissionTypeName(submissionExerciseType), resultId, resultCompletionDate, resultScore,
+                resultRated, resultSuccessful, resultAssessmentType);
     }
 
     public boolean isTestRun() {

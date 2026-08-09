@@ -1,9 +1,17 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
-import { Observable, Subscription, of, tap } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, finalize, of, shareReplay, tap } from 'rxjs';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 
 /**
  * Loads the exercise data of the course overview on demand and publishes it through the {@link CourseStorageService}.
@@ -21,8 +29,20 @@ export class CourseOverviewExercisesService implements OnDestroy {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly accountService = inject(AccountService);
+    private readonly alertService = inject(AlertService);
+    private readonly websocketService = inject(WebsocketService);
+    private readonly teamService = inject(TeamService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
 
     private readonly state = signal<{ courseId: number; data: CourseExercisesForOverviewDTO } | undefined>(undefined);
+    private inFlightRequest?: { courseId: number; observable: Observable<CourseExercisesForOverviewDTO> };
+    private activeCourseId?: number;
+    private pendingStoredCourseSubscription?: Subscription;
+    private pendingStoredCourseId?: number;
+    private quizExercisesSubscription?: Subscription;
+    private teamAssignmentUpdateSubscription?: Subscription;
+    private liveUpdatesCourseId?: number;
+    private liveUpdatesGeneration = 0;
 
     private currentUserId?: number;
     private readonly authenticationStateSubscription: Subscription;
@@ -38,6 +58,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.clear();
         this.authenticationStateSubscription?.unsubscribe();
     }
 
@@ -58,12 +79,39 @@ export class CourseOverviewExercisesService implements OnDestroy {
      * @param courseId the course to fetch the exercise data for
      */
     load(courseId: number): Observable<CourseExercisesForOverviewDTO> {
-        return this.courseManagementService.findCourseExercisesForOverview(courseId).pipe(
+        if (this.inFlightRequest?.courseId === courseId) {
+            return this.inFlightRequest.observable;
+        }
+
+        this.activateCourse(courseId);
+        const observable = this.courseManagementService.findCourseExercisesForOverview(courseId).pipe(
             tap((data) => {
+                // A response from a course that has since been left must never replace the active course's cache.
+                if (this.activeCourseId !== courseId) {
+                    return;
+                }
                 this.state.set({ courseId, data });
                 this.publishExercisesToStoredCourse(courseId, data);
+                this.startLiveUpdates(courseId);
             }),
+            catchError((error: unknown) => {
+                // The global HTTP interceptor already displays structured server errors and connection failures.
+                // Add a fallback for errors it deliberately does not handle, then terminate the optional tab load
+                // cleanly so next-only subscribers do not route the error through RxJS's global error handler.
+                if (!this.isHandledByGlobalHttpAlert(error)) {
+                    this.alertService.error('artemisApp.courseOverview.exerciseLoadFailed');
+                }
+                return EMPTY;
+            }),
+            finalize(() => {
+                if (this.inFlightRequest?.observable === observable) {
+                    this.inFlightRequest = undefined;
+                }
+            }),
+            shareReplay({ bufferSize: 1, refCount: true }),
         );
+        this.inFlightRequest = { courseId, observable };
+        return observable;
     }
 
     /**
@@ -80,7 +128,13 @@ export class CourseOverviewExercisesService implements OnDestroy {
      * Drops the held exercise data so the next course visit fetches it again.
      */
     clear(): void {
+        this.activeCourseId = undefined;
+        this.inFlightRequest = undefined;
         this.state.set(undefined);
+        this.pendingStoredCourseSubscription?.unsubscribe();
+        this.pendingStoredCourseSubscription = undefined;
+        this.pendingStoredCourseId = undefined;
+        this.stopLiveUpdates();
     }
 
     /**
@@ -94,8 +148,150 @@ export class CourseOverviewExercisesService implements OnDestroy {
     private publishExercisesToStoredCourse(courseId: number, data: CourseExercisesForOverviewDTO): void {
         const course = this.courseStorageService.getCourse(courseId);
         if (!course) {
+            this.waitForStoredCourse(courseId);
             return;
         }
+        if (this.pendingStoredCourseId === courseId) {
+            this.pendingStoredCourseSubscription?.unsubscribe();
+            this.pendingStoredCourseSubscription = undefined;
+            this.pendingStoredCourseId = undefined;
+        }
         this.courseStorageService.updateCourse({ ...course, exercises: data.exercises });
+    }
+
+    /**
+     * Waits for the lean course request when the exercise request wins the race. CourseStorageService is intentionally
+     * not replaying, so this subscription is installed only after confirming that no course is stored yet.
+     */
+    private waitForStoredCourse(courseId: number): void {
+        if (this.pendingStoredCourseId === courseId) {
+            return;
+        }
+        this.pendingStoredCourseSubscription?.unsubscribe();
+        this.pendingStoredCourseId = courseId;
+        this.pendingStoredCourseSubscription = this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe(() => {
+            if (this.activeCourseId !== courseId) {
+                return;
+            }
+            const data = this.dataFor(courseId);
+            if (!data) {
+                return;
+            }
+            // Unsubscribe before publishing because updateCourse synchronously emits on this same stream.
+            this.pendingStoredCourseSubscription?.unsubscribe();
+            this.pendingStoredCourseSubscription = undefined;
+            this.pendingStoredCourseId = undefined;
+            this.publishExercisesToStoredCourse(courseId, data);
+        });
+    }
+
+    private activateCourse(courseId: number): void {
+        if (this.activeCourseId === courseId) {
+            return;
+        }
+        this.activeCourseId = courseId;
+        this.state.set(undefined);
+        this.pendingStoredCourseSubscription?.unsubscribe();
+        this.pendingStoredCourseSubscription = undefined;
+        this.pendingStoredCourseId = undefined;
+        this.stopLiveUpdates();
+    }
+
+    /**
+     * Keeps websocket-driven quiz visibility and team assignments in the shared cache. These subscriptions must outlive
+     * the exercises component itself: a student can leave the tab, receive an update, and later return to the same
+     * course visit without reloading the REST payload.
+     */
+    private startLiveUpdates(courseId: number): void {
+        if (this.liveUpdatesCourseId === courseId) {
+            return;
+        }
+        this.stopLiveUpdates();
+        this.liveUpdatesCourseId = courseId;
+        const generation = this.liveUpdatesGeneration;
+
+        const quizChannel = `/topic/courses/${courseId}/quizExercises`;
+        this.quizExercisesSubscription = this.websocketService.subscribe<QuizExercise>(quizChannel).subscribe({
+            next: (quizExercise) => {
+                const converted = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
+                this.updateCachedExercises(courseId, (exercises) => exercises.filter((exercise) => exercise.id !== converted.id).concat(converted));
+            },
+            error: () => {},
+        });
+
+        void this.subscribeToTeamAssignmentUpdates(courseId, generation);
+    }
+
+    private async subscribeToTeamAssignmentUpdates(courseId: number, generation: number): Promise<void> {
+        try {
+            const updates = await this.teamService.teamAssignmentUpdates;
+            if (this.liveUpdatesGeneration !== generation || this.liveUpdatesCourseId !== courseId) {
+                return;
+            }
+            this.teamAssignmentUpdateSubscription = updates.subscribe({
+                next: (teamAssignment) => this.applyTeamAssignment(courseId, teamAssignment),
+                error: () => {},
+            });
+        } catch {
+            // A websocket setup failure must not turn an otherwise successful REST load into an unhandled rejection.
+        }
+    }
+
+    private applyTeamAssignment(courseId: number, teamAssignment: TeamAssignmentPayload): void {
+        this.updateCachedExercises(courseId, (exercises) => {
+            let didUpdate = false;
+            const updated = exercises.map((exercise) => {
+                if (exercise.id !== teamAssignment.exerciseId) {
+                    return exercise;
+                }
+                didUpdate = true;
+                return { ...exercise, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
+            });
+            return didUpdate ? updated : exercises;
+        });
+    }
+
+    private updateCachedExercises(courseId: number, update: (exercises: Exercise[]) => Exercise[]): void {
+        const current = this.state();
+        if (!current || current.courseId !== courseId || this.activeCourseId !== courseId) {
+            return;
+        }
+        // Prefer the stored copy because exercise-detail and participation websocket flows can enrich it after the
+        // original REST response. A quiz/team update must preserve those newer participation snapshots.
+        const source = this.courseStorageService.getCourse(courseId)?.exercises ?? current.data.exercises;
+        const exercises = update(source ?? []);
+        if (exercises === source) {
+            return;
+        }
+        const data = { ...current.data, exercises };
+        this.state.set({ courseId, data });
+        this.publishExercisesToStoredCourse(courseId, data);
+    }
+
+    private stopLiveUpdates(): void {
+        this.liveUpdatesGeneration++;
+        this.liveUpdatesCourseId = undefined;
+        this.quizExercisesSubscription?.unsubscribe();
+        this.quizExercisesSubscription = undefined;
+        this.teamAssignmentUpdateSubscription?.unsubscribe();
+        this.teamAssignmentUpdateSubscription = undefined;
+    }
+
+    private isHandledByGlobalHttpAlert(error: unknown): boolean {
+        if (!(error instanceof HttpErrorResponse)) {
+            return false;
+        }
+        if (error.status === 0) {
+            return true;
+        }
+        if (error.status === 404) {
+            // AlertService deliberately suppresses all 404 responses.
+            return false;
+        }
+        if (error.status === 400) {
+            const hasApplicationErrorHeader = error.headers.keys().some((header) => header.toLowerCase().endsWith('app-error'));
+            return hasApplicationErrorHeader || !!error.error?.fieldErrors?.length || !!error.error?.title;
+        }
+        return !!error.error?.title;
     }
 }

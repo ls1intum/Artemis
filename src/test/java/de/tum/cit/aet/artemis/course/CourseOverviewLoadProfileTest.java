@@ -78,6 +78,16 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     /** Size of the "realistic course" being profiled. */
     private static final int CONTENT_PER_TYPE = 20;
 
+    /**
+     * Generous ceiling above the measured exercise overview response. This is intentionally not the exact baseline:
+     * identifiers and legitimate small DTO additions may change the size slightly, while accidentally serializing an
+     * entity graph or another large field must fail the profile loudly.
+     */
+    private static final int MAX_EXERCISE_OVERVIEW_PAYLOAD_BYTES = 20_000;
+
+    /** Projection queries for the exercise-only fixture must remain bounded as its 20 exercise graphs grow. */
+    private static final int MAX_EXERCISE_OVERVIEW_QUERIES = 8;
+
     /** A modestly sized problem statement; real programming exercises are commonly several times this. */
     private static final String PROBLEM_STATEMENT = """
             # Task
@@ -158,6 +168,9 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 exercise.setBonusPoints(0.0);
                 exercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
                 exercise.setDueDate(ZonedDateTime.now().plusDays(2));
+                exercise.setAllowFeedbackRequests(true);
+                ((ProgrammingExercise) exercise).setAllowOnlineEditor(true);
+                ((ProgrammingExercise) exercise).setAllowOfflineIde(true);
             }
             else {
                 exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),
@@ -398,22 +411,26 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotRepeatTheRequestingUserOnEveryParticipation() throws Exception {
-        String body = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + course.getId() + "/exercises-for-overview")).andReturn().getResponse()
-                .getContentAsString();
+        var response = request.performMvcRequest(MockMvcRequestBuilders.get("/api/course/courses/" + course.getId() + "/exercises-for-overview")).andReturn().getResponse();
+        String body = response.getContentAsString();
+        int payloadSizeBytes = response.getContentAsByteArray().length;
+
+        assertThat(payloadSizeBytes).as("the exercise overview payload must stay within its performance budget").isLessThanOrEqualTo(MAX_EXERCISE_OVERVIEW_PAYLOAD_BYTES);
 
         // The colon matters: "student" alone also matches "studentParticipations" and "studentAssignedTeamIdComputed"
         assertThat(body).as("the participations must not carry the student, which the client already knows").doesNotContain("\"student\":");
         assertThat(body).as("nor the derived participant fields that come with it").doesNotContain("\"participantName\":");
         // Everything the overview renders must be here...
         assertThat(body).as("the exercise fields the overview renders").contains("\"title\":", "\"dueDate\":", "\"maxPoints\":", "\"difficulty\":", "\"categories\":",
-                "\"includedInOverallScore\":", "\"assessmentDueDate\":", "\"studentParticipations\":");
+                "\"includedInOverallScore\":", "\"assessmentDueDate\":", "\"studentParticipations\":", "\"allowFeedbackRequests\":", "\"allowOnlineEditor\":",
+                "\"allowOfflineIde\":");
         // ...and the long tail it never reads must not be, especially the programming configuration
         assertThat(body).as("fields no overview consumer reads").doesNotContain("\"projectKey\":", "\"packageName\":", "\"programmingLanguage\":", "\"projectType\":",
-                "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"staticCodeAnalysisEnabled\":", "\"allowOnlineEditor\":", "\"allowOnlineIde\":",
-                "\"showTestNamesToStudents\":", "\"testCasesChanged\":", "\"secondCorrectionEnabled\":", "\"gradingInstructionFeedbackUsed\":");
+                "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"staticCodeAnalysisEnabled\":", "\"allowOnlineIde\":", "\"showTestNamesToStudents\":",
+                "\"testCasesChanged\":", "\"secondCorrectionEnabled\":", "\"gradingInstructionFeedbackUsed\":");
         // Results carry no feedbacks: only the scores export and the assessment views need them, and they load their own
         assertThat(body).as("results must not carry their feedbacks").doesNotContain("\"feedbacks\":");
-        log.info("exercises-for-overview response size: {} bytes for {} exercises", body.length(), CONTENT_PER_TYPE);
+        log.info("exercises-for-overview response size: {} bytes for {} exercises", payloadSizeBytes, CONTENT_PER_TYPE);
     }
 
     /**
@@ -427,6 +444,7 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
         request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
 
+        assertThat(statistics.getPrepareStatementCount()).as("the projection-backed exercise overview query budget").isLessThanOrEqualTo(MAX_EXERCISE_OVERVIEW_QUERIES);
         assertEntityWasNotLoaded(Exercise.class);
         assertEntityWasNotLoaded(TextExercise.class);
         assertEntityWasNotLoaded(ProgrammingExercise.class);

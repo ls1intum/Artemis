@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
@@ -17,4 +18,11 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseTitleDTO(long id, String title, ExerciseType type) {
+
+    /**
+     * JPQL constructor accepting the entity class produced by Hibernate's {@code TYPE(...)} function.
+     */
+    public ExerciseTitleDTO(long id, String title, Class<? extends Exercise> type) {
+        this(id, title, ExerciseType.getExerciseTypeFromClass(type));
+    }
 }

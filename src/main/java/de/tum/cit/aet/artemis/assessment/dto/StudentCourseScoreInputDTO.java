@@ -27,12 +27,13 @@ public record StudentCourseScoreInputDTO(long studentId, Collection<CourseGradeS
     }
 
     /**
-     * Returns the same score inputs without presentation contributions. Score breakdowns per exercise type use this,
-     * because presentations only contribute to the total course score.
+     * Returns the score input for one exercise-type breakdown. Graded presentation points are course-wide and therefore
+     * excluded, while basic presentation scores remain attributable to the type of their participation.
      *
-     * @return this student's inputs with both presentation values set to zero
+     * @param presentationScoreCount the positive basic presentation scores on participations of the selected type
+     * @return this student's input for one exercise type
      */
-    public StudentCourseScoreInputDTO withoutPresentations() {
-        return new StudentCourseScoreInputDTO(studentId, gradeScores, plagiarismCases, 0.0, 0);
+    public StudentCourseScoreInputDTO forExerciseType(long presentationScoreCount) {
+        return new StudentCourseScoreInputDTO(studentId, gradeScores, plagiarismCases, 0.0, presentationScoreCount);
     }
 }
