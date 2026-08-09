@@ -112,6 +112,23 @@ describe('YouTubePlayerComponent', () => {
         expect(seekSpy).toHaveBeenCalledWith(600, true);
     });
 
+    it('does not set a video playing that the seek was not meant to start', () => {
+        // YouTube starts a video that had not been started yet, where the native player only moves its position.
+        // A point-out seeks with resumePlayback=false and must leave both kinds of lecture as it found them.
+        const pauseVideo = vi.fn();
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 600, seekTo: vi.fn(), pauseVideo };
+
+        expect(component.seekTo(42, false)).toBe(true);
+        expect(pauseVideo).toHaveBeenCalled();
+
+        // One that was already playing keeps playing — the native player does not pause that one either.
+        pauseVideo.mockClear();
+        (component as any).playerState = 1; // YT_STATE_PLAYING
+
+        expect(component.seekTo(50, false)).toBe(true);
+        expect(pauseVideo).not.toHaveBeenCalled();
+    });
+
     it('accepts a target while the player cannot state a duration yet', () => {
         // A duration of 0 is the player saying "not known", not "zero seconds long". Judging the target against it
         // would refuse every seek made before the video data has loaded.

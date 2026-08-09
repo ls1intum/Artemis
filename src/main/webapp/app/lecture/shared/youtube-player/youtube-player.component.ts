@@ -11,7 +11,7 @@ const READINESS_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
 
 /** Minimal shape of the YouTube player instance we interact with (subset of the YT.Player / Angular wrapper API). */
-type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'getDuration' | 'seekTo'>;
+type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'getDuration' | 'pauseVideo' | 'seekTo'>;
 
 /** Minimal shape of the event emitted by the YouTube player's `ready` output. */
 interface YoutubePlayerReadyEvent {
@@ -276,19 +276,26 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     /**
      * Seeks the video to the given position.
      * @param seconds the position to seek to
+     * @param resumePlayback whether to start playing from there
      * @return whether the video moved to the requested position: neither a call made before {@link onPlayerReady} nor
      *         a target outside the video counts, the latter because YouTube would clamp it to the end, which is not
      *         what was asked for. While the player cannot state a duration it reports 0, and the target cannot be
      *         judged against that; a caller that must *state* the outcome (the Iris point-out ack) waits for
      *         {@link isSeekable} first, so it never has to trust the answer given in that window.
      */
-    seekTo(seconds: number, _resumePlayback = true): boolean {
+    seekTo(seconds: number, resumePlayback = true): boolean {
         if (!this.youtubePlayer) return false;
         const duration = this.youtubePlayer.getDuration();
         if (seconds < 0 || (duration > 0 && seconds > duration)) {
             return false;
         }
+        const wasPlaying = this.isPlaying();
         this.youtubePlayer.seekTo(seconds, true);
+        // YouTube starts playing a video that had not been started yet, where the native player just moves its
+        // position. Left as it is, an Iris point-out would set a YouTube lecture playing but not a streamed one.
+        if (!resumePlayback && !wasPlaying) {
+            this.youtubePlayer.pauseVideo();
+        }
         this.updateCurrentSegment(seconds);
         return true;
     }

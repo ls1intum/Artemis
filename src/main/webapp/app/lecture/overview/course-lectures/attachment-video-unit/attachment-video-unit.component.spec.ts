@@ -387,6 +387,28 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
+    it('toggleCollapse(true): resets videoPlayerFailed, so a later point-out is not given up on', () => {
+        // The failure latch describes the player instance that is torn down on collapse. Left standing it would
+        // outlive that instance and make every later timestamp point-out for this unit be dropped as unreachable,
+        // even though reopening builds a fresh player that loads fine.
+        component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+        component.transcriptSegments.set([{ startTime: 0, endTime: 10, text: 'Slide 7', slideNumber: 7 }]);
+        component.isLoading.set(false);
+        component['isTranscriptLoading'].set(false);
+        const pointOut = { lectureUnitId: 1, timestamp: 42 } as IrisPointOut;
+
+        component.onVideoPlayerFailed();
+
+        expect(component.videoPlayerFailed()).toBe(true);
+        expect(component['isPointOutUnreachable'](pointOut)).toBe(true);
+
+        component.toggleCollapse(true);
+        fixture.detectChanges();
+
+        expect(component.videoPlayerFailed()).toBe(false);
+        expect(component['isPointOutUnreachable'](pointOut)).toBe(false);
+    });
+
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
         // initial has attachment
         expect(component.hasAttachment()).toBe(true);

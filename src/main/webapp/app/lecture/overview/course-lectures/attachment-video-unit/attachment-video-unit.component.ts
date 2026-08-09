@@ -251,16 +251,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const viewer = this.pdfViewer();
             return viewer ? viewer.currentPageSignal() : undefined;
         },
-        getCurrentVideoTimestamp: () => {
-            const videoPlayer = this.videoPlayer();
-            const youtubePlayer = this.youtubePlayer();
-            return videoPlayer?.getCurrentTime() ?? youtubePlayer?.getCurrentTime();
-        },
-        hasVideoBeenPlayed: () => {
-            const videoPlayer = this.videoPlayer();
-            const youtubePlayer = this.youtubePlayer();
-            return videoPlayer?.hasBeenPlayed() ?? youtubePlayer?.hasBeenPlayed() ?? false;
-        },
+        getCurrentVideoTimestamp: () => this.activePlayer()?.getCurrentTime(),
+        hasVideoBeenPlayed: () => this.activePlayer()?.hasBeenPlayed() ?? false,
     }));
 
     readonly ownContextsProvider = computed<LectureContextsProvider>(() => ({
@@ -361,7 +353,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // how long the video is — before that it accepts a target past the end and reports it back unchanged, so
             // acknowledging then would claim a jump the later clamp undoes. Reading the signal here re-runs this
             // effect once it flips, and a video that never gets there is dropped by isPointOutUnreachable instead.
-            const videoReady = pointOut.timestamp == undefined || (this.videoPlayer()?.isSeekable() ?? this.youtubePlayer()?.isSeekable() ?? false);
+            const videoReady = pointOut.timestamp == undefined || (this.activePlayer()?.isSeekable() ?? false);
             if (!pdfReady || !videoReady) {
                 return;
             }
@@ -433,11 +425,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             applied = this.pdfViewer()?.goToPage(page) ?? false;
         }
         if (timestamp != undefined) {
-            // Whichever player is rendered reports whether it was there to take the seek; a dropped seek is not a
-            // navigation. A player that answers false stops here rather than falling through to the other one — the
-            // template renders exactly one of them, so there is no second player to ask.
-            const seeked = this.videoPlayer()?.seekTo(timestamp, false) ?? this.youtubePlayer()?.seekTo(timestamp, false) ?? false;
-            applied = seeked && applied;
+            // The player reports whether it moved to the requested position; a refused or dropped seek is not a
+            // navigation.
+            applied = (this.activePlayer()?.seekTo(timestamp, false) ?? false) && applied;
         }
         return applied;
     }
@@ -608,7 +598,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.loadPdf();
             }
         } else {
+            // Both latches describe a player instance that is being torn down here, so they must not outlive it —
+            // reopening the unit builds a fresh one, and a stale failure would make every later point-out for this
+            // unit be given up on as unreachable.
             this.youtubePlayerFailed.set(false);
+            this.videoPlayerFailed.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
@@ -879,24 +873,30 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // the PDF back. The flag is only ever set for the duration of this synchronous call.
         this.isApplyingVideoSeek = true;
         try {
-            const videoPlayer = this.videoPlayer();
-            if (videoPlayer) {
-                videoPlayer.seekTo(timestamp, shouldResumePlayback);
-                return;
-            }
-
-            this.youtubePlayer()?.seekTo(timestamp, shouldResumePlayback);
+            this.activePlayer()?.seekTo(timestamp, shouldResumePlayback);
         } finally {
             this.isApplyingVideoSeek = false;
         }
     }
 
+    /**
+     * Whichever video player is rendered — the template shows exactly one of them, and both expose the same seeking
+     * and position API. Everything that drives the video goes through here rather than asking the two in turn, so
+     * a rendered player is never silently passed over because it answered "no" rather than "I am not here".
+     *
+     * Deliberately a method and not a computed: it reads the two viewChild signals on every call, which keeps it
+     * tracked by whichever effect asks — the pending-point-out effect has to re-run once a player appears.
+     */
+    private activePlayer(): VideoPlayerComponent | YouTubePlayerComponent | undefined {
+        return this.videoPlayer() ?? this.youtubePlayer();
+    }
+
     private isVideoCurrentlyPlaying(): boolean {
-        return this.videoPlayer()?.isPlaying() ?? this.youtubePlayer()?.isPlaying() ?? false;
+        return this.activePlayer()?.isPlaying() ?? false;
     }
 
     private getActiveVideoSlideNumber(): number | undefined {
-        return this.videoPlayer()?.getCurrentSlideNumber() ?? this.youtubePlayer()?.getCurrentSlideNumber();
+        return this.activePlayer()?.getCurrentSlideNumber();
     }
 
     private clearSynchronizationTargets(): void {
