@@ -29,9 +29,9 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorForwardingService;
 import de.tum.cit.aet.artemis.iris.service.IrisBotUserService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisAuthorRole;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisAnswerPostDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisAuthorRole;
 
 class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegrationTest {
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
+package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import org.jspecify.annotations.Nullable;
 

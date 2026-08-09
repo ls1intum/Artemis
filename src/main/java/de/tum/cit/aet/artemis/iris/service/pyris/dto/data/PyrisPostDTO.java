@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
@@ -13,6 +12,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisAuthorRole;
 
 /**
  * Pyris DTO for a post.
@@ -57,6 +57,6 @@ public record PyrisPostDTO(Long id, String content, List<PyrisAnswerPostDTO> ans
                     UserRole role = answer.getAuthor() != null ? roles.get(answer.getAuthor().getId()) : null;
                     boolean optedOut = AiSelectionDecision.NO_AI.equals(answer.getAuthor() != null ? answer.getAuthor().getSelectedLLMUsage() : null);
                     return optedOut ? PyrisAnswerPostDTO.redacted(answer, role) : new PyrisAnswerPostDTO(answer, role);
-                }).collect(Collectors.toList());
+                }).toList();
     }
 }
