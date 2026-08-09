@@ -67,7 +67,6 @@ export class UnifiedFeedbackComponent {
 
     editable = input<boolean>(false);
     readOnly = input<boolean>(false);
-    useDefaultFeedbackSuggestionBadgeText = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
 
     feedbackTitle = model<string | undefined>(undefined);

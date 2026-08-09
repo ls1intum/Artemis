@@ -41,7 +41,6 @@ describe('UnifiedFeedbackComponent', () => {
     it('should have editable-mode defaults', () => {
         expect(component.editable()).toBe(false);
         expect(component.readOnly()).toBe(false);
-        expect(component.useDefaultFeedbackSuggestionBadgeText()).toBe(false);
         expect(component.feedbackTitle()).toBeUndefined();
         expect(component.feedbackDetail()).toBeUndefined();
         expect(component.feedbackCredits()).toBe(0);

@@ -21,7 +21,6 @@ export class UnreferencedFeedbackComponent {
 
     readonly readOnly = input<boolean>(undefined!);
     readonly highlightDifferences = input<boolean>(undefined!);
-    readonly useDefaultFeedbackSuggestionBadgeText = input(false);
     readonly resultId = input<number>(undefined!);
 
     /**

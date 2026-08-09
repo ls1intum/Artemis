@@ -1,9 +1,7 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faLightbulb, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
-import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -11,17 +9,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-feedback-suggestion-badge',
     templateUrl: './feedback-suggestion-badge.component.html',
     styleUrls: ['./feedback-suggestion-badge.component.scss'],
-    imports: [TumUiTooltipDirective, FaIconComponent, TranslateDirective],
+    imports: [FaIconComponent, TranslateDirective],
     host: {
         '[class.suggestion-badge-host--footer]': 'variant() === "footer"',
     },
 })
 export class FeedbackSuggestionBadgeComponent {
-    private translateService = inject(TranslateService);
-
     readonly feedback = input<Feedback>(undefined!);
-
-    readonly useDefaultText = input(false);
 
     readonly variant = input<'overlay' | 'footer'>('overlay');
 
@@ -34,36 +28,12 @@ export class FeedbackSuggestionBadgeComponent {
     }
 
     get text(): string {
-        const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback());
-        if (feedbackSuggestionType === FeedbackSuggestionType.ADAPTED) {
-            // Always mark adapted feedback suggestions as such, even with the default badge in text mode
-            return 'artemisApp.assessment.suggestion.adapted';
-        }
-        if (this.useDefaultText()) {
-            return 'artemisApp.assessment.suggestion.default';
-        }
-        switch (feedbackSuggestionType) {
+        switch (Feedback.getFeedbackSuggestionType(this.feedback())) {
             case FeedbackSuggestionType.SUGGESTED:
+            case FeedbackSuggestionType.ACCEPTED:
                 return 'artemisApp.assessment.suggestion.suggested';
-            case FeedbackSuggestionType.ACCEPTED:
-                return 'artemisApp.assessment.suggestion.accepted';
-            default:
-                return '';
-        }
-    }
-
-    get tooltip(): string {
-        if (this.useDefaultText()) {
-            return this.translateService.instant('artemisApp.assessment.suggestionTitle.default');
-        }
-        const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback());
-        switch (feedbackSuggestionType) {
-            case FeedbackSuggestionType.SUGGESTED:
-                return this.translateService.instant('artemisApp.assessment.suggestionTitle.suggested');
-            case FeedbackSuggestionType.ACCEPTED:
-                return this.translateService.instant('artemisApp.assessment.suggestionTitle.accepted');
             case FeedbackSuggestionType.ADAPTED:
-                return this.translateService.instant('artemisApp.assessment.suggestionTitle.adapted');
+                return 'artemisApp.assessment.suggestion.adapted';
             default:
                 return '';
         }
