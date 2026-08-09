@@ -70,19 +70,11 @@ describe('YouTubePlayerComponent', () => {
         expect(updateSpy).toHaveBeenCalledWith(12);
     });
 
-    it('reports seekability and seek success only once the player has been handed over', () => {
+    it('reports seekability only once a player that can state a length has been handed over', () => {
         // The component exists from the moment Angular creates it, but a seek before onPlayerReady goes nowhere.
         expect(component.isSeekable()).toBe(false);
         expect(component.seekTo(12)).toBe(false);
 
-        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 600, seekTo: vi.fn() };
-        component.onPlayerReady({} as any);
-
-        expect(component.isSeekable()).toBe(true);
-        expect(component.seekTo(12)).toBe(true);
-    });
-
-    it('stays unseekable while the player cannot state a duration, and flips once it can', () => {
         // getDuration() reports 0 until the video's metadata has been parsed — "not known", not "zero seconds long".
         // A target judged against that would be accepted no matter how far past the end it lies, so seekability
         // waits for a real length. The seek itself is still carried out: refusing it would drop every seek made
@@ -100,6 +92,7 @@ describe('YouTubePlayerComponent', () => {
         component.onStateChange({ data: 3 /* BUFFERING */ } as any);
 
         expect(component.isSeekable()).toBe(true);
+        expect(component.seekTo(12)).toBe(true);
     });
 
     it('refuses a target outside the video instead of letting it clamp to the end', () => {

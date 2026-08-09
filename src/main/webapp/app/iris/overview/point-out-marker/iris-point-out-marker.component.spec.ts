@@ -24,7 +24,7 @@ describe('IrisPointOutMarkerComponent', () => {
                 'artemisApp.iris.pointOut.label': 'Navigated to {{target}} in lecture unit {{unit}}',
                 'artemisApp.iris.pointOut.labelNoUnit': 'Navigated to {{target}}',
             }[key] ?? key;
-        return template.replace(/\{\{(\w+)}}/g, (_match, name) => String(params?.[name] ?? ''));
+        return template.replace(/\{\{(\w+)}}/g, (_match, name) => String(params![name]));
     };
 
     /**
@@ -62,14 +62,13 @@ describe('IrisPointOutMarkerComponent', () => {
         vi.clearAllMocks();
     });
 
-    it('should build a labelled marker for a page point-out', async () => {
+    it('should build a labelled marker for a page point-out, naming the lecture unit when it is known', async () => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3, lectureUnitName: 'Sorting' }));
 
         expect(component.markers()).toHaveLength(1);
         expect(component.markers()[0].label).toBe('Navigated to page 3 in lecture unit Sorting');
-    });
 
-    it('should omit the lecture unit clause when the name is unknown', async () => {
+        // Without a name there is nothing to name the unit by, so the clause is left out rather than left empty.
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3 }));
 
         expect(component.markers()[0].label).toBe('Navigated to page 3');
@@ -124,19 +123,13 @@ describe('IrisPointOutMarkerComponent', () => {
         expect(buttons).toHaveLength(1);
         // Also the assertion that a marker naming both targets joins them into one label.
         expect(buttons[0].textContent).toContain('Navigated to page 3 and timestamp 2:30');
+        // The visible label is the accessible name, so no aria-label may shadow it.
+        expect(buttons[0].getAttribute('aria-label')).toBeNull();
 
         buttons[0].click();
 
         // The marker's own lecture travels with the click; the chat's current context has no say in where it leads.
         expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, lectureId: 27, page: 3, timestamp: 150, forceOpen: true });
-    });
-
-    it('should let the visible label be the accessible name', async () => {
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3 }));
-
-        // The visible label is the accessible name, so no aria-label may shadow it.
-        const button = fixture.nativeElement.querySelector('button[tumUiButton]');
-        expect(button.getAttribute('aria-label')).toBeNull();
     });
 
     it('should rebuild labels when the language changes', async () => {

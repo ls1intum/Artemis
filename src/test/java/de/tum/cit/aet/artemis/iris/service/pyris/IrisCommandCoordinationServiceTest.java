@@ -69,7 +69,7 @@ class IrisCommandCoordinationServiceTest {
     }
 
     @Test
-    void register_completesFutureWhenMatchingAckArrives() throws Exception {
+    void register_completesFutureWhenMatchingAckArrivesAndKeepsThatResult() throws Exception {
         var correlationId = UUID.randomUUID().toString();
         CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
 
@@ -78,35 +78,23 @@ class IrisCommandCoordinationServiceTest {
         var ack = future.get(1, TimeUnit.SECONDS);
         assertThat(ack.correlationId()).isEqualTo(correlationId);
         assertThat(ack.applied()).isTrue();
-    }
-
-    @Test
-    void handleAck_fromUnexpectedUserDoesNotCompleteFuture() {
-        var correlationId = UUID.randomUUID().toString();
-        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
-
-        coordinationService.handleAck(new IrisCommandAckDTO(correlationId, true), "attacker");
-
-        assertThat(future).isNotDone();
-    }
-
-    @Test
-    void handleAck_forUnknownCorrelationIdIsIgnored() {
-        // No pending registration on this node: the broadcast must be ignored without throwing.
-        coordinationService.handleAck(new IrisCommandAckDTO(UUID.randomUUID().toString(), true), "student1");
-    }
-
-    @Test
-    void handleAck_duplicateAckDoesNotOverwriteTheAlreadyReportedResult() throws Exception {
-        var correlationId = UUID.randomUUID().toString();
-        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
-        coordinationService.handleAck(new IrisCommandAckDTO(correlationId, true), "student1");
-        future.get(1, TimeUnit.SECONDS);
 
         // A second ack for the same command — a duplicate, or one racing the timeout — must not flip or fail the
         // result the pipeline already acted on. Note this pins the outcome, not the mechanism: the entry is gone by
         // now, but even if it were not, completing an already-completed future is a no-op.
         coordinationService.handleAck(new IrisCommandAckDTO(correlationId, false), "student1");
         assertThat(future.get(1, TimeUnit.SECONDS).applied()).isTrue();
+    }
+
+    @Test
+    void handleAck_thatMatchesNoPendingRegistrationIsIgnored() {
+        var correlationId = UUID.randomUUID().toString();
+        CompletableFuture<IrisCommandAckDTO> future = coordinationService.register(correlationId, "student1");
+
+        coordinationService.handleAck(new IrisCommandAckDTO(correlationId, true), "attacker");
+        // No pending registration on this node for that id: the broadcast must be ignored without throwing.
+        coordinationService.handleAck(new IrisCommandAckDTO(UUID.randomUUID().toString(), true), "student1");
+
+        assertThat(future).isNotDone();
     }
 }

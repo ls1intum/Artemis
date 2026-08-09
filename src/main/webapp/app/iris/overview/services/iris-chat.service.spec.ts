@@ -618,23 +618,22 @@ describe('IrisChatService', () => {
         expect(navigationSpy).not.toHaveBeenCalled();
     });
 
-    it('should emit point-out navigation with forceOpen when navigateToPointOut is called', async () => {
-        const navPromise = firstValueFrom(service.pointOut$);
-        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
-        await expect(navPromise).resolves.toEqual({ lectureUnitId: 7, page: 2, forceOpen: true });
-        expect(routerMock.navigate).not.toHaveBeenCalled();
-    });
-
     it('should emit a point-out in place while its own lecture is the one on screen', () => {
-        // The combined view is right there and can move without a reload, so the marker must not route anywhere.
-        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
-        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
         const emitted = vi.fn();
         service.pointOut$.subscribe(emitted);
 
+        // A point-out that names no lecture has nothing to route by and can only be carried out where it is.
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
+
+        expect(emitted).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 7, page: 2, forceOpen: true });
+
+        // The combined view is right there and can move without a reload, so the marker must not route anywhere.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+
         service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, forceOpen: true });
 
-        expect(emitted).toHaveBeenCalledOnce();
+        expect(emitted).toHaveBeenCalledTimes(2);
         expect(routerMock.navigate).not.toHaveBeenCalled();
     });
 
@@ -655,6 +654,11 @@ describe('IrisChatService', () => {
         });
         // Nothing is emitted, so a lecture page opened later does not act on a stale target as well.
         expect(emitted).not.toHaveBeenCalled();
+
+        // A point-out that names no page is routed without one, rather than with an empty parameter.
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, timestamp: 42, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenLastCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, timestamp: 42 } });
     });
 
     it('should route a point-out to the lecture it was made in after the chat moved to another one', () => {
@@ -672,83 +676,46 @@ describe('IrisChatService', () => {
         expect(emitted).not.toHaveBeenCalled();
     });
 
-    it('should leave a routed point-out without the parts it does not name', () => {
-        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
-        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
-
-        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, timestamp: 42, forceOpen: true });
-
-        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, timestamp: 42 } });
-    });
-
-    it('should forward incoming point-out commands to point-out navigation', async () => {
+    it('should forward incoming point-out commands to point-out navigation, whether or not they name this tab', async () => {
         const commandSubject = new Subject<IrisCommand>();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
-
-        const navPromise = firstValueFrom(service.pointOut$);
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
 
         service.openChat(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-1' });
+        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-4', targetClientId: wsMock.clientId });
 
-        await expect(navPromise).resolves.toEqual({ lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
+        // The correlation id travels along, so whoever carries the target out is the one that answers for it.
+        expect(navigated).toHaveBeenNthCalledWith(1, { lectureUnitId: 42, page: 3, correlationId: 'corr-1' });
+        expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 3, correlationId: 'corr-4' });
     });
 
     it('should carry out commands addressed to another tab without answering for them', async () => {
         // The server pushes to the user, so every tab receives the command and navigates — the student should find the
         // same position whichever tab they look at next. Only the addressed tab reports the outcome, so the navigation
-        // here arrives without a correlation id, exactly like a marker click.
+        // here arrives without a correlation id, exactly like a marker click. The negative ack for an unusable command
+        // belongs to the addressed tab too; otherwise every tab of the user would answer the same request.
         const commandSubject = new Subject<IrisCommand>();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
         const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
-
-        const navPromise = firstValueFrom(service.pointOut$);
+        const navigated = vi.fn();
+        service.pointOut$.subscribe(navigated);
 
         service.openChat(ChatServiceMode.LECTURE, id);
         await waitForSessionId();
         commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-3', targetClientId: 'another-tab' });
-
-        await expect(navPromise).resolves.toEqual({ lectureUnitId: 42, page: 3 });
-        expect(ackSpy).not.toHaveBeenCalled();
-    });
-
-    it('should not acknowledge an unsupported command addressed to another tab', async () => {
-        // The negative ack for an unusable command belongs to the addressed tab too; otherwise every tab of the user
-        // would answer the same request.
-        const commandSubject = new Subject<IrisCommand>();
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
-        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
-
-        service.openChat(ChatServiceMode.LECTURE, id);
-        await waitForSessionId();
         commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-5', targetClientId: 'another-tab' });
 
+        expect(navigated).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, page: 3 });
         expect(ackSpy).not.toHaveBeenCalled();
-    });
-
-    it('should handle incoming commands addressed to this tab', async () => {
-        const commandSubject = new Subject<IrisCommand>();
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
-
-        const navPromise = firstValueFrom(service.pointOut$);
-
-        service.openChat(ChatServiceMode.LECTURE, id);
-        await waitForSessionId();
-        commandSubject.next({ type: 'pointOut', parameters: { lectureUnitId: 42, page: 3 }, correlationId: 'corr-4', targetClientId: wsMock.clientId });
-
-        await expect(navPromise).resolves.toEqual({ lectureUnitId: 42, page: 3, correlationId: 'corr-4' });
     });
 
     it('should send the tab client id along with a user message', async () => {

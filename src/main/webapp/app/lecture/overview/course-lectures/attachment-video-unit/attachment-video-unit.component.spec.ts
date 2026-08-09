@@ -1162,21 +1162,6 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).not.toHaveBeenCalled();
         });
 
-        it('defers the success ack until the point-out navigation has actually been applied', () => {
-            const goToPage = mockPdfViewer(signal(10));
-            component['fullscreenState'].set(true);
-
-            component['handlePointOut'](pointOutRequest({ correlationId: 'c3', page: 3 }));
-
-            // The ack must not be sent synchronously — it waits for the navigation effect to run.
-            expect(ackSpy).not.toHaveBeenCalled();
-
-            fixture.detectChanges(); // flush the pendingPointOut effect
-
-            expect(goToPage).toHaveBeenCalledWith(3);
-            expect(ackSpy).toHaveBeenCalledWith('c3', true);
-        });
-
         it('acknowledges as not applied when the viewer rejects the requested page', () => {
             // Iris names a page the deck does not have, so the viewer stays put. Reporting success here would leave
             // Iris claiming a jump that never happened and persist a point-out chip that does nothing when clicked.
@@ -1192,7 +1177,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('waits for the PDF document to finish loading before judging the target', () => {
+        it('defers the ack until the document has loaded and the navigation has actually been applied', () => {
             // The viewer component renders before its document does and reports 0 pages until then. Acting on that
             // would reject every target; the point-out has to stay pending until the page count is known.
             const totalPages = signal(0);
@@ -1200,7 +1185,11 @@ describe('AttachmentVideoUnitComponent', () => {
             component['fullscreenState'].set(true);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c9', page: 3 }));
-            fixture.detectChanges();
+
+            // The ack is never sent synchronously — it waits for the navigation effect to run.
+            expect(ackSpy).not.toHaveBeenCalled();
+
+            fixture.detectChanges(); // flush the pendingPointOut effect
 
             expect(goToPage).not.toHaveBeenCalled();
             expect(ackSpy).not.toHaveBeenCalled();
@@ -1251,28 +1240,26 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).toHaveBeenCalledWith('c4', false);
         });
 
-        it('acknowledges a superseded point-out when a newer one replaces it', () => {
-            // No PDF viewer is available, so the first request stays pending and is still unacknowledged when the
-            // second arrives — without releasing it here, its pipeline would wait out the full server-side timeout.
+        it('acknowledges a superseded point-out when a newer one replaces it, unless nobody waits on its answer', () => {
+            // No PDF viewer is available, so a request stays pending and is still unacknowledged when the next one
+            // arrives — without releasing it there, its pipeline would wait out the full server-side timeout.
             component['fullscreenState'].set(true);
             component['handlePointOut'](pointOutRequest({ correlationId: 'c5', page: 3 }));
             fixture.detectChanges();
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c6', page: 7 }));
 
-            expect(ackSpy).toHaveBeenCalledWith('c5', false);
-            expect(ackSpy).not.toHaveBeenCalledWith('c6', false);
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith('c5', false);
             expect(component['pendingPointOut']()!.correlationId).toBe('c6');
-        });
 
-        it('does not acknowledge a superseded marker click, which has nobody waiting on it', () => {
-            component['fullscreenState'].set(true);
+            // A marker click supersedes c6, which is released in turn. The click itself has nobody waiting on it, so
+            // being superseded by c7 right after passes without a word.
+            ackSpy.mockClear();
             component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 3 }));
             fixture.detectChanges();
-
             component['handlePointOut'](pointOutRequest({ correlationId: 'c7', page: 7 }));
 
-            expect(ackSpy).not.toHaveBeenCalled();
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith('c6', false);
         });
 
         // A viewer that failed to load is replaced by an error message for as long as the view stays open, and a unit
@@ -1313,9 +1300,10 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('keeps a timestamp target pending while the video source is still being resolved', () => {
-            // The playlist is only known once loading has finished; dropping the target before then would report a
-            // perfectly good point-out as not applied.
+        it('keeps a timestamp target pending while the video source and its transcript are still being resolved', () => {
+            // The playlist is only known once loading has finished, and the transcript is requested just before the
+            // loading flag clears and settles only after it — so an empty transcript is not an answer at either point.
+            // Judging by the loading flag alone would report a perfectly good point-out as not applied.
             component['fullscreenState'].set(true);
             component.isLoading.set(true);
 
@@ -1324,19 +1312,12 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(ackSpy).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeDefined();
-        });
 
-        it('keeps a timestamp target pending while the transcript request is still in flight', () => {
-            // The transcript is requested just before the loading flag clears and settles only after it, so an empty
-            // transcript is not yet an answer at this point. Judging by the loading flag alone would report a
-            // perfectly good point-out as not applied.
-            component['fullscreenState'].set(true);
+            // Loading has finished, but the transcript request it started is still in flight.
             component.isLoading.set(false);
             component['isTranscriptLoading'].set(true);
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
             component.transcriptSegments.set([]);
-
-            component['handlePointOut'](pointOutRequest({ correlationId: 'c16', timestamp: 42 }));
             fixture.detectChanges();
 
             expect(ackSpy).not.toHaveBeenCalled();
@@ -1346,7 +1327,7 @@ describe('AttachmentVideoUnitComponent', () => {
             component['isTranscriptLoading'].set(false);
             fixture.detectChanges();
 
-            expect(ackSpy).toHaveBeenCalledWith('c16', false);
+            expect(ackSpy).toHaveBeenCalledWith('c13', false);
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
@@ -1455,36 +1436,27 @@ describe('AttachmentVideoUnitComponent', () => {
                 expect(ackSpy).toHaveBeenCalledWith('s1', true);
             });
 
-            it('turns the toggle off and applies both positions when they show different slides', () => {
-                // Page 2 is slide 8 while timestamp 25 is slide 9. Synchronization is the weaker statement, so it
-                // gives way rather than dragging the PDF to slide 9's page.
+            // Page 2 is slide 8, while timestamp 25 is slide 9. Timestamp 10 ends slide 7's segment and starts slide
+            // 8's, where the video player reports the earlier slide 7 — so treating that one as agreeing with page 2
+            // would let the echo drag the PDF to slide 7's page 1, off the page Iris named. Either way synchronization
+            // is the weaker statement and gives way rather than dragging the PDF anywhere.
+            it.each([
+                [25, '0:25'],
+                [10, '0:10'],
+            ])('turns the toggle off and applies both positions when page 2 and timestamp %is show different slides', (timestamp, time) => {
                 const { goToPage, seekTo } = mockSynchronizedViewers(3);
 
-                component['handlePointOut'](pointOutRequest({ correlationId: 's2', page: 2, displayPage: 8, timestamp: 25 }));
+                component['handlePointOut'](pointOutRequest({ correlationId: 's2', page: 2, displayPage: 8, timestamp }));
                 fixture.detectChanges();
 
                 expect(goToPage).toHaveBeenCalledTimes(1);
                 expect(goToPage).toHaveBeenCalledWith(2);
                 expect(seekTo).toHaveBeenCalledTimes(1);
-                expect(seekTo).toHaveBeenCalledWith(25, false);
+                expect(seekTo).toHaveBeenCalledWith(timestamp, false);
                 expect(component.synchronizeVideoAndSlides()).toBe(false);
                 // Labelled with the number printed on the slide, so the notice agrees with the chip in the chat.
-                expect(component.syncDisabledByPointOut()).toEqual({ page: 8, time: '0:25' });
+                expect(component.syncDisabledByPointOut()).toEqual({ page: 8, time });
                 expect(ackSpy).toHaveBeenCalledWith('s2', true);
-            });
-
-            it('turns the toggle off for a timestamp on a segment boundary, where the players disagree', () => {
-                // Timestamp 10 ends slide 7's segment and starts slide 8's. The video player reports the earlier
-                // slide 7 there, so treating the point-out as agreeing with page 2 would let that echo drag the PDF
-                // to slide 7's page 1 — off the page Iris named.
-                const { goToPage } = mockSynchronizedViewers(3);
-
-                component['handlePointOut'](pointOutRequest({ correlationId: 's4', page: 2, displayPage: 8, timestamp: 10 }));
-                fixture.detectChanges();
-
-                expect(goToPage).toHaveBeenCalledTimes(1);
-                expect(goToPage).toHaveBeenCalledWith(2);
-                expect(component.synchronizeVideoAndSlides()).toBe(false);
             });
 
             it('lets synchronization derive the video position from a point-out that only names a page', () => {
