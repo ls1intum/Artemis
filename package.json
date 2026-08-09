@@ -25,7 +25,7 @@
         "@e965/xlsx": "0.20.3",
         "@embedpdf/engines": "2.14.4",
         "@embedpdf/models": "2.14.4",
-        "@embedpdf/pdfium": "2.14.4",
+        "@embedpdf/pdfium": "2.15.0",
         "@fingerprintjs/fingerprintjs": "5.2.0",
         "@fortawesome/angular-fontawesome": "catalog:",
         "@fortawesome/fontawesome-svg-core": "catalog:",
