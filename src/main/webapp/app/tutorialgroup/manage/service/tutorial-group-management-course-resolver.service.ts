@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { EMPTY, Observable, combineLatest, filter, map, throwError } from 'rxjs';
+import { EMPTY, Observable, combineLatest, filter, map, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -32,16 +32,18 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                 }
                 return course;
             }),
-            tap((course: Course) => {
+            // Every redirect returns EMPTY so the resolver completes without emitting and Angular cancels this
+            // navigation. Emitting as well would activate the target route alongside the redirect.
+            switchMap((course: Course) => {
                 if (!course.isAtLeastTutor) {
                     this.alertService.error('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
                     void this.router.navigate(['/course-management']);
-                    return;
+                    return EMPTY;
                 }
                 if (course.tutorialGroupsConfiguration) {
                     const editUrl = '/course-management/' + course.id + '/tutorial-groups/configuration/' + course.tutorialGroupsConfiguration.id + '/edit';
                     if (state.url === editUrl) {
-                        return;
+                        return of(course);
                     }
                 }
                 if (!course.tutorialGroupsConfiguration || !course.timeZone) {
@@ -51,7 +53,9 @@ export class TutorialGroupManagementCourseResolver implements Resolve<Course> {
                         this.alertService.warning('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
                         void this.router.navigate(['/course-management']);
                     }
+                    return EMPTY;
                 }
+                return of(course);
             }),
             // Both endpoints require at least student in the course, so a user below that gets a 403 and the
             // isAtLeastTutor check above is never reached. Without this the navigation just fails and drops the

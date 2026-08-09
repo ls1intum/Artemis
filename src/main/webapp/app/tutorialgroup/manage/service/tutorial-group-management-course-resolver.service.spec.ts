@@ -55,8 +55,12 @@ describe('TutorialGroupManagementResolve', () => {
         course.isAtLeastInstructor = true;
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(router, 'navigate');
-        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
+        const next = vi.fn();
+
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
+
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+        expect(next).not.toHaveBeenCalled();
     });
 
     it('should navigate instructors to tutorial-groups-checklist if course has no timeZone', () => {
@@ -67,8 +71,12 @@ describe('TutorialGroupManagementResolve', () => {
         course.tutorialGroupsConfiguration = { id: 1 };
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(router, 'navigate');
-        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
+        const next = vi.fn();
+
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
+
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+        expect(next).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -84,12 +92,14 @@ describe('TutorialGroupManagementResolve', () => {
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(router, 'navigate');
         vi.spyOn(alertService, 'warning');
+        const next = vi.fn();
 
-        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
 
         expect(alertService.warning).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.configurationRequiredForTutor');
         expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
         expect(router.navigate).not.toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+        expect(next).not.toHaveBeenCalled();
     });
 
     it('should allow tutors to access tutorial group management if the configuration is complete', () => {
@@ -139,12 +149,14 @@ describe('TutorialGroupManagementResolve', () => {
         vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
         vi.spyOn(router, 'navigate');
         vi.spyOn(alertService, 'error');
+        const next = vi.fn();
 
-        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe();
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
         expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
         expect(router.navigate).not.toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+        expect(next).not.toHaveBeenCalled();
     });
 
     it('should show an error and navigate to course management if the course request is forbidden', () => {
