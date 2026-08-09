@@ -46,7 +46,7 @@ services:
     # Consumed by Pyris's Weaviate client only (Artemis never talks to this instance), but kept in
     # sync with WEAVIATE_SERVER_VERSION in the repo root .env so the E2E stack and the Artemis dev
     # stack run the same server. When bumping, re-check it against edutelligence's weaviate-client.
-    image: cr.weaviate.io/semitechnologies/weaviate:1.37.14
+    image: cr.weaviate.io/semitechnologies/weaviate:1.39.0
     container_name: iris-e2e-weaviate
     command:
       - --host
