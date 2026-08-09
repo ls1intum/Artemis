@@ -194,7 +194,7 @@ overrides:
   '@hono/node-server': 2.0.12
   http-proxy-middleware: 3.0.7
   immutable: 5.1.9
-  ip-address: 10.3.1
+  ip-address: 10.4.0
   js-yaml: 4.3.0
   jsdom: 30.0.1
   katex: 0.18.1
@@ -5939,8 +5939,8 @@ packages:
   iobuffer@5.4.0:
     resolution: {integrity: sha512-DRebOWuqDvxunfkNJAlc3IzWIPD5xVxwUNbHr7xKB8E6aLJxIPfNX3CoMJghcFjpv6RWQsrcJbghtEwSPoJqMA==}
 
-  ip-address@10.3.1:
-    resolution: {integrity: sha512-1e9d3kb97NHJTIJDZW9rKqW2h6+dFa50Dy0fpPSMQp2ADje5gvKsXmdiK6dwY5t76TaTt5+P5N1Y/LoToIxP6g==}
+  ip-address@10.4.0:
+    resolution: {integrity: sha512-oSK96Grm3aP6OrS263xVxbNDGVL7rzBtYdpGqlDG8iQdoenDoTs/nkki+DflYbAEE8Xl6o5YxhxlrKvI3nqKXQ==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -13201,7 +13201,7 @@ snapshots:
   express-rate-limit@8.5.2(express@5.2.1(supports-color@10.2.2)):
     dependencies:
       express: 5.2.1(supports-color@10.2.2)
-      ip-address: 10.3.1
+      ip-address: 10.4.0
 
   express@5.2.1(supports-color@10.2.2):
     dependencies:
@@ -13640,7 +13640,7 @@ snapshots:
   iobuffer@5.4.0:
     optional: true
 
-  ip-address@10.3.1: {}
+  ip-address@10.4.0: {}
 
   ipaddr.js@1.9.1: {}
 
