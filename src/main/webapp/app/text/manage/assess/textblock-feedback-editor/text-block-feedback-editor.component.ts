@@ -79,11 +79,8 @@ export class TextBlockFeedbackEditorComponent {
      */
     didChange(): void {
         const feedbackValue = this.feedback();
-        const feedbackTextBefore = feedbackValue.text;
-        Feedback.updateFeedbackTypeOnChange(feedbackValue);
         this.feedbackChange.emit(feedbackValue);
-        // send event to analytics if the feedback was adapted (=> title text changes to have prefix with "adapted" in it)
-        if (feedbackTextBefore !== feedbackValue.text) {
+        if (Feedback.isFeedbackSuggestion(feedbackValue)) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, feedbackValue.type, this.textBlock().type);
         }
     }

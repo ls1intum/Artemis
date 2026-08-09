@@ -4,12 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import {
-    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_IDENTIFIER,
-    Feedback,
-} from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
@@ -186,7 +181,7 @@ export class UnifiedFeedbackComponent {
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
-        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
             if (raw.startsWith(prefix)) {
                 return prefix;
             }
@@ -230,7 +225,7 @@ export class UnifiedFeedbackComponent {
     }
 
     private stripFeedbackSuggestionPrefix(text: string): string {
-        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
             if (text.startsWith(prefix)) {
                 return text.slice(prefix.length);
             }
@@ -240,9 +235,6 @@ export class UnifiedFeedbackComponent {
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
-            if (feedback.text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
-                return this.stripFeedbackSuggestionPrefix(feedback.text);
-            }
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return this.stripFeedbackSuggestionPrefix(feedback.text);
             }

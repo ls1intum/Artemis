@@ -10,8 +10,7 @@
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
-                "suggested": "AI Feedback Suggestion",
-                "adapted": "Adapted AI Feedback Suggestion"
+                "suggested": "AI Feedback Suggestion"
             },
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {

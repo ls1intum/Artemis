@@ -10,8 +10,7 @@
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
-                "suggested": "KI-Feedback-Vorschlag",
-                "adapted": "Angepasster KI-Feedback-Vorschlag"
+                "suggested": "KI-Feedback-Vorschlag"
             },
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {

@@ -46,7 +46,6 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         if (feedback.type === FeedbackType.AUTOMATIC) {
             feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
-        Feedback.updateFeedbackTypeOnChange(feedback);
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
     }

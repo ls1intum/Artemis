@@ -78,7 +78,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledWith(comp.feedback());
     });
 
-    it('should mark automatic feedback and feedback suggestions as adapted when they are modified', () => {
+    it('should mark automatic feedback as AUTOMATIC_ADAPTED when modified, without touching the suggestion badge text', () => {
         fixture.componentRef.setInput('feedback', {
             id: 1,
             type: FeedbackType.AUTOMATIC,
@@ -91,7 +91,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledWith({
             id: 1,
             type: FeedbackType.AUTOMATIC_ADAPTED,
-            text: 'FeedbackSuggestion:adapted:feedback1',
+            text: 'FeedbackSuggestion:accepted:feedback1',
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback);

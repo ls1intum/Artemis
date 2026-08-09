@@ -44,13 +44,6 @@ describe('FeedbackSuggestionBadgeComponent', () => {
         expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
     });
 
-    it('should have the correct text for an ADAPTED feedback', () => {
-        fixture.componentRef.setInput('feedback', new Feedback());
-        vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
-
-        expect(component.text).toBe('artemisApp.assessment.suggestion.adapted');
-    });
-
     it('should have empty text for undefined feedback type', () => {
         fixture.componentRef.setInput('feedback', new Feedback());
         vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(undefined as any as FeedbackSuggestionType);

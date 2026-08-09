@@ -25,7 +25,6 @@ export enum FeedbackSuggestionType {
     NO_SUGGESTION = 'NO_SUGGESTION', // No suggestion at all
     SUGGESTED = 'SUGGESTED', // Suggestion is made, but not accepted yet
     ACCEPTED = 'ACCEPTED', // Suggestion is accepted
-    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the TA
 }
 
 // Prefixes for the feedback text to identify the feedback type more specifically without having to change the database schema:
@@ -33,7 +32,6 @@ export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:'
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
 export const FEEDBACK_SUGGESTION_IDENTIFIER = 'FeedbackSuggestion:';
 export const FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER = 'FeedbackSuggestion:accepted:';
-export const FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER = 'FeedbackSuggestion:adapted:';
 export const NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER = 'NonGradedFeedbackSuggestion:';
 
 export interface DropInfo {
@@ -143,9 +141,6 @@ export class Feedback implements BaseEntity {
         // that.text is guaranteed to be defined here because the feedback is a suggestion, which must have a text
         if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
             return FeedbackSuggestionType.ACCEPTED;
-        }
-        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
-            return FeedbackSuggestionType.ADAPTED;
         }
         return FeedbackSuggestionType.SUGGESTED;
     }
@@ -286,13 +281,6 @@ export class Feedback implements BaseEntity {
 
     public static fromServerResponse(response: Feedback): Feedback {
         return Object.assign(new Feedback(), response);
-    }
-
-    public static updateFeedbackTypeOnChange(feedback: Feedback) {
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            // Mark as adapted feedback suggestion
-            feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
-        }
     }
 }
 

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { vi } from 'vitest';
 import { faMinus } from '@fortawesome/free-solid-svg-icons';
 
@@ -167,9 +167,9 @@ describe('UnifiedFeedbackComponent', () => {
         expect(badge.querySelector('fa-icon')).toBeTruthy();
     });
 
-    it('should use the original Athena suggestion title for adapted feedback', () => {
+    it('should strip the accepted-suggestion prefix from the Athena suggestion title', () => {
         fixture.componentRef.setInput('title', undefined);
-        fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check` } as any);
+        fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check` } as any);
         fixture.detectChanges();
         expect(component.inferredTitle()).toBe('Missing null check');
     });

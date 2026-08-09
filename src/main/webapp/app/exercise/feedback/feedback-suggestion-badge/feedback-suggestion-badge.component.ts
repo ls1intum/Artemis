@@ -32,8 +32,6 @@ export class FeedbackSuggestionBadgeComponent {
             case FeedbackSuggestionType.SUGGESTED:
             case FeedbackSuggestionType.ACCEPTED:
                 return 'artemisApp.assessment.suggestion.suggested';
-            case FeedbackSuggestionType.ADAPTED:
-                return 'artemisApp.assessment.suggestion.adapted';
             default:
                 return '';
         }

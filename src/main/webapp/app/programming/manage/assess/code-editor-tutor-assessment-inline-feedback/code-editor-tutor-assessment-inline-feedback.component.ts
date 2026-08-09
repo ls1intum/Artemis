@@ -99,9 +99,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         const feedback = this.currentFeedback();
         feedback.type = this.MANUAL;
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
-        if (Feedback.isFeedbackSuggestion(feedback)) {
-            Feedback.updateFeedbackTypeOnChange(feedback);
-        } else {
+        if (!Feedback.isFeedbackSuggestion(feedback)) {
             feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         }
         this.viewOnly.set(true);
