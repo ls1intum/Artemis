@@ -496,7 +496,7 @@ dependencies {
     implementation "com.nimbusds:nimbus-jose-jwt:10.9.1"
 
     // Nullable annotations for improved static analysis
-    implementation "org.jspecify:jspecify:1.0.0"
+    implementation "org.jspecify:jspecify:1.0.1"
 
     // Helios push-based status updates
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"
