@@ -13,10 +13,12 @@
     (feedbackCreditsChange)="onScoreChange()"
     (onDelete)="dismiss()"
     (keydown.escape)="escKeyup()"
+    (drop)="connectFeedbackWithInstruction($event)"
+    (dragover)="$event.preventDefault()"
 >
     @if (criteria(); as criteriaList) {
         @if (criteriaList.length > 0) {
-            <div unifiedFeedbackExtraControls class="dropdown" ngbDropdown (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+            <div unifiedFeedbackExtraControls class="dropdown" ngbDropdown>
                 <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
                 @if (criteriaList.length === 1) {
                     <ul ngbDropdownMenu>
