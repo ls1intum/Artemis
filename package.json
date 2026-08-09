@@ -21,7 +21,7 @@
         "@angular/service-worker": "22.1.0",
         "@angular/youtube-player": "22.1.0",
         "@ctrl/ngx-emoji-mart": "9.3.0",
-        "@dagrejs/dagre": "3.0.0",
+        "@dagrejs/dagre": "3.1.1",
         "@e965/xlsx": "0.20.3",
         "@embedpdf/engines": "2.14.4",
         "@embedpdf/models": "2.14.4",

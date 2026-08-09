@@ -265,8 +265,8 @@ importers:
         specifier: 9.3.0
         version: 9.3.0(@angular/core@22.1.0(@angular/compiler@22.1.0)(rxjs@7.8.2)(zone.js@0.16.2))
       '@dagrejs/dagre':
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 3.1.1
+        version: 3.1.1
       '@e965/xlsx':
         specifier: 0.20.3
         version: 0.20.3
@@ -1816,11 +1816,11 @@ packages:
     peerDependencies:
       '@angular/core': '>=15.0.0-0'
 
-  '@dagrejs/dagre@3.0.0':
-    resolution: {integrity: sha512-ZzhnTy1rfuoew9Ez3EIw4L2znPGnYYhfn8vc9c4oB8iw6QAsszbiU0vRhlxWPFnmmNSFAkrYeF1PhM5m4lAN0Q==}
+  '@dagrejs/dagre@3.1.1':
+    resolution: {integrity: sha512-zroZB1dFOFiGgv4Xcrn1DckB1o4aOikPqD2NDQPV0WM//CXGcS6xiD0rNkqHmw6FEg4tabt4nxPLwgCWT+Vb2A==}
 
-  '@dagrejs/graphlib@4.0.1':
-    resolution: {integrity: sha512-IvcV6FduIIAmLwnH+yun+QtV36SC7mERqa86aClNqmMN09WhmPPYU8ckHrZBozErf+UvHPWOTJYaGYiIcs0DgA==}
+  '@dagrejs/graphlib@4.0.5':
+    resolution: {integrity: sha512-7xrBTqIts3o+PMUZX97wSc+7TUbW+/rULzGNCTP6yooNVDXbzw4Wutg/H/xOutTB/c/k0YqOAavgPh4/Zk9PFA==}
 
   '@discoveryjs/json-ext@1.1.0':
     resolution: {integrity: sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==}
@@ -2725,6 +2725,7 @@ packages:
   '@ngtools/webpack@22.1.2':
     resolution: {integrity: sha512-5o3zbOdEHv5+wjRCMN+t6RBou28dbPkio5/rxEJBsQ9iEq11K+atsSKEaZXBMUhYr9nLYR8Pckm5Cqx2FP9R2Q==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
+    deprecated: Angular's Webpack support is deprecated. Use the esbuild and Vite-based "@angular/build" package instead.
     peerDependencies:
       '@angular/compiler-cli': ^22.0.0
       typescript: '>=6.0 <6.1'
@@ -9754,11 +9755,11 @@ snapshots:
       '@angular/core': 22.1.0(@angular/compiler@22.1.0)(rxjs@7.8.2)(zone.js@0.16.2)
       tslib: 2.8.1
 
-  '@dagrejs/dagre@3.0.0':
+  '@dagrejs/dagre@3.1.1':
     dependencies:
-      '@dagrejs/graphlib': 4.0.1
+      '@dagrejs/graphlib': 4.0.5
 
-  '@dagrejs/graphlib@4.0.1': {}
+  '@dagrejs/graphlib@4.0.5': {}
 
   '@discoveryjs/json-ext@1.1.0': {}
 
