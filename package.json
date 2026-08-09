@@ -64,7 +64,7 @@
         "turndown": "7.2.4",
         "y-monaco": "0.1.6",
         "y-protocols": "1.0.7",
-        "yjs": "13.6.31"
+        "yjs": "13.6.32"
     },
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "catalog:",
