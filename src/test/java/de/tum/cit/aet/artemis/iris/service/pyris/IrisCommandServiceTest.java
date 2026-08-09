@@ -269,40 +269,25 @@ class IrisCommandServiceTest {
     }
 
     @Test
-    void executeCommand_lectureUnitFromAnotherCourseShortCircuitsWithoutContactingClient() {
-        // The id is model-generated: a unit outside the chat's course must not be dispatched, and above all its name
-        // must never reach this chat's history.
+    void executeCommand_pointOutIntoAnUnresolvableUnitShortCircuitsWithoutContactingClient() {
+        // The id is model-generated, so none of these three is a transport problem to be waited out: no client could
+        // navigate to any of them, and forwarding them would stall the pipeline for the full ack timeout for nobody.
+
+        // A unit outside the chat's course. Above all its name must never reach this chat's history.
         stubLectureUnitInCourse(COURSE_ID + 1);
+        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
 
-        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
+        // An id that exists nowhere.
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(List.of(LECTURE_UNIT_ID))).thenReturn(List.of());
+        assertThat(commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
 
-        assertThat(result.applied()).isFalse();
+        // No lecture module at all, so there are no units to point into.
+        var serviceWithoutLectures = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository,
+                userRepository, new ObjectMapper(), Optional.empty());
+        assertThat(serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3)).applied()).isFalse();
+
         verify(coordinationService, never()).register(anyString(), anyString());
         verify(irisWebsocketService, never()).send(any(), any(), any());
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-    }
-
-    @Test
-    void executeCommand_unknownLectureUnitShortCircuitsWithoutContactingClient() {
-        // A hallucinated id would otherwise stall the pipeline for the full ack timeout, since no client can navigate to it.
-        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(List.of(LECTURE_UNIT_ID))).thenReturn(List.of());
-
-        var result = commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
-
-        assertThat(result.applied()).isFalse();
-        verify(coordinationService, never()).register(anyString(), anyString());
-        verify(irisWebsocketService, never()).send(any(), any(), any());
-    }
-
-    @Test
-    void executeCommand_withoutLectureModuleShortCircuitsWithoutContactingClient() {
-        // No lecture module means no units to point into, so the command cannot be carried out by anyone.
-        var serviceWithoutLectures = new IrisCommandService(coordinationService, irisWebsocketService, irisChatWebsocketService, irisMessageService, irisSessionRepository,
-                userRepository, new ObjectMapper(), Optional.empty());
-
-        var result = serviceWithoutLectures.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3));
-
-        assertThat(result.applied()).isFalse();
-        verify(irisWebsocketService, never()).send(any(), any(), any());
     }
 }

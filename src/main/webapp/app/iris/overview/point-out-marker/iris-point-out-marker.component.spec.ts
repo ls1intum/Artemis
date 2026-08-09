@@ -74,24 +74,26 @@ describe('IrisPointOutMarkerComponent', () => {
         expect(component.markers()[0].label).toBe('Navigated to page 3');
     });
 
-    it('should label the page with the number printed on the slide when there is one', async () => {
-        // The deck index is what the client navigates by, but the student reads the printed number off the slide
-        // and Iris names it in its answer text — so the chip has to agree with those two, not with the index.
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 7, displayPage: 5 }));
-
-        expect(component.markers()[0].label).toBe('Navigated to page 5');
-        // Navigation is unaffected: clicking still goes to the deck index.
-        expect(component.markers()[0].data.page).toBe(7);
-    });
-
-    // An unnumbered slide carries no printed number at all, and an unusable one is no better than none: the number
-    // is only a label, so it is dropped rather than rejecting a point-out whose navigation is perfectly good. Iris
-    // names no page for such a slide either, so nothing contradicts the deck index the label falls back to.
-    it.each([undefined, 0, -1, 2.5, '5', null])('should label with the deck index when the printed page number is %p', async (displayPage) => {
+    // The deck index is what the client navigates by, but the student reads the printed number off the slide and Iris
+    // names it in its answer text — so the chip has to agree with those two, not with the index. An unnumbered slide
+    // carries no printed number at all, and an unusable one is no better than none: the number is only a label, so it
+    // is dropped rather than rejecting a point-out whose navigation is perfectly good. Iris names no page for such a
+    // slide either, so nothing contradicts the deck index the label then falls back to.
+    it.each([
+        [5, 5],
+        [undefined, 7],
+        [0, 7],
+        [-1, 7],
+        [2.5, 7],
+        ['5', 7],
+        [null, 7],
+    ])('should label a point-out on deck index 7 with %p as page %p', async (displayPage, expectedPage) => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 7, displayPage }));
 
         expect(component.markers()).toHaveLength(1);
-        expect(component.markers()[0].label).toBe('Navigated to page 7');
+        expect(component.markers()[0].label).toBe(`Navigated to page ${expectedPage}`);
+        // Navigation is unaffected either way: clicking still goes to the deck index.
+        expect(component.markers()[0].data.page).toBe(7);
     });
 
     it.each([

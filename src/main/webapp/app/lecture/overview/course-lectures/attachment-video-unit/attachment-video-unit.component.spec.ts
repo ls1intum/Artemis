@@ -1190,17 +1190,18 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
         });
 
-        it('acknowledges immediately as not applied when the combined view is closed', () => {
+        it('answers a point-out it cannot carry out, and stays silent about one that is not its own', () => {
+            // A server-pushed point-out into a closed combined view is answered at once: no view means no navigation,
+            // and saying so releases the waiting pipeline instead of making it sit out the ack timeout.
             component['fullscreenState'].set(false);
-
             component['handlePointOut'](pointOutRequest({ correlationId: 'c1', page: 3 }));
 
-            expect(ackSpy).toHaveBeenCalledWith('c1', false);
-        });
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith('c1', false);
 
-        it('ignores command requests targeting a different lecture unit', () => {
+            // A request for another unit is not this unit's to answer — the addressed unit answers it, or the
+            // server-side timeout does. Answering it here would deny a point-out that another unit is applying.
+            ackSpy.mockClear();
             component['fullscreenState'].set(true);
-
             component['handlePointOut'](pointOutRequest({ correlationId: 'c2', lectureUnitId: 999, page: 3 }));
 
             expect(ackSpy).not.toHaveBeenCalled();
@@ -1276,15 +1277,23 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).toHaveBeenCalledWith('c9', true);
         });
 
-        it('keeps a marker click pending while the combined view is still opening', () => {
-            // openFullscreen() does not set the fullscreen state synchronously: it goes through the layout,
-            // which reports back via onFullscreenChange. A forceOpen point-out therefore starts out with
-            // isFullscreen() === false and must survive until the view is actually up.
+        it('holds a marker click until the view it opens is up, and drops it when there is no view to open', () => {
             const { goToPage } = mockViewers(signal(10));
+            const openFullscreen = vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
             component['fullscreenState'].set(false);
-            makeCombinedViewOpenable();
-            vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
 
+            // Iris is not available on this unit yet, so openFullscreen() is a no-op and the view never opens — and
+            // never closes either, which is the only transition that drops a stale target. Held on regardless, this
+            // one would survive until the student opens the combined view themselves and make it jump out of nowhere.
+            component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 3, forceOpen: true }));
+
+            expect(openFullscreen).not.toHaveBeenCalled();
+            expect(component['pendingPointOut']()).toBeUndefined();
+
+            // With a view to open, the click survives the wait for it: openFullscreen() does not set the fullscreen
+            // state synchronously but goes through the layout, which reports back via onFullscreenChange, so a
+            // forceOpen point-out starts out with isFullscreen() === false.
+            makeCombinedViewOpenable();
             component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 5, forceOpen: true }));
             fixture.detectChanges();
 
@@ -1300,38 +1309,9 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('drops a marker click instead of holding it when there is no combined view to open', () => {
-            // openFullscreen() is a no-op without fullscreen content, so the view never opens — and never closes
-            // either, which is the only transition that drops a stale target. Held on regardless, this one would
-            // survive until the student opens the combined view themselves and make it jump out of nowhere.
-            // Iris is not available on this unit, so there is no combined view for the click to open.
-            component['fullscreenState'].set(false);
-            const openFullscreen = vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
-
-            component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 3, forceOpen: true }));
-
-            expect(openFullscreen).not.toHaveBeenCalled();
-            expect(component['pendingPointOut']()).toBeUndefined();
-        });
-
-        it('drops a pending point-out when the combined view is closed before it could be applied', () => {
-            // No PDF viewer is available, so the target can never be applied and the request stays pending.
-            component['fullscreenState'].set(true);
-            component['handlePointOut'](pointOutRequest({ correlationId: 'c4', page: 3 }));
-            fixture.detectChanges();
-            expect(component['pendingPointOut']()).toBeDefined();
-
-            component['onFullscreenChange'](false);
-
-            // Dropped, so a later unrelated reopen does not make the view jump. The target is now known to be
-            // unreachable, so the waiting pipeline is released right away instead of sitting out the ack timeout.
-            expect(component['pendingPointOut']()).toBeUndefined();
-            expect(ackSpy).toHaveBeenCalledWith('c4', false);
-        });
-
-        it('acknowledges a superseded point-out when a newer one replaces it, unless nobody waits on its answer', () => {
-            // No PDF viewer is available, so a request stays pending and is still unacknowledged when the next one
-            // arrives — without releasing it there, its pipeline would wait out the full server-side timeout.
+        it('releases a pending point-out when a newer one replaces it or the view closes, unless nobody waits on its answer', () => {
+            // No PDF viewer is available here, so a request stays pending and is still unacknowledged when the next
+            // one arrives — without releasing it there, its pipeline would wait out the full server-side timeout.
             component['fullscreenState'].set(true);
             component['handlePointOut'](pointOutRequest({ correlationId: 'c5', page: 3 }));
             fixture.detectChanges();
@@ -1349,6 +1329,14 @@ describe('AttachmentVideoUnitComponent', () => {
             component['handlePointOut'](pointOutRequest({ correlationId: 'c7', page: 7 }));
 
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith('c6', false);
+
+            // Closing the view is the other way a pending target ends: it is dropped, so a later unrelated reopen
+            // does not make the view jump, and its pipeline hears about it right away.
+            ackSpy.mockClear();
+            component['onFullscreenChange'](false);
+
+            expect(component['pendingPointOut']()).toBeUndefined();
+            expect(ackSpy).toHaveBeenCalledExactlyOnceWith('c7', false);
         });
 
         // A viewer that failed to load is replaced by an error message for as long as the view stays open, and a unit

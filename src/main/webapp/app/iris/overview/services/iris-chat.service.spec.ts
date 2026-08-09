@@ -695,11 +695,11 @@ describe('IrisChatService', () => {
         expect(navigated).toHaveBeenNthCalledWith(2, { lectureUnitId: 42, page: 3, correlationId: 'corr-4' });
     });
 
-    it('should carry out commands addressed to another tab without answering for them', async () => {
+    it('should answer only for the commands addressed to it, while carrying out every one it receives', async () => {
         // The server pushes to the user, so every tab receives the command and navigates — the student should find the
         // same position whichever tab they look at next. Only the addressed tab reports the outcome, so the navigation
-        // here arrives without a correlation id, exactly like a marker click. The negative ack for an unusable command
-        // belongs to the addressed tab too; otherwise every tab of the user would answer the same request.
+        // in a bystanding tab arrives without a correlation id, exactly like a marker click. The negative ack for an
+        // unusable command belongs to the addressed tab too; otherwise every tab of the user would answer the request.
         const commandSubject = new Subject<IrisCommand>();
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
@@ -716,6 +716,13 @@ describe('IrisChatService', () => {
 
         expect(navigated).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, page: 3 });
         expect(ackSpy).not.toHaveBeenCalled();
+
+        // The same unsupported command addressed to this tab: nobody can carry it out, and this tab is the one that
+        // has to say so, or the pipeline waits out its full ack timeout.
+        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-2' });
+
+        expect(navigated).toHaveBeenCalledOnce();
+        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-2', applied: false });
     });
 
     it('should send the tab client id along with a user message', async () => {
@@ -731,21 +738,6 @@ describe('IrisChatService', () => {
         await firstValueFrom(service.sendMessage('test message'));
 
         expect(stub).toHaveBeenCalledWith(id, expect.objectContaining({ clientId: wsMock.clientId }));
-    });
-
-    it('should acknowledge unsupported incoming commands as not applied', async () => {
-        const commandSubject = new Subject<IrisCommand>();
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValueOnce(commandSubject.asObservable());
-        const ackSpy = vi.spyOn(wsMock, 'sendCommandAck');
-
-        service.openChat(ChatServiceMode.LECTURE, id);
-        await waitForSessionId();
-        commandSubject.next({ type: 'highlightTerm', parameters: { slide: 4 }, correlationId: 'corr-2' });
-
-        expect(ackSpy).toHaveBeenCalledExactlyOnceWith({ correlationId: 'corr-2', applied: false });
     });
 
     it('should set live assistant draft from websocket partial without incrementing new message counter', async () => {
