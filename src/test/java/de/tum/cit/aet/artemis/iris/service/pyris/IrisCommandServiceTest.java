@@ -64,6 +64,8 @@ class IrisCommandServiceTest {
 
     private static final long LECTURE_UNIT_ID = 42L;
 
+    private static final long LECTURE_ID = 27L;
+
     @Mock
     private IrisCommandCoordinationService coordinationService;
 
@@ -135,6 +137,7 @@ class IrisCommandServiceTest {
         var course = new Course();
         course.setId(courseId);
         var lecture = new Lecture();
+        lecture.setId(LECTURE_ID);
         lecture.setCourse(course);
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(List.of(LECTURE_UNIT_ID))).thenReturn(List.of(lectureUnit));
         when(lectureUnit.getLecture()).thenReturn(lecture);
@@ -166,13 +169,15 @@ class IrisCommandServiceTest {
 
         commandService.executeCommand(job, pointOutCommand(LECTURE_UNIT_ID, 3, null));
 
-        // The marker mirrors the command's {type, parameters} shape so history readers parse it like a command,
-        // with Artemis-resolved display data (the unit name) added to the parameters.
+        // The marker mirrors the command's {type, parameters} shape so history readers parse it like a command, with
+        // what only Artemis can resolve added to the parameters: the unit's name and the lecture it belongs to. The
+        // lecture is what a click on the chip navigates by later, when the chat may sit in a different one entirely.
         var marker = ((IrisJsonMessageContent) savedMarker.getValue().getContent().getFirst()).getJsonNode();
         assertThat(marker.get("type").asText()).isEqualTo("pointOut");
         assertThat(marker.get("parameters").get("lectureUnitId").asLong()).isEqualTo(LECTURE_UNIT_ID);
         assertThat(marker.get("parameters").get("page").asInt()).isEqualTo(3);
         assertThat(marker.get("parameters").get("lectureUnitName").asText()).isEqualTo("Sorting");
+        assertThat(marker.get("parameters").get("lectureId").asLong()).isEqualTo(LECTURE_ID);
         assertThat(marker.has("lectureUnitId")).isFalse();
     }
 

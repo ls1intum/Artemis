@@ -1137,16 +1137,20 @@ export class IrisChatService implements OnDestroy {
      *
      * The lecture unit that carries out a point-out only listens while it is on screen. Chat history, however, opens a
      * lecture session from anywhere — the course Iris page above all — and there the marker would emit into the void
-     * and the click would do nothing at all. So when the session's lecture is not the one the route is showing, the
-     * target is handed to the lecture's deep link instead, which reaches the same position through the route and
+     * and the click would do nothing at all. So when the marker's lecture is not the one the route is showing, the
+     * target is handed to that lecture's deep link instead, which reaches the same position through the route and
      * applies it as the page builds. Only a marker whose lecture is already open is delivered in place, where the
      * combined view can move without a reload.
+     *
+     * The lecture comes off the marker rather than out of the session's context: a conversation can be switched to
+     * another lecture after a point-out was made, and an older marker still points where it pointed then.
      * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
      */
     public navigateToPointOut(pointOut: IrisPointOut): void {
-        const session = this.contextService.committed();
         const courseId = this.getCourseId();
-        if (session?.mode === ChatServiceMode.LECTURE && courseId && !sameSessionContext(session, this.contextService.page())) {
+        const pageContext = this.contextService.page();
+        const showsMarkersLecture = pageContext?.mode === ChatServiceMode.LECTURE && pageContext.entityId === pointOut.lectureId;
+        if (pointOut.lectureId != undefined && courseId && !showsMarkersLecture) {
             // Same deep link the lecture citations use, so both ways of pointing at a position arrive the same way.
             // Unlike a citation it also asks for the combined view, which is where Iris did the pointing and where
             // the toggle and its explanation live — otherwise the same click would land in a different place
@@ -1158,7 +1162,7 @@ export class IrisChatService implements OnDestroy {
             if (pointOut.timestamp != undefined) {
                 queryParams.timestamp = pointOut.timestamp;
             }
-            void this.router.navigate(['/courses', courseId, 'lectures', session.entityId], { queryParams });
+            void this.router.navigate(['/courses', courseId, 'lectures', pointOut.lectureId], { queryParams });
             return;
         }
         this.pointOutSubject.next(pointOut);

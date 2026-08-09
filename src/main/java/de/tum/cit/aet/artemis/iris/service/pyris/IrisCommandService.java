@@ -141,7 +141,7 @@ public class IrisCommandService {
         // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
         // history marker is best-effort: a failure here must not turn into a 500 for Pyris.
         try {
-            persistAndPushMarker(session, buildPointOutMarkerContent(command, lectureUnit.getName()));
+            persistAndPushMarker(session, buildPointOutMarkerContent(command, lectureUnit));
         }
         catch (Exception e) {
             log.error("Point-out command was applied on the client but persisting its marker failed", e);
@@ -222,19 +222,28 @@ public class IrisCommandService {
 
     /**
      * Builds a point-out marker's JSON content: the executed command in the same {@code {type, parameters}} shape it arrived in — so readers of the chat history parse markers
-     * exactly like commands rather than a second, flattened format — plus the lecture unit's name, which only Artemis can resolve and which the chip needs as a label.
+     * exactly like commands rather than a second, flattened format — plus the two things about the unit that only Artemis can resolve.
+     * <p>
+     * The unit's name is the chip's label. The id of its lecture is what a click on the chip navigates by: a marker outlives the context of the chat it was made in, which can be
+     * switched to another lecture later on, so the chip must carry the lecture it belongs to rather than let the client read the one the conversation happens to sit in now.
      *
-     * @param command         the applied point-out command
-     * @param lectureUnitName the display name of the unit the command points into, used as the chip's label
+     * @param command     the applied point-out command
+     * @param lectureUnit the unit the command points into, resolved by {@link #resolveLectureUnitInCourse}
      * @return the marker content to persist
      */
-    private ObjectNode buildPointOutMarkerContent(PyrisCommandDTO command, @Nullable String lectureUnitName) {
+    private ObjectNode buildPointOutMarkerContent(PyrisCommandDTO command, LectureUnit lectureUnit) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("type", command.type());
         ObjectNode parameters = node.putObject("parameters");
         command.parameters().forEach(parameters::set);
+        var lectureUnitName = lectureUnit.getName();
         if (lectureUnitName != null && !lectureUnitName.isBlank()) {
             parameters.put("lectureUnitName", lectureUnitName);
+        }
+        // The join fetch guarantees the lecture; only a lecture that was never persisted could lack an id.
+        var lectureId = lectureUnit.getLecture().getId();
+        if (lectureId != null) {
+            parameters.put("lectureId", lectureId);
         }
         return node;
     }

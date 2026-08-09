@@ -632,7 +632,7 @@ describe('IrisChatService', () => {
         const emitted = vi.fn();
         service.pointOut$.subscribe(emitted);
 
-        service.navigateToPointOut({ lectureUnitId: 7, page: 2, timestamp: 42, forceOpen: true });
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, forceOpen: true });
 
         expect(emitted).toHaveBeenCalledOnce();
         expect(routerMock.navigate).not.toHaveBeenCalled();
@@ -647,7 +647,7 @@ describe('IrisChatService', () => {
         const emitted = vi.fn();
         service.pointOut$.subscribe(emitted);
 
-        service.navigateToPointOut({ lectureUnitId: 7, page: 2, timestamp: 42, forceOpen: true });
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, timestamp: 42, forceOpen: true });
 
         // combined asks for the view Iris pointed in, so the click lands the same way from either page.
         expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], {
@@ -657,11 +657,26 @@ describe('IrisChatService', () => {
         expect(emitted).not.toHaveBeenCalled();
     });
 
+    it('should route a point-out to the lecture it was made in after the chat moved to another one', () => {
+        // A conversation can be switched to another lecture, and the markers made before that keep pointing where they
+        // pointed then. Reading the lecture off the session's context would send this click into lecture 99, which
+        // does not even hold the unit it names.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 99 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 99 });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, page: 2, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, page: 2 } });
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
     it('should leave a routed point-out without the parts it does not name', () => {
         service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
         service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
 
-        service.navigateToPointOut({ lectureUnitId: 7, timestamp: 42, forceOpen: true });
+        service.navigateToPointOut({ lectureUnitId: 7, lectureId: 27, timestamp: 42, forceOpen: true });
 
         expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, timestamp: 42 } });
     });

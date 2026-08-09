@@ -118,7 +118,7 @@ describe('IrisPointOutMarkerComponent', () => {
     });
 
     it('should render one kit button per marker and navigate with forceOpen on click', async () => {
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3, timestamp: 150 }));
+        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, lectureId: 27, page: 3, timestamp: 150 }));
 
         const buttons = fixture.nativeElement.querySelectorAll('button[tumUiButton]');
         expect(buttons).toHaveLength(1);
@@ -127,7 +127,8 @@ describe('IrisPointOutMarkerComponent', () => {
 
         buttons[0].click();
 
-        expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, page: 3, timestamp: 150, forceOpen: true });
+        // The marker's own lecture travels with the click; the chat's current context has no say in where it leads.
+        expect(chatServiceMock.navigateToPointOut).toHaveBeenCalledExactlyOnceWith({ lectureUnitId: 42, lectureId: 27, page: 3, timestamp: 150, forceOpen: true });
     });
 
     it('should let the visible label be the accessible name', async () => {

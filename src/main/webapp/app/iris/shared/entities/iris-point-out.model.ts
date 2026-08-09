@@ -9,6 +9,13 @@
  */
 export interface IrisPointOut {
     lectureUnitId: number;
+    /**
+     * The lecture the unit belongs to, stored on history markers so a click navigates by the lecture the point-out was
+     * made in. A conversation can be switched to another lecture after the fact, so the session's context is no answer
+     * to where an older marker points. Absent on a server-pushed command, which needs no route: the combined view that
+     * receives it is the one it points into.
+     */
+    lectureId?: number;
     /** Slide page to display, counted from the start of the deck. The value navigation runs off. */
     page?: number;
     /**
@@ -43,13 +50,14 @@ export function parsePointOut(parameters: Record<string, unknown> | undefined): 
     if (page === undefined && timestamp === undefined) {
         return undefined;
     }
-    // Only markers carry the unit name; a server-pushed command simply leaves it undefined.
+    // Only markers carry the unit name and its lecture; a server-pushed command simply leaves both undefined.
     const lectureUnitName = typeof parameters['lectureUnitName'] === 'string' ? parameters['lectureUnitName'] : undefined;
+    const lectureId = typeof parameters['lectureId'] === 'number' ? parameters['lectureId'] : undefined;
     // Purely a label, so a value that could not be printed as a page number is dropped rather than
     // rejecting the whole point-out: the navigation it describes is still perfectly good.
     const displayPageValue = parameters['displayPage'];
     const displayPage = typeof displayPageValue === 'number' && Number.isInteger(displayPageValue) && displayPageValue > 0 ? displayPageValue : undefined;
-    return { lectureUnitId: parameters['lectureUnitId'], page, displayPage, timestamp, lectureUnitName };
+    return { lectureUnitId: parameters['lectureUnitId'], lectureId, page, displayPage, timestamp, lectureUnitName };
 }
 
 /**
