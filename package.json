@@ -19,7 +19,7 @@
         "@angular/platform-browser-dynamic": "22.1.0",
         "@angular/router": "22.1.0",
         "@angular/service-worker": "22.1.0",
-        "@angular/youtube-player": "22.1.0",
+        "@angular/youtube-player": "22.1.1",
         "@ctrl/ngx-emoji-mart": "9.3.0",
         "@dagrejs/dagre": "3.0.0",
         "@e965/xlsx": "0.20.3",
