@@ -10,6 +10,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPo
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.countRowsForEntity;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.seedRow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
@@ -149,9 +150,11 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteAllPostsForChannel_removesChannelPostsAndLeavesOthers() throws Exception {
         long courseId = 990100, channelId = 990101, otherChannelId = 990109, postId = 990102, answerPostId = 990103, otherPostId = 990108;
-        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
-        searchableEntityWeaviateService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer"));
-        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(otherPostId, courseId, otherChannelId, "title", "content"));
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.ANSWER_POST, answerPostId,
+                new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer").toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, otherPostId,
+                new PostSearchableEntityDTO(otherPostId, courseId, otherChannelId, "title", "content").toPropertyMap());
         assertPostExistsInWeaviate(weaviateService, postId);
         assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
         assertPostExistsInWeaviate(weaviateService, otherPostId);
@@ -167,8 +170,9 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteAllPostsForCourse_removesCoursePostsAndAnswerPosts() throws Exception {
         long courseId = 990200, channelId = 990201, postId = 990202, answerPostId = 990203;
-        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
-        searchableEntityWeaviateService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer"));
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.ANSWER_POST, answerPostId,
+                new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer").toPropertyMap());
         assertPostExistsInWeaviate(weaviateService, postId);
         assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
 
@@ -182,8 +186,9 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteAllAnswerPostsForPost_removesAnswerPostsLeavesThePost() throws Exception {
         long courseId = 990300, channelId = 990301, postId = 990302, answerPostId = 990303;
-        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
-        searchableEntityWeaviateService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer"));
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.ANSWER_POST, answerPostId,
+                new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer").toPropertyMap());
         assertPostExistsInWeaviate(weaviateService, postId);
         assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
 
@@ -197,9 +202,11 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteAllForCourse_removesEveryRowAndLeavesOtherCourses() throws Exception {
         long courseId = 990400, otherCourseId = 990409, channelId = 990401, lectureId = 990404, postId = 990402, unitId = 990403, otherPostId = 990408;
-        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
-        searchableEntityWeaviateService.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null));
-        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(otherPostId, otherCourseId, channelId, "title", "content"));
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId,
+                new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null).toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, otherPostId,
+                new PostSearchableEntityDTO(otherPostId, otherCourseId, channelId, "title", "content").toPropertyMap());
         assertPostExistsInWeaviate(weaviateService, postId);
         assertLectureUnitExistsInWeaviate(weaviateService, unitId);
         assertPostExistsInWeaviate(weaviateService, otherPostId);
@@ -215,8 +222,10 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteAllLectureUnitsForLecture_removesUnitsAndLeavesOthers() throws Exception {
         long courseId = 990500, lectureId = 990501, otherLectureId = 990509, unitId = 990502, otherUnitId = 990508;
-        searchableEntityWeaviateService.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null));
-        searchableEntityWeaviateService.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(otherUnitId, courseId, otherLectureId, "unit", "desc", "text", null));
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId,
+                new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null).toPropertyMap());
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, otherUnitId,
+                new LectureUnitSearchableEntityDTO(otherUnitId, courseId, otherLectureId, "unit", "desc", "text", null).toPropertyMap());
         assertLectureUnitExistsInWeaviate(weaviateService, unitId);
         assertLectureUnitExistsInWeaviate(weaviateService, otherUnitId);
 

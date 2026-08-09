@@ -52,11 +52,13 @@ class SearchableEntityWeaviateServiceEnqueueTest {
 
     private final ApplicationEventPublisher eventPublisher = mock(ApplicationEventPublisher.class);
 
+    private final SearchableEntityResolver resolver = mock(SearchableEntityResolver.class);
+
     private SearchableEntityWeaviateService service;
 
     @BeforeEach
     void setUp() {
-        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, objectMapper, eventPublisher);
+        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, eventPublisher);
     }
 
     @Test
