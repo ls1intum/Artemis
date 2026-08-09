@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -224,9 +223,7 @@ public class ExerciseGroupResource {
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
         List<ExerciseGroup> exerciseGroupList = exerciseGroupRepository.findWithExamAndExercisesByExamId(examId);
-        // The query left-joins the groups off the exam, so an exam without any exercise groups yields a single null row;
-        // filter it out so the endpoint returns the documented empty list instead of failing to map.
-        List<ExerciseGroupDTO> exerciseGroupDTOs = exerciseGroupList.stream().filter(Objects::nonNull).map(ExerciseGroupDTO::ofWithExercises).toList();
+        List<ExerciseGroupDTO> exerciseGroupDTOs = exerciseGroupList.stream().map(ExerciseGroupDTO::ofWithExercises).toList();
         return ResponseEntity.ok(exerciseGroupDTOs);
     }
 

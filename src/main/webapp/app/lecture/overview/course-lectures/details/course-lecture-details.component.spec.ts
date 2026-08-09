@@ -43,6 +43,17 @@ import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
+import { DialogService } from 'primeng/dynamicdialog';
 import { FileService } from 'app/foundation/service/file.service';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -123,6 +134,7 @@ describe('CourseLectureDetailsComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(DiscussionSectionComponent),
+                MockComponent(IrisLogoComponent),
                 MockComponent(InformationBoxComponent),
             ],
             providers: [
@@ -141,6 +153,20 @@ describe('CourseLectureDetailsComponent', () => {
                     completeLectureUnit: vi.fn(),
                 }),
                 MockProvider(AlertService),
+                // The component opens the lecture's Iris session for the chat panel; the real service reads the
+                // router URL in its constructor, which this test bed does not have. The chat panel itself pulls in
+                // PrimeNG's DialogService for the "About Iris" dialog.
+                MockProvider(DialogService),
+                { provide: AccountService, useClass: MockAccountService },
+                /*
+                 * `DiscussionSectionComponent` declares `providers: [MetisService]`, and ng-mocks carries a mocked
+                 * component's providers over, so rendering it builds the real `MetisService`. Its constructor
+                 * subscribes to a notification topic as soon as it has a user, and the websocket service opens a
+                 * connection for the first subscriber — which in jsdom throws on the relative broker URL and fails the
+                 * run as an unhandled rejection, without failing a single test.
+                 */
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -162,7 +188,14 @@ describe('CourseLectureDetailsComponent', () => {
                 MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseLectureDetailsComponent, {
+                // The chat panel is a page-level detail here: the real chatbot drives the whole Iris chat service, so
+                // swap it for a mock and let the Iris specs cover the chat itself.
+                remove: { imports: [IrisBaseChatbotComponent] },
+                add: { imports: [MockComponent(IrisBaseChatbotComponent)] },
+            })
+            .compileComponents();
 
         lectureService = TestBed.inject(LectureService);
         vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
@@ -258,6 +291,76 @@ describe('CourseLectureDetailsComponent', () => {
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
+    });
+
+    it('should show the iris panel and open the lecture chat once iris is enabled for the course', async () => {
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.showIris()).toBe(true);
+        expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeTruthy();
+        expect(TestBed.inject(IrisChatService).openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, courseLecturesDetailsComponent.lecture()!.id);
+    });
+
+    /**
+     * `startsCollapsed` as the Iris panel itself received it, which is what the template binding decides. Read off the
+     * panels component's own content children: a `jhiPanel` sits on an `ng-template`, which is not an element and so
+     * never turns up in a `By.directive` query.
+     */
+    const irisPanelInput = (): boolean =>
+        (fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent)
+            .panels()
+            .find((panel) => panel.label() === 'artemisApp.courseOverview.exerciseDetails.iris')!
+            .startsCollapsed();
+
+    it('should open the iris panel collapsed for a user who declined AI', async () => {
+        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        // Their chat says only that they declined, so an open panel would cost them lecture width on every visit.
+        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeTruthy();
+        // Asserted on the panel input rather than the rendered rail: jsdom reports no width, so the panels always
+        // render in their narrow single-tab mode and never show a collapsed rail to look for.
+        expect(irisPanelInput()).toBeTruthy();
+    });
+
+    it('should open the iris panel expanded for a user who accepted AI', async () => {
+        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeFalsy();
+        expect(irisPanelInput()).toBeFalsy();
+    });
+
+    it('should not show the iris panel when iris is disabled for the course', async () => {
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: false } } as any);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.showIris()).toBe(false);
+        expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeFalsy();
+        expect(TestBed.inject(IrisChatService).openChat).not.toHaveBeenCalled();
+    });
+
+    it('should not show the iris panel for a tutorial lecture, which has no session of its own', async () => {
+        // Let the component load its lecture first, otherwise loadData overwrites the flag set below.
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        courseLecturesDetailsComponent.lecture.set({ ...courseLecturesDetailsComponent.lecture()!, isTutorialLecture: true });
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(courseLecturesDetailsComponent.showIris()).toBe(false);
+        expect(fixture.nativeElement.querySelector('jhi-iris-base-chatbot')).toBeFalsy();
     });
 
     it('should not show discussion section when communication is disabled', async () => {

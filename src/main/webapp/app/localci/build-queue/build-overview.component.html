@@ -153,14 +153,7 @@
     </div>
 
     <!-- Modal -->
-    <tum-ui-dialog
-        [modal]="true"
-        [(visible)]="buildLogsModalVisible"
-        [style]="{ width: '90dvw', height: '90dvh' }"
-        [contentStyle]="{ overflow: 'auto' }"
-        [draggable]="false"
-        [dismissableMask]="true"
-    >
+    <tum-ui-dialog [(visible)]="buildLogsModalVisible" size="full" [dismissableMask]="true">
         <ng-template #header>
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId() }}</span>
