@@ -85,6 +85,7 @@
                     <textarea
                         #detailTextarea
                         class="unified-feedback-detail-input"
+                        [class.unified-feedback-detail-input-missing]="isDetailMissing()"
                         rows="2"
                         [ngModel]="feedbackDetail() ?? ''"
                         (ngModelChange)="feedbackDetail.set($event)"

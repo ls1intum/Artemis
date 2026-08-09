@@ -165,6 +165,7 @@ export class UnifiedFeedbackComponent {
     readonly canDismissWithoutConfirm = computed(() => (this.feedbackCredits() ?? 0) === 0 && (this.feedbackDetail() ?? '').length === 0 && this.displayTitle().length === 0);
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
+    readonly isDetailMissing = computed(() => this.editable() && !this.feedback()?.reference && !this.feedbackDetail());
     readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));

@@ -332,6 +332,10 @@
     &:focus-visible {
         background: var(--card-bg);
     }
+
+    &.unified-feedback-detail-input-missing {
+        border-color: var(--bs-danger);
+    }
 }
 
 .unified-feedback-correction-status {
