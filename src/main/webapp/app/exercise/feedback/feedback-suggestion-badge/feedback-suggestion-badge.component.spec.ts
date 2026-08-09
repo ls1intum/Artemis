@@ -6,7 +6,7 @@ import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiTooltipDirective } from 'app/shared-ui/tum-ui/tooltip/tum-ui-tooltip.directive';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { faLightbulb, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 
 describe('FeedbackSuggestionBadgeComponent', () => {
