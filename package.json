@@ -95,7 +95,7 @@
         "angular-eslint": "22.1.0",
         "concurrently": "catalog:",
         "cross-env": "catalog:",
-        "esbuild": "0.28.1",
+        "esbuild": "0.28.2",
         "eslint": "catalog:",
         "eslint-plugin-prettier": "5.5.6",
         "eslint-plugin-storybook": "catalog:",
