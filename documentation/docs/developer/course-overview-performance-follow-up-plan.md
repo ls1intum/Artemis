@@ -20,13 +20,18 @@ responses from a previous course, retries failed requests, and is cleared on an 
 course container is destroyed. It neither persists across visits nor changes a REST contract. Only the
 `exams-for-overview` response is reused; the two student-exam calls retain their existing refresh behavior.
 
-The only additional performance change suitable for the current PR is test-only: payload and database-query budgets
-for `exercises-for-overview`. They protect the main reduction without expanding runtime scope. The profile now checks
-that required fields remain present, unused fields remain absent, Hibernate does not hydrate the exercise entity graph,
-the 20-exercise text/programming projection stays at no more than eight statements, and its uncompressed JSON remains
-below 20 KB. The latest validation produced 12,803 bytes and eight statements; a course with a visible quiz adds one
-bounded batch-marker projection. The budgets deliberately leave payload headroom for legitimate small contract
-additions.
+A review-driven score-correctness fix adds overview-specific individual and team grade projections keyed by the
+already computed visible non-quiz exercise IDs. They retain the latest eligible rated result while a newer submission
+is still waiting for a result. This replaces the previous course-wide non-quiz projections without adding a statement;
+the individual quiz projection remains course-wide because it has distinct first-submission semantics.
+
+Beyond these production changes, the only additional performance work suitable for the current PR is test-only:
+payload and database-query budgets for `exercises-for-overview`. They protect the main reduction without expanding
+runtime scope. The profile now checks that required fields remain present, unused fields remain absent, Hibernate does
+not hydrate the exercise entity graph, the 20-exercise text/programming projection stays at no more than eight
+statements, and its uncompressed JSON remains below 20 KB. The latest validation produced 12,803 bytes and eight
+statements; a course with a visible quiz adds one bounded batch-marker projection. The budgets deliberately leave
+payload headroom for legitimate small contract additions.
 
 ## Goals
 
@@ -108,9 +113,10 @@ No follow-up should rewrite these paths without new evidence:
 
 - `exercises-for-overview` uses constructor projections from database to server and a pure score calculator. Its
   profile forbids exercise, participation, submission, result, feedback, grading-scale, and plagiarism entity loads.
-  One low-priority row-volume refinement remains: its shared grade-score queries select the student's rows for the
-  course and discard rows for unreleased or LTI-hidden exercises in Java. This is tracked separately below because
-  changing the shared projections in the current PR would widen its blast radius.
+  The individual and team non-quiz grade projections are restricted to the already computed visible exercise IDs. One
+  low-priority row-volume refinement remains: the individual quiz query is still keyed by course and quiz rows for
+  unreleased or LTI-hidden exercises are discarded in Java. Its distinct first-submission semantics make that change
+  worth isolating and characterizing separately.
 - `lectures-for-overview` is a narrow constructor projection containing the sidebar fields.
 - `available-tabs` combines six indexed availability checks in one query. Iris stays separate because its effective
   default is Java-owned and its flag is stored in JSON.
@@ -329,25 +335,29 @@ specialized tests.
 - Test enabled/disabled Iris, missing/default settings, consent required/granted, empty/new/existing sessions, and live
   WebSocket updates.
 
-## Follow-up PR 10: restrict overview score rows to visible exercises
+## Follow-up PR 10: restrict overview quiz-score rows to visible exercises
 
-**Priority:** Low until a course with many hidden exercises shows material row volume; the current query count and
+**Priority:** Low until a course with many hidden quizzes shows material row volume; the current query count and
 entity-hydration profile are already bounded.
 
 ### Problem
 
-`exercises-for-overview` reuses three grade-score projections that are keyed by course. The service then removes rows
-whose exercise is unreleased or, for an online course, has not been launched by the requesting student. The returned
-DTO and score are correct, but the database can still send score rows that the server immediately discards.
+The overview-specific individual and team non-quiz projections are already keyed by visible exercise IDs. The
+individual quiz projection remains keyed by course because quiz scoring intentionally selects the first submission,
+unlike the latest relevant rated result used by other exercise types. The service therefore still removes quiz rows
+whose exercise is unreleased or, for an online course, has not been launched by the requesting student.
 
 ### Design and acceptance criteria
 
-- Add overview-specific grade-score projections keyed by the already computed visible exercise IDs, or safely extend
-  the shared projections only after characterizing their other consumers.
-- Preserve individual quiz, individual non-quiz, team, rated-result, individual-due-date, and practice-mode semantics.
-- Assert score equivalence with the current DTO calculator for released, unreleased, and LTI-hidden exercises.
-- With 20 visible and 100 hidden exercises, selected grade rows should match the visible set and query count must not
-  grow. Do not combine the three subtype queries unless measurement shows a clear benefit and the SQL stays readable.
+- Add an overview-specific individual quiz projection keyed by the already computed visible quiz IDs, or safely extend
+  the shared projection only after characterizing its other consumers.
+- Preserve the first-submission rule, latest-result-within-that-submission rule, rated-result filtering, and
+  practice-mode exclusion.
+- Assert score equivalence for released, unreleased, and LTI-hidden quizzes, including multiple submissions and
+  multiple results on the selected submission.
+- With 20 visible and 100 hidden quizzes, selected grade rows should match the visible set and query count must not
+  grow. Keep the query separate from non-quiz scoring unless measurement shows a clear benefit and the SQL stays
+  readable.
 
 ## Delivery order
 
@@ -360,7 +370,7 @@ The recommended order balances total student impact, measured severity, and isol
 5. Push calendar filtering into the DB and project tutorial-group summaries.
 6. Consolidate Exams, FAQ, and Training contracts in independent small PRs.
 7. Handle Iris startup and history paging in an Iris-owned PR.
-8. Restrict overview grade-score rows when row-volume measurements justify the shared-query change.
+8. Restrict overview quiz-score rows when row-volume measurements justify the shared-query change.
 
 Dashboard, learning path, and communication are independent and can be developed in parallel, but each should be
 reviewed and measured separately.
