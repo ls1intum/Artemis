@@ -1,8 +1,3 @@
-# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
-# ignores for everything except registry/auth/Node settings like node-options)
-# and into this file. Settings here govern the install behaviour in this
-# project root.
-
 packages:
   - 'packages/*'
 
@@ -49,7 +44,7 @@ catalog:
   lodash-es: 4.18.1
   ng-packagr: 22.1.0
   postcss: 8.5.25
-  publint: 0.3.22
+  publint: 0.3.23
   playwright: 1.62.1
   react: 19.2.8
   rxjs: 7.8.2
