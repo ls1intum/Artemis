@@ -7,8 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -23,7 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "searchable_entity_sync_state", uniqueConstraints = @UniqueConstraint(name = "uc_searchable_entity_sync_state_type_entity", columnNames = { "entity_type",
         "entity_id" }))
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SearchableEntitySyncState extends DomainObject {
 
     @Column(name = "entity_type", nullable = false, length = 64)

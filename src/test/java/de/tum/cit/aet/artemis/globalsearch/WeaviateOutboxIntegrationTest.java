@@ -1,7 +1,13 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAnswerPostExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertAnswerPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.countRowsForEntity;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,7 +29,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -34,8 +43,8 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 /**
  * Integration tests for the durable Weaviate outbox: a metadata change is recorded as an outbox row,
  * and the single-writer dispatcher on the scheduling node applies it to Weaviate, refreshes the sync ledger,
- * and removes the row. Also verifies idempotent re-application and that an enqueue joins the caller's
- * transaction (rolling back leaves no outbox row).
+ * and removes the row. Also verifies idempotent re-application, that an enqueue joins the caller's transaction
+ * (rolling back leaves no outbox row), and that each bulk-delete operation maps to the correct Weaviate deletion.
  * <p>
  * Tests are skipped when Docker is not available or the Weaviate container failed to start.
  */
@@ -80,7 +89,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void upsert_isDispatchedToWeaviate_writesSyncState_andRemovesOutboxRow() {
+    void testUpsert_isDispatchedWritesSyncStateAndRemovesOutboxRow() {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
@@ -93,7 +102,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteEntity_isDispatchedToWeaviate_andClearsSyncState() throws Exception {
+    void testDeleteEntity_isDispatchedAndClearsSyncState() throws Exception {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
         assertCourseExistsInWeaviate(weaviateService, course);
 
@@ -106,7 +115,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void duplicateUpserts_areIdempotent_yieldingASingleWeaviateRow() {
+    void testDuplicateUpserts_areIdempotentYieldingASingleRow() {
         var dto = CourseSearchableEntityDTO.fromCourse(course);
         // Two identical enqueues produce two outbox rows; applying both must converge to one row (deterministic UUID replace).
         searchableEntityWeaviateService.upsertCourseAsync(dto);
@@ -121,7 +130,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void enqueueInRolledBackTransaction_persistsNoOutboxRow() throws Exception {
+    void testEnqueueInRolledBackTransaction_persistsNoOutboxRow() throws Exception {
         var dto = CourseSearchableEntityDTO.fromCourse(course);
         TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
 
@@ -134,6 +143,87 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("rolled-back enqueue leaves no outbox row").isFalse();
         // The after-commit dispatch never fires on rollback, so nothing reaches Weaviate either.
         assertCourseNotInWeaviate(weaviateService, course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteAllPostsForChannel_removesChannelPostsAndLeavesOthers() throws Exception {
+        long courseId = 990100, channelId = 990101, otherChannelId = 990109, postId = 990102, answerPostId = 990103, otherPostId = 990108;
+        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
+        searchableEntityWeaviateService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer"));
+        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(otherPostId, courseId, otherChannelId, "title", "content"));
+        assertPostExistsInWeaviate(weaviateService, postId);
+        assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
+        assertPostExistsInWeaviate(weaviateService, otherPostId);
+
+        searchableEntityWeaviateService.deleteAllPostsForChannelAsync(channelId);
+
+        assertPostNotInWeaviate(weaviateService, postId);
+        assertAnswerPostNotInWeaviate(weaviateService, answerPostId);
+        assertPostExistsInWeaviate(weaviateService, otherPostId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteAllPostsForCourse_removesCoursePostsAndAnswerPosts() throws Exception {
+        long courseId = 990200, channelId = 990201, postId = 990202, answerPostId = 990203;
+        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
+        searchableEntityWeaviateService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer"));
+        assertPostExistsInWeaviate(weaviateService, postId);
+        assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
+
+        searchableEntityWeaviateService.deleteAllPostsForCourseAsync(courseId);
+
+        assertPostNotInWeaviate(weaviateService, postId);
+        assertAnswerPostNotInWeaviate(weaviateService, answerPostId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteAllAnswerPostsForPost_removesAnswerPostsLeavesThePost() throws Exception {
+        long courseId = 990300, channelId = 990301, postId = 990302, answerPostId = 990303;
+        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
+        searchableEntityWeaviateService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(answerPostId, postId, courseId, channelId, "answer"));
+        assertPostExistsInWeaviate(weaviateService, postId);
+        assertAnswerPostExistsInWeaviate(weaviateService, answerPostId);
+
+        searchableEntityWeaviateService.deleteAllAnswerPostsForPostAsync(postId);
+
+        assertAnswerPostNotInWeaviate(weaviateService, answerPostId);
+        assertPostExistsInWeaviate(weaviateService, postId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteAllForCourse_removesEveryRowAndLeavesOtherCourses() throws Exception {
+        long courseId = 990400, otherCourseId = 990409, channelId = 990401, lectureId = 990404, postId = 990402, unitId = 990403, otherPostId = 990408;
+        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content"));
+        searchableEntityWeaviateService.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null));
+        searchableEntityWeaviateService.upsertPostAsync(new PostSearchableEntityDTO(otherPostId, otherCourseId, channelId, "title", "content"));
+        assertPostExistsInWeaviate(weaviateService, postId);
+        assertLectureUnitExistsInWeaviate(weaviateService, unitId);
+        assertPostExistsInWeaviate(weaviateService, otherPostId);
+
+        searchableEntityWeaviateService.deleteAllForCourseAsync(courseId);
+
+        assertPostNotInWeaviate(weaviateService, postId);
+        assertLectureUnitNotInWeaviate(weaviateService, unitId);
+        assertPostExistsInWeaviate(weaviateService, otherPostId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteAllLectureUnitsForLecture_removesUnitsAndLeavesOthers() throws Exception {
+        long courseId = 990500, lectureId = 990501, otherLectureId = 990509, unitId = 990502, otherUnitId = 990508;
+        searchableEntityWeaviateService.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null));
+        searchableEntityWeaviateService.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(otherUnitId, courseId, otherLectureId, "unit", "desc", "text", null));
+        assertLectureUnitExistsInWeaviate(weaviateService, unitId);
+        assertLectureUnitExistsInWeaviate(weaviateService, otherUnitId);
+
+        searchableEntityWeaviateService.deleteAllLectureUnitsForLectureAsync(lectureId);
+
+        assertLectureUnitNotInWeaviate(weaviateService, unitId);
+        assertLectureUnitExistsInWeaviate(weaviateService, otherUnitId);
     }
 
     private boolean hasOutboxRowFor(String type, long entityId) {
