@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
  * Spring Data JPA repository for {@link WeaviateOutboxEntry}.
  * <p>
  * The enqueue side ({@code SearchableEntityWeaviateService}) only calls {@code save}. The dispatcher on the
- * scheduling node claims due rows with {@link #claimBatchForDispatch(ZonedDateTime, int)} and deletes them
- * once their Weaviate write is confirmed.
+ * scheduling node reads due rows with {@link #findDueForDispatch(ZonedDateTime, int)} and deletes them once
+ * their Weaviate write is confirmed.
  */
 @Conditional(WeaviateEnabled.class)
 @Lazy

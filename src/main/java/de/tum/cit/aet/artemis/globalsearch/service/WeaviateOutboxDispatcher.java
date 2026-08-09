@@ -43,10 +43,11 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * on failure the row survives with an incremented attempt count and an exponentially backed-off
  * {@code next_attempt_at}, so a Weaviate outage self-heals when Weaviate recovers.
  * <p>
- * A confirmed per-entity write drops all older outbox rows for that entity ({@link #collapseSupersededRows}).
- * Without this, a failed older row deferred by backoff could wake up after a newer row for the same entity
- * already succeeded and overwrite it. This preserves latest-wins for a single writer; two scheduling nodes at
- * once are a misconfiguration, and a later reconcile pass is the backstop.
+ * A confirmed per-entity write drops all older outbox rows for that entity ({@link #collapseSupersededRows}),
+ * so a failed older row deferred by backoff cannot wake up after a newer row for the same entity succeeded and
+ * overwrite it. This preserves latest-wins only for single-entity races (same type and id) under the single
+ * writer. Bulk deletes are not collapsed, so a per-entity row deferred across a bulk delete can still resurrect
+ * or wrongly erase rows; a later reconcile pass is the backstop and must garbage-collect such orphans.
  * <p>
  * A drain is triggered two ways: a periodic {@link #scheduledDrain()} tick (the cross-node path and safety
  * net) and an after-commit {@link #onOutboxEnqueued(WeaviateOutboxEnqueuedEvent)} nudge for the freshness of
@@ -80,6 +81,12 @@ public class WeaviateOutboxDispatcher {
     private static final long BASE_BACKOFF_SECONDS = 10;
 
     private static final long MAX_BACKOFF_SECONDS = 300;
+
+    /**
+     * A row's first few failures log at warn; further retries log at debug so a sustained Weaviate outage with a
+     * backlog does not emit one warning per row per retry.
+     */
+    private static final int MAX_WARN_ATTEMPTS = 3;
 
     private final WeaviateOutboxRepository outboxRepository;
 
@@ -171,12 +178,21 @@ public class WeaviateOutboxDispatcher {
     private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
         try {
             searchableEntityWeaviateService.applyOutboxEntry(entry);
+            if (entry.getAttempts() > 0) {
+                log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
+            }
             transactionTemplate.executeWithoutResult(status -> confirmWrite(entry, now));
         }
         catch (Exception e) {
-            ZonedDateTime nextAttempt = now.plusSeconds(backoffSeconds(entry.getAttempts() + 1));
+            int attempt = entry.getAttempts() + 1;
+            ZonedDateTime nextAttempt = now.plusSeconds(backoffSeconds(attempt));
             transactionTemplate.executeWithoutResult(status -> scheduleRetry(entry, nextAttempt));
-            log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), entry.getAttempts(), nextAttempt, e.getMessage());
+            if (attempt <= MAX_WARN_ATTEMPTS) {
+                log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
+            }
+            else {
+                log.debug("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
+            }
         }
     }
 

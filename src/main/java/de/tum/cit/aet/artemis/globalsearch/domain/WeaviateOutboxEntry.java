@@ -15,10 +15,10 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * <p>
  * Every metadata change routes through this outbox instead of writing to Weaviate directly. The
  * enqueue is a plain repository save that naturally joins any ambient transaction, so the intent is recorded
- * durably even if Weaviate is down or the node dies. A single-writer dispatcher on the scheduling node claims
- * rows in id (enqueue) order with {@code FOR UPDATE SKIP LOCKED}, performs the Weaviate write, and on success
- * deletes the row. On failure it increments {@link #attempts} and pushes {@link #nextAttemptAt} out with
- * exponential backoff, keeping the row for a later retry.
+ * durably even if Weaviate is down or the node dies. A single-writer dispatcher on the scheduling node reads
+ * rows in id (enqueue) order (no locking, since it is the only writer), performs the Weaviate write, and on
+ * success deletes the row. On failure it increments {@link #attempts} and pushes {@link #nextAttemptAt} out
+ * with exponential backoff, keeping the row for a later retry.
  * <p>
  * {@link WeaviateOutboxOperation#UPSERT} and {@link WeaviateOutboxOperation#DELETE_ENTITY} rows carry
  * {@link #entityType} and {@link #entityId}; UPSERT additionally carries a {@link #payload} snapshot (the
