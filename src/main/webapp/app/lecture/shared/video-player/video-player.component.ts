@@ -100,6 +100,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * Whether the video knows how long it is, which is what makes a requested position judgeable. Before its metadata
      * arrives the element accepts any target and reports it back unchanged, so a caller that has to state whether it
      * really got there (the Iris point-out ack) must wait for this signal rather than trust {@link seekTo} alone.
+     *
+     * A length of its own is what counts, not merely having metadata: unbounded media (a live stream) reports an
+     * infinite duration, against which {@link seekTo} has nothing to reject a target with and would accept any of
+     * them. Such a video therefore never becomes seekable in this sense, however much of it has loaded.
      */
     private readonly seekableState = signal<boolean>(false);
     readonly isSeekable = this.seekableState.asReadonly();
@@ -188,8 +192,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         // A seek can only be judged against a known length, so track when the element has one. Metadata may already be
         // there for a cached resource, in which case no event follows and the initial read is the only chance to see it.
+        // A finite duration is the actual condition — an unbounded stream has its metadata and still no length to judge
+        // against — and it covers the not-yet-loaded case on its own, since the duration is NaN until metadata arrives.
         this.durationHandler = () => {
-            this.seekableState.set(videoElement.readyState >= 1);
+            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(videoElement.duration));
         };
         videoElement.addEventListener('loadedmetadata', this.durationHandler);
         videoElement.addEventListener('durationchange', this.durationHandler);

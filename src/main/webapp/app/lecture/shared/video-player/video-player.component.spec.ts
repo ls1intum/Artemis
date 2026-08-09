@@ -270,10 +270,26 @@ describe('VideoPlayerComponent', () => {
         expect(component.seekTo(42, false)).toBe(true);
         expect(videoElement.currentTime).toBe(42);
 
+        // Metadata arriving is exactly what gives the element its duration, so a real one comes with it — asserting
+        // seekability off readyState alone would describe a state the element never actually reaches.
         Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: 300, configurable: true });
         videoElement.dispatchEvent(new Event('loadedmetadata'));
 
         expect(component.isSeekable()).toBe(true);
+    });
+
+    it('never reports an unbounded stream as seekable', async () => {
+        // Live media has its metadata and still no length: seekTo has nothing to reject a target against there and
+        // would take any of them, so a caller that must state whether it really got there must not be let through.
+        setInputs('https://cdn.example.com/live.m3u8', []);
+        await render();
+        Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        Object.defineProperty(videoElement, 'duration', { value: Infinity, configurable: true });
+
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(component.isSeekable()).toBe(false);
     });
 
     it('emits playerFailed when the media element reports an error', async () => {
