@@ -48,7 +48,7 @@
         "baseline-browser-mapping": "2.11.7",
         "eslint": "10.8.0",
         "prettier": "3.9.6",
-        "typescript": "6.0.3"
+        "typescript": "7.0.2"
     },
     "browserslist": {
         "production": [
