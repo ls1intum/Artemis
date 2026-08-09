@@ -8,8 +8,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
@@ -29,7 +27,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  */
 @Entity
 @Table(name = "weaviate_outbox")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class WeaviateOutboxEntry extends DomainObject {
 
     @Enumerated(EnumType.STRING)

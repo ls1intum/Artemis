@@ -60,7 +60,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void upsertCourse_enqueuesUpsertRowWithCanonicalPayload_andNoSynchronousWeaviateWrite() throws Exception {
+    void testUpsertCourse_enqueuesRowWithCanonicalPayloadAndNoSynchronousWrite() throws Exception {
         var dto = new CourseSearchableEntityDTO(42L, "Algorithms", "ALG", "A course description");
 
         service.upsertCourseAsync(dto);
@@ -78,7 +78,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void eachUpsertMethod_enqueuesUpsertWithCorrectTypeAndId() {
+    void testEachUpsertMethod_enqueuesUpsertWithCorrectTypeAndId() {
         service.upsertCourseAsync(new CourseSearchableEntityDTO(1L, "c", null, null));
         service.upsertLectureAsync(new LectureSearchableEntityDTO(2L, 10L, "l", null, null, null));
         service.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(3L, 10L, 20L, "u", null, "text", null));
@@ -101,7 +101,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void updateExercises_enqueuesOneUpsertPerExercise_andSignalsOnce() {
+    void testUpdateExercises_enqueuesOneUpsertPerExerciseAndSignalsOnce() {
         service.updateExercisesAsync(List.of(exerciseDto(10L), exerciseDto(11L)), 99L);
 
         verify(outboxRepository, times(2)).save(any(WeaviateOutboxEntry.class));
@@ -111,7 +111,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void deleteEntity_enqueuesDeleteEntityRow() {
+    void testDeleteEntity_enqueuesDeleteEntityRow() {
         service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, 55L);
 
         WeaviateOutboxEntry entry = captureSavedEntry();
@@ -123,7 +123,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void bulkDeletes_enqueueCorrectOperationAndParams() throws Exception {
+    void testBulkDeletes_enqueueCorrectOperationAndParams() throws Exception {
         service.deleteAllForCourseAsync(1L);
         service.deleteAllPostsForCourseAsync(2L);
         service.deleteAllPostsForChannelAsync(3L);
@@ -143,7 +143,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void upsertCourse_withNullDtoOrNullId_doesNotEnqueue() {
+    void testUpsertCourse_withNullDtoOrNullIdDoesNotEnqueue() {
         service.upsertCourseAsync(null);
         service.upsertCourseAsync(new CourseSearchableEntityDTO(null, "c", null, null));
 

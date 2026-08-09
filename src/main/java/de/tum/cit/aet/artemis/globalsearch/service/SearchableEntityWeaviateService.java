@@ -454,6 +454,7 @@ public class SearchableEntityWeaviateService {
             case DELETE_ANSWER_POSTS_FOR_POST -> doDeleteAnswerPostsForPost(longParam(entry, "postId"));
             case DELETE_ALL_FOR_COURSE -> doDeleteAllForCourse(longParam(entry, "courseId"));
             case DELETE_LECTURE_UNITS_FOR_LECTURE -> doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"));
+            default -> throw new IllegalStateException("Unhandled Weaviate outbox operation: " + entry.getOperation());
         }
     }
 
