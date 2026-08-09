@@ -6,7 +6,7 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
-            force "com.github.jknack:handlebars:4.5.3"
+            force "com.github.jknack:handlebars:4.5.4"
         }
     }
     // The custom OpenAPI generator (generatorName "angular22", https://github.com/ls1intum/openapi-generator-angular22)
