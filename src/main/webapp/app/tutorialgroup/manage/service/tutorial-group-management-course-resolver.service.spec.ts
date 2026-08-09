@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, HttpStatusCode, provideHttpClient } from '@angular/common/http';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -145,6 +145,52 @@ describe('TutorialGroupManagementResolve', () => {
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
         expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
         expect(router.navigate).not.toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-checklist']);
+    });
+
+    it('should show an error and navigate to course management if the course request is forbidden', () => {
+        vi.spyOn(service, 'find').mockReturnValue(throwError(() => new HttpErrorResponse({ status: HttpStatusCode.Forbidden })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse<TutorialGroupConfigurationDTO>({ body: { id: 5 } })));
+        vi.spyOn(router, 'navigate');
+        vi.spyOn(alertService, 'error');
+        const next = vi.fn();
+
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
+
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should show an error and navigate to course management if the configuration request is forbidden', () => {
+        const course: Course = new Course();
+        course.id = 1;
+        course.isAtLeastTutor = true;
+        course.timeZone = 'Europe/Berlin';
+        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(throwError(() => new HttpErrorResponse({ status: HttpStatusCode.Forbidden })));
+        vi.spyOn(router, 'navigate');
+        vi.spyOn(alertService, 'error');
+        const next = vi.fn();
+
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ next });
+
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupsManagement.notAuthorized');
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should propagate errors other than forbidden without showing the authorization error', () => {
+        const serverError = new HttpErrorResponse({ status: HttpStatusCode.InternalServerError });
+        vi.spyOn(service, 'find').mockReturnValue(throwError(() => serverError));
+        vi.spyOn(router, 'navigate');
+        vi.spyOn(alertService, 'error');
+        const error = vi.fn();
+
+        resolver.resolve({ params: { courseId: 1 } } as unknown as ActivatedRouteSnapshot, {} as unknown as RouterStateSnapshot).subscribe({ error });
+
+        expect(error).toHaveBeenCalledWith(serverError);
+        expect(alertService.error).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should not navigate to tutorial-groups-checklist if state url matches edit configuration url', () => {
