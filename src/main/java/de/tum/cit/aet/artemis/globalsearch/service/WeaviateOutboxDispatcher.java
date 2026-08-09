@@ -2,12 +2,9 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -27,7 +24,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
-import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 
@@ -177,11 +173,11 @@ public class WeaviateOutboxDispatcher {
      */
     private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
         try {
-            searchableEntityWeaviateService.applyOutboxEntry(entry);
+            Optional<String> writtenContentHash = searchableEntityWeaviateService.applyOutboxEntry(entry);
             if (entry.getAttempts() > 0) {
                 log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
             }
-            transactionTemplate.executeWithoutResult(status -> confirmWrite(entry, now));
+            transactionTemplate.executeWithoutResult(status -> confirmWrite(entry, now, writtenContentHash));
         }
         catch (Exception e) {
             int attempt = entry.getAttempts() + 1;
@@ -201,9 +197,9 @@ public class WeaviateOutboxDispatcher {
      * Records a confirmed write in one short transaction: collapses superseded rows, refreshes the ledger, and
      * removes the row.
      */
-    private void confirmWrite(WeaviateOutboxEntry entry, ZonedDateTime now) {
+    private void confirmWrite(WeaviateOutboxEntry entry, ZonedDateTime now, Optional<String> writtenContentHash) {
         collapseSupersededRows(entry);
-        refreshSyncLedger(entry, now);
+        refreshSyncLedger(entry, now, writtenContentHash);
         outboxRepository.delete(entry);
     }
 
@@ -226,20 +222,21 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Refreshes the {@code searchable_entity_sync_state} ledger after a confirmed write. Single-entity upserts
-     * record the written content hash; single-entity deletes remove the ledger row so a later reconcile does
-     * not treat a deleted entity as still synced. Bulk deletes leave the ledger to a later reconcile pass.
+     * Refreshes the {@code searchable_entity_sync_state} ledger from what the write actually did. A row that was
+     * upserted records its written content hash; a per-entity entry that resolved to a delete (an explicit delete,
+     * or an upsert whose entity is gone or no longer indexable) removes the ledger row so a later reconcile does
+     * not treat it as still synced. Bulk deletes (null entity id) leave the ledger to a later reconcile pass.
      */
-    private void refreshSyncLedger(WeaviateOutboxEntry entry, ZonedDateTime now) {
-        if (entry.getOperation() == WeaviateOutboxOperation.UPSERT) {
-            String hash = sha256Hex(entry.getPayload());
+    private void refreshSyncLedger(WeaviateOutboxEntry entry, ZonedDateTime now, Optional<String> writtenContentHash) {
+        if (writtenContentHash.isPresent()) {
+            String hash = writtenContentHash.get();
             syncStateRepository.findByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId()).ifPresentOrElse(state -> {
                 state.setContentHash(hash);
                 state.setSyncedAt(now);
                 syncStateRepository.save(state);
             }, () -> syncStateRepository.save(new SearchableEntitySyncState(entry.getEntityType(), entry.getEntityId(), hash, now)));
         }
-        else if (entry.getOperation() == WeaviateOutboxOperation.DELETE_ENTITY) {
+        else if (entry.getEntityId() != null) {
             syncStateRepository.deleteByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId());
         }
     }
@@ -253,17 +250,5 @@ public class WeaviateOutboxDispatcher {
         int shift = Math.min(attempts - 1, 30);
         long backoff = BASE_BACKOFF_SECONDS << shift;
         return Math.min(backoff, MAX_BACKOFF_SECONDS);
-    }
-
-    private static String sha256Hex(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        }
-        catch (NoSuchAlgorithmException e) {
-            // SHA-256 is guaranteed to be available on every JVM.
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
     }
 }
