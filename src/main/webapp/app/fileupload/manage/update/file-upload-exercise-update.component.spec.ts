@@ -75,7 +75,7 @@ import dayjs from 'dayjs/esm';
 
 import 'app/foundation/util/array.extension';
 
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -87,7 +87,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EditType } from 'app/exercise/util/exercise.utils';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -143,6 +143,18 @@ class StubExerciseTitleChannelNameComponent {
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
     readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
+}
+
+// Mock for TitleChannelNameComponent interface. channelFieldDisplayed/titleErrors are plain settable
+// fields so tests can drive both branches of getInvalidReasons per-test.
+class MockTitleChannelNameComponent {
+    isValid = signal(true);
+    channelFieldDisplayed = true;
+    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
+    titleErrors: ValidationErrors | undefined = undefined;
+    get field_title(): NgModel {
+        return { control: { errors: this.titleErrors } } as NgModel;
+    }
 }
 
 describe('FileUploadExerciseUpdateComponent', () => {
@@ -773,6 +785,108 @@ describe('FileUploadExerciseUpdateComponent', () => {
             await fixture.whenStable();
 
             expect(component.isExamMode()).toBe(true);
+        });
+    });
+
+    describe('getInvalidReasons', () => {
+        let course: Course;
+        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
+
+        const filledInExercise = () => {
+            const exercise = new FileUploadExercise(course, undefined);
+            exercise.title = 'Valid title';
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            exercise.filePattern = 'png,pdf';
+            return exercise;
+        };
+
+        beforeEach(async () => {
+            course = createCourse();
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // The real viewChild(ExerciseTitleChannelNameComponent) query never matches
+            // StubExerciseTitleChannelNameComponent (a different class registered under the same
+            // selector), so it always resolves to undefined here. Overriding the signal directly -
+            // scoped to this describe block's own component instance only - lets getInvalidReasons()
+            // exercise the title/channel-name branches.
+            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
+            component.exerciseTitleChannelNameComponent = (() => ({
+                titleChannelNameComponent: () => titleChannelNameComponentMock,
+            })) as unknown as typeof component.exerciseTitleChannelNameComponent;
+        });
+
+        it('should report the mandatory fields of an untouched creation form', () => {
+            component.fileUploadExercise.set(new FileUploadExercise(course, undefined));
+            component.isExamMode.set(false);
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
+            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
+            expect(translateKeys).toContain('artemisApp.fileUploadExercise.form.filePattern.undefined');
+        });
+
+        it('should report no reason for a completely filled in exercise', () => {
+            component.fileUploadExercise.set(filledInExercise());
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            expect(component.getInvalidReasons()).toEqual([]);
+        });
+
+        it('should report a file pattern shorter than two characters', () => {
+            const exercise = filledInExercise();
+            exercise.filePattern = 'p';
+            component.fileUploadExercise.set(exercise);
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: 2 } }]);
+        });
+
+        it('should report a disallowed title', () => {
+            component.fileUploadExercise.set(filledInExercise());
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+        });
+
+        it('should require a channel name when the channel field is displayed', () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            component.fileUploadExercise.set(exercise);
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = true;
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        it('should not require a channel name when the channel field is hidden', () => {
+            const exercise = filledInExercise();
+            exercise.channelName = undefined;
+            component.fileUploadExercise.set(exercise);
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = false;
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
     });
 });

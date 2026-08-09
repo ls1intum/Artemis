@@ -10,7 +10,7 @@ import { FileUploadExerciseService } from '../services/file-upload-exercise.serv
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
@@ -42,6 +42,9 @@ import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
+import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+
+const MIN_FILE_PATTERN_LENGTH = 2;
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -227,6 +230,35 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);
+    }
+
+    /**
+     * Every reason the exercise cannot be saved. Drives both the invalid-input badge and the
+     * disabled state of the save button in the form footer.
+     */
+    getInvalidReasons(): ValidationReason[] {
+        const exercise = this.fileUploadExercise();
+        if (!exercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        const reasons = getCommonExerciseInvalidReasons(exercise, {
+            isExamMode: this.isExamMode(),
+            minTitleLength: 3,
+            isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+            isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+            timelineStatus: this.timelineStatus(),
+            isExampleSolutionPublicationDateInputValid: this.solutionPublicationDateField()?.dateInput?.valid ?? true,
+        });
+
+        const filePattern = exercise.filePattern;
+        if (!filePattern) {
+            reasons.push({ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.undefined', translateValues: {} });
+        } else if (filePattern.length < MIN_FILE_PATTERN_LENGTH) {
+            reasons.push({ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: MIN_FILE_PATTERN_LENGTH } });
+        }
+
+        return reasons;
     }
 
     /**

@@ -172,7 +172,7 @@
         [isImport]="isImport()"
         [isCreation]="!fileUploadExercise().id"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || fileUploadExercise().exampleSolutionPublicationDateError)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [notificationText]="notificationText()"
