@@ -7,7 +7,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -28,6 +28,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
@@ -105,6 +106,7 @@ describe('CourseExamsComponent', () => {
     } as StudentExam;
 
     beforeEach(() => {
+        router.navigate.mockClear();
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         TestBed.configureTestingModule({
@@ -164,6 +166,7 @@ describe('CourseExamsComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -209,6 +212,104 @@ describe('CourseExamsComponent', () => {
 
         returnedComponent.ngOnDestroy();
         returnedFixture.destroy();
+    });
+
+    it('should replace and append test-exam attempts received while the tab is active', () => {
+        const shouldUpdate = new BehaviorSubject(false);
+        const currentStudentExam = new Subject<StudentExam>();
+        examParticipationService.shouldUpdateTestExamsObservable = shouldUpdate.asObservable();
+        examParticipationService.currentlyLoadedStudentExam = currentStudentExam;
+        const resetUpdateSpy = vi.spyOn(examParticipationService, 'setShouldUpdateTestExams');
+        const prepareSidebarSpy = vi.spyOn(component, 'prepareSidebarData');
+        component.ngOnInit();
+        const replacement = {
+            ...studentExamForExam3AndSubmitted,
+            startedDate: dayjs().subtract(30, 'minutes'),
+            exam: { ...visibleTestExam1, course: { id: 1 } as Course },
+        } as StudentExam;
+        const added = {
+            ...studentExamForExam3AndSubmitted,
+            id: 99,
+            startedDate: dayjs().subtract(10, 'minutes'),
+            exam: { ...visibleTestExam1, course: { id: 1 } as Course },
+        } as StudentExam;
+
+        currentStudentExam.next(replacement);
+        shouldUpdate.next(true);
+        currentStudentExam.next(added);
+
+        const attempts = component.getStudentExamForExamIdOrderedByIdReverse(visibleTestExam1.id!);
+        expect(attempts).toHaveLength(3);
+        expect(attempts).toEqual([added, studentExamForExam3AndNotSubmitted, replacement]);
+        expect(attempts).not.toContain(studentExamForExam3AndSubmitted);
+        expect(resetUpdateSpy).toHaveBeenCalledTimes(2);
+        expect(resetUpdateSpy).toHaveBeenNthCalledWith(1, false);
+        expect(resetUpdateSpy).toHaveBeenNthCalledWith(2, false);
+        expect(prepareSidebarSpy).toHaveBeenCalledTimes(5);
+    });
+
+    it('should expose an empty exam list and a non-selected state when the overview request fails', () => {
+        vi.spyOn(examParticipationService, 'getExamsForOverview').mockReturnValue(throwError(() => new Error('network')));
+
+        component.ngOnInit();
+
+        expect(component.exams()).toEqual([]);
+        expect(component.examSelected()).toBe(false);
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should navigate to the last selected exam before considering an upcoming exam', () => {
+        vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(42);
+        const upcomingSpy = vi.spyOn(courseOverviewService, 'getUpcomingExam').mockReturnValue({ id: 43 } as Exam);
+
+        component.navigateToExam();
+
+        expect(upcomingSpy).toHaveBeenCalledWith([]);
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith([42], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
+    });
+
+    it('should navigate to the upcoming exam when none was selected previously', () => {
+        vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(undefined);
+        vi.spyOn(courseOverviewService, 'getUpcomingExam').mockReturnValue({ id: 43 } as Exam);
+
+        component.navigateToExam();
+
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith([43], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
+    });
+
+    it('should keep the selected exam from the URL without redirecting', () => {
+        (TestBed.inject(ActivatedRoute) as any).firstChild = { snapshot: { params: { examId: 1 } } };
+
+        component.navigateToExam();
+
+        expect(component.examSelected()).toBe(true);
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should stop checking a latest test-exam attempt once its working time expires', () => {
+        vi.useFakeTimers();
+        const attempt = { started: true, startedDate: dayjs(), exam: visibleTestExam1 } as StudentExam;
+        const workingTimeSpy = vi.spyOn(component, 'isWithinWorkingTime').mockImplementation(() => {
+            component.withinWorkingTime = false;
+        });
+
+        component.calculateIndividualWorkingTimeForTestExams(attempt, true);
+        vi.advanceTimersByTime(1000);
+
+        expect(workingTimeSpy).toHaveBeenCalledExactlyOnceWith(attempt, visibleTestExam1);
+        expect(component.studentExamState?.closed).toBe(true);
+    });
+
+    it('should calculate whether an active test-exam attempt remains within its individual working time', () => {
+        const attempt = { started: true, submitted: false, startedDate: dayjs().subtract(30, 'minutes') } as StudentExam;
+        const exam = { workingTime: 60 * 60 } as Exam;
+
+        component.isWithinWorkingTime(attempt, exam);
+        expect(component.withinWorkingTime).toBe(true);
+
+        attempt.startedDate = dayjs().subtract(2, 'hours');
+        component.isWithinWorkingTime(attempt, exam);
+        expect(component.withinWorkingTime).toBe(false);
     });
 
     it('should correctly switch boolean value in expandAttemptsMap', () => {

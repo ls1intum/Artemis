@@ -1,17 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { HttpResponse } from '@angular/common/http';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 describe('CourseLecturesComponent', () => {
     let component: CourseLecturesComponent;
@@ -94,6 +95,79 @@ describe('CourseLecturesComponent', () => {
 
         returnedComponent.ngOnDestroy();
         returnedFixture.destroy();
+    });
+
+    it('should expose an empty sidebar when the lecture overview request fails', () => {
+        vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockReturnValue(throwError(() => new Error('network')));
+        const processSpy = vi.spyOn(component, 'processLectures');
+
+        component.ngOnInit();
+
+        expect(component.lectures()).toEqual([]);
+        expect(processSpy).toHaveBeenCalledExactlyOnceWith([]);
+        expect(component.sidebarData()).toEqual({
+            groupByCategory: true,
+            storageId: 'lecture',
+            groupedData: component.accordionLectureGroups,
+            ungroupedData: component.sidebarLectures,
+        });
+    });
+
+    it('should navigate to the last selected lecture before considering an upcoming lecture', () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue('41');
+        const upcomingSpy = vi.spyOn(courseOverviewService, 'getUpcomingLecture').mockReturnValue({ id: 42 } as Lecture);
+
+        component.navigateToLecture();
+
+        expect(upcomingSpy).toHaveBeenCalledWith(undefined);
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['41'], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
+    });
+
+    it('should navigate to the upcoming lecture when none was selected previously', () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        vi.spyOn(TestBed.inject(SessionStorageService), 'retrieve').mockReturnValue(undefined);
+        vi.spyOn(courseOverviewService, 'getUpcomingLecture').mockReturnValue({ id: 42 } as Lecture);
+
+        component.navigateToLecture();
+
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith([42], { relativeTo: TestBed.inject(ActivatedRoute), replaceUrl: true });
+    });
+
+    it('should leave sidebar data unchanged until lectures have loaded', () => {
+        const processSpy = vi.spyOn(component, 'processLectures');
+
+        component.prepareSidebarData();
+
+        expect(processSpy).not.toHaveBeenCalled();
+        expect(component.sidebarData()).toBeUndefined();
+    });
+
+    it('should update the page title and persist both sidebar collapse states', () => {
+        const persistSpy = vi.spyOn(courseOverviewService, 'setSidebarCollapseState');
+
+        component.setPageTitle('Lectures');
+        component.toggleSidebar();
+        component.toggleSidebar();
+
+        expect(component.pageTitle()).toBe('Lectures');
+        expect(component.isCollapsed()).toBe(false);
+        expect(persistSpy).toHaveBeenNthCalledWith(1, 'lecture', true);
+        expect(persistSpy).toHaveBeenNthCalledWith(2, 'lecture', false);
+    });
+
+    it('should navigate after a lecture subroute closes but not while another child remains active', () => {
+        const route = TestBed.inject(ActivatedRoute);
+        const navigateSpy = vi.spyOn(component, 'navigateToLecture');
+
+        component.onSubRouteDeactivate();
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        (route as any).firstChild = undefined;
+        component.onSubRouteDeactivate();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle multi-launch subscription', async () => {
