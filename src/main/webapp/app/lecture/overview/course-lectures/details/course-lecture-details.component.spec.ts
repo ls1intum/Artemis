@@ -452,6 +452,19 @@ describe('CourseLectureDetailsComponent', () => {
         it('should read the combined-view request off the deep link', () => {
             // An Iris point-out marker clicked from elsewhere routes here and asks for the view Iris pointed in;
             // a lecture citation leaves the flag off and stays with the unit on the page.
+            const targetUnit = new AttachmentVideoUnit();
+            targetUnit.id = 100;
+            targetUnit.videoSource = 'https://example.com/video.mp4';
+            targetUnit.attachment = new Attachment();
+            targetUnit.attachment.link = '/path/to/slides.pdf';
+            targetUnit.lecture = lecture;
+
+            // Unlike its siblings here this test goes through the query-param parsing itself, which lives in
+            // ngOnInit — so the component has to be initialised before the params are pushed. The unit is put in
+            // place afterwards, because ensureValidDeepLinkTargets drops targets that name a unit off the page.
+            fixture.detectChanges();
+            courseLecturesDetailsComponent.lectureUnits.set([targetUnit]);
+
             queryParams.next({ unit: '100', page: '3', timestamp: '42', combined: 'true' });
 
             expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);

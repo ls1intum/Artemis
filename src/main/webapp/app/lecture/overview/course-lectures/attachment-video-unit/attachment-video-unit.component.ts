@@ -399,10 +399,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
         if (!this.isFullscreen()) {
-            if (!pointOut.forceOpen) {
-                if (pointOut.correlationId) {
-                    this.chatService.sendCommandAck(pointOut.correlationId, false);
-                }
+            // A marker click opens the view first, but only where there is one to open: openFullscreen is a no-op
+            // without fullscreen content, and a target stored regardless would wait for a view that never comes.
+            // Nothing would clear it either — the drop on close runs on the close transition, which a view that
+            // never opened never makes — so it would sit there and jump some later, unrelated reopen.
+            if (!pointOut.forceOpen || !this.hasFullscreenContent()) {
+                this.acknowledgeAsDropped(pointOut);
                 return;
             }
             this.openFullscreen();

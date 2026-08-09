@@ -38,6 +38,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisPointOut } from 'app/iris/shared/entities/iris-point-out.model';
 import { WritableSignal, signal } from '@angular/core';
 
@@ -103,9 +104,12 @@ describe('AttachmentVideoUnitComponent', () => {
         })
             // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the
             // viewer purely through its public input/output contract (and override `pdfViewer` where needed).
+            // The Iris sidebar's chatbot goes the same way — it renders as soon as a test enables Iris and opens
+            // the combined view, and it drives the whole Iris chat stack (down to PrimeNG's DialogService), none
+            // of which this TestBed provides for. The Iris specs cover the chat itself.
             .overrideComponent(AttachmentVideoUnitComponent, {
-                remove: { imports: [PdfViewerComponent] },
-                add: { imports: [MockComponent(PdfViewerComponent)] },
+                remove: { imports: [PdfViewerComponent, LectureChatbotComponent] },
+                add: { imports: [MockComponent(PdfViewerComponent), MockComponent(LectureChatbotComponent)] },
             })
             .compileComponents();
 
@@ -1140,6 +1144,17 @@ describe('AttachmentVideoUnitComponent', () => {
             return goToPage;
         }
 
+        /**
+         * Makes `hasFullscreenContent()` true, which is what `handlePointOut` consults before holding a marker
+         * click open: there has to be content to show and Iris available on a non-tutorial lecture to show it next to.
+         */
+        function makeCombinedViewOpenable() {
+            // A fresh reference rather than a mutation: the computeds behind hasFullscreenContent have already been
+            // evaluated by the beforeEach above, and writing into the existing unit would not invalidate them.
+            fixture.componentRef.setInput('lectureUnit', { ...component.lectureUnit(), lecture: { id: 1, isTutorialLecture: false } });
+            fixture.componentRef.setInput('irisSettings', { settings: { enabled: true } });
+        }
+
         beforeEach(() => {
             chatService = TestBed.inject(IrisChatService);
             ackSpy = vi.spyOn(chatService, 'sendCommandAck').mockImplementation(() => {});
@@ -1208,6 +1223,7 @@ describe('AttachmentVideoUnitComponent', () => {
             // isFullscreen() === false and must survive until the view is actually up.
             const goToPage = mockPdfViewer(signal(10));
             component['fullscreenState'].set(false);
+            makeCombinedViewOpenable();
             vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
 
             component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 5, forceOpen: true }));
@@ -1222,6 +1238,20 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(goToPage).toHaveBeenCalledWith(5);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        it('drops a marker click instead of holding it when there is no combined view to open', () => {
+            // openFullscreen() is a no-op without fullscreen content, so the view never opens — and never closes
+            // either, which is the only transition that drops a stale target. Held on regardless, this one would
+            // survive until the student opens the combined view themselves and make it jump out of nowhere.
+            // Iris is not available on this unit, so there is no combined view for the click to open.
+            component['fullscreenState'].set(false);
+            const openFullscreen = vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
+
+            component['handlePointOut'](pointOutRequest({ correlationId: undefined, page: 3, forceOpen: true }));
+
+            expect(openFullscreen).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 

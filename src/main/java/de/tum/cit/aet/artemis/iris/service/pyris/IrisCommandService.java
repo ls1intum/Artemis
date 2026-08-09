@@ -61,12 +61,16 @@ public class IrisCommandService {
     private static final String POINT_OUT_TYPE = "pointOut";
 
     /**
-     * How long to wait for the addressed tab to report back before treating a command as not carried out. The tab answers either way as soon as it has tried, so this is a backstop
-     * for a tab that went away (closed, reloaded, connection lost) rather than a budget the normal case spends. It still has to cover the full path — node to broker to browser,
-     * the navigation itself, and back — and the navigation is the slow part: the client may have to open the combined view, wait for the viewer to render and its document to
-     * load, and only then seek. Pyris' own timeout on the command call must stay above this value, so a slow client surfaces as "not applied" rather than as a transport error.
+     * How long to wait for the addressed tab to report back before treating a command as not carried out. The tab answers either way as soon as it has tried, and negatively at
+     * once wherever it can already tell that it never will — a closed combined view, or a viewer that is not coming — so this is a backstop for a tab that went away (closed,
+     * reloaded, connection lost) rather than a budget the normal case spends. What it has to cover is the path node to broker to browser and back, plus a viewer that is rendered
+     * but whose document is still loading. Opening the combined view is not part of it: only a marker click does that, and no pipeline waits on those.
+     * <p>
+     * Kept short, because the pipeline stands still for the whole of it and the student waits that much longer for their answer. Going lower would start discarding the acks of
+     * tabs that were merely slow, and a discarded ack means the view moves while the answer says it did not. Pyris' own timeout on the command call must stay above this value,
+     * so a slow client surfaces as "not applied" rather than as a transport error.
      */
-    private static final long ACK_TIMEOUT_SECONDS = 5;
+    private static final long ACK_TIMEOUT_SECONDS = 3;
 
     private final IrisCommandCoordinationService coordinationService;
 

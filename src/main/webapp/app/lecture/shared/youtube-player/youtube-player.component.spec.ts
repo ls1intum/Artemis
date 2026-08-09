@@ -81,7 +81,10 @@ describe('YouTubePlayerComponent', () => {
         // before the video data has loaded, and the caller that has to state an outcome waits for isSeekable anyway.
         let duration = 0;
         const seekSpy = vi.fn();
-        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => duration, seekTo: seekSpy };
+        const player = { getCurrentTime: () => 0, getDuration: () => duration, seekTo: seekSpy };
+        // Handed over the way production does it: onPlayerReady prefers the Angular wrapper viewChild, so a player
+        // assigned to youtubePlayer directly would be replaced by the real (and unready) one the moment it runs.
+        (component as any).playerComponent = () => player;
         component.onPlayerReady({} as any);
 
         expect(component.isSeekable()).toBe(false);
