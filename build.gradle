@@ -179,7 +179,7 @@ ext["tomcat.version"] = "11.0.22"
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
 dependencyManagement {
     imports {
-        mavenBom "tools.jackson:jackson-bom:3.1.5"
+        mavenBom "tools.jackson:jackson-bom:3.2.1"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.1"
     }
 }
