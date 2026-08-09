@@ -28,26 +28,22 @@ import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateOutboxEntry, Long> {
 
     /**
-     * Atomically claim due outbox rows for dispatch, oldest enqueue first.
-     * <p>
-     * Uses PostgreSQL {@code FOR UPDATE SKIP LOCKED} (same idiom as
-     * {@code LectureUnitProcessingStateRepository.findIdleForDispatch}) so a second drain on the same node
-     * never processes a row already locked by an in-flight drain. Rows whose backoff has not elapsed
-     * ({@code next_attempt_at > now}) are excluded. Ordering by {@code id} preserves enqueue order, which is
-     * what makes multiple pending rows for the same entity apply latest-wins when processed sequentially.
+     * Reads due outbox rows for dispatch, oldest enqueue first. This is a plain read with no {@code FOR UPDATE}:
+     * the dispatcher runs on the single scheduling node, so there is no concurrent claimer to lock rows against,
+     * and the read is not held in a transaction across the Weaviate write. Rows whose backoff has not elapsed
+     * ({@code next_attempt_at > now}) are excluded; ordering by {@code id} preserves enqueue order.
      *
      * @param now   the current time; rows with {@code next_attempt_at <= now} are eligible
-     * @param limit the maximum number of rows to claim in one batch
-     * @return the claimed rows, locked for the duration of the calling transaction
+     * @param limit the maximum number of rows to read in one batch
+     * @return the due rows, detached
      */
     @Query(value = """
             SELECT * FROM weaviate_outbox
             WHERE next_attempt_at <= :now
             ORDER BY id ASC
             LIMIT :limit
-            FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
-    List<WeaviateOutboxEntry> claimBatchForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
+    List<WeaviateOutboxEntry> findDueForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
      * Deletes outbox rows for {@code (entityType, entityId)} with an id below {@code appliedId}. Called after a

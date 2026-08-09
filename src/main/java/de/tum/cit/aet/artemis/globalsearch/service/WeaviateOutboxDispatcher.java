@@ -35,13 +35,13 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * Single-writer dispatcher that drains the {@code weaviate_outbox} and performs the actual writes to the
  * shared {@code SearchableEntities} Weaviate collection.
  * <p>
- * It runs only on the scheduling node ({@code @Profile(PROFILE_SCHEDULING)}) and only when Weaviate is
- * enabled, so writes are serialized cluster-wide rather than raced across nodes as the previous
- * fire-and-forget {@code @Async} writes were. Rows are claimed in id (enqueue) order with
- * {@code FOR UPDATE SKIP LOCKED} and processed sequentially. On a confirmed write the row is deleted and, for
- * an upsert, the {@code searchable_entity_sync_state} ledger is refreshed; on failure the row survives with an
- * incremented attempt count and an exponentially backed-off {@code next_attempt_at}, so a Weaviate outage
- * self-heals when Weaviate recovers.
+ * It runs only on the scheduling node ({@code @Profile(PROFILE_SCHEDULING)}), which Artemis requires to be
+ * exactly one instance, so it is the single writer to the collection. It reads due rows in id (enqueue) order
+ * with a plain query and processes them sequentially. Each Weaviate write happens outside any transaction, so a
+ * slow or hung write never holds a database connection; the outcome is then recorded in a short transaction: on
+ * success the row is deleted and, for an upsert, the {@code searchable_entity_sync_state} ledger is refreshed;
+ * on failure the row survives with an incremented attempt count and an exponentially backed-off
+ * {@code next_attempt_at}, so a Weaviate outage self-heals when Weaviate recovers.
  * <p>
  * A confirmed per-entity write drops all older outbox rows for that entity ({@link #collapseSupersededRows}).
  * Without this, a failed older row deferred by backoff could wake up after a newer row for the same entity
@@ -52,9 +52,9 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * net) and an after-commit {@link #onOutboxEnqueued(WeaviateOutboxEnqueuedEvent)} nudge for the freshness of
  * enqueues made on this node. A {@link ReentrantLock} guarantees only one drain runs at a time on this node.
  * <p>
- * The claim uses {@code FOR UPDATE SKIP LOCKED}, which requires an open transaction; a {@link TransactionTemplate}
- * provides it per batch. This is programmatic transaction scope (no new {@code @Transactional} annotation) and
- * mirrors the {@code LectureUnitProcessingState} dispatcher the spec points to as the idiom to copy.
+ * Being the single writer, it needs no lock or lease to protect a row during processing: the read does not
+ * mutate the row, so a crash mid-batch simply leaves it to be re-read and re-applied (writes are idempotent).
+ * Only the short outcome writes use a transaction, via a {@link TransactionTemplate}.
  */
 @Lazy
 @Component
@@ -65,8 +65,8 @@ public class WeaviateOutboxDispatcher {
     private static final Logger log = LoggerFactory.getLogger(WeaviateOutboxDispatcher.class);
 
     /**
-     * Maximum number of rows claimed per transaction. A drain keeps claiming batches until one comes back
-     * smaller than this, so a burst larger than one batch still drains fully within a single drain call.
+     * Maximum number of rows read per batch. A drain keeps reading batches until one comes back smaller than
+     * this, so a burst larger than one batch still drains fully within a single drain call.
      */
     private static final int BATCH_SIZE = 100;
 
@@ -124,12 +124,12 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Drains all currently due outbox rows, one batch (transaction) at a time. At most one drain runs at a
-     * time on this node; a concurrent trigger returns immediately and lets the in-flight drain finish the work.
+     * Drains all currently due outbox rows, one batch at a time. At most one drain runs at a time on this node;
+     * a concurrent trigger returns immediately and lets the in-flight drain finish the work.
      */
     public void drain() {
         if (!drainLock.tryLock()) {
-            // Another drain is already running on this node; it will pick up any rows we would have claimed.
+            // Another drain is already running on this node; it will pick up any rows we would have read.
             return;
         }
         try {
@@ -137,12 +137,12 @@ public class WeaviateOutboxDispatcher {
             SecurityUtils.setAuthorizationObject();
             int processed;
             do {
-                processed = drainBatchInTransaction();
+                processed = drainBatch();
             }
             while (processed == BATCH_SIZE);
         }
         catch (Exception e) {
-            // A batch failed to commit (e.g. the database was unavailable). Give up for now; the next tick retries.
+            // The database was unavailable while reading or recording. Give up for now; the next tick retries.
             log.error("Weaviate outbox drain aborted: {}", e.getMessage(), e);
         }
         finally {
@@ -151,40 +151,51 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Claims and processes one batch inside a transaction so {@code FOR UPDATE SKIP LOCKED} holds its locks.
+     * Reads one batch of due rows (no transaction, no lock) and processes each.
      *
-     * @return the number of rows claimed (equal to {@link #BATCH_SIZE} while more may remain)
+     * @return the number of rows read (equal to {@link #BATCH_SIZE} while more may remain)
      */
-    private int drainBatchInTransaction() {
-        Integer claimed = transactionTemplate.execute(status -> {
-            ZonedDateTime now = ZonedDateTime.now();
-            List<WeaviateOutboxEntry> batch = outboxRepository.claimBatchForDispatch(now, BATCH_SIZE);
-            for (WeaviateOutboxEntry entry : batch) {
-                processEntry(entry, now);
-            }
-            return batch.size();
-        });
-        return claimed != null ? claimed : 0;
+    private int drainBatch() {
+        ZonedDateTime now = ZonedDateTime.now();
+        List<WeaviateOutboxEntry> batch = outboxRepository.findDueForDispatch(now, BATCH_SIZE);
+        for (WeaviateOutboxEntry entry : batch) {
+            processEntry(entry, now);
+        }
+        return batch.size();
     }
 
     /**
-     * Applies a single outbox entry to Weaviate. On success the row is deleted and, for an upsert, the sync
-     * ledger is refreshed; a delete of a single entity also clears its ledger row. On failure the row is kept
-     * with an incremented attempt count and a backed-off next attempt time.
+     * Applies a single outbox entry to Weaviate outside any transaction, then records the outcome in a short
+     * transaction: {@link #confirmWrite} on success, {@link #scheduleRetry} on failure.
      */
     private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
         try {
             searchableEntityWeaviateService.applyOutboxEntry(entry);
-            collapseSupersededRows(entry);
-            recordSuccess(entry, now);
-            outboxRepository.delete(entry);
+            transactionTemplate.executeWithoutResult(status -> confirmWrite(entry, now));
         }
         catch (Exception e) {
             ZonedDateTime nextAttempt = now.plusSeconds(backoffSeconds(entry.getAttempts() + 1));
-            entry.recordFailedAttempt(nextAttempt);
-            outboxRepository.save(entry);
+            transactionTemplate.executeWithoutResult(status -> scheduleRetry(entry, nextAttempt));
             log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), entry.getAttempts(), nextAttempt, e.getMessage());
         }
+    }
+
+    /**
+     * Records a confirmed write in one short transaction: collapses superseded rows, refreshes the ledger, and
+     * removes the row.
+     */
+    private void confirmWrite(WeaviateOutboxEntry entry, ZonedDateTime now) {
+        collapseSupersededRows(entry);
+        refreshSyncLedger(entry, now);
+        outboxRepository.delete(entry);
+    }
+
+    /**
+     * Records a failed write in one short transaction: increments the attempt count and backs off.
+     */
+    private void scheduleRetry(WeaviateOutboxEntry entry, ZonedDateTime nextAttempt) {
+        entry.recordFailedAttempt(nextAttempt);
+        outboxRepository.save(entry);
     }
 
     /**
@@ -202,7 +213,7 @@ public class WeaviateOutboxDispatcher {
      * record the written content hash; single-entity deletes remove the ledger row so a later reconcile does
      * not treat a deleted entity as still synced. Bulk deletes leave the ledger to a later reconcile pass.
      */
-    private void recordSuccess(WeaviateOutboxEntry entry, ZonedDateTime now) {
+    private void refreshSyncLedger(WeaviateOutboxEntry entry, ZonedDateTime now) {
         if (entry.getOperation() == WeaviateOutboxOperation.UPSERT) {
             String hash = sha256Hex(entry.getPayload());
             syncStateRepository.findByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId()).ifPresentOrElse(state -> {
