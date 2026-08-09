@@ -104,7 +104,7 @@
         "jsdom": "catalog:",
         "lighthouse": "13.4.1",
         "lint-staged": "17.3.0",
-        "ng-mocks": "14.15.3",
+        "ng-mocks": "14.16.1",
         "ng-packagr": "catalog:",
         "postcss": "catalog:",
         "postcss-html": "2.0.0",

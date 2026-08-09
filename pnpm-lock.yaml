@@ -509,8 +509,8 @@ importers:
         specifier: 17.3.0
         version: 17.3.0
       ng-mocks:
-        specifier: 14.15.3
-        version: 14.15.3(4985d5a60fbbe7ac5e0d4a0740cee21a)
+        specifier: 14.16.1
+        version: 14.16.1(4985d5a60fbbe7ac5e0d4a0740cee21a)
       ng-packagr:
         specifier: 'catalog:'
         version: 22.1.0(@angular/compiler-cli@22.1.0(@angular/compiler@22.1.0)(supports-color@10.2.2)(typescript@6.0.3))(tailwindcss@4.3.3)(tslib@2.8.1)(typescript@6.0.3)
@@ -2725,6 +2725,7 @@ packages:
   '@ngtools/webpack@22.1.2':
     resolution: {integrity: sha512-5o3zbOdEHv5+wjRCMN+t6RBou28dbPkio5/rxEJBsQ9iEq11K+atsSKEaZXBMUhYr9nLYR8Pckm5Cqx2FP9R2Q==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
+    deprecated: Angular's Webpack support is deprecated. Use the esbuild and Vite-based "@angular/build" package instead.
     peerDependencies:
       '@angular/compiler-cli': ^22.0.0
       typescript: '>=6.0 <6.1'
@@ -6649,8 +6650,8 @@ packages:
     resolution: {integrity: sha512-WmmLty1YWwJl9yZi77v2dVIV6X2kuYV8YYBI/G3LWGKdGHmHUvL1z7FW0iDvEvGAwNEoc5x1tOOOyDnf5jJw/w==}
     engines: {node: '>= 10'}
 
-  ng-mocks@14.15.3:
-    resolution: {integrity: sha512-J0UafeI2K5kc5oDhIinGu+VqT990b0sP2dlKV3JxXYTlaQxQ7Mm0LLrxGz10hsGGJVtn9JEKkhjnpb6oijLT3w==}
+  ng-mocks@14.16.1:
+    resolution: {integrity: sha512-vag8gK5PFO8edUAKnPtIoCWurqSsI5uKOf1+V/KsffQdVhAstoqpmzjRAW4hVaVUN581Sfy5oectNFNmi38xXg==}
     peerDependencies:
       '@angular/common': ^22.0.0
       '@angular/core': ^22.0.0
@@ -14295,7 +14296,7 @@ snapshots:
 
   neotraverse@1.0.1: {}
 
-  ng-mocks@14.15.3(4985d5a60fbbe7ac5e0d4a0740cee21a):
+  ng-mocks@14.16.1(4985d5a60fbbe7ac5e0d4a0740cee21a):
     dependencies:
       '@angular/common': 22.1.0(@angular/core@22.1.0(@angular/compiler@22.1.0)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
       '@angular/core': 22.1.0(@angular/compiler@22.1.0)(rxjs@7.8.2)(zone.js@0.16.2)
