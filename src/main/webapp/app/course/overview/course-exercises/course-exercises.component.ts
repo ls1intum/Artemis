@@ -143,12 +143,6 @@ export class CourseExercisesComponent {
         this.onCourseLoad();
         this.prepareSidebarData();
 
-        // The course container only loads the course itself; the exercises (with participations and scores) belong to
-        // this tab, so they are fetched here. The result is published on the stored course, which the subscription
-        // below picks up — the statistics tab shares the same load.
-        this.exercisesLoadSubscription?.unsubscribe();
-        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this._courseId()).subscribe();
-
         // Cancel previous course update subscription to avoid duplicates when courseId changes
         this.courseUpdateSubscription?.unsubscribe();
         this.courseUpdateSubscription = this.courseStorageService
@@ -166,8 +160,12 @@ export class CourseExercisesComponent {
                 this.changeDetectorRef.markForCheck();
             });
 
-        // If no exercise is selected navigate to the lastSelected or upcoming exercise
-        this.navigateToExercise();
+        // The course container only loads the course itself; the exercises (with participations and scores) belong to
+        // this tab, so they are fetched here. Install the course-update subscription first: the overview service
+        // publishes the exercises there before emitting its response. Only then can last-selected/upcoming navigation
+        // reliably choose an exercise on a cold course entry. The statistics tab shares the same load.
+        this.exercisesLoadSubscription?.unsubscribe();
+        this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this._courseId()).subscribe(() => this.navigateToExercise());
     }
 
     navigateToExercise() {
