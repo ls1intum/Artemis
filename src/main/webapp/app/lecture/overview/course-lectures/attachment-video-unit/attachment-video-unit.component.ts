@@ -134,6 +134,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
     readonly youtubePlayerFailed = signal(false);
+    /**
+     * Whether the streamed video reported that it cannot be played. Unlike its YouTube counterpart this does not
+     * switch the template to a fallback — it only ends the wait for a seekable player, so a point-out is answered
+     * right away instead of sitting out the server-side ack timeout. See {@link isPointOutUnreachable}.
+     */
+    readonly videoPlayerFailed = signal(false);
 
     // For iframe fallback: YouTube watch/share URLs cannot be framed, so we
     // construct a privacy-enhanced embed URL from the video ID when available.
@@ -305,7 +311,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const id = this.lectureUnit()?.id;
             // read id to create the dependency; then schedule reset
             void id;
-            untracked(() => this.youtubePlayerFailed.set(false));
+            untracked(() => {
+                this.youtubePlayerFailed.set(false);
+                this.videoPlayerFailed.set(false);
+            });
         });
 
         // Update dark-mode class based on theme
@@ -348,10 +357,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // A rendered viewer whose document is still loading reports 0 pages and would reject every target, so wait
             // for the page count as well — otherwise a perfectly valid point-out would be reported as not applied.
             const pdfReady = pointOut.page == undefined || (this.pdfViewer()?.getTotalPages() ?? 0) > 0;
-            // Same for the YouTube player: Angular creates its wrapper component long before the iframe API hands the
-            // real player over, and a seek in between is silently dropped. So wait for the player itself, not for the
-            // component — reading its readiness signal here re-runs this effect once it flips.
-            const videoReady = pointOut.timestamp == undefined || this.videoPlayer() !== undefined || (this.youtubePlayer()?.isPlayerReady() ?? false);
+            // Same for whichever video player is rendered: a seek is only judgeable once the player exists *and* knows
+            // how long the video is — before that it accepts a target past the end and reports it back unchanged, so
+            // acknowledging then would claim a jump the later clamp undoes. Reading the signal here re-runs this
+            // effect once it flips, and a video that never gets there is dropped by isPointOutUnreachable instead.
+            const videoReady = pointOut.timestamp == undefined || (this.videoPlayer()?.isSeekable() ?? this.youtubePlayer()?.isSeekable() ?? false);
             if (!pdfReady || !videoReady) {
                 return;
             }
@@ -476,7 +486,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * The conditions below mirror the template's, since a player that is never rendered can never be seeked either:
      * the video player needs a resolved playlist *and* a transcript, while the YouTube player needs neither and renders
      * on the video id alone. A playlist without a transcript therefore ends in the iframe, not in a player — waiting on
-     * it would block until the server-side ack timeout, which is the very thing this method exists to prevent.
+     * it would block until the server-side ack timeout, which is the very thing this method exists to prevent. A player
+     * that did render but reported failure counts the same way: it will never state a length, so the effect's wait for
+     * a seekable player would otherwise never end.
      *
      * Both requests must have settled before their outcome counts. The transcript is requested just before the loading
      * flag clears and settles after it, so an empty transcript is only final once its own request has finished too;
@@ -488,7 +500,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
             return true;
         }
-        const hasSeekableVideo = (!!this.playlistUrl() && this.hasTranscript()) || (!!this.youtubeVideoId() && !this.youtubePlayerFailed());
+        const hasSeekableVideo = (!!this.playlistUrl() && this.hasTranscript() && !this.videoPlayerFailed()) || (!!this.youtubeVideoId() && !this.youtubePlayerFailed());
         return pointOut.timestamp != undefined && !this.isLoading() && !this.isTranscriptLoading() && !hasSeekableVideo;
     }
 
@@ -999,6 +1011,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     onYouTubePlayerFailed(): void {
         this.youtubePlayerFailed.set(true);
+    }
+
+    onVideoPlayerFailed(): void {
+        this.videoPlayerFailed.set(true);
     }
 
     hasAttachment(): boolean {

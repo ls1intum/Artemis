@@ -46,6 +46,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Active slide/page number inferred from the transcript */
     currentSlideNumberChange = output<number | undefined>();
 
+    /** Emitted when the video cannot be played at all, so callers stop waiting for a position it will never reach. */
+    playerFailed = output<void>();
+
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
 
@@ -92,6 +95,20 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private viewReady = signal<boolean>(false);
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
+
+    /**
+     * Whether the video knows how long it is, which is what makes a requested position judgeable. Before its metadata
+     * arrives the element accepts any target and reports it back unchanged, so a caller that has to state whether it
+     * really got there (the Iris point-out ack) must wait for this signal rather than trust {@link seekTo} alone.
+     */
+    private readonly seekableState = signal<boolean>(false);
+    readonly isSeekable = this.seekableState.asReadonly();
+
+    /** Store reference to the metadata handler that flips {@link isSeekable}, for cleanup */
+    private durationHandler: (() => void) | undefined = undefined;
+
+    /** Store reference to the media error handler, for cleanup */
+    private errorHandler: (() => void) | undefined = undefined;
 
     constructor() {
         effect(() => {
@@ -153,6 +170,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                             // Fatal error, cannot recover
                             this.hls?.destroy();
                             this.hls = undefined;
+                            this.playerFailed.emit();
                             break;
                     }
                 }
@@ -167,6 +185,21 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.updateCurrentSegment(videoElement.currentTime);
         };
         videoElement.addEventListener('timeupdate', this.timeupdateHandler);
+
+        // A seek can only be judged against a known length, so track when the element has one. Metadata may already be
+        // there for a cached resource, in which case no event follows and the initial read is the only chance to see it.
+        this.durationHandler = () => {
+            this.seekableState.set(videoElement.readyState >= 1);
+        };
+        videoElement.addEventListener('loadedmetadata', this.durationHandler);
+        videoElement.addEventListener('durationchange', this.durationHandler);
+        this.durationHandler();
+
+        // A media error is the element's way of saying the video is not coming, which ends the wait for a length.
+        this.errorHandler = () => {
+            this.playerFailed.emit();
+        };
+        videoElement.addEventListener('error', this.errorHandler);
 
         // Initialize transcript height syncing for the resizable panel
         this.initializeResizer();
@@ -267,11 +300,12 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * Seeks the video to the given time and optionally resumes playback.
      * @param seconds the position to seek to
      * @param resumePlayback whether to start playing from there
-     * @return whether the video really moved to the requested position. A target outside the video is refused rather
-     *         than seeked to: the browser would clamp it to the end, which is not the position that was asked for, and
-     *         a caller passing the outcome onwards (the Iris point-out ack) must not report that as a navigation.
-     *         An unknown duration — metadata not loaded yet, or a live stream, where it is Infinity — is not a
-     *         rejection; there is nothing to judge the target against, and the browser applies the seek once it can.
+     * @return whether the video moved to the requested position. A target outside the video is refused rather than
+     *         seeked to: the browser would clamp it to the end, which is not the position that was asked for. While
+     *         the length is still unknown the target cannot be judged, and the seek is issued anyway — the browser
+     *         applies it once the resource loads, and refusing it would strand the transcript and synchronization
+     *         callers, which have no way to wait. A caller that must *state* the outcome (the Iris point-out ack)
+     *         waits for {@link isSeekable} first, so it never has to trust the answer given in that window.
      */
     seekTo(seconds: number, resumePlayback = true): boolean {
         const elRef = this.videoRef();
@@ -403,6 +437,17 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
+        }
+
+        if (videoElement && this.durationHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.durationHandler);
+            videoElement.removeEventListener('durationchange', this.durationHandler);
+            this.durationHandler = undefined;
+        }
+
+        if (videoElement && this.errorHandler) {
+            videoElement.removeEventListener('error', this.errorHandler);
+            this.errorHandler = undefined;
         }
 
         // Remove loadedmetadata listener to prevent memory leaks

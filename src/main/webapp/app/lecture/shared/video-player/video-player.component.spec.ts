@@ -256,6 +256,31 @@ describe('VideoPlayerComponent', () => {
         expect(playSpy).not.toHaveBeenCalled();
     });
 
+    it('reports seekability only once the video has a length', async () => {
+        // Before metadata arrives the element takes any target and reports it back unchanged, so a caller that must
+        // state whether it really got there has to wait for this rather than trust the seek's own answer.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+
+        expect(component.isSeekable()).toBe(false);
+
+        Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(component.isSeekable()).toBe(true);
+    });
+
+    it('emits playerFailed when the media element reports an error', async () => {
+        // A video that cannot load will never state a length, so waiting callers need to be told to stop waiting.
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+        const emitSpy = vi.spyOn(component.playerFailed, 'emit');
+
+        videoElement.dispatchEvent(new Event('error'));
+
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
     it('refuses a target outside the video instead of letting it clamp to the end', async () => {
         // Iris proposes the timestamp, so it can name one the video does not have. The browser would clamp such a seek
         // to the end, which is not the position that was asked for — reporting it as applied would leave a point-out

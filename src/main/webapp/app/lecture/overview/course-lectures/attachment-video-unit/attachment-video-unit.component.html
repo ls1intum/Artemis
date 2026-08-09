@@ -67,6 +67,7 @@
                         [transcriptSegments]="transcriptSegments()"
                         [initialTimestamp]="targetTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
+                        (playerFailed)="onVideoPlayerFailed()"
                     />
                 </div>
             } @else if (youtubeVideoId() && !youtubePlayerFailed()) {

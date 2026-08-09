@@ -1333,14 +1333,15 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('waits for the YouTube player itself, not merely for its wrapper component', () => {
-            // Angular creates the wrapper long before the YouTube iframe API hands over the real player, and a seek in
-            // between is silently dropped. Treating the wrapper's existence as readiness would acknowledge a
-            // navigation that never happened, so the target stays pending until the player reports ready.
-            const isPlayerReady = signal(false);
-            const seekTo = vi.fn(() => isPlayerReady());
+        it('waits for a player that can judge the target, not merely for its wrapper component', () => {
+            // Angular creates the wrapper long before the YouTube iframe API hands over the real player, and a player
+            // that cannot yet state a duration accepts any target and reports it back unchanged. Treating either as
+            // readiness would acknowledge a navigation that never happened, so the target stays pending until the
+            // player can actually judge it.
+            const isSeekable = signal(false);
+            const seekTo = vi.fn(() => isSeekable());
             Object.defineProperty(component, 'youtubePlayer', {
-                value: () => ({ isPlayerReady, seekTo }),
+                value: () => ({ isSeekable, seekTo }),
                 writable: true,
                 configurable: true,
             });
@@ -1356,7 +1357,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeDefined();
 
-            isPlayerReady.set(true);
+            isSeekable.set(true);
             fixture.detectChanges();
 
             expect(seekTo).toHaveBeenCalledWith(42, false);
@@ -1406,7 +1407,7 @@ describe('AttachmentVideoUnitComponent', () => {
                     configurable: true,
                 });
                 Object.defineProperty(component, 'videoPlayer', {
-                    value: () => ({ seekTo, isPlaying: () => false, getCurrentSlideNumber: () => currentSlideNumber }),
+                    value: () => ({ seekTo, isSeekable: () => true, isPlaying: () => false, getCurrentSlideNumber: () => currentSlideNumber }),
                     writable: true,
                     configurable: true,
                 });
