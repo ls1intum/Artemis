@@ -54,8 +54,9 @@ export class FileUploadAssessmentService {
         return this.http.get<FileUploadResultDTO>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/result`).pipe(map((result) => this.convertResultFromServer(result)));
     }
 
-    cancelAssessment(submissionId: number): Observable<void> {
-        return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null);
+    cancelAssessment(submissionId: number, resultId?: number): Observable<void> {
+        const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
+        return this.http.put<void>(`${this.resourceUrl}/file-upload-submissions/${submissionId}/cancel-assessment`, null, { params });
     }
 
     /**

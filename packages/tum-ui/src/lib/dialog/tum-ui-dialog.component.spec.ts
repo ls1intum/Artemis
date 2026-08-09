@@ -221,6 +221,65 @@ describe('TumUiDialogComponent', () => {
         fixture.detectChanges();
         expect(panel()).toBeNull();
     });
+
+    it('renders in the overlay container, not the top layer, so nested overlays can stack above it', () => {
+        host.open.set(true);
+        fixture.detectChanges();
+
+        const overlayHost = panel()?.closest('.cdk-overlay-pane')?.parentElement;
+        expect(overlayHost?.hasAttribute('popover')).toBe(false);
+        expect(overlayHost?.classList.contains('cdk-overlay-popover')).toBe(false);
+        expect(document.querySelector('.cdk-overlay-container')?.contains(panel()!)).toBe(true);
+    });
+
+    it('locks page scroll without offsetting the root, and releases it on close', () => {
+        const root = document.documentElement;
+
+        host.open.set(true);
+        fixture.detectChanges();
+
+        expect(root.style.overflow).toBe('hidden');
+        expect(root.classList.contains('cdk-global-scrollblock')).toBe(false);
+        expect(root.style.position).not.toBe('fixed');
+        expect(root.style.top).toBe('');
+
+        host.open.set(false);
+        fixture.detectChanges();
+
+        expect(root.style.overflow).toBe('');
+    });
+
+    it('keeps the page locked until the last of two nested dialogs closes', () => {
+        const root = document.documentElement;
+        const nested = TestBed.createComponent(StringHeaderHostComponent);
+        nested.detectChanges();
+
+        host.open.set(true);
+        fixture.detectChanges();
+        nested.componentInstance.open.set(true);
+        nested.detectChanges();
+        expect(root.style.overflow).toBe('hidden');
+
+        nested.componentInstance.open.set(false);
+        nested.detectChanges();
+        expect(root.style.overflow).toBe('hidden');
+
+        host.open.set(false);
+        fixture.detectChanges();
+        expect(root.style.overflow).toBe('');
+    });
+
+    it('releases the scroll lock when destroyed while still open', () => {
+        const root = document.documentElement;
+
+        host.open.set(true);
+        fixture.detectChanges();
+        expect(root.style.overflow).toBe('hidden');
+
+        fixture.destroy();
+
+        expect(root.style.overflow).toBe('');
+    });
 });
 
 describe('TumUiDialogComponent projected #header template', () => {
