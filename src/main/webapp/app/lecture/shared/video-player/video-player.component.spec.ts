@@ -257,12 +257,18 @@ describe('VideoPlayerComponent', () => {
     });
 
     it('reports seekability only once the video has a length', async () => {
-        // Before metadata arrives the element takes any target and reports it back unchanged, so a caller that must
-        // state whether it really got there has to wait for this rather than trust the seek's own answer.
+        // Before metadata arrives the duration is NaN, which is nothing to judge a target against: the element takes
+        // any of them and reports it back unchanged. The seek is still carried out — the browser applies it once the
+        // resource has loaded — but a caller that must state whether it really got there waits for this signal
+        // instead of trusting the seek's own answer.
         setInputs('https://cdn.example.com/m.m3u8', []);
         await render();
+        // Stated explicitly rather than relying on what jsdom happens to report for a media element without a resource.
+        Object.defineProperty(videoElement, 'duration', { value: NaN, configurable: true });
 
         expect(component.isSeekable()).toBe(false);
+        expect(component.seekTo(42, false)).toBe(true);
+        expect(videoElement.currentTime).toBe(42);
 
         Object.defineProperty(videoElement, 'readyState', { value: 1, configurable: true });
         videoElement.dispatchEvent(new Event('loadedmetadata'));
@@ -295,18 +301,6 @@ describe('VideoPlayerComponent', () => {
 
         expect(component.seekTo(300, false)).toBe(true);
         expect(videoElement.currentTime).toBe(300);
-    });
-
-    it('accepts a target while the duration is still unknown', async () => {
-        // Before metadata arrives the duration is NaN, which is nothing to judge the target against; the browser
-        // applies such a seek once the resource has loaded, so refusing it would report a good position as missed.
-        setInputs('https://cdn.example.com/m.m3u8', []);
-        await render();
-        // Stated explicitly rather than relying on what jsdom happens to report for a media element without a resource.
-        Object.defineProperty(videoElement, 'duration', { value: NaN, configurable: true });
-
-        expect(component.seekTo(42, false)).toBe(true);
-        expect(videoElement.currentTime).toBe(42);
     });
 
     it('applies initial timestamp after metadata is available', async () => {

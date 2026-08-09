@@ -387,7 +387,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(false);
     });
 
-    it('toggleCollapse(true): resets videoPlayerFailed, so a later point-out is not given up on', () => {
+    it('toggleCollapse(true): resets playerFailed, so a later point-out is not given up on', () => {
         // The failure latch describes the player instance that is torn down on collapse. Left standing it would
         // outlive that instance and make every later timestamp point-out for this unit be dropped as unreachable,
         // even though reopening builds a fresh player that loads fine.
@@ -397,15 +397,15 @@ describe('AttachmentVideoUnitComponent', () => {
         component['isTranscriptLoading'].set(false);
         const pointOut = { lectureUnitId: 1, timestamp: 42 } as IrisPointOut;
 
-        component.onVideoPlayerFailed();
+        component.onPlayerFailed();
 
-        expect(component.videoPlayerFailed()).toBe(true);
+        expect(component.playerFailed()).toBe(true);
         expect(component['isPointOutUnreachable'](pointOut)).toBe(true);
 
         component.toggleCollapse(true);
         fixture.detectChanges();
 
-        expect(component.videoPlayerFailed()).toBe(false);
+        expect(component.playerFailed()).toBe(false);
         expect(component['isPointOutUnreachable'](pointOut)).toBe(false);
     });
 
@@ -447,30 +447,12 @@ describe('AttachmentVideoUnitComponent', () => {
                 videoSource: 'https://youtu.be/dQw4w9WgXcQ',
             } as any);
             fixture.detectChanges();
-            component.onYouTubePlayerFailed();
+            component.onPlayerFailed();
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
             expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
             // iframeFallbackUrl should use privacy-enhanced embed URL, not the raw watch URL
             expect(component.iframeFallbackUrl()).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
-        });
-
-        it('resets youtubePlayerFailed when unit is collapsed and reopened', () => {
-            fixture.componentRef.setInput('initiallyExpanded', true);
-            fixture.componentRef.setInput('lectureUnit', {
-                id: 1,
-                videoSourceType: 'YOUTUBE',
-                youtubeVideoId: 'dQw4w9WgXcQ',
-                videoSource: 'https://youtu.be/dQw4w9WgXcQ',
-            } as any);
-            fixture.detectChanges();
-            component.onYouTubePlayerFailed();
-            expect(component.youtubePlayerFailed()).toBe(true);
-
-            // Collapse the unit
-            component.toggleCollapse(true);
-            fixture.detectChanges();
-            expect(component.youtubePlayerFailed()).toBe(false);
         });
 
         it('uses raw video source URL for non-YouTube iframe fallback', () => {
@@ -525,7 +507,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(fixture.nativeElement.querySelector('iframe')).toBeTruthy();
         });
 
-        it('youtubePlayerFailed resets when the lecture unit changes', () => {
+        it('playerFailed resets when the lecture unit changes', () => {
             fixture.componentRef.setInput('initiallyExpanded', true);
             fixture.componentRef.setInput('lectureUnit', {
                 id: 10,
@@ -534,7 +516,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 videoSource: 'https://youtu.be/aaa',
             } as any);
             fixture.detectChanges();
-            component.onYouTubePlayerFailed();
+            component.onPlayerFailed();
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('jhi-youtube-player')).toBeFalsy();
             fixture.componentRef.setInput('lectureUnit', {
@@ -1293,11 +1275,15 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).not.toHaveBeenCalled();
         });
 
-        it('gives up on a page target once the PDF has failed to load', () => {
-            // The viewer is replaced by an error message for as long as the view stays open, so waiting for it would
-            // never end and the waiting pipeline would sit out its full ack timeout without ever being answered.
+        // A viewer that failed to load is replaced by an error message for as long as the view stays open, and a unit
+        // without a PDF never had one to show. Either way waiting would never end and the pipeline would sit out its
+        // full ack timeout without ever being answered.
+        it.each([
+            ['the PDF has failed to load', () => component.pdfLoadError.set(true)],
+            ['the unit has no PDF at all', () => fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: undefined })],
+        ])('gives up on a page target once %s', (_reason, makeUnreachable) => {
+            makeUnreachable();
             component['fullscreenState'].set(true);
-            component.pdfLoadError.set(true);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c10', page: 3 }));
             fixture.detectChanges();
@@ -1306,23 +1292,19 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('gives up on a page target when the unit has no PDF at all', () => {
-            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: undefined });
-            component['fullscreenState'].set(true);
-
-            component['handlePointOut'](pointOutRequest({ correlationId: 'c11', page: 3 }));
-            fixture.detectChanges();
-
-            expect(ackSpy).toHaveBeenCalledWith('c11', false);
-            expect(component['pendingPointOut']()).toBeUndefined();
-        });
-
-        it('gives up on a timestamp target when no seekable player can appear', () => {
-            // Without a resolved playlist or a working YouTube video the unit falls back to a bare iframe, which
-            // cannot be seeked — so no player will ever show up for this target to be applied to.
+        // Both end in the bare iframe, which cannot be seeked, so no player will ever show up for the target to be
+        // applied to: no playlist and no YouTube video at all, or a resolved playlist whose transcript came back
+        // empty — the video player renders only with both. Treating the playlist alone as proof of a player would
+        // leave the target pending forever and make the waiting pipeline sit out its full ack timeout.
+        it.each([
+            ['no seekable player can appear', undefined],
+            ['the playlist resolved but the transcript came back empty', 'https://cdn.example.com/playlist.m3u8'],
+        ])('gives up on a timestamp target when %s', (_reason, playlistUrl) => {
             component['fullscreenState'].set(true);
             component.isLoading.set(false);
-            component.playlistUrl.set(undefined);
+            component['isTranscriptLoading'].set(false);
+            component.playlistUrl.set(playlistUrl);
+            component.transcriptSegments.set([]);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c12', timestamp: 42 }));
             fixture.detectChanges();
@@ -1342,23 +1324,6 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(ackSpy).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeDefined();
-        });
-
-        it('gives up on a timestamp target when the playlist resolved but the transcript came back empty', () => {
-            // The video player only renders with a resolved playlist *and* a transcript. Without the latter the unit
-            // falls back to the bare iframe, so no seekable player is coming — treating the playlist alone as proof of
-            // one would leave the target pending forever and make the waiting pipeline sit out its full ack timeout.
-            component['fullscreenState'].set(true);
-            component.isLoading.set(false);
-            component['isTranscriptLoading'].set(false);
-            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
-            component.transcriptSegments.set([]);
-
-            component['handlePointOut'](pointOutRequest({ correlationId: 'c15', timestamp: 42 }));
-            fixture.detectChanges();
-
-            expect(ackSpy).toHaveBeenCalledWith('c15', false);
-            expect(component['pendingPointOut']()).toBeUndefined();
         });
 
         it('keeps a timestamp target pending while the transcript request is still in flight', () => {

@@ -67,17 +67,17 @@
                         [transcriptSegments]="transcriptSegments()"
                         [initialTimestamp]="targetTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
-                        (playerFailed)="onVideoPlayerFailed()"
+                        (playerFailed)="onPlayerFailed()"
                     />
                 </div>
-            } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
+            } @else if (youtubeVideoId() && !playerFailed()) {
                 <div class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
                     <jhi-youtube-player
                         [videoId]="youtubeVideoId()!"
                         [transcriptSegments]="transcriptSegments()"
                         [initialTimestamp]="targetTimestamp()"
                         (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
-                        (playerFailed)="onYouTubePlayerFailed()"
+                        (playerFailed)="onPlayerFailed()"
                     />
                 </div>
             } @else {

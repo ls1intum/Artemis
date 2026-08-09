@@ -85,26 +85,14 @@ describe('IrisPointOutMarkerComponent', () => {
         expect(component.markers()[0].data.page).toBe(7);
     });
 
-    it('should fall back to the deck index for a slide with no printed number', async () => {
-        // Iris names no page for an unnumbered slide either, so nothing contradicts the index here.
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 7 }));
-
-        expect(component.markers()[0].label).toBe('Navigated to page 7');
-    });
-
-    it.each([0, -1, 2.5, '5', null])('should ignore a printed page number of %p and label with the deck index', async (displayPage) => {
-        // The printed number is only a label, so an unusable one is dropped rather than rejecting a point-out
-        // whose navigation is perfectly good.
+    // An unnumbered slide carries no printed number at all, and an unusable one is no better than none: the number
+    // is only a label, so it is dropped rather than rejecting a point-out whose navigation is perfectly good. Iris
+    // names no page for such a slide either, so nothing contradicts the deck index the label falls back to.
+    it.each([undefined, 0, -1, 2.5, '5', null])('should label with the deck index when the printed page number is %p', async (displayPage) => {
         await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 7, displayPage }));
 
         expect(component.markers()).toHaveLength(1);
         expect(component.markers()[0].label).toBe('Navigated to page 7');
-    });
-
-    it('should join page and timestamp targets', async () => {
-        await setMessage(buildMessage({ type: 'pointOut', lectureUnitId: 42, page: 3, timestamp: 150 }));
-
-        expect(component.markers()[0].label).toBe('Navigated to page 3 and timestamp 2:30');
     });
 
     it.each([
@@ -134,6 +122,7 @@ describe('IrisPointOutMarkerComponent', () => {
 
         const buttons = fixture.nativeElement.querySelectorAll('button[tumUiButton]');
         expect(buttons).toHaveLength(1);
+        // Also the assertion that a marker naming both targets joins them into one label.
         expect(buttons[0].textContent).toContain('Navigated to page 3 and timestamp 2:30');
 
         buttons[0].click();

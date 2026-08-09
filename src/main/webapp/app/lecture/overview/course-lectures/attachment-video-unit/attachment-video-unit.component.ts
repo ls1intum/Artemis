@@ -139,13 +139,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly rawVideoSource = computed(() => this.lectureUnit()?.videoSource ?? null);
     readonly youtubeVideoId = computed(() => this.lectureUnit()?.youtubeVideoId ?? null);
-    readonly youtubePlayerFailed = signal(false);
     /**
-     * Whether the streamed video reported that it cannot be played. Unlike its YouTube counterpart this does not
-     * switch the template to a fallback — it only ends the wait for a seekable player, so a point-out is answered
-     * right away instead of sitting out the server-side ack timeout. See {@link isPointOutUnreachable}.
+     * Whether the rendered video player reported that it cannot play. Exactly one player is ever rendered, so one
+     * latch describes both: it puts the YouTube player on its iframe fallback, and in either case it ends the wait
+     * for a seekable player, so a point-out is answered right away instead of sitting out the server-side ack
+     * timeout. It belongs to the player instance and is therefore cleared whenever that one goes.
      */
-    readonly videoPlayerFailed = signal(false);
+    readonly playerFailed = signal(false);
 
     // For iframe fallback: YouTube watch/share URLs cannot be framed, so we
     // construct a privacy-enhanced embed URL from the video ID when available.
@@ -203,7 +203,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
-    readonly hasSyncCapableVideo = computed(() => !!this.playlistUrl() || (!!this.youtubeVideoId() && !this.youtubePlayerFailed()));
+    readonly hasSyncCapableVideo = computed(() => (!!this.playlistUrl() || !!this.youtubeVideoId()) && !this.playerFailed());
     readonly synchronizationState = computed(() => this.computeSynchronizationState());
     readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
@@ -312,10 +312,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             const id = this.lectureUnit()?.id;
             // read id to create the dependency; then schedule reset
             void id;
-            untracked(() => {
-                this.youtubePlayerFailed.set(false);
-                this.videoPlayerFailed.set(false);
-            });
+            untracked(() => this.playerFailed.set(false));
         });
 
         // A deep link asking for the combined view opens it as soon as there is something to show. The content is
@@ -510,7 +507,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
             return true;
         }
-        const hasSeekableVideo = (!!this.playlistUrl() && this.hasTranscript() && !this.videoPlayerFailed()) || (!!this.youtubeVideoId() && !this.youtubePlayerFailed());
+        const hasSeekableVideo = ((!!this.playlistUrl() && this.hasTranscript()) || !!this.youtubeVideoId()) && !this.playerFailed();
         return pointOut.timestamp != undefined && !this.isLoading() && !this.isTranscriptLoading() && !hasSeekableVideo;
     }
 
@@ -618,11 +615,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.loadPdf();
             }
         } else {
-            // Both latches describe a player instance that is being torn down here, so they must not outlive it —
-            // reopening the unit builds a fresh one, and a stale failure would make every later point-out for this
-            // unit be given up on as unreachable.
-            this.youtubePlayerFailed.set(false);
-            this.videoPlayerFailed.set(false);
+            // The latch describes the player instance being torn down here, so it must not outlive it — reopening the
+            // unit builds a fresh one, and a stale failure would make every later point-out for this unit be given up
+            // on as unreachable.
+            this.playerFailed.set(false);
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
@@ -1029,12 +1025,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    onYouTubePlayerFailed(): void {
-        this.youtubePlayerFailed.set(true);
-    }
-
-    onVideoPlayerFailed(): void {
-        this.videoPlayerFailed.set(true);
+    onPlayerFailed(): void {
+        this.playerFailed.set(true);
     }
 
     hasAttachment(): boolean {

@@ -83,13 +83,18 @@ describe('YouTubePlayerComponent', () => {
     });
 
     it('stays unseekable while the player cannot state a duration, and flips once it can', () => {
-        // getDuration() reports 0 until the video's metadata has been parsed. A target judged against that would be
-        // accepted no matter how far past the end it lies, so seekability waits for a real length.
+        // getDuration() reports 0 until the video's metadata has been parsed — "not known", not "zero seconds long".
+        // A target judged against that would be accepted no matter how far past the end it lies, so seekability
+        // waits for a real length. The seek itself is still carried out: refusing it would drop every seek made
+        // before the video data has loaded, and the caller that has to state an outcome waits for isSeekable anyway.
         let duration = 0;
-        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => duration, seekTo: vi.fn() };
+        const seekSpy = vi.fn();
+        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => duration, seekTo: seekSpy };
         component.onPlayerReady({} as any);
 
         expect(component.isSeekable()).toBe(false);
+        expect(component.seekTo(42)).toBe(true);
+        expect(seekSpy).toHaveBeenCalledWith(42, true);
 
         duration = 600;
         component.onStateChange({ data: 3 /* BUFFERING */ } as any);
@@ -127,16 +132,6 @@ describe('YouTubePlayerComponent', () => {
 
         expect(component.seekTo(50, false)).toBe(true);
         expect(pauseVideo).not.toHaveBeenCalled();
-    });
-
-    it('accepts a target while the player cannot state a duration yet', () => {
-        // A duration of 0 is the player saying "not known", not "zero seconds long". Judging the target against it
-        // would refuse every seek made before the video data has loaded.
-        const seekSpy = vi.fn();
-        (component as any).youtubePlayer = { getCurrentTime: () => 0, getDuration: () => 0, seekTo: seekSpy };
-
-        expect(component.seekTo(42)).toBe(true);
-        expect(seekSpy).toHaveBeenCalledWith(42, true);
     });
 
     it('emits playerFailed when readiness timeout elapses without onPlayerReady', () => {
