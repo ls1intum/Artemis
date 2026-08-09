@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
@@ -291,6 +292,24 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 .orElseThrow();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTeamExerciseIncludesAllTeamMembers() throws Exception {
+        var exercise = createTextExerciseForTeam();
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var team = createTeamForExercise(student1, exercise);
+        team.addStudents(student2);
+        team = teamRepository.save(team);
+        addTeamToExercise(team, exercise);
+
+        var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipationDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(participation.team()).isNotNull();
+        assertThat(participation.team().students()).extracting(UserPublicInfoDTO::getId).containsExactlyInAnyOrder(student1.getId(), student2.getId());
     }
 
     @Test
@@ -1646,17 +1665,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getParticipationIncludesCourseContextRequiredForClientAccessRights() throws Exception {
+    void getParticipationIncludesCourseIdRequiredForClientAccessRights() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
 
         assertThat(actualParticipation.exercise()).isNotNull();
         assertThat(actualParticipation.exercise().course()).isNotNull();
-        assertThat(actualParticipation.exercise().course().studentGroupName()).isEqualTo(course.getStudentGroupName());
-        assertThat(actualParticipation.exercise().course().teachingAssistantGroupName()).isEqualTo(course.getTeachingAssistantGroupName());
-        assertThat(actualParticipation.exercise().course().editorGroupName()).isEqualTo(course.getEditorGroupName());
-        assertThat(actualParticipation.exercise().course().instructorGroupName()).isEqualTo(course.getInstructorGroupName());
+        assertThat(actualParticipation.exercise().course().id()).isEqualTo(course.getId());
     }
 
     @Test
