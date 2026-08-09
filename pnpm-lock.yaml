@@ -313,8 +313,8 @@ importers:
         specifier: 7.3.0
         version: 7.3.0
       '@tumaet/apollon':
-        specifier: 5.0.1
-        version: 5.0.1(@types/react@19.2.17)(@xyflow/react@12.11.1(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+        specifier: 5.2.0
+        version: 5.2.0(@types/react@19.2.17)(@xyflow/react@12.11.1(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
       '@tumaet/ui-angular':
         specifier: workspace:*
         version: link:packages/tum-ui
@@ -2725,6 +2725,7 @@ packages:
   '@ngtools/webpack@22.1.2':
     resolution: {integrity: sha512-5o3zbOdEHv5+wjRCMN+t6RBou28dbPkio5/rxEJBsQ9iEq11K+atsSKEaZXBMUhYr9nLYR8Pckm5Cqx2FP9R2Q==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
+    deprecated: Angular's Webpack support is deprecated. Use the esbuild and Vite-based "@angular/build" package instead.
     peerDependencies:
       '@angular/compiler-cli': ^22.0.0
       typescript: '>=6.0 <6.1'
@@ -4173,8 +4174,8 @@ packages:
   '@ts-morph/common@0.29.0':
     resolution: {integrity: sha512-35oUmphHbJvQ/+UTwFNme/t2p3FoKiGJ5auTjjpNTop2dyREspirjMy82PLSC1pnDJ8ah1GU98hwpVt64YXQsg==}
 
-  '@tumaet/apollon@5.0.1':
-    resolution: {integrity: sha512-cqs187fWY1C5dcTyoadYo7WdIEFiIRV5Q8DRqgR0wNJ9ieYJGDc+At3YyIn9kTb+MaiHsneXuq81zt9ekxagZA==}
+  '@tumaet/apollon@5.2.0':
+    resolution: {integrity: sha512-kH1rv8+dihAE/AMqd1U48nFqiYsyQKrb0DM0vL2CeXvlr6T3KDQDqmY2qapgKpmQUj5AITGAgwXXlzSCDpG36g==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@xyflow/react': ^12.9.0
@@ -11623,7 +11624,7 @@ snapshots:
       path-browserify: 1.0.1
       tinyglobby: 0.2.17
 
-  '@tumaet/apollon@5.0.1(@types/react@19.2.17)(@xyflow/react@12.11.1(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
+  '@tumaet/apollon@5.2.0(@types/react@19.2.17)(@xyflow/react@12.11.1(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
     dependencies:
       '@base-ui/react': 1.6.0(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@chenglou/pretext': 0.0.8
@@ -11631,6 +11632,7 @@ snapshots:
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities': 3.2.2(react@19.2.8)
       '@xyflow/react': 12.11.1(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@xyflow/system': 0.0.78
       lucide-react: 1.22.0(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
