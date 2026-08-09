@@ -3,7 +3,10 @@
         <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="true" />
     }
     @if (!readOnly()) {
-        <div class="close">
+        <!-- Deleting is not selecting: the host of this editor treats any click as "select this text block", and selecting
+             re-creates the feedback that was just removed (TextBlockRef.initFeedback). Keep the close control's clicks,
+             including the confirm-icon's two-step click, from reaching it. -->
+        <div class="close" (click)="$event.stopPropagation()">
             @if (canDismiss) {
                 <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()" id="dismiss-icon" />
             } @else {

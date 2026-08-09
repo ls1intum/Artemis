@@ -7,5 +7,8 @@ import { ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-time
 })
 export class ExerciseTimelineStubComponent {
     timelineItems = input.required<TimelineItem[]>();
+    readonly = input<boolean>(false);
+    lockedToGroup = input<boolean>(false);
+    lockedClick = output<void>();
     timelineStatusChange = output<ExerciseTimelineStatus>();
 }

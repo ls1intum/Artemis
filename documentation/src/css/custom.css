@@ -16,7 +16,7 @@
     --docusaurus-highlighted-code-line-bg: var(--tum-gray-20);
 
     /* TUM Primary Colors */
-    --tum-color-blue: #0065BD;
+    --tum-color-blue: #0065bd;
     --tum-color-black: #000000;
     --tum-color-white: #ffffff;
 
@@ -25,14 +25,18 @@
     --tum-color-blue-darker: #003359;
     --tum-gray-80: #333333;
     --tum-gray-50: #808080;
-    --tum-gray-20: #CCCCCC;
+    --tum-gray-20: #cccccc;
 
     /* TUM Accent Colors */
-    --tum-accent-beige: #DAD7CB;
-    --tum-accent-orange: #E37222;
-    --tum-accent-green: #A2AD00;
-    --tum-accent-light-blue: #98C6EA;
-    --tum-accent-blue: #64A0C8;
+    --tum-accent-beige: #dad7cb;
+    --tum-accent-orange: #e37222;
+    --tum-accent-green: #a2ad00;
+    --tum-accent-light-blue: #98c6ea;
+    --tum-accent-blue: #64a0c8;
+}
+
+.navbar__logo {
+    margin-right: 1.5em;
 }
 
 /* Dark mode: use Artemis blue tones */

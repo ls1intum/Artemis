@@ -33,7 +33,16 @@
                                 </div>
                             </div>
                             <div class="quiz-statistic-chart" style="height: 525px">
-                                <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
+                                <p-chart
+                                    type="bar"
+                                    [data]="chartData()"
+                                    [options]="chartOptions()"
+                                    [plugins]="dataLabelsPlugin"
+                                    [ariaLabel]="
+                                        (rated ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated')
+                                            | artemisTranslate
+                                    "
+                                />
                             </div>
                             <div class="col-md-12 text-center button-row">
                                 <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
@@ -115,7 +124,12 @@
                                                         </div>
                                                     }
                                                     @if (correctDragItemForDropLocation(dropLocation)) {
-                                                        <jhi-drag-item [dragItem]="correctDragItemForDropLocation(dropLocation)!" [clickDisabled]="true" [minWidth]="'100%'" />
+                                                        <jhi-drag-item
+                                                            [dragItem]="correctDragItemForDropLocation(dropLocation)!"
+                                                            [clickDisabled]="true"
+                                                            [minWidth]="'100%'"
+                                                            [questionId]="question.id"
+                                                        />
                                                     }
                                                 </div>
                                             }
@@ -129,7 +143,13 @@
                                     @if (question.dragItems && question.dragItems.length) {
                                         <div class="drag-items">
                                             @for (dragItem of question.dragItems; track dragItem) {
-                                                <jhi-drag-item [dragItem]="dragItem" [invalid]="!!dragItem.invalid" [clickDisabled]="true" [minWidth]="'100%'" />
+                                                <jhi-drag-item
+                                                    [dragItem]="dragItem"
+                                                    [invalid]="!!dragItem.invalid"
+                                                    [clickDisabled]="true"
+                                                    [minWidth]="'100%'"
+                                                    [questionId]="question.id"
+                                                />
                                             }
                                         </div>
                                     }

@@ -78,7 +78,13 @@ public class ProblemStatementRenderingService {
 
     private static final String RENDERER_VERSION = "1.0.0";
 
-    private static final String KATEX_BASE_PATH = "/webjars/katex/dist";
+    /**
+     * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
+     * {@code node_modules} by the Angular build. The server used to pull a second copy as a webjar, which meant shipping
+     * two versions of the same library - and the webjar's generated POM carried an npm version range, which Gradle cannot
+     * resolve without asking the repository for a version list on every build.
+     */
+    private static final String KATEX_BASE_PATH = "/assets/katex";
 
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 

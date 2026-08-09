@@ -1127,6 +1127,20 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithInvalidContextElement_isRejected() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+
+            // page is annotated with @Min(1) on IrisSlidesContextDTO, so this element violates its own constraints.
+            // The context list must therefore be validated element by element, not just as a container.
+            var invalidSlidesContext = new IrisSlidesContextDTO(unitId, 0);
+            var requestDto = buildRequestWithContext(messageToSend, List.of(invalidSlidesContext));
+
+            request.postWithoutResponseBody(messagesUrl(session), requestDto, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void sendMessageWithSlidesContext_forwardsContextToPyris() throws Exception {
             IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
             IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);

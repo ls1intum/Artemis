@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -137,13 +138,16 @@ public class FileUploadExerciseResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -165,6 +169,7 @@ public class FileUploadExerciseResource {
         this.atlasMLApi = atlasMLApi;
         this.competencyApi = competencyApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -253,7 +258,7 @@ public class FileUploadExerciseResource {
         }
         importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedFileUploadExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalFileUploadExercise, user);
@@ -262,7 +267,7 @@ public class FileUploadExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(importedFileUploadExercise, ENTITY_NAME);
 
-        final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
+        final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(importedFileUploadExercise, originalFileUploadExercise);
 
         // Notify AtlasML about the new exercise
         atlasMLApi.ifPresent(api -> {
@@ -326,7 +331,7 @@ public class FileUploadExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<FileUploadExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(fileUploadExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
@@ -364,7 +369,7 @@ public class FileUploadExerciseResource {
         }
 
         // Check that the user is authorized to update the exercise
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         return doUpdateFileUploadExercise(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, notificationText, user);
@@ -396,7 +401,7 @@ public class FileUploadExerciseResource {
             String notificationText, User user) {
 
         if (user == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
 
         // ========== 1. Capture old values BEFORE mutation ==========
@@ -563,7 +568,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // Notify AtlasML about the exercise deletion before actual deletion
         atlasMLApi.ifPresent(api -> {
@@ -651,7 +656,7 @@ public class FileUploadExerciseResource {
                 ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
                 : Set.of();
 
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -773,6 +778,9 @@ public class FileUploadExerciseResource {
         exercise.setDueDate(updateFileUploadExerciseDTO.dueDate());
         exercise.setAssessmentDueDate(updateFileUploadExerciseDTO.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(updateFileUploadExerciseDTO.exampleSolutionPublicationDate());
+
+        // A variant group owns its members' timeline, so pin the dates back to the group before validating.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         // Validates general settings: points, dates
         exercise.validateGeneralSettings();

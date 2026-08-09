@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecu
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
@@ -195,6 +197,14 @@ public class IrisRequestMockProvider {
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
+    }
+
+    public void mockLectureUnitMetadataWebhookRunResponse(Consumer<PyrisLectureUnitMetadataWebhookDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/lectures/metadata", PyrisLectureUnitMetadataWebhookDTO.class, responseConsumer, count);
+    }
+
+    public void mockLectureUnitVisibilityWebhookRunResponse(Consumer<PyrisLectureUnitVisibilityWebhookDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/lectures/visibility", PyrisLectureUnitVisibilityWebhookDTO.class, responseConsumer, count);
     }
 
     public void mockFaqDeletionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {

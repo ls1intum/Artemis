@@ -15,12 +15,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
-    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

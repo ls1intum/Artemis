@@ -1,0 +1,115 @@
+package de.tum.cit.aet.artemis.lecture.repository;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import jakarta.persistence.LockModeType;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
+
+@Conditional(LectureEnabled.class)
+@Lazy
+@Repository
+public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository<IrisLectureUnitSyncState, Long> {
+
+    Optional<IrisLectureUnitSyncState> findByLectureUnitId(Long lectureUnitId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT attachmentVideoUnit FROM AttachmentVideoUnit attachmentVideoUnit WHERE attachmentVideoUnit.id = :lectureUnitId")
+    Optional<AttachmentVideoUnit> findAttachmentVideoUnitForUpdateById(@Param("lectureUnitId") long lectureUnitId);
+
+    List<IrisLectureUnitSyncState> findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(List<String> statuses, ZonedDateTime now);
+
+    /**
+     * Claims a due retry by moving its next retry time to a lease deadline while holding the owning lecture-unit lock.
+     *
+     * @param lectureUnitId the attachment video unit id
+     * @param now           the current time
+     * @param leaseUntil    the deadline after which another worker may reclaim an unfinished retry
+     * @return the claimed state, or empty if another worker already claimed it
+     */
+    @Transactional
+    default Optional<IrisLectureUnitSyncState> claimRetry(long lectureUnitId, ZonedDateTime now, ZonedDateTime leaseUntil) {
+        return findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findByLectureUnitId(lectureUnitId))
+                .filter(state -> IrisLectureUnitSyncState.STATUS_DIRTY.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()))
+                .filter(state -> state.getNextRetryAt() != null && !state.getNextRetryAt().isAfter(now)).map(state -> {
+                    state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+                    state.setNextRetryAt(leaseUntil);
+                    return saveAndFlush(state);
+                });
+    }
+
+    /**
+     * Applies a synchronization-state transition while holding the owning lecture-unit lock. Reloading the current state after acquiring the lock preserves dirty hashes
+     * written while a Pyris request was in flight.
+     *
+     * @param lectureUnitId the attachment video unit id
+     * @param transition    the transition to apply to the current state
+     */
+    @Transactional
+    default void updateWithLectureUnitLock(long lectureUnitId, Consumer<IrisLectureUnitSyncState> transition) {
+        findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findByLectureUnitId(lectureUnitId)).ifPresent(state -> {
+            transition.accept(state);
+            saveAndFlush(state);
+        });
+    }
+
+    /**
+     * Atomically creates or updates the dirty synchronization state while holding a lock on the owning lecture unit. Locking the always-existing parent row also serializes
+     * concurrent first writes when no synchronization-state row exists yet.
+     *
+     * @param lectureUnitId  the attachment video unit id
+     * @param metadataHash   the new metadata hash, or null if metadata did not change
+     * @param visibilityHash the new visibility hash, or null if visibility did not change
+     * @param nextRetryAt    the earliest retry time
+     * @return the persisted dirty state
+     */
+    @Transactional
+    default IrisLectureUnitSyncState markDirty(long lectureUnitId, String metadataHash, String visibilityHash, ZonedDateTime nextRetryAt) {
+        if (findAttachmentVideoUnitForUpdateById(lectureUnitId).isEmpty()) {
+            throw new EntityNotFoundException("AttachmentVideoUnit", lectureUnitId);
+        }
+
+        IrisLectureUnitSyncState state = findByLectureUnitId(lectureUnitId).orElseGet(() -> {
+            IrisLectureUnitSyncState newState = new IrisLectureUnitSyncState();
+            newState.setLectureUnitId(lectureUnitId);
+            return newState;
+        });
+        if (metadataHash != null) {
+            state.setMetadataHash(metadataHash);
+        }
+        if (visibilityHash != null) {
+            state.setVisibilityHash(visibilityHash);
+        }
+        boolean hasActiveLease = IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()) && state.getNextRetryAt() != null
+                && state.getNextRetryAt().isAfter(nextRetryAt);
+        if (!hasActiveLease && java.util.Objects.equals(state.getMetadataHash(), state.getLastSyncedMetadataHash())
+                && java.util.Objects.equals(state.getVisibilityHash(), state.getLastSyncedVisibilityHash())) {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
+            state.setNextRetryAt(null);
+            return save(state);
+        }
+        if (hasActiveLease) {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
+        }
+        else {
+            state.setStatus(IrisLectureUnitSyncState.STATUS_DIRTY);
+            state.setNextRetryAt(nextRetryAt);
+        }
+        return save(state);
+    }
+}
