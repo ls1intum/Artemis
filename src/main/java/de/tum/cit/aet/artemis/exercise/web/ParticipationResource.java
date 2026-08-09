@@ -157,6 +157,7 @@ public class ParticipationResource {
         if (exercise.isTeamMode()) {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
+            participant = teamRepository.findWithStudentsByIdElseThrow(participant.getId());
         }
         StudentParticipation participation;
         try {
