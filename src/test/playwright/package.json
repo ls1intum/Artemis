@@ -19,7 +19,7 @@
         "istanbul-reports": "3.2.0",
         "junit-merge": "2.0.0",
         "monocart-reporter": "2.12.4",
-        "npm-check-updates": "23.0.0",
+        "npm-check-updates": "23.0.2",
         "npm-run-all2": "9.0.3",
         "simple-git": "3.36.0",
         "uuid": "14.0.1"

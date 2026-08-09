@@ -57,8 +57,8 @@ importers:
         specifier: 2.12.4
         version: 2.12.4
       npm-check-updates:
-        specifier: 23.0.0
-        version: 23.0.0
+        specifier: 23.0.2
+        version: 23.0.2
       npm-run-all2:
         specifier: 9.0.3
         version: 9.0.3
@@ -723,8 +723,8 @@ packages:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
 
-  npm-check-updates@23.0.0:
-    resolution: {integrity: sha512-B7dvnnS4Tm/4YQghXjBgGBDuHsk88hqCmr4ZuCr0nscsPzf/QVMls5mT8ZUcHrcrFRBP1afB2KNuJo8Px55DrA==}
+  npm-check-updates@23.0.2:
+    resolution: {integrity: sha512-t5tv+d4sP+WbSwcDAFBwDxSUJRomc+TJoURPu7q5B/19toUsR/7eshRxBdWdE7iYw80iE4O4D/7OvCvIcaG8ug==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0, npm: '>=10.0.0'}
     hasBin: true
 
@@ -1608,7 +1608,7 @@ snapshots:
 
   normalize-path@3.0.0: {}
 
-  npm-check-updates@23.0.0: {}
+  npm-check-updates@23.0.2: {}
 
   npm-normalize-package-bin@6.0.0: {}
 
