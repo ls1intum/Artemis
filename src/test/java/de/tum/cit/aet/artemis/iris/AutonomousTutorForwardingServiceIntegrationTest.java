@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorForwardingService;
 import de.tum.cit.aet.artemis.iris.service.IrisBotUserService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisAnswerPostDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisAuthorRole;
 
 class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -66,15 +68,19 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
 
     private User student2;
 
+    private User instructor;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
         course = courseUtilService.createCourse();
+        userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX);
         channel = conversationUtilService.createCourseWideChannel(course, "general");
         irisBotUserService.ensureIrisBotUserExists();
         botUser = irisBotUserService.getIrisBotUser();
         student = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         student2 = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student2").orElseThrow();
+        instructor = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         enableIrisFor(course);
         featureToggleService.enableFeature(Feature.AutonomousTutor);
     }
@@ -312,6 +318,49 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         var visibleAnswer = answers.stream().filter(a -> !a.redacted()).findFirst();
         assertThat(visibleAnswer).isPresent();
         assertThat(visibleAnswer.get().content()).isEqualTo("Can you clarify the bounds?");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_sendsThreadInChronologicalOrder() {
+        // Iris identifies the message to answer as the last one of the thread, so the order it receives must be the
+        // order the messages were written in — not the arbitrary iteration order of the answer set.
+        Post post = createPostInChannel(student, "What is a bridge pattern?");
+        createAnswerPost(post, botUser, "The Bridge Pattern separates an abstraction from its implementation.");
+        AnswerPost followUp = createAnswerPost(post, instructor, "Then what is a strategy pattern");
+        channel.setCourse(course);
+
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewAnswerMessage(followUp, post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+
+        var answers = capturedDto.get().post().answers();
+        assertThat(answers).extracting(PyrisAnswerPostDTO::content).containsExactly("The Bridge Pattern separates an abstraction from its implementation.",
+                "Then what is a strategy pattern");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void onNewAnswerMessage_sendsAuthorRolesForTheWholeThread() {
+        // Without roles Iris cannot tell its own draft apart from a student message: the bot is persisted as a
+        // regular user, so UserRole alone reports it as a student.
+        Post post = createPostInChannel(student, "What is a bridge pattern?");
+        createAnswerPost(post, botUser, "The Bridge Pattern separates an abstraction from its implementation.");
+        AnswerPost followUp = createAnswerPost(post, instructor, "Then what is a strategy pattern");
+        channel.setCourse(course);
+
+        AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
+        irisRequestMockProvider.mockAutonomousTutorResponse(capturedDto::set);
+
+        autonomousTutorForwardingService.onNewAnswerMessage(followUp, post, channel, course);
+
+        await().atMost(Duration.ofSeconds(5)).until(() -> capturedDto.get() != null);
+
+        assertThat(capturedDto.get().post().authorRole()).isEqualTo(PyrisAuthorRole.STUDENT);
+        assertThat(capturedDto.get().post().answers()).extracting(PyrisAnswerPostDTO::authorRole).containsExactly(PyrisAuthorRole.IRIS, PyrisAuthorRole.INSTRUCTOR);
     }
 
     // --- Thread-wide AI selection resolution ---
