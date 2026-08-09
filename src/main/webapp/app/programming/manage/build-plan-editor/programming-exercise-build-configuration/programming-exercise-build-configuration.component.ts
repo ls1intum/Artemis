@@ -43,7 +43,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     readonly memorySwap = signal<number | undefined>(undefined);
     dockerFlags: DockerFlags = {};
 
-    dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
 
     readonly envVarKeyTemplate = viewChild<CellTemplateRef<[string, string]>>('envVarKeyTemplate');
