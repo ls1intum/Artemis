@@ -14,4 +14,8 @@ public class WeaviateException extends RuntimeException {
         super(message, cause);
     }
 
+    public WeaviateException(String message) {
+        super(message);
+    }
+
 }

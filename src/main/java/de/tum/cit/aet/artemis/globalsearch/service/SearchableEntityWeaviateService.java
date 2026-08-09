@@ -521,48 +521,47 @@ public class SearchableEntityWeaviateService {
     }
 
     private void deleteEntityInternal(String type, long entityId) {
-        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        collection.data.deleteMany(
-                Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)));
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type), Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId)),
+                type + " " + entityId);
     }
 
     private void doDeleteLectureUnitsForLecture(long lectureId) {
-        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
-                Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId));
-        var result = collection.data.deleteMany(filter);
-        log.debug("Deleted {} lecture unit rows for lecture {}", result.successful(), lectureId);
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.LECTURE_UNIT),
+                Filter.property(SearchableEntitySchema.Properties.LECTURE_ID).eq(lectureId)), "lecture unit rows for lecture " + lectureId);
     }
 
     private void doDeleteAnswerPostsForPost(long postId) {
-        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
-                Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId));
-        var result = collection.data.deleteMany(filter);
-        log.debug("Deleted {} answer post rows for post {}", result.successful(), postId);
+        deleteManyOrThrow(Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
+                Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId)), "answer post rows for post " + postId);
     }
 
     private void doDeletePostsForChannel(long channelId) {
-        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
                 Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
-        var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId));
-        var result = collection.data.deleteMany(filter);
-        log.debug("Deleted {} post/answer post rows for channel {}", result.successful(), channelId);
+        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId)), "post/answer post rows for channel " + channelId);
     }
 
     private void doDeletePostsForCourse(long courseId) {
-        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
                 Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
-        var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
-        var result = collection.data.deleteMany(filter);
-        log.debug("Deleted {} post/answer post rows for course {}", result.successful(), courseId);
+        deleteManyOrThrow(Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId)), "post/answer post rows for course " + courseId);
     }
 
     private void doDeleteAllForCourse(long courseId) {
+        deleteManyOrThrow(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), "rows for course " + courseId);
+    }
+
+    /**
+     * Runs a {@code deleteMany} and treats a partial failure as a failure: if Weaviate reports rows it matched
+     * but could not delete, throws so the dispatcher keeps the outbox row and retries with backoff rather than
+     * leaving orphaned searchable rows. {@code deleteMany} is idempotent, so a retry is safe.
+     */
+    private void deleteManyOrThrow(Filter filter, String description) {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-        var result = collection.data.deleteMany(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
-        log.debug("Deleted {} rows for course {}", result.successful(), courseId);
+        var result = collection.data.deleteMany(filter);
+        if (result.failed() > 0) {
+            throw new WeaviateException("Failed to delete " + result.failed() + " of " + result.matches() + " " + description + " in Weaviate");
+        }
+        log.debug("Deleted {} {}", result.successful(), description);
     }
 }
