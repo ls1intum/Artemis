@@ -699,6 +699,18 @@ describe('TextExercise Management Update Component', () => {
             expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.order', translateValues: { dateName: 'Due Date' } }]);
         });
 
+        it('should report a title shorter than the minimum length', () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab';
+            component.textExercise = exercise;
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
+        });
+
         it('should report a disallowed title', () => {
             component.textExercise = filledInExercise();
             component.isExamMode.set(false);

@@ -72,7 +72,6 @@ class StubTitleChannelNameComponent {
 // Mock for TitleChannelNameComponent interface. channelFieldDisplayed/titleErrors are plain settable
 // fields so tests can drive both branches of getInvalidReasons per-test.
 class MockTitleChannelNameComponent {
-    isValid = signal(true);
     channelFieldDisplayed = true;
     isChannelFieldDisplayed = () => this.channelFieldDisplayed;
     titleErrors: ValidationErrors | undefined = undefined;
@@ -719,9 +718,9 @@ describe('ModelingExerciseUpdateComponent', () => {
             // always resolves to undefined here. Overriding the signal directly - scoped to this describe block's
             // own component instance only - lets getInvalidReasons() exercise the title/channel-name branches.
             titleChannelNameComponentMock = new MockTitleChannelNameComponent();
-            comp.exerciseTitleChannelNameComponent = (() => ({
+            (comp as unknown as { exerciseTitleChannelNameComponent: unknown }).exerciseTitleChannelNameComponent = () => ({
                 titleChannelNameComponent: () => titleChannelNameComponentMock,
-            })) as unknown as typeof comp.exerciseTitleChannelNameComponent;
+            });
         });
 
         it('should report the mandatory fields of an untouched creation form', () => {
@@ -734,7 +733,7 @@ describe('ModelingExerciseUpdateComponent', () => {
             expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
         });
 
-        it('should not enforce a minimum title length', () => {
+        it('documents a known client/server gap: the client accepts a 2-char title, but the server requires 3+ for every exercise type', () => {
             comp.modelingExercise = filledInExercise('ab');
             comp.isExamMode.set(false);
             comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });

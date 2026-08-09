@@ -148,7 +148,6 @@ class StubExerciseTitleChannelNameComponent {
 // Mock for TitleChannelNameComponent interface. channelFieldDisplayed/titleErrors are plain settable
 // fields so tests can drive both branches of getInvalidReasons per-test.
 class MockTitleChannelNameComponent {
-    isValid = signal(true);
     channelFieldDisplayed = true;
     isChannelFieldDisplayed = () => this.channelFieldDisplayed;
     titleErrors: ValidationErrors | undefined = undefined;
@@ -850,6 +849,18 @@ describe('FileUploadExerciseUpdateComponent', () => {
             component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
             expect(component.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.fileUploadExercise.form.filePattern.minlength', translateValues: { min: 2 } }]);
+        });
+
+        it('should report a title shorter than the minimum length', () => {
+            const exercise = filledInExercise();
+            exercise.title = 'ab';
+            component.fileUploadExercise.set(exercise);
+            component.isExamMode.set(false);
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            const translateKeys = component.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.minlength');
         });
 
         it('should report a disallowed title', () => {
