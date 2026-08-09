@@ -352,8 +352,12 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        // The problem statement is owned by the collaborative editor and its dedicated PATCH endpoint. Metadata requests can carry a blank or stale editor value, so they must
-        // never overwrite the persisted statement. See issue #13046.
+        // The problem statement is owned by the collaborative editor and its dedicated PATCH endpoint, not by this metadata update. A blank or absent value here means the editor
+        // has not finished its initial sync yet (e.g. the user saved a category change on a slow connection before the statement loaded), so the persisted statement is kept
+        // rather than wiped. A present one is still applied: this endpoint remains the documented way to set a statement, and dropping it silently loses the edit. See #13046.
+        if (dto.problemStatement() != null && !dto.problemStatement().isBlank()) {
+            exercise.setProblemStatement(dto.problemStatement());
+        }
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
