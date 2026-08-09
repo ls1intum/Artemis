@@ -570,7 +570,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
-    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0"
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
