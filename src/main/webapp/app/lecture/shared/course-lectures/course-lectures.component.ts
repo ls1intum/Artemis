@@ -13,6 +13,7 @@ import { LtiService } from 'app/foundation/service/lti.service';
 import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -52,6 +53,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private ltiService = inject(LtiService);
     private lectureService = inject(LectureService);
     private sessionStorageService = inject(SessionStorageService);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
@@ -110,7 +112,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
      */
     private loadLectures(): void {
         this.lecturesSubscription?.unsubscribe();
-        this.lecturesSubscription = this.lectureService.findAllByCourseIdForOverview(this.courseId()).subscribe({
+        this.lecturesSubscription = this.courseOverviewTabDataService.loadLecturesIfNeeded(this.courseId()).subscribe({
             next: (lectures) => {
                 this.lectures.set(lectures);
                 this.prepareSidebarData();

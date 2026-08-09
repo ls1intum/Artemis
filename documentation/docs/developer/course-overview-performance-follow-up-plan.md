@@ -8,11 +8,17 @@
 
 ## Decision for the current PR
 
-Do not add another production optimization to the current PR. The remaining opportunities cross REST contracts,
+Do not add another broad production optimization to the current PR. The remaining opportunities cross REST contracts,
 feature-module boundaries, or non-trivial business logic. Adding one now would make an already broad change harder to
 review and roll back. Correctness fixes requested in review remain in scope, including preserving programming/quiz
 actions in the projection, applying online-course LTI visibility to the title projection, and making the shared client
 cache resilient to request and WebSocket races.
+
+One small review-driven optimization is also included: returning to the lectures or exams tab during the same course
+visit reuses its already loaded overview DTO response. The course-keyed state shares concurrent requests, rejects late
+responses from a previous course, retries failed requests, and is cleared on an in-place course switch and when the
+course container is destroyed. It neither persists across visits nor changes a REST contract. Only the
+`exams-for-overview` response is reused; the two student-exam calls retain their existing refresh behavior.
 
 The only additional performance change suitable for the current PR is test-only: payload and database-query budgets
 for `exercises-for-overview`. They protect the main reduction without expanding runtime scope. The profile now checks
@@ -35,8 +41,9 @@ additions.
 ## Non-goals
 
 - Do not migrate native clients from the deprecated `for-dashboard` endpoint as part of these web optimizations.
-- Do not replace a measured database problem with application caching. Artemis' normal projection, filtering, paging,
-  and indexing rules apply; a new cache would require a separate measured case and complete eviction design.
+- Do not replace a measured database problem with durable or cross-visit application caching. Artemis' normal
+  projection, filtering, paging, and indexing rules apply. Per-visit request reuse is acceptable only for an identical
+  response with an explicit course-switch and container-destruction eviction design.
 - Do not combine unrelated tabs merely to reduce the displayed REST-call count. Calls should only be combined when
   their data has the same lifecycle and is needed by the same user action.
 - Do not assert wall-clock timings in CI. Assert query/row/entity-load and payload budgets; log timings for comparison.
@@ -90,6 +97,10 @@ The common course shell is listed separately. Tab rows show the additional tab-s
 Conditional detail calls are deliberately absent from the totals: lecture auto-selection, exam conduction data,
 remembered exercise/tutorial-group selections, a recommended learning object's detail, and optional Iris detail chat
 can add requests. Each follow-up must measure both a clean first visit and the relevant selected-detail path.
+
+Reopening lectures during the same course visit adds no second `lectures-for-overview` call. Reopening exams adds no
+second `exams-for-overview` call, but still refreshes `test-exams-per-user` and `real-exams-sidebar-data`; consolidating
+those calls requires a separate freshness and contract decision.
 
 ## Already satisfactory in this area
 

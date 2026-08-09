@@ -39,6 +39,7 @@ import { CourseOverviewComponent } from 'app/course/overview/course-overview/cou
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -213,6 +214,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
+                MockProvider(CourseOverviewTabDataService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -513,6 +515,7 @@ describe('CourseOverviewComponent', () => {
     it('should reload the course content when navigating to a different course in place', async () => {
         const paramsSubject = new BehaviorSubject<Params>({ courseId: course1.id });
         (route as any).params = paramsSubject.asObservable();
+        const clearTabDataSpy = vi.spyOn(TestBed.inject(CourseOverviewTabDataService), 'clear');
         await component.ngOnInit();
         expect(findCourseForOverviewStub).toHaveBeenCalledExactlyOnceWith(course1.id);
 
@@ -523,6 +526,7 @@ describe('CourseOverviewComponent', () => {
         expect(findCourseForOverviewStub).toHaveBeenCalledTimes(2);
         expect(findCourseForOverviewStub).toHaveBeenLastCalledWith(999);
         expect(getSidebarItemsSpy).toHaveBeenCalled();
+        expect(clearTabDataSpy).toHaveBeenCalledOnce();
     });
 
     it('should clear the previous course tab flags immediately and keep only safe sidebar items when the new tab request fails', async () => {
@@ -620,12 +624,14 @@ describe('CourseOverviewComponent', () => {
     it('should drop the per-visit tab and exercise state on destroy so re-entering the course refetches', () => {
         const clearTabsSpy = vi.spyOn(availableTabsService, 'clear');
         const clearExercisesSpy = vi.spyOn(TestBed.inject(CourseOverviewExercisesService), 'clear');
+        const clearTabDataSpy = vi.spyOn(TestBed.inject(CourseOverviewTabDataService), 'clear');
 
         component.ngOnInit();
         component.ngOnDestroy();
 
         expect(clearTabsSpy).toHaveBeenCalled();
         expect(clearExercisesSpy).toHaveBeenCalled();
+        expect(clearTabDataSpy).toHaveBeenCalled();
     });
 
     it('should render controls if child has configuration', () => {

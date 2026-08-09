@@ -194,6 +194,23 @@ describe('CourseExamsComponent', () => {
         expect(component.expandAttemptsMap).toEqual(expectedMap);
     });
 
+    it('should reuse the loaded exams when the routed tab component is recreated during the same course visit', () => {
+        component.ngOnInit();
+        const firstExams = component.exams();
+        component.ngOnDestroy();
+        const returnedFixture = TestBed.createComponent(CourseExamsComponent);
+        const returnedComponent = returnedFixture.componentInstance;
+        returnedComponent.ngOnInit();
+
+        expect(examParticipationService.getExamsForOverview).toHaveBeenCalledExactlyOnceWith(1);
+        expect(returnedComponent.exams()).toBe(firstExams);
+        expect(returnedComponent.realExamsOfCourse).toEqual([visibleRealExam2, visibleRealExam1]);
+        expect(returnedComponent.testExamsOfCourse).toEqual([visibleTestExam2, visibleTestExam1]);
+
+        returnedComponent.ngOnDestroy();
+        returnedFixture.destroy();
+    });
+
     it('should correctly switch boolean value in expandAttemptsMap', () => {
         const expectedMap = new Map<number, boolean>();
         expectedMap.set(visibleTestExam1.id!, true);

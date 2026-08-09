@@ -76,6 +76,26 @@ describe('CourseLecturesComponent', () => {
         expect(component.lectures()).toEqual([lecture]);
     });
 
+    it('should reuse the loaded lectures when the routed tab component is recreated during the same course visit', () => {
+        const lectures: LectureForOverview[] = [{ id: 7, title: 'Lecture 7' }];
+        const loadSpy = vi.spyOn(lectureService, 'findAllByCourseIdForOverview').mockReturnValue(of(lectures));
+        vi.spyOn(courseOverviewService, 'sortLectures').mockReturnValue(lectures);
+        vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+
+        component.ngOnInit();
+        component.ngOnDestroy();
+        const returnedFixture = TestBed.createComponent(CourseLecturesComponent);
+        const returnedComponent = returnedFixture.componentInstance;
+        returnedComponent.ngOnInit();
+
+        expect(loadSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(returnedComponent.lectures()).toBe(lectures);
+        expect(returnedComponent.sortedLectures).toBe(lectures);
+
+        returnedComponent.ngOnDestroy();
+        returnedFixture.destroy();
+    });
+
     it('should handle multi-launch subscription', async () => {
         const processSpy = vi.spyOn(component, 'processLectures');
         const sortSpy = vi.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);

@@ -26,6 +26,7 @@ import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-une
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 
 /**
  * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
@@ -53,6 +54,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseTitleBarService = inject(CourseTitleBarService);
     private courseAvailableTabsService = inject(CourseAvailableTabsService);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
     /**
      * Every page that does not bring its own sidebar gets the shell title bar, so the student overview matches course
@@ -111,6 +113,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             if (previousCourseId && previousCourseId !== id) {
                 // The exercise data of the previous course must not be reused for the new one
                 this.courseOverviewExercisesService.clear();
+                this.courseOverviewTabDataService.clear();
                 // loadCourse() unsubscribes any in-flight loadCourseSubscription internally before returning the observable
                 this.loadCourseSubscription = this.loadCourse().subscribe({
                     next: () => {
@@ -387,6 +390,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         // Drop the per-visit state so re-entering the course asks the server again
         this.courseAvailableTabsService.clear();
         this.courseOverviewExercisesService.clear();
+        this.courseOverviewTabDataService.clear();
         this.examStartedSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
     }

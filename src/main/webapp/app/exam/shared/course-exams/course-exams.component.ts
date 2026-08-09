@@ -17,6 +17,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -50,6 +51,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
@@ -130,7 +132,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.examParticipationService.setShouldUpdateTestExams(false);
             });
 
-        this.examsSubscription = this.examParticipationService.getExamsForOverview(this.courseId()).subscribe({
+        this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(this.courseId()).subscribe({
             next: (exams) => {
                 this.exams.set(exams);
                 // The Map is used to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
