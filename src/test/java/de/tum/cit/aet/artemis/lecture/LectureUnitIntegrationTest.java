@@ -650,6 +650,23 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMaterialVersions_whileTheVideoIsBeingReTranscribed_reportsNoVideoVersion() throws Exception {
+        var unit = citedUnitFixture(ProcessingPhase.TRANSCRIBING);
+        // What a raw checkpoint of a run in progress leaves behind: a pending transcription, while the version still describes the completed one before it
+        var transcription = lectureTranscriptionRepository.findByLectureUnit_Id(unit.getId()).orElseThrow();
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        lectureTranscriptionRepository.save(transcription);
+
+        var versions = request.get("/api/lecture/lecture-units/" + unit.getId() + "/material-versions", HttpStatus.OK, LectureUnitMaterialVersionsDTO.class);
+
+        // Reporting the retained version here would let a citation of the previous video pass as current and jump to a timestamp that no longer says what it said
+        assertThat(versions.videoVersion()).isNull();
+        assertThat(versions.hasVideo()).isTrue();
+        assertThat(versions.attachmentVersion()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMaterialVersions_whenTheVideoWasRemoved_reportsNoVideo() throws Exception {
         var unit = citedUnitFixture(ProcessingPhase.DONE);
         lectureTranscriptionRepository.deleteAll(lectureTranscriptionRepository.findByLectureId(lecture1.getId()));

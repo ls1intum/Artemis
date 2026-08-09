@@ -339,6 +339,17 @@ describe('IrisCitationTextComponent', () => {
             expect(warning).not.toHaveBeenCalled();
         });
 
+        // A transcript segment carries the slide it was spoken over, but only the transcription was checked: the PDF may have changed on its own, so that page would be
+        // an unverified slide presented as the cited one.
+        it('leaves out the companion slide of a video citation', () => {
+            getMaterialVersions.mockReturnValue(of({ videoVersion: 2, hasVideo: true, attachmentVersion: 5 }));
+
+            clickCitation('[cite:L:42:7:120:180:Key:Summary:vt2]', [meta()]);
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: '120' } });
+            expect(warning).not.toHaveBeenCalled();
+        });
+
         it('compares a video citation against the transcription, not against the slides', () => {
             // The slides happen to sit at exactly the pinned number, which must not make the citation look unchanged
             getMaterialVersions.mockReturnValue(of({ attachmentVersion: 2 }));

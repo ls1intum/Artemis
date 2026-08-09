@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitMaterialVersionsDTO;
 
@@ -113,8 +114,8 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT new de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO(
                 lu.id,
-                CASE WHEN ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE THEN ps.attachmentVersion ELSE NULL END,
-                CASE WHEN ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE AND t.id IS NOT NULL THEN ps.transcriptionVersion ELSE NULL END)
+                CASE WHEN ps.phase = ProcessingPhase.DONE THEN ps.attachmentVersion ELSE NULL END,
+                CASE WHEN ps.phase = ProcessingPhase.DONE AND t.id IS NOT NULL THEN ps.transcriptionVersion ELSE NULL END)
             FROM LectureUnit lu
                 LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = lu.id
                 LEFT JOIN LectureTranscription t ON t.lectureUnit.id = lu.id
@@ -127,6 +128,11 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
      * <p>
      * Iris citations are pinned to the version of the material they were generated from. Fetching the current versions at the moment a citation is clicked — rather than
      * carrying them along with the chat — is what makes the comparison reflect the material as it is right now.
+     * <p>
+     * The transcription version is only reported for a {@link TranscriptionStatus#COMPLETED} transcription, because the version describes the last completed one: a run in
+     * progress writes its raw segments as {@link TranscriptionStatus#PENDING} and the version only follows once the enriched result arrives. Reporting it in between would
+     * let a citation of the previous video compare equal and jump to a timestamp that no longer describes what is said there — for the length of the run, or indefinitely
+     * if it never completes.
      *
      * @param lectureUnitId the ID of the lecture unit
      * @return the current versions, or empty if the unit does not exist
@@ -141,6 +147,7 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
                 LEFT JOIN avu.attachment a
                 LEFT JOIN LectureUnitProcessingState ps ON ps.lectureUnit.id = lu.id
                 LEFT JOIN LectureTranscription t ON t.lectureUnit.id = lu.id
+                    AND t.transcriptionStatus = TranscriptionStatus.COMPLETED
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnitMaterialVersionsDTO> findMaterialVersionsById(@Param("lectureUnitId") long lectureUnitId);

@@ -7,7 +7,7 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { IrisCitationParsed } from './iris-citation-text.model';
+import { IrisCitationParsed, IrisCitationVersion } from './iris-citation-text.model';
 import { IrisCitationMaterialVersionService } from './iris-citation-material-version.service';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
@@ -341,11 +341,12 @@ export class IrisCitationTextComponent {
         }
 
         const pinnedVersion = element.getAttribute('data-pinned-version');
-        const pinnedKind = element.getAttribute('data-pinned-kind');
-        if (!pinnedVersion || !pinnedKind) {
+        const pinnedKindAttribute = element.getAttribute('data-pinned-kind');
+        if (!pinnedVersion || !pinnedKindAttribute) {
             this.navigateToLectureUnit(element, courseId, lectureId, unitId, true);
             return;
         }
+        const pinnedKind: IrisCitationVersion['kind'] = pinnedKindAttribute === 'video' ? 'video' : 'attachment';
 
         this.materialVersionService
             .getMaterialVersions(Number(unitId))
@@ -359,7 +360,7 @@ export class IrisCitationTextComponent {
                         if (!isUnchanged) {
                             this.alertService.warning(CITATION_STALE_WARNING_KEY);
                         }
-                        this.navigateToLectureUnit(element, courseId, lectureId, unitId, isUnchanged);
+                        this.navigateToLectureUnit(element, courseId, lectureId, unitId, isUnchanged, pinnedKind);
                         return;
                     }
                     // A version can only have been pinned for material that was processed, so a missing one means the material is no longer what it was. A video whose
@@ -390,16 +391,27 @@ export class IrisCitationTextComponent {
      * <p>
      * The `deepLink` flag tells the lecture page that a specific unit was asked for rather than the lecture as a whole, so that it can say so when it cannot find it. It is
      * set for every citation, including ones carrying no pinned version: whether the unit still exists is a question that does not need versions to answer.
+     * <p>
+     * A stamped citation only travels with the coordinate of the material it was checked against. A video citation carries the companion slide number of its transcript
+     * segment, and that PDF may have changed on its own since — the transcription version says nothing about it, so jumping to that page would present an unverified slide
+     * as the cited one. Citations without a pinned version keep taking both, exactly as they did before versions existed.
      */
-    private navigateToLectureUnit(element: HTMLElement, courseId: string, lectureId: string, unitId: string, includeExactPosition: boolean): void {
+    private navigateToLectureUnit(
+        element: HTMLElement,
+        courseId: string,
+        lectureId: string,
+        unitId: string,
+        includeExactPosition: boolean,
+        pinnedKind?: IrisCitationVersion['kind'],
+    ): void {
         const queryParams: Record<string, string> = { unit: unitId, deepLink: 'true' };
         if (includeExactPosition) {
             const timestamp = element.getAttribute('data-timestamp');
             const page = element.getAttribute('data-page');
-            if (timestamp) {
+            if (timestamp && pinnedKind !== 'attachment') {
                 queryParams.timestamp = timestamp;
             }
-            if (page) {
+            if (page && pinnedKind !== 'video') {
                 queryParams.page = page;
             }
         }
