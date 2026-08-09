@@ -17,6 +17,12 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
                 "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.course.domain.Course, boolean)",
                 // dispatchPendingJobs needs @Transactional because it uses FOR UPDATE SKIP LOCKED and its callers have no transaction context.
                 "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.dispatchPendingJobs()",
+                // Regeneration must hold the attachment row lock while coordinating database state with student-PDF file replacement, including for callers without a transaction.
+                "de.tum.cit.aet.artemis.lecture.service.AttachmentService.regenerateStudentVersion(de.tum.cit.aet.artemis.lecture.domain.Attachment)",
+                // Self-invocation bypasses regenerateStudentVersion's proxy, so this outer transaction establishes the required boundary.
+                "de.tum.cit.aet.artemis.lecture.service.AttachmentService.regenerateStudentVersionOrLeavePending(de.tum.cit.aet.artemis.lecture.domain.Attachment)",
+                // Keep the defensive attachment lock active if a caller does not already have a transaction.
+                "de.tum.cit.aet.artemis.lecture.service.AttachmentService.markStudentVersionRegenerationPending(de.tum.cit.aet.artemis.lecture.domain.Attachment)",
                 // Slide splitting holds a pessimistic unit lock while coordinating database rows with file-system rollback and after-commit actions.
                 "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitSlideSplitJob)",
                 "de.tum.cit.aet.artemis.lecture.service.SlideSplitterService.updateSlideVisibility(de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit, java.util.List)",

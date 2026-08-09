@@ -156,7 +156,7 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         testSlide.setHidden(originalDueDate);
         Slide savedSlide = slideRepository.save(testSlide);
         attachmentService.regenerateStudentVersion(testAttachmentVideoUnit.getAttachment());
-        String oldStudentVersion = testAttachmentVideoUnit.getAttachment().getStudentVersion();
+        String oldStudentVersion = attachmentRepository.findById(testAttachmentVideoUnit.getAttachment().getId()).orElseThrow().getStudentVersion();
         assertThat(oldStudentVersion).isNotBlank();
         Path oldStudentVersionPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldStudentVersion), FilePathType.STUDENT_VERSION_SLIDES);
         assertThat(oldStudentVersionPath).exists();

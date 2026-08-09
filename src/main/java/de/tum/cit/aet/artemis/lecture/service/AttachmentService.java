@@ -107,6 +107,8 @@ public class AttachmentService {
     /**
      * Regenerates the student version of an attachment based on currently visible slides.
      * This should be called after slides are unhidden to ensure the student version is up-to-date.
+     * Persisted attachments are reloaded with a pessimistic lock. Callers without a surrounding transaction that pass a detached attachment must reload the attachment to
+     * observe changes to its student-version reference.
      *
      * @param attachment The attachment whose student version needs to be regenerated
      */

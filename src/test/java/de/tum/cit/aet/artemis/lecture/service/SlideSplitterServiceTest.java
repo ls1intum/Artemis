@@ -538,7 +538,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     void studentVersionFailureRollsBackVisibilityUpdate() {
         Slide slide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
         testAttachmentVideoUnit.getAttachment().setLink("attachments/attachment-unit/" + testAttachmentVideoUnit.getId() + "/missing.pdf");
-        attachmentVideoUnitRepository.saveAndFlush(testAttachmentVideoUnit);
+        attachmentRepository.saveAndFlush(testAttachmentVideoUnit.getAttachment());
         ZonedDateTime hiddenUntil = ZonedDateTime.now().plusDays(1);
 
         assertThatThrownBy(() -> slideVisibilityUpdateService.updateVisibilityAndStudentVersion(testAttachmentVideoUnit,
