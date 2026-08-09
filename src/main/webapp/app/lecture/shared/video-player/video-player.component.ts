@@ -108,6 +108,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private readonly seekableState = signal<boolean>(false);
     readonly isSeekable = this.seekableState.asReadonly();
 
+    /** The reason above, as an answer rather than a not-yet: {@link isSeekable} will not follow while this holds. */
+    private readonly unboundedState = signal<boolean>(false);
+    readonly isUnbounded = this.unboundedState.asReadonly();
+
     /** Store reference to the metadata handler that flips {@link isSeekable}, for cleanup */
     private durationHandler: (() => void) | undefined = undefined;
 
@@ -195,7 +199,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         // A finite duration is the actual condition — an unbounded stream has its metadata and still no length to judge
         // against — and it covers the not-yet-loaded case on its own, since the duration is NaN until metadata arrives.
         this.durationHandler = () => {
-            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(videoElement.duration));
+            const duration = videoElement.duration;
+            this.seekableState.set(videoElement.readyState >= 1 && Number.isFinite(duration));
+            this.unboundedState.set(duration === Infinity);
         };
         videoElement.addEventListener('loadedmetadata', this.durationHandler);
         videoElement.addEventListener('durationchange', this.durationHandler);

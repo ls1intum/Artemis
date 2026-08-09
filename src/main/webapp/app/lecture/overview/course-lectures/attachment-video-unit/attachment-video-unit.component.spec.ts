@@ -1126,36 +1126,51 @@ describe('AttachmentVideoUnitComponent', () => {
             return { correlationId: 'corr', lectureUnitId: 1, ...overrides } as IrisPointOut;
         }
 
-        /** Mirrors the real viewer, which refuses to navigate to a page the loaded document does not have. */
-        const isPageInRange = (page: number, totalPages: number) => page >= 1 && page <= totalPages;
-
         /**
-         * Installs a stand-in for the pdfViewer viewChild. Its page count comes from a real signal so that "the
-         * document finished loading" re-runs the pending-point-out effect the same way it does in production, and
-         * goToPage mirrors the real viewer by rejecting targets outside that range.
+         * Installs stand-ins for the pdfViewer and videoPlayer viewChildren, mirroring the real ones in the two
+         * respects these tests turn on. They refuse what the real ones refuse — a page the loaded document does not
+         * have, a position past the end of the video — and they echo an applied navigation back the way the real
+         * ones emit it: the viewer reports the new page from inside goToPage, the player its active slide from
+         * inside seekTo. Without that echo neither pane could drag the other, which is what the synchronization
+         * tests are about; where synchronization is off the component ignores the echo, as it does in production.
+         *
+         * The page count comes from a signal so that "the document finished loading" re-runs the pending-point-out
+         * effect the same way it does in production.
          */
-        function mockPdfViewer(totalPages: WritableSignal<number>) {
-            const goToPage = vi.fn((page: number) => isPageInRange(page, totalPages()));
+        function mockViewers(totalPages: WritableSignal<number>, duration = 300) {
+            let currentPage = 1;
+            let currentSlideNumber: number | undefined;
+            const canGoToPage = (page: number) => page >= 1 && page <= totalPages();
+            const canSeekTo = (seconds: number) => seconds >= 0 && seconds <= duration;
+            const goToPage = vi.fn((page: number) => {
+                if (!canGoToPage(page)) {
+                    return false;
+                }
+                currentPage = page;
+                component['onPdfCurrentPageChange'](page);
+                return true;
+            });
+            // Resolves the slide the way VideoPlayerComponent.updateCurrentSegment does, including its 0.3s
+            // tolerance, so a timestamp on a shared boundary lands on the earlier segment here just as it does there.
+            const seekTo = vi.fn((seconds: number) => {
+                if (!canSeekTo(seconds)) {
+                    return false;
+                }
+                currentSlideNumber = component.transcriptSegments().find((segment) => seconds >= segment.startTime - 0.3 && seconds <= segment.endTime + 0.3)?.slideNumber;
+                component['onVideoSlideNumberChange'](currentSlideNumber);
+                return true;
+            });
             Object.defineProperty(component, 'pdfViewer', {
-                value: vi.fn().mockReturnValue({ goToPage, canGoToPage: (page: number) => isPageInRange(page, totalPages()), getTotalPages: () => totalPages() }),
+                value: () => ({ goToPage, canGoToPage, getTotalPages: () => totalPages(), getCurrentPage: () => currentPage }),
                 writable: true,
                 configurable: true,
             });
-            return goToPage;
-        }
-
-        /**
-         * Installs a stand-in for the videoPlayer viewChild that accepts positions up to `duration`, mirroring the
-         * real player's refusal of a target past the end of the video.
-         */
-        function mockVideoPlayer(duration: number) {
-            const seekTo = vi.fn((seconds: number) => seconds >= 0 && seconds <= duration);
             Object.defineProperty(component, 'videoPlayer', {
-                value: () => ({ seekTo, canSeekTo: (seconds: number) => seconds >= 0 && seconds <= duration, isSeekable: () => true }),
+                value: () => ({ seekTo, canSeekTo, isSeekable: () => true, isUnbounded: () => false, isPlaying: () => false, getCurrentSlideNumber: () => currentSlideNumber }),
                 writable: true,
                 configurable: true,
             });
-            return seekTo;
+            return { goToPage, seekTo };
         }
 
         /**
@@ -1194,7 +1209,7 @@ describe('AttachmentVideoUnitComponent', () => {
         it('acknowledges as not applied when the deck does not have the requested page', () => {
             // Iris names a page the deck does not have, so the viewer stays put. Reporting success here would leave
             // Iris claiming a jump that never happened and persist a point-out chip that does nothing when clicked.
-            const goToPage = mockPdfViewer(signal(4));
+            const { goToPage } = mockViewers(signal(4));
             component['fullscreenState'].set(true);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c8', page: 99 }));
@@ -1215,8 +1230,7 @@ describe('AttachmentVideoUnitComponent', () => {
             ['the page does not exist', { page: 99, timestamp: 12 }],
             ['the timestamp lies past the end of the video', { page: 2, timestamp: 9999 }],
         ])('applies neither half of a combined point-out when %s', (_reason, target) => {
-            const goToPage = mockPdfViewer(signal(4));
-            const seekTo = mockVideoPlayer(300);
+            const { goToPage, seekTo } = mockViewers(signal(4));
             component['fullscreenState'].set(true);
             // Synchronization has to be genuinely available, or the toggle would go off on its own and the
             // assertion below would pass without saying anything about the point-out.
@@ -1241,7 +1255,7 @@ describe('AttachmentVideoUnitComponent', () => {
             // The viewer component renders before its document does and reports 0 pages until then. Acting on that
             // would reject every target; the point-out has to stay pending until the page count is known.
             const totalPages = signal(0);
-            const goToPage = mockPdfViewer(totalPages);
+            const { goToPage } = mockViewers(totalPages);
             component['fullscreenState'].set(true);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c9', page: 3 }));
@@ -1266,7 +1280,7 @@ describe('AttachmentVideoUnitComponent', () => {
             // openFullscreen() does not set the fullscreen state synchronously: it goes through the layout,
             // which reports back via onFullscreenChange. A forceOpen point-out therefore starts out with
             // isFullscreen() === false and must survive until the view is actually up.
-            const goToPage = mockPdfViewer(signal(10));
+            const { goToPage } = mockViewers(signal(10));
             component['fullscreenState'].set(false);
             makeCombinedViewOpenable();
             vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
@@ -1375,6 +1389,28 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
+        it('gives up on a timestamp target once the rendered player reports an unbounded stream', () => {
+            // A live stream has no length to place a position in and never will, so the wait for seekability could
+            // not end. Held on, the target would outlive the server's ack timeout and navigate on a later
+            // durationchange — after Pyris was told it did not happen and no marker was written for it.
+            Object.defineProperty(component, 'videoPlayer', {
+                value: () => ({ isSeekable: () => false, isUnbounded: () => true, seekTo: vi.fn(), canSeekTo: () => false }),
+                writable: true,
+                configurable: true,
+            });
+            component['fullscreenState'].set(true);
+            component.isLoading.set(false);
+            component['isTranscriptLoading'].set(false);
+            component.playlistUrl.set('https://cdn.example.com/live.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 10, text: 'Slide 7', slideNumber: 7 }]);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c18', timestamp: 42 }));
+            fixture.detectChanges();
+
+            expect(ackSpy).toHaveBeenCalledWith('c18', false);
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
         it('keeps a timestamp target pending while the video source and its transcript are still being resolved', () => {
             // The playlist is only known once loading has finished, and the transcript is requested just before the
             // loading flag clears and settles only after it — so an empty transcript is not an answer at either point.
@@ -1447,57 +1483,6 @@ describe('AttachmentVideoUnitComponent', () => {
                 { startTime: 20, endTime: 30, text: 'Slide 9', slideNumber: 9 },
             ];
 
-            // Mirrors VideoPlayerComponent.updateCurrentSegment including its 0.3s tolerance, so that a timestamp on
-            // a shared boundary resolves to the earlier segment here just as it does in the real player.
-            const slideAtTimestamp = (timestamp: number) => transcript.find((s) => timestamp >= s.startTime - 0.3 && timestamp <= s.endTime + 0.3)?.slideNumber;
-
-            /**
-             * Installs viewers that complete the synchronization handshake the way the real ones do: the PDF viewer
-             * reports the new page from inside goToPage (as it emits currentPageChange), and the player updates its
-             * active slide from inside seekTo. Without that echo a pane could not drag the other one at all, which is
-             * the very thing these tests are about.
-             */
-            function mockSynchronizedViewers(totalPages: number) {
-                let currentPage = 1;
-                let currentSlideNumber: number | undefined;
-                const goToPage = vi.fn((page: number) => {
-                    if (!isPageInRange(page, totalPages)) {
-                        return false;
-                    }
-                    currentPage = page;
-                    component['onPdfCurrentPageChange'](page);
-                    return true;
-                });
-                const seekTo = vi.fn((timestamp: number) => {
-                    currentSlideNumber = slideAtTimestamp(timestamp);
-                    component['onVideoSlideNumberChange'](currentSlideNumber);
-                    // A rendered player takes the seek, and its answer is what the point-out is acknowledged with.
-                    return true;
-                });
-                Object.defineProperty(component, 'pdfViewer', {
-                    value: () => ({
-                        goToPage,
-                        canGoToPage: (page: number) => isPageInRange(page, totalPages),
-                        getTotalPages: () => totalPages,
-                        getCurrentPage: () => currentPage,
-                    }),
-                    writable: true,
-                    configurable: true,
-                });
-                Object.defineProperty(component, 'videoPlayer', {
-                    value: () => ({
-                        seekTo,
-                        canSeekTo: () => true,
-                        isSeekable: () => true,
-                        isPlaying: () => false,
-                        getCurrentSlideNumber: () => currentSlideNumber,
-                    }),
-                    writable: true,
-                    configurable: true,
-                });
-                return { goToPage, seekTo };
-            }
-
             beforeEach(() => {
                 component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
                 component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
@@ -1507,7 +1492,7 @@ describe('AttachmentVideoUnitComponent', () => {
             });
 
             it('keeps the toggle on and both panes on Iris position when the two positions agree', () => {
-                const { goToPage, seekTo } = mockSynchronizedViewers(3);
+                const { goToPage, seekTo } = mockViewers(signal(3));
 
                 component['handlePointOut'](pointOutRequest({ correlationId: 's1', page: 2, displayPage: 8, timestamp: 12 }));
                 fixture.detectChanges();
@@ -1530,7 +1515,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 [25, '0:25'],
                 [10, '0:10'],
             ])('turns the toggle off and applies both positions when page 2 and timestamp %is show different slides', (timestamp, time) => {
-                const { goToPage, seekTo } = mockSynchronizedViewers(3);
+                const { goToPage, seekTo } = mockViewers(signal(3));
 
                 component['handlePointOut'](pointOutRequest({ correlationId: 's2', page: 2, displayPage: 8, timestamp }));
                 fixture.detectChanges();
@@ -1548,7 +1533,7 @@ describe('AttachmentVideoUnitComponent', () => {
             it('lets synchronization derive the video position from a point-out that only names a page', () => {
                 // Nothing contradicts synchronization here: the video following Iris to the slide it named is the
                 // whole point of the toggle.
-                const { seekTo } = mockSynchronizedViewers(3);
+                const { seekTo } = mockViewers(signal(3));
 
                 component['handlePointOut'](pointOutRequest({ correlationId: 's3', page: 2, displayPage: 8 }));
                 fixture.detectChanges();
@@ -1559,7 +1544,7 @@ describe('AttachmentVideoUnitComponent', () => {
             });
 
             it('drops the explanation once the student decides about the toggle themselves', () => {
-                mockSynchronizedViewers(3);
+                mockViewers(signal(3));
                 component['handlePointOut'](pointOutRequest({ correlationId: 's5', page: 2, displayPage: 8, timestamp: 25 }));
                 fixture.detectChanges();
                 expect(component.syncDisabledByPointOut()).toBeDefined();

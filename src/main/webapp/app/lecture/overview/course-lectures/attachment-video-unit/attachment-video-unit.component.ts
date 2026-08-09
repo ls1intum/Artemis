@@ -525,6 +525,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (pointOut.page != undefined && (!this.hasPdf() || this.pdfLoadError())) {
             return true;
         }
+        // A rendered player on an unbounded stream has no length to place a position in and never will, so the wait
+        // for seekability below could not end there either.
+        if (pointOut.timestamp != undefined && this.videoPlayer()?.isUnbounded()) {
+            return true;
+        }
         const hasSeekableVideo = ((!!this.playlistUrl() && this.hasTranscript()) || !!this.youtubeVideoId()) && !this.playerFailed();
         return pointOut.timestamp != undefined && !this.isLoading() && !this.isTranscriptLoading() && !hasSeekableVideo;
     }

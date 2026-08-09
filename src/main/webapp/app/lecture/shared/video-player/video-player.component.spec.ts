@@ -290,6 +290,9 @@ describe('VideoPlayerComponent', () => {
         videoElement.dispatchEvent(new Event('loadedmetadata'));
 
         expect(component.isSeekable()).toBe(false);
+        // Stated separately from "not seekable yet", so a caller waiting on seekability can stop rather than wait out
+        // a budget that will never be met.
+        expect(component.isUnbounded()).toBe(true);
     });
 
     it('emits playerFailed when the media element reports an error', async () => {
