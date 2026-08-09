@@ -302,6 +302,16 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
+    /** {@link seekTo}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canSeekTo(seconds: number): boolean {
+        const videoElement = this.videoRef()?.nativeElement;
+        if (!videoElement) {
+            return false;
+        }
+        const duration = videoElement.duration;
+        return seconds >= 0 && (!Number.isFinite(duration) || seconds <= duration);
+    }
+
     /**
      * Seeks the video to the given time and optionally resumes playback.
      * @param seconds the position to seek to
@@ -314,17 +324,11 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      *         waits for {@link isSeekable} first, so it never has to trust the answer given in that window.
      */
     seekTo(seconds: number, resumePlayback = true): boolean {
-        const elRef = this.videoRef();
-        const videoElement = elRef ? elRef.nativeElement : undefined;
-
-        if (!videoElement) {
+        if (!this.canSeekTo(seconds)) {
             return false;
         }
-
-        const duration = videoElement.duration;
-        if (seconds < 0 || (Number.isFinite(duration) && seconds > duration)) {
-            return false;
-        }
+        // Guaranteed by canSeekTo, which returns false without an element.
+        const videoElement = this.videoRef()!.nativeElement;
 
         videoElement.currentTime = seconds;
         if (resumePlayback) {

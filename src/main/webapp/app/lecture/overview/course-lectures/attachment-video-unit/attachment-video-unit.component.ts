@@ -431,6 +431,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const page = pointOut.page;
         const timestamp = pointOut.timestamp;
 
+        // All or nothing. Both targets are checked before either viewer or the toggle is touched, because a
+        // point-out that moved only one of its two panes is worse than one that moved neither: it is reported as not
+        // applied and gets no marker, so nothing in the chat leads back to the half-position the student is left in,
+        // and Iris' answer describes a place they are not.
+        if (!this.canApplyPointOut(page, timestamp)) {
+            return false;
+        }
+
         // A point-out supersedes the explanation left by an earlier one, whether or not it disables the toggle again.
         this.syncDisabledByPointOutState.set(undefined);
         if (page != undefined && timestamp != undefined && this.contradictsSynchronization(page, timestamp)) {
@@ -449,6 +457,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             applied = (this.activePlayer()?.seekTo(timestamp, false) ?? false) && applied;
         }
         return applied;
+    }
+
+    /** Whether every target a point-out names would be taken, each viewer answering for its own without moving. */
+    private canApplyPointOut(page: number | undefined, timestamp: number | undefined): boolean {
+        if (page != undefined && !(this.pdfViewer()?.canGoToPage(page) ?? false)) {
+            return false;
+        }
+        return timestamp == undefined || (this.activePlayer()?.canSeekTo(timestamp) ?? false);
     }
 
     /**

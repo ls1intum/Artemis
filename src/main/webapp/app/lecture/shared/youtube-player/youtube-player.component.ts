@@ -273,6 +273,15 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.seekableState.set((this.youtubePlayer?.getDuration() ?? 0) > 0);
     }
 
+    /** {@link seekTo}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canSeekTo(seconds: number): boolean {
+        if (!this.youtubePlayer) {
+            return false;
+        }
+        const duration = this.youtubePlayer.getDuration();
+        return seconds >= 0 && (duration <= 0 || seconds <= duration);
+    }
+
     /**
      * Seeks the video to the given position.
      * @param seconds the position to seek to
@@ -284,17 +293,17 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
      *         {@link isSeekable} first, so it never has to trust the answer given in that window.
      */
     seekTo(seconds: number, resumePlayback = true): boolean {
-        if (!this.youtubePlayer) return false;
-        const duration = this.youtubePlayer.getDuration();
-        if (seconds < 0 || (duration > 0 && seconds > duration)) {
+        if (!this.canSeekTo(seconds)) {
             return false;
         }
+        // Guaranteed by canSeekTo, which returns false without a player.
+        const player = this.youtubePlayer!;
         const wasPlaying = this.isPlaying();
-        this.youtubePlayer.seekTo(seconds, true);
+        player.seekTo(seconds, true);
         // YouTube starts playing a video that had not been started yet, where the native player just moves its
         // position. Left as it is, an Iris point-out would set a YouTube lecture playing but not a streamed one.
         if (!resumePlayback && !wasPlaying) {
-            this.youtubePlayer.pauseVideo();
+            player.pauseVideo();
         }
         this.updateCurrentSegment(seconds);
         return true;

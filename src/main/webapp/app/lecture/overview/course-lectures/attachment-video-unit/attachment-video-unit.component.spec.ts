@@ -1137,11 +1137,25 @@ describe('AttachmentVideoUnitComponent', () => {
         function mockPdfViewer(totalPages: WritableSignal<number>) {
             const goToPage = vi.fn((page: number) => isPageInRange(page, totalPages()));
             Object.defineProperty(component, 'pdfViewer', {
-                value: vi.fn().mockReturnValue({ goToPage, getTotalPages: () => totalPages() }),
+                value: vi.fn().mockReturnValue({ goToPage, canGoToPage: (page: number) => isPageInRange(page, totalPages()), getTotalPages: () => totalPages() }),
                 writable: true,
                 configurable: true,
             });
             return goToPage;
+        }
+
+        /**
+         * Installs a stand-in for the videoPlayer viewChild that accepts positions up to `duration`, mirroring the
+         * real player's refusal of a target past the end of the video.
+         */
+        function mockVideoPlayer(duration: number) {
+            const seekTo = vi.fn((seconds: number) => seconds >= 0 && seconds <= duration);
+            Object.defineProperty(component, 'videoPlayer', {
+                value: () => ({ seekTo, canSeekTo: (seconds: number) => seconds >= 0 && seconds <= duration, isSeekable: () => true }),
+                writable: true,
+                configurable: true,
+            });
+            return seekTo;
         }
 
         /**
@@ -1177,7 +1191,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).not.toHaveBeenCalled();
         });
 
-        it('acknowledges as not applied when the viewer rejects the requested page', () => {
+        it('acknowledges as not applied when the deck does not have the requested page', () => {
             // Iris names a page the deck does not have, so the viewer stays put. Reporting success here would leave
             // Iris claiming a jump that never happened and persist a point-out chip that does nothing when clicked.
             const goToPage = mockPdfViewer(signal(4));
@@ -1186,9 +1200,40 @@ describe('AttachmentVideoUnitComponent', () => {
             component['handlePointOut'](pointOutRequest({ correlationId: 'c8', page: 99 }));
             fixture.detectChanges();
 
-            expect(goToPage).toHaveBeenCalledWith(99);
+            // The viewer is asked whether it has the page, never told to go there.
+            expect(goToPage).not.toHaveBeenCalled();
             expect(ackSpy).toHaveBeenCalledWith('c8', false);
             // Settled either way: the target is known to be unreachable, so it must not linger and fire later.
+            expect(component['pendingPointOut']()).toBeUndefined();
+        });
+
+        // A point-out naming both a page and a timestamp is all or nothing. Applying the half that holds up would
+        // move one pane and leave the other where it was, while the whole thing is reported as not applied and gets
+        // no marker — so the student sits in a half-position that nothing in the chat leads back to and that Iris'
+        // answer describes wrongly. Both orderings are covered because the two targets are applied one after another.
+        it.each([
+            ['the page does not exist', { page: 99, timestamp: 12 }],
+            ['the timestamp lies past the end of the video', { page: 2, timestamp: 9999 }],
+        ])('applies neither half of a combined point-out when %s', (_reason, target) => {
+            const goToPage = mockPdfViewer(signal(4));
+            const seekTo = mockVideoPlayer(300);
+            component['fullscreenState'].set(true);
+            // Synchronization has to be genuinely available, or the toggle would go off on its own and the
+            // assertion below would pass without saying anything about the point-out.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 10, text: 'Slide 7', slideNumber: 7 }]);
+            component.synchronizeVideoAndSlides.set(true);
+
+            component['handlePointOut'](pointOutRequest({ correlationId: 'c17', ...target }));
+            fixture.detectChanges();
+
+            expect(goToPage).not.toHaveBeenCalled();
+            expect(seekTo).not.toHaveBeenCalled();
+            // The toggle is part of applying a point-out, so it must not have given way for one that never happened.
+            expect(component.synchronizeVideoAndSlides()).toBe(true);
+            expect(component.syncDisabledByPointOut()).toBeUndefined();
+            expect(ackSpy).toHaveBeenCalledWith('c17', false);
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
@@ -1369,7 +1414,7 @@ describe('AttachmentVideoUnitComponent', () => {
             const isSeekable = signal(false);
             const seekTo = vi.fn(() => isSeekable());
             Object.defineProperty(component, 'youtubePlayer', {
-                value: () => ({ isSeekable, seekTo }),
+                value: () => ({ isSeekable, seekTo, canSeekTo: () => isSeekable() }),
                 writable: true,
                 configurable: true,
             });
@@ -1430,12 +1475,23 @@ describe('AttachmentVideoUnitComponent', () => {
                     return true;
                 });
                 Object.defineProperty(component, 'pdfViewer', {
-                    value: () => ({ goToPage, getTotalPages: () => totalPages, getCurrentPage: () => currentPage }),
+                    value: () => ({
+                        goToPage,
+                        canGoToPage: (page: number) => isPageInRange(page, totalPages),
+                        getTotalPages: () => totalPages,
+                        getCurrentPage: () => currentPage,
+                    }),
                     writable: true,
                     configurable: true,
                 });
                 Object.defineProperty(component, 'videoPlayer', {
-                    value: () => ({ seekTo, isSeekable: () => true, isPlaying: () => false, getCurrentSlideNumber: () => currentSlideNumber }),
+                    value: () => ({
+                        seekTo,
+                        canSeekTo: () => true,
+                        isSeekable: () => true,
+                        isPlaying: () => false,
+                        getCurrentSlideNumber: () => currentSlideNumber,
+                    }),
                     writable: true,
                     configurable: true,
                 });

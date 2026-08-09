@@ -597,6 +597,11 @@ export class PdfViewerComponent {
         return this.totalPages();
     }
 
+    /** {@link goToPage}'s condition on its own, for a caller that has to know all its targets hold up before moving any. */
+    canGoToPage(page: number): boolean {
+        return Number.isInteger(page) && page >= 1 && page <= this.totalPages();
+    }
+
     /**
      * Scrolls the given page into view.
      *
@@ -606,7 +611,7 @@ export class PdfViewerComponent {
      *         navigation having happened.
      */
     goToPage(page: number): boolean {
-        if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) {
+        if (!this.canGoToPage(page)) {
             return false;
         }
         const element = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1);
