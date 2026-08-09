@@ -40,6 +40,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisActivityItem, IrisActivityKind, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -277,8 +278,15 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
+    /** Copies the shared assistant fixture before overriding `final`, so tests never alias its dayjs/content fields. */
+    const intermediateServerMessage = (): IrisAssistantMessage => {
+        const message = deepClone(mockServerMessage);
+        message.final = false;
+        return message;
+    };
+
     it('should not expose the toolbox for an intermediate assistant message', () => {
-        chatService.messages.next([{ ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        chatService.messages.next([intermediateServerMessage()]);
         fixture.detectChanges();
 
         // An intermediate message is not an answer — neither copy nor rating is offered, regardless of run state.
@@ -317,7 +325,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should not expose the toolbox for an intermediate assistant message left after a failed run', () => {
         // The newest assistant message is intermediate (final: false) — e.g. a tool call whose run then failed.
-        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        chatService.messages.next([mockUserMessageWithContent('question'), intermediateServerMessage()]);
         chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FAILED });
         fixture.detectChanges();
 
@@ -328,7 +336,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should not expose the toolbox for a persisted intermediate assistant message without run info', () => {
         // Reloaded history: the newest assistant message is intermediate and there is no run info at all.
-        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        chatService.messages.next([mockUserMessageWithContent('question'), intermediateServerMessage()]);
         fixture.detectChanges();
 
         expect(component.runInfo()).toBeUndefined();
@@ -337,7 +345,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should not expose the toolbox for an intermediate assistant message after a finished run', () => {
         // Terminal but non-failed run state must not re-enable the toolbox for a non-final message.
-        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage]);
+        chatService.messages.next([mockUserMessageWithContent('question'), intermediateServerMessage()]);
         chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
         fixture.detectChanges();
 
@@ -347,7 +355,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should expose the toolbox for a final assistant message following an intermediate one', () => {
         // The intermediate message is superseded by a final answer → only the final answer gets the toolbox.
-        chatService.messages.next([mockUserMessageWithContent('question'), { ...mockServerMessage, final: false } as IrisAssistantMessage, mockServerMessage2]);
+        chatService.messages.next([mockUserMessageWithContent('question'), intermediateServerMessage(), mockServerMessage2]);
         chatService.runInfo.next({ runId: 'run-1', state: IrisRunState.FINISHED });
         fixture.detectChanges();
 
@@ -358,7 +366,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not rate intermediate assistant messages defensively', async () => {
-        const message = { ...mockServerMessage, final: false } as IrisAssistantMessage;
+        const message = intermediateServerMessage();
         const stub = vi.spyOn(chatService, 'rateMessage');
 
         component.rateMessage(message, true);
@@ -725,9 +733,16 @@ describe('IrisBaseChatbotComponent', () => {
             },
         ];
 
+        /** Copies the shared assistant fixture before attaching the trail, so tests never alias its dayjs/content fields. */
+        const messageWithPersistedActivities = (): IrisAssistantMessage => {
+            const message = deepClone(mockServerMessage);
+            message.activities = persistedActivities;
+            return message;
+        };
+
         it('should render the persisted trail collapsed by default, still expandable', () => {
             const instantSpy = vi.spyOn(component['translateService'], 'instant');
-            chatService.messages.next([{ ...mockServerMessage, activities: persistedActivities } as IrisAssistantMessage]);
+            chatService.messages.next([messageWithPersistedActivities()]);
             fixture.detectChanges();
 
             const trail = fixture.nativeElement.querySelector('details.activity-trail') as HTMLDetailsElement;
@@ -740,7 +755,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should expand the persisted trail to a read-only activity feed', () => {
-            chatService.messages.next([{ ...mockServerMessage, activities: persistedActivities } as IrisAssistantMessage]);
+            chatService.messages.next([messageWithPersistedActivities()]);
             fixture.detectChanges();
 
             const trail = fixture.nativeElement.querySelector('details.activity-trail') as HTMLDetailsElement;
