@@ -52,7 +52,7 @@
         "highlight.js": "11.11.1",
         "hls.js": "1.6.16",
         "html-diff-ts": "1.4.2",
-        "katex": "0.18.1",
+        "katex": "0.18.2",
         "lodash-es": "catalog:",
         "markdown-it": "15.0.0",
         "monaco-editor": "0.56.0",
