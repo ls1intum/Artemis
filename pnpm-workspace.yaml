@@ -1,8 +1,3 @@
-# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
-# ignores for everything except registry/auth/Node settings like node-options)
-# and into this file. Settings here govern the install behaviour in this
-# project root.
-
 packages:
   - 'packages/*'
 
@@ -131,7 +126,7 @@ overrides:
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.7'
-  '@babel/plugin-transform-modules-systemjs': '7.29.7'
+  '@babel/plugin-transform-modules-systemjs': '7.29.8'
   '@primeuix/styled': '0.7.4'
   '@primeuix/utils': '0.7.2'
   '@sinonjs/fake-timers': '15.4.0'

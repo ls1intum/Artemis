@@ -1,7 +1,3 @@
-# pnpm 11+ install/resolution settings for the documentation/ subproject.
-# Default isolated layout: no hoist shim. The gray-matter patch is applied
-# via `patchedDependencies` below (works on the .pnpm symlink store directly).
-
 preferFrozenLockfile: true
 enablePrePostScripts: true
 autoInstallPeers: true
@@ -13,7 +9,7 @@ autoInstallPeers: true
 # root pnpm projects.
 overrides:
   '@babel/core': '7.29.7'
-  '@babel/plugin-transform-modules-systemjs': '7.29.7'
+  '@babel/plugin-transform-modules-systemjs': '7.29.8'
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
@@ -46,4 +42,3 @@ allowBuilds:
   core-js: true
   core-js-pure: true
   esbuild: true
-
