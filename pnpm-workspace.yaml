@@ -1,8 +1,3 @@
-# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
-# ignores for everything except registry/auth/Node settings like node-options)
-# and into this file. Settings here govern the install behaviour in this
-# project root.
-
 packages:
   - 'packages/*'
 
@@ -181,7 +176,7 @@ overrides:
   '@analogjs/vite-plugin-angular>vite': '7.3.6'
   'vite-tsconfig-paths>vite': '7.3.6'
   webpack: '5.109.2'
-  webpack-dev-middleware: '7.4.5'
+  webpack-dev-middleware: '8.1.1'
   # Kept on the 5.x line (Angular build tooling requires ^5; 6.x is an API break).
   webpack-dev-server: '5.2.6'
   word-wrap: '1.2.5'
