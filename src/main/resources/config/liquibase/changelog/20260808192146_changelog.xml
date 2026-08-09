@@ -4,9 +4,10 @@
 
     <!--
         weaviate_outbox stores the intent of every SearchableEntities write (upsert or delete) as a durable
-        row. A single-writer dispatcher on the scheduling node claims rows with FOR UPDATE SKIP LOCKED and
-        performs the actual Weaviate write with retry/backoff, so a Weaviate outage or node death no longer
-        loses the write. UPSERT rows carry a payload snapshot (the property map the call site already built);
+        row. A single-writer dispatcher on the scheduling node reads due rows in id order (no locking, since it
+        is the only writer) and performs the actual Weaviate write with retry/backoff, so a Weaviate outage or
+        node death no longer loses the write. UPSERT rows carry a payload snapshot (the property map the call
+        site already built);
         bulk delete rows carry their parameters as JSON.
 
         searchable_entity_sync_state records, per (entity_type, entity_id), the content hash last confirmed

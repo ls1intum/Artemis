@@ -197,15 +197,19 @@ public class SearchableEntityWeaviateService {
         if (dtos == null || dtos.isEmpty()) {
             return;
         }
+        int enqueued = 0;
         for (ExerciseSearchableEntityDTO dto : dtos) {
             if (dto == null || dto.exerciseId() == null) {
                 log.warn("Cannot upsert exercise without an ID for exam {}", examId);
                 continue;
             }
             saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), dto.toPropertyMap());
+            enqueued++;
         }
-        log.debug("Enqueued upserts for {} exercises of exam {}", dtos.size(), examId);
-        signalEnqueued();
+        if (enqueued > 0) {
+            log.debug("Enqueued upserts for {} exercises of exam {}", enqueued, examId);
+            signalEnqueued();
+        }
     }
 
     // ----- Lecture sync -----
