@@ -55,6 +55,12 @@ describe('FileUploadExercise DTO adapters', () => {
             teamMode: false,
             gradingInstructionFeedbackUsed: true,
             releaseDate: '2026-02-01T08:00:00.000Z',
+            exerciseVariantGroup: {
+                id: 67,
+                title: 'Variants',
+                maxPoints: 20,
+                dueDate: '2026-02-03T08:00:00.000Z',
+            },
             exerciseGroup: {
                 id: 78,
                 exam: {
@@ -74,6 +80,8 @@ describe('FileUploadExercise DTO adapters', () => {
         expect(exercise.exerciseGroup?.exam?.id).toBe(90);
         expect(exercise.exerciseGroup?.exam?.startDate?.toISOString()).toBe('2026-02-02T08:00:00.000Z');
         expect(exercise.exerciseGroup?.exam?.course?.id).toBe(12);
+        expect(exercise.exerciseVariantGroup?.id).toBe(67);
+        expect(exercise.exerciseVariantGroup?.dueDate?.toISOString()).toBe('2026-02-03T08:00:00.000Z');
         expect(exercise.teamMode).toBe(false);
         expect(exercise.gradingInstructionFeedbackUsed).toBe(true);
     });

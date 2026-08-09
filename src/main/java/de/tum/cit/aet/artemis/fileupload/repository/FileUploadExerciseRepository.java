@@ -53,6 +53,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
                 LEFT JOIN FETCH results.assessor
                 LEFT JOIN FETCH fileUploadExercise.teamAssignmentConfig
                 LEFT JOIN FETCH fileUploadExercise.plagiarismDetectionConfig
+                LEFT JOIN FETCH fileUploadExercise.exerciseVariantGroup
                 LEFT JOIN FETCH fileUploadExercise.gradingCriteria
                 LEFT JOIN FETCH fileUploadExercise.competencyLinks cl
                 LEFT JOIN FETCH cl.competency

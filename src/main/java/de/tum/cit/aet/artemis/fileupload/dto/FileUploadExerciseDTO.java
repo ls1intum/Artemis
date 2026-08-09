@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param gradingInstructionFeedbackUsed         whether existing feedback uses structured grading instructions
  * @param course                                 the minimal course context for a course exercise
  * @param exerciseGroup                          the minimal exercise-group and exam context for an exam exercise
+ * @param exerciseVariantGroup                   the minimal exercise-variant-group context, when initialized
  * @param gradingCriteria                        the grading criteria, when initialized together with their instructions
  * @param competencyLinks                        the competency links, when initialized
  * @param plagiarismDetectionConfig              the plagiarism-detection settings, when initialized
@@ -68,8 +70,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
         @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed,
-        @Nullable CourseContextDTO course, @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable Set<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) {
+        @Nullable CourseContextDTO course, @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
+        @Nullable Set<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks,
+        @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) {
 
     /**
      * Maps a full create, import, detail, update, or re-evaluation response. Optional associations are included only when Hibernate has initialized them.
@@ -92,7 +95,8 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
     }
 
     /**
-     * Maps a lean course-management list entry. Categories are retained when fetched; course context and all other optional associations are intentionally omitted.
+     * Maps a lean course-management list entry. Categories and exercise-variant-group context are retained when fetched; course context and other optional associations are
+     * intentionally omitted.
      *
      * @param exercise the course exercise to map
      * @return the lean course-list response DTO
@@ -115,14 +119,15 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
                 : null;
         CourseContextDTO course = includeContext && exercise.isCourseExercise() ? CourseContextDTO.of(exercise.getCourseViaExerciseGroupOrCourseMember()) : null;
         ExerciseGroupContextDTO exerciseGroup = includeContext && exercise.isExamExercise() ? ExerciseGroupContextDTO.of(exercise.getExerciseGroup()) : null;
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroup = ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup());
 
         return new FileUploadExerciseDTO(exercise.getId(), "file-upload", exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 categories, exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getAssessmentType(),
                 exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
-                exercise.getExampleSolution(), exercise.getFilePattern(), exercise.isGradingInstructionFeedbackUsed(), course, exerciseGroup, gradingCriteria, competencyLinks,
-                plagiarismDetectionConfig);
+                exercise.getExampleSolution(), exercise.getFilePattern(), exercise.isGradingInstructionFeedbackUsed(), course, exerciseGroup, exerciseVariantGroup, gradingCriteria,
+                competencyLinks, plagiarismDetectionConfig);
     }
 
     private static Set<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {

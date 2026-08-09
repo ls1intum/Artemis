@@ -5,7 +5,14 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore, PlagiarismDetectionConfig } from 'app/exercise/shared/entities/exercise/exercise.model';
+import {
+    DifficultyLevel,
+    ExerciseMode,
+    ExerciseType,
+    ExerciseVariantGroupReference,
+    IncludedInOverallScore,
+    PlagiarismDetectionConfig,
+} from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -45,6 +52,17 @@ export interface ExerciseGroupContextDto {
     exam?: ExamContextDto;
 }
 
+export interface ExerciseVariantGroupReferenceDto {
+    id?: number;
+    title?: string;
+    maxPoints?: number;
+    releaseDate?: string;
+    startDate?: string;
+    dueDate?: string;
+    assessmentDueDate?: string;
+    exampleSolutionPublicationDate?: string;
+}
+
 export interface FileUploadExerciseDto {
     id: number;
     type: ExerciseType.FILE_UPLOAD;
@@ -77,6 +95,7 @@ export interface FileUploadExerciseDto {
     gradingInstructionFeedbackUsed: boolean;
     course?: CourseContextDto;
     exerciseGroup?: ExerciseGroupContextDto;
+    exerciseVariantGroup?: ExerciseVariantGroupReferenceDto;
     gradingCriteria?: GradingCriterionDTO[];
     competencyLinks?: CompetencyLinkDTO[];
     plagiarismDetectionConfig?: FileUploadPlagiarismDetectionConfigDto;
@@ -186,6 +205,7 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     exercise.exampleSolution = dto.exampleSolution;
     exercise.filePattern = dto.filePattern;
     exercise.gradingInstructionFeedbackUsed = dto.gradingInstructionFeedbackUsed;
+    exercise.exerciseVariantGroup = dto.exerciseVariantGroup ? toExerciseVariantGroup(dto.exerciseVariantGroup) : undefined;
     exercise.gradingCriteria = dto.gradingCriteria?.map((criterion) =>
         Object.assign(new GradingCriterion(), {
             id: criterion.id,
@@ -236,6 +256,19 @@ function toExerciseGroup(dto: ExerciseGroupContextDto): ExerciseGroup {
     exerciseGroup.id = dto.id;
     exerciseGroup.exam = dto.exam ? toExam(dto.exam) : undefined;
     return exerciseGroup;
+}
+
+function toExerciseVariantGroup(dto: ExerciseVariantGroupReferenceDto): ExerciseVariantGroupReference {
+    return {
+        id: dto.id,
+        title: dto.title,
+        maxPoints: dto.maxPoints,
+        releaseDate: convertDateStringFromServer(dto.releaseDate),
+        startDate: convertDateStringFromServer(dto.startDate),
+        dueDate: convertDateStringFromServer(dto.dueDate),
+        assessmentDueDate: convertDateStringFromServer(dto.assessmentDueDate),
+        exampleSolutionPublicationDate: convertDateStringFromServer(dto.exampleSolutionPublicationDate),
+    };
 }
 
 function toExam(dto: ExamContextDto): Exam {
