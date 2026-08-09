@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -47,6 +47,9 @@ class WeaviateOutboxDispatcherTest {
 
     private static final String COURSE = SearchableEntitySchema.TypeValues.COURSE;
 
+    /** Stand-in content hash returned by the mocked service for a successful upsert (a real hash is 64 hex chars). */
+    private static final String HASH = "a".repeat(64);
+
     private final WeaviateOutboxRepository outboxRepository = mock(WeaviateOutboxRepository.class);
 
     private final SearchableEntitySyncStateRepository syncStateRepository = mock(SearchableEntitySyncStateRepository.class);
@@ -67,6 +70,7 @@ class WeaviateOutboxDispatcherTest {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"entity_id\":1,\"type\":\"course\"}");
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
+        when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
 
         dispatcher.drain();
 
@@ -76,7 +80,7 @@ class WeaviateOutboxDispatcherTest {
         SearchableEntitySyncState state = stateCaptor.getValue();
         assertThat(state.getEntityType()).isEqualTo(COURSE);
         assertThat(state.getEntityId()).isEqualTo(1L);
-        assertThat(state.getContentHash()).hasSize(64);
+        assertThat(state.getContentHash()).isEqualTo(HASH);
         verify(outboxRepository).delete(entry);
     }
 
@@ -96,7 +100,7 @@ class WeaviateOutboxDispatcherTest {
         verify(syncStateRepository, never()).save(any());
 
         // Weaviate recovered: a later drain applies the same row and clears it.
-        doNothing().when(searchableEntityWeaviateService).applyOutboxEntry(entry);
+        doReturn(Optional.of(HASH)).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
 
         dispatcher.drain();
@@ -110,6 +114,7 @@ class WeaviateOutboxDispatcherTest {
         WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, "{\"title\":\"new\"}");
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
+        when(searchableEntityWeaviateService.applyOutboxEntry(any())).thenReturn(Optional.of(HASH));
 
         dispatcher.drain();
 
@@ -139,6 +144,7 @@ class WeaviateOutboxDispatcherTest {
         entry.setId(10L);
         when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 42L)).thenReturn(Optional.empty());
+        when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
 
         dispatcher.drain();
 
@@ -210,11 +216,12 @@ class WeaviateOutboxDispatcherTest {
             String key = entry.getEntityType() + ":" + entry.getEntityId();
             if (entry.getOperation() == WeaviateOutboxOperation.UPSERT) {
                 weaviate.put(key, entry.getPayload());
+                return Optional.of(HASH);
             }
             else if (entry.getOperation() == WeaviateOutboxOperation.DELETE_ENTITY) {
                 weaviate.remove(key);
             }
-            return null;
+            return Optional.empty();
         }).when(searchableEntityWeaviateService).applyOutboxEntry(any(WeaviateOutboxEntry.class));
         when(syncStateRepository.findByEntityTypeAndEntityId(anyString(), any())).thenReturn(Optional.empty());
     }
