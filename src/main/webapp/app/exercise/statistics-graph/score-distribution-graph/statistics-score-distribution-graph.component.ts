@@ -11,11 +11,12 @@ import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-o
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChartModule } from 'primeng/chart';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
-    imports: [TranslateDirective, ChartModule],
+    imports: [TranslateDirective, ChartModule, ArtemisTranslatePipe],
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private navigationService = inject(ArtemisNavigationUtilService);
