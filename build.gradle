@@ -539,7 +539,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.84"
     implementation "org.bouncycastle:bcprov-jdk18on:1.84"
     // pulled transitively by sshd-git; pin to patched version
-    implementation "org.bouncycastle:bcpg-jdk18on:1.84"
+    implementation "org.bouncycastle:bcpg-jdk18on:1.85"
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
