@@ -399,12 +399,21 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-footer')).toBeNull();
     });
 
-    it('should render the AI suggestion badge inside a footer when feedback.text carries a suggestion prefix', () => {
+    it('should render the AI suggestion badge inside a footer when feedback.text carries a suggestion prefix and editable is true', () => {
+        fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Missing null check` } as any);
         fixture.detectChanges();
 
         const footer = fixture.nativeElement.querySelector('.unified-feedback-footer');
         expect(footer).toBeTruthy();
         expect(footer.querySelector('jhi-feedback-suggestion-badge')).toBeTruthy();
+    });
+
+    it('should not render the AI suggestion badge in non-editable (e.g. student result) views, even when the feedback is a suggestion', () => {
+        fixture.componentRef.setInput('editable', false);
+        fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Missing null check` } as any);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.unified-feedback-footer')).toBeNull();
     });
 });

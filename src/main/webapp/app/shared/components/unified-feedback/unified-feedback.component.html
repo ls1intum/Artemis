@@ -109,7 +109,7 @@
             } @else if (feedbackContent()) {
                 <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
             }
-            @if (feedback() && Feedback.isFeedbackSuggestion(feedback()!)) {
+            @if (editable() && feedback() && Feedback.isFeedbackSuggestion(feedback()!)) {
                 <div class="unified-feedback-footer">
                     <jhi-feedback-suggestion-badge [feedback]="feedback()!" variant="footer" />
                 </div>
