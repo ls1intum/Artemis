@@ -1,8 +1,3 @@
-# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
-# ignores for everything except registry/auth/Node settings like node-options)
-# and into this file. Settings here govern the install behaviour in this
-# project root.
-
 packages:
   - 'packages/*'
 
@@ -10,11 +5,11 @@ catalog:
   '@analogjs/vite-plugin-angular': 2.6.4
   '@analogjs/vitest-angular': 2.6.4
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2201.2
-  '@angular-devkit/core': 22.1.2
-  '@angular/build': 22.1.2
+  '@angular-devkit/architect': 0.2201.3
+  '@angular-devkit/core': 22.1.3
+  '@angular/build': 22.1.3
   '@angular/cdk': 22.1.0
-  '@angular/cli': 22.1.2
+  '@angular/cli': 22.1.3
   '@angular/common': 22.1.0
   '@angular/compiler': 22.1.0
   '@angular/compiler-cli': 22.1.0

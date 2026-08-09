@@ -69,7 +69,7 @@
     "devDependencies": {
         "@analogjs/vite-plugin-angular": "catalog:",
         "@analogjs/vitest-angular": "catalog:",
-        "@angular-devkit/build-angular": "22.1.2",
+        "@angular-devkit/build-angular": "22.1.3",
         "@angular-eslint/builder": "22.1.0",
         "@angular-eslint/eslint-plugin": "22.1.0",
         "@angular-eslint/schematics": "22.1.0",
