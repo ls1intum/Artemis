@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout Artemis
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Pull the published Pyris image (edutelligence main)
         # edutelligence's own CI (iris_build-and-push-docker.yml) publishes
@@ -55,7 +55,7 @@ jobs:
         # Only needed for a non-main ref requested via manual dispatch (e.g. to validate an
         # in-progress edutelligence branch/PR before merge) — no published image exists for those.
         if: github.event.inputs.edutelligence_ref != '' && github.event.inputs.edutelligence_ref != 'main'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ls1intum/edutelligence
           ref: ${{ github.event.inputs.edutelligence_ref }}

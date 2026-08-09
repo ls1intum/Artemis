@@ -155,7 +155,7 @@ jobs:
       # from the branch being deployed). Keep it out of the root workspace: sparse checkouts mutate
       # the worktree.
       - name: Check out verify action
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: .github/actions/verify-image-build
           sparse-checkout-cone-mode: false
@@ -206,7 +206,7 @@ jobs:
       # wget of the script from a mutable URL. Helios dispatches this workflow from the branch being
       # deployed, and test-server deploys are limited to accredited developers.
       - name: Check out deploy CLI
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: artemis-server-cli
           sparse-checkout-cone-mode: false

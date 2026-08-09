@@ -47,7 +47,7 @@ jobs:
       # `upload-release` job below, so the write token never sits on this every-PR build.
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 0
@@ -182,7 +182,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Download .war artifact

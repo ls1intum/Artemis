@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install bats
         run: |
           set -Eeuo pipefail
@@ -41,7 +41,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Run actionlint
         # Pin the install script to a release tag, not `main` — it executes a downloaded
         # binary. `-shellcheck=` disables integrated shellcheck, which flags pre-existing

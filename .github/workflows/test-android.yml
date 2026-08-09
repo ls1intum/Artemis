@@ -53,12 +53,12 @@ jobs:
 
     steps:
       - name: Checkout Main Artemis Repo (this repo)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: main-repo
 
       - name: Checkout Artemis Android Repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ls1intum/artemis-android
           path: android-repo

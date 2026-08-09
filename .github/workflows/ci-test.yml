@@ -48,7 +48,7 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           # Module-affected diff (`git diff "origin/$DEFAULT_BRANCH"`) needs the full
@@ -200,7 +200,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
       # Some client tests OOM under the project-wide --max-old-space-size in .npmrc; drop only that line.

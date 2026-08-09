@@ -77,7 +77,7 @@ jobs:
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 0
@@ -114,7 +114,7 @@ jobs:
       tests: ${{ steps.run-tests-phase1.outcome }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -306,7 +306,7 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -497,7 +497,7 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -671,7 +671,7 @@ jobs:
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
           fetch-depth: 1
@@ -831,7 +831,7 @@ jobs:
 
       # Sparse-checkout the local composite action used by find-e2e-comment below (PR-only); the
       # composite must be on disk before its `uses:` resolves.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: always()
         with:
           sparse-checkout: .github/actions

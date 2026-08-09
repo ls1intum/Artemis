@@ -57,7 +57,7 @@ jobs:
       # Check out only the resolver action, from the workflow's own ref (Helios dispatches this
       # workflow from the branch being deployed). Run-resolution is a build-correctness helper.
       - name: Check out resolver action
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: .github/actions/resolve-artifact-run
           sparse-checkout-cone-mode: false
@@ -110,7 +110,7 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Checkout Artemis-Ansible repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: 'ls1intum/artemis-ansible'
 

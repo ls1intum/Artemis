@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Verify version is consistent across build.gradle, openapi.yaml and README.md

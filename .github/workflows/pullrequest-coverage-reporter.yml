@@ -86,7 +86,7 @@ jobs:
       # Trusted default branch only (never the PR head) — see the SECURITY note at the top of the
       # file. Changed files come from the API below, not a git diff of a checked-out PR tree.
       - name: Checkout coverage tooling (trusted default branch — never the PR head)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         if: steps.find-pr.outputs.result != ''
 
       - name: Detect changed files (via API — no PR checkout)

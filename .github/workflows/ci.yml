@@ -51,7 +51,7 @@ jobs:
       has_beans: ${{ steps.decide.outputs.has_beans }}
       has_tum_ui: ${{ steps.decide.outputs.has_tum_ui }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
 
@@ -254,7 +254,7 @@ jobs:
       group: coverage-inrun-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Detect changed files
