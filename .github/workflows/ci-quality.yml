@@ -174,7 +174,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.14'
       - name: Check LOC and number of class dependencies
@@ -208,7 +208,7 @@ jobs:
           # match the style jobs and exercise exactly the tree Build/Test do.
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.14'
       - name: Query quality check
