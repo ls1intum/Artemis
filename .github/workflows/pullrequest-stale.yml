@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for stale PRs
-        uses: actions/stale@v10
+        uses: actions/stale@v11
         with:
           operations-per-run: 600
           ascending: true
