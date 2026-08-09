@@ -69,7 +69,7 @@ plugins {
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.21.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.2.4"
+    id "org.cyclonedx.bom" version "3.4.0"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
