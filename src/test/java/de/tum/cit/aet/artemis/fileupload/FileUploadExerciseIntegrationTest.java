@@ -988,11 +988,11 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFileUploadExerciseFromCourseToExam_forcesIndividualMode() throws Exception {
-        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Course sourceCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         FileUploadExercise sourceExercise = FileUploadExerciseFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7),
                 ZonedDateTime.now().plusDays(14), creationFilePattern, sourceCourse);
         sourceExercise = fileUploadExerciseRepository.save(sourceExercise);
-        ExerciseGroup targetExerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup targetExerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
 
         sourceExercise.setCourse(null);
         sourceExercise.setExerciseGroup(targetExerciseGroup);
@@ -1060,7 +1060,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchExamFileUploadExercise_returnsExamContext() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         FileUploadExercise exercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
         String title = TEST_PREFIX + "searchExamFileUploadExercise";
         exercise.setTitle(title);
