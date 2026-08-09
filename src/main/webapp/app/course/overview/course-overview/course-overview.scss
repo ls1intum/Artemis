@@ -194,8 +194,10 @@ canvas#complete-chart {
 }
 
 .content-sidebar-width {
-    // magic number is 255px sidebar width + 8px margin
-    width: calc(100% - 263px) !important;
+    /* The page's own sidebar plus the grey divider beside it — from the tokens, so it cannot drift from either.
+       It previously hardcoded 263px for a 255px sidebar and an 8px margin, which left 8px once the divider became
+       6px. */
+    width: calc(100% - var(--sidebar-width) - var(--spacing-divider)) !important;
     transition: width 0.1s 0s ease-in-out;
 }
 

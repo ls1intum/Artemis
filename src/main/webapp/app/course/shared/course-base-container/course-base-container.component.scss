@@ -20,7 +20,7 @@
     .sidebar {
         flex: 0 0 auto;
         box-sizing: content-box;
-        width: $menu-width-open;
+        width: var(--sidebar-nav-width);
         overflow: hidden;
         border: none;
         transition: width 0.2s ease-in-out;
@@ -32,10 +32,40 @@
         position: relative;
         z-index: 1;
 
-        @include dynamic-content-height(--spacing-modules, --system-notification-height);
+        @include shell-content-height;
 
         overflow: hidden;
         transition: width 0.2s ease-in-out;
+
+        /*
+         * Column flex so the scroll region below the title bar fills exactly the space that is left. It used to
+         * compute its own `100vh - …` height, which ignored the title bar and therefore left a gap above the
+         * footer that varied with the navbar height and from page to page.
+         *
+         * Exam conduction (`.exam-wrapper`) is excluded entirely — including the `display: flex` itself, so its
+         * formatting context is byte-identical to before. It drives its own full-viewport layout and its inner
+         * views size themselves from `--header-height`, which the exam navigation bar owns during conduction.
+         */
+        &:not(.exam-wrapper) {
+            display: flex;
+            flex-direction: column;
+
+            > .course-body-container {
+                flex: 1 1 auto;
+                min-height: 0;
+            }
+
+            /* The shell computes the available height; the scroll region must not re-derive it from the viewport. */
+            > .course-body-container.scrollable-content {
+                height: auto;
+            }
+
+            /*
+             * The rule that makes a sidebar page fill this region lives in `global.scss`, not here: it has to style
+             * the page component the router inserts, which is outside this template and therefore carries no
+             * `_ngcontent` attribute for the emulated encapsulation to match. See `.layout-content` there.
+             */
+        }
 
         &.exam-wrapper {
             height: 100vh !important;
@@ -44,7 +74,7 @@
 
     &.container-closed {
         .sidebar {
-            width: $menu-width-closed;
+            width: var(--sidebar-nav-width-collapsed);
         }
     }
 
@@ -57,7 +87,7 @@
 
     @media screen and (max-width: 960px) {
         .sidebar {
-            width: $menu-width-closed;
+            width: var(--sidebar-nav-width-collapsed);
         }
     }
 }
