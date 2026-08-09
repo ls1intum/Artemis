@@ -185,7 +185,8 @@ public class WeaviateOutboxDispatcher {
         }
         catch (Exception e) {
             int attempt = entry.getAttempts() + 1;
-            ZonedDateTime nextAttempt = now.plusSeconds(backoffSeconds(attempt));
+            // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
+            ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
             transactionTemplate.executeWithoutResult(status -> scheduleRetry(entry, nextAttempt));
             if (attempt <= MAX_WARN_ATTEMPTS) {
                 log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
