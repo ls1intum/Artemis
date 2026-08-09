@@ -199,14 +199,15 @@ Run the dialect-specific, read-only preflight script against the production snap
 
 ```bash
 psql "$DATABASE_URL" --file supporting_scripts/migration/quiz_point_counter_preflight_postgresql.sql > quiz-point-counter-preflight.txt
-mysql --host "$DB_HOST" --user "$DB_USER" --password "$DB_NAME" < supporting_scripts/migration/quiz_point_counter_preflight_mysql.sql > quiz-point-counter-preflight.txt
+mysql --host "$DB_HOST" --user "$DB_USER" --password --database "$DB_NAME" < supporting_scripts/migration/quiz_point_counter_preflight_mysql.sql > quiz-point-counter-preflight.txt
 ```
 
 The report contains:
 
 1. structurally invalid `PC` ownership rows (this result must be empty);
-2. every source row that will be normalized or merged, including its preserved/target id and `exercise.max_points` versus the current question-point sum;
-3. owner-level differences between relational participant summaries and the normalized counter sums (reported only; the migration never changes the summary columns).
+2. every `QP` statistic without exactly one exercise owner (this result must be empty);
+3. every source row that will be normalized or merged, including its preserved/target id and `exercise.max_points` versus the current question-point sum;
+4. owner-level differences between relational participant summaries and the normalized counter sums (reported only; the migration never changes the summary columns).
 
 Stop writers before generating the final report. Keep them stopped while the migration, post-backfill checks, and smoke test run. A failed precondition leaves `quiz_statistic_counter` intact; after the drop, recovery is forward-only or from the pre-cutover backup.
 

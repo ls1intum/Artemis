@@ -10,6 +10,15 @@ WHERE c.discriminator = 'PC'
   AND (c.quiz_point_statistic_id IS NULL OR qs.id IS NULL OR qs.discriminator <> 'QP' OR e.id IS NULL)
 ORDER BY c.id;
 
+-- Every QP statistic must have exactly one exercise owner.
+SELECT qs.id AS statistic_id, COUNT(e.id) AS exercise_owner_count
+FROM quiz_statistic qs
+LEFT JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+WHERE qs.discriminator = 'QP'
+GROUP BY qs.id
+HAVING COUNT(e.id) <> 1
+ORDER BY qs.id;
+
 -- Rows whose numeric values will be normalized. The target id is the valid target bucket's id when present, otherwise the smallest merged source id.
 WITH totals AS (
     SELECT qs.id AS statistic_id, e.id AS exercise_id, e.max_points, COALESCE(SUM(q.points), 0.0) AS overall_points
@@ -66,7 +75,6 @@ WHERE source_points IS DISTINCT FROM normalized_points
    OR source_rated_counter IS DISTINCT FROM normalized_rated_counter
    OR source_unrated_counter IS DISTINCT FROM normalized_unrated_counter
    OR source_id <> target_id
-   OR max_points IS DISTINCT FROM overall_points
 ORDER BY statistic_id, normalized_points, source_id;
 
 -- Owner-level participant parity after normalization and merging. These relational summary columns are reported but never changed by the migration.

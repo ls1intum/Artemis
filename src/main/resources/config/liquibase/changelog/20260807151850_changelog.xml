@@ -13,6 +13,17 @@
                 WHERE c.discriminator = 'PC'
                   AND (c.quiz_point_statistic_id IS NULL OR qs.id IS NULL OR qs.discriminator <> 'QP' OR e.id IS NULL)
             ]]></sqlCheck>
+            <sqlCheck expectedResult="0"><![CDATA[
+                SELECT COUNT(*)
+                FROM (
+                    SELECT qs.id
+                    FROM quiz_statistic qs
+                    LEFT JOIN exercise e ON e.quiz_point_statistic_id = qs.id
+                    WHERE qs.discriminator = 'QP'
+                    GROUP BY qs.id
+                    HAVING COUNT(e.id) <> 1
+                ) invalid_owners
+            ]]></sqlCheck>
         </preConditions>
     </changeSet>
 

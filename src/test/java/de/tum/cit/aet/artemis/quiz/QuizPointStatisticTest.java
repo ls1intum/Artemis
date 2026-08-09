@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,18 @@ class QuizPointStatisticTest {
         pointStatistic.setPointCounters(null);
 
         assertThat(pointStatistic.getPointCounters()).isEmpty();
+    }
+
+    @Test
+    void shouldRemoveNullCountersBeforeAssigningIds() {
+        var pointStatistic = new QuizPointStatistic();
+        var counters = new ArrayList<PointCounter>();
+        counters.add(null);
+        counters.add(pointCounter(42L, 1.0));
+
+        pointStatistic.setPointCounters(counters);
+
+        assertThat(pointStatistic.getPointCounters()).extracting(PointCounter::getId).containsExactly(42L);
     }
 
     @Test

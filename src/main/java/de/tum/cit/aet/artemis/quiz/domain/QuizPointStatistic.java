@@ -58,6 +58,7 @@ public class QuizPointStatistic extends QuizStatistic {
 
     public void setPointCounters(List<PointCounter> pointCounters) {
         this.pointCounters = pointCounters == null ? new ArrayList<>() : new ArrayList<>(pointCounters);
+        this.pointCounters.removeIf(pointCounter -> pointCounter == null);
         assignMissingCounterIds();
         this.pointCounters.sort(Comparator.comparingDouble(PointCounter::getPoints));
     }
