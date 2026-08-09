@@ -522,7 +522,7 @@ public class CourseAccessResource {
     public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug,
             SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
-        CourseRole role = CourseRole.fromRole(Role.fromString(courseRoleSlug));
+        CourseRole role = resolveCourseRole(courseRoleSlug);
         Page<CourseRoleMemberDTO> page = courseAccessService.getPagedUsersInCourseRole(courseId, role, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -544,10 +544,25 @@ public class CourseAccessResource {
     public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for course {} role {} with term: {}", courseId, courseRoleSlug, searchTerm);
-        CourseRole role = CourseRole.fromRole(Role.fromString(courseRoleSlug));
+        CourseRole role = resolveCourseRole(courseRoleSlug);
         Page<UserForRegistrationDTO> result = courseAccessService.searchUsersForCourseRole(courseId, role, searchTerm, page, size);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
         return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * Resolves the role path segment (e.g. 'students', 'tutors') to a {@link CourseRole}.
+     *
+     * @param courseRoleSlug the role path segment from the REST URL
+     * @return the resolved course role
+     * @throws ResponseStatusException with status 400 (Bad Request) if the slug does not map to a known course role
+     */
+    private CourseRole resolveCourseRole(String courseRoleSlug) {
+        Role role = Role.fromString(courseRoleSlug);
+        if (role == Role.ANONYMOUS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown course role: " + courseRoleSlug);
+        }
+        return CourseRole.fromRole(role);
     }
 
     /**
