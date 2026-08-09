@@ -49,7 +49,7 @@
         "./styles.css": "./styles.css"
     },
     "peerDependencies": {
-        "@angular/cdk": "22.1.0",
+        "@angular/cdk": "22.1.1",
         "@angular/common": "22.1.0",
         "@angular/core": "22.1.0",
         "@angular/forms": "22.1.0",
