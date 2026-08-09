@@ -285,7 +285,7 @@ jobs:
           path: build/test-results/vitest/coverage/
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
       - name: Generate coverage table

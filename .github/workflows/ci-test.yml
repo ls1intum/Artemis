@@ -210,7 +210,7 @@ jobs:
       # The self-hosted runners have no usable npm on PATH; install Node first so
       # pnpm/action-setup's npm-based self-installer (v6) finds a working npm.
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '${{ env.node }}'
       - name: Setup pnpm
@@ -218,7 +218,7 @@ jobs:
         with:
           run_install: false
       - name: Enable pnpm store cache
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
