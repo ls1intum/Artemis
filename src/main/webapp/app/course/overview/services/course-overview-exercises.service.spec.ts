@@ -67,6 +67,11 @@ describe('CourseOverviewExercisesService', () => {
         expect(service.dataFor(undefined as unknown as number)).toBeUndefined();
     });
 
+    it('should not mistake a missing in-flight request for a temporarily undefined course id', () => {
+        expect(() => service.load(undefined as unknown as number).subscribe()).not.toThrow();
+        expect(fetchSpy).toHaveBeenCalledExactlyOnceWith(undefined);
+    });
+
     it('should fetch only once per course when using loadIfNeeded, so the exercises and statistics tabs share one load', () => {
         service.loadIfNeeded(1).subscribe();
         service.loadIfNeeded(1).subscribe();

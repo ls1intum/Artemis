@@ -47,6 +47,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/ser
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
@@ -147,6 +148,7 @@ describe('CourseOverviewComponent', () => {
     let getCourseAvailableTabsStub: ReturnType<typeof vi.spyOn>;
     let availableTabsService: CourseAvailableTabsService;
     let courseSidebarService: CourseSidebarService;
+    let courseSidebarItemService: CourseSidebarItemService;
     let profileService: ProfileService;
 
     let metisConversationService: MetisConversationService;
@@ -228,6 +230,7 @@ describe('CourseOverviewComponent', () => {
 
         component.isShownViaLti.set(false);
         courseSidebarService = TestBed.inject(CourseSidebarService);
+        courseSidebarItemService = TestBed.inject(CourseSidebarItemService);
         courseService = TestBed.inject(CourseManagementService);
         courseStorageService = TestBed.inject(CourseStorageService);
         examParticipationService = TestBed.inject(ExamParticipationService);
@@ -555,6 +558,17 @@ describe('CourseOverviewComponent', () => {
     it('should not show the exams item when the exams tab is unavailable', () => {
         component.availableTabs.set(availableTabs({ exams: false }));
         expect(component.getSidebarItems().some((item) => item.title?.includes('Exams'))).toBe(false);
+    });
+
+    it('should include each server-enabled conditional sidebar item when its client module is enabled', () => {
+        component.tutorialGroupEnabled = true;
+        component.availableTabs.set(availableTabs({ communication: true, tutorialGroups: true, iris: true }));
+
+        const items = component.getSidebarItems();
+
+        expect(items).toContainEqual(courseSidebarItemService.getCommunicationsItem());
+        expect(items).toContainEqual(courseSidebarItemService.getTutorialGroupsItem());
+        expect(items).toContainEqual(courseSidebarItemService.getIrisItem());
     });
 
     it('should render only the always-available items before the tabs have arrived', () => {

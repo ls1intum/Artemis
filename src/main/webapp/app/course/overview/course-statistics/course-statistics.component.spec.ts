@@ -13,7 +13,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { CourseStatisticsComponent, NgxExercise } from 'app/course/overview/course-statistics/course-statistics.component';
+import { CourseStatisticsComponent, NgxExercise, Series } from 'app/course/overview/course-statistics/course-statistics.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -367,6 +367,33 @@ describe('CourseStatisticsComponent', () => {
 
         expect(callbacks.title([{ label: 'artemisApp.courseOverview.statistics.missingPointsLabel' }])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');
         expect(callbacks.label({ parsed: 400 })).toBe('400');
+    });
+
+    it.each([
+        [undefined, []],
+        [
+            { name: 'Achieved bonus', value: 80, absoluteValue: 8, isProgrammingExercise: true },
+            ['artemisApp.courseOverview.statistics.programmingExercisePassedTests | artemisApp.courseOverview.statistics.bonusPointTooltip'],
+        ],
+        [
+            { name: 'Achieved (not included)', value: 75, absoluteValue: 6, isProgrammingExercise: false },
+            ['artemisApp.courseOverview.statistics.exerciseAchievedScore | artemisApp.courseOverview.statistics.notIncludedTooltip'],
+        ],
+        [
+            { name: 'Missed points', value: 100, absoluteValue: 10, notParticipated: true, exerciseTitle: 'Missed exercise' },
+            ['artemisApp.courseOverview.statistics.exerciseNotParticipated'],
+        ],
+        [
+            { name: 'Missed points', value: 50, absoluteValue: 5, afterDueDate: true, isProgrammingExercise: true, exerciseTitle: 'Late exercise' },
+            ['artemisApp.courseOverview.statistics.exerciseParticipatedAfterDueDate', 'artemisApp.courseOverview.statistics.programmingExerciseFailedTests'],
+        ],
+        [{ name: 'Not graded', value: 100, exerciseTitle: 'Pending exercise' }, ['artemisApp.courseOverview.statistics.exerciseNotGraded']],
+    ])('should build the expected stacked-bar tooltip for %#', (series, expectedLines) => {
+        const item = { dataIndex: 0, dataset: { meta: series ? [series as Series] : [] } };
+
+        const lines = (comp as any).barTooltipLines(item);
+
+        expect(lines).toEqual(expectedLines);
     });
 
     it('should group all exercises', () => {

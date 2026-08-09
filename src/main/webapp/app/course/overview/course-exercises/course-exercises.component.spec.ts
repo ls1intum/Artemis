@@ -52,6 +52,7 @@ describe('CourseExercisesComponent', () => {
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
     let exerciseService: ExerciseService;
+    let router: MockRouter;
     let participationWebsocketBehaviorSubject: BehaviorSubject<Participation | undefined>;
     let exerciseOverviewResponse: Subject<CourseExercisesForOverviewDTO>;
     let loadExercisesForOverview: ReturnType<typeof vi.fn>;
@@ -122,6 +123,7 @@ describe('CourseExercisesComponent', () => {
         component = fixture.componentInstance;
         courseStorageService = TestBed.inject(CourseStorageService);
         exerciseService = TestBed.inject(ExerciseService);
+        router = TestBed.inject(Router) as unknown as MockRouter;
 
         (component as any)._sidebarData.set({ groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' });
         course = new Course();
@@ -178,6 +180,19 @@ describe('CourseExercisesComponent', () => {
         expect(component.course()?.exercises).toEqual([exercise]);
         expect(navigateSpy).toHaveBeenCalledOnce();
         courseUpdates.complete();
+    });
+
+    it.each([
+        ['/courses/123/exercises/group/7', true],
+        ['/courses/123/exercises/456', true],
+    ])('should recognize an exercise selection already encoded in %s without redirecting', (url, expectedSelected) => {
+        router.setUrl(url);
+        router.navigate.mockClear();
+
+        component.navigateToExercise();
+
+        expect((component as any)._exerciseSelected()).toBe(expectedSelected);
+        expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should display sidebar when course is provided', () => {

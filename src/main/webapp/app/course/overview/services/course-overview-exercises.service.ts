@@ -79,7 +79,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
      * @param courseId the course to fetch the exercise data for
      */
     load(courseId: number): Observable<CourseExercisesForOverviewDTO> {
-        if (this.inFlightRequest?.courseId === courseId) {
+        if (this.inFlightRequest && this.inFlightRequest.courseId === courseId) {
             return this.inFlightRequest.observable;
         }
 
