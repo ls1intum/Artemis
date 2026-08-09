@@ -1,7 +1,3 @@
-# pnpm 11+ install/resolution settings for the documentation/ subproject.
-# Default isolated layout: no hoist shim. The gray-matter patch is applied
-# via `patchedDependencies` below (works on the .pnpm symlink store directly).
-
 preferFrozenLockfile: true
 enablePrePostScripts: true
 autoInstallPeers: true
@@ -21,7 +17,7 @@ overrides:
   fast-uri: '3.1.4'
   follow-redirects: '1.16.0'
   http-proxy-middleware: '3.0.7'
-  joi: '17.13.4'
+  joi: '18.2.3'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
   js-yaml: '4.3.0'
   launch-editor: '2.14.1'
@@ -46,4 +42,3 @@ allowBuilds:
   core-js: true
   core-js-pure: true
   esbuild: true
-
