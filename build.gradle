@@ -625,7 +625,7 @@ dependencies {
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.9"
-    testImplementation "com.tngtech.archunit:archunit:1.4.2"
+    testImplementation "com.tngtech.archunit:archunit:1.5.0"
 
     // we only need the database present at runtime
     runtimeOnly "com.h2database:h2:2.4.240"
