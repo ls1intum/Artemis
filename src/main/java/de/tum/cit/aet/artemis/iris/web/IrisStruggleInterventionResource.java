@@ -61,7 +61,7 @@ public class IrisStruggleInterventionResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<StruggleInterventionAcceptedDTO> triggerStruggleIntervention(@PathVariable long exerciseId,
             @Valid @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Explicit server-side AI opt-in gate (spec §10), before any pipeline work.
         user.hasOptedIntoLLMUsageElseThrow();
         var outcome = struggleInterventionService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), requestDTO.intent(),
@@ -85,7 +85,7 @@ public class IrisStruggleInterventionResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> revealAmbient(@PathVariable long exerciseId, @PathVariable String episodeId, @RequestBody RevealAmbientRequestDTO body) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
         var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId, body.hintText(), body.level(), body.clientMessageId());
         return ResponseEntity.ok(dto);
@@ -107,7 +107,7 @@ public class IrisStruggleInterventionResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Void> deleteProactiveMessage(@PathVariable long exerciseId, @PathVariable long messageId) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         struggleInterventionService.deleteSupersededProactiveMessage(user, messageId);
         return ResponseEntity.noContent().build();
     }
@@ -128,7 +128,7 @@ public class IrisStruggleInterventionResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Void> cancelStruggleJob(@PathVariable long exerciseId, @RequestBody CancelStruggleJobRequestDTO body) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         struggleInterventionService.cancelOutstandingStruggleJob(user, exerciseId, body.requestToken());
         return ResponseEntity.noContent().build();
     }
@@ -155,7 +155,7 @@ public class IrisStruggleInterventionResource {
         if (outcome == null) {
             throw new BadRequestException("An episode outcome is required");
         }
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         // Bind the exerciseId path variable to a real authorization check: the caller must be at least a STUDENT in
         // this exercise. Without it any authenticated student could write an outcome for an episode in any exercise.
         struggleInterventionService.checkAtLeastStudentForExercise(exerciseId, user);
