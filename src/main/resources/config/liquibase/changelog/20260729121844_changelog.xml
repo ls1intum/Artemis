@@ -15,7 +15,7 @@
          Mirrors how attachments already work: transcription_content_hash decides whether anything actually changed (the
          counterpart of attachment.sha256_hash), transcription_version is the value pinned into the citation marker (the
          counterpart of attachment.version). -->
-    <changeSet id="20260729121844-01-add-transcription-version-columns" author="finley">
+    <changeSet id="20260729121844-01-add-transcription-version-columns" author="vivienxr">
         <addColumn tableName="lecture_unit_processing_state">
             <column name="transcription_version" type="int"/>
             <column name="transcription_content_hash" type="varchar(64)"/>
