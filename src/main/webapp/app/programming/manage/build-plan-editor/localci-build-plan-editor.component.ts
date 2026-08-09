@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
@@ -58,25 +58,6 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     readonly dockerImage = signal<string>('');
     readonly timeout = signal<number>(0);
 
-    // set while the editor waits for the build phases template so the fetched language default is only applied when the
-    // exercise itself configured no image, and never overwrites an image the instructor typed in the meantime
-    private readonly awaitingTemplateDockerImage = signal(false);
-
-    constructor() {
-        // Seed the language default image once the template service resolves it, so an exercise stored without an image
-        // (the windfile migration did this for every exercise that relied on the language default) opens with a usable
-        // image instead of an empty field and a dead submit button.
-        effect(() => {
-            const templateDockerImage = this.buildPhasesTemplateService.buildPlan()?.dockerImage;
-            untracked(() => {
-                if (this.awaitingTemplateDockerImage() && templateDockerImage && this.dockerImage().trim().length === 0) {
-                    this.dockerImage.set(templateDockerImage);
-                    this.awaitingTemplateDockerImage.set(false);
-                }
-            });
-        });
-    }
-
     readonly isExamMode = computed(() => !!this.programmingExercise()?.exerciseGroup);
 
     private readonly buildConfigurationComponent = viewChild(ProgrammingExerciseBuildConfigurationComponent);
@@ -105,27 +86,36 @@ export class LocalCIBuildPlanEditorComponent implements OnInit {
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {
             this.initEditingState(exercise);
-            this.seedDefaultDockerImageIfMissing(exercise);
             this.programmingExercise.set(exercise);
+            this.seedDefaultDockerImageIfMissing(exercise);
             this.loadParticipationsWithResults(exercise);
         });
     }
 
     /**
-     * Requests the language default Docker image from the build phases template service when the exercise configured
-     * none. The resolved image is applied by the constructor effect. Does nothing when the image is already set or the
-     * exercise has no programming language.
+     * Fetches the language default Docker image and applies it when the exercise configured none, so an exercise stored
+     * without an image (the windfile migration did this for every exercise that relied on the language default) opens
+     * with a usable image instead of an empty field and a dead submit button. Does nothing when the image is already set
+     * or the exercise has no programming language. The response is tied to the exercise it was requested for, so a slow
+     * response for a previously opened exercise never overwrites the image of the one now on screen.
      */
     private seedDefaultDockerImageIfMissing(exercise: ProgrammingExercise): void {
         const programmingLanguage = exercise.programmingLanguage;
         if (!programmingLanguage || this.dockerImage().trim().length > 0) {
             return;
         }
-        this.awaitingTemplateDockerImage.set(true);
-        // the template service holds a shared signal, so reset it first: otherwise the effect would apply the image left
-        // over from a previously opened exercise before this request resolves. The default plan carries no image.
-        this.buildPhasesTemplateService.resetToDefault();
-        this.buildPhasesTemplateService.fetchTemplate(!!exercise.exerciseGroup, programmingLanguage, exercise.projectType);
+        this.buildPhasesTemplateService
+            .getTemplate(!!exercise.exerciseGroup, programmingLanguage, exercise.projectType)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (template) => {
+                    if (this.programmingExercise()?.id === exercise.id && template.dockerImage && this.dockerImage().trim().length === 0) {
+                        this.dockerImage.set(template.dockerImage);
+                    }
+                },
+                // the editor stays usable without a seeded image; the instructor can still enter one manually
+                error: () => {},
+            });
     }
 
     /**
