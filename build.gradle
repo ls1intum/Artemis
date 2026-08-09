@@ -375,7 +375,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.22.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.22.0"
+    implementation "commons-codec:commons-codec:1.22.1"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
