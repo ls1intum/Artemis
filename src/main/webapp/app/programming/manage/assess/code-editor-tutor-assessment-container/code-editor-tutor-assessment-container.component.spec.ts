@@ -313,7 +313,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should update assessor correctly if the manual assessment is overridden', async () => {
-        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const user2 = <User>{ id: 100 };
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
         result.assessor = user2;
         result.hasComplaint = false;

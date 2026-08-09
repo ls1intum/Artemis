@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./feedback-suggestion-badge.component.scss'],
     imports: [TumUiTooltipDirective, FaIconComponent, TranslateDirective],
     host: {
-        '[class.suggestion-badge-host--footer]': "variant() === 'footer'",
+        '[class.suggestion-badge-host--footer]': 'variant() === "footer"',
     },
 })
 export class FeedbackSuggestionBadgeComponent {
