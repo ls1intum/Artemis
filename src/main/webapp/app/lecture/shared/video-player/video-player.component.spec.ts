@@ -751,6 +751,28 @@ describe('VideoPlayerComponent', () => {
             expect(component.tokenError()).toBe(true);
         });
 
+        it('switches to videoUrl and clears the refresh timer when a token refresh has no usable URL', async () => {
+            vi.useFakeTimers();
+            const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+            const signedUrl = 'https://tum.live/hls/signed.m3u8';
+            const fallbackUrl = 'https://cdn.example.com/public.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValueOnce(of({ playlistUrl: signedUrl, expiresIn: 60 })).mockReturnValueOnce(of({ expiresIn: 60 }));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', fallbackUrl);
+            await render();
+            getMockHls().loadSource.mockClear();
+
+            vi.advanceTimersByTime(31000);
+
+            expect(component.tokenError()).toBe(false);
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(fallbackUrl);
+            expect(clearTimeoutSpy).toHaveBeenCalled();
+
+            vi.useRealTimers();
+        });
+
         it('schedules a token refresh timer before expiry', async () => {
             const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
             mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 3600 }));

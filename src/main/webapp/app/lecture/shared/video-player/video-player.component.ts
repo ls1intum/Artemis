@@ -212,7 +212,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 next: (token) => {
                     const url = token.playlistUrl ?? token.playlistUrlPres ?? token.playlistUrlCam;
                     if (!url) {
-                        this.tokenError.set(true);
+                        this.loadFallbackOrSetTokenError(videoElement);
                         return;
                     }
 
@@ -254,26 +254,29 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     }, refreshAfterMs);
                 },
                 error: () => {
-                    // EP2 failed (initial load or refresh — 409/404/503/etc.).
-                    // Fall back to the public videoUrl path whenever available.
-                    // For a refresh failure, this.hls already exists — still switch sources so the stale
-                    // signed URL is replaced immediately rather than waiting for the CDN to expire it.
-                    this.clearTokenRefreshTimer();
-                    const fallbackUrl = this.videoUrl();
-                    if (fallbackUrl) {
-                        this.tokenError.set(false);
-                        if (this.hls) {
-                            this.hls.loadSource(fallbackUrl);
-                        } else if (this.nativeHlsLoaded) {
-                            this.refreshNativeHlsSource(fallbackUrl, videoElement);
-                        } else {
-                            this.initHls(fallbackUrl, videoElement);
-                        }
-                    } else {
-                        this.tokenError.set(true);
-                    }
+                    this.loadFallbackOrSetTokenError(videoElement);
                 },
             });
+    }
+
+    private loadFallbackOrSetTokenError(videoElement: HTMLVideoElement): void {
+        // EP2 failed or returned no usable playlist URL. For a refresh failure, switch sources immediately
+        // so the stale signed URL is not used until it expires.
+        this.clearTokenRefreshTimer();
+        const fallbackUrl = this.videoUrl();
+        if (!fallbackUrl) {
+            this.tokenError.set(true);
+            return;
+        }
+
+        this.tokenError.set(false);
+        if (this.hls) {
+            this.hls.loadSource(fallbackUrl);
+        } else if (this.nativeHlsLoaded) {
+            this.refreshNativeHlsSource(fallbackUrl, videoElement);
+        } else {
+            this.initHls(fallbackUrl, videoElement);
+        }
     }
 
     /**
