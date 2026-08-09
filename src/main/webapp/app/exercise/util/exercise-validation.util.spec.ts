@@ -91,6 +91,13 @@ describe('ExerciseValidationUtil', () => {
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.points.undefined']);
         });
 
+        it('should report a null points value as missing', () => {
+            const exercise = validExercise();
+            exercise.maxPoints = null as unknown as number;
+
+            expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.points.undefined']);
+        });
+
         it('should report points below the minimum', () => {
             const exercise = validExercise();
             exercise.maxPoints = 0;
@@ -104,6 +111,13 @@ describe('ExerciseValidationUtil', () => {
 
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.points.customMax']);
         });
+
+        it('should accept points at the maximum boundary', () => {
+            const exercise = validExercise();
+            exercise.maxPoints = 9999;
+
+            expect(translateKeys(exercise, validViewState())).toEqual([]);
+        });
     });
 
     describe('bonus points', () => {
@@ -114,7 +128,14 @@ describe('ExerciseValidationUtil', () => {
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.undefined']);
         });
 
-        it('should ignore bonus points when the exercise is not included completely', () => {
+        it('should report a null bonus points value as missing', () => {
+            const exercise = validExercise();
+            exercise.bonusPoints = null as unknown as number;
+
+            expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.undefined']);
+        });
+
+        it('should not require bonus points when the exercise is not included completely', () => {
             const exercise = validExercise();
             exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
             exercise.bonusPoints = undefined;
@@ -128,6 +149,14 @@ describe('ExerciseValidationUtil', () => {
 
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMin']);
 
+            exercise.bonusPoints = 10000;
+
+            expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMax']);
+        });
+
+        it('should enforce bonus points bounds even when the exercise is not included completely', () => {
+            const exercise = validExercise();
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
             exercise.bonusPoints = 10000;
 
             expect(translateKeys(exercise, validViewState())).toEqual(['artemisApp.exercise.form.bonusPoints.customMax']);
@@ -162,6 +191,10 @@ describe('ExerciseValidationUtil', () => {
         it('should accept valid team sizes', () => {
             expect(translateKeys(teamExercise(1, 5), validViewState())).toEqual([]);
         });
+
+        it('should accept a team size at the maximum boundary', () => {
+            expect(translateKeys(teamExercise(1, 99), validViewState())).toEqual([]);
+        });
     });
 
     describe('timeline and example solution publication date', () => {
@@ -191,6 +224,13 @@ describe('ExerciseValidationUtil', () => {
             expect(translateKeys(validExercise(), { ...validViewState(), isExampleSolutionPublicationDateInputValid: false })).toEqual([
                 'artemisApp.exercise.form.exampleSolutionPublicationDate.invalidInput',
             ]);
+        });
+
+        it('should still report an invalid title in exam mode', () => {
+            const exercise = validExercise();
+            exercise.title = undefined;
+
+            expect(translateKeys(exercise, { ...validViewState(), isExamMode: true })).toEqual(['artemisApp.exercise.form.title.undefined']);
         });
 
         it('should skip timeline and solution date checks in exam mode', () => {

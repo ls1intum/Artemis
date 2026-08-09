@@ -1,6 +1,6 @@
 import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import type { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 const MIN_POINTS = 1;
 const MAX_POINTS = 9999;
@@ -121,13 +121,11 @@ function validatePoints(exercise: Exercise, reasons: ValidationReason[]): void {
 }
 
 function validateBonusPoints(exercise: Exercise, reasons: ValidationReason[]): void {
-    if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-        return;
-    }
-
     const bonusPoints = exercise.bonusPoints;
     if (bonusPoints === undefined || bonusPoints === null) {
-        reasons.push({ translateKey: 'artemisApp.exercise.form.bonusPoints.undefined', translateValues: {} });
+        if (exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            reasons.push({ translateKey: 'artemisApp.exercise.form.bonusPoints.undefined', translateValues: {} });
+        }
     } else if (bonusPoints < MIN_BONUS_POINTS) {
         reasons.push({ translateKey: 'artemisApp.exercise.form.bonusPoints.customMin', translateValues: {} });
     } else if (bonusPoints > MAX_BONUS_POINTS) {
