@@ -1,0 +1,21 @@
+// Keep the lifecycle labels ("Start Quiz", "Set Visible", …) on one line
+button {
+    white-space: nowrap;
+}
+
+.batch-menu {
+    min-width: 15rem;
+
+    &__list {
+        max-height: 16rem;
+        overflow-y: auto;
+    }
+}
+
+.batch-password {
+    font-family: monospace;
+}
+
+tum-ui-popover {
+    display: none;
+}

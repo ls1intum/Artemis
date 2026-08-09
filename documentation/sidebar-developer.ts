@@ -17,7 +17,17 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Client Guidelines',
-                    items: ['guidelines/client-development', 'guidelines/client-theming', 'guidelines/client-tests', 'guidelines/tum-ui-kit'],
+                    items: [
+                        'guidelines/client-development',
+                        'guidelines/client-theming',
+                        'guidelines/client-tests',
+                        'guidelines/tum-ui-kit',
+                        {
+                            type: 'doc',
+                            label: 'TUM UI component reference',
+                            id: 'tum-ui',
+                        },
+                    ],
                 },
                 {
                     type: 'category',

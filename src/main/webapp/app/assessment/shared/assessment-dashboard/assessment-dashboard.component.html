@@ -226,15 +226,13 @@
                                         exam()?.numberOfCorrectionRoundsInExam &&
                                         exam()!.numberOfCorrectionRoundsInExam! > 1
                                     ) {
-                                        <ng-container class="col-lg-3 col-md-6 col-sm-6">
-                                            <jhi-second-correction-enable-button
-                                                class="me-1 mb-1"
-                                                data-testid="toggle-second-correction"
-                                                (ngModelChange)="toggleSecondCorrection(exercise.id!)"
-                                                [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
-                                                [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
-                                            />
-                                        </ng-container>
+                                        <jhi-second-correction-enable-button
+                                            class="me-1 mb-1"
+                                            data-testid="toggle-second-correction"
+                                            (ngModelChange)="toggleSecondCorrection(exercise.id!)"
+                                            [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
+                                            [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
+                                        />
                                     }
                                 </td>
                             </tr>
