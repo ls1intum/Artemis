@@ -8,7 +8,7 @@
         "email": "krusche@tum.de",
         "url": "https://aet.cit.tum.de/krusche"
     },
-    "packageManager": "pnpm@11.19.0",
+    "packageManager": "pnpm@11.20.0",
     "dependencies": {
         "@angular/cdk": "catalog:",
         "@angular/common": "catalog:",
