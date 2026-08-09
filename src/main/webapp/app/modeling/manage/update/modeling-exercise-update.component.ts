@@ -343,6 +343,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
     };
 
+    onModelChanged(model: UMLModel): void {
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(model);
+        void this.calculateFormSectionStatus();
+    }
+
     readonly assessmentCriteriaAdditionalContext = () =>
         [
             `Diagram type:\n${this.modelingExercise.diagramType ?? ''}`,

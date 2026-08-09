@@ -2,7 +2,7 @@ import { AfterContentInit, Component, DestroyRef, Injector, OnInit, afterNextRen
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, isEqual } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { GradingCreditsAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-credits.action';
@@ -273,6 +273,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     prepareForSave(): void {
+        if (!this.editable()) {
+            return;
+        }
         this.cleanupExerciseGradingInstructions();
         this.markdownEditor().parseMarkdown();
         if (this.exercise().gradingInstructionFeedbackUsed) {
@@ -287,6 +290,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @desc Clear the exercise grading instruction text to avoid double assignments
      */
     cleanupExerciseGradingInstructions() {
+        if (!this.editable()) {
+            return;
+        }
         this.exercise().gradingInstructions = undefined;
     }
 
@@ -299,6 +305,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     createSubInstructionActions(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         let instructionActions;
         let criterionActions;
         let endOfInstructionsAction = 0;
@@ -329,6 +338,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setParentForInstructionsWithNoCriterion(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         const criteria = [...this.criteria()];
         for (const { action } of textWithDomainActions) {
             this.setExerciseGradingInstructionText(textWithDomainActions);
@@ -352,6 +364,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     groupInstructionsToCriteria(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         const initialCriterionActions = textWithDomainActions;
         const exercise = this.exercise();
         const gradingCriteria = exercise.gradingCriteria ?? (exercise.gradingCriteria = []);
@@ -386,6 +401,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setInstructionParameters(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         let index = 0;
         for (const { text, action } of textWithDomainActions) {
             if (!this.instructions[index]) {
@@ -411,6 +429,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     onDomainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         this.instructions = [];
         this.criteria.set([]);
         this.exercise().gradingCriteria = [];
@@ -418,6 +439,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     onInstructionChange(textWithDomainActions: TextWithDomainAction[], instruction: GradingInstruction): void {
+        if (!this.editable()) {
+            return;
+        }
         this.instructions = [instruction];
         this.setInstructionParameters(textWithDomainActions);
     }
@@ -429,36 +453,58 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be reset
      */
     resetInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
+        const gradingCriteria = this.exercise().gradingCriteria;
+        if (gradingCriteria === undefined || criterionIndex < 0 || gradingCriteria[criterionIndex] === undefined) {
+            return;
+        }
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
-        const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
+        const instructions = gradingCriteria[criterionIndex].structuredGradingInstructions;
+        const instructionIndex = instructions.indexOf(instruction);
+        if (instructionIndex < 0) {
+            return;
+        }
         let backupInstructionIndex = undefined;
 
         if (backupCriterionIndex >= 0) {
             backupInstructionIndex = this.findInstructionIndex(instruction, this.backupExercise, backupCriterionIndex);
 
             if (backupInstructionIndex != undefined && backupInstructionIndex >= 0) {
-                this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = cloneDeep(
+                instructions[instructionIndex] = cloneDeep(
                     this.backupExercise.gradingCriteria![backupCriterionIndex].structuredGradingInstructions[backupInstructionIndex],
                 );
             }
         }
         if (backupCriterionIndex < 0 || backupInstructionIndex == undefined || backupInstructionIndex < 0) {
-            this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = new GradingInstruction();
+            instructions[instructionIndex] = new GradingInstruction();
         }
         this.initializeMarkdown();
     }
 
     findCriterionIndex(criterion: GradingCriterion, exercise: Exercise) {
-        return exercise.gradingCriteria!.findIndex((gradingCriteria) => {
-            return gradingCriteria.id === criterion.id;
-        });
+        const gradingCriteria = exercise.gradingCriteria ?? [];
+        const objectIndex = gradingCriteria.indexOf(criterion);
+        if (objectIndex >= 0 || criterion.id === undefined) {
+            return objectIndex;
+        }
+        return gradingCriteria.findIndex((gradingCriteria) => gradingCriteria.id === criterion.id);
     }
 
     findInstructionIndex(instruction: GradingInstruction, exercise: Exercise, criterionIndex: number) {
-        return exercise.gradingCriteria![criterionIndex].structuredGradingInstructions?.findIndex((gradingInstruction) => {
-            return gradingInstruction.id === instruction.id;
-        });
+        const gradingCriteria = exercise.gradingCriteria;
+        const criterion = gradingCriteria?.[criterionIndex];
+        if (criterion === undefined) {
+            return -1;
+        }
+        const instructions = criterion.structuredGradingInstructions ?? [];
+        const objectIndex = instructions.indexOf(instruction);
+        if (objectIndex >= 0 || instruction.id === undefined) {
+            return objectIndex;
+        }
+        return instructions.findIndex((gradingInstruction) => gradingInstruction.id === instruction.id);
     }
 
     /**
@@ -468,12 +514,18 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be deleted
      */
     deleteInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.splice(instructionIndex, 1);
     }
 
     addInstruction(criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         this.addNewInstruction(criterion);
         this.initializeMarkdown();
     }
@@ -483,17 +535,26 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param criterion The grading criterion that contains the instruction to insert.
      */
     addNewInstruction(criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instruction = new GradingInstruction();
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.push(instruction);
     }
 
     addGradingCriterion() {
+        if (!this.editable()) {
+            return;
+        }
         this.addNewGradingCriterion();
         this.initializeMarkdown();
     }
 
     addNewGradingCriterion() {
+        if (!this.editable()) {
+            return;
+        }
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
         criterion.structuredGradingInstructions.push(new GradingInstruction());
@@ -505,11 +566,17 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     onCriterionTitleChange($event: Event, criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         this.exercise().gradingCriteria![criterionIndex].title = ($event.target as HTMLInputElement).value;
     }
 
     resetCriterionTitle(criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise());
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
         if (backupCriterionIndex >= 0) {
@@ -520,6 +587,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     deleteGradingCriterion(criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         this.exercise().gradingCriteria!.splice(criterionIndex, 1);
     }
@@ -529,6 +599,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
     setExerciseGradingInstructionText(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!this.editable()) {
+            return;
+        }
         if (!textWithDomainActions.length) {
             return;
         }
@@ -543,11 +616,17 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * Updates markdown text between mode switches
      */
     switchMode() {
+        if (!this.editable()) {
+            return;
+        }
         this.showEditMode.update((mode) => !mode);
         this.markdownEditorText.set(this.generateMarkdown());
     }
 
     generateAssessmentCriteria(): void {
+        if (!this.editable()) {
+            return;
+        }
         if (this.isGenerationDisabled()) {
             return;
         }
@@ -579,15 +658,25 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     private requestAssessmentCriteria(): void {
-        if (this.isGenerating()) {
+        if (!this.editable() || this.isGenerating()) {
             return;
         }
+        const exercise = this.exercise();
+        const exampleSolution = this.exampleSolution();
+        const additionalContext = this.additionalGenerationContext()();
+        const generationSnapshot = {
+            problemStatement: exercise.problemStatement,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            gradingInstructions: exercise.gradingInstructions,
+            gradingCriteria: cloneDeep(exercise.gradingCriteria),
+            exampleSolution,
+            additionalContext,
+            gradingInstructionFeedbackUsed: exercise.gradingInstructionFeedbackUsed,
+        };
         this.isGenerating.set(true);
         defer(() =>
-            this.generationService.generate(this.exercise(), {
-                exampleSolution: this.exampleSolution(),
-                additionalContext: this.additionalGenerationContext()(),
-            }),
+            this.generationService.generate(exercise, { exampleSolution, additionalContext }),
         )
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
@@ -595,7 +684,24 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             )
             .subscribe({
                 next: (criteria) => {
-                    this.exercise().gradingCriteria = criteria;
+                    if (!this.editable()) {
+                        return;
+                    }
+                    const currentExercise = this.exercise();
+                    const currentSnapshot = {
+                        problemStatement: currentExercise.problemStatement,
+                        maxPoints: currentExercise.maxPoints,
+                        bonusPoints: currentExercise.bonusPoints,
+                        gradingInstructions: currentExercise.gradingInstructions,
+                        gradingCriteria: cloneDeep(currentExercise.gradingCriteria),
+                        exampleSolution: this.exampleSolution(),
+                        additionalContext: this.additionalGenerationContext()(),
+                        gradingInstructionFeedbackUsed: currentExercise.gradingInstructionFeedbackUsed,
+                    };
+                    if (!isEqual(generationSnapshot, currentSnapshot)) {
+                        return;
+                    }
+                    currentExercise.gradingCriteria = criteria;
                     this.criteria.set(criteria);
                     this.criteriaGenerated.emit();
                     if (this.exercise().gradingInstructionFeedbackUsed) {
@@ -631,6 +737,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
+        if (!this.editable()) {
+            return;
+        }
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
         this.exercise().gradingCriteria![criterionIndex].structuredGradingInstructions[instructionIndex] = instruction;

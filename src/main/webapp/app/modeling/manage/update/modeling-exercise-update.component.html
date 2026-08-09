@@ -60,7 +60,7 @@
             <jhi-modeling-editor
                 [diagramType]="modelingExercise.diagramType"
                 [umlModel]="exampleSolution()"
-                (onModelChanged)="calculateFormSectionStatus()"
+                (onModelChanged)="onModelChanged($event)"
                 [withExplanation]="false"
                 [scrollLock]="true"
             />

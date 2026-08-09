@@ -130,7 +130,7 @@ describe('GradingInstructionsDetailsComponent', () => {
             }
         });
 
-        it('should generate once, replace criteria, preserve in-flight general text edits, and prevent duplicate clicks', () => {
+        it('should discard a response when general instructions change while waiting and prevent duplicate clicks', () => {
             const response = new Subject<GradingCriterion[]>();
             const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
             exercise.gradingInstructions = 'Keep this text';
@@ -148,11 +148,77 @@ describe('GradingInstructionsDetailsComponent', () => {
             response.next([generatedCriterion]);
             response.complete();
 
-            expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
+            expect(exercise.gradingCriteria).toBeUndefined();
             expect(exercise.gradingInstructions).toBe('Edited while waiting');
             expect(component.isGenerating()).toBe(false);
-            expect(generatedSpy).toHaveBeenCalledOnce();
-            expect(alertService.success).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.success');
+            expect(generatedSpy).not.toHaveBeenCalled();
+            expect(alertService.success).not.toHaveBeenCalled();
+        });
+
+        it('should discard a response when additional generation context changes while waiting', () => {
+            const response = new Subject<GradingCriterion[]>();
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            const currentCriteria: GradingCriterion[] = [];
+            let additionalContext = 'Initial diagram';
+            exercise.gradingCriteria = currentCriteria;
+            fixture.componentRef.setInput('additionalGenerationContext', () => additionalContext);
+            generationService.generate.mockReturnValue(response);
+
+            component.generateAssessmentCriteria();
+            additionalContext = 'Changed diagram';
+            response.next([generatedCriterion]);
+            response.complete();
+
+            expect(exercise.gradingCriteria).toBe(currentCriteria);
+            expect(component.isGenerating()).toBe(false);
+            expect(alertService.success).not.toHaveBeenCalled();
+        });
+
+        it('should discard a response when max points change while waiting', () => {
+            const response = new Subject<GradingCriterion[]>();
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            generationService.generate.mockReturnValue(response);
+
+            component.generateAssessmentCriteria();
+            exercise.maxPoints = 10;
+            response.next([generatedCriterion]);
+            response.complete();
+
+            expect(exercise.gradingCriteria).toBeUndefined();
+            expect(component.isGenerating()).toBe(false);
+            expect(alertService.success).not.toHaveBeenCalled();
+        });
+
+        it('should preserve criteria edited while generation is in flight', () => {
+            const response = new Subject<GradingCriterion[]>();
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            const editedCriteria = [{ title: 'Edited', structuredGradingInstructions: [] } as GradingCriterion];
+            generationService.generate.mockReturnValue(response);
+
+            component.generateAssessmentCriteria();
+            exercise.gradingCriteria = editedCriteria;
+            response.next([generatedCriterion]);
+            response.complete();
+
+            expect(exercise.gradingCriteria).toBe(editedCriteria);
+            expect(component.isGenerating()).toBe(false);
+            expect(alertService.success).not.toHaveBeenCalled();
+        });
+
+        it('should apply a deferred response when edit mode changes while waiting', () => {
+            const response = new Subject<GradingCriterion[]>();
+            const generatedCriterion = { title: 'Generated', structuredGradingInstructions: [gradingInstructionWithoutId] } as GradingCriterion;
+            const markdownEditor = { setMarkdown: vi.fn() };
+            Object.defineProperty(component, 'markdownEditor', { value: () => markdownEditor });
+            generationService.generate.mockReturnValue(response);
+
+            component.generateAssessmentCriteria();
+            component.switchMode();
+            response.next([generatedCriterion]);
+            response.complete();
+
+            expect(exercise.gradingCriteria).toEqual([generatedCriterion]);
+            expect(component.isGenerating()).toBe(false);
         });
 
         it('should parse, generate, and remain in edit-as-text mode', () => {
@@ -266,6 +332,31 @@ describe('GradingInstructionsDetailsComponent', () => {
                 additionalContext: 'Diagram type: ClassDiagram',
             });
         });
+
+        it('should not request assessment criteria when the component is not editable', () => {
+            fixture.componentRef.setInput('editable', false);
+
+            component.generateAssessmentCriteria();
+
+            expect(generationService.generate).not.toHaveBeenCalled();
+            expect(component.canShowGenerationButton()).toBe(false);
+        });
+
+        it('should not mutate criteria or mode when the component is not editable', () => {
+            exercise.gradingCriteria = [gradingCriterion];
+            const originalTitle = gradingCriterion.title;
+            const originalMode = component.showEditMode();
+            fixture.componentRef.setInput('editable', false);
+
+            component.addNewGradingCriterion();
+            component.deleteGradingCriterion(gradingCriterion);
+            component.onCriterionTitleChange({ target: { value: 'changed' } } as unknown as Event, gradingCriterion);
+            component.switchMode();
+
+            expect(exercise.gradingCriteria).toEqual([gradingCriterion]);
+            expect(gradingCriterion.title).toBe(originalTitle);
+            expect(component.showEditMode()).toBe(originalMode);
+        });
     });
 
     describe('onInit', () => {
@@ -294,6 +385,18 @@ describe('GradingInstructionsDetailsComponent', () => {
             expect(component.markdownEditorText()).toBe('General assessment instructions\n\n');
             expect(component.markdownEditorText()).not.toContain(GradingCriterionAction.IDENTIFIER);
         });
+
+        it('should parse per-instruction editors with only grading instruction actions', () => {
+            exercise.gradingInstructionFeedbackUsed = true;
+            const mainEditor = { parseMarkdown: vi.fn() };
+            const instructionEditor = { parseMarkdown: vi.fn() };
+            Object.defineProperty(component, 'markdownEditor', { value: () => mainEditor });
+            Object.defineProperty(component, 'markdownEditors', { value: () => [instructionEditor] });
+
+            component.prepareForSave();
+
+            expect(instructionEditor.parseMarkdown).toHaveBeenCalledWith(component.domainActionsForGradingInstructionParsing);
+        });
     });
 
     it('should return grading criteria index', () => {
@@ -310,6 +413,16 @@ describe('GradingInstructionsDetailsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(index).toBe(0);
+    });
+
+    it('should expose the grading instruction domain actions used by the template', () => {
+        expect(component.domainActionsForGradingInstructionParsing).toEqual([
+            component.creditsAction,
+            component.gradingScaleAction,
+            component.descriptionAction,
+            component.feedbackAction,
+            component.usageCountAction,
+        ]);
     });
 
     it('should add new grading instruction to criteria', () => {
@@ -335,6 +448,24 @@ describe('GradingInstructionsDetailsComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(exercise.gradingCriteria).toEqual(component.backupExercise.gradingCriteria);
+    });
+
+    it('should reset only the selected no-ID instruction when multiple no-ID objects exist', () => {
+        const firstInstruction = { credits: 1, gradingScale: 'first' } as GradingInstruction;
+        const secondInstruction = { credits: 2, gradingScale: 'second' } as GradingInstruction;
+        const firstCriterion = { title: 'first', structuredGradingInstructions: [firstInstruction] } as GradingCriterion;
+        const secondCriterion = { title: 'second', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [firstCriterion, secondCriterion];
+        component.backupExercise.gradingCriteria = [
+            { title: 'first', structuredGradingInstructions: [{ credits: 3, gradingScale: 'backup first' }] },
+            { title: 'second', structuredGradingInstructions: [{ credits: 4, gradingScale: 'backup second' }] },
+        ] as GradingCriterion[];
+
+        component.resetInstruction(secondInstruction, secondCriterion);
+
+        expect(exercise.gradingCriteria[0].structuredGradingInstructions[0]).toBe(firstInstruction);
+        expect(exercise.gradingCriteria[1].structuredGradingInstructions[0]).not.toBe(secondInstruction);
+        expect(exercise.gradingCriteria[1].structuredGradingInstructions[0]).toEqual(new GradingInstruction());
     });
 
     it('should add new grading criteria to corresponding exercise', () => {

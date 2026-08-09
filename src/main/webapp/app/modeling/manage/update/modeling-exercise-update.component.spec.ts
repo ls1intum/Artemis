@@ -20,7 +20,7 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -98,7 +98,7 @@ class StubModelingEditorComponent {
     scrollLock = input<boolean>(false);
     resizeOptions = input<unknown>();
     withExplanation = input<boolean>(false);
-    onModelChanged = output<unknown>();
+    onModelChanged = output<UMLModel>();
     apollonEditor = { nextRender: Promise.resolve() };
 
     getCurrentModel() {
@@ -338,6 +338,16 @@ describe('ModelingExerciseUpdateComponent', () => {
                 comp.synchronizeForAssessmentCriteriaGeneration();
 
                 expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(currentModel));
+            });
+
+            it('should synchronize live diagram changes for assessment criteria context', () => {
+                const changedModel = { elements: { changed: true }, relationships: {}, version: '3.0.0' } as UMLModel;
+                const statusSpy = vi.spyOn(comp, 'calculateFormSectionStatus');
+
+                comp.onModelChanged(changedModel);
+
+                expect(comp.modelingExercise.exampleSolutionModel).toBe(JSON.stringify(changedModel));
+                expect(statusSpy).toHaveBeenCalled();
             });
 
             it('should provide all modeling-specific assessment criteria context', () => {
