@@ -274,8 +274,8 @@ importers:
         specifier: 2.14.4
         version: 2.14.4(preact@10.29.6)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svelte@5.56.4(@typescript-eslint/types@8.65.0))(vue@3.5.39(typescript@6.0.3))
       '@embedpdf/models':
-        specifier: 2.14.4
-        version: 2.14.4
+        specifier: 2.15.0
+        version: 2.15.0
       '@embedpdf/pdfium':
         specifier: 2.14.4
         version: 2.14.4
@@ -1890,6 +1890,9 @@ packages:
   '@embedpdf/models@2.14.4':
     resolution: {integrity: sha512-RlxazYdS1ObWe3Rt78pVUXSqQEMeOb1oHFA0CT3aolwtVooZyop9XO3WTDWpEaGvGrHXvuSv7WQgcCLZ2zKyaQ==}
 
+  '@embedpdf/models@2.15.0':
+    resolution: {integrity: sha512-gHr+hAN094kmzCB+6J2zaiHS8o4tKeY0IfTOxVEGwqntgKk8LCWD3s+P7dlVY3V8XUVmdyFWhFt7zwm0uw+VMg==}
+
   '@embedpdf/pdfium@2.14.4':
     resolution: {integrity: sha512-0tDPQEH1WtfXcASNVp5U3dqfzZboNvcE4rDok/P4JCN+DCTaJDG2E9lYHGMo9FtuS2IdHgrzkmPRpOo5WV9MKQ==}
 
@@ -2725,6 +2728,7 @@ packages:
   '@ngtools/webpack@22.1.2':
     resolution: {integrity: sha512-5o3zbOdEHv5+wjRCMN+t6RBou28dbPkio5/rxEJBsQ9iEq11K+atsSKEaZXBMUhYr9nLYR8Pckm5Cqx2FP9R2Q==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
+    deprecated: Angular's Webpack support is deprecated. Use the esbuild and Vite-based "@angular/build" package instead.
     peerDependencies:
       '@angular/compiler-cli': ^22.0.0
       typescript: '>=6.0 <6.1'
@@ -9825,6 +9829,8 @@ snapshots:
   '@embedpdf/fonts-tc@1.0.0': {}
 
   '@embedpdf/models@2.14.4': {}
+
+  '@embedpdf/models@2.15.0': {}
 
   '@embedpdf/pdfium@2.14.4': {}
 
