@@ -31,6 +31,16 @@ jhipster:
     Always replace default credentials before deploying. Failing to do so exposes your system to serious security risks.
 </Callout>
 
+<Callout variant={CalloutVariant.warning}>
+    `artemis.user-management.internal-admin.username` has to name a dedicated local account, not a login from your external
+    directory. Artemis owns that account: it sets the configured password and the administrator authorities on every startup
+    and marks the account as internally managed. An internally managed account authenticates against Artemis rather than
+    against the directory, and it is eligible for the e-mail password reset - so pointing this property at a directory login
+    moves that account out of your directory's control, and the flag cannot be changed back through the admin UI, which
+    offers it only while a user is being created. Artemis logs a warning when it has to mark an account that existed as an
+    externally managed one.
+</Callout>
+
 <Callout variant={CalloutVariant.info}>
     Always restrict read access to configuration files for the minimum required set of users (usually only the system user that runs the Artemis service) only.
 </Callout>

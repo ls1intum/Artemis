@@ -123,9 +123,8 @@
                         ></button>
                         <tum-ui-dialog
                             [(visible)]="orgSelectorVisible"
-                            [modal]="true"
                             [dismissableMask]="true"
-                            [style]="{ width: '80vw' }"
+                            size="large"
                             [header]="'artemisApp.organizationManagement.modalSelector.title' | artemisTranslate"
                         >
                             @if (orgSelectorVisible()) {

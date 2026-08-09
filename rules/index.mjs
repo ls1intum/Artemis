@@ -6,6 +6,7 @@ import preferSignalTemplateState from './prefer-signal-template-state.mjs';
 import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
 import noPrimengComponentClasses from './no-primeng-component-classes.mjs';
+import requireChartAccessibleName from './require-chart-accessible-name.mjs';
 import noNavigationInEffect from './no-navigation-in-effect.mjs';
 import noAsUnknownCast from './no-as-unknown-cast.mjs';
 import noAsAnyCast from './no-as-any-cast.mjs';
@@ -20,6 +21,7 @@ export default {
         'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
         'no-bootstrap-classes': noBootstrapClasses,
         'no-primeng-component-classes': noPrimengComponentClasses,
+        'require-chart-accessible-name': requireChartAccessibleName,
         'no-navigation-in-effect': noNavigationInEffect,
         'no-as-unknown-cast': noAsUnknownCast,
         'no-as-any-cast': noAsAnyCast,

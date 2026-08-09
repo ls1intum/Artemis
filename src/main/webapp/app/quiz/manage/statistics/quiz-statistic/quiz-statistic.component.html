@@ -44,7 +44,15 @@
                             </div>
                         </div>
                         <div class="quiz-statistic-chart" style="height: 500px">
-                            <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" />
+                            <p-chart
+                                type="bar"
+                                [data]="chartData()"
+                                [options]="chartOptions()"
+                                [plugins]="dataLabelsPlugin"
+                                [ariaLabel]="
+                                    (rated ? 'artemisApp.showStatistic.quizStatistic.titleRated' : 'artemisApp.showStatistic.quizStatistic.titleUnrated') | artemisTranslate
+                                "
+                            />
                         </div>
                         <div class="col-md-12 text-center button-row">
                             <button (click)="switchRated()" type="button" class="btn btn-primary">

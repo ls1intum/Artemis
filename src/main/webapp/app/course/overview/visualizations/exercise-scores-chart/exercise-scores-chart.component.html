@@ -36,7 +36,13 @@
 <div class="d-flex mt-2 justify-content-center">
     <div class="line-chart-container" id="scores-line-chart">
         <div class="chart-scroll-content" [style.width.px]="chartWidth()">
-            <p-chart type="line" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($any($event))" />
+            <p-chart
+                type="line"
+                [data]="chartData()"
+                [options]="chartOptions()"
+                (onDataSelect)="onSelect($any($event))"
+                [ariaLabel]="'artemisApp.exercise-scores-chart.title' | artemisTranslate"
+            />
         </div>
     </div>
 </div>

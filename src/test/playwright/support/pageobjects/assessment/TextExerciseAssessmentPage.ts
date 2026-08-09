@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { BASE_API, ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
@@ -27,6 +28,23 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
 
     private getFeedbackSection(sectionIndex: number) {
         return this.page.locator(`#text-feedback-block-${sectionIndex}`);
+    }
+
+    /**
+     * Cancels the open assessment, accepting the confirmation dialog, and returns the cancel response.
+     * The result id is part of the request: the server releases the correction round the editor has open rather than
+     * resolving one itself, which used to release the newest round instead (issue #13396).
+     */
+    async cancelAssessment() {
+        const cancelButton = this.page.locator('#cancel');
+        await cancelButton.waitFor({ state: 'visible' });
+        await expect(cancelButton).toBeEnabled({ timeout: 10000 });
+        this.page.once('dialog', (dialog) => dialog.accept());
+        const responsePromise = this.page.waitForResponse(
+            (response) => /\/submissions\/\d+\/cancel-assessment(\?|$)/.test(response.url().replace(/^[^?]*?(\/api)/, '$1')) && response.request().method() === 'POST',
+        );
+        await cancelButton.click();
+        return await responsePromise;
     }
 
     async submit() {
