@@ -543,7 +543,7 @@ dependencies {
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
-    implementation "org.postgresql:postgresql:42.7.12"
+    implementation "org.postgresql:postgresql:42.7.13"
 
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:78.3"
