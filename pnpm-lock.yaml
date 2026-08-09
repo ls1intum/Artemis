@@ -177,7 +177,7 @@ overrides:
   '@babel/runtime': 7.29.7
   '@babel/plugin-transform-modules-systemjs': 7.29.7
   '@primeuix/styled': 0.7.4
-  '@primeuix/utils': 0.7.2
+  '@primeuix/utils': 0.8.0
   '@sinonjs/fake-timers': 15.4.0
   ajv: 8.20.0
   brace-expansion: 5.0.9
@@ -3454,8 +3454,8 @@ packages:
   '@primeuix/themes@2.0.3':
     resolution: {integrity: sha512-3fS1883mtCWhgUgNf/feiaaDSOND4EBIOu9tZnzJlJ8QtYyL6eFLcA6V3ymCWqLVXQ1+lTVEZv1gl47FIdXReg==}
 
-  '@primeuix/utils@0.7.2':
-    resolution: {integrity: sha512-pmEbSfP0Phf9W9RweiM66zXnkn73ZeKyYINElbX3uZ2+stzzaba2svLAl3B1pHVcRw5t43O0VciaGe4ye2EXKw==}
+  '@primeuix/utils@0.8.0':
+    resolution: {integrity: sha512-dZSMKU2XJ7W7VDLuFMS/o4k+QYw4SYIpqSNhR/jdasMaaXl8eq0Gt7fTzTwwq7hgfmfOsI6V5xtzUUIvybOJ/w==}
     engines: {node: '>=12.11.0'}
 
   '@publint/pack@0.1.6':
@@ -11059,11 +11059,11 @@ snapshots:
 
   '@primeuix/motion@0.0.10':
     dependencies:
-      '@primeuix/utils': 0.7.2
+      '@primeuix/utils': 0.8.0
 
   '@primeuix/styled@0.7.4':
     dependencies:
-      '@primeuix/utils': 0.7.2
+      '@primeuix/utils': 0.8.0
 
   '@primeuix/styles@2.0.3':
     dependencies:
@@ -11073,7 +11073,7 @@ snapshots:
     dependencies:
       '@primeuix/styled': 0.7.4
 
-  '@primeuix/utils@0.7.2': {}
+  '@primeuix/utils@0.8.0': {}
 
   '@publint/pack@0.1.6':
     dependencies:
@@ -14800,7 +14800,7 @@ snapshots:
       '@primeuix/motion': 0.0.10
       '@primeuix/styled': 0.7.4
       '@primeuix/styles': 2.0.3
-      '@primeuix/utils': 0.7.2
+      '@primeuix/utils': 0.8.0
       rxjs: 7.8.2
       tslib: 2.8.1
 
