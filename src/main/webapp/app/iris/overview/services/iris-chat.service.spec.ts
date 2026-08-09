@@ -43,7 +43,7 @@ describe('IrisChatService', () => {
     let service: IrisChatService;
     let httpService: IrisChatHttpService;
     let wsMock: IrisWebsocketService;
-    let routerMock: { url: string };
+    let routerMock: { url: string; navigate: ReturnType<typeof vi.fn> };
     let accountService: AccountService;
 
     const id = 123;
@@ -72,7 +72,7 @@ describe('IrisChatService', () => {
     };
 
     beforeEach(() => {
-        routerMock = { url: '' };
+        routerMock = { url: '', navigate: vi.fn().mockResolvedValue(true) };
 
         TestBed.configureTestingModule({
             providers: [
@@ -622,6 +622,48 @@ describe('IrisChatService', () => {
         const navPromise = firstValueFrom(service.pointOut$);
         service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
         await expect(navPromise).resolves.toEqual({ lectureUnitId: 7, page: 2, forceOpen: true });
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should emit a point-out in place while its own lecture is the one on screen', () => {
+        // The combined view is right there and can move without a reload, so the marker must not route anywhere.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, timestamp: 42, forceOpen: true });
+
+        expect(emitted).toHaveBeenCalledOnce();
+        expect(routerMock.navigate).not.toHaveBeenCalled();
+    });
+
+    it('should route a point-out to its lecture when the session is open from somewhere else', () => {
+        // Chat history opens a lecture session from anywhere, the course Iris page above all. The unit that carries a
+        // point-out out only listens while it is on screen, so emitting here would leave the click doing nothing at
+        // all. The deep link reaches the same position through the route instead.
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        const emitted = vi.fn();
+        service.pointOut$.subscribe(emitted);
+
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, timestamp: 42, forceOpen: true });
+
+        // combined asks for the view Iris pointed in, so the click lands the same way from either page.
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], {
+            queryParams: { unit: 7, combined: true, page: 2, timestamp: 42 },
+        });
+        // Nothing is emitted, so a lecture page opened later does not act on a stale target as well.
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
+    it('should leave a routed point-out without the parts it does not name', () => {
+        service['contextService']['_committed'].set({ mode: ChatServiceMode.LECTURE, entityId: 27 });
+        service['contextService'].setPageContext({ mode: ChatServiceMode.COURSE, entityId: courseId });
+
+        service.navigateToPointOut({ lectureUnitId: 7, timestamp: 42, forceOpen: true });
+
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/courses', courseId, 'lectures', 27], { queryParams: { unit: 7, combined: true, timestamp: 42 } });
     });
 
     it('should forward incoming point-out commands to point-out navigation', async () => {

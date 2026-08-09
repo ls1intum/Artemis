@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, of, throwError } from 'rxjs';
+import { BehaviorSubject, EMPTY, of, throwError } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -72,6 +72,8 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
     let lectureService: LectureService;
+    /** The route's query params, pushable so tests can exercise the deep-link parsing. */
+    let queryParams: BehaviorSubject<Record<string, string>>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -79,6 +81,7 @@ describe('CourseLectureDetailsComponent', () => {
     MockInstance(DiscussionSectionComponent, 'postCreateEditModal', signal(new ElementRef(document.createElement('div'))));
 
     beforeEach(async () => {
+        queryParams = new BehaviorSubject<Record<string, string>>({});
         const releaseDate = dayjs('18-03-2020 13:30', 'DD-MM-YYYY HH:mm');
         const endDate = dayjs('18-03-2020 15:30', 'DD-MM-YYYY HH:mm');
 
@@ -176,7 +179,7 @@ describe('CourseLectureDetailsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         params: of({ lectureId: '1' }),
-                        queryParams: of({}),
+                        queryParams,
                         parent: {
                             parent: {
                                 params: of({ courseId: '1' }),
@@ -444,6 +447,21 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
 
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+        });
+
+        it('should read the combined-view request off the deep link', () => {
+            // An Iris point-out marker clicked from elsewhere routes here and asks for the view Iris pointed in;
+            // a lecture citation leaves the flag off and stays with the unit on the page.
+            queryParams.next({ unit: '100', page: '3', timestamp: '42', combined: 'true' });
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(100);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(42);
+            expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(true);
+
+            queryParams.next({ unit: '100', page: '3' });
+
+            expect(courseLecturesDetailsComponent.targetCombinedView()).toBe(false);
         });
 
         it('should preserve page for unit with only PDF', () => {

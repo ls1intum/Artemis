@@ -928,6 +928,36 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.isFullscreen()).toBe(false);
         });
 
+        it('targetCombinedView: opens the combined view once content is there, and only once', () => {
+            // A point-out marker clicked from elsewhere in the app arrives as a deep link, and has to end up in the
+            // same view as clicking it on this page does. The content is still being resolved when the unit is first
+            // built, so the opening waits for it — but must not overrule the student closing the view again.
+            const openFullscreen = vi.spyOn(component, 'openFullscreen').mockImplementation(() => {});
+            // The combined view also needs the Iris sidebar to be available, as hasFullscreenContent requires both.
+            fixture.componentRef.setInput('irisSettings', { settings: { enabled: true } });
+            component.lectureUnit().lecture = { id: 1, isTutorialLecture: false } as any;
+            component.lectureUnit().videoSource = undefined;
+            component.lectureUnit().attachment = undefined;
+            fixture.componentRef.setInput('targetCombinedView', true);
+            fixture.detectChanges();
+
+            // Nothing to show yet, so nothing is opened and the request is still outstanding.
+            expect(openFullscreen).not.toHaveBeenCalled();
+
+            component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
+            fixture.componentRef.setInput('lectureUnit', { ...component.lectureUnit() });
+            fixture.detectChanges();
+
+            expect(openFullscreen).toHaveBeenCalledOnce();
+
+            // A later run — the student having closed the view in between — must not reopen it.
+            component['onFullscreenChange'](false);
+            fixture.componentRef.setInput('lectureUnit', { ...component.lectureUnit() });
+            fixture.detectChanges();
+
+            expect(openFullscreen).toHaveBeenCalledOnce();
+        });
+
         it('openFullscreen: expands collapsed card before activating fullscreen', () => {
             component.lectureUnit().videoSource = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
             fixture.componentRef.setInput('irisSettings', {

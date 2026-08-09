@@ -1134,9 +1134,33 @@ export class IrisChatService implements OnDestroy {
     /**
      * Triggers navigation to a point-out marker's position, (re)opening the combined view if needed.
      * Used when the student clicks a COMMAND marker in the chat history.
+     *
+     * The lecture unit that carries out a point-out only listens while it is on screen. Chat history, however, opens a
+     * lecture session from anywhere — the course Iris page above all — and there the marker would emit into the void
+     * and the click would do nothing at all. So when the session's lecture is not the one the route is showing, the
+     * target is handed to the lecture's deep link instead, which reaches the same position through the route and
+     * applies it as the page builds. Only a marker whose lecture is already open is delivered in place, where the
+     * combined view can move without a reload.
      * @param pointOut the navigation target (the caller should set forceOpen to reopen a closed view)
      */
     public navigateToPointOut(pointOut: IrisPointOut): void {
+        const session = this.contextService.committed();
+        const courseId = this.getCourseId();
+        if (session?.mode === ChatServiceMode.LECTURE && courseId && !sameSessionContext(session, this.contextService.page())) {
+            // Same deep link the lecture citations use, so both ways of pointing at a position arrive the same way.
+            // Unlike a citation it also asks for the combined view, which is where Iris did the pointing and where
+            // the toggle and its explanation live — otherwise the same click would land in a different place
+            // depending on which page the student happened to start from.
+            const queryParams: Record<string, number | boolean> = { unit: pointOut.lectureUnitId, combined: true };
+            if (pointOut.page != undefined) {
+                queryParams.page = pointOut.page;
+            }
+            if (pointOut.timestamp != undefined) {
+                queryParams.timestamp = pointOut.timestamp;
+            }
+            void this.router.navigate(['/courses', courseId, 'lectures', session.entityId], { queryParams });
+            return;
+        }
         this.pointOutSubject.next(pointOut);
     }
 
@@ -1152,8 +1176,12 @@ export class IrisChatService implements OnDestroy {
     private handleCommand(command: IrisCommand): void {
         // Delivery is per user, so this arrives in every tab with the session open. All of them carry the command out —
         // the student should find the same position in whichever tab they look at next — but only the tab the run was
-        // started from answers for it. The others drop the correlation id and are then handled exactly like a marker
-        // click: navigate, say nothing.
+        // started from answers for it. The others drop the correlation id and then navigate without saying anything.
+        //
+        // Unlike a marker click this never routes a tab elsewhere, even where the lecture unit is not on screen to
+        // receive it: a click is the student asking to be taken somewhere, while this arrives on its own and would
+        // pull them out of whatever they were doing. Such a tab therefore does nothing, and where it was also the one
+        // answering, the pipeline is released by the server-side ack timeout.
         const answersForCommand = !command.targetClientId || command.targetClientId === this.irisWebsocketService.clientId;
         switch (command.type) {
             case 'pointOut': {
