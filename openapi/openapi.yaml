@@ -1868,8 +1868,10 @@ components:
           enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
         randomizeOrder: {type: boolean}
         invalid: {type: boolean}
-        type: {type: string}
-        explanation: {type: string}
+        type:
+          type: string
+          default: drag-and-drop
+          enum: [drag-and-drop]
         backgroundFilePath: {type: string}
         dropLocations:
           type: array
@@ -1877,6 +1879,7 @@ components:
         dragItems:
           type: array
           items: {$ref: '#/components/schemas/DragItem'}
+      required: [type]
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -2316,12 +2319,15 @@ components:
           enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
         randomizeOrder: {type: boolean}
         invalid: {type: boolean}
-        type: {type: string}
-        explanation: {type: string}
+        type:
+          type: string
+          default: multiple-choice
+          enum: [multiple-choice]
         answerOptions:
           type: array
           items: {$ref: '#/components/schemas/AnswerOptionWithoutSolution'}
         singleChoice: {type: boolean}
+      required: [type]
     DomainObject:
       type: object
       properties:
@@ -2339,8 +2345,10 @@ components:
           enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
         randomizeOrder: {type: boolean}
         invalid: {type: boolean}
-        type: {type: string}
-        explanation: {type: string}
+        type:
+          type: string
+          default: short-answer
+          enum: [short-answer]
         spots:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerSpot'}
@@ -2349,6 +2357,7 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+      required: [type]
     TutorialGroupStudentImportData:
       type: object
       properties:
@@ -2431,6 +2440,15 @@ components:
         accuracyOfScores: {type: integer, format: int32}
     SubmittedAnswerBeforeEvaluation:
       type: object
+      discriminator:
+        propertyName: type
+        mapping: {multiple-choice: '#/components/schemas/MultipleChoiceSubmittedAnswerBeforeEvaluation',
+          drag-and-drop: '#/components/schemas/DragAndDropSubmittedAnswerBeforeEvaluation',
+          short-answer: '#/components/schemas/ShortAnswerSubmittedAnswerBeforeEvaluation'}
+      oneOf:
+      - {$ref: '#/components/schemas/MultipleChoiceSubmittedAnswerBeforeEvaluation'}
+      - {$ref: '#/components/schemas/DragAndDropSubmittedAnswerBeforeEvaluation'}
+      - {$ref: '#/components/schemas/ShortAnswerSubmittedAnswerBeforeEvaluation'}
       properties:
         id: {type: integer, format: int64}
         quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
@@ -2447,6 +2465,48 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ShortAnswerSubmittedText'}
           uniqueItems: true
+    MultipleChoiceSubmittedAnswerBeforeEvaluation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+        selectedOptions:
+          type: array
+          items: {$ref: '#/components/schemas/AnswerOptionWithoutSolution'}
+          uniqueItems: true
+        type:
+          type: string
+          default: multiple-choice
+          enum: [multiple-choice]
+      required: [type]
+    DragAndDropSubmittedAnswerBeforeEvaluation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+        mappings:
+          type: array
+          items: {$ref: '#/components/schemas/DragAndDropMapping'}
+          uniqueItems: true
+        type:
+          type: string
+          default: drag-and-drop
+          enum: [drag-and-drop]
+      required: [type]
+    ShortAnswerSubmittedAnswerBeforeEvaluation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        quizQuestion: {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
+        submittedTexts:
+          type: array
+          items: {$ref: '#/components/schemas/ShortAnswerSubmittedText'}
+          uniqueItems: true
+        type:
+          type: string
+          default: short-answer
+          enum: [short-answer]
+      required: [type]
     SubmittedAnswerFromStudent:
       discriminator:
         propertyName: type
