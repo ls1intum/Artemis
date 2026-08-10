@@ -81,7 +81,7 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
             WHERE team.exercise.id = :exerciseId
                 AND student.id = :userId
             """)
-    Optional<Team> findOneWithStudentsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+    Optional<Team> findOneWithStudentsByExerciseIdAndUserId(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
 
     @Query("""
             SELECT team
