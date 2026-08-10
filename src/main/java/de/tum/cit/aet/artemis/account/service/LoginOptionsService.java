@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -60,10 +59,11 @@ public class LoginOptionsService {
         }
         String sanitizedInput = emailOrLogin.trim().toLowerCase(Locale.ROOT);
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
-        Optional<User> user = isEmail ? userRepository.findOneByEmailIgnoreCase(sanitizedInput) : userRepository.findOneByLogin(sanitizedInput);
+        // only project the internal flag instead of loading the whole user entity: empty means the user is unknown to Artemis
+        Optional<Boolean> internalUser = isEmail ? userRepository.isInternalUserByEmailIgnoreCase(sanitizedInput) : userRepository.isInternalUserByLogin(sanitizedInput);
         // if user is already in database
-        if (user.isPresent()) {
-            if (user.get().isInternal()) {
+        if (internalUser.isPresent()) {
+            if (internalUser.get()) {
                 return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
             }
             else {

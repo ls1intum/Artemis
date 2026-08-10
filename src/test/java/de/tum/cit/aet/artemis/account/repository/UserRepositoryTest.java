@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -445,5 +446,23 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastEditorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastInstructorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
+    }
+
+    @Test
+    void testIsInternalUserByLoginAndByEmail() {
+        User internalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internal");
+        User externalUser = userUtilService.createAndSaveUser(TEST_PREFIX + "external");
+        externalUser.setInternal(false);
+        externalUser = userRepository.save(externalUser);
+
+        assertThat(userRepository.isInternalUserByLogin(internalUser.getLogin())).contains(true);
+        assertThat(userRepository.isInternalUserByLogin(externalUser.getLogin())).contains(false);
+        assertThat(userRepository.isInternalUserByLogin(TEST_PREFIX + "doesnotexist")).isEmpty();
+
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail())).contains(true);
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(externalUser.getEmail())).contains(false);
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(TEST_PREFIX + "doesnotexist@test.de")).isEmpty();
+        // the lookup by email has to stay case-insensitive, just like the entity based findOneByEmailIgnoreCase it replaces
+        assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
     }
 }
