@@ -146,6 +146,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             .subscribe(() => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
+                    // the service already reported the failure to the user, nothing is derived from the refresh here
+                    error: () => {},
                 });
             });
     }
@@ -179,6 +181,8 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             .subscribe(() => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
+                    // the service already reported the failure to the user, nothing is derived from the refresh here
+                    error: () => {},
                 });
                 this.onUpdateSidebar.emit();
             });

@@ -225,14 +225,15 @@ describe('MetisConversationService', () => {
                     vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
                     metisConversationService.forceRefresh().subscribe({
-                        complete: () => {
+                        // the failure is passed on, so that subscribers cannot mistake it for an up to date list
+                        error: () => {
                             // A failed refresh must not be mistaken for "the user has no conversations": dropping the cache
                             // would clear the active conversation and strip its id from the URL, so a reload could not restore it
                             forkJoin({
                                 conversations: metisConversationService.conversationsOfUser$.pipe(take(1)),
                                 activeConversation: metisConversationService.activeConversation$.pipe(take(1)),
                             }).subscribe(({ conversations, activeConversation }) => {
-                                expect(conversations).toHaveLength(3);
+                                expect(conversations).toEqual([groupChat, oneToOneChat, channel]);
                                 expect(activeConversation?.id).toBe(groupChat.id);
                                 done({});
                             });
@@ -250,7 +251,8 @@ describe('MetisConversationService', () => {
             metisConversationService.isServiceSetup$.subscribe((isSetUp) => isServiceSetUpValues.push(isSetUp));
 
             metisConversationService.setUpConversationService(course).subscribe({
-                complete: () => {
+                // the failure is passed on, so the caller does not record the service as instantiated
+                error: () => {
                     // announcing the service as ready with an empty cache would make every conversation opened from the
                     // URL look like one the user is not a member of
                     expect(isServiceSetUpValues).toEqual([false]);
