@@ -32,6 +32,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             SELECT DISTINCT e
             FROM ModelingExercise e
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.course.id = :courseId
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -41,7 +42,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     // the instructor's settings. The nested exampleSubmissions.submission.results path already fetches
     // exampleSubmissions, so it is not listed on its own.
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
-            "plagiarismDetectionConfig" })
+            "plagiarismDetectionConfig", "exerciseVariantGroup" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })

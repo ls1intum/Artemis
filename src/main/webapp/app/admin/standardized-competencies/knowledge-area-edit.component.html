@@ -102,15 +102,7 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.knowledgeArea.model.parent"></label>
-            <tum-ui-select
-                inputId="knowledge-area-select"
-                [options]="knowledgeAreas()"
-                optionLabel="title"
-                optionValue="id"
-                formControlName="parentId"
-                [showClear]="true"
-                appendTo="body"
-            />
+            <tum-ui-select inputId="knowledge-area-select" [options]="knowledgeAreas()" optionLabel="title" optionValue="id" formControlName="parentId" [showClear]="true" />
             @if (form.controls.parentId.invalid && (form.controls.parentId.dirty || form.controls.parentId.touched)) {
                 <tum-ui-message severity="error" data-testid="parent-error">
                     <span jhiTranslate="artemisApp.knowledgeArea.details.error.parentIdCircle"></span>

@@ -1520,8 +1520,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseIntoCourse_persistsPlagiarismDetectionConfigFromDto() throws Exception {
         var now = ZonedDateTime.now();
-        Course course1 = courseUtilService.addEmptyCourse();
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         ModelingExercise sourceExercise = ModelingExerciseFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram,
                 course1);
         // Carry a non-default (valid) plagiarism config on the source so the import DTO transports it and we can assert it is persisted.
@@ -1703,7 +1703,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAndUpdateExamModelingExercise_carriesExamGroupAndAcceptsFlattenedEdit() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, true);
+        ExerciseGroup exerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, true, TEST_PREFIX);
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise = modelingExerciseTestRepository.save(modelingExercise);
 

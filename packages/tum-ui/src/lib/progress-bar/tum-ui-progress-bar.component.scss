@@ -1,0 +1,77 @@
+:host {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    height: calc(var(--tumaet-ui-spacing) * 5);
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+.tum-ui-progress-bar-value {
+    height: 100%;
+    width: 0;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--tumaet-ui-primary-color);
+    transition: width 1s ease-in-out;
+}
+
+.tum-ui-progress-bar-value[data-severity='success'] {
+    background: var(--tumaet-ui-state-success);
+}
+
+.tum-ui-progress-bar-value[data-severity='warn'] {
+    background: var(--tumaet-ui-state-warning);
+}
+
+.tum-ui-progress-bar-value[data-severity='danger'] {
+    background: var(--tumaet-ui-state-danger);
+}
+
+.tum-ui-progress-bar-value[data-severity='info'] {
+    background: var(--tumaet-ui-state-info);
+}
+
+.tum-ui-progress-bar-label {
+    font-size: var(--tumaet-ui-font-size-xs);
+    font-weight: 600;
+    color: var(--tumaet-ui-primary-contrast-color);
+}
+
+.tum-ui-progress-bar-value[data-severity='success'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-success-contrast);
+}
+
+.tum-ui-progress-bar-value[data-severity='warn'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-warning-contrast);
+}
+
+.tum-ui-progress-bar-value[data-severity='danger'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-danger-contrast);
+}
+
+.tum-ui-progress-bar-value[data-severity='info'] .tum-ui-progress-bar-label {
+    color: var(--tumaet-ui-state-info-contrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tum-ui-progress-bar-value {
+        transition: none;
+    }
+}
+
+@media (forced-colors: active) {
+    :host {
+        border: 1px solid CanvasText;
+    }
+
+    .tum-ui-progress-bar-value {
+        background: Highlight;
+    }
+
+    .tum-ui-progress-bar-label {
+        color: HighlightText;
+    }
+}

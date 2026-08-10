@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
@@ -39,7 +40,7 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId,
         ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
         PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode,
-        ModelingExerciseExamGroupDTO exerciseGroup) implements Serializable {
+        ModelingExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
 
     /**
      * Creates a {@link ModelingExerciseResponseDTO} from the given {@link ModelingExercise}.
@@ -99,6 +100,10 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
         // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
         Set<ModelingExampleSubmissionDTO> exampleSubmissionDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getExampleSubmissions(), ModelingExampleSubmissionDTO::of);
 
+        // The exercise edit form renders its timeline as read-only "locked to group" pickers when the exercise belongs to a
+        // variant group, so the group reference has to travel with the exercise.
+        ExerciseVariantGroupReferenceDTO exerciseVariantGroupDTO = ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup());
+
         // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
         // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
         Set<String> categories = ModelingDtoCollections.copyInitializedSet(exercise.getCategories());
@@ -110,6 +115,6 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
                 exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), exercise.getGradingInstructions(), categories, exercise.getChannelName(),
                 exercise.getFeedbackSuggestionModule(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores,
                 course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
-                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
+                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);
     }
 }

@@ -180,9 +180,100 @@ describe('SidebarAccordionComponent', () => {
         expect(itemHiddenDiv).toBeNull();
     });
 
+    describe('searching a variant group', () => {
+        // A variant-group card carries the group title and its members in groupedItems, but no type of its own,
+        // so searching for a member's title or type must still keep the whole group visible.
+        beforeEach(() => {
+            fixture.componentRef.setInput('groupedData', {
+                current: {
+                    entityData: [
+                        {
+                            title: 'Variant group',
+                            id: 10,
+                            size: 'M',
+                            groupedItems: [
+                                { title: 'Sorting algorithms', id: 11, size: 'M', type: 'programming' },
+                                { title: 'Binary trees', id: 12, size: 'M', type: 'modeling' },
+                            ],
+                        },
+                    ],
+                },
+            });
+        });
+
+        const groupIsVisible = (searchValue: string): boolean => {
+            fixture.componentRef.setInput('searchValue', searchValue);
+            fixture.changeDetectorRef.detectChanges();
+            return !!fixture.nativeElement.querySelector('#test-accordion-item-container-0')?.querySelector('.sidebar-group');
+        };
+
+        it('should keep the group when the search matches a member title', () => {
+            expect(groupIsVisible('Binary')).toBe(true);
+        });
+
+        it('should keep the group when the search matches a member type', () => {
+            expect(groupIsVisible('programming')).toBe(true);
+        });
+
+        it('should keep the group when the search matches the group title', () => {
+            expect(groupIsVisible('Variant')).toBe(true);
+        });
+
+        it('should hide the group when the search matches neither the group nor a member', () => {
+            expect(groupIsVisible('quiz')).toBe(false);
+        });
+    });
+
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
         expect(component.collapseStateInternal()['future']).toBe(false);
+    });
+
+    it('should expand the group when the selected item is a nested variant of a group', () => {
+        // A variant group is one top-level card whose members live in groupedItems. Selecting a variant via a
+        // direct URL / refresh must still expand its (collapsed) time category so the selected card is visible.
+        fixture.componentRef.setInput('groupedData', {
+            future: {
+                entityData: [
+                    {
+                        title: 'Variant group',
+                        id: 10,
+                        size: 'M',
+                        groupedItems: [
+                            { title: 'Sorting algorithms', id: 11, size: 'M', type: 'programming' },
+                            { title: 'Binary trees', id: 12, size: 'M', type: 'modeling' },
+                        ],
+                    },
+                ],
+            },
+        });
+        fixture.componentRef.setInput('routeParams', { exerciseId: 12 });
+        fixture.componentRef.setInput('collapseState', { future: true });
+        fixture.detectChanges();
+
+        component.expandGroupWithSelectedItem();
+        expect(component.collapseStateInternal()['future']).toBe(false);
+    });
+
+    it('should leave the group collapsed when no card or nested variant matches the selected item', () => {
+        fixture.componentRef.setInput('groupedData', {
+            future: {
+                entityData: [
+                    {
+                        title: 'Variant group',
+                        id: 10,
+                        size: 'M',
+                        groupedItems: [{ title: 'Sorting algorithms', id: 11, size: 'M', type: 'programming' }],
+                    },
+                ],
+            },
+        });
+        fixture.componentRef.setInput('routeParams', { exerciseId: 999 });
+        fixture.componentRef.setInput('collapseState', { future: true });
+        fixture.detectChanges();
+
+        component.expandGroupWithSelectedItem();
+        expect(component.collapseStateInternal()['future']).toBe(true);
     });
 
     it('should calculate unread messages of each group correctly', () => {
