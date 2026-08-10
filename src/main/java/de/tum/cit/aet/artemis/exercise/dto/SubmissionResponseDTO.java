@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.quiz.domain.AbstractQuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -56,7 +55,7 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
      * @return the submission response DTO
      */
     public static SubmissionResponseDTO ofForParticipationHistory(Submission submission) {
-        return of(submission, true, false, false);
+        return of(submission, true, false, false, true);
     }
 
     /**
@@ -66,7 +65,7 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
      * @return the submission response DTO
      */
     public static SubmissionResponseDTO ofForTestRunAssessment(Submission submission) {
-        return of(submission, true, true, false);
+        return of(submission, true, true, false, true);
     }
 
     /**
@@ -76,7 +75,7 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
      * @return the submission response DTO
      */
     public static SubmissionResponseDTO ofForImport(Submission submission) {
-        return of(submission, true, false, true);
+        return of(submission, true, false, true, true);
     }
 
     /**
@@ -86,14 +85,18 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
      * @return the submission response DTO
      */
     public static SubmissionResponseDTO ofForComplaintDashboard(Submission submission) {
-        return of(submission, false, false, false);
+        return of(submission, false, false, false, false);
     }
 
-    private static SubmissionResponseDTO of(Submission submission, boolean includeParticipant, boolean includeFeedback, boolean latestResultOnly) {
+    private static SubmissionResponseDTO of(Submission submission, boolean includeParticipant, boolean includeFeedback, boolean latestResultOnly,
+            boolean includeProgrammingDetails) {
         Objects.requireNonNull(submission, "The submission must be set");
 
-        StudentParticipationDTO participation = Hibernate.isInitialized(submission.getParticipation())
-                && submission.getParticipation() instanceof StudentParticipation studentParticipation ? StudentParticipationDTO.of(studentParticipation, includeParticipant) : null;
+        StudentParticipationDTO participation = null;
+        if (Hibernate.isInitialized(submission.getParticipation()) && submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+            participation = includeProgrammingDetails ? StudentParticipationDTO.of(studentParticipation, includeParticipant)
+                    : StudentParticipationDTO.ofWithoutProgrammingDetails(studentParticipation, includeParticipant);
+        }
         List<SubmissionResultDTO> results = null;
         if (Hibernate.isInitialized(submission.getResults())) {
             if (latestResultOnly) {
@@ -132,9 +135,6 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
         }
         else if (submission instanceof QuizSubmission quizSubmission) {
             quizBatch = quizSubmission.getQuizBatch();
-            scoreInPoints = quizSubmission.getScoreInPoints();
-        }
-        else if (submission instanceof AbstractQuizSubmission quizSubmission) {
             scoreInPoints = quizSubmission.getScoreInPoints();
         }
 

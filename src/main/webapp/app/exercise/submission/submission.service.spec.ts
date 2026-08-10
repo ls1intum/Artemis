@@ -14,6 +14,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Submission, SubmissionExerciseType, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import dayjs from 'dayjs/esm';
 import { SubmissionResponseDTO } from 'app/exercise/shared/entities/submission/submission-response.dto';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Submission Service', () => {
     let service: SubmissionService;
@@ -173,10 +174,12 @@ describe('Submission Service', () => {
         const exerciseId = 1;
         const submissionDateStr = '2022-02-02T12:34:56.789Z';
         const complaintSubmittedTimeStr = '2022-02-03T22:11:33.444Z';
+        const returnedSubmission = deepClone(submissionResponseDTO);
+        returnedSubmission.submissionDate = submissionDateStr;
 
         const returnedFromService = [
             {
-                submission: { ...submissionResponseDTO, submissionDate: submissionDateStr },
+                submission: returnedSubmission,
                 complaint: { id: 2, submittedTime: complaintSubmittedTimeStr, complaintIsAccepted: true },
             },
         ];

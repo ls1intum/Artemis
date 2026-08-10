@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -901,8 +900,7 @@ public class SubmissionService {
         Page<StudentParticipation> studentParticipationPage = studentParticipationRepository.findAllWithEagerSubmissionsAndResultsByExerciseId(exerciseId, searchTerm, pageable);
 
         var latestSubmissions = studentParticipationPage.getContent().stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-        final Page<SubmissionResponseDTO> submissionPage = new PageImpl<>(latestSubmissions.stream().map(SubmissionResponseDTO::ofForImport).toList(), pageable,
-                latestSubmissions.size());
-        return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
+        final List<SubmissionResponseDTO> submissionDTOs = latestSubmissions.stream().map(SubmissionResponseDTO::ofForImport).toList();
+        return new SearchResultPageDTO<>(submissionDTOs, studentParticipationPage.getTotalPages());
     }
 }

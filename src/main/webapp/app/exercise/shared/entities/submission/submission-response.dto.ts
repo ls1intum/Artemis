@@ -5,7 +5,7 @@ import { Feedback, FeedbackDTO, convertFeedbackFromServer } from 'app/assessment
 import { Language } from 'app/course/shared/entities/course.model';
 import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Submission, SubmissionExerciseType, SubmissionType, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -88,7 +88,7 @@ export function fromSubmissionResponseDTO(dto: SubmissionResponseDTO): Submissio
     }
 
     submission.results?.forEach((result) => (result.submission = submission));
-    setLatestSubmissionResult(submission, submission.results?.last());
+    submission.latestResult = findLatestSubmissionResult(submission.results);
     return submission;
 }
 
@@ -120,7 +120,7 @@ function fromSubmissionResultDTO(dto: SubmissionResultDTO): Result {
     result.testCaseCount = dto.testCaseCount;
     result.passedTestCaseCount = dto.passedTestCaseCount;
     result.codeIssueCount = dto.codeIssueCount;
-    result.assessor = dto.assessor ? Object.assign(new User(), dto.assessor) : undefined;
+    result.assessor = dto.assessor ? fromUserPublicInfoDTO(dto.assessor) : undefined;
     result.feedbacks = dto.feedbacks?.map((feedback) => reconnectFeedback(convertFeedbackFromServer(feedback), result));
     result.assessmentNote = dto.assessmentNote ? fromSubmissionAssessmentNoteDTO(dto.assessmentNote) : undefined;
     return result;
@@ -135,6 +135,33 @@ function fromSubmissionAssessmentNoteDTO(dto: SubmissionAssessmentNoteDTO): Asse
     const assessmentNote = new AssessmentNote();
     assessmentNote.id = dto.id;
     assessmentNote.note = dto.note;
-    assessmentNote.creator = dto.creator ? Object.assign(new User(), dto.creator) : undefined;
+    assessmentNote.creator = dto.creator ? fromUserPublicInfoDTO(dto.creator) : undefined;
     return assessmentNote;
+}
+
+function findLatestSubmissionResult(results: Result[] | undefined): Result | undefined {
+    return results?.reduce<Result | undefined>((latestResult, result) => {
+        if (!latestResult) {
+            return result;
+        }
+        if (result.id === undefined) {
+            return latestResult;
+        }
+        if (latestResult.id === undefined) {
+            return result;
+        }
+        return result.id > latestResult.id ? result : latestResult;
+    }, undefined);
+}
+
+function fromUserPublicInfoDTO(dto: UserPublicInfoDTO): User {
+    const user = new User();
+    user.id = dto.id;
+    user.login = dto.login;
+    user.name = dto.name;
+    user.firstName = dto.firstName;
+    user.lastName = dto.lastName;
+    user.email = dto.email;
+    user.imageUrl = dto.imageUrl;
+    return user;
 }
