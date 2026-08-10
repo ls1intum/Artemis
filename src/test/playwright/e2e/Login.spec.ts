@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { test } from '../support/fixtures';
 import { studentOne } from '../support/users';
 import { BASE_API } from '../support/constants';
@@ -46,18 +46,23 @@ test.describe('Login page tests', { tag: '@fast' }, () => {
         await page.waitForURL('/sign-in');
     });
 
+    /**
+     * Reads the login options straight from the API. The browser network buffer is deliberately not used: entries in it
+     * can be evicted before the body is read, which fails with "No data found for resource with given identifier" on a
+     * loaded runner even though the request itself succeeded.
+     */
+    async function fetchLoginOptions(page: Page, usernameOrEmail: string) {
+        const response = await page.request.get(`${BASE_API}/core/public/login-options`, { params: { usernameOrEmail } });
+        expect(response.status()).toBe(200);
+        return response.json();
+    }
+
     test('Requests the login options for a known internal user and continues to the password step', async ({ page, loginPage }) => {
+        expect(await fetchLoginOptions(page, studentOne.username)).toEqual({ loginMethod: 'PASSWORD', idpName: null });
+
         await page.goto('/sign-in');
         await loginPage.enterUsername(studentOne.username);
-
-        const responsePromise = page.waitForResponse((response) => response.url().includes(`${BASE_API}/core/public/login-options`));
         await loginPage.clickContinueButton();
-        const response = await responsePromise;
-
-        expect(response.status()).toBe(200);
-        const options = await response.json();
-        expect(options.loginMethod).toBe('PASSWORD');
-        expect(options.idpName ?? null).toBeNull();
 
         // internal users authenticate with their Artemis password, so the second stage has to offer the password field
         await expect(page.locator('#password')).toBeVisible();
@@ -73,33 +78,25 @@ test.describe('Login page tests', { tag: '@fast' }, () => {
 
         // return to the anonymous login page and identify via the email address instead of the login
         await page.context().clearCookies();
+        expect(await fetchLoginOptions(page, email)).toEqual({ loginMethod: 'PASSWORD', idpName: null });
+
         await page.goto('/sign-in');
         await loginPage.enterUsername(email);
-
-        const responsePromise = page.waitForResponse((response) => response.url().includes(`${BASE_API}/core/public/login-options`));
         await loginPage.clickContinueButton();
-        const response = await responsePromise;
-
-        expect(response.status()).toBe(200);
-        const options = await response.json();
-        expect(options.loginMethod).toBe('PASSWORD');
-        expect(options.idpName ?? null).toBeNull();
         await expect(page.locator('#password')).toBeVisible();
     });
 
     test('Answers identically for an unknown account so it cannot be used to enumerate users', async ({ page, loginPage }) => {
+        // this test server has no LDAP and no external identity provider, so an unknown account has to be answered
+        // exactly like a known one. Comparing the two answers states that directly instead of restating the expected shape.
+        const knownAccount = await fetchLoginOptions(page, studentOne.username);
+        const unknownAccount = await fetchLoginOptions(page, 'artemis_test_user_does_not_exist');
+        expect(unknownAccount).toEqual(knownAccount);
+
+        // the second stage must not give it away either
         await page.goto('/sign-in');
         await loginPage.enterUsername('artemis_test_user_does_not_exist');
-
-        const responsePromise = page.waitForResponse((response) => response.url().includes(`${BASE_API}/core/public/login-options`));
         await loginPage.clickContinueButton();
-        const response = await responsePromise;
-
-        // this test server has no LDAP and no external identity provider, so an unknown account has to look exactly like a known internal one
-        expect(response.status()).toBe(200);
-        const options = await response.json();
-        expect(options.loginMethod).toBe('PASSWORD');
-        expect(options.idpName ?? null).toBeNull();
         await expect(page.locator('#password')).toBeVisible();
     });
 
