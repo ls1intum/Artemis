@@ -1,6 +1,6 @@
-import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
+import type { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Course } from 'app/course/shared/entities/course.model';
+import type { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,6 +11,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -111,7 +112,7 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     participation.submissionCount = dto.submissionCount;
     participation.participantName = dto.participantName;
     participation.participantIdentifier = dto.participantIdentifier;
-    participation.student = dto.student ? Object.assign(new User(), dto.student) : undefined;
+    participation.student = dto.student ? deepClone(dto.student) : undefined;
     participation.team = dto.team ? fromParticipationTeamDTO(dto.team) : undefined;
     participation.exercise = dto.exercise ? fromParticipationExerciseContextDTO(dto.exercise) : undefined;
 
@@ -135,7 +136,7 @@ function fromParticipationTeamDTO(dto: ParticipationTeamDTO): Team {
     team.name = dto.name;
     team.shortName = dto.shortName;
     team.image = dto.image;
-    team.students = dto.students?.map((student) => Object.assign(new User(), student));
+    team.students = dto.students?.map((student) => deepClone(student));
     return team;
 }
 
@@ -150,7 +151,7 @@ function fromParticipationExerciseContextDTO(dto: ParticipationExerciseContextDT
     exercise.dueDate = convertDateStringFromServer(dto.dueDate);
     exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
     exercise.maxPoints = dto.maxPoints;
-    exercise.course = dto.course ? Object.assign(new Course(), dto.course) : undefined;
+    exercise.course = dto.course ? deepClone(dto.course) : undefined;
     exercise.exerciseGroup = dto.exerciseGroup ? fromExerciseGroupDTO(dto.exerciseGroup, exercise.course) : undefined;
     return exercise;
 }
@@ -160,7 +161,7 @@ function fromExerciseGroupDTO(dto: NonNullable<ParticipationExerciseContextDTO['
     exerciseGroup.id = dto.id;
     exerciseGroup.exam = new Exam();
     exerciseGroup.exam.id = dto.exam.id;
-    exerciseGroup.exam.course = course ?? Object.assign(new Course(), dto.exam.course);
+    exerciseGroup.exam.course = course ?? deepClone(dto.exam.course);
     return exerciseGroup;
 }
 
