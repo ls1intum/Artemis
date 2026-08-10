@@ -31,7 +31,7 @@ export class ExampleSubmissionImportPagingService extends PagingService<Submissi
             .get<SubmissionSearchResponseDTO>(`${ExampleSubmissionImportPagingService.RESOURCE_URL}/${options.exerciseId}/submissions-for-import`, { params, observe: 'response' })
             .pipe(
                 map((resp: HttpResponse<SubmissionSearchResponseDTO>) => ({
-                    resultsOnPage: resp.body?.resultsOnPage.map(fromSubmissionResponseDTO) ?? [],
+                    resultsOnPage: resp.body?.resultsOnPage?.map(fromSubmissionResponseDTO) ?? [],
                     numberOfPages: resp.body?.numberOfPages ?? 0,
                 })),
             );
