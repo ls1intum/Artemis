@@ -37,6 +37,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -688,6 +690,46 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(body.path("assessmentType").asText()).isEqualTo(AssessmentType.AUTOMATIC.name());
     }
 
+    /**
+     * {@code withSubmission=true} nests the whole submission, so the same superset rule applies one level down: the
+     * nested object has to keep every property {@link ProgrammingSubmission} put on the entity wire. The raw key set
+     * is asserted because deserializing into the entity would hide a dropped key.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetLatestResultWithFeedbacks_withSubmission_keepsTheScorpioKeySet() throws Exception {
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        // Pin the values behind the computed and the boolean keys, so their presence does not depend on the fixture.
+        participation.setInitializationDate(ZonedDateTime.now().minusMinutes(30));
+        participationRepository.save(participation);
+        ProgrammingSubmission submission = (ProgrammingSubmission) result.getSubmission();
+        submission.setSubmissionDate(participation.getInitializationDate().plusMinutes(5));
+        submission.setCommitHash("1234567890abcdef");
+        submission.setType(SubmissionType.MANUAL);
+        submission.setExampleSubmission(true);
+        submission.setBuildFailed(true);
+        submissionRepository.save(submission);
+
+        Map<String, Object> body = getJsonMap(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=true");
+
+        assertThat(body).containsKey("submission");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> submissionJson = (Map<String, Object>) body.get("submission");
+        assertThat(submissionJson).containsKeys("id", "submissionExerciseType", "submissionDate", "commitHash", "type", "submitted", "exampleSubmission", "buildFailed", "empty",
+                "durationInMinutes", "participation");
+        assertThat(submissionJson.get("id")).isEqualTo(submission.getId().intValue());
+        assertThat(submissionJson.get("submissionExerciseType")).isEqualTo("programming");
+        assertThat(submissionJson.get("commitHash")).isEqualTo("1234567890abcdef");
+        assertThat(submissionJson.get("type")).isEqualTo(SubmissionType.MANUAL.name());
+        assertThat(submissionJson.get("submitted")).isEqualTo(true);
+        assertThat(submissionJson.get("exampleSubmission")).isEqualTo(true);
+        assertThat(submissionJson.get("buildFailed")).isEqualTo(true);
+        // A programming submission is never empty; the constant was on the entity wire and stays on this one.
+        assertThat(submissionJson.get("empty")).isEqualTo(false);
+        assertThat(submissionJson.get("durationInMinutes")).isEqualTo(5);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMigratedParticipationRoutes_stayWithinTheirQueryBudget() throws Exception {
@@ -714,6 +756,14 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     private JsonNode getJson(String url) throws Exception {
         return objectMapper.readTree(request.get(url, HttpStatus.OK, String.class));
+    }
+
+    /**
+     * Reads a response as a plain map, so a key-set assertion sees exactly the keys on the wire.
+     */
+    private Map<String, Object> getJsonMap(String url) throws Exception {
+        return objectMapper.readValue(request.get(url, HttpStatus.OK, String.class), new TypeReference<>() {
+        });
     }
 
     private Set<Long> resultIdsOfExercise() {

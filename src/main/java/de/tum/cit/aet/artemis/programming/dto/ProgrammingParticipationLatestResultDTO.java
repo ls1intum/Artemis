@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 /**
  * The {@link Result} shape served by {@code programming-exercise-participations/{id}/latest-result-with-feedbacks}.
@@ -64,8 +65,11 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
             return null;
         }
         SubmissionRefDTO submissionDTO = withSubmission ? SubmissionRefDTO.of(result.getSubmission()) : null;
-        List<ResultDTO.FeedbackDTO> feedbackDTOs = Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks().stream().map(ResultDTO.FeedbackDTO::of).toList() : null;
-        UserNameDTO assessor = Hibernate.isInitialized(result.getAssessor()) ? UserNameDTO.of(result.getAssessor()) : null;
+        // Hibernate.isInitialized(null) is true, so every guard needs its own null check.
+        var feedbacks = result.getFeedbacks();
+        List<ResultDTO.FeedbackDTO> feedbackDTOs = feedbacks != null && Hibernate.isInitialized(feedbacks) ? feedbacks.stream().map(ResultDTO.FeedbackDTO::of).toList() : null;
+        var assessorEntity = result.getAssessor();
+        UserNameDTO assessor = assessorEntity != null && Hibernate.isInitialized(assessorEntity) ? UserNameDTO.of(assessorEntity) : null;
         AssessmentNoteDTO assessmentNote = AssessmentNoteDTO.of(result.getAssessmentNote());
         return new ProgrammingParticipationLatestResultDTO(result.getId(), result.getExerciseId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(),
                 result.isRated(), submissionDTO, feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
@@ -75,16 +79,32 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
     /**
      * The submission slice nested under {@link ProgrammingParticipationLatestResultDTO}, carrying its own
      * participation and (for the SCORPIO superset) the exercise the participation belongs to.
+     * <p>
+     * The components are the full set of properties {@link ProgrammingSubmission} serialized at this position before
+     * this record existed, i.e. every non-{@code @JsonIgnore} property of the entity and its {@link Submission}
+     * super class, including the {@code submissionExerciseType} type id and the computed {@code durationInMinutes}.
+     * The one entity property that is deliberately absent is {@code results}: {@code Result.submission} carries
+     * {@code @JsonIgnoreProperties({"results"})}, so the nested result list was never on this wire.
      *
      * @param id                     the submission id
      * @param submissionDate         when the submission was created
      * @param commitHash             the git commit hash of the submission
      * @param type                   how the submission was created (manual, instructor, test, ...)
      * @param submissionExerciseType the constant discriminator {@code "programming"}
+     * @param submitted              whether the submission was submitted; never {@code null}, as on the entity wire
+     * @param exampleSubmission      whether this is an example submission
+     * @param buildFailed            whether the build of this submission failed
+     * @param empty                  the constant {@code false} a programming submission reports for {@code isEmpty()}
+     * @param durationInMinutes      minutes between participation start and submission; {@code null} when either
+     *                                   date is missing
+     * @param buildLogEntries        the build logs, but only when they are already loaded: this route does not fetch
+     *                                   them, and forcing the lazy collection here would add queries to every call.
+     *                                   The plugin reads build logs from {@code participations/{id}/buildlogs}
      * @param participation          the participation the submission belongs to
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record SubmissionRefDTO(Long id, ZonedDateTime submissionDate, String commitHash, SubmissionType type, String submissionExerciseType, ParticipationRefDTO participation)
+    public record SubmissionRefDTO(Long id, ZonedDateTime submissionDate, String commitHash, SubmissionType type, String submissionExerciseType, Boolean submitted,
+            Boolean exampleSubmission, Boolean buildFailed, Boolean empty, Long durationInMinutes, List<BuildLogEntryDTO> buildLogEntries, ParticipationRefDTO participation)
             implements Serializable {
 
         private static final String SUBMISSION_EXERCISE_TYPE = "programming";
@@ -101,8 +121,14 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
             if (!(submission instanceof ProgrammingSubmission programmingSubmission)) {
                 return null;
             }
+            List<BuildLogEntry> entries = programmingSubmission.getBuildLogEntries();
+            List<BuildLogEntryDTO> buildLogEntries = entries != null && Hibernate.isInitialized(entries) ? entries.stream().map(BuildLogEntryDTO::of).toList() : null;
+            Participation participation = programmingSubmission.getParticipation();
+            // getDurationInMinutes() reads the participation's initialization date, so it must not run on a proxy.
+            Long durationInMinutes = participation != null && Hibernate.isInitialized(participation) ? programmingSubmission.getDurationInMinutes() : null;
             return new SubmissionRefDTO(programmingSubmission.getId(), programmingSubmission.getSubmissionDate(), programmingSubmission.getCommitHash(),
-                    programmingSubmission.getType(), SUBMISSION_EXERCISE_TYPE, ParticipationRefDTO.of(programmingSubmission.getParticipation()));
+                    programmingSubmission.getType(), SUBMISSION_EXERCISE_TYPE, programmingSubmission.isSubmitted(), programmingSubmission.isExampleSubmission(),
+                    programmingSubmission.isBuildFailed(), programmingSubmission.isEmpty(), durationInMinutes, buildLogEntries, ParticipationRefDTO.of(participation));
         }
     }
 
