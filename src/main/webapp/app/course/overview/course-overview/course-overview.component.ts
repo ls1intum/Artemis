@@ -194,29 +194,28 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * available in the new course; on failure the sidebar therefore stays at its safe, always-available baseline.
      */
     /**
-     * Keeps the sidebar's tab list in step with the guard on every navigation inside the course.
+     * Keeps the sidebar's tab list in step with the guard.
      *
-     * The container outlives child-tab navigations, so its flags would otherwise be whatever the course load found on
-     * entry, while the guard decides each guarded navigation from a freshly fetched answer. The two could then
+     * The container outlives child-tab navigations, so its flags would otherwise stay at whatever the course load found
+     * on entry while the guard decides each guarded navigation from a freshly fetched answer. The two could then
      * disagree: a tab removed since entry would still be offered, and one that became available would stay hidden.
      *
-     * Costs nothing on a guarded navigation — the tab service is scoped to the navigation, so the guard's response is
-     * still the one being shared. An unguarded tab pays a single lightweight request.
+     * Adopts the guard's answer rather than fetching its own. The tab service is scoped to the navigation, so if a
+     * guard ran, its response is still held and is free to read; if none ran, no guard has contradicted the current
+     * flags and there is nothing to reconcile. This costs no request at all — which matters because entering a course
+     * is a chain of navigations (course, then tab, then the auto-selected item), and refetching on each would undo
+     * what this endpoint was split out to achieve.
      */
     protected override handleNavigationEndActions(): void {
         const courseId = this.courseId();
         if (!courseId) {
             return;
         }
-        this.availableTabsSubscription?.unsubscribe();
-        this.availableTabsSubscription = this.courseAvailableTabsService.loadIfNeeded(courseId).subscribe({
-            next: (tabs) => {
-                this.availableTabs.set(tabs);
-                this.sidebarItems.set(this.getSidebarItems());
-            },
-            // Leave the current flags in place: a failed refresh must not empty the sidebar the user is looking at
-            error: () => {},
-        });
+        const tabsFetchedByGuard = this.courseAvailableTabsService.tabsFor(courseId);
+        if (tabsFetchedByGuard) {
+            this.availableTabs.set(tabsFetchedByGuard);
+            this.sidebarItems.set(this.getSidebarItems());
+        }
     }
 
     private loadAvailableTabs(): void {

@@ -294,32 +294,31 @@ describe('CourseOverviewComponent', () => {
         );
     });
 
-    it('should refresh the sidebar tabs on a navigation inside the course, so it cannot disagree with the guard', () => {
+    it('should adopt the tabs a guard fetched for this navigation, so the sidebar cannot disagree with it', () => {
         // The container survives child-tab navigations, so without this the sidebar keeps whatever the course load
         // found on entry while the guard decides each guarded navigation from a freshly fetched answer
         component.courseId.set(1);
-        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: true })));
-        (component as any).handleNavigationEndActions();
-        expect(component.availableTabs()?.lectures).toBe(true);
+        component.availableTabs.set(availableTabs({ lectures: true }));
 
-        // A later navigation finds the lectures tab gone and the exams tab newly available
-        availableTabsService.clear();
+        // A guard runs for the next navigation and finds the lectures tab gone and the exams tab newly available
         getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false, exams: true })));
+        availableTabsService.loadIfNeeded(1).subscribe();
         (component as any).handleNavigationEndActions();
 
         expect(component.availableTabs()?.lectures).toBe(false);
         expect(component.availableTabs()?.exams).toBe(true);
     });
 
-    it('should keep the tabs it has when a sidebar refresh fails', () => {
+    it('should not fetch tabs of its own, so a chain of navigations costs no extra request', () => {
         component.courseId.set(1);
-        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: true })));
-        (component as any).handleNavigationEndActions();
+        component.availableTabs.set(availableTabs({ lectures: true }));
+        getCourseAvailableTabsStub.mockClear();
 
+        // No guard ran for this navigation, so nothing has contradicted the current flags
         availableTabsService.clear();
-        getCourseAvailableTabsStub.mockReturnValue(throwError(() => new Error('offline')));
         (component as any).handleNavigationEndActions();
 
+        expect(getCourseAvailableTabsStub).not.toHaveBeenCalled();
         expect(component.availableTabs()?.lectures).toBe(true);
     });
 
