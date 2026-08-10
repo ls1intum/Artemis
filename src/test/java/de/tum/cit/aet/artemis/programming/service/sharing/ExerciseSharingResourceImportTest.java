@@ -6,6 +6,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.InputStream;
@@ -230,12 +231,27 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
     void setUpWithMissingExercise() throws Exception {
 
-        SharingSetupInfoDTO emptySetupInfo = new SharingSetupInfoDTO(null, 0, null);
+        SharingSetupInfoDTO emptySetupInfo = new SharingSetupInfoDTO(null, 0, correctSharingInfo());
 
         // last step: do Exercise Import
         requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(emptySetupInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().is5xxServerError());
 
+    }
+
+    /**
+     * The whole import is driven by the basket reference. Without it the service dereferenced null and the caller saw
+     * a 500; a malformed request has to be rejected at the boundary instead.
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
+    void setUpWithMissingSharingInfoIsRejected() throws Exception {
+        SharingSetupInfoDTO setupInfoWithoutSharingInfo = new SharingSetupInfoDTO(null, 0, null);
+
+        requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(setupInfoWithoutSharingInfo)).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("sharingInfoMissing"));
     }
 
     @Test

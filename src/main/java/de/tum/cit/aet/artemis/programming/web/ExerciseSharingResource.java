@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -59,6 +60,8 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
 public class ExerciseSharingResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
+
+    private static final String ENTITY_NAME = "programmingExercise";
 
     /**
      * FileInputStream wrapper that deletes the underlying temporary file on close.
@@ -146,12 +149,16 @@ public class ExerciseSharingResource {
      * </p>
      *
      * @param sharingSetupInfo details required to import (exercise metadata, templates, etc.)
-     * @return {@code 200 OK} with the created exercise; {@code 500 Internal Server Error}
-     *         on import failures (e.g., VCS operations, invalid payload, IO/URI issues)
+     * @return {@code 200 OK} with the created exercise; {@code 400 Bad Request} when the basket reference is
+     *         missing; {@code 500 Internal Server Error} on import failures (e.g., VCS operations, IO/URI issues)
      */
     @PostMapping("setup-import")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExerciseResponseDTO> setUpFromSharingImport(@RequestBody SharingSetupInfoDTO sharingSetupInfo) {
+        // The whole import is driven by the basket reference; without it the service would dereference null.
+        if (sharingSetupInfo.sharingInfo() == null) {
+            throw new BadRequestAlertException("The sharing information is missing", ENTITY_NAME, "sharingInfoMissing");
+        }
         try {
             ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
             return ResponseEntity.ok().body(ProgrammingExerciseResponseDTO.of(exercise));
