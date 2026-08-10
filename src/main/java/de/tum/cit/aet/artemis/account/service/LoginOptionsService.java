@@ -59,11 +59,10 @@ public class LoginOptionsService {
         }
         String sanitizedInput = emailOrLogin.trim().toLowerCase(Locale.ROOT);
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
-        // only project the internal flag instead of loading the whole user entity: empty means the user is unknown to Artemis
-        Optional<Boolean> internalUser = isEmail ? userRepository.isInternalUserByEmailIgnoreCase(sanitizedInput) : userRepository.isInternalUserByLogin(sanitizedInput);
-        // if user is already in database
-        if (internalUser.isPresent()) {
-            if (internalUser.get()) {
+        // only project the internal flag instead of loading the whole user entity: empty means the user is not in the database
+        Optional<Boolean> internalFlag = isEmail ? userRepository.isInternalUserByEmailIgnoreCase(sanitizedInput) : userRepository.isInternalUserByLogin(sanitizedInput);
+        if (internalFlag.isPresent()) {
+            if (internalFlag.get()) {
                 return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
             }
             else {
