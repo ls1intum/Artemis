@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -459,7 +460,8 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
             return;
         }
         assertThat(actual).isNotNull();
-        assertThat(actual.toInstant()).isEqualTo(expected.toInstant());
+        // PostgreSQL persists datetime(3), so sub-millisecond precision from ZonedDateTime.now() is lost on the round trip.
+        assertThat(actual.toInstant().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(expected.toInstant().truncatedTo(ChronoUnit.MILLIS));
     }
 
     /**
