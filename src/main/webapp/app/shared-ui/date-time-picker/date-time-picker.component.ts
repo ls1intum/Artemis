@@ -263,6 +263,19 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     }
 
     /**
+     * Whether a parsed value lies inside `[min]`/`[max]`. Both bounds are inclusive: a date equal to a
+     * bound is accepted, which matches the calendar popup, where the bound days stay selectable.
+     *
+     * Shared by the typing path ({@link updateField}) and the programmatic one ({@link updateSignals}), so a
+     * date the user is not allowed to type cannot slip in through `setValue` / `patchValue` either.
+     */
+    private isWithinRange(parsed: dayjs.Dayjs): boolean {
+        const min = this.min();
+        const max = this.max();
+        return !(min && parsed.isBefore(min)) && !(max && parsed.isAfter(max));
+    }
+
+    /**
      * Handles model changes emitted by the p-datepicker.
      *
      * With `keepInvalid="true"` and the default `dataType="date"`, the picker emits:
@@ -278,15 +291,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
         const currentValue = this.value();
         if (newValue instanceof Date && dayjs(newValue).isValid()) {
             const parsed = dayjs(newValue);
-            const min = this.min();
-            const max = this.max();
 
             // P2 fix: PrimeNG emits a real Date even for dates outside [minDate]/[maxDate]
             // because the calendar popup's disabled-day range only prevents picking — typed input
             // bypasses it. Reject out-of-range values here so the parent model never receives them
             // and the field shows as invalid. We do NOT clear this.value() so the displayed date
             // stays visible (keepInvalid-like); needsParentSync ensures recovery is propagated.
-            if ((min && parsed.isBefore(min)) || (max && parsed.isAfter(max))) {
+            if (!this.isWithinRange(parsed)) {
                 this.setInputValid(false);
                 this.dateInputValue.set(newValue.toISOString());
                 this.needsParentSync = true;
@@ -374,8 +385,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
     updateSignals() {
         const currentValue = this.value();
         const parsed = currentValue != undefined ? dayjs(currentValue) : undefined;
-        // An empty field is valid (the required check is handled separately); a present-but-unparseable value is not.
-        this.setInputValid(parsed == undefined || parsed.isValid());
+        // An empty field is valid (the required check is handled separately); a present-but-unparseable one is not.
+        // The range is checked here too: `setValue` / `patchValue` reach the model without passing updateField,
+        // so without this a parent could write a date the user is not allowed to type and keep the form valid.
+        this.setInputValid(parsed == undefined || (parsed.isValid() && this.isWithinRange(parsed)));
         this.dateInputValue.set(parsed?.isValid() ? parsed.toISOString() : '');
     }
 

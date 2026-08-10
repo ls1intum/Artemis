@@ -126,6 +126,24 @@ describe('FormDateTimePickerComponent', () => {
             expect(component.validate()).toEqual({ invalidDate: true });
         });
 
+        it('reports invalidDate for a programmatically written date outside [min]/[max]', () => {
+            fixture.componentRef.setInput('max', normalDate);
+            fixture.changeDetectorRef.detectChanges();
+
+            component.writeValue(dayjs(normalDate).add(1, 'day'));
+
+            expect(component.validate()).toEqual({ invalidDate: true });
+        });
+
+        it('reports no error for a programmatically written date on the bound, which is inclusive', () => {
+            fixture.componentRef.setInput('max', normalDate);
+            fixture.changeDetectorRef.detectChanges();
+
+            component.writeValue(normalDate);
+
+            expect(component.validate()).toBeNull();
+        });
+
         it('reports no error once the input is corrected', () => {
             component.updateField('not-a-date');
             expect(component.validate()).toEqual({ invalidDate: true });

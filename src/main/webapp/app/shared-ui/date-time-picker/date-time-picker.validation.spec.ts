@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -12,13 +12,15 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 @Component({
     template: `
         <form [formGroup]="form">
-            <jhi-date-time-picker formControlName="softDueDate" [pickerType]="CALENDAR" [shouldDisplayTimeZoneWarning]="false" />
+            <jhi-date-time-picker formControlName="softDueDate" [pickerType]="CALENDAR" [min]="min()" [max]="max()" [shouldDisplayTimeZoneWarning]="false" />
         </form>
     `,
     imports: [ReactiveFormsModule, FormDateTimePickerComponent],
 })
 class HostComponent {
     form = new FormGroup({ softDueDate: new FormControl<dayjs.Dayjs | undefined>(undefined) });
+    min = signal<dayjs.Dayjs | undefined>(undefined);
+    max = signal<dayjs.Dayjs | undefined>(undefined);
     readonly CALENDAR = DateTimePickerType.CALENDAR;
 }
 
@@ -82,6 +84,58 @@ describe('date-time-picker reports unparseable input to its form control', () =>
 
         expect(host.form.valid).toBe(true);
         expect(host.form.controls.softDueDate.value).toBeUndefined();
+    });
+
+    // Programmatic writes reach the model through writeValue, not updateField, so the range has to be
+    // rechecked there as well. Otherwise a parent could patch in a date the user is not allowed to type
+    // and the form would happily submit it (CodeRabbit / Claudia-Anthropica on #13472).
+    describe('programmatic writes outside [min]/[max]', () => {
+        const min = dayjs('2026-06-01T00:00:00');
+        const max = dayjs('2026-06-30T00:00:00');
+
+        beforeEach(() => {
+            host.min.set(min);
+            host.max.set(max);
+            fixture.detectChanges();
+        });
+
+        it('marks the form invalid when setValue writes a date before [min]', () => {
+            host.form.controls.softDueDate.setValue(min.subtract(1, 'day'));
+            fixture.detectChanges();
+
+            expect(host.form.controls.softDueDate.errors).toEqual({ invalidDate: true });
+            expect(host.form.valid).toBe(false);
+        });
+
+        it('marks the form invalid when patchValue writes a date after [max]', () => {
+            host.form.patchValue({ softDueDate: max.add(1, 'day') });
+            fixture.detectChanges();
+
+            expect(host.form.controls.softDueDate.errors).toEqual({ invalidDate: true });
+            expect(host.form.valid).toBe(false);
+        });
+
+        it('accepts programmatic values on the bounds, which are inclusive', () => {
+            host.form.controls.softDueDate.setValue(min);
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(true);
+
+            host.form.controls.softDueDate.setValue(max);
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+        });
+
+        it('recovers when a later write brings the value back inside the range', () => {
+            host.form.controls.softDueDate.setValue(max.add(1, 'day'));
+            fixture.detectChanges();
+            expect(host.form.valid).toBe(false);
+
+            host.form.controls.softDueDate.setValue(min.add(1, 'day'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+        });
     });
 
     it('recovers when the parent resets the control', () => {
