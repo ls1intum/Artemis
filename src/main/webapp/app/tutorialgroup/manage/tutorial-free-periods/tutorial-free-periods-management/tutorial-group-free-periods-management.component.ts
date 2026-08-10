@@ -109,8 +109,11 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
-                        this.tutorialGroupsConfiguration.set(tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body));
-                        const freePeriods = this.tutorialGroupsConfiguration().tutorialGroupFreePeriods;
+                        const configuration = tutorialGroupsConfigurationEntityFromDto(tutorialGroupsConfigurationResult.body);
+                        this.tutorialGroupsConfiguration.set(configuration);
+                        // the parent route resolves the course once, so the overview would keep showing the free periods from before this page
+                        this.course().tutorialGroupsConfiguration = configuration;
+                        const freePeriods = configuration.tutorialGroupFreePeriods;
                         if (freePeriods) {
                             this.tutorialGroupFreePeriods.set(this.sortService.sortByProperty(freePeriods, 'start', false));
                         } else {
