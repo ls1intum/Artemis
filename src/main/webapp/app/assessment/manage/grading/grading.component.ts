@@ -890,10 +890,10 @@ export class GradingComponent implements OnInit {
             let currentInterval: number;
 
             if (previousGradeStep) {
-                currentInterval = this.getPercentageInterval(currentGradeStep);
+                currentInterval = this.calculatePercentageInterval(currentGradeStep);
                 currentGradeStep.lowerBoundPercentage = previousGradeStep.upperBoundPercentage;
             } else {
-                currentInterval = newPercentageInterval ?? this.getPercentageInterval(currentGradeStep);
+                currentInterval = newPercentageInterval ?? this.calculatePercentageInterval(currentGradeStep);
             }
 
             const shiftedUpperBound = currentGradeStep.lowerBoundPercentage + currentInterval;
@@ -921,8 +921,11 @@ export class GradingComponent implements OnInit {
     }
 
     getPercentageInterval(gradeStep: GradeStep): number {
-        const raw = gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
-        return parseFloat(raw.toFixed(1));
+        return parseFloat(this.calculatePercentageInterval(gradeStep).toFixed(1));
+    }
+
+    private calculatePercentageInterval(gradeStep: GradeStep): number {
+        return gradeStep.upperBoundPercentage - gradeStep.lowerBoundPercentage;
     }
 
     getPointsInterval(gradeStep: GradeStep): number | undefined {

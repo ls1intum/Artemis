@@ -1165,6 +1165,28 @@ describe('GradingComponent', () => {
             validateGradeStepBounds(comp.gradingScale.gradeSteps[3], 85, 185, maxPoints);
         });
 
+        it('should preserve precise bounds when cascading a points interval', () => {
+            const maxPoints = 120;
+            comp.maxPoints.set(maxPoints);
+            comp.generateDefaultGradingScale();
+
+            comp.setPointsInterval(11, 5);
+
+            const updatedGradeStep = comp.gradingScale.gradeSteps[11];
+            expect(comp.getPercentageInterval(updatedGradeStep)).toBe(4.2);
+            expect(updatedGradeStep.lowerBoundPercentage).toBe(90);
+            expect(updatedGradeStep.upperBoundPercentage).toBeCloseTo((113 / maxPoints) * 100);
+            expect(updatedGradeStep.lowerBoundPoints).toBe(108);
+            expect(updatedGradeStep.upperBoundPoints).toBeCloseTo(113);
+
+            const stickyGradeStep = comp.gradingScale.gradeSteps.last()!;
+            expect(stickyGradeStep.lowerBoundPercentage).toBeCloseTo((113 / maxPoints) * 100);
+            expect(stickyGradeStep.upperBoundPercentage).toBe(100);
+            expect(stickyGradeStep.lowerBoundPoints).toBeCloseTo(113);
+            expect(stickyGradeStep.upperBoundPoints).toBe(120);
+            expect(comp.gradingForm().valid()).toBe(true);
+        });
+
         it('should expand the sticky grade step to the maximum points when a points interval decreases', () => {
             const maxPoints = 120;
             comp.maxPoints.set(maxPoints);
