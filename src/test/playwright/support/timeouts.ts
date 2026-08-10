@@ -10,6 +10,7 @@
 const DEFAULT_BUILD_RESULT_TIMEOUT = 120000; // 120 seconds
 const DEFAULT_BUILD_FINISH_TIMEOUT = 300000; // 300 seconds
 const DEFAULT_EXAM_DASHBOARD_TIMEOUT = 120000; // 120 seconds
+const DEFAULT_RELOAD_RENDER_TIMEOUT = 30000; // 30 seconds
 
 /**
  * Timeout for waiting for build results to appear in the UI (e.g., commit history).
@@ -28,6 +29,20 @@ export const BUILD_FINISH_TIMEOUT = parseInt(process.env.BUILD_FINISH_TIMEOUT_MS
  * Environment variable: EXAM_DASHBOARD_TIMEOUT_MS
  */
 export const EXAM_DASHBOARD_TIMEOUT = parseInt(process.env.EXAM_DASHBOARD_TIMEOUT_MS || String(DEFAULT_EXAM_DASHBOARD_TIMEOUT), 10);
+
+/**
+ * Timeout for the first assertion after a full `page.reload()`.
+ * <p>
+ * A reload re-bootstraps the entire client, and Playwright disables the HTTP cache per context, so the bundle and its
+ * lazy chunks are re-fetched from scratch. Under parallel CI load that regularly exceeds the default 10s expect
+ * timeout, which is what made the post-reload assertions in the channel and exam participation tests flaky.
+ * <p>
+ * Apply it only to the first assertion after the reload: anything rendered in the same pass is already present by then,
+ * so later assertions keep the default timeout and the budgets cannot stack into the per-test cap.
+ *
+ * Environment variable: RELOAD_RENDER_TIMEOUT_MS
+ */
+export const RELOAD_RENDER_TIMEOUT = parseInt(process.env.RELOAD_RENDER_TIMEOUT_MS || String(DEFAULT_RELOAD_RENDER_TIMEOUT), 10);
 
 /**
  * Interval between polling attempts (shared across all polling operations).
