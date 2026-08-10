@@ -5,6 +5,7 @@ import { EMPTY, Observable, Subscription, catchError, finalize, of, shareReplay,
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -147,11 +148,6 @@ export class CourseOverviewExercisesService implements OnDestroy {
 
     /**
      * Publishes the freshly loaded exercises on the stored course.
-     *
-     * A new top-level course object is required: consumers hold the course in a signal, and a signal only notifies when
-     * the reference changes. The copy is deliberately shallow rather than a `deepClone` — `exercises` is replaced
-     * wholesale with the array just received from the server, so nothing is aliased into the previous course object,
-     * and deep-cloning every exercise with its participations, submissions and results would be pure waste.
      */
     private publishExercisesToStoredCourse(courseId: number, data: CourseExercisesForOverviewDTO): void {
         const course = this.courseStorageService.getCourse(courseId);
@@ -164,7 +160,12 @@ export class CourseOverviewExercisesService implements OnDestroy {
             this.pendingStoredCourseSubscription = undefined;
             this.pendingStoredCourseId = undefined;
         }
-        this.courseStorageService.updateCourse({ ...course, exercises: data.exercises });
+        // A different object has to be stored: consumers hold the course in a signal, which only notifies when the
+        // reference changes. deepClone is the documented way to produce it; the exercises it copies are thrown away on
+        // the next line, so what actually survives the clone is the course's own scalars and dates.
+        const updatedCourse = deepClone(course);
+        updatedCourse.exercises = data.exercises;
+        this.courseStorageService.updateCourse(updatedCourse);
     }
 
     /**
