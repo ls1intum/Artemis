@@ -1,6 +1,6 @@
 import { Component, Signal, computed, effect, inject, signal } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { filter, map } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
@@ -53,6 +54,7 @@ export class CourseTutorialGroupsComponent {
     private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     courseId = this.getCurrentCourseIdSignal();
     tutorialGroups = signal<TutorialGroup[]>([]);
@@ -75,6 +77,17 @@ export class CourseTutorialGroupsComponent {
                 this.setTutorialGroupsAndTutorialLectures(courseId);
             }
         });
+
+        // Selecting this tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections(this.activatedRoute)
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => {
+                const courseId = this.courseId();
+                if (courseId) {
+                    this.setTutorialGroupsAndTutorialLectures(courseId);
+                }
+            });
 
         effect(() => {
             const tutorialGroups = this.tutorialGroups();

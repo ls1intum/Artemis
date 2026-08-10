@@ -45,7 +45,9 @@ export class CourseTabRefreshService {
      * leave the tab waiting for a re-selection of a URL the sidebar link never produces.
      */
     private tabUrlOf(route: ActivatedRoute): string {
-        const segments = route.pathFromRoot.flatMap((ancestor) => ancestor.snapshot.url.map((segment) => segment.path));
+        // Angular always populates pathFromRoot; the fallback is for partial ActivatedRoute doubles in tests, which
+        // then simply never match a navigation and so never refresh
+        const segments = (route.pathFromRoot ?? []).flatMap((ancestor) => ancestor.snapshot.url.map((segment) => segment.path));
         return '/' + segments.join('/');
     }
 
