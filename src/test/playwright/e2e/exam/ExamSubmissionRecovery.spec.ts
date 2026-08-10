@@ -65,6 +65,13 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
         await failedSave;
+
+        // Receiving the HTTP response happens before Angular's error callback necessarily finishes. Wait until the
+        // application has recorded the failed save before reloading; otherwise the reload can race the callback and
+        // incorrectly take the normal server-backed resume path instead of restoring the locally cached answer.
+        const failedSaveStorageKey = `artemis_student_exam_${course.id}_${exam.id}-save-failed`;
+        await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), failedSaveStorageKey)).toBe('true');
+
         // Stop failing saves so the post-reload re-send can succeed.
         await page.unroute(quizSaveUrl);
 
