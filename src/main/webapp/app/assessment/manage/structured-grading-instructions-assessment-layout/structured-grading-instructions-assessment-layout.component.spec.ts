@@ -169,11 +169,28 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.detectChanges();
         }
 
-        it('should render a checkbox and usage stepper', () => {
+        it('should render a usage stepper for multi-use instructions and hide it for single-use ones', () => {
+            // Default: unset usageCount means unlimited multi-use.
             expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
             expect(fixture.nativeElement.querySelectorAll('.sgi-item__usage-step')).toHaveLength(2);
-            expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
             expect(fixture.nativeElement.querySelector('.sgi-item__usage-counter')?.textContent?.trim()).toBe('0 / ∞');
+            expect(fixture.debugElement.query(By.css('jhi-help-icon'))).toBeNull();
+
+            instruction.usageCount = 1;
+            fixture.componentRef.setInput('criteria', [{ ...criterion, structuredGradingInstructions: [instruction] }]);
+            fixture.detectChanges();
+
+            expect(comp.showUsageStepper(instruction)).toBe(false);
+            expect(fixture.nativeElement.querySelector('.sgi-item__usage-stepper')).toBeNull();
+        });
+
+        it('should keep single-use instructions checkbox-only even when applied', () => {
+            instruction.usageCount = 1;
+            setApplicationCount(1);
+
+            expect(comp.showUsageStepper(instruction)).toBe(false);
+            expect(fixture.nativeElement.querySelector('.sgi-item__usage-stepper')).toBeNull();
+            expect(checkboxInput().checked).toBe(true);
         });
 
         it('should update the usage counter from linked feedback', () => {

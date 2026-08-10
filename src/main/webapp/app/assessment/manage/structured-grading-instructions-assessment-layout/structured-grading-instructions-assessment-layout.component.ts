@@ -174,6 +174,19 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         return this.selectionService.isRemovable(instruction);
     }
 
+    /**
+     * {@link GradingInstruction.usageCount} of 1 is a single application. Zero/unset means unlimited, and any higher
+     * value is a finite multi-use limit — both need the stepper once applied.
+     */
+    isMultiUse(instruction: GradingInstruction): boolean {
+        return (instruction.usageCount ?? 0) !== 1;
+    }
+
+    /** Multi-use instructions always expose the counter; single-use stays checkbox-only. */
+    showUsageStepper(instruction: GradingInstruction): boolean {
+        return this.isMultiUse(instruction);
+    }
+
     /** Tag severity of an instruction's point pill (green awarded / red deducted / neutral zero). */
     pointsSeverity(credits: number): TumUiTagSeverity {
         return pointsSeverity(credits);
