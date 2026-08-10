@@ -1,6 +1,6 @@
 requests==2.34.2
 urllib3>=2.7.0
-gitpython==3.1.55
+gitpython==3.1.58
 beautifulsoup4==4.15.0
 soupsieve>=2.8.4
 pyperclip==1.11.0
