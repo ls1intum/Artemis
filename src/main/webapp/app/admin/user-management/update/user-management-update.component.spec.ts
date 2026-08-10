@@ -314,6 +314,32 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.editForm.get('password')?.value).toBe('');
         });
 
+        it('should keep the form saveable when a new user with a manual password is switched to external', () => {
+            // Third route out of manual-password mode, and the one that does not go through
+            // shouldRandomizePassword() at all: the template hides the entire password section behind
+            // `@if (internal)`, so unchecking it destroys the input while a required rule left on the control
+            // would keep the form invalid — with no password field on screen to satisfy it.
+            // A new user (no id) is required here, since `internal` is disabled for existing users.
+            const newUser = new User();
+            component.user.set(newUser);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+            component.editForm.get('internal')!.enable();
+            component.editForm.patchValue({ internal: true });
+            const passwordControl = component.editForm.get('password')!;
+
+            component.shouldRandomizePassword(false);
+            component.editForm.patchValue({ password: 'typed-Password-123' });
+            expect(passwordControl.valid).toBe(true);
+
+            // The administrator decides the account is externally managed after all.
+            component.editForm.patchValue({ internal: false });
+
+            expect(passwordControl.errors).toBeNull();
+            expect(passwordControl.valid).toBe(true);
+            expect(passwordControl.value).toBe('');
+        });
+
         it('should keep the form saveable after toggling back to keeping the existing password', () => {
             // Second regression guard, found by exercising this in the browser. The password input lives inside
             // `@if (!useRandomPassword())`, so toggling back destroys the RequiredValidator directive while its
@@ -325,6 +351,8 @@ describe('UserManagementUpdateComponent', () => {
             component.user().login = 'test_user';
             // @ts-ignore - accessing private method for testing
             component.initializeForm();
+            // An internal account: the password only applies to those, so the required rule is keyed on it.
+            component.editForm.patchValue({ internal: true });
             const passwordControl = component.editForm.get('password')!;
 
             component.shouldRandomizePassword(false);
