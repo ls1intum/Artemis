@@ -74,21 +74,6 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT DISTINCT team
-            FROM Team team
-                LEFT JOIN FETCH team.students
-            WHERE team.exercise.id = :exerciseId
-                AND EXISTS (
-                    SELECT 1
-                    FROM Team candidateTeam
-                        JOIN candidateTeam.students student
-                    WHERE candidateTeam.id = team.id
-                        AND student.id = :userId
-                )
-            """)
-    Optional<Team> findOneWithStudentsByExerciseIdAndUserId(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
-
-    @Query("""
             SELECT team
             FROM Team team
                 LEFT JOIN team.students student

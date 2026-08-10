@@ -155,7 +155,7 @@ public class ParticipationResource {
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
         if (exercise.isTeamMode()) {
-            participant = teamRepository.findOneWithStudentsByExerciseIdAndUserId(exercise.getId(), user.getId())
+            participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
         StudentParticipation participation;
@@ -175,6 +175,10 @@ public class ParticipationResource {
                 log.error("Failed to start exercise participation for exercise {} and user {}", exerciseId, user.getLogin(), e);
                 throw new InternalServerErrorException("Failed to start exercise participation.");
             }
+        }
+
+        if (exercise.isTeamMode()) {
+            participation = studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), participant.getId()).orElseThrow();
         }
 
         // remove sensitive information before sending participation to the client
