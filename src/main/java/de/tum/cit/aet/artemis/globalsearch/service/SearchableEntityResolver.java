@@ -95,8 +95,7 @@ public class SearchableEntityResolver {
     public Optional<Map<String, Object>> resolve(String type, long entityId) {
         return switch (type) {
             case SearchableEntitySchema.TypeValues.COURSE -> courseRepository.findById(entityId).map(course -> CourseSearchableEntityDTO.fromCourse(course).toPropertyMap());
-            case SearchableEntitySchema.TypeValues.EXERCISE ->
-                exerciseLoadService.loadExerciseDtos(List.of(entityId)).stream().findFirst().map(ExerciseSearchableEntityDTO::toPropertyMap);
+            case SearchableEntitySchema.TypeValues.EXERCISE -> exerciseLoadService.loadExerciseDtoForResolve(entityId).map(ExerciseSearchableEntityDTO::toPropertyMap);
             case SearchableEntitySchema.TypeValues.LECTURE ->
                 lectureRepositoryApi.flatMap(api -> api.findById(entityId)).map(lecture -> LectureSearchableEntityDTO.fromLecture(lecture).toPropertyMap());
             case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> lectureUnitRepositoryApi.map(api -> api.findAllByIdsWithLecture(List.of(entityId))).orElseGet(List::of).stream()
