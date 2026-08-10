@@ -338,7 +338,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var currentCriteriaSize = modelingExercise.getGradingCriteria().size();
         var newCriteria = new GradingCriterion();
         newCriteria.setTitle("new");
-        modelingExercise.addGradingCriteria(newCriteria);
+        newCriteria.setExercise(modelingExercise);
+        modelingExercise.getGradingCriteria().add(newCriteria);
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         ModelingExerciseResponseDTO createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
                 ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
