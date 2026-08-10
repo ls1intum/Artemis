@@ -148,6 +148,10 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
         });
 
         test('Instructor should be able to edit a channel', async ({ login, courseMessages, page, communicationAPIRequests }) => {
+            // Login, three debounced edit flows, the server check and a full page reload share one test
+            // budget, and the @fast project caps that at 60s. Lift it so the post-reload wait below can
+            // actually run to completion instead of being cut short by the total timeout under CI load.
+            test.slow();
             await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
             const newName = 'new-' + generateUUID().slice(0, 8);
             const topic = 'test-topic';
