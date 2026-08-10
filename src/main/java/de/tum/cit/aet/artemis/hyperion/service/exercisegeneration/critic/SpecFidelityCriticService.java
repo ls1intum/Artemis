@@ -226,8 +226,6 @@ public class SpecFidelityCriticService {
 
     private final ConceptSelectionCritic conceptCritic;
 
-    private final ConceptAdmissionCritic conceptAdmissionCritic;
-
     private final SpecificationReviewCritic specificationCritic;
 
     private final ContractWitnessAuthor witnessAuthor;
@@ -272,7 +270,6 @@ public class SpecFidelityCriticService {
                 configuredOptions, checkpointManager);
         this.verdictParser = new CriticVerdictParser(objectMapper);
         this.conceptCritic = new ConceptSelectionCritic(reviewer, objectMapper);
-        this.conceptAdmissionCritic = new ConceptAdmissionCritic(reviewer, objectMapper);
         this.specificationCritic = new SpecificationReviewCritic(reviewer, objectMapper);
         this.witnessAuthor = new ContractWitnessAuthor(reviewer, objectMapper);
         this.semanticMutantAuthor = new SemanticMutantAuthor(reviewer, objectMapper);
@@ -338,30 +335,40 @@ public class SpecFidelityCriticService {
     }
 
     /**
-     * Compares the proposed concepts, then independently audits the selected candidate before it can become specification provenance.
+     * Compares the proposed concepts against the instructor brief and selects one.
+     * <p>
+     * The only judgments made here are the ones a concept can answer: whether it covers the brief, carries the requested learning objective, and fits the requested difficulty. A
+     * concept is a design sketch, not the graded contract, so grounding, observability, and partition-equivalence are deliberately not judged at this stage. Those are properties
+     * of the frozen specification and the suite that grades it, and {@link #reviewSpecification} judges them there, against an artifact that can actually satisfy them. Asking
+     * them of a concept rejects the very act of concretization every later stage depends on: a brief that says "describe the operations and their behavior on edge cases" needs
+     * some stage to decide what popping an empty stack does, and forbidding the concept to decide it leaves nothing that may.
      *
      * @param brief      the authoritative instructor brief
      * @param candidates the candidate concepts keyed by their prompt ordinal
      * @param usageSink  model-usage observer, or {@code null}
      * @param cancelled  cancellation signal
-     * @return the selected and admitted concept, or a rejection that requests another candidate batch
+     * @return the selected concept, or a rejection that requests another candidate batch
      */
     public ConceptSelectionReview reviewConceptCandidates(String brief, Map<Integer, String> candidates, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
-        ConceptSelectionReview selection = enforceExploratoryConcept(brief, candidates, conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled));
-        if (!selection.accepted()) {
-            return selection;
-        }
-        return conceptAdmissionCritic.admit(brief, selection.selectedCandidate(), candidates.get(selection.selectedCandidate()), selection, usageSink, cancelled);
+        return enforceExploratoryConcept(brief, candidates, conceptCritic.reviewConceptCandidates(brief, candidates, usageSink, cancelled));
     }
 
+    /**
+     * Rejects a selected concept that invents an implementation-technique constraint on a brief that requested none.
+     * <p>
+     * The guard is against the <em>generator</em> manufacturing an ungradeable requirement, not against a concept restating a technique the instructor already chose. Once the
+     * brief fixes any technique, that choice is instructor provenance and {@link #ensureGradeableSpecification} is what keeps it a non-graded pedagogical objective rather than a
+     * frozen correctness rule. Matching the concept's technique to the brief's is deliberately not checked here: comparing families cannot tell a restatement from its negation,
+     * so a Streams brief whose concept bans explicit loops reads as an iteration mandate the brief never made. Whether the technique is the requested one is a brief-fit
+     * question, and {@link ConceptSelectionCritic} already owns it.
+     */
     static ConceptSelectionReview enforceExploratoryConcept(String brief, Map<Integer, String> candidates, ConceptSelectionReview review) {
         if (!review.accepted()) {
             return review;
         }
         String selected = candidates.get(review.selectedCandidate());
         List<String> prematureMandates = ExerciseIntegrityGate.techniqueMandates(selected);
-        Set<String> selectedFamilies = techniqueFamilies(prematureMandates);
-        if (prematureMandates.isEmpty() || techniqueFamilies(ExerciseIntegrityGate.techniqueMandates(brief)).containsAll(selectedFamilies)) {
+        if (prematureMandates.isEmpty() || !ExerciseIntegrityGate.techniqueMandates(brief).isEmpty()) {
             return review;
         }
         String finding = "Candidate " + review.selectedCandidate() + " prematurely fixes an implementation construct (" + String.join(", ", prematureMandates)
@@ -369,33 +376,6 @@ public class SpecFidelityCriticService {
                 + "an instructor-requested technique there as non-graded pedagogy when public behavior cannot prove it.";
         String audit = review.auditSummary() + "\n\nServer concept invariant: rejected selected candidate — " + finding;
         return new ConceptSelectionReview(true, null, List.of(finding), finding, audit, new ConceptFallback(review.selectedCandidate(), 0));
-    }
-
-    private static Set<String> techniqueFamilies(List<String> mandates) {
-        Set<String> families = new HashSet<>();
-        String text = String.join(" ", mandates).toLowerCase(Locale.ROOT).replaceAll("\\p{Pd}", "-");
-        if (text.contains("recurs")) {
-            families.add("recursion");
-        }
-        if (text.contains("loop") || text.contains("iterat")) {
-            families.add("iteration");
-        }
-        if (text.contains("stream") || text.contains("pipeline")) {
-            families.add("stream");
-        }
-        if (text.contains("lambda")) {
-            families.add("lambda");
-        }
-        if (text.contains("if-else")) {
-            families.add("if-else");
-        }
-        if (text.contains("ternary")) {
-            families.add("ternary");
-        }
-        if (text.contains("switch")) {
-            families.add("switch");
-        }
-        return Set.copyOf(families);
     }
 
     public List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, @Nullable Consumer<ChatResponse> usageSink,

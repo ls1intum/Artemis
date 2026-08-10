@@ -249,6 +249,28 @@ class SpecFidelityCriticServiceTest {
         assertThat(review.accepted()).isTrue();
     }
 
+    /**
+     * The instructor's technique choice can reach the concept negated: on a Streams brief, banning explicit loops is how a concept states "use the Streams API". Comparing the
+     * construct families named by the brief against those named by the concept reads that ban as an iteration mandate the brief never made, and rejected the whole run. Whether
+     * the technique is the requested one is a brief-fit judgment, so the invariant asks only whether the brief fixed a technique at all.
+     */
+    @Test
+    void conceptReviewPreservesAnInstructorTechniqueStatedAsAProhibitionOfItsAlternative() {
+        Map<Integer, String> candidates = Map.of(1, "Aggregate sensor records through a pipeline. The solution must not use loops or external accumulators.", 2,
+                "Total invoice lines.", 3, "Classify readings.");
+        SpecFidelityCriticService.ConceptSelectionReview modelReview = new SpecFidelityCriticService.ConceptSelectionReview(true, 1, List.of(),
+                "Candidate 1 carries the requested Streams objective.", "The model accepted candidate 1.");
+
+        SpecFidelityCriticService.ConceptSelectionReview review = SpecFidelityCriticService.enforceExploratoryConcept(
+                "Create an intermediate Java exercise that teaches the Java Streams API and lambdas. Students filter, transform, and aggregate a small collection of records.",
+                candidates, modelReview);
+
+        assertThat(review).isEqualTo(modelReview);
+        assertThat(review.accepted()).isTrue();
+        // The same candidate under a brief that fixes no technique is still rejected, so the acceptance above is the brief's doing and not an undetected mandate.
+        assertThat(SpecFidelityCriticService.enforceExploratoryConcept("Aggregate a small collection of records.", candidates, modelReview).accepted()).isFalse();
+    }
+
     @Test
     void conceptReviewRejectsScalarReskinsAndRequestsPropertiesNotAReplacementDesign() {
         Map<Integer, String> candidates = conceptCandidates("Strategies multiply potion volume by different constants.",
