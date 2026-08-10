@@ -113,6 +113,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
     private lastLoadedRequestKey?: string;
 
+    /** Generation of the last load issued; see {@link isCurrentLoad}. */
+    private loadGeneration = 0;
+
     /** The route subscriptions of the current initialisation, torn down when it runs again. */
     private routeSubscriptions: Subscription[] = [];
     readonly resultId = signal<number>(0);
@@ -220,6 +223,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
         this.lastLoadedRequestKey = requestKey;
         this.lastRouteParams = params;
+        const generation = ++this.loadGeneration;
         {
             // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
             // the previous submission has to be cleared before loading the next one
@@ -236,11 +240,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const submissionId = params.get('submissionId');
             this.resultId.set(Number(params.get('resultId')) || 0);
             if (submissionId === 'new') {
-                this.loadRandomSubmission(this.exerciseId);
+                this.loadRandomSubmission(this.exerciseId, generation);
             } else {
-                this.loadSubmission(Number(submissionId));
+                this.loadSubmission(Number(submissionId), generation);
             }
         }
+    }
+
+    /**
+     * Whether the load that was issued as the given generation is still the latest one.
+     * <p>
+     * Consecutive round changes each issue their own request and nothing cancels the earlier one, so two loads can be
+     * in flight and complete in either order. Without this check the response of the obsolete request wins, leaving the
+     * page showing a submission for one round while {@link correctionRound} — which the url owns — names another, so
+     * result selection and feedback tagging use mismatched data.
+     */
+    private isCurrentLoad(generation: number): boolean {
+        return generation === this.loadGeneration;
     }
 
     /**
@@ -261,21 +277,30 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * Load the modeling submission for a given ID
      * @param submissionId The ID of the modeling submission that should be loaded
      */
-    private loadSubmission(submissionId: number): void {
+    private loadSubmission(submissionId: number, generation: number): void {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound(), this.resultId()).subscribe({
             next: (submission: ModelingSubmission) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
             },
             error: (error: HttpErrorResponse) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 this.handleErrorResponse(error);
             },
         });
     }
 
-    private loadRandomSubmission(exerciseId: number): void {
+    private loadRandomSubmission(exerciseId: number, generation: number): void {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 if (!submission) {
                     // there are no unassessed submissions
                     this.submission.set(undefined);
@@ -290,6 +315,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 this.handleErrorResponse(error);
             },
         });

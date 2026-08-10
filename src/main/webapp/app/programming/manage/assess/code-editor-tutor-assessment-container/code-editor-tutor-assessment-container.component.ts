@@ -26,7 +26,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -107,6 +107,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
     private lastLoadedRequestKey?: string;
+
+    /** Generation of the last load issued; see {@link isCurrentLoad}. */
+    private loadGeneration = 0;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded assessment editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
@@ -243,6 +246,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         }
         this.lastLoadedRequestKey = requestKey;
         this.lastRouteParams = params;
+        const generation = ++this.loadGeneration;
         {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
@@ -264,14 +268,23 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
             submissionObservable
                 .pipe(
+                    // Drop everything an obsolete load produces before it can touch the state of a newer one; see
+                    // isCurrentLoad. Filtering here also stops the chain, so none of the follow-up requests below run.
+                    filter(() => this.isCurrentLoad(generation)),
                     tap({
                         next: async (submission?: ProgrammingSubmission) => {
                             await this.onSubmissionReceived(submissionId, submission);
                         },
-                        complete: () => this.loadingParticipation.set(false),
+                        complete: () => {
+                            if (this.isCurrentLoad(generation)) {
+                                this.loadingParticipation.set(false);
+                            }
+                        },
                     }),
                     catchError((error: HttpErrorResponse) => {
-                        this.handleErrorResponse(error);
+                        if (this.isCurrentLoad(generation)) {
+                            this.handleErrorResponse(error);
+                        }
                         // Stop the chain: without a participation the steps below cannot run anyway, and letting the
                         // error reach the subscriber would additionally report it as an uncaught exception — the very
                         // Sentry noise the explicit handling avoids.
@@ -304,6 +317,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 )
                 .subscribe();
         }
+    }
+
+    /**
+     * Whether the load that was issued as the given generation is still the latest one.
+     * <p>
+     * Consecutive round changes each issue their own request and nothing cancels the earlier one, so two loads can be
+     * in flight and complete in either order. Without this check the response of the obsolete request wins, leaving the
+     * page showing a participation for one round while {@link correctionRound} — which the url owns — names another, so
+     * result selection and feedback tagging use mismatched data.
+     */
+    private isCurrentLoad(generation: number): boolean {
+        return generation === this.loadGeneration;
     }
 
     /**

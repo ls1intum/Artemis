@@ -6,6 +6,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
@@ -479,6 +480,41 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         await Promise.resolve();
 
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(456, 1);
+    });
+
+    it('should ignore a round response that arrives after a newer one', async () => {
+        // Consecutive round changes each issue their own lock request and nothing cancels the earlier one, so the two
+        // can complete in either order. The obsolete response must not win: the page would then show a participation for
+        // one round while correctionRound — which the url owns — names another, so result selection and feedback
+        // tagging use mismatched data.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = params$.asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+        const pendingByRound = new Map<number, Subject<ProgrammingSubmission>>();
+        lockAndGetProgrammingSubmissionParticipationStub.mockImplementation((_submissionId: number, correctionRound = 0) => {
+            const pending = new Subject<ProgrammingSubmission>();
+            pendingByRound.set(correctionRound, pending);
+            return pending.asObservable();
+        });
+
+        comp.ngOnInit();
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        await Promise.resolve();
+        expect([...pendingByRound.keys()]).toEqual([0, 1]);
+
+        // The round the url now names answers first, the obsolete one only afterwards.
+        const roundOneSubmission = deepClone(submission);
+        roundOneSubmission.id = 501;
+        pendingByRound.get(1)!.next(roundOneSubmission);
+        await firstValueFrom(scheduled([null], asapScheduler));
+        const roundZeroSubmission = deepClone(submission);
+        roundZeroSubmission.id = 502;
+        pendingByRound.get(0)!.next(roundZeroSubmission);
+        await firstValueFrom(scheduled([null], asapScheduler));
+
+        expect(comp.submission()?.id).toBe(501);
     });
 
     it('should not show complaint when participation contains no complaint', async () => {

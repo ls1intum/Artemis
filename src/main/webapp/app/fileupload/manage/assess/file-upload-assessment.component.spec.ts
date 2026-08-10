@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
@@ -323,6 +323,37 @@ describe('FileUploadAssessmentComponent', () => {
             await Promise.resolve();
 
             expect(getSpy).toHaveBeenCalledExactlyOnceWith(9, 1, 0);
+        });
+
+        it('should ignore a round response that arrives after a newer one', async () => {
+            // Consecutive round changes each issue their own request and nothing cancels the earlier one, so the two can
+            // complete in either order. The obsolete response must not win: the page would then show a submission for
+            // one round while correctionRound — which the url owns — names another, so result selection and feedback
+            // tagging use mismatched data.
+            const pendingByRound = new Map<number, Subject<HttpResponse<FileUploadSubmission>>>();
+            vi.spyOn(fileUploadSubmissionService, 'get').mockImplementation((_submissionId, correctionRound = 0) => {
+                const pending = new Subject<HttpResponse<FileUploadSubmission>>();
+                pendingByRound.set(correctionRound, pending);
+                return pending.asObservable();
+            });
+            component.ngOnInit();
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            await Promise.resolve();
+            expect([...pendingByRound.keys()]).toEqual([0, 1]);
+
+            // The round the url now names answers first, the obsolete one only afterwards.
+            const roundOneSubmission = createSubmission();
+            roundOneSubmission.id = 501;
+            setLatestSubmissionResult(roundOneSubmission, createResult(roundOneSubmission));
+            pendingByRound.get(1)!.next(new HttpResponse({ body: roundOneSubmission }));
+
+            const roundZeroSubmission = createSubmission();
+            roundZeroSubmission.id = 502;
+            setLatestSubmissionResult(roundZeroSubmission, createResult(roundZeroSubmission));
+            pendingByRound.get(0)!.next(new HttpResponse({ body: roundZeroSubmission }));
+
+            expect(component.submission()?.id).toBe(501);
         });
 
         it('should extract route params for course and exercise', () => {

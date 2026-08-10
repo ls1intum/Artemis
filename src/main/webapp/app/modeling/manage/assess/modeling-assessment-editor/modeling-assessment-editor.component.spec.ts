@@ -24,7 +24,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -255,6 +255,36 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
 
             expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 0);
+        });
+
+        it('should ignore a round response that arrives after a newer one', async () => {
+            // Consecutive round changes each issue their own request and nothing cancels the earlier one, so the two can
+            // complete in either order. The obsolete response must not win: the page would then show a submission for
+            // one round while correctionRound — which the url owns — names another, so result selection and feedback
+            // tagging use mismatched data.
+            const pendingByRound = new Map<number, Subject<ModelingSubmission>>();
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockImplementation((_submissionId, correctionRound = 0) => {
+                const pending = new Subject<ModelingSubmission>();
+                pendingByRound.set(correctionRound, pending);
+                return pending.asObservable();
+            });
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            await Promise.resolve();
+            expect([...pendingByRound.keys()]).toEqual([0, 1]);
+
+            // The round the url now names answers first, the obsolete one only afterwards.
+            const roundOneSubmission = getSubmissionWithData();
+            roundOneSubmission.id = 501;
+            pendingByRound.get(1)!.next(roundOneSubmission);
+            const roundZeroSubmission = getSubmissionWithData();
+            roundZeroSubmission.id = 502;
+            pendingByRound.get(0)!.next(roundZeroSubmission);
+            await fixture.whenStable();
+
+            expect(component.submission()?.id).toBe(501);
         });
 
         it('should open the first round for a url without the parameter even on a reused component', async () => {

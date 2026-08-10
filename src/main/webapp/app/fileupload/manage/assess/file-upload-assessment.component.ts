@@ -106,6 +106,9 @@ export class FileUploadAssessmentComponent implements OnInit {
 
     /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
     private lastLoadedRequestKey?: string;
+
+    /** Generation of the last load issued; see {@link isCurrentLoad}. */
+    private loadGeneration = 0;
     resultId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseGroupId?: number;
@@ -195,6 +198,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         }
         this.lastLoadedRequestKey = requestKey;
         this.lastRouteParams = params;
+        const generation = ++this.loadGeneration;
         {
             this.resetSubmissionState();
             this.courseId = Number(params['courseId']);
@@ -213,11 +217,23 @@ export class FileUploadAssessmentComponent implements OnInit {
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
             if (submissionValue === 'new') {
-                this.loadOptimalSubmission(this.exerciseId);
+                this.loadOptimalSubmission(this.exerciseId, generation);
             } else {
-                this.loadSubmission(submissionId);
+                this.loadSubmission(submissionId, generation);
             }
         }
+    }
+
+    /**
+     * Whether the load that was issued as the given generation is still the latest one.
+     * <p>
+     * Consecutive round changes each issue their own request and nothing cancels the earlier one, so two loads can be
+     * in flight and complete in either order. Without this check the response of the obsolete request wins, leaving the
+     * page showing a submission for one round while {@link correctionRound} — which the url owns — names another, so
+     * result selection and feedback tagging use mismatched data.
+     */
+    private isCurrentLoad(generation: number): boolean {
+        return generation === this.loadGeneration;
     }
 
     attachmentExtension(filePath: string): string {
@@ -228,9 +244,12 @@ export class FileUploadAssessmentComponent implements OnInit {
         return filePath.split('.').pop() ?? 'N/A';
     }
 
-    private loadOptimalSubmission(exerciseId: number): void {
+    private loadOptimalSubmission(exerciseId: number, generation: number): void {
         this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: FileUploadSubmission) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 if (!submission) {
                     // there is no submission waiting for assessment at the moment
                     this.navigateBack();
@@ -248,6 +267,9 @@ export class FileUploadAssessmentComponent implements OnInit {
                 }
             },
             error: (error: HttpErrorResponse) => {
+                if (!this.isCurrentLoad(generation)) {
+                    return;
+                }
                 this.loadingInitialSubmission.set(false);
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
@@ -258,18 +280,24 @@ export class FileUploadAssessmentComponent implements OnInit {
         });
     }
 
-    private loadSubmission(submissionId: number): void {
+    private loadSubmission(submissionId: number, generation: number): void {
         this.fileUploadSubmissionService
             .get(submissionId, this.correctionRound(), this.resultId)
             .pipe(filter((res) => !!res.body))
             .subscribe({
                 next: (res) => {
+                    if (!this.isCurrentLoad(generation)) {
+                        return;
+                    }
                     if (res.body) {
                         this.initializePropertiesFromSubmission(res.body);
                         this.validateAssessment();
                     }
                 },
                 error: (error: HttpErrorResponse) => {
+                    if (!this.isCurrentLoad(generation)) {
+                        return;
+                    }
                     this.loadingInitialSubmission.set(false);
                     if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                         this.navigateBack();
