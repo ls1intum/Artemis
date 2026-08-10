@@ -143,7 +143,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private void giveUserCredentials() {
         // Cleared first: the fixture user is reused across the tests in this class, so a test that deliberately leaves a
         // credential in place would otherwise make a later test see two of them.
-        passkeyCredentialsRepository.deleteAllByUserId(user.getId());
+        passkeyCredentialCleanupRepository.deleteAllByUserId(user.getId());
         userSshPublicKeyRepository.deleteAll(userSshPublicKeyRepository.findAllByUserId(user.getId()));
         participationVCSAccessTokenRepository.deleteAllByUserId(user.getId());
         repositoryVCSAccessTokenRepository.deleteAllByUserId(user.getId());
