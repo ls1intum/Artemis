@@ -399,6 +399,11 @@ public class ModelingExerciseResource {
             }
         }
 
+        // The edit form locks its timeline pickers when the exercise belongs to a variant group, so the response has to
+        // carry the group. Resolved by exercise id rather than fetch-joined: a sixth path on the entity graph above
+        // would cross the query-quality over-fetch threshold.
+        exerciseVariantGroupService.findOwningGroup(exerciseId).ifPresent(modelingExercise::setExerciseVariantGroup);
+
         // Guarantee exam.course is initialized before mapping, deterministically rather than relying on the access
         // check above happening to touch it.
         ensureExamCourseInitialized(modelingExercise);
