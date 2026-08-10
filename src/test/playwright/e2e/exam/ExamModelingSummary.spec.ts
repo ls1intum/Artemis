@@ -71,13 +71,10 @@ test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
         await expect(panel.locator('.feedback-row').first()).toBeVisible();
         await expect(panel).toContainText('Good');
 
-        // Docked, not floating: reviewing is reading, and the summary has the width
-        // to put the feedback beside the diagram rather than over it.
-        await expect(panel).toHaveClass(/apollon-rail-disclosure--docked/);
-
-        // And the diagram is framed clear of it - the camera has to refit once the
-        // rail reserves its width, or the nodes stay hidden underneath.
-        const panelBox = (await panel.boundingBox())!;
+        // The panel floats over the canvas, so the camera has to frame the diagram
+        // clear of it. Reserving room is not the same as using it: without a refit
+        // once the rail settles, the nodes keep their old framing and sit underneath.
+        const panelBox = (await panel.locator('.apollon-rail-disclosure__panel').boundingBox())!;
         const nodes = page.locator('jhi-modeling-exam-summary .react-flow__node');
         const nodeCount = await nodes.count();
         expect(nodeCount).toBeGreaterThan(0);

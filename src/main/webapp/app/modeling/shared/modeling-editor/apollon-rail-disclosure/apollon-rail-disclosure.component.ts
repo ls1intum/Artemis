@@ -27,7 +27,6 @@ let nextDisclosureId = 0;
     host: {
         class: 'apollon-rail-disclosure nopan nodrag nowheel',
         '[class.apollon-rail-disclosure--expanded]': 'visible()',
-        '[class.apollon-rail-disclosure--docked]': 'docked()',
         '[attr.aria-label]': 'label()',
     },
 })
@@ -40,14 +39,6 @@ export class ApollonRailDisclosureComponent {
     readonly label = input.required<string>();
     readonly icon = input.required<IconDefinition>();
     readonly testId = input<string>();
-    /**
-     * Docked, the panel is part of the rail: it reserves its own width, so the canvas
-     * shrinks beside it instead of being covered. Floating (the default) keeps the
-     * canvas full-bleed and hangs the panel over it, which is right when vertical
-     * room is scarce and the diagram is the workspace. Docking is right when the
-     * surface is being read rather than edited and there is width to spare.
-     */
-    readonly docked = input(false);
     readonly visible = model(false);
     /**
      * Set by the host, which is the only party that can see what else the editor

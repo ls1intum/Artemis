@@ -71,8 +71,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     readonly enablePopups = input(true);
     /** Heading shown on the side panel's card. */
     readonly panelLabel = input('');
-    /** Docks the side panel beside the canvas instead of floating it over; see {@link ApollonRailDisclosureComponent.docked}. */
-    readonly panelDocked = input(false);
     protected readonly hasPanel = computed(() => isOccupied(this.projectedPanel()));
     /** Open by default: in the assessed view the feedback IS the point of the page. */
     readonly panelVisible = signal(true);
@@ -324,15 +322,34 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
         this.panelResizeObserver?.disconnect();
-        this.panelResizeObserver = new ResizeObserver(() => {
-            const width = Math.round(panel.getBoundingClientRect().width);
-            if (width === this.lastReservedPanelWidth) {
-                return;
-            }
-            this.lastReservedPanelWidth = width;
-            this.scheduleFitView();
-        });
+        this.panelResizeObserver = new ResizeObserver(() => this.reserveRoomForPanel(panel));
         this.panelResizeObserver.observe(panel);
+        this.reserveRoomForPanel(panel);
+    }
+
+    /**
+     * The panel floats over the canvas so it keeps the notch-and-glass look of the
+     * editor's other chrome, which means it contributes no inset of its own - only
+     * the trigger does. Left at that, the camera frames the diagram behind the open
+     * panel. Reserving the panel's measured width as an explicit inset keeps the
+     * float and still guarantees the diagram is laid out clear of it.
+     */
+    private reserveRoomForPanel(panel: HTMLElement): void {
+        if (!this.apollonEditor) {
+            return;
+        }
+        const openPanel = panel.querySelector<HTMLElement>('.apollon-rail-disclosure__panel:not([hidden])');
+        const width = Math.ceil(openPanel?.getBoundingClientRect().width ?? 0);
+        if (width === this.lastReservedPanelWidth) {
+            return;
+        }
+        this.lastReservedPanelWidth = width;
+        this.apollonEditor.updateControl('apollon:host:right-rail', {
+            style: { overflow: 'visible' },
+            // 'auto' alone measures only the in-flow trigger; the float needs saying.
+            inset: width > 0 ? { right: width } : 'auto',
+        });
+        this.scheduleFitView();
     }
 
     /**
@@ -349,6 +366,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.apollonEditor?.fitView({ respectInsets: true });
             });
         });
+    }
+
+    /** Re-reserves the rail when the panel is collapsed or reopened. */
+    protected onPanelVisibilityChanged(): void {
+        const panel = this.panelRegion()?.nativeElement;
+        if (panel) {
+            // Measured after the panel has been shown/hidden, not before.
+            window.requestAnimationFrame(() => this.reserveRoomForPanel(panel));
+        }
     }
 
     protected scheduleChromePlacement(): void {
