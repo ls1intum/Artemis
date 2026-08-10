@@ -44,9 +44,10 @@ $transition-color-length: 0.2s;
  * Open, the toggle is pushed towards the right edge; collapsed it centres in the rail like every icon above it, so
  * the nudge and the padding that align it in the open state have to go.
  */
-.double-arrow.menu-closed {
+.double-arrow.menu-collapsed {
     transform: none;
     padding-right: 0;
+    margin-top: 0.5rem;
 }
 
 .double-arrow {
@@ -55,10 +56,9 @@ $transition-color-length: 0.2s;
     align-items: center;
     justify-content: flex-end;
     cursor: pointer;
-    padding-right: 10px;
 }
 
-.menu-closed.double-arrow {
+.menu-collapsed.double-arrow {
     justify-content: center;
 }
 
@@ -71,7 +71,7 @@ $transition-color-length: 0.2s;
     transform: rotate(180deg);
 }
 
-.menu-closed .double-arrow-icon {
+.menu-collapsed .double-arrow-icon {
     transform: rotate(0deg);
 
     /* The 40px minimum is what reserves room for the label beside it when open; collapsed it just offsets the pair. */
@@ -93,6 +93,11 @@ $transition-color-length: 0.2s;
         width: var(--sidebar-nav-width-collapsed) !important;
     }
 
+    .nav-link-sidebar.collapsed {
+        display: flex;
+        justify-content: center;
+    }
+
     .auto-collapse {
         display: none;
     }
@@ -109,38 +114,12 @@ $transition-color-length: 0.2s;
     color: var(--bs-body-color);
 }
 
-/*
- * Collapsed an item is nothing but its icon, so centre it in the rail. The gap to the label sits on the label rather
- * than on the icon for exactly this reason: with the label gone there is no margin left to push the icon off-centre.
- */
-.nav-link-sidebar.collapsed {
+.collapsed .nav-link-sidebar {
     display: flex;
     justify-content: center;
 
-    > .d-flex {
-        justify-content: center;
-    }
-}
-
-.sidebar-container.collapsed {
-    /*
-     * The bottom items share their row with the collapse toggle while the sidebar is open, so the link is only as wide
-     * as its content — collapsed, that left the settings icon short of the centre the icons above it sit on. The
-     * dropdown toggle is a plain `.nav-link`, so it needs centring of its own.
-     */
-    .nav-link-sidebar,
-    .three-dots {
-        width: 100%;
-    }
-
-    .three-dots {
-        display: flex;
-        justify-content: center;
-    }
-
-    /* Set the expand toggle apart from the last item rather than having it read as another entry. */
-    .double-arrow {
-        margin-top: 0.75rem;
+    .dropdown-content & {
+        justify-content: flex-start;
     }
 }
 
@@ -170,18 +149,12 @@ a:not(.btn):not(.tab-link):hover {
     }
 }
 
-.dropdown-li {
-    display: block;
-    text-decoration: none;
-}
-
 .dropdown-content {
     overflow-y: auto;
-    position: absolute;
     background-color: var(--dropdown-bg);
     border: 1px solid var(--border-color);
     z-index: 3000;
-    border-radius: 4px;
+    border-radius: 0.25rem;
 
     &.fixedContentSize {
         max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
@@ -189,8 +162,7 @@ a:not(.btn):not(.tab-link):hover {
 }
 
 .dropdown-menu {
-    min-width: 204px;
-    max-width: 294px;
+    max-width: var(--sidebar-nav-width);
 }
 
 .dropdown-courses.active {
@@ -211,8 +183,7 @@ a:not(.btn):not(.tab-link):hover {
 ::ng-deep .double-arrow-tooltip {
     // without this styling the tooltip is positioned with some distance to the left of the collapse icon when the sidebar is expanded.
     // the margin bottom ensures the tooltip does not overlap with the collapse icon
-    left: 2rem !important;
-    margin-bottom: 0.25rem !important;
+    margin-left: 0.8rem !important;
 }
 
 ::ng-deep .double-arrow-tooltip-no-bottom-items {
@@ -222,5 +193,5 @@ a:not(.btn):not(.tab-link):hover {
 
 ::ng-deep .double-arrow-tooltip-collapsed {
     // without this styling the tooltip is positioned with too much distance to the right of the collapse icon when the sidebar is collapsed.
-    left: -2.25rem !important;
+    margin-left: -0.5rem !important;
 }

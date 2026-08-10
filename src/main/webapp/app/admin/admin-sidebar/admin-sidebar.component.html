@@ -12,7 +12,7 @@
         </div>
 
         <!-- NavItems grouped -->
-        <div>
+        <div class="justify-items-center">
             <hr class="mt-0" />
             <ul class="grow list-none p-0">
                 @for (group of sidebarGroups(); track group.translation; let groupIndex = $index) {
@@ -50,12 +50,12 @@
         </div>
     </div>
 
-    <div class="mb-2 shrink-0 bg-[var(--module-bg)]">
+    <div class="my-2 shrink-0 bg-[var(--module-bg)]">
         @if (!isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="double-arrow flex w-full cursor-pointer items-center justify-end border-none bg-transparent px-2 pe-[10px] font-[inherit] text-inherit"
-                [class.menu-closed]="isNavbarCollapsed()"
+                class="flex w-full justify-end border-none bg-transparent px-2"
+                [class.menu-collapsed]="isNavbarCollapsed()"
                 [tumUiTooltip]="'global.menu.admin.collapseMenu' | artemisTranslate"
                 tumUiTooltipPlacement="right"
                 (click)="toggleCollapseState.emit()"
@@ -72,15 +72,15 @@
         @if (isNavbarCollapsed() && canExpand()) {
             <button
                 type="button"
-                class="double-arrow mb-2 flex w-full cursor-pointer items-center justify-center border-none bg-transparent pe-[10px] font-[inherit] text-inherit"
-                [class.menu-closed]="isNavbarCollapsed()"
+                class="w-full border-none bg-transparent text-center"
+                [class.menu-collapsed]="isNavbarCollapsed()"
                 [tumUiTooltip]="'global.menu.admin.expandMenu' | artemisTranslate"
                 tumUiTooltipPlacement="right"
                 (click)="toggleCollapseState.emit()"
                 [attr.aria-expanded]="!isNavbarCollapsed()"
                 data-testid="admin-sidebar-expand"
             >
-                <span class="double-arrow-icon inline-flex min-w-10 items-center gap-1">
+                <span class="double-arrow-icon gap-1">
                     <fa-icon class="-me-[10px] fa-xs" [icon]="faChevronRight" />
                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                 </span>

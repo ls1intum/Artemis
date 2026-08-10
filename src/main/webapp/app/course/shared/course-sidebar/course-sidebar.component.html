@@ -1,15 +1,15 @@
-<div class="mt-2 sidebar-container d-flex h-100 justify-content-between flex-column" [class]="{ collapsed: isNavbarCollapsed() }">
+<div class="mt-2 sidebar-container px-1 d-flex h-100 justify-content-between flex-column" [class]="{ collapsed: isNavbarCollapsed() || !canExpand() }">
     <div>
         <!-- NavItems -->
         <div>
-            <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
+            <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end grow text-decoration-none">
                 @for (sidebarItem of sidebarItemsTop(); track sidebarItem.routerLink) {
                     <li class="nav-item" [hidden]="sidebarItem.hidden">
                         <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                     </li>
                 }
                 <li ngbDropdownToggle class="nav-item">
-                    <div [hidden]="!anyItemHidden()" class="three-dots nav-link px-2">
+                    <div [hidden]="!anyItemHidden()" class="three-dots nav-link nav-link-sidebar px-2" [class]="{ collapsed: isNavbarCollapsed() }">
                         <fa-icon [fixedWidth]="true" [icon]="faEllipsis" />
                         <span
                             class="more ms-2"
@@ -28,7 +28,7 @@
                         @for (courseActionItem of courseActionItems(); track courseActionItem) {
                             <li class="nav-item">
                                 <a
-                                    class="nav-link nav-link-sidebar px-2 py-2"
+                                    class="nav-link nav-link-sidebar py-2"
                                     [ngClass]="{ collapsed: isNavbarCollapsed() }"
                                     (click)="courseActionItemClick.emit(courseActionItem)"
                                     [title]="courseActionItem.title"
@@ -50,7 +50,7 @@
                     @for (courseActionItem of courseActionItems(); track courseActionItem; let i = $index) {
                         <a
                             [id]="'action-item-' + i"
-                            class="nav-link nav-link-sidebar px-2"
+                            class="nav-link nav-link-sidebar"
                             [ngClass]="{ collapsed: isNavbarCollapsed() }"
                             (click)="courseActionItemClick.emit(courseActionItem)"
                             [title]="courseActionItem.title"
@@ -65,13 +65,13 @@
         <div class="navbar-nav mb-2">
             @for (bottomItem of sidebarItemsBottom(); track bottomItem.routerLink; let isLast = $last) {
                 <li class="nav-item" [hidden]="bottomItem.hidden">
-                    <div class="d-flex align-items-center justify-content-between">
+                    <div [class.d-flex]="!isNavbarCollapsed() && canExpand()">
                         <a
                             class="nav-link nav-link-sidebar px-2 py-2"
                             [id]="bottomItem.testId ?? ''"
                             [ngClass]="{
                                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && bottomItem.title === 'Communication',
-                                collapsed: isNavbarCollapsed(),
+                                collapsed: isNavbarCollapsed() || !canExpand(),
                             }"
                             [routerLink]="bottomItem.routerLink"
                             routerLinkActive="active"
@@ -92,7 +92,7 @@
                         @if (isLast && !isNavbarCollapsed() && canExpand()) {
                             <div
                                 class="double-arrow px-2"
-                                [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
+                                [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
                                 [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
                                 tooltipClass="double-arrow-tooltip"
                                 [container]="'body'"
@@ -110,8 +110,8 @@
 
             @if ((isNavbarCollapsed() || !sidebarItemsBottom().length) && canExpand()) {
                 <div
-                    class="double-arrow mb-2"
-                    [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
+                    class="double-arrow mb-3"
+                    [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
                     [tooltipClass]="isNavbarCollapsed() ? 'double-arrow-tooltip-collapsed' : 'double-arrow-tooltip-no-bottom-items'"
                     [ngbTooltip]="(isNavbarCollapsed() ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
                     (click)="toggleCollapseState.emit()"
