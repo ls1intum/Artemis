@@ -4,7 +4,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+} from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
@@ -181,7 +186,7 @@ export class UnifiedFeedbackComponent {
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
-        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
             if (raw.startsWith(prefix)) {
                 return prefix;
             }
@@ -189,8 +194,42 @@ export class UnifiedFeedbackComponent {
         return '';
     }
 
+    /**
+     * The prefix to write on the next edit: an accepted suggestion transitions to adapted the moment it is
+     * touched; every other state (already adapted, not a suggestion, or the unreachable bare "suggested") is
+     * left as-is. This is a one-way, sticky transition — it never reverts even if the edit is undone later.
+     */
+    private nextTitlePrefix(): string {
+        const current = this.currentTitlePrefix();
+        return current === FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER ? FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER : current;
+    }
+
+    /**
+     * Rewrites feedbackTitle's suggestion prefix from accepted to adapted, if applicable, without changing the
+     * title text itself. Called whenever the description or the score changes, since neither of those edits
+     * goes through onTitleInput.
+     */
+    private markAdaptedIfSuggestion(): void {
+        const current = this.currentTitlePrefix();
+        if (current !== FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER) {
+            return;
+        }
+        const title = (this.feedbackTitle() ?? '').slice(current.length);
+        this.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}${title}`);
+    }
+
     onTitleInput(value: string): void {
-        this.feedbackTitle.set(`${this.currentTitlePrefix()}${value}`);
+        this.feedbackTitle.set(`${this.nextTitlePrefix()}${value}`);
+    }
+
+    onDetailChange(value: string): void {
+        this.feedbackDetail.set(value);
+        this.markAdaptedIfSuggestion();
+    }
+
+    onCreditsChange(value: number): void {
+        this.feedbackCredits.set(value ?? 0);
+        this.markAdaptedIfSuggestion();
     }
 
     handleDeleteConfirmed(): void {
@@ -225,7 +264,7 @@ export class UnifiedFeedbackComponent {
     }
 
     private stripFeedbackSuggestionPrefix(text: string): string {
-        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
             if (text.startsWith(prefix)) {
                 return text.slice(prefix.length);
             }

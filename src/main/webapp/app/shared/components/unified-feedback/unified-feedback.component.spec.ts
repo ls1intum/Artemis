@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { By } from '@angular/platform-browser';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
 import { faMinus } from '@fortawesome/free-solid-svg-icons';
 
@@ -254,14 +256,74 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredAlertClass()).toBe('alert-success');
     });
 
-    it('should expose a stripped display title and re-apply the suggestion prefix on edit', () => {
+    it('should expose a stripped display title and mark an accepted suggestion as adapted on title edit', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set('FeedbackSuggestion:accepted:Missing null check');
         fixture.detectChanges();
         expect(component.displayTitle()).toBe('Missing null check');
 
         component.onTitleInput('Null check is missing');
-        expect(component.feedbackTitle()).toBe('FeedbackSuggestion:accepted:Null check is missing');
+        expect(component.feedbackTitle()).toBe('FeedbackSuggestion:adapted:Null check is missing');
+    });
+
+    it('should mark an accepted suggestion as adapted when only the description is edited', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
+        fixture.detectChanges();
+
+        component.onDetailChange('More context about the issue');
+
+        expect(component.feedbackDetail()).toBe('More context about the issue');
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should mark an accepted suggestion as adapted when only the score is edited', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
+        fixture.detectChanges();
+
+        component.onCreditsChange(2);
+
+        expect(component.feedbackCredits()).toBe(2);
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should not touch a non-suggestion title when editing', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('Encapsulation broken');
+        fixture.detectChanges();
+
+        component.onCreditsChange(2);
+        component.onDetailChange('Some detail');
+        component.onTitleInput('Encapsulation is broken');
+
+        expect(component.feedbackTitle()).toBe('Encapsulation is broken');
+    });
+
+    it('should stay adapted once already adapted, even if a later edit happens to match the original wording', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+        fixture.detectChanges();
+
+        component.onTitleInput('Missing null check');
+
+        expect(component.feedbackTitle()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should feed the live feedbackTitle into the suggestion badge, reflecting the adapted state within the same session (regression test for the pre-fix object-identity staleness bug)', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check` } as any);
+        component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
+        fixture.detectChanges();
+
+        let badge = fixture.debugElement.query(By.directive(FeedbackSuggestionBadgeComponent));
+        expect(badge.componentInstance.feedbackText()).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
+
+        component.onCreditsChange(3);
+        fixture.detectChanges();
+
+        badge = fixture.debugElement.query(By.directive(FeedbackSuggestionBadgeComponent));
+        expect(badge.componentInstance.feedbackText()).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
     });
 
     it('should not add a prefix when editing a plain (non-suggestion) title', () => {
