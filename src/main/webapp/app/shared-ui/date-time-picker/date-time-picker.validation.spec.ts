@@ -280,6 +280,61 @@ describe('date-time-picker reports unparseable input to its form control', () =>
         });
     });
 
+    // These drive the real input rather than updateField, because only actual typing leaves raw text in the
+    // inner picker (keepInvalid). The display is what the user acts on, so it must never show a date the form
+    // does not hold: that combination reads as "valid with a date" and submits nothing.
+    describe('display stays in step with the model', () => {
+        const shownDate = () => (fixture.nativeElement.querySelector('input.p-datepicker-input') as HTMLInputElement | null)?.value ?? '<no input>';
+
+        const type = (text: string) => {
+            const input = fixture.nativeElement.querySelector('input.p-datepicker-input') as HTMLInputElement;
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: '0', bubbles: true }));
+            input.value = text;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            fixture.detectChanges();
+        };
+
+        beforeEach(() => {
+            host.max.set(dayjs('2026-06-30T00:00:00'));
+            fixture.detectChanges();
+        });
+
+        it('clears a rejected date from the input when the control is reset', () => {
+            type('05.07.2026');
+            expect(shownDate()).toBe('05.07.2026');
+            expect(host.form.valid).toBe(false);
+
+            host.form.reset();
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+            expect(shownDate()).toBe('');
+        });
+
+        it('clears unparseable text from the input when the control is reset', () => {
+            type('asdasd');
+            expect(shownDate()).toBe('asdasd');
+            expect(host.form.valid).toBe(false);
+
+            host.form.reset();
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+            expect(shownDate()).toBe('');
+        });
+
+        it('shows the date the parent writes over rejected text', () => {
+            type('05.07.2026');
+            expect(host.form.valid).toBe(false);
+
+            host.form.controls.softDueDate.setValue(dayjs('2026-06-10T00:00:00'));
+            fixture.detectChanges();
+
+            expect(host.form.valid).toBe(true);
+            expect(shownDate()).toBe('10.06.2026');
+        });
+    });
+
     it('recovers when the parent resets the control', () => {
         picker.updateField('asdasd');
         fixture.detectChanges();

@@ -264,6 +264,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
         // ABOVE the idempotency guard. Resetting an already-empty field writes an equal value and takes the
         // early return below, and an entry left behind there would be written into the form by the next bound
         // change - handing the parent a date it had just discarded.
+        // Either flag also means the input is showing raw text (kept by `keepInvalid`) that the model does not
+        // hold, so the display has to be re-synced below or the field goes on showing a date the form does not
+        // have - valid, and submitting nothing.
+        const displayHoldsSupersededText = this.needsParentSync || this.rejectedEntry != undefined;
         this.rejectedEntry = undefined;
         this.needsParentSync = false;
         // Idempotency guard: Angular re-invokes writeValue on every change-detection pass while
@@ -273,6 +277,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, Valida
             // The bound value is unchanged, but a prior unparseable entry may have left the validity
             // signals stale; refresh them so a programmatic reset/write clears any lingering invalid state.
             this.updateSignals();
+            if (displayHoldsSupersededText) {
+                this.reflectValueInPicker(next);
+            }
             return;
         }
         this.value.set(next);
