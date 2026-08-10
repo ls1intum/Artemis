@@ -221,13 +221,20 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (requestKey === this.lastLoadedRequestKey) {
             return;
         }
+        // Whether an earlier load of this initialisation put an assessment on screen that this one replaces.
+        const replacesLoadedSubmission = this.lastLoadedRequestKey !== undefined;
         this.lastLoadedRequestKey = requestKey;
         this.lastRouteParams = params;
         const generation = ++this.loadGeneration;
         {
-            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
-            // the previous submission has to be cleared before loading the next one
-            this.assessmentNotPossibleYet.set(undefined);
+            // this component is reused for param-only navigations (e.g. to the next submission) and for round-only
+            // ones, so the state of the previous submission has to be cleared before loading the next one. On the
+            // first load of an initialisation there is nothing on screen yet, so only the blocked state is reset.
+            if (replacesLoadedSubmission) {
+                this.resetSubmissionState();
+            } else {
+                this.assessmentNotPossibleYet.set(undefined);
+            }
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
             if (params.has('examId')) {
@@ -302,8 +309,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                     return;
                 }
                 if (!submission) {
-                    // there are no unassessed submissions
+                    // there are no unassessed submissions — leave the loading state the request entered, so the page
+                    // says so instead of staying blank behind the loading flags
                     this.submission.set(undefined);
+                    this.loadingInitialSubmission.set(false);
+                    this.isLoading.set(false);
                     return;
                 }
 
@@ -529,6 +539,25 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingExercise.set(undefined);
         this.result.set(undefined);
         this.model.set(undefined);
+    }
+
+    /**
+     * Returns the editor to its loading state before a replacement submission is requested.
+     * <p>
+     * A round change re-requests the submission while {@link correctionRound} — which the url owns — already names
+     * the new round. Without this, the assessment of the previous round stays on screen and interactive until the
+     * response arrives, so a tutor could edit or submit it from a page whose url and header name another round.
+     * Clearing the submission takes the editor and its feedback out of the template, and `isLoading` disables the
+     * save and submit controls of the assessment layout.
+     */
+    private resetSubmissionState(): void {
+        this.loadingInitialSubmission.set(true);
+        this.isLoading.set(true);
+        this.assessmentNotPossibleYet.set(undefined);
+        this.resetAssessmentState();
+        this.referencedFeedback = [];
+        this.unreferencedFeedback.set([]);
+        this.complaint.set(undefined!);
     }
 
     onError(): void {

@@ -287,6 +287,40 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.submission()?.id).toBe(501);
         });
 
+        it('should not leave the previous assessment interactive while a round reload is pending', async () => {
+            // correctionRound follows the url immediately, but the submission only follows once the replacement request
+            // answers. In between, the assessment of the previous round must not stay on screen and editable: a tutor
+            // could otherwise save or submit it from a page whose url and header already name another round.
+            const pendingReload = new Subject<ModelingSubmission>();
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(getSubmissionWithData())).mockReturnValueOnce(pendingReload.asObservable());
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(component.submission()).toBeDefined();
+            expect(component.isLoading()).toBe(false);
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            await Promise.resolve();
+            await fixture.whenStable();
+
+            // The replacement request is still in flight.
+            expect(component.correctionRound()).toBe(1);
+            expect(component.isLoading()).toBe(true);
+            expect(component.loadingInitialSubmission()).toBe(true);
+            expect(component.submission()).toBeUndefined();
+            expect(component.result()).toBeUndefined();
+            expect(component.model()).toBeUndefined();
+            expect(component.unreferencedFeedback()).toEqual([]);
+
+            // ... and the new round's assessment appears once it answers.
+            const roundOneSubmission = getSubmissionWithData();
+            roundOneSubmission.id = 777;
+            pendingReload.next(roundOneSubmission);
+            await fixture.whenStable();
+
+            expect(component.submission()?.id).toBe(777);
+            expect(component.isLoading()).toBe(false);
+        });
+
         it('should open the first round for a url without the parameter even on a reused component', async () => {
             // Pins existing behaviour rather than a change: this editor already took the round from the url on every
             // navigation. The same url has to open the same round, whether it is reached directly or through the next
