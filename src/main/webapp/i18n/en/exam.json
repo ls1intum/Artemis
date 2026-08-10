@@ -313,6 +313,7 @@
             "submittedColumn": "Submitted",
             "totalColumn": "Total",
             "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
+            "scoreDistributionTitle": "Distribution of overall exam scores",
             "gradesBeforeBonus": "Grades before bonus",
             "gradesAfterBonus": "Grades after bonus",
             "noStudentResultAvailable": "No student results available",

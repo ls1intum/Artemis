@@ -19,10 +19,12 @@ import { TooltipModule } from 'primeng/tooltip';
 import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 
 @Component({
     selector: 'jhi-course-training',
     imports: [
+        CourseTitleBarActionsDirective,
         ButtonComponent,
         LeaderboardComponent,
         TranslateDirective,
