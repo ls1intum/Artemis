@@ -114,13 +114,13 @@ $transition-color-length: 0.2s;
     color: var(--bs-body-color);
 }
 
+.dropdown-content .nav-link-sidebar {
+    justify-content: flex-start;
+}
+
 .collapsed .nav-link-sidebar {
     display: flex;
     justify-content: center;
-
-    .dropdown-content & {
-        justify-content: flex-start;
-    }
 }
 
 .nav-link-sidebar:hover,
