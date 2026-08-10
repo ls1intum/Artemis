@@ -79,6 +79,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
 
+    private hlsSourceRestoreHandler: (() => void) | undefined;
+
     private nativeHlsLoaded = false;
 
     private nativeSourceRestoreHandler: (() => void) | undefined;
@@ -219,23 +221,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     this.tokenError.set(false);
 
                     if (this.hls) {
-                        // Refresh: swap the source while preserving position and play state.
-                        const currentTime = videoElement.currentTime;
-                        const wasPlaying = !videoElement.paused;
-
-                        this.hls.loadSource(url);
-
-                        // Restore position after the new manifest loads
-                        const restoreAfterManifest = () => {
-                            videoElement.currentTime = currentTime;
-                            if (wasPlaying) {
-                                videoElement.play().catch(() => {
-                                    // Autoplay may be blocked; ignore and let user resume manually
-                                });
-                            }
-                            this.hls?.off(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
-                        };
-                        this.hls.on(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+                        this.reloadHlsSourcePreservingPlayback(url, videoElement);
                     } else if (this.nativeHlsLoaded) {
                         this.refreshNativeHlsSource(url, videoElement);
                     } else {
@@ -271,12 +257,42 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         this.tokenError.set(false);
         if (this.hls) {
-            this.hls.loadSource(fallbackUrl);
+            this.reloadHlsSourcePreservingPlayback(fallbackUrl, videoElement);
         } else if (this.nativeHlsLoaded) {
             this.refreshNativeHlsSource(fallbackUrl, videoElement);
         } else {
             this.initHls(fallbackUrl, videoElement);
         }
+    }
+
+    private reloadHlsSourcePreservingPlayback(url: string, videoElement: HTMLVideoElement): void {
+        const hls = this.hls;
+        if (!hls) {
+            return;
+        }
+
+        if (this.hlsSourceRestoreHandler) {
+            hls.off(Hls.Events.MANIFEST_PARSED, this.hlsSourceRestoreHandler);
+        }
+
+        const currentTime = videoElement.currentTime;
+        const wasPlaying = !videoElement.paused;
+        const restoreAfterManifest = () => {
+            videoElement.currentTime = currentTime;
+            if (wasPlaying) {
+                videoElement.play().catch(() => {
+                    // Autoplay may be blocked; ignore and let user resume manually
+                });
+            }
+            hls.off(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+            if (this.hlsSourceRestoreHandler === restoreAfterManifest) {
+                this.hlsSourceRestoreHandler = undefined;
+            }
+        };
+
+        this.hlsSourceRestoreHandler = restoreAfterManifest;
+        hls.on(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+        hls.loadSource(url);
     }
 
     /**
@@ -305,6 +321,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                             // Fatal error, cannot recover
                             this.hls?.destroy();
                             this.hls = undefined;
+                            this.hlsSourceRestoreHandler = undefined;
                             break;
                     }
                 }
@@ -579,6 +596,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         // Destroy HLS instance
         if (this.hls) {
+            if (this.hlsSourceRestoreHandler) {
+                this.hls.off(Hls.Events.MANIFEST_PARSED, this.hlsSourceRestoreHandler);
+                this.hlsSourceRestoreHandler = undefined;
+            }
             this.hls.destroy();
             this.hls = undefined;
         }

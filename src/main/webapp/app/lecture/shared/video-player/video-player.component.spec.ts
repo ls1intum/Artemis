@@ -841,7 +841,7 @@ describe('VideoPlayerComponent', () => {
             }
         });
 
-        it('switches to videoUrl via HLS when a token REFRESH fails and a fallback videoUrl is set', async () => {
+        it('switches to the HLS fallback after a token refresh failure while preserving playback', async () => {
             vi.useFakeTimers();
 
             const firstUrl = 'https://tum.live/hls/first.m3u8';
@@ -857,15 +857,30 @@ describe('VideoPlayerComponent', () => {
             fixture.componentRef.setInput('videoUrl', fallbackUrl);
             await render();
 
+            videoElement.currentTime = 42;
+            Object.defineProperty(videoElement, 'paused', { configurable: true, value: false });
+            const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
+
             // Clear the initial loadSource call
             getMockHls().loadSource.mockClear();
+            getMockHls().on.mockClear();
+            getMockHls().off.mockClear();
 
             // Trigger the refresh timer — this fires fetchAndLoadToken again which will fail
             vi.advanceTimersByTime(31000);
 
-            // The player must switch to fallbackUrl via hls.loadSource (not tokenError)
             expect(component.tokenError()).toBe(false);
             expect(getMockHls().loadSource).toHaveBeenCalledWith(fallbackUrl);
+
+            const manifestCall = getMockHls().on.mock.calls.find((call: any) => call[0] === 'hlsManifestParsed');
+            expect(manifestCall).toBeDefined();
+            const manifestHandler = manifestCall[1];
+            videoElement.currentTime = 0;
+            manifestHandler();
+
+            expect(videoElement.currentTime).toBe(42);
+            expect(playSpy).toHaveBeenCalled();
+            expect(getMockHls().off).toHaveBeenCalledWith('hlsManifestParsed', manifestHandler);
 
             vi.useRealTimers();
         });
@@ -910,6 +925,43 @@ describe('VideoPlayerComponent', () => {
             expect(playSpy).toHaveBeenCalled();
             // ...and the one-shot handler is removed to avoid leaks / double-restore.
             expect(getMockHls().off).toHaveBeenCalledWith('hlsManifestParsed', manifestHandler);
+
+            vi.useRealTimers();
+        });
+
+        it('removes a pending restore handler before a consecutive HLS source reload', async () => {
+            vi.useFakeTimers();
+
+            mockGocastService.getPlaybackToken
+                .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/first.m3u8', expiresIn: 60 }))
+                .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/second.m3u8', expiresIn: 60 }))
+                .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/third.m3u8', expiresIn: 60 }));
+
+            setGocastIdentity();
+            await render();
+
+            Object.defineProperty(videoElement, 'paused', { configurable: true, value: true });
+            getMockHls().on.mockClear();
+            getMockHls().off.mockClear();
+
+            videoElement.currentTime = 17;
+            vi.advanceTimersByTime(31000);
+            const firstManifestHandler = getMockHls().on.mock.calls.find((call: any) => call[0] === 'hlsManifestParsed')?.[1];
+            expect(firstManifestHandler).toBeDefined();
+
+            videoElement.currentTime = 42;
+            vi.advanceTimersByTime(31000);
+
+            const manifestHandlers = getMockHls().on.mock.calls.filter((call: any) => call[0] === 'hlsManifestParsed');
+            expect(manifestHandlers).toHaveLength(2);
+            const secondManifestHandler = manifestHandlers[1][1];
+            expect(getMockHls().off).toHaveBeenCalledWith('hlsManifestParsed', firstManifestHandler);
+
+            videoElement.currentTime = 0;
+            secondManifestHandler();
+
+            expect(videoElement.currentTime).toBe(42);
+            expect(getMockHls().off).toHaveBeenCalledWith('hlsManifestParsed', secondManifestHandler);
 
             vi.useRealTimers();
         });
