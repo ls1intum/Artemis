@@ -294,6 +294,35 @@ describe('CourseOverviewComponent', () => {
         );
     });
 
+    it('should refresh the sidebar tabs on a navigation inside the course, so it cannot disagree with the guard', () => {
+        // The container survives child-tab navigations, so without this the sidebar keeps whatever the course load
+        // found on entry while the guard decides each guarded navigation from a freshly fetched answer
+        component.courseId.set(1);
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: true })));
+        (component as any).handleNavigationEndActions();
+        expect(component.availableTabs()?.lectures).toBe(true);
+
+        // A later navigation finds the lectures tab gone and the exams tab newly available
+        availableTabsService.clear();
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: false, exams: true })));
+        (component as any).handleNavigationEndActions();
+
+        expect(component.availableTabs()?.lectures).toBe(false);
+        expect(component.availableTabs()?.exams).toBe(true);
+    });
+
+    it('should keep the tabs it has when a sidebar refresh fails', () => {
+        component.courseId.set(1);
+        getCourseAvailableTabsStub.mockReturnValue(of(availableTabs({ lectures: true })));
+        (component as any).handleNavigationEndActions();
+
+        availableTabsService.clear();
+        getCourseAvailableTabsStub.mockReturnValue(throwError(() => new Error('offline')));
+        (component as any).handleNavigationEndActions();
+
+        expect(component.availableTabs()?.lectures).toBe(true);
+    });
+
     it('should create sidebar items with default items', () => {
         component.lectureEnabled = true;
         component.availableTabs.set(availableTabs({ lectures: true }));

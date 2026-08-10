@@ -193,6 +193,32 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * course's flags are cleared before starting so an in-place course switch can never retain links that are not
      * available in the new course; on failure the sidebar therefore stays at its safe, always-available baseline.
      */
+    /**
+     * Keeps the sidebar's tab list in step with the guard on every navigation inside the course.
+     *
+     * The container outlives child-tab navigations, so its flags would otherwise be whatever the course load found on
+     * entry, while the guard decides each guarded navigation from a freshly fetched answer. The two could then
+     * disagree: a tab removed since entry would still be offered, and one that became available would stay hidden.
+     *
+     * Costs nothing on a guarded navigation — the tab service is scoped to the navigation, so the guard's response is
+     * still the one being shared. An unguarded tab pays a single lightweight request.
+     */
+    protected override handleNavigationEndActions(): void {
+        const courseId = this.courseId();
+        if (!courseId) {
+            return;
+        }
+        this.availableTabsSubscription?.unsubscribe();
+        this.availableTabsSubscription = this.courseAvailableTabsService.loadIfNeeded(courseId).subscribe({
+            next: (tabs) => {
+                this.availableTabs.set(tabs);
+                this.sidebarItems.set(this.getSidebarItems());
+            },
+            // Leave the current flags in place: a failed refresh must not empty the sidebar the user is looking at
+            error: () => {},
+        });
+    }
+
     private loadAvailableTabs(): void {
         const courseId = this.courseId();
         this.availableTabs.set(undefined);
