@@ -157,7 +157,22 @@
                 },
                 "setupLater": "Später einrichten",
                 "setupPasskey": "Passkey einrichten",
-                "remindMeIn30Days": "Erinnere mich in 30 Tagen"
+                "remindMeIn30Days": "Erinnere mich in 30 Tagen",
+                "heroTitle": "Richte deinen ersten Passkey auf diesem Gerät ein",
+                "facts": {
+                    "faster": {
+                        "title": "Schnellere Anmeldung:",
+                        "desc": "direkter Login nach Erkennung deines Geräts"
+                    },
+                    "noPasswords": {
+                        "title": "Keine Passwörter nötig:",
+                        "desc": "nie wieder Passwörter vergessen oder zurücksetzen"
+                    },
+                    "secure": {
+                        "title": "Sicherer als Passwörter:",
+                        "desc": "phishing-resistent und an dein Gerät gebunden"
+                    }
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",

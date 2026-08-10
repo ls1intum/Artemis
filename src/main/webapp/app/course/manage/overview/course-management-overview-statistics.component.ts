@@ -14,12 +14,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ActiveStudentsChart } from 'app/course/shared/entities/active-students-chart';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',
     templateUrl: './course-management-overview-statistics.component.html',
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
-    imports: [RouterLink, TranslateDirective, HelpIconComponent, ChartModule, ArtemisDatePipe],
+    imports: [RouterLink, TranslateDirective, HelpIconComponent, ChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart {
     private readonly translateService = inject(TranslateService);
