@@ -88,6 +88,19 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Retrieves a single conversation of the currently logged-in user by its id.
+     *
+     * @param courseId - The id of the course
+     * @param conversationId - The id of the conversation
+     * @returns Promise<ChannelDTO | undefined> the conversation, or undefined if the user cannot see it.
+     */
+    async getConversationById(courseId: number, conversationId: number): Promise<ChannelDTO | undefined> {
+        const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
+        const conversations: ConversationDTO[] = await response.json();
+        return conversations.find((conv: ConversationDTO) => conv.id === conversationId) as ChannelDTO | undefined;
+    }
+
+    /**
      * Retrieves the exercise channel for a given course and exercise.
      *
      * @param courseId - The ID of the course.

@@ -11,6 +11,12 @@ import { SEED_COURSES } from '../../support/seedData';
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
 const writeCourse = { id: SEED_COURSES.channel2.id };
 
+// Budget for the client to re-bootstrap after a full page reload. Deliberately larger than the
+// default expect timeout: a reload re-downloads and re-parses the whole bundle (Playwright disables
+// the HTTP cache per context), which is one of the slowest things a test can wait for under parallel
+// CI load. Still well inside the @fast per-test timeout, so a genuine regression fails rather than hangs.
+const RELOAD_RENDER_TIMEOUT = 45_000;
+
 test.describe('Channel messages', { tag: '@fast' }, () => {
     test.describe('Create channel', () => {
         test('Check for pre-created channels', async ({ login, courseMessages }) => {
@@ -137,19 +143,31 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await communicationAPIRequests.joinUserIntoChannel({ id: writeCourse.id } as any, channel.id!, instructor);
         });
 
-        test('Instructor should be able to edit a channel', async ({ login, courseMessages, page }) => {
+        test('Instructor should be able to edit a channel', async ({ login, courseMessages, page, communicationAPIRequests }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
             const newName = 'new-' + generateUUID().slice(0, 8);
             const topic = 'test-topic';
+            const description = 'New Description';
 
             await courseMessages.editName(newName);
             await courseMessages.editTopic(topic);
-            await courseMessages.editDescription('New Description');
+            await courseMessages.editDescription(description);
 
+            // Assert against the server first: this is what "the edits were saved" actually means, and it
+            // holds regardless of how fast the client re-renders.
+            const persisted = await communicationAPIRequests.getConversationById(writeCourse.id, channel.id!);
+            expect(persisted?.name).toBe(newName);
+            expect(persisted?.topic).toBe(topic);
+            expect(persisted?.description).toBe(description);
+
+            // Then confirm the reloaded UI shows them. A reload re-bootstraps the entire client, and
+            // Playwright disables the HTTP cache per context, so the bundle is re-fetched from scratch —
+            // on a loaded CI runner that can take longer than the default expect timeout. Wait on the
+            // assertions themselves (they poll) with a budget that matches a cold reload, rather than
+            // gating on an intermediate element within a fixed window.
             await page.reload();
-            await page.locator('jhi-conversation-header').waitFor({ state: 'visible', timeout: 10000 });
-            await expect(courseMessages.getName()).toContainText(newName);
-            await expect(courseMessages.getTopic()).toContainText(topic);
+            await expect(courseMessages.getName()).toContainText(newName, { timeout: RELOAD_RENDER_TIMEOUT });
+            await expect(courseMessages.getTopic()).toContainText(topic, { timeout: RELOAD_RENDER_TIMEOUT });
         });
     });
 
