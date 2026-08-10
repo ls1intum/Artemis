@@ -8,10 +8,14 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -21,16 +25,20 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Behaviour of {@link AutonomousCompetencyExerciseEventListener} — the event listener that feeds
  * the automatic pipeline from exercise creation / update events. Verifies the feature-toggle gate,
  * the per-course kill switch (with flush-on-disable), the content-relevant changed-field filter,
- * the programming-exercise scope filter, exam filtering, and null guards without needing a full
- * Spring context.
+ * that every exercise type (programming, text, modeling, quiz, file upload) is recorded, exam
+ * filtering, and null guards without needing a full Spring context.
  */
 @ExtendWith(MockitoExtension.class)
 class AutonomousCompetencyExerciseEventListenerTest {
@@ -148,18 +156,30 @@ class AutonomousCompetencyExerciseEventListenerTest {
         verify(accumulator, never()).record(anyLong(), anyLong());
     }
 
-    @Test
-    void onExerciseVersionCreated_nonProgrammingExercise_filtered() {
+    @ParameterizedTest(name = "records {0} exercise")
+    @MethodSource("courseExercisesOfEachType")
+    void onExerciseVersionCreated_anyExerciseType_records(String type, Exercise exercise) {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
-        Course course = new Course();
-        course.setId(COURSE_ID);
-        TextExercise exercise = new TextExercise();
-        exercise.setId(EXERCISE_ID);
-        exercise.setCourse(course);
+        stubCourseEnabled(true);
 
         listener.onExerciseVersionCreated(new ExerciseVersionCreatedEvent(exercise, RELEVANT_FIELDS));
 
-        verify(accumulator, never()).record(anyLong(), anyLong());
+        // Every exercise type now feeds the accumulator — the previous programming-only gate is gone.
+        verify(accumulator).record(COURSE_ID, EXERCISE_ID);
+    }
+
+    private static Stream<Arguments> courseExercisesOfEachType() {
+        return Stream.of(Arguments.of("programming", withCourse(new ProgrammingExercise())), Arguments.of("text", withCourse(new TextExercise())),
+                Arguments.of("modeling", withCourse(new ModelingExercise())), Arguments.of("quiz", withCourse(new QuizExercise())),
+                Arguments.of("file-upload", withCourse(new FileUploadExercise())));
+    }
+
+    private static Exercise withCourse(Exercise exercise) {
+        Course course = new Course();
+        course.setId(COURSE_ID);
+        exercise.setId(EXERCISE_ID);
+        exercise.setCourse(course);
+        return exercise;
     }
 
     @Test

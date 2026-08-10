@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegrationTest {
 
@@ -33,6 +35,11 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     @Autowired
     private AtlasOrchestratorProperties orchestratorProperties;
 
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    private Course course;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -40,7 +47,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         // Only TEST_PREFIX instructor is enrolled; OTHER_PREFIX instructor has no UCR entry and will be denied.
-        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         featureToggleService.enableFeature(Feature.AtlasAgent);
     }
@@ -52,44 +59,55 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void runForProgrammingExercise_student_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+    void runForExercise_student_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void runForProgrammingExercise_tutor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+    void runForExercise_tutor_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void runForProgrammingExercise_editor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+    void runForExercise_editor_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void runForProgrammingExercise_wrongCourseInstructor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+    void runForExercise_wrongCourseInstructor_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void runForExercise_nonProgrammingWrongCourseInstructor_returnsForbidden() throws Exception {
+        // The endpoint is now generic over all exercise types, so the @EnforceAtLeastInstructorInExercise
+        // gate must bind to the owning course of a non-programming exercise too — an instructor of another
+        // course cannot trigger orchestration on this course's text exercise.
+        TextExercise textExercise = textExerciseUtilService.createSampleTextExercise(course);
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", textExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithAnonymousUser
-    void runForProgrammingExercise_anonymous_returnsUnauthorized() throws Exception {
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+    void runForExercise_anonymous_returnsUnauthorized() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void runForProgrammingExercise_atlasAgentFeatureDisabled_returnsForbidden() throws Exception {
+    void runForExercise_atlasAgentFeatureDisabled_returnsForbidden() throws Exception {
         featureToggleService.disableFeature(Feature.AtlasAgent);
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
@@ -101,7 +119,7 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // competencies, which is never what the instructor wants.
         ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
 
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+        request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));
     }
 

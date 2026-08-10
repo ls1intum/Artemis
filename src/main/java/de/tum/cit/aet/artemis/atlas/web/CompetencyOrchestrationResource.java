@@ -60,11 +60,11 @@ public class CompetencyOrchestrationResource {
         return ResponseEntity.ok(new OrchestratorDefaultsDTO(orchestratorProperties.debounceWindowSeconds(), orchestratorProperties.maxDailyOrchestrations()));
     }
 
-    @PostMapping("programming-exercises/{exerciseId}/run")
+    @PostMapping("exercises/{exerciseId}/run")
     @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.AtlasAgent)
-    public ResponseEntity<CompetencyOrchestrationResultDTO> runForProgrammingExercise(@PathVariable Long exerciseId) {
-        log.info("REST request to run Atlas orchestrator for programming exercise: {}", exerciseId);
+    public ResponseEntity<CompetencyOrchestrationResultDTO> runForExercise(@PathVariable Long exerciseId) {
+        log.info("REST request to run Atlas orchestrator for exercise: {}", exerciseId);
         CompetencyOrchestrationResultDTO result = competencyOrchestrationService.runWithQueuedFlush(exerciseId);
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
