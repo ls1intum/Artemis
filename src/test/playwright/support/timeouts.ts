@@ -19,14 +19,20 @@ const DEFAULT_RELOAD_RENDER_TIMEOUT = 30000; // 30 seconds
  * `parseInt` is too permissive for configuration that decides how long a test waits: it accepts a partial string like
  * `30000ms`, yields `NaN` for anything unparseable, and happily returns negatives. Any of those would silently
  * override a documented budget with a nonsensical one, and the resulting failure would look like a flaky test rather
- * than a misconfigured variable. So an invalid value is reported and ignored rather than used.
+ * than a misconfigured variable. So a value that is present but unusable is reported and ignored rather than used.
+ *
+ * A blank value is deliberately treated as "not configured" and passes without a warning, because that is how these
+ * variables arrive when they are not set: `ci-e2e.yml` supplies them as `${{ vars.SOME_TIMEOUT }}`, which renders an
+ * empty string for an unset repository variable, and the compose files use `${SOME_TIMEOUT:-default}`, which also
+ * treats empty as absent. Warning here would fire on ordinary runs rather than on a mistake.
  *
  * @param variableName name of the environment variable to read
- * @param fallback default timeout in ms, used when the variable is unset or invalid
+ * @param fallback default timeout in ms, used when the variable is unset, blank, or unusable
  */
 function readTimeoutMs(variableName: string, fallback: number): number {
     const raw = process.env[variableName];
     if (raw === undefined || raw.trim() === '') {
+        // Unset, or set to an empty string by an unconfigured CI variable — not a misconfiguration to report.
         return fallback;
     }
     const parsed = Number(raw);
