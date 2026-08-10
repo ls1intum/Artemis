@@ -1267,17 +1267,16 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        long policyRowsBeforeImport = submissionPolicyRepository.count();
-
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
         assertThat(exerciseToBeImported.getSubmissionPolicy().getSubmissionLimit()).isEqualTo(5);
 
-        // The request carries a policy without an id and the import saves it once: the import must add exactly one row.
-        // A duplicate insert stays invisible to every assertion on the response.
-        assertThat(submissionPolicyRepository.count() - policyRowsBeforeImport).isEqualTo(1);
+        // The request carries a policy without an id and the import saves it once: the new exercise must own exactly
+        // one row. A duplicate insert stays invisible to every assertion on the response. The count is scoped to this
+        // exercise, because the policy table is shared with every test running in parallel.
+        assertThat(submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(exerciseToBeImported.getId()))).hasSize(1);
         var persistedPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exerciseToBeImported.getId());
         assertThat(persistedPolicy).isNotNull();
         assertThat(persistedPolicy.getId()).isEqualTo(exerciseToBeImported.getSubmissionPolicy().getId());

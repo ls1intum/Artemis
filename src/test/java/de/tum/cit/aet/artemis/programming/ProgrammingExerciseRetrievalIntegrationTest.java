@@ -102,12 +102,12 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.presentationScoreEnabled()).isEqualTo(exercise.getPresentationScoreEnabled());
         assertThat(response.secondCorrectionEnabled()).isEqualTo(exercise.getSecondCorrectionEnabled());
         // The Playwright helper that pushes the timeline into the past re-sends all six date fields.
-        assertThat(response.releaseDate()).isEqualTo(exercise.getReleaseDate());
-        assertThat(response.startDate()).isEqualTo(exercise.getStartDate());
-        assertThat(response.dueDate()).isEqualTo(exercise.getDueDate());
-        assertThat(response.assessmentDueDate()).isEqualTo(exercise.getAssessmentDueDate());
-        assertThat(response.exampleSolutionPublicationDate()).isEqualTo(exercise.getExampleSolutionPublicationDate());
-        assertThat(response.buildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        assertSameInstant(response.releaseDate(), exercise.getReleaseDate());
+        assertSameInstant(response.startDate(), exercise.getStartDate());
+        assertSameInstant(response.dueDate(), exercise.getDueDate());
+        assertSameInstant(response.assessmentDueDate(), exercise.getAssessmentDueDate());
+        assertSameInstant(response.exampleSolutionPublicationDate(), exercise.getExampleSolutionPublicationDate());
+        assertSameInstant(response.buildAndTestStudentSubmissionsAfterDueDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         // gradingInstructionFeedbackUsed is a transient the grading-instruction editor branches on.
         assertThat(response.gradingInstructionFeedbackUsed()).isNotNull();
         assertThat(response.buildConfig()).isNotNull();
@@ -146,8 +146,8 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(response.exerciseGroup().exam().title()).isEqualTo(exam.getTitle());
         assertThat(response.exerciseGroup().exam().testExam()).isEqualTo(exam.isTestExam());
         assertThat(response.exerciseGroup().exam().numberOfCorrectionRoundsInExam()).isEqualTo(exam.getNumberOfCorrectionRoundsInExam());
-        assertThat(response.exerciseGroup().exam().publishResultsDate()).isEqualTo(exam.getPublishResultsDate());
-        assertThat(response.exerciseGroup().exam().exampleSolutionPublicationDate()).isEqualTo(exam.getExampleSolutionPublicationDate());
+        assertSameInstant(response.exerciseGroup().exam().publishResultsDate(), exam.getPublishResultsDate());
+        assertSameInstant(response.exerciseGroup().exam().exampleSolutionPublicationDate(), exam.getExampleSolutionPublicationDate());
         // Exam navigation walks exerciseGroup.exam.course; a flat exam id kills it.
         assertThat(response.exerciseGroup().exam().course()).isNotNull();
         assertThat(response.exerciseGroup().exam().course().id()).isEqualTo(exam.getCourse().getId());
@@ -358,12 +358,12 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         assertThat(listItem.allowOnlineEditor()).isEqualTo(exercise.isAllowOnlineEditor());
         assertThat(listItem.allowOnlineIde()).isEqualTo(exercise.isAllowOnlineIde());
         // The bulk "Edit selected" timeline modal rebuilds its request body from this very list.
-        assertThat(listItem.releaseDate()).isEqualTo(exercise.getReleaseDate());
-        assertThat(listItem.startDate()).isEqualTo(exercise.getStartDate());
-        assertThat(listItem.dueDate()).isEqualTo(exercise.getDueDate());
-        assertThat(listItem.assessmentDueDate()).isEqualTo(exercise.getAssessmentDueDate());
-        assertThat(listItem.exampleSolutionPublicationDate()).isEqualTo(exercise.getExampleSolutionPublicationDate());
-        assertThat(listItem.buildAndTestStudentSubmissionsAfterDueDate()).isEqualTo(exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        assertSameInstant(listItem.releaseDate(), exercise.getReleaseDate());
+        assertSameInstant(listItem.startDate(), exercise.getStartDate());
+        assertSameInstant(listItem.dueDate(), exercise.getDueDate());
+        assertSameInstant(listItem.assessmentDueDate(), exercise.getAssessmentDueDate());
+        assertSameInstant(listItem.exampleSolutionPublicationDate(), exercise.getExampleSolutionPublicationDate());
+        assertSameInstant(listItem.buildAndTestStudentSubmissionsAfterDueDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         // The course is deliberately absent; the client re-attaches the course it already holds.
         assertThat(listItem.course()).isNull();
         assertThat(listItem.exerciseGroup()).isNull();
@@ -447,6 +447,19 @@ class ProgrammingExerciseRetrievalIntegrationTest extends AbstractProgrammingInt
         exercise.setExerciseVariantGroup(savedGroup);
         programmingExerciseRepository.save(exercise);
         return savedGroup;
+    }
+
+    /**
+     * Compares two dates by their instant. Postgres stores timestamps in UTC, so the offset of the fixture value does
+     * not survive the round trip and only the instant is comparable.
+     */
+    private static void assertSameInstant(ZonedDateTime actual, ZonedDateTime expected) {
+        if (expected == null) {
+            assertThat(actual).isNull();
+            return;
+        }
+        assertThat(actual).isNotNull();
+        assertThat(actual.toInstant()).isEqualTo(expected.toInstant());
     }
 
     /**
