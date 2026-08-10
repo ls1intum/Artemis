@@ -184,9 +184,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           # Thresholds are technical debt; lower them as violations are fixed.
-          # 17 -> 18: Exercise.java grew from 1000 to 1005 lines in #13186. This job is skipped on
-          # pushes to develop, so the new violation only surfaces on the next pull request.
-          max_large_classes=18
+          max_large_classes=17
           max_complex_beans=18
 
           python supporting_scripts/analyze_java_files.py \
