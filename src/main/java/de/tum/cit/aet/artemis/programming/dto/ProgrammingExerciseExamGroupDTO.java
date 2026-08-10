@@ -44,11 +44,13 @@ public record ProgrammingExerciseExamGroupDTO(Long id, ProgrammingExerciseExamDT
     }
 
     /**
-     * Builds the reference from an {@link ExerciseGroup}; expects the group (and its exam) to be loaded. The exam's
-     * course is included only when it is already initialized, so this never forces a lazy load.
+     * Builds the reference from an {@link ExerciseGroup}. Each of the three levels is guarded separately, so a
+     * partially fetched graph degrades to an absent sub-object instead of throwing: an absent or uninitialized group
+     * maps to {@code null}, an uninitialized exam to a group with no exam, and an uninitialized course to an exam
+     * with no course. Nothing here forces a lazy load.
      *
      * @param exerciseGroup the exercise group (may be {@code null})
-     * @return the reference, or {@code null} if the input was {@code null}
+     * @return the reference, or {@code null} if the group is {@code null} or not initialized
      */
     public static ProgrammingExerciseExamGroupDTO of(ExerciseGroup exerciseGroup) {
         if (exerciseGroup == null || !Hibernate.isInitialized(exerciseGroup)) {
@@ -58,7 +60,9 @@ public record ProgrammingExerciseExamGroupDTO(Long id, ProgrammingExerciseExamDT
         if (exam == null || !Hibernate.isInitialized(exam)) {
             return new ProgrammingExerciseExamGroupDTO(exerciseGroup.getId(), null);
         }
-        ProgrammingExerciseCourseDTO course = Hibernate.isInitialized(exam.getCourse()) ? ProgrammingExerciseCourseDTO.of(exam.getCourse()) : null;
+        // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
+        var courseEntity = exam.getCourse();
+        ProgrammingExerciseCourseDTO course = courseEntity != null && Hibernate.isInitialized(courseEntity) ? ProgrammingExerciseCourseDTO.of(courseEntity) : null;
         ProgrammingExerciseExamDTO examReference = new ProgrammingExerciseExamDTO(exam.getId(), exam.getTitle(), exam.isTestExam(), exam.getPublishResultsDate(),
                 exam.getExampleSolutionPublicationDate(), exam.getNumberOfCorrectionRoundsInExam(), course);
         return new ProgrammingExerciseExamGroupDTO(exerciseGroup.getId(), examReference);

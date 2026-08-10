@@ -90,7 +90,8 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
             GradingInstruction gradingInstruction = feedback.getGradingInstruction();
             GradingInstructionDTO gradingInstructionDTO = gradingInstruction != null && Hibernate.isInitialized(gradingInstruction) ? GradingInstructionDTO.of(gradingInstruction)
                     : null;
-            ResultDTO.TestCaseDTO testCaseDTO = Hibernate.isInitialized(feedback.getTestCase()) ? ResultDTO.TestCaseDTO.of(feedback.getTestCase()) : null;
+            var testCase = feedback.getTestCase();
+            ResultDTO.TestCaseDTO testCaseDTO = testCase != null && Hibernate.isInitialized(testCase) ? ResultDTO.TestCaseDTO.of(testCase) : null;
             return new ProgrammingAssessmentFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
                     feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstructionDTO, testCaseDTO);
         }
@@ -106,14 +107,16 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
         if (result == null) {
             return null;
         }
+        // Hibernate.isInitialized(null) is true, so every guard below needs its own null check.
         List<ProgrammingAssessmentFeedbackDTO> feedbacks = null;
-        if (Hibernate.isInitialized(result.getFeedbacks()) && result.getFeedbacks() != null) {
+        if (result.getFeedbacks() != null && Hibernate.isInitialized(result.getFeedbacks())) {
             // The entity stores feedback in an unordered Set; sort by id so the wire order is stable for the client
             // (and for tests that assert on positions), keeping items without an id last.
             feedbacks = result.getFeedbacks().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Feedback::getId, Comparator.nullsLast(Comparator.naturalOrder())))
                     .map(ProgrammingAssessmentFeedbackDTO::of).toList();
         }
-        UserNameDTO assessor = Hibernate.isInitialized(result.getAssessor()) ? UserNameDTO.of(result.getAssessor()) : null;
+        var assessorEntity = result.getAssessor();
+        UserNameDTO assessor = assessorEntity != null && Hibernate.isInitialized(assessorEntity) ? UserNameDTO.of(assessorEntity) : null;
         // Result#getAssessmentNote already guards the lazy backing list itself.
         AssessmentNoteDTO assessmentNote = AssessmentNoteDTO.of(result.getAssessmentNote());
         return new ProgrammingAssessmentResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),

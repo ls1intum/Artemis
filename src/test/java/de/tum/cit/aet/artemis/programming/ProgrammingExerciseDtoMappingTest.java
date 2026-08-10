@@ -1,17 +1,21 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.hibernate.collection.spi.PersistentBag;
 import org.hibernate.collection.spi.PersistentSet;
+import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.proxy.LazyInitializer;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -144,9 +148,9 @@ class ProgrammingExerciseDtoMappingTest {
         exercise.setStudentParticipations(uninitializedSet());
         exercise.setAuxiliaryRepositories(uninitializedList());
 
-        assertThatCode(() -> ProgrammingExerciseResponseDTO.of(exercise)).doesNotThrowAnyException();
-
+        // A missing guard would throw here: every lazy slot above reports itself as not initialized.
         ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise);
+
         assertThat(dto).isNotNull();
         assertThat(dto.id()).isEqualTo(42L);
         assertThat(dto.type()).isEqualTo("programming");
@@ -255,6 +259,72 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.exerciseGroup().exam().course()).isNotNull();
         assertThat(dto.exerciseGroup().exam().course().id()).isEqualTo(9L);
         assertThat(dto.exerciseGroup().exam().course().title()).isEqualTo("Exam course");
+    }
+
+    /**
+     * Not every read path fetch-joins the whole exam chain, so each level has to degrade on its own. A detached
+     * exercise whose group is still a proxy must map to no group at all rather than to a blank one.
+     */
+    @Test
+    void responseDtoOmitsTheExerciseGroupWhenTheGroupIsStillAProxy() {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(10L);
+        exercise.setExerciseGroup(uninitializedProxy(ExerciseGroup.class));
+
+        ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise);
+
+        assertThat(dto.exerciseGroup()).isNull();
+    }
+
+    /**
+     * The group is loaded but its exam is not: the group reference still has to reach the client, without the exam.
+     * Touching {@code exam.getTitle()} here would force a lazy load outside a session.
+     */
+    @Test
+    void responseDtoOmitsTheExamWhenOnlyTheExerciseGroupIsLoaded() {
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(4L);
+        exerciseGroup.setExam(uninitializedProxy(Exam.class));
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(10L);
+        exercise.setExerciseGroup(exerciseGroup);
+
+        ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise);
+
+        assertThat(dto.exerciseGroup()).isNotNull();
+        assertThat(dto.exerciseGroup().id()).isEqualTo(4L);
+        assertThat(dto.exerciseGroup().exam()).isNull();
+    }
+
+    /**
+     * One level further down: the exam is loaded, its course is not. The exam fields the client reads must survive,
+     * only the course drops out.
+     */
+    @Test
+    void responseDtoOmitsTheExamCourseWhenTheCourseIsStillAProxy() {
+        Exam exam = new Exam();
+        exam.setId(3L);
+        exam.setTitle("Endterm");
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.setCourse(uninitializedProxy(Course.class));
+
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(4L);
+        exerciseGroup.setExam(exam);
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setId(10L);
+        exercise.setExerciseGroup(exerciseGroup);
+
+        ProgrammingExerciseResponseDTO dto = ProgrammingExerciseResponseDTO.of(exercise);
+
+        assertThat(dto.exerciseGroup()).isNotNull();
+        assertThat(dto.exerciseGroup().exam()).isNotNull();
+        assertThat(dto.exerciseGroup().exam().id()).isEqualTo(3L);
+        assertThat(dto.exerciseGroup().exam().title()).isEqualTo("Endterm");
+        assertThat(dto.exerciseGroup().exam().numberOfCorrectionRoundsInExam()).isEqualTo(2);
+        assertThat(dto.exerciseGroup().exam().course()).isNull();
     }
 
     // --- Request DTOs: write-side defaults the entity does not provide ---------------------------------------------
@@ -408,5 +478,25 @@ class ProgrammingExerciseDtoMappingTest {
         PersistentBag<T> bag = mock(PersistentBag.class);
         when(bag.wasInitialized()).thenReturn(false);
         return bag;
+    }
+
+    /**
+     * An entity proxy that reports itself as not initialized, the state every lazy to-one relation is in on a
+     * detached entity. A mapper that reads through it instead of guarding produces a blank sub-object, which the
+     * assertions above catch.
+     *
+     * @param type the entity class to proxy
+     * @return the proxy
+     */
+    private static <T> T uninitializedProxy(Class<T> type) {
+        T proxy = mock(type, withSettings().extraInterfaces(HibernateProxy.class));
+        LazyInitializer lazyInitializer = mock(LazyInitializer.class);
+        when(lazyInitializer.isUninitialized()).thenReturn(true);
+        // Hibernate reaches the lazy initializer over the default asHibernateProxy(), which a mock would answer with
+        // null, so both steps of that lookup have to be stubbed.
+        doReturn(proxy).when((HibernateProxy) proxy).asHibernateProxy();
+        doReturn(lazyInitializer).when((HibernateProxy) proxy).getHibernateLazyInitializer();
+        assertThat(Hibernate.isInitialized(proxy)).isFalse();
+        return proxy;
     }
 }

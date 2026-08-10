@@ -94,7 +94,9 @@ public record UpdateProgrammingExerciseDTO(
         }
 
         // The submission policy is a lazy one-to-one: on a detached exercise the proxy cannot be unproxied, so map an uninitialized policy to null.
-        SubmissionPolicyDTO submissionPolicyDTO = Hibernate.isInitialized(exercise.getSubmissionPolicy()) ? SubmissionPolicyDTO.of(exercise.getSubmissionPolicy()) : null;
+        // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
+        var submissionPolicy = exercise.getSubmissionPolicy();
+        SubmissionPolicyDTO submissionPolicyDTO = submissionPolicy != null && Hibernate.isInitialized(submissionPolicy) ? SubmissionPolicyDTO.of(submissionPolicy) : null;
 
         return new UpdateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),

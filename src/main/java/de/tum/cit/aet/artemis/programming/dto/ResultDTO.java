@@ -63,7 +63,8 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
      */
     public static ResultDTO of(Result result, Collection<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
-        if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
+        // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
+        if (result.getSubmission() != null && Hibernate.isInitialized(result.getSubmission())) {
             submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
         }
         var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
@@ -87,7 +88,8 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
      * @return the converted DTO
      */
     public static ResultDTO ofNested(Result result) {
-        return ofNested(result, Hibernate.isInitialized(result.getFeedbacks()) ? result.getFeedbacks() : null);
+        var feedbacks = result.getFeedbacks();
+        return ofNested(result, feedbacks != null && Hibernate.isInitialized(feedbacks) ? feedbacks : null);
     }
 
     /**

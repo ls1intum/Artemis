@@ -168,12 +168,18 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                     .map(ProgrammingExerciseStudentParticipation.class::cast).map(ProgrammingExerciseStudentParticipationDTO::of).toList();
         }
 
-        TeamAssignmentConfigDTO teamAssignmentConfig = Hibernate.isInitialized(exercise.getTeamAssignmentConfig()) ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
+        // Hibernate.isInitialized(null) is true, so every guard below needs its own null check.
+        var teamAssignmentConfigEntity = exercise.getTeamAssignmentConfig();
+        TeamAssignmentConfigDTO teamAssignmentConfig = teamAssignmentConfigEntity != null && Hibernate.isInitialized(teamAssignmentConfigEntity)
+                ? TeamAssignmentConfigDTO.of(teamAssignmentConfigEntity)
                 : null;
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
-                ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
+        var plagiarismDetectionConfigEntity = exercise.getPlagiarismDetectionConfig();
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig = plagiarismDetectionConfigEntity != null && Hibernate.isInitialized(plagiarismDetectionConfigEntity)
+                ? PlagiarismDetectionConfigDTO.of(plagiarismDetectionConfigEntity)
                 : null;
-        SubmissionPolicyDTO submissionPolicy = Hibernate.isInitialized(exercise.getSubmissionPolicy()) ? SubmissionPolicyDTO.of(exercise.getSubmissionPolicy()) : null;
+        var submissionPolicyEntity = exercise.getSubmissionPolicy();
+        SubmissionPolicyDTO submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity)
+                : null;
 
         return new ProgrammingExerciseResponseDTO(exercise.getId(), TYPE, exercise.getTitle(), exercise.getShortName(), exercise.getChannelName(), exercise.getProblemStatement(),
                 categories, exercise.getDifficulty(), exercise.getMode(), exercise.isTeamMode(), teamAssignmentConfig, exercise.getMaxPoints(), exercise.getBonusPoints(),

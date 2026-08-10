@@ -53,7 +53,8 @@ public record ProgrammingSubmissionForAssessmentDTO(Long id, String submissionEx
         if (submission == null) {
             return null;
         }
-        List<Result> results = Hibernate.isInitialized(submission.getResults()) ? submission.getResults() : null;
+        // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
+        List<Result> results = submission.getResults() != null && Hibernate.isInitialized(submission.getResults()) ? submission.getResults() : null;
         return of(submission, exercise, results);
     }
 

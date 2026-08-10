@@ -48,7 +48,8 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
             return null;
         }
         List<ResultDTO> resultDTOs = null;
-        if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
+        // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
+        if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
             resultDTOs = submission.getResults().stream().map(ResultDTO::ofNested).toList();
         }
         return of(submission, resultDTOs);
