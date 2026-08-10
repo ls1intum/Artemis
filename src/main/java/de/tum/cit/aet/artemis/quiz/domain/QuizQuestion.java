@@ -17,6 +17,8 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -83,9 +85,26 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     private QuizExercise exercise;
 
+    // The question type-specific "correct answer" content (drop locations / drag items / correct mappings for DnD, answer options for MC, spots / solutions / correct mappings for
+    // SA), stored as JSON instead of separate relational child tables. All three question types use it.
+    // @JsonIgnore because this is an internal storage representation: subclasses expose the content through their existing getters (e.g. getDropLocations()), preserving the
+    // REST/websocket wire format.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content")
+    @JsonIgnore
+    private QuizQuestionContent content;
+
     @JsonProperty("exerciseId")
     public Long getExerciseId() {
         return exercise != null ? exercise.getId() : null;
+    }
+
+    protected QuizQuestionContent getContent() {
+        return content;
+    }
+
+    protected void setContent(QuizQuestionContent content) {
+        this.content = content;
     }
 
     public String getTitle() {
@@ -239,21 +258,6 @@ public abstract class QuizQuestion extends DomainObject {
      * @return an empty question just including the id of the object
      */
     public abstract QuizQuestion copyQuestionId();
-
-    /**
-     * undo all changes which are not allowed
-     *
-     * @param originalQuizQuestion the original not changed QuizQuestion, to detect the changes
-     */
-    public abstract void undoUnallowedChanges(QuizQuestion originalQuizQuestion);
-
-    /**
-     * check if an update of the Results and Statistics is necessary
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     * @return a boolean which is true if the question-changes make an update necessary and false if not
-     */
-    public abstract boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion);
 
     /**
      * Initialize QuizQuestionStatistic of the implementor

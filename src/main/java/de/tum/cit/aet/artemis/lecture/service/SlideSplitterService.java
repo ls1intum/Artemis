@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -27,6 +30,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -40,6 +46,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
@@ -54,12 +61,16 @@ public class SlideSplitterService {
 
     private final SlideRepository slideRepository;
 
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
     private final SlideUnhideService slideUnhideService;
 
     private final ExerciseRepository exerciseRepository;
 
-    public SlideSplitterService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, ExerciseRepository exerciseRepository) {
+    public SlideSplitterService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideUnhideService slideUnhideService,
+            ExerciseRepository exerciseRepository) {
         this.slideRepository = slideRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
     }
@@ -67,41 +78,59 @@ public class SlideSplitterService {
     /**
      * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
      *
-     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
+     * @param job the immutable attachment revision and slide configuration to process
+     * @return a future that completes after slide splitting finishes
      */
     @Async
-    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
+    @Transactional
+    public CompletableFuture<Void> splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob job) {
+        Optional<AttachmentVideoUnit> attachmentVideoUnitForUpdate = attachmentVideoUnitRepository.findByIdForUpdate(job.attachmentVideoUnitId());
+        if (attachmentVideoUnitForUpdate.isEmpty()) {
+            log.debug("Skipping slide split job for deleted AttachmentVideoUnit {}", job.attachmentVideoUnitId());
+            return CompletableFuture.completedFuture(null);
+        }
+
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithAttachmentById(job.attachmentVideoUnitId())
+                .orElseThrow(() -> new IllegalStateException("Locked AttachmentVideoUnit disappeared before slide splitting " + job.attachmentVideoUnitId()));
+        if (!job.matches(attachmentVideoUnit.getAttachment())) {
+            log.debug("Skipping obsolete slide split job for AttachmentVideoUnit {} and attachment revision {}/{}/{}", job.attachmentVideoUnitId(), job.attachmentId(),
+                    job.attachmentVersion(), job.attachmentSha256Hash());
+            return CompletableFuture.completedFuture(null);
+        }
+
         Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
-            splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
+            if (job.pageOrder() == null) {
+                splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
+            }
+            else {
+                splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, job.hiddenPages(), job.pageOrder());
+            }
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
-     * Splits an AttachmentVideoUnit file into single slides and saves them as PNG files asynchronously.
+     * Updates slide visibility without rebuilding slide images or changing the attachment file.
      *
-     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
-     * @param hiddenPages         The hidden pages of the attachmentVideoUnit.
-     * @param pageOrder           The page order of the attachmentVideoUnit.
+     * @param attachmentVideoUnit the attachment video unit whose slide visibility changed
+     * @param hiddenPages         the complete set of hidden slides; omitted slides are made visible
      */
-    @Async
-    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
-        Path attachmentPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
-        File file = attachmentPath.toFile();
-        try (PDDocument document = Loader.loadPDF(file)) {
-            String pdfFilename = file.getName();
-            splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
-        }
-        catch (IOException e) {
-            log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
-        }
+    @Transactional
+    public void updateSlideVisibility(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
+        lockAttachmentVideoUnit(attachmentVideoUnit);
+        Map<String, HiddenPageInfoDTO> hiddenPagesMap = hiddenPages.stream().collect(Collectors.toMap(HiddenPageInfoDTO::slideId, dto -> dto));
+        slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).forEach(slide -> {
+            ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slide, hiddenPagesMap, String.valueOf(slide.getId()));
+            Slide savedSlide = slideRepository.save(slide);
+            scheduleUnhideIfNeeded(savedSlide, previousHiddenValue, savedSlide.getHidden());
+        });
     }
 
     /**
@@ -112,7 +141,9 @@ public class SlideSplitterService {
      * @param document            The PDF document that is already loaded.
      * @param pdfFilename         The name of the PDF file.
      */
+    @Transactional
     public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename) {
+        lockAttachmentVideoUnit(attachmentVideoUnit);
         log.debug("Splitting AttachmentVideoUnit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
         try {
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
@@ -123,11 +154,12 @@ public class SlideSplitterService {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
                 byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
                 int slideNumber = page + 1;
-                String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + slideNumber + ".png";
+                String filename = uniqueSlideFilename(fileNameWithOutExt, attachmentVideoUnit.getId(), slideNumber);
                 MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(filename, ".png", imageInByte);
                 var path = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
                         .resolve(String.valueOf(slideNumber)).resolve(filename);
                 Path savePath = FileUtil.saveFile(slideFile, path);
+                deleteFileAfterRollback(savePath);
 
                 Slide slideEntity = new Slide();
                 slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
@@ -151,8 +183,10 @@ public class SlideSplitterService {
      * @param hiddenPages         The hidden pages information.
      * @param pageOrder           The order of pages in the PDF.
      */
+    @Transactional
     public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, List<HiddenPageInfoDTO> hiddenPages,
             List<SlideOrderDTO> pageOrder) {
+        lockAttachmentVideoUnit(attachmentVideoUnit);
         log.debug("Processing slides for Attachment Video Unit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
 
         try {
@@ -256,10 +290,11 @@ public class SlideSplitterService {
         if (pdfPageIndex >= 0 && pdfPageIndex < totalPages) {
             BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
             byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-            String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
+            String filename = uniqueSlideFilename(fileNameWithOutExt, attachmentVideoUnit.getId(), order);
             MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(filename, ".png", imageInByte);
             Path savePath = FileUtil.saveFile(slideFile, FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
                     .resolve(String.valueOf(order)).resolve(filename));
+            deleteFileAfterRollback(savePath);
 
             slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
         }
@@ -272,7 +307,7 @@ public class SlideSplitterService {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
             Path originalPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPath), FilePathType.SLIDE);
-            String newFilename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
+            String newFilename = uniqueSlideFilename(fileNameWithOutExt, attachmentVideoUnit.getId(), order);
 
             try {
                 File existingFile = originalPath.toFile();
@@ -283,9 +318,9 @@ public class SlideSplitterService {
                     MultipartFile slideFile = FileUtil.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
                     Path savePath = FileUtil.saveFile(slideFile, FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString())
                             .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
+                    replaceFileAfterCommit(originalPath, savePath);
 
                     slideEntity.setSlideImagePath(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
-                    existingFile.delete();
                 }
                 else {
                     log.warn("Could not find existing slide file at path: {}", originalPath);
@@ -304,8 +339,10 @@ public class SlideSplitterService {
      */
     private void scheduleUnhideIfNeeded(Slide savedSlide, ZonedDateTime previousHiddenValue, ZonedDateTime newHiddenValue) {
         if (!Objects.equals(previousHiddenValue, newHiddenValue)) {
-            slideUnhideService.handleSlideHiddenUpdate(savedSlide);
-            log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+            runAfterCommit(() -> {
+                slideUnhideService.handleSlideHiddenUpdate(savedSlide);
+                log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+            });
         }
     }
 
@@ -343,5 +380,73 @@ public class SlideSplitterService {
             ImageIO.write(bufferedImage, format, outputStream);
             return outputStream.toByteArray();
         }
+    }
+
+    private void lockAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit) {
+        attachmentVideoUnitRepository.findByIdForUpdate(attachmentVideoUnit.getId())
+                .orElseThrow(() -> new IllegalStateException("Cannot update slides for missing attachment video unit " + attachmentVideoUnit.getId()));
+    }
+
+    private void replaceFileAfterCommit(Path oldPath, Path newPath) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deleteFile(oldPath);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+            @Override
+            public void afterCommit() {
+                deleteFile(oldPath);
+            }
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_COMMITTED) {
+                    deleteFile(newPath);
+                }
+            }
+        });
+    }
+
+    private void deleteFileAfterRollback(Path path) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_COMMITTED) {
+                    deleteFile(path);
+                }
+            }
+        });
+    }
+
+    private void runAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
+    }
+
+    private void deleteFile(Path path) {
+        try {
+            Files.deleteIfExists(path);
+        }
+        catch (IOException e) {
+            log.error("Could not delete slide image {}", path, e);
+        }
+    }
+
+    private static String uniqueSlideFilename(String filenameWithoutExtension, long attachmentVideoUnitId, int slideNumber) {
+        return filenameWithoutExtension + "_" + attachmentVideoUnitId + "_" + UUID.randomUUID().toString().substring(0, 8) + "_Slide_" + slideNumber + ".png";
     }
 }

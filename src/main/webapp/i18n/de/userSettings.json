@@ -6,6 +6,31 @@
             "userSettings": "Benutzereinstellungen",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokensOverview": {
+                "title": "Zugriffstokens",
+                "description": "Eine Übersicht der VCS-Zugriffstokens, mit denen du Repositories über HTTPS klonen kannst. Jedes Token ist auf ein einzelnes Repository beschränkt. Das Widerrufen eines Tokens deaktiviert es sofort; beim nächsten Öffnen des Klon-Dialogs dieses Repositories wird automatisch ein neues erstellt.",
+                "table": {
+                    "course": "Kurs",
+                    "exercise": "Aufgabe",
+                    "type": "Typ",
+                    "repository": "Repository",
+                    "empty": "Du hast noch keine VCS-Zugriffstokens."
+                },
+                "type": {
+                    "participation": "Teilnahme",
+                    "template": "Vorlage",
+                    "solution": "Lösung",
+                    "tests": "Tests",
+                    "auxiliary": "Zusatz",
+                    "assignment": "Abgabe",
+                    "repository": "Repository"
+                },
+                "revoke": {
+                    "label": "Widerrufen",
+                    "question": "Möchtest du dieses VCS-Zugriffstoken wirklich widerrufen? Es funktioniert sofort nicht mehr. Beim nächsten Öffnen des Klon-Dialogs dieses Repositories wird automatisch ein neues erstellt.",
+                    "success": "Das VCS-Zugriffstoken wurde widerrufen."
+                }
+            },
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
             "LLMUsage": "KI-Erfahrung",
@@ -132,7 +157,22 @@
                 },
                 "setupLater": "Später einrichten",
                 "setupPasskey": "Passkey einrichten",
-                "remindMeIn30Days": "Erinnere mich in 30 Tagen"
+                "remindMeIn30Days": "Erinnere mich in 30 Tagen",
+                "heroTitle": "Richte deinen ersten Passkey auf diesem Gerät ein",
+                "facts": {
+                    "faster": {
+                        "title": "Schnellere Anmeldung:",
+                        "desc": "direkter Login nach Erkennung deines Geräts"
+                    },
+                    "noPasswords": {
+                        "title": "Keine Passwörter nötig:",
+                        "desc": "nie wieder Passwörter vergessen oder zurücksetzen"
+                    },
+                    "secure": {
+                        "title": "Sicherer als Passwörter:",
+                        "desc": "phishing-resistent und an dein Gerät gebunden"
+                    }
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",

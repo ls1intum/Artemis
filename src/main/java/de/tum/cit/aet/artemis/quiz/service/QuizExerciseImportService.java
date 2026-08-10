@@ -69,63 +69,70 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     /**
-     * Imports a quiz exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyQuizExerciseBasis(QuizExercise)} to set up the basis of the exercise and
-     * {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
+     * Imports a quiz exercise: builds a new entity from {@code newExercise} (the destination and any caller overrides),
+     * backfills its basis and quiz settings from {@code sourceExercise} (the original), copies a hard copy of the
+     * questions, and saves it. Student-/tutor participations are not copied.
+     * This method calls {@link #copyQuizExerciseBasis(QuizExercise, QuizExercise)} to set up the basis of the exercise
+     * and {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
      *
-     * @param templateExercise The template exercise which should get imported
-     * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param files            The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
+     * @param newExercise    the exercise to build; already carries the destination (course / exercise group) and any overrides
+     * @param sourceExercise the source exercise whose content and settings are copied
+     * @param files          The potential files to be added. Null if no change to files during import. ExamImportService sends null by default
      * @return The newly created exercise
      */
     @NonNull
-    public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise, @Nullable List<MultipartFile> files) throws IOException {
-        log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        QuizExercise newExercise = copyQuizExerciseBasis(importedExercise, templateExercise);
-        // Use templateExercise as fallback source for questions/batches when importedExercise (skeleton) doesn't have them
-        QuizExercise questionSource = importedExercise.getQuizQuestions() != null && !importedExercise.getQuizQuestions().isEmpty() ? importedExercise : templateExercise;
-        copyQuizQuestions(questionSource, newExercise);
+    public QuizExercise importQuizExercise(final QuizExercise newExercise, final QuizExercise sourceExercise, @Nullable List<MultipartFile> files) throws IOException {
+        log.debug("Creating a new quiz exercise based on exercise {}", sourceExercise);
+        copyQuizExerciseBasis(newExercise, sourceExercise);
+        copyQuizQuestions(sourceExercise, newExercise);
         // Don't copy batches for exam exercises — exam timing controls quiz scheduling
         if (!newExercise.isExamExercise()) {
-            QuizExercise batchSource = importedExercise.getQuizBatches() != null && !importedExercise.getQuizBatches().isEmpty() ? importedExercise : templateExercise;
-            copyQuizBatches(batchSource, newExercise);
+            copyQuizBatches(sourceExercise, newExercise);
         }
 
-        QuizExercise newQuizExercise = quizExerciseService.save(newExercise);
+        // The first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself), so we
+        // keep operating on the single newExercise reference instead of juggling the returned instances.
+        quizExerciseService.save(newExercise);
 
-        channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
+        channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
 
-        QuizExercise finalNewQuizExercise = newQuizExercise;
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalNewQuizExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newExercise));
         if (files != null) {
-            newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
+            // This save operates on a detached entity and therefore merges into a new instance, which carries the file
+            // paths and the ids generated for the uploaded files, so it has to be returned instead of newExercise. The
+            // transient channel name does not survive the merge, so restore it on the returned exercise.
+            QuizExercise persistedExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newExercise, files));
+            persistedExercise.setChannelName(newExercise.getChannelName());
+            return persistedExercise;
         }
 
-        return newQuizExercise;
+        return newExercise;
     }
 
     /**
-     * Copies the exercise basis into a new exercise. Structural context (target course/group) comes from
-     * {@code importedExercise}; the quiz content and settings come from {@code templateExercise} (the original exercise),
-     * with {@code importedExercise} taking precedence where it carries a value. The start-, end-, and assessment due
-     * dates are intentionally not copied here.
+     * Backfills the quiz exercise basis and quiz-specific settings onto {@code newExercise} from {@code sourceExercise}.
+     * The generic basis follows the "keep the caller's value, else take the source's" rule (see
+     * {@link ExerciseImportService#copyExerciseBasis}). The quiz-specific settings are always taken from the source:
+     * quiz exercises have no standalone (user-editable) import path, and several settings are primitive or have non-null
+     * defaults, so a skeleton's default cannot be distinguished from an intentional override. The start-, end-, and
+     * assessment due dates are intentionally not copied here.
      *
-     * @param importedExercise the intended exercise (full for standalone import, a destination skeleton for bulk import)
-     * @param templateExercise the original exercise providing the quiz content and settings
-     * @return the cloned QuizExercise basis
+     * @param newExercise    the exercise being built; mutated in place
+     * @param sourceExercise the source exercise providing the quiz content and settings
      */
-    @NonNull
-    private QuizExercise copyQuizExerciseBasis(QuizExercise importedExercise, QuizExercise templateExercise) {
-        log.debug("Copying the exercise basis from {}", importedExercise);
-        QuizExercise newExercise = new QuizExercise();
-
-        super.copyExerciseBasis(newExercise, importedExercise, templateExercise, new HashMap<>());
-        newExercise.setRandomizeQuestionOrder(templateExercise.isRandomizeQuestionOrder());
-        newExercise.setAllowedNumberOfAttempts(templateExercise.getAllowedNumberOfAttempts());
-        newExercise.setQuizMode(templateExercise.getQuizMode());
-        newExercise.setDuration(templateExercise.getDuration());
-        return newExercise;
+    private void copyQuizExerciseBasis(QuizExercise newExercise, QuizExercise sourceExercise) {
+        log.debug("Copying the quiz exercise basis from {}", sourceExercise);
+        prepareNewExerciseForImport(newExercise);
+        // A caller may pass a full quiz (the import-exercise-group path binds request entities), whose managed/detached
+        // quiz statistic and batches cannot be persisted under the new exercise. Reset them: the statistic is recreated
+        // fresh on save, questions and (for non-exam) batches are re-copied from the source below.
+        newExercise.setQuizPointStatistic(null);
+        newExercise.setQuizBatches(new HashSet<>());
+        super.copyExerciseBasis(newExercise, sourceExercise, new HashMap<>());
+        newExercise.setRandomizeQuestionOrder(sourceExercise.isRandomizeQuestionOrder());
+        newExercise.setAllowedNumberOfAttempts(sourceExercise.getAllowedNumberOfAttempts());
+        newExercise.setQuizMode(sourceExercise.getQuizMode());
+        newExercise.setDuration(sourceExercise.getDuration());
     }
 
     /**
@@ -178,9 +185,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
             newOption.setExplanation(originalOption.getExplanation());
             newOption.setIsCorrect(originalOption.isIsCorrect());
             newOption.setInvalid(originalOption.isInvalid());
-            newOption.setQuestion(copy);
             newAnswerOptions.add(newOption);
         }
+        // setAnswerOptions mints a fresh, question-scoped id for each option
         copy.setAnswerOptions(newAnswerOptions);
         return copy;
     }
@@ -211,8 +218,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             log.warn("BackgroundFilePath of DragAndDropQuestion {} is null", original.getId());
         }
 
-        // Copy drop locations
-        List<DropLocation> newDropLocations = new ArrayList<>();
+        // Copy drop locations (each gets a fresh, question-scoped id); order is preserved so index-based mapping copy below stays valid
         for (DropLocation originalLoc : original.getDropLocations()) {
             DropLocation newLoc = new DropLocation();
             newLoc.setPosX(originalLoc.getPosX());
@@ -220,24 +226,19 @@ public class QuizExerciseImportService extends ExerciseImportService {
             newLoc.setWidth(originalLoc.getWidth());
             newLoc.setHeight(originalLoc.getHeight());
             newLoc.setInvalid(originalLoc.isInvalid());
-            newLoc.setQuestion(copy);
-            newLoc.setMappings(new HashSet<>());
-            newDropLocations.add(newLoc);
+            copy.addDropLocation(newLoc);
         }
-        copy.setDropLocations(newDropLocations);
 
-        // Copy drag items
-        List<DragItem> newDragItems = new ArrayList<>();
+        // Copy drag items (each gets a fresh, question-scoped id); order is preserved. The id must be minted (via addDragItem) before copying the picture file, since the new
+        // picture
+        // path embeds the drag item id.
         for (DragItem originalItem : original.getDragItems()) {
             DragItem newItem = new DragItem();
             newItem.setText(originalItem.getText());
             newItem.setInvalid(originalItem.isInvalid());
-            newItem.setQuestion(copy);
-            newItem.setMappings(new HashSet<>());
+            copy.addDragItem(newItem);
             copyDragItemFile(originalItem, newItem);
-            newDragItems.add(newItem);
         }
-        copy.setDragItems(newDragItems);
 
         // Copy correct mappings (must happen after drop locations and drag items are set)
         copyDragAndDropMappings(original, copy);
@@ -259,7 +260,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         }
         if (Files.exists(oldPath)) {
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragItemFilePath(), FilePathType.DRAG_ITEM);
-            target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, null).toString());
+            target.setPictureFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, FilePathType.DRAG_ITEM, target.getId()).toString());
         }
         else {
             target.setPictureFilePath(source.getPictureFilePath());
@@ -267,22 +268,20 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     private void copyDragAndDropMappings(DragAndDropQuestion source, DragAndDropQuestion target) {
-        Set<DragAndDropMapping> newMappings = new HashSet<>();
+        // The source mappings carry positional indices (derived from the source's ordered lists). Because the target's drop locations and drag items were copied in the same order,
+        // the index maps 1:1 to the target's freshly-created (id-bearing) components.
         for (DragAndDropMapping originalMapping : source.getCorrectMappings()) {
+            Integer dragItemIndex = originalMapping.getDragItemIndex();
+            Integer dropLocationIndex = originalMapping.getDropLocationIndex();
+            if (dragItemIndex == null || dropLocationIndex == null) {
+                continue;
+            }
             DragAndDropMapping newMapping = new DragAndDropMapping();
             newMapping.setInvalid(originalMapping.isInvalid());
-            newMapping.setDragItemIndex(originalMapping.getDragItemIndex());
-            newMapping.setDropLocationIndex(originalMapping.getDropLocationIndex());
-            newMapping.setQuestion(target);
-            if (originalMapping.getDragItemIndex() != null) {
-                newMapping.setDragItem(target.getDragItems().get(originalMapping.getDragItemIndex()));
-            }
-            if (originalMapping.getDropLocationIndex() != null) {
-                newMapping.setDropLocation(target.getDropLocations().get(originalMapping.getDropLocationIndex()));
-            }
-            newMappings.add(newMapping);
+            newMapping.setDragItem(target.getDragItems().get(dragItemIndex));
+            newMapping.setDropLocation(target.getDropLocations().get(dropLocationIndex));
+            target.addCorrectMapping(newMapping);
         }
-        target.setCorrectMappings(newMappings);
     }
 
     private ShortAnswerQuestion copyShortAnswerQuestion(ShortAnswerQuestion original) {
@@ -290,28 +289,31 @@ public class QuizExerciseImportService extends ExerciseImportService {
         copy.setSimilarityValue(original.getSimilarityValue());
         copy.setMatchLetterCase(original.getMatchLetterCase());
 
-        // Copy spots
+        // Copy spots (a fresh, question-scoped id is minted for each by setSpots). Keep an ordered list so the original spot order is preserved, and a map only for resolving the
+        // correct mappings below by old id (HashMap iteration order is unspecified, so it must not drive the stored/serialized order).
         Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
+        List<ShortAnswerSpot> newSpots = new ArrayList<>();
         for (ShortAnswerSpot oldSpot : original.getSpots()) {
-            ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot, copy);
-            Long key = oldSpot.getId();
-            spotMap.put(key, newSpot);
+            ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot);
+            spotMap.put(oldSpot.getId(), newSpot);
+            newSpots.add(newSpot);
         }
-        copy.setSpots(new ArrayList<>(spotMap.values()));
+        copy.setSpots(newSpots);
 
-        // Copy solutions
+        // Copy solutions (a fresh, question-scoped id is minted for each by setSolutions); same ordered-list + lookup-map approach as the spots above.
         Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
+        List<ShortAnswerSolution> newSolutions = new ArrayList<>();
         for (ShortAnswerSolution oldSolution : original.getSolutions()) {
-            ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution, copy);
-            Long key = oldSolution.getId();
-            solutionMap.put(key, newSolution);
+            ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution);
+            solutionMap.put(oldSolution.getId(), newSolution);
+            newSolutions.add(newSolution);
         }
-        copy.setSolutions(new ArrayList<>(solutionMap.values()));
+        copy.setSolutions(newSolutions);
 
-        // Copy correct mappings
+        // Copy correct mappings: the new spots/solutions already have minted ids, so setCorrectMappings can store them id-based (resolved against spotMap/solutionMap by old id)
         Set<ShortAnswerMapping> newMappings = new HashSet<>();
         for (ShortAnswerMapping oldMapping : original.getCorrectMappings()) {
-            ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, copy, spotMap, solutionMap);
+            ShortAnswerMapping newMapping = createNewShortAnswerMapping(oldMapping, spotMap, solutionMap);
             newMappings.add(newMapping);
         }
         copy.setCorrectMappings(newMappings);
@@ -321,55 +323,43 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     /**
      * Creates a new ShortAnswerSpot instance based on the properties of the old spot.
-     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
      *
-     * @param oldSpot    the original ShortAnswerSpot to copy from
-     * @param saQuestion the short answer question to associate with the new spot
+     * @param oldSpot the original ShortAnswerSpot to copy from
      * @return the newly created ShortAnswerSpot
      */
-    private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot, ShortAnswerQuestion saQuestion) {
+    private ShortAnswerSpot createNewShortAnswerSpot(ShortAnswerSpot oldSpot) {
         ShortAnswerSpot newSpot = new ShortAnswerSpot();
         newSpot.setSpotNr(oldSpot.getSpotNr());
         newSpot.setWidth(oldSpot.getWidth());
         newSpot.setInvalid(oldSpot.isInvalid());
-        newSpot.setQuestion(saQuestion);
-        newSpot.setMappings(new HashSet<>());
         return newSpot;
     }
 
     /**
      * Creates a new ShortAnswerSolution instance based on the properties of the old solution.
-     * Copies relevant fields and associates it with the given question, initializing an empty set of mappings.
      *
      * @param oldSolution the original ShortAnswerSolution to copy from
-     * @param saQuestion  the short answer question to associate with the new solution
      * @return the newly created ShortAnswerSolution
      */
-    private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution, ShortAnswerQuestion saQuestion) {
+    private ShortAnswerSolution createNewShortAnswerSolution(ShortAnswerSolution oldSolution) {
         ShortAnswerSolution newSolution = new ShortAnswerSolution();
         newSolution.setText(oldSolution.getText());
         newSolution.setInvalid(oldSolution.isInvalid());
-        newSolution.setQuestion(saQuestion);
-        newSolution.setMappings(new HashSet<>());
         return newSolution;
     }
 
     /**
      * Creates a new ShortAnswerMapping instance based on the properties of the old mapping.
-     * Copies the invalid flag, associates it with the given question, and links it to the corresponding
-     * new solution and spot using the provided maps if they exist.
+     * Copies the invalid flag and links it to the corresponding new solution and spot using the provided maps if they exist.
      *
      * @param oldMapping  the original ShortAnswerMapping to copy from
-     * @param saQuestion  the short answer question to associate with the new mapping
      * @param spotMap     the map of IDs/tempIDs to new ShortAnswerSpot instances
      * @param solutionMap the map of IDs/tempIDs to new ShortAnswerSolution instances
      * @return the newly created ShortAnswerMapping
      */
-    private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, ShortAnswerQuestion saQuestion, Map<Long, ShortAnswerSpot> spotMap,
-            Map<Long, ShortAnswerSolution> solutionMap) {
+    private ShortAnswerMapping createNewShortAnswerMapping(ShortAnswerMapping oldMapping, Map<Long, ShortAnswerSpot> spotMap, Map<Long, ShortAnswerSolution> solutionMap) {
         ShortAnswerMapping newMapping = new ShortAnswerMapping();
         newMapping.setInvalid(oldMapping.isInvalid());
-        newMapping.setQuestion(saQuestion);
 
         if (oldMapping.getSolution() != null) {
             Long solutionKey = oldMapping.getSolution().getId();

@@ -11,12 +11,7 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiSelectComponent } from 'app/shared-ui/tum-ui/select/tum-ui-select.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-
+import { TumUiButtonComponent, TumUiButtonDirective, TumUiInputDirective, TumUiMessageComponent, TumUiSelectComponent } from '@tumaet/ui-angular';
 /** Option shown in the source select, with a precomputed display label. */
 interface SourceOption {
     id?: number;

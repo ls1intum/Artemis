@@ -171,6 +171,7 @@
             "visible": "Sichtbar",
             "startDate": "Beginn",
             "endDate": "Ende",
+            "examSummaryPublicationDate": "Abgabenübersicht sichtbar ab",
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewTimespan": "Zeitraum der Klausureinsicht",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
@@ -312,6 +313,7 @@
             "submittedColumn": "Abgegeben",
             "totalColumn": "Total",
             "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
+            "scoreDistributionTitle": "Verteilung der Gesamtergebnisse",
             "gradesBeforeBonus": "Noten vor Bonus",
             "gradesAfterBonus": "Noten nach Bonus",
             "noStudentResultAvailable": "Keine Studentenabgabe vorhanden",
@@ -330,12 +332,12 @@
             "progress": "Aufgabe {{ current }} von {{ all }}",
             "progressSmall": "{{ current }}/{{ all }}",
             "exerciseType": "Typ",
-            "examOverview": "Klausurübersicht",
             "examStatus": "Status",
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
             "navigation": {
+                "exerciseButton": "Aufgabe {{ number }}: {{ title }}",
                 "nextButton": "Weiter",
                 "previousButton": "Zurück"
             },
@@ -345,8 +347,6 @@
             "goToExamManagement": "Zur Klausurverwaltung gehen",
             "goToExamBack": "Gehe zurück, um die Prüfung weiterzumachen",
             "submitProgrammingExercise": "Weiter",
-            "submitOtherExercise": "Speichern & Weiter",
-            "submitLastExercise": "Speichern",
             "uploadFile": "Upload",
             "greeting": "Willkommen zu {{ title }}.",
             "finish": "Das ist das Ende von {{ title }}.",
@@ -380,7 +380,13 @@
                 "title": "Deine Klausur wurde erfolgreich abgegeben!",
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
-                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
+                "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}",
+                "summaryAvailableFrom": "Deine Abgabenübersicht ist ab dem {{ date }} verfügbar."
+            },
+            "summaryLoadFailed": {
+                "title": "Die Zusammenfassung der Klausur konnte nicht geladen werden.",
+                "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
+                "retry": "Erneut versuchen"
             },
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
@@ -516,6 +522,8 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
+            "examSummaryPublicationDate": "Abgabenübersicht sichtbar ab",
+            "examSummaryPublicationDateTooltip": "Studierende können die Übersicht ihrer abgegebenen Klausur (Prüfungsfragen, ihre eigenen Antworten und den PDF-Export) erst ab diesem Zeitpunkt sehen. Leer lassen, um die Übersicht direkt nach der Abgabe anzuzeigen. Das ist nützlich für Klausuren, die in mehreren Schichten geschrieben werden, damit frühe Teilnehmende die Inhalte nicht an spätere weitergeben können.",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
@@ -727,7 +735,9 @@
                     "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
                     "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu Erstellen der Build-Pläne kann diese Importfunktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
                 },
-                "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
+                "importSuccessful": "Import der Aufgabengruppen erfolgreich!",
+                "moveUp": "Aufgabengruppe nach oben verschieben",
+                "moveDown": "Aufgabengruppe nach unten verschieben"
             },
             "quizPool": "Quiz Pool",
             "delete": {

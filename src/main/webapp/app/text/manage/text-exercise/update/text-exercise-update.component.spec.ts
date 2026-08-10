@@ -30,6 +30,7 @@ vi.mock('monaco-editor', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
@@ -64,6 +65,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
@@ -75,6 +77,7 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
 
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
@@ -138,6 +141,7 @@ describe('TextExercise Management Update Component', () => {
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let textExerciseService: TextExerciseService;
     let calendarService: CalendarService;
+    let exerciseService: ExerciseService;
 
     let routeData$: BehaviorSubject<Data>;
     let routeUrl$: BehaviorSubject<UrlSegment[]>;
@@ -259,6 +263,8 @@ describe('TextExercise Management Update Component', () => {
                         MockExerciseFeedbackSuggestionOptionsComponent,
                         StubExerciseUpdatePlagiarismComponent,
                         MockComponent(FeatureOverlayComponent),
+                        ExerciseGroupTimelineLockStubComponent,
+                        TextExerciseTimelineComponent,
                     ],
                 },
             })
@@ -266,6 +272,7 @@ describe('TextExercise Management Update Component', () => {
 
         textExerciseService = TestBed.inject(TextExerciseService);
         calendarService = TestBed.inject(CalendarService);
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     afterEach(() => {
@@ -429,6 +436,46 @@ describe('TextExercise Management Update Component', () => {
             expect(component.backupExercise).toBeDefined();
             expect(component.isSaving()).toBe(false);
         });
+
+        it('should render one timeline containing all exercise dates', async () => {
+            const exercise = createExercise(createCourse());
+            exercise.releaseDate = dayjs().add(1, 'hour');
+            exercise.startDate = dayjs().add(2, 'hours');
+            exercise.dueDate = dayjs().add(1, 'day');
+            exercise.assessmentDueDate = dayjs().add(2, 'days');
+            routeData$.next({ textExercise: exercise });
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const timelines = fixture.debugElement.queryAll(By.directive(TextExerciseTimelineComponent));
+            const timeline = timelines[0].componentInstance as TextExerciseTimelineComponent;
+
+            expect(timelines).toHaveLength(1);
+            expect(timeline.releaseDate()).toBe(exercise.releaseDate);
+            expect(timeline.startDate()).toBe(exercise.startDate);
+            expect(timeline.dueDate()).toBe(exercise.dueDate);
+            expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
+        });
+
+        it('should validate dates when the timeline status changes', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ textExercise: exercise });
+
+            fixture = TestBed.createComponent(TextExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            vi.mocked(exerciseService.validateDate).mockClear();
+
+            component.timelineStatus.set({ valid: false, empty: true });
+            await fixture.whenStable();
+
+            expect(exerciseService.validateDate).toHaveBeenCalledWith(exercise);
+            expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+        });
     });
 
     describe('ngOnInit in import mode: Course to Course', () => {
@@ -436,6 +483,7 @@ describe('TextExercise Management Update Component', () => {
             const exercise = createExercise(createCourse());
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             routeData$.next({ textExercise: exercise });
@@ -451,6 +499,7 @@ describe('TextExercise Management Update Component', () => {
             expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
 
@@ -482,6 +531,7 @@ describe('TextExercise Management Update Component', () => {
             exercise.exerciseGroup.exam.course = createCourse();
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             exercise.channelName = 'testChannel';
@@ -498,6 +548,7 @@ describe('TextExercise Management Update Component', () => {
             expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
     });
@@ -507,6 +558,7 @@ describe('TextExercise Management Update Component', () => {
             const exercise = createExercise(createCourse());
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             routeData$.next({ textExercise: exercise });
@@ -523,6 +575,7 @@ describe('TextExercise Management Update Component', () => {
             expect(component.textExercise.course).toBeUndefined();
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
     });
@@ -533,6 +586,7 @@ describe('TextExercise Management Update Component', () => {
             exercise.exerciseGroup = new ExerciseGroup();
             exercise.id = 1;
             exercise.releaseDate = dayjs();
+            exercise.startDate = dayjs();
             exercise.dueDate = dayjs();
             exercise.assessmentDueDate = dayjs();
             exercise.channelName = 'testChannel';
@@ -549,6 +603,7 @@ describe('TextExercise Management Update Component', () => {
             expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
+            expect(component.textExercise.startDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
         });
     });
