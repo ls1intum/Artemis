@@ -177,6 +177,7 @@ public class WeaviateOutboxDispatcher {
     private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
         try {
             Optional<String> writtenContentHash = searchableEntityWeaviateService.applyOutboxEntry(entry);
+            logApplied(entry, writtenContentHash);
             if (entry.getAttempts() > 0) {
                 log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
             }
@@ -193,6 +194,27 @@ public class WeaviateOutboxDispatcher {
             else {
                 log.debug("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Traces a confirmed apply at {@code DEBUG} so the full enqueue-to-write flow is legible in the logs (the
+     * enqueue side already logs at {@code DEBUG}). The written content hash distinguishes the two upsert outcomes:
+     * present means the row was written, empty means the entity was gone or no longer indexable and the dispatcher
+     * re-derived it to a delete instead. Bulk deletes carry no single entity id, so they log by operation.
+     */
+    private static void logApplied(WeaviateOutboxEntry entry, Optional<String> writtenContentHash) {
+        if (!log.isDebugEnabled()) {
+            return;
+        }
+        if (entry.getEntityId() == null) {
+            log.debug("Applied {} (outbox entry {})", entry.getOperation(), entry.getId());
+        }
+        else if (writtenContentHash.isPresent()) {
+            log.debug("Applied upsert for {} {} (outbox entry {})", entry.getEntityType(), entry.getEntityId(), entry.getId());
+        }
+        else {
+            log.debug("Removed {} {} from the index (outbox entry {})", entry.getEntityType(), entry.getEntityId(), entry.getId());
         }
     }
 
