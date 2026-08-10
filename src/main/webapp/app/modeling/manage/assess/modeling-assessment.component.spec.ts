@@ -79,7 +79,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    Feedback,
+    FeedbackCorrectionErrorType,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
@@ -391,6 +397,85 @@ describe('ModelingAssessmentComponent', () => {
 
         comp.generateFeedbackFromAssessment(Object.values(mockModel.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
+    });
+
+    it('should mark an accepted suggestion as adapted when its Apollon-edited content changes', () => {
+        const mockModel = makeMockModel();
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.detectChanges();
+
+        comp.elementFeedback.set(ELEMENT_ID_1, {
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            detailText: 'Original suggestion text',
+            credits: 1,
+            referenceId: ELEMENT_ID_1,
+            type: FeedbackType.AUTOMATIC,
+        });
+        (comp as any).shownInApollon.set(ELEMENT_ID_1, 'Original suggestion text');
+
+        comp.generateFeedbackFromAssessment([{ modelElementId: ELEMENT_ID_1, elementType: 'Package', score: 1, feedback: 'Edited suggestion text' } as any]);
+
+        const updated = comp.elementFeedback.get(ELEMENT_ID_1)!;
+        expect(updated.text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+        expect(updated.detailText).toBe('Edited suggestion text');
+    });
+
+    it('should mark an accepted suggestion as adapted when only its score changes', () => {
+        const mockModel = makeMockModel();
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.detectChanges();
+
+        comp.elementFeedback.set(ELEMENT_ID_1, {
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            detailText: 'Original suggestion text',
+            credits: 1,
+            referenceId: ELEMENT_ID_1,
+            type: FeedbackType.AUTOMATIC,
+        });
+        (comp as any).shownInApollon.set(ELEMENT_ID_1, 'Original suggestion text');
+
+        comp.generateFeedbackFromAssessment([{ modelElementId: ELEMENT_ID_1, elementType: 'Package', score: 2, feedback: 'Original suggestion text' } as any]);
+
+        const updated = comp.elementFeedback.get(ELEMENT_ID_1)!;
+        expect(updated.text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should not re-mark an already-adapted suggestion, only update its detail text', () => {
+        const mockModel = makeMockModel();
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.detectChanges();
+
+        comp.elementFeedback.set(ELEMENT_ID_1, {
+            text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`,
+            detailText: 'Already adapted text',
+            credits: 1,
+            referenceId: ELEMENT_ID_1,
+            type: FeedbackType.AUTOMATIC,
+        });
+
+        comp.generateFeedbackFromAssessment([{ modelElementId: ELEMENT_ID_1, elementType: 'Package', score: 1, feedback: 'Further edit' } as any]);
+
+        const updated = comp.elementFeedback.get(ELEMENT_ID_1)!;
+        expect(updated.text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+        expect(updated.detailText).toBe('Further edit');
+    });
+
+    it('should not mark a non-suggestion feedback as adapted', () => {
+        const mockModel = makeMockModel();
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.detectChanges();
+
+        comp.elementFeedback.set(ELEMENT_ID_1, {
+            text: 'Instructor comment',
+            credits: 1,
+            referenceId: ELEMENT_ID_1,
+            type: FeedbackType.MANUAL,
+        });
+
+        comp.generateFeedbackFromAssessment([{ modelElementId: ELEMENT_ID_1, elementType: 'Package', score: 2, feedback: 'Edited instructor comment' } as any]);
+
+        const updated = comp.elementFeedback.get(ELEMENT_ID_1)!;
+        expect(updated.text).toBe('Edited instructor comment');
     });
 
     it('applies highlight overlays to the editor when the highlightedElements input changes', async () => {

@@ -1,7 +1,13 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -209,12 +215,25 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 feedback.credits = assessment.score;
                 if (Feedback.isFeedbackSuggestion(feedback)) {
                     // Apollon merges the suggestion's title and description into one field; keep the
-                    // accepted-suggestion title in `text` and route the assessor's edits into detailText only.
-                    const lastShown = this.shownInApollon.get(assessment.modelElementId);
-                    const textChanged = assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown;
-                    if (textChanged && assessment.feedback !== undefined) {
-                        feedback.detailText = assessment.feedback;
-                        this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
+                    // suggestion title in `text` (rewriting its prefix to adapted on the first edit) and
+                    // route the assessor's edits into detailText only.
+                    const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
+                    if (alreadyAdapted) {
+                        if (assessment.feedback !== undefined) {
+                            feedback.detailText = assessment.feedback;
+                        }
+                    } else {
+                        const lastShown = this.shownInApollon.get(assessment.modelElementId);
+                        const textChanged = assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown;
+                        if (textChanged || scoreChanged) {
+                            const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
+                            feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
+                            if (textChanged && assessment.feedback !== undefined) {
+                                feedback.detailText = assessment.feedback;
+                                this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
+                            }
+                        }
+                        // else: auto-emit or unchanged content, keep the original accepted prefix
                     }
                 } else {
                     feedback.text = assessment.feedback;
@@ -410,6 +429,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             description: correctionStatusDescription,
             status: correctionStatus,
         };
+    }
+
+    private stripSuggestionPrefix(text: string): string {
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (text.startsWith(prefix)) {
+                return text.slice(prefix.length);
+            }
+        }
+        return text;
     }
 
     private calculateDropInfo(feedback: Feedback) {
