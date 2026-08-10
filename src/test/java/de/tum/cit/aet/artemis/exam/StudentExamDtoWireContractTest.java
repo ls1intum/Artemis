@@ -87,7 +87,8 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        textExercise = examUtilService.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
+        // the enrolling variant is required: the endpoints under test authorize through the course roles of the user, so without enrollment every request is answered with 403
+        textExercise = examUtilService.addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(TEST_PREFIX);
         exam = textExercise.getExerciseGroup().getExam();
         course = exam.getCourse();
 
