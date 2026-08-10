@@ -73,6 +73,16 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
             """)
     Optional<Team> findOneByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
+    @EntityGraph(type = LOAD, attributePaths = "students")
+    @Query("""
+            SELECT team
+            FROM Team team
+                LEFT JOIN team.students student
+            WHERE team.exercise.id = :exerciseId
+                AND student.id = :userId
+            """)
+    Optional<Team> findOneWithStudentsByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
+
     @Query("""
             SELECT team
             FROM Team team

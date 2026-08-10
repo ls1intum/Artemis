@@ -54,7 +54,6 @@ describe('Participation Service', () => {
                 exerciseType: ExerciseType.TEXT,
                 course: {
                     id: 7,
-                    instructorGroupName: 'course-instructors',
                 },
             },
             submissions: [
@@ -73,7 +72,7 @@ describe('Participation Service', () => {
                 expect(dayjs.isDayjs(resp.body?.initializationDate)).toBe(true);
                 expect(resp.body?.submissions?.[0].participation).toBe(resp.body);
                 expect(resp.body?.submissions?.[0].results?.[0].submission).toBe(resp.body?.submissions?.[0]);
-                expect(resp.body?.exercise?.course?.instructorGroupName).toBe('course-instructors');
+                expect(resp.body?.exercise?.course?.id).toBe(7);
             });
 
         const req = httpMock.expectOne({ method: 'GET' });

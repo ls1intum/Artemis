@@ -1,4 +1,4 @@
-import type { UserPublicInfoDTO } from 'app/account/user/user.model';
+import type { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import type { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -112,7 +112,7 @@ export function fromStudentParticipationDTO(dto: StudentParticipationDTO): Stude
     participation.submissionCount = dto.submissionCount;
     participation.participantName = dto.participantName;
     participation.participantIdentifier = dto.participantIdentifier;
-    participation.student = dto.student ? deepClone(dto.student) : undefined;
+    participation.student = dto.student ? (deepClone(dto.student) as User) : undefined;
     participation.team = dto.team ? fromParticipationTeamDTO(dto.team) : undefined;
     participation.exercise = dto.exercise ? fromParticipationExerciseContextDTO(dto.exercise) : undefined;
 
@@ -136,7 +136,7 @@ function fromParticipationTeamDTO(dto: ParticipationTeamDTO): Team {
     team.name = dto.name;
     team.shortName = dto.shortName;
     team.image = dto.image;
-    team.students = dto.students?.map((student) => deepClone(student));
+    team.students = dto.students?.map((student) => deepClone(student) as User);
     return team;
 }
 
