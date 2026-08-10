@@ -12,7 +12,7 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, forkJoin, of, take, throwError } from 'rxjs';
 import { ConversationDTO } from '../shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -176,6 +176,49 @@ describe('MetisConversationService', () => {
                             done({});
                         },
                     });
+                },
+            });
+        });
+    });
+
+    it('should keep the cached conversations and the active conversation when a force refresh fails', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    metisConversationService.setActiveConversation(groupChat);
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+                    metisConversationService.forceRefresh().subscribe({
+                        complete: () => {
+                            // A failed refresh must not be mistaken for "the user has no conversations": dropping the cache
+                            // would clear the active conversation and strip its id from the URL, so a reload could not restore it
+                            forkJoin({
+                                conversations: metisConversationService.conversationsOfUser$.pipe(take(1)),
+                                activeConversation: metisConversationService.activeConversation$.pipe(take(1)),
+                            }).subscribe(({ conversations, activeConversation }) => {
+                                expect(conversations).toHaveLength(3);
+                                expect(activeConversation?.id).toBe(groupChat.id);
+                                done({});
+                            });
+                        },
+                    });
+                },
+            });
+        });
+    });
+
+    it('should not report the service as set up when the conversations cannot be loaded', () => {
+        return new Promise((done) => {
+            vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const isServiceSetUpValues: boolean[] = [];
+            metisConversationService.isServiceSetup$.subscribe((isSetUp) => isServiceSetUpValues.push(isSetUp));
+
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    // announcing the service as ready with an empty cache would make every conversation opened from the
+                    // URL look like one the user is not a member of
+                    expect(isServiceSetUpValues).toEqual([false]);
+                    done({});
                 },
             });
         });

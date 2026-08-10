@@ -214,7 +214,11 @@ export class MetisConversationService implements OnDestroy {
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
-                return of([]);
+                // Do not continue into the mapping below with an empty list. Treating a failed request as "the user has no
+                // conversations" would drop the cached conversations, reset the active conversation and, through the
+                // active conversation subscriber, strip the conversationId from the URL. A reload could then not restore
+                // the conversation any more, because the identifier it needs is gone. Keep the last known state instead.
+                return EMPTY;
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;
@@ -297,7 +301,10 @@ export class MetisConversationService implements OnDestroy {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(false);
-                return of([]);
+                // Stop here instead of running the setup below with an empty list, which would announce the service as
+                // ready while no conversation is known. Every conversation opened from the URL would then be reported
+                // as one the user is not a member of, and the view would stay empty.
+                return EMPTY;
             }),
             map((conversations: ConversationDTO[]) => {
                 this.conversationsOfUser = conversations;

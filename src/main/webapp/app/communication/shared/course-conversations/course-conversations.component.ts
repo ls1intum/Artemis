@@ -346,6 +346,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 }
                 this.isServiceSetUp.set(true);
                 this.isLoading.set(false);
+            } else {
+                // The conversations could not be loaded and the service reported the failure. Stop the loading indicator
+                // instead of spinning forever, the error itself has already been raised by the service.
+                this.isLoading.set(false);
             }
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
