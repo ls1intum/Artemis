@@ -19,6 +19,7 @@
             [(feedbackTitle)]="feedback.text"
             [(feedbackDetail)]="feedback.detailText"
             [(feedbackCredits)]="feedback.credits!"
+            (onDelete)="cancelFeedback()"
             (drop)="updateFeedbackOnDrop($event)"
             (dragover)="$event.preventDefault()"
             (keydown)="handleKeydown($event)"

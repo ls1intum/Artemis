@@ -246,4 +246,19 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
     });
+
+    it('should cancel the open edit when the built-in dismiss button is clicked', () => {
+        const onCancelFeedbackSpy = vi.fn();
+        comp.onCancelFeedback.subscribe(onCancelFeedbackSpy);
+        // A fresh, empty feedback is dismissible without confirmation, so the plain dismiss button renders.
+        fixture.detectChanges();
+
+        const dismissButton = fixture.debugElement.query(By.css('#dismiss-icon'));
+        expect(dismissButton).toBeTruthy();
+        dismissButton.nativeElement.click();
+        fixture.detectChanges();
+
+        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
+    });
 });
