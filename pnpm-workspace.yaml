@@ -154,10 +154,12 @@ overrides:
   immutable: '5.1.9'
   ip-address: '10.3.1'
   # Kept on the 4.x line (consumers require ^4; 5.x is an API break).
-  js-yaml: '4.3.0'
+  js-yaml: '4.3.1'
   jsdom: '30.0.1'
   katex: '0.18.1'
   minimatch: '10.2.6'
+  # Reached dev-side via postcss, whose range allows the patched 3.3.17.
+  nanoid: '3.3.17'
   piscina: '5.3.0'
   postcss: '8.5.25'
   punycode: '2.3.1'
