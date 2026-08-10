@@ -2,7 +2,7 @@ import { Location, UpperCasePipe } from '@angular/common';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
@@ -97,6 +97,12 @@ export class FileUploadAssessmentComponent implements OnInit {
     courseId!: number; // set in ngOnInit() from route params
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     readonly correctionRound = signal(0);
+
+    /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
+    private lastRouteParams?: Params;
+
+    /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
+    private lastLoadedRequestKey?: string;
     resultId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseGroupId?: number;
@@ -132,15 +138,46 @@ export class FileUploadAssessmentComponent implements OnInit {
                 this.userId = user.id;
             }
         });
+        // A fresh initialisation must load again: the guard below only exists to dedupe the two route subscriptions
+        // against each other, not to suppress a genuine re-init.
+        this.lastLoadedRequestKey = undefined;
+        this.lastRouteParams = undefined;
+
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
             // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
             // Number() alone will not do. This component both requests the submission with this signal and indexes the
             // loaded results by it, so there is a single round either way.
             this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
+            // Angular does not re-emit unchanged path parameters, so a navigation that changes only the round would
+            // otherwise leave the loaded submission on the previous round while this page indexes results and tags
+            // feedback with the new one. Re-request with the same parsed value the rest of the page now uses.
+            // Only once a submission is actually on screen: before that there is nothing to re-request, and the path
+            // subscription below is what performs the initial load.
+            if (this.lastRouteParams?.['submissionId']) {
+                this.loadSubmissionForRoute(this.lastRouteParams);
+            }
         });
 
-        this.route.params.subscribe((params) => {
+        this.route.params.subscribe((params) => this.loadSubmissionForRoute(params));
+    }
+
+    /**
+     * Loads the submission the current route points at, for the round the page is currently showing.
+     * <p>
+     * Driven from both route subscriptions, so it is idempotent: a navigation that changes the path and the round
+     * together makes both of them fire, and these load paths lock a submission server-side, so requesting twice is not
+     * merely wasteful. The guard keys on everything the request depends on, which makes a repeat call a no-op while a
+     * genuine change still reloads.
+     */
+    private loadSubmissionForRoute(params: Params): void {
+        const requestKey = `${params['submissionId']}|${params['exerciseId']}|${params['resultId']}|${this.correctionRound()}`;
+        if (requestKey === this.lastLoadedRequestKey) {
+            return;
+        }
+        this.lastLoadedRequestKey = requestKey;
+        this.lastRouteParams = params;
+        {
             this.resetSubmissionState();
             this.courseId = Number(params['courseId']);
             const exerciseId = Number(params['exerciseId']);
@@ -162,7 +199,7 @@ export class FileUploadAssessmentComponent implements OnInit {
             } else {
                 this.loadSubmission(submissionId);
             }
-        });
+        }
     }
 
     attachmentExtension(filePath: string): string {

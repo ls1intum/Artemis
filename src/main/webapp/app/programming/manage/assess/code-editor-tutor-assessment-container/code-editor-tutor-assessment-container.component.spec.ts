@@ -32,7 +32,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -437,6 +437,28 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(comp.correctionRound()).toBe(expectedRound);
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, expectedRound);
+    });
+
+    it('should re-lock the submission when only the round changes in the url', () => {
+        // Angular does not re-emit unchanged path parameters, so a query-only navigation used to update the round
+        // signal without re-requesting anything: this page then locked round 0 while indexing results and tagging
+        // feedback for round 1. The route mock uses one-shot observables, so a writable view swaps in subjects for
+        // this test only, exactly as the round-parsing test above reaches queryParamMap.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { params: Observable<Params>; queryParamMap: Observable<ParamMap> };
+        const params$ = new BehaviorSubject<Params>({ submissionId: 123 });
+        const queryParamMap$ = new BehaviorSubject<ParamMap>(convertToParamMap({ testRun: 'false' }));
+        activatedRoute.params = params$.asObservable();
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+
+        comp.ngOnInit();
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, 0);
+
+        // Only the query changes; the path parameters stay exactly as they were.
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+
+        expect(comp.correctionRound()).toBe(1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenLastCalledWith(123, 1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(2);
     });
 
     it('should not show complaint when participation contains no complaint', async () => {

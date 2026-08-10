@@ -220,6 +220,24 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, expectedRound, 0);
         });
 
+        it('should reload the submission when only the round changes in the url', async () => {
+            // Angular does not re-emit unchanged path parameters, so a query-only navigation used to update the round
+            // signal without re-requesting anything: the page then indexed round-1 results and tagged feedback for
+            // round 1 while still holding the submission loaded for round 0.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, 0, 0);
+
+            // Only the query changes; the path parameters stay exactly as they were.
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSubmissionSpy).toHaveBeenLastCalledWith(2, 1, 0);
+            expect(getSubmissionSpy).toHaveBeenCalledTimes(2);
+        });
+
         it('should open the first round for a url without the parameter even on a reused component', async () => {
             // Pins existing behaviour rather than a change: this editor already took the round from the url on every
             // navigation. The same url has to open the same round, whether it is reached directly or through the next

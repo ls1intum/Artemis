@@ -5,7 +5,7 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { EMPTY, Observable, Subscription, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, CanDeactivateFn, Params, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
@@ -98,6 +98,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly getCourseFromExercise = getCourseFromExercise;
 
     paramSub?: Subscription;
+
+    /** Route parameters of the currently shown submission, so a round change can re-request the same submission. */
+    private lastRouteParams?: Params;
+
+    /** Identity of the last request actually issued, making {@link loadSubmissionForRoute} idempotent. */
+    private lastLoadedRequestKey?: string;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
     // signal-backed under zoneless change detection, otherwise the loaded assessment editor never renders.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
@@ -195,8 +201,32 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Number() alone will not do. This round is sent to the server when the submission is locked, so `NaN` from
             // a hand-edited URL used to leave the tutor on an empty editor.
             this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
+            // Angular does not re-emit unchanged path parameters, so a navigation that changes only the round would
+            // otherwise leave the locked participation on the previous round while this page indexes results and tags
+            // feedback with the new one. Only once a submission is on screen: before that the path subscription below
+            // performs the initial load.
+            if (this.lastRouteParams?.['submissionId']) {
+                this.loadSubmissionForRoute(this.lastRouteParams);
+            }
         });
-        this.paramSub = this.route.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => this.loadSubmissionForRoute(params));
+    }
+
+    /**
+     * Loads the submission the current route points at, for the round the page is currently showing.
+     * <p>
+     * Driven from both route subscriptions, so it is idempotent: a navigation that changes the path and the round
+     * together makes both of them fire, and this load path locks a submission server-side, so requesting twice is not
+     * merely wasteful.
+     */
+    private loadSubmissionForRoute(params: Params): void {
+        const requestKey = `${params['submissionId']}|${params['exerciseId']}|${this.correctionRound()}`;
+        if (requestKey === this.lastLoadedRequestKey) {
+            return;
+        }
+        this.lastLoadedRequestKey = requestKey;
+        this.lastRouteParams = params;
+        {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
             // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
@@ -256,7 +286,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                 )
                 .subscribe();
-        });
+        }
     }
 
     /**

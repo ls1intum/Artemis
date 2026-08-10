@@ -288,6 +288,41 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getSpy).toHaveBeenLastCalledWith(8, 0, 0);
         });
 
+        it('should reload the submission when only the round changes in the url', () => {
+            // Angular does not re-emit unchanged path parameters, so a query-only navigation used to update the round
+            // signal without re-requesting anything: the page then indexed round-1 results and tagged feedback for
+            // round 1 while still holding the submission loaded for round 0.
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, 0, 0);
+
+            // Only the query changes; the path parameters stay exactly as they were.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSpy).toHaveBeenLastCalledWith(7, 1, 0);
+            expect(getSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should request the submission once when the path and the round change together', () => {
+            // Both route subscriptions fire for such a navigation, and this load path locks the submission
+            // server-side, so requesting twice would not merely be wasteful.
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            getSpy.mockClear();
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 9 });
+
+            expect(getSpy).toHaveBeenCalledTimes(2);
+            expect(getSpy).toHaveBeenNthCalledWith(1, 7, 1, 0);
+            expect(getSpy).toHaveBeenLastCalledWith(9, 1, 0);
+        });
+
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
