@@ -3,12 +3,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
-import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+    NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
+} from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -20,7 +27,12 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CodeEditorTutorAssessmentInlineFeedbackComponent, MockModule(NgbTooltipModule)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(StructuredGradingCriterionService),
+                // The edit-mode delete button (rendered for MANUAL feedback) pulls in the delete dialog service.
+                MockProvider(DeleteDialogService),
+            ],
         });
         fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
         comp = fixture.componentInstance;
@@ -182,5 +194,56 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
         const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
         expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
+    });
+
+    it('should render an editable title field for a feedback suggestion while editing', async () => {
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            detailText: 'Add a null check.',
+            credits: 1,
+        } as Feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        // The app is zoneless: the ngModel-bound input value is only written to the DOM after an extra stabilization pass.
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const titleInput = fixture.debugElement.query(By.css('.unified-feedback-title-input'));
+        expect(titleInput).toBeTruthy();
+        expect(titleInput.nativeElement.value).toBe('Missing null check');
+    });
+
+    it('should show the suggestion badge only while editing, not in the collapsed view', () => {
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            detailText: 'Add a null check.',
+            credits: 1,
+        } as Feedback);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('jhi-feedback-suggestion-badge'))).toBeNull();
+
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('jhi-feedback-suggestion-badge'))).toBeTruthy();
+    });
+
+    it('should mark an accepted suggestion as adapted when its detail text is edited while editing', () => {
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`,
+            detailText: 'Add a null check.',
+            credits: 1,
+        } as Feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        const detailTextarea = fixture.debugElement.query(By.css('.unified-feedback-detail-input')).nativeElement as HTMLTextAreaElement;
+        detailTextarea.value = 'Add a null check before dereferencing the pointer.';
+        detailTextarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
     });
 });

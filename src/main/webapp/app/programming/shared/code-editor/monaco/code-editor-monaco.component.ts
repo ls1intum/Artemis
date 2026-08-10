@@ -601,7 +601,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 const focusLine = this.renderFocusLine;
                 this.renderFocusLine = undefined;
                 if (focusLine !== undefined) {
-                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                    // The inline feedback editor renders its description field through jhi-unified-feedback, which
+                    // identifies the textarea by class rather than by a (non-reusable) id.
+                    this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('.unified-feedback-detail-input')?.focus();
                 }
             },
             { injector: this.injector },
