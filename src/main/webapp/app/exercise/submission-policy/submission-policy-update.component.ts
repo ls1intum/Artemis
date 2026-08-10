@@ -126,8 +126,13 @@ export class SubmissionPolicyUpdateComponent {
     exceedingPenaltyPattern = RegExp('^0*[1-9][0-9]*(\\.[0-9]+)?|0+\\.[0-9]*[1-9][0-9]*$');
 
     // Set once the form received a persisted policy or the user changed the policy type. From then on,
-    // later programmingExercise emissions must not overwrite the form.
+    // later programmingExercise emissions for the SAME exercise must not overwrite the form.
     private policyFormInitialized = false;
+
+    // Id of the exercise the form currently shows. The grading route is reused when navigating from one
+    // exercise's submission policy tab to another, so without this the latch above would reject the new
+    // exercise and leave the previous one's policy on screen while the actions target the new one.
+    private initializedExerciseId?: number;
 
     constructor() {
         // The exercise can arrive after this component mounted (the grading page shows the submission policy
@@ -141,10 +146,28 @@ export class SubmissionPolicyUpdateComponent {
         });
     }
 
+    /**
+     * Whether this emission belongs to a different exercise than the one on screen.
+     *
+     * Only a switch between two known ids counts. An id appearing on a previously unsaved exercise is the
+     * same entity being persisted, not a new one, so the user's input survives it.
+     */
+    private hasSwitchedExercise(programmingExercise: ProgrammingExercise): boolean {
+        const exerciseId = programmingExercise.id;
+        return exerciseId !== undefined && this.initializedExerciseId !== undefined && exerciseId !== this.initializedExerciseId;
+    }
+
     private initializeFormFromExercise(programmingExercise: ProgrammingExercise): void {
-        if (this.policyFormInitialized || this.form?.dirty || this.form?.touched) {
+        const switchedExercise = this.hasSwitchedExercise(programmingExercise);
+        if (!switchedExercise && (this.policyFormInitialized || this.form?.dirty || this.form?.touched)) {
             return;
         }
+        if (switchedExercise) {
+            // Nothing from the previous exercise may survive: its values are reset below, and the latch has
+            // to drop as well or the new exercise's persisted policy would be rejected right after.
+            this.policyFormInitialized = false;
+        }
+        this.initializedExerciseId = programmingExercise.id ?? this.initializedExerciseId;
         const submissionPolicy = programmingExercise.submissionPolicy;
         this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.form) {

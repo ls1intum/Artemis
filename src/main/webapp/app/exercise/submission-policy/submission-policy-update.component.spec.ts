@@ -227,4 +227,73 @@ describe('Submission Policy Update Form Component', () => {
         expect(submissionLimitInputField.value).toBe('5');
         expect(typeChangeSpy).toHaveBeenCalledTimes(1);
     });
+
+    // The grading parent reloads on an exerciseId route change and Angular reuses this component for the same
+    // route configuration, so a second exercise arrives through the same input.
+    describe('navigating between two exercises on the reused grading route', () => {
+        const exerciseWithPolicy = (id: number, submissionLimit: number) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = id;
+            exercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit } as LockRepositoryPolicy;
+            return exercise;
+        };
+
+        it('should show the second exercise policy instead of keeping the first', async () => {
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+            expect(fixture.nativeElement.querySelector('#field_submissionLimit').value).toBe('3');
+
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(2, 7));
+            await detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_submissionPolicy').value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+            expect(fixture.nativeElement.querySelector('#field_submissionLimit').value).toBe('7');
+            expect(component.submissionLimitControl.value).toBe(7);
+        });
+
+        it('should drop edits made on the first exercise when the second arrives', async () => {
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+            component.submissionLimitControl.setValue(10);
+            component.submissionLimitControl.markAsDirty();
+            await detectChanges();
+
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(2, 7));
+            await detectChanges();
+
+            // Keeping the edit here would submit 10 against the second exercise.
+            expect(component.submissionLimitControl.value).toBe(7);
+            expect(component.submissionLimitControl.dirty).toBe(false);
+        });
+
+        it('should adopt the second exercise policy type, not only its values', async () => {
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+
+            const secondExercise = new ProgrammingExercise(undefined, undefined);
+            secondExercise.id = 2;
+            secondExercise.submissionPolicy = undefined;
+            fixture.componentRef.setInput('programmingExercise', secondExercise);
+            await detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_submissionPolicy').value).toBe(SubmissionPolicyType.NONE);
+            expect(component.invalid).toBe(false);
+        });
+
+        it('should keep edits when an unsaved exercise gains an id, which is the same exercise', async () => {
+            // Creation flow: the exercise has no id until it is persisted; that is not a navigation.
+            const newExercise = new ProgrammingExercise(undefined, undefined);
+            newExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 3 } as LockRepositoryPolicy;
+            fixture.componentRef.setInput('programmingExercise', newExercise);
+            await detectChanges();
+            component.submissionLimitControl.setValue(10);
+            component.submissionLimitControl.markAsDirty();
+            await detectChanges();
+
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+
+            expect(component.submissionLimitControl.value).toBe(10);
+        });
+    });
 });
