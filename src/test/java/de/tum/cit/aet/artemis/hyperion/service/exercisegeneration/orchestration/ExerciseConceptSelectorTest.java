@@ -84,6 +84,9 @@ class ExerciseConceptSelectorTest {
                 .contains("do not prescribe exact class names", "method signatures", "formulas", "worked-example values")
                 .contains("choose a qualitative domain", "must not prescribe", "closed label list", "domain pressure")
                 .contains("semantic difference", "later", "specification", "facts, not a defense")
+                // The rules above forbid prescribing counts and partitions, which a brief asking for several behaviors over more than one kind of input reads as licence to
+                // narrow. Scope the brief states is exempt, or the generator scrubs away the coverage it is being judged on.
+                .contains("never to scope the brief states", "How many behaviors students implement", "Covering less than the brief asks for is")
                 .doesNotContain("specify enough deterministic decision logic", "tie behavior", "justify why the candidate is intermediate", "Dijkstra", "routing");
     }
 
@@ -108,7 +111,11 @@ class ExerciseConceptSelectorTest {
         verify(loop, times(2)).runTextSession(anyString(), eq(null), prompts.capture(), anyInt(), any(), any(), any());
         assertThat(prompts.getAllValues().get(1)).contains("learner-owned learning fit", "objective-relative difficulty", "domain", "grounding")
                 .contains("Preserve a sound central interaction", "leave that detail open", "only when the interaction itself failed")
-                .doesNotContain("Every candidate is scalar formula transcription.", "clock repair", "potion scoring", "fragmented radio transmissions");
+                // A coverage failure is the one case where preserving the central interaction is wrong: the replacement has to widen, not re-theme.
+                .contains("A brief-coverage failure is none of those", "must carry the omitted scope", "Narrowing again")
+                // The replacement batch is told what the reviewer actually objected to. Without it the generator sees only that one of six axes failed, which is what let a
+                // rejected batch come back narrowed the same way. The reviewer diagnoses properties only, so the reason travels without a replacement design.
+                .contains("Every candidate is scalar formula transcription.").doesNotContain("clock repair", "potion scoring", "fragmented radio transmissions");
     }
 
     @Test

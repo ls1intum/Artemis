@@ -40,6 +40,9 @@ public class ExerciseConceptSelector {
             grounding, feasibility and proportionality, or concept-level precision. Preserve a sound central interaction when the defect is only an exact value, API, label set,
             validation rule, or implementation mandate that belongs in the later specification; leave that detail open instead of merely renaming it. Generate a genuinely
             different central interaction only when the interaction itself failed learning fit, grounding, equivalence, or feasibility.
+            A brief-coverage failure is none of those: it says the concept left out work the brief asks for, so the replacement must carry the omitted scope. Read what the
+            coverage finding says is missing and widen the candidate to cover it — a brief asking for several behaviors over more than one kind of input is not covered by one
+            behavior over one of them. Narrowing again, or restating the same scope under a new theme, repeats the failure.
             """;
 
     private static final String SYSTEM_PROMPT = """
@@ -90,6 +93,9 @@ public class ExerciseConceptSelector {
 
             Before answering, scrub every candidate-authored literal, API name, exact label list, and required implementation construct that the brief did not supply. Merge claimed
             cases or boundaries whose complete caller-visible outcome and state transition are identical; a cut point that changes nothing is not a learner-owned decision.
+            Scrubbing and merging apply to detail you invented, never to scope the brief states. How many behaviors students implement and which kinds of input they cover are
+            choices the brief may fix, and where it fixes them they are preserved in full even though they read as counts and partitions. Covering less than the brief asks for is
+            a coverage failure, not the concise concept the rules above ask for.
 
             INSTRUCTOR BRIEF:
             """;
@@ -167,7 +173,10 @@ public class ExerciseConceptSelector {
                 return new ConceptSelection(true, review.selectedCandidate(), candidates.get(review.selectedCandidate()), turns, transcript, review.feedback(), audit.toString());
             }
             fallback = better(fallback, review, candidates);
-            feedback = attempt == MAX_BATCHES ? review.feedback() : REPLACEMENT_FEEDBACK + "\n" + review.decisionSummary();
+            // Both branches carry the review's concrete per-candidate diagnosis: the last batch as the run's rejection reason, an earlier one as the next batch's guidance. A
+            // replacement batch told only that "the previous batch failed at least one of" six axes cannot redirect its search and reliably repeats the defect it was replacing.
+            // The reviewer diagnoses properties and never authors a replacement design, so this hands the generator the reason without handing it an idea.
+            feedback = attempt == MAX_BATCHES ? review.feedback() : REPLACEMENT_FEEDBACK + "\n" + review.feedback();
         }
         return new ConceptSelection(true, null, null, turns, transcript, feedback, audit.toString(), fallback);
     }
