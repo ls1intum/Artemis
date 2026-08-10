@@ -57,15 +57,38 @@ export class GitExerciseParticipation {
     static async setupSSHCredentials(context: BrowserContext, sshAlgorithm: SshEncryptionAlgorithm) {
         console.log(`Setting up SSH credentials with key ${SSH_KEY_NAMES[sshAlgorithm]}`);
         const page = await context.newPage();
-        const sshKeyPath = path.join(SSH_KEYS_PATH, `${SSH_KEY_NAMES[sshAlgorithm]}.pub`);
-        const sshKey = await fs.readFile(sshKeyPath, 'utf8');
-        await page.goto('user-settings/ssh');
-        await page.getByTestId('addNewSshKeyButton').click();
-        await page.getByTestId('sshKeyField').fill(sshKey!);
-        const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-keys`);
-        await page.getByTestId('saveSshKeyButton').click();
-        await responsePromise;
-        await page.close();
+        try {
+            const sshKeyPath = path.join(SSH_KEYS_PATH, `${SSH_KEY_NAMES[sshAlgorithm]}.pub`);
+            const sshKey = await fs.readFile(sshKeyPath, 'utf8');
+            const sshSettingsUrl = '/user-settings/ssh';
+            const addKeyButton = page.getByTestId('addNewSshKeyButton');
+            let navigationError: unknown;
+
+            // context.newPage() is not the fixture page and therefore does not inherit the
+            // fixture's Angular render recovery. Bound the readiness wait and retry the lazy
+            // route once instead of letting locator.click() consume the entire test timeout.
+            for (let attempt = 0; attempt < 2; attempt++) {
+                try {
+                    await page.goto(sshSettingsUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+                    await addKeyButton.waitFor({ state: 'visible', timeout: 15_000 });
+                    navigationError = undefined;
+                    break;
+                } catch (error) {
+                    navigationError = error;
+                }
+            }
+            if (navigationError) {
+                throw new Error(`SSH settings did not render at ${sshSettingsUrl} after 2 attempts`, { cause: navigationError });
+            }
+
+            await addKeyButton.click();
+            await page.getByTestId('sshKeyField').fill(sshKey);
+            const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-keys`);
+            await page.getByTestId('saveSshKeyButton').click();
+            await responsePromise;
+        } finally {
+            await page.close().catch(() => undefined);
+        }
     }
 
     /**

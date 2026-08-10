@@ -87,7 +87,7 @@ class StudentExamDtoWireContractTest extends AbstractSpringIntegrationIndependen
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        textExercise = examUtilService.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
+        textExercise = examUtilService.addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(TEST_PREFIX);
         exam = textExercise.getExerciseGroup().getExam();
         course = exam.getCourse();
 

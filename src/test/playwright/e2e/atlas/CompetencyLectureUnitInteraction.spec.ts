@@ -158,10 +158,20 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             if (editNavigationError) {
                 throw new Error(`Text-unit edit form did not render at ${editUrl} after 2 attempts`, { cause: editNavigationError });
             }
-            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).waitFor({ state: 'visible', timeout: 30_000 });
+            const compACheckbox = page.getByRole('checkbox', { name: compATitle });
+            const compBCheckbox = page.getByRole('checkbox', { name: compBTitle });
 
-            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).uncheck();
-            await page.getByRole('checkbox', { name: 'Comp B ' + uid }).check();
+            // The edit form renders before its existing competency links finish loading. Waiting
+            // only for the checkbox to become visible can therefore make uncheck() a no-op while
+            // the initially-unchecked control is still being hydrated, after which the form sets
+            // Comp A back to checked and submits both links. Anchor on the persisted checked state
+            // before changing the selection and verify the final form state before submitting.
+            await expect(compACheckbox).toBeChecked({ timeout: 30_000 });
+            await expect(compBCheckbox).not.toBeChecked();
+            await compACheckbox.uncheck();
+            await compBCheckbox.check();
+            await expect(compACheckbox).not.toBeChecked();
+            await expect(compBCheckbox).toBeChecked();
 
             const updateResponse = page.waitForResponse(
                 (response) => response.url().includes(`/api/lecture/lectures/${lecture.id}/text-units`) && response.request().method() === 'PUT' && response.status() === 200,

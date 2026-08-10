@@ -296,6 +296,7 @@ export class Commands {
 
     static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string | RegExp, interval = 5000, timeout = 60000) => {
         const startTime = Date.now();
+        const requestedUrl = page.url();
         let lastSeenText: string | null = null;
         const matches = (text: string | null): boolean => text != null && (expectedText instanceof RegExp ? expectedText.test(text) : text.includes(expectedText));
 
@@ -317,8 +318,14 @@ export class Commands {
 
             try {
                 await page.reload();
+                // A failed lazy-route bootstrap can send an exercise page to the bare
+                // /courses fallback. Reloading that fallback again loses the route forever,
+                // so restore the page this polling loop started on before the next probe.
+                if (Commands.driftedToCoursesFallback(requestedUrl, page.url())) {
+                    await page.goto(requestedUrl, { waitUntil: 'domcontentloaded' });
+                }
             } catch (reloadError) {
-                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
+                throw new Error(`Failed to reload or restore the page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
             }
         }
 
