@@ -215,12 +215,20 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Retry the build once before failing — a real configuration regression fails twice.
-        // The GCC variant used to flake here with `TestOutputASan [FAIL]: timeout`, which was not a
-        // load or ASLR effect: AddressSanitizer runs LeakSanitizer at exit, that scan stops the world
-        // via ptrace, and the build containers deliberately have no CAP_SYS_PTRACE (they run untrusted
-        // student code), so a correct `asan.out` stalled instead of exiting. The C template now sets
-        // ASAN_OPTIONS=detect_leaks=0 for the tester's child processes, so the stall is gone at the
-        // source. This retry is kept as cheap insurance and can be dropped once that has held.
+        //
+        // The GCC variant has flaked here twice with `TestOutputASan [FAIL]: timeout`, each time for a
+        // different reason, and each time the fix belonged in the C template rather than here.
+        //
+        // First: AddressSanitizer runs LeakSanitizer at exit, that scan stops the world via ptrace, and
+        // the build containers deliberately have no CAP_SYS_PTRACE (they run untrusted student code), so
+        // a correct `asan.out` stalled instead of exiting. Fixed by ASAN_OPTIONS=detect_leaks=0.
+        //
+        // Second: the `kill` shadow in shadow_exec.c called itself instead of the syscall, so a signal
+        // sent by the program — or by the sanitizer runtime on its way to reporting an error — recursed
+        // until the stack overflowed. Fixed by issuing the syscall directly.
+        //
+        // Both attempts run on the same runner within seconds of each other, so this retry cannot
+        // absorb a condition of the host itself; it only covers a per-build hiccup.
         AssertionError lastFailure = null;
         for (int attempt = 1; attempt <= MAX_BUILD_ATTEMPTS; attempt++) {
             String triggerFileName = "trigger-attempt-" + attempt + ".txt";
@@ -477,8 +485,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             FileSystemResource logResource = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());
             if (logResource != null && logResource.exists()) {
                 String logContent = Files.readString(logResource.getFile().toPath());
-                diagnostics.append(System.lineSeparator()).append("Build log file tail:").append(System.lineSeparator())
-                        .append(trimToLastCharacters(logContent, MAX_DIAGNOSTIC_LOG_LENGTH));
+                diagnostics.append(System.lineSeparator()).append("Build log excerpt:").append(System.lineSeparator()).append(trimToExcerpt(logContent, MAX_DIAGNOSTIC_LOG_LENGTH));
             }
         }
         catch (IOException ignored) {
@@ -497,15 +504,27 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             persistedLogs.append(buildLog.getLog());
         }
 
-        diagnostics.append(System.lineSeparator()).append("Persisted build log tail:").append(System.lineSeparator())
-                .append(trimToLastCharacters(persistedLogs.toString(), MAX_DIAGNOSTIC_LOG_LENGTH));
+        diagnostics.append(System.lineSeparator()).append("Persisted build log excerpt:").append(System.lineSeparator())
+                .append(trimToExcerpt(persistedLogs.toString(), MAX_DIAGNOSTIC_LOG_LENGTH));
     }
 
-    private String trimToLastCharacters(String input, int maxCharacters) {
+    /**
+     * Keeps the beginning and the end of an over-long log, rather than only the end.
+     * <p>
+     * A crashing sanitizer run prints the same line until its output limit is reached, which fills a
+     * tail-only excerpt entirely with copies of that line. The first lines are where the diagnosis
+     * actually is -- the error header, the mapping it failed on, the test case that was running --
+     * so keep both ends and say how much was dropped in between.
+     */
+    private String trimToExcerpt(String input, int maxCharacters) {
         if (input.length() <= maxCharacters) {
             return input;
         }
-        return input.substring(input.length() - maxCharacters);
+        int headLength = maxCharacters / 2;
+        int tailLength = maxCharacters - headLength;
+        int omitted = input.length() - maxCharacters;
+        return input.substring(0, headLength) + System.lineSeparator() + "... [" + omitted + " characters omitted] ..." + System.lineSeparator()
+                + input.substring(input.length() - tailLength);
     }
 
     private void initializeLazyLocalCIServices() {
