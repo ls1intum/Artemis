@@ -89,7 +89,7 @@
         </div>
     }
     @if (agentNotFound()) {
-        <tum-ui-message severity="warn" styleClass="mb-4 block">
+        <tum-ui-message severity="warn" class="mb-4 block">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />

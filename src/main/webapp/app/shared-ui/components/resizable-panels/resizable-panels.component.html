@@ -9,7 +9,7 @@
         layout="horizontal"
         [panelSizes]="panelSizesForSplitter()"
         [minSizes]="[0, 0]"
-        [gutterSize]="12"
+        [gutterSize]="gutterSize"
         [stateKey]="storageKey() ?? null"
         stateStorage="local"
         (onResizeEnd)="onResizeEnd($any($event.sizes))"

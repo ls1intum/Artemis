@@ -13,6 +13,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -145,6 +146,36 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             component.onSelect({});
 
             expect(navigateToExerciseMock).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('chart height', () => {
+        // A fixed height squeezed multi-exercise groups into unreadable slivers and made the canvas overflow its
+        // box, covering the next chart's title — so the height must grow with the number of bars.
+        it('should grow with the number of bars', () => {
+            // One bar for the exercise group plus one per exercise: 48px of axis/padding + 4 * 34px.
+            expect(component.chartEntries()).toHaveLength(4);
+            expect(component.chartHeight()).toBe(48 + 4 * 34);
+        });
+
+        it('should shrink for a group with a single exercise', () => {
+            const singleExercise = deepClone(returnValue);
+            singleExercise.exerciseResults = [deepClone(returnValue.exerciseResults[0])];
+            fixture.componentRef.setInput('averageScores', singleExercise);
+            component.ngOnInit();
+
+            expect(component.chartEntries()).toHaveLength(2);
+            expect(component.chartHeight()).toBe(48 + 2 * 34);
+        });
+
+        it('should stay readable for a group without exercises', () => {
+            const withoutExercises = deepClone(returnValue);
+            withoutExercises.exerciseResults = [];
+            fixture.componentRef.setInput('averageScores', withoutExercises);
+            component.ngOnInit();
+
+            // Only the exercise-group bar remains, so the box must still be tall enough for one bar plus the axis.
+            expect(component.chartHeight()).toBe(48 + 34);
         });
     });
 
