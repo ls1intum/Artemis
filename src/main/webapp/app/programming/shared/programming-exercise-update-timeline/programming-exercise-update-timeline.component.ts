@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -26,7 +26,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
     styleUrls: ['./programming-exercise-update-timeline.component.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseTimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, TimelineComponent, ExerciseFeedbackSuggestionOptionsComponent],
 })
 export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -45,7 +45,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     customizeBuildPlan = input<boolean | undefined>(undefined);
     skipAutomaticAfterDueDatePreview = input(false);
     exercise = input.required<ProgrammingExercise>();
-    /** When true the dates are governed by the exercise's variant group (see {@link ExerciseTimelineComponent}). */
+    /** When true the dates are governed by the exercise's variant group (see {@link TimelineComponent}). */
     lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
     lockedClick = output<void>();
@@ -183,7 +183,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         this.assessmentType.update((assessmentType) => (assessmentType === AssessmentType.AUTOMATIC ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.AUTOMATIC));
     }
 
-    handleTimelineStatusChange(timelineStatus: ExerciseTimelineStatus) {
+    handleTimelineStatusChange(timelineStatus: TimelineStatus) {
         this.formValid = timelineStatus.valid;
         this.formEmpty = timelineStatus.empty;
         this.formValidChanges.next(this.formValid);

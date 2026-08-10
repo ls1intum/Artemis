@@ -43,7 +43,7 @@ import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
@@ -86,7 +86,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
-    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);

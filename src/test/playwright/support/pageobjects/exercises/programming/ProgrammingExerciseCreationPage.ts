@@ -56,7 +56,7 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
 
     /**
      * Sets the Due Date field on the unified exercise timeline (PrimeNG p-datepicker rendered inside
-     * <jhi-exercise-timeline>). The timeline assigns the inputId per visible item dynamically
+     * <jhi-timeline>). The timeline assigns the inputId per visible item dynamically
      * (e.g. datepicker-0, datepicker-1, ...), so we locate the input through its associated label
      * and then fill it in the format expected by ExerciseTimelineComponent#handleManualInput.
      *
