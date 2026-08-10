@@ -5,12 +5,8 @@
     margin-bottom: 0.75rem;
 }
 
-/* Criteria sit in the same instructions column as the problem statement and the
-   example solution, so they follow that column's rhythm: one spacing step
-   between blocks, no rules, and the section's own text size. Bootstrap's
-   `.table` supplied all three differently — it drew a border under every row and
-   set its own cell padding — which is what made this panel read as a different
-   kind of content from its siblings. */
+/* Criteria share the instructions column with the problem statement and the example solution, so they
+   follow that column's rhythm: one spacing step between blocks, no rules, and the section's text size. */
 .sgi-criterion + .sgi-criterion {
     margin-top: 0.75rem;
 }

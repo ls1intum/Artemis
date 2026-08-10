@@ -117,11 +117,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
-    /**
-     * Whether the exercise carries an example solution that could be published. Recomputed from the live Apollon
-     * model in {@link calculateFormSectionStatus} (the model itself is not a signal), which the editor and the
-     * explanation editor both call on every change.
-     */
+    /** A signal rather than a computed, because the live Apollon model is not one; {@link calculateFormSectionStatus} pushes it. */
     protected readonly hasExampleSolution = signal(false);
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
@@ -196,9 +192,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         });
     }
 
-    /** Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes. */
     private updateFormSectionsOnIsValidChange() {
-        // Guard against viewChild not being available yet (before view init).
+        // Runs before view init too, so the title component may not exist yet.
         const titleComponent = this.exerciseTitleChannelNameComponent?.();
         if (titleComponent?.titleChannelNameComponent) {
             titleComponent.titleChannelNameComponent().isValid();
@@ -207,7 +202,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         void this.calculateFormSectionStatus();
     }
 
-    /** Initializes all relevant data for creating or editing a modeling exercise. */
     ngOnInit(): void {
         this.document.documentElement.classList.add(ModelingExerciseUpdateComponent.SCROLL_SNAP_CLASS);
         scrollToTopOfPage();
@@ -301,8 +295,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 empty: !hasExampleSolutionDiagram || !this.modelingExercise.exampleSolutionExplanation,
             },
             {
-                // The example solution publication date lives in the timeline (as for programming exercises), so its
-                // validity is part of the grading section.
+                // The timeline owns the example solution publication date, so its validity counts towards grading.
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
                     (this.points()?.valid ?? true) &&
@@ -314,16 +307,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         ]);
     }
 
-    /**
-     * Updates the exercise categories.
-     * @param categories list of exercise categories
-     */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
         this.exerciseCategories.set(categories);
     }
 
-    /** Validates that the configured dates are consistent. */
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
         void this.calculateFormSectionStatus();

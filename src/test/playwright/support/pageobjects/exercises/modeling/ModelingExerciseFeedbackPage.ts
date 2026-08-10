@@ -2,12 +2,10 @@ import { AbstractExerciseFeedback } from '../AbstractExerciseFeedbackPage';
 import { expect } from '@playwright/test';
 
 /**
- * A class which encapsulates UI selectors and actions for a modeling exercise feedback page.
+ * UI selectors and actions for a modeling exercise feedback page.
  *
- * The modeling assessed view renders its feedback inside the editor's own chrome
- * using Apollon's assessment language — a tone badge carrying the signed score,
- * the element as the diagram names it, then the comment — rather than the shared
- * unified-feedback cards the other exercise types still use.
+ * Overrides the shared accessors because the modeling assessed view renders feedback as rows in the
+ * editor's own chrome rather than in the `unified-feedback` cards the other exercise types use.
  */
 export class ModelingExerciseFeedbackPage extends AbstractExerciseFeedback {
     async shouldShowComponentFeedback(component: number, points: number, feedback: string) {

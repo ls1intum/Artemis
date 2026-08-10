@@ -1,7 +1,5 @@
 @if (appearance() === 'chrome') {
-    <!-- Mounted into an Apollon overlay region: an island that floats over the
-         canvas, not a band above it. Keep it one line — the full guidance lives
-         in the info tooltip. -->
+    <!-- An island floating over the canvas, so it has to stay one line; the full guidance lives in the info tooltip. -->
     @if (notice(); as notice) {
         <div class="feedback-suggestions-chrome apollon-glass" [attr.data-notice]="notice" role="status" aria-live="polite">
             @if (notice === 'loading') {

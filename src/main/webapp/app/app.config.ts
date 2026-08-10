@@ -1,9 +1,8 @@
 import 'app/foundation/util/array.extension';
 import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
-import { OVERLAY_DEFAULT_CONFIG } from '@angular/cdk/overlay';
+import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } from '@angular/cdk/overlay';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { FullscreenOverlayContainer, OverlayContainer } from '@angular/cdk/overlay';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
@@ -39,6 +38,10 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         provideArtemisTumUiTranslator(),
+        // App-wide: CDK's default container is appended to <body>, which the browser hides while another element is
+        // fullscreen — so every CDK overlay (TUM UI dialogs, tooltips, selects) would vanish inside the modeling
+        // editor's fullscreen frame. FullscreenOverlayContainer re-parents the container into the fullscreen element
+        // for the duration of the session and restores it afterwards. See `global.scss` for the matching z-index rule.
         { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
         DialogService,
         // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.

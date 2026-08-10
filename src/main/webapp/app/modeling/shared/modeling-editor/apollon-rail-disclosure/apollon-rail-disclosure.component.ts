@@ -7,17 +7,12 @@ import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives
 let nextDisclosureId = 0;
 
 /**
- * A side panel that hangs off one of Apollon's rails: a chrome-styled trigger
- * island, and a resizable glass panel that floats out from underneath it.
+ * A side panel that hangs off one of Apollon's rails: a chrome-styled trigger island and a resizable
+ * panel that floats out from underneath it. The host element is what a caller hands to
+ * `editor.getRegionElement('right-rail')`.
  *
- * The panel floats *over* the canvas rather than reserving a column, so the rail
- * only ever gives up the trigger's width. That is what keeps the diagram framed
- * the same whether the panel is open or shut, and it is why collapsing is cheap
- * enough to be the reader's decision rather than a layout event.
- *
- * The host is the element you hand to `editor.getRegionElement('right-rail')`.
- * Both the editor's problem statement and the assessment's feedback list use it,
- * so the two surfaces cannot drift into two dialects of the same affordance.
+ * The panel floats over the canvas instead of reserving a column, so the rail only ever gives up the
+ * trigger's width and the diagram keeps its framing whether the panel is open or shut.
  */
 @Component({
     selector: 'jhi-apollon-rail-disclosure',
@@ -40,18 +35,10 @@ export class ApollonRailDisclosureComponent {
     readonly icon = input.required<IconDefinition>();
     readonly testId = input<string>();
     readonly visible = model(false);
-    /**
-     * Set by the host, which is the only party that can see what else the editor
-     * has parked below the trigger. See `calculateRailDisclosureMaxHeight`.
-     */
+    /** Only the host can see what else the editor has parked below the trigger; see `calculateRailDisclosureMaxHeight`. */
     readonly maxHeight = input(720);
     readonly initialWidth = input(416);
-    /**
-     * Leave undefined to let the panel be as tall as its content (capped by
-     * `maxHeight`). A fixed height suits a surface that is always long, like a
-     * problem statement; a feedback list with three entries should not open a
-     * half-empty card.
-     */
+    /** Undefined sizes the panel to its content (capped by {@link maxHeight}); set it only for a surface that is always long. */
     readonly initialHeight = input<number | undefined>(undefined);
 
     readonly resized = output<ResizableSizeEvent>();

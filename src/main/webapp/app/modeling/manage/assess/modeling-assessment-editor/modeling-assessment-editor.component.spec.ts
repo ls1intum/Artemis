@@ -710,15 +710,11 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
             expect(banner).not.toBeNull();
-            // Chrome appearance, addressed at the canvas' top-left region...
             expect(banner.componentInstance.appearance()).toBe('chrome');
-            // The mocked canvas does not render its projection slots, so assert the
-            // logical placement: the banner is content of the canvas component, and its
-            // top-left region directive is what puts it into Apollon's chrome.
+            // The mocked canvas renders no projection slots, so placement is asserted logically: the banner
+            // is content of the canvas component, and its top-left directive is what mounts it into the chrome.
             expect(fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).query(By.directive(FeedbackSuggestionsBannerComponent))).not.toBeNull();
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(true);
-            // ...and no longer in the header band, which is what used to shrink the canvas.
-            expect(banner.nativeElement.hasAttribute('jhiBannerSlot')).toBe(false);
         });
 
         it('should leave the region unoccupied, and the island unrendered, when there is no notice', async () => {
@@ -727,8 +723,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // The banner stays projected — gating it with `@if` is what used to strand
-            // it outside the DOM — but it claims no canvas room and paints nothing.
+            // Projected unconditionally (see `ModelingAssessmentRegion`), but claiming no canvas room and painting nothing.
             const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
             expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();

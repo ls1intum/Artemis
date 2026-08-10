@@ -176,9 +176,8 @@
     }
 </div>
 
-<!-- Declared once and rendered only where it cannot push the page: inside the
-     assessment card when there is one, below the live editor otherwise (where
-     the flex chain makes it steal height from the canvas instead). -->
+<!-- Declared once, rendered only where it cannot push the page: inside the assessment card when there is
+     one, below the live editor otherwise, where the flex chain makes it take height from the canvas. -->
 <ng-template #complaintSection>
     <jhi-complaint-student-view [exercise]="modelingExercise()!" [participation]="participation()" [result]="resultWithComplaint() ? resultWithComplaint() : result()" />
 </ng-template>

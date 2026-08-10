@@ -43,11 +43,8 @@
                         [highlightDifferences]="highlightDifferences"
                         [elementCounts]="submission()?.similarElements"
                     >
-                        <!-- Athena's status belongs to the diagram, so it rides in the canvas'
-                             top-left corner as chrome. Projected unconditionally and gated by
-                             occupancy rather than `@if`: a control-flow block cannot be relied
-                             on to reach a named slot, and an empty region would still reserve
-                             an inset. See `ModelingAssessmentRegion`. -->
+                        <!-- Athena's status belongs to the diagram, so it rides in the canvas' top-left corner.
+                             Projected unconditionally and gated by occupancy, never `@if` — see `ModelingAssessmentRegion`. -->
                         <jhi-feedback-suggestions-banner
                             [modelingAssessmentTopLeft]="!!feedbackSuggestionsNotice()"
                             appearance="chrome"

@@ -24,11 +24,8 @@
         .modeling-explanation-surface__focus-shape {
             stroke: var(--apollon-primary);
 
-            /* The glow belongs to the outline, not to the backdrop. Filtering the
-               whole SVG made every child its own silhouette, so the two helper
-               rects that fill the notch seam and square off the corner - both
-               invisible by design - each grew a halo: a blue line under the label
-               and a bright square where the notch meets the body. */
+            /* Filter the outline shapes, never the whole backdrop SVG: `drop-shadow` haloes every child
+               separately, which would give the deliberately invisible seam and corner helpers a glow too. */
             filter: drop-shadow(0 0 1px var(--apollon-primary)) drop-shadow(0 0 1px var(--apollon-primary));
         }
     }
@@ -66,12 +63,9 @@
     stroke-width: var(--artemis-apollon-chrome-border-width);
     vector-effect: non-scaling-stroke;
 
-    /* The body outline runs the whole way round, including the stretch the notch
-       sits on. `__seam-fill` hides that stretch, but the glass it is filled with is
-       92% opaque, so on focus the primary stroke bled through underneath the label
-       as a faint line. Clipping the top-left corner out means the stroke is never
-       painted there in the first place - nothing to hide, nothing to bleed. The
-       left edge above the cut is drawn by `__corner-edge`, which is unaffected. */
+    /* Cut the stretch the notch sits on out of the outline rather than covering it: `__seam-fill` is not
+       fully opaque, so a stroke painted underneath shows through as a line beneath the label. The left
+       edge above the cut comes from `__corner-edge`. */
     clip-path: polygon(
         var(--modeling-explanation-surface-notch-width, 0) 0,
         100% 0,

@@ -1,6 +1,4 @@
-/* Chrome appearance only. The default `banner` appearance is deliberately left
-   unstyled here so text and programming assessment keep the layout their hosts
-   already give them. */
+/* Chrome appearance only: the default `banner` appearance stays unstyled so its hosts keep laying it out. */
 :host(.feedback-suggestions-banner--chrome) {
     display: flex;
     min-width: 0;

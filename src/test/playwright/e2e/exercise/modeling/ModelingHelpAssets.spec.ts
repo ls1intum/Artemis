@@ -197,6 +197,14 @@ const locateEditor = async (page: Page) => {
     };
 };
 
+/**
+ * An asset generator, not coverage: it drives the live editor to re-shoot the walkthrough images in
+ * `content/images/modeling-help` for both themes, and asserts nothing about the product. It is skipped
+ * unless explicitly invoked, so it contributes no signal to a normal run.
+ *
+ * That the shipped images exist and resolve IS asserted, by the help dialog checks in
+ * `ModelingEditorFullscreen.spec.ts`.
+ */
 test.describe('Modeling help assets', { tag: '@fast' }, () => {
     test.skip(!regenerateAssets, 'Regenerate with UPDATE_MODELING_HELP_SCREENSHOTS=1 ./run-e2e-tests-local-fast.sh --filter "Modeling help assets".');
     test.use({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2 });

@@ -494,12 +494,11 @@ describe('ModelingAssessmentComponent', () => {
     });
 });
 
-/** Stands in for the Athena chrome island: a component root inside `@if`, which
- *  is the shape the real page projects. */
+/** Stands in for a chrome island such as the Athena notice. */
 @Component({ selector: 'jhi-chrome-notice-stub', template: '<span class="chrome-notice">notice</span>' })
 class ChromeNoticeStubComponent {}
 
-/** Pins the backwards-compatible form: a bare attribute still means "always shown". */
+/** Host for the bare-attribute form of the marker, which must keep meaning "always occupied". */
 @Component({
     selector: 'jhi-modeling-assessment-bare-slot-host',
     template: `
@@ -529,13 +528,7 @@ class ModelingAssessmentChromeHostComponent {
     readonly diagramType = UMLDiagramType.ClassDiagram;
 }
 
-/**
- * Chrome islands are projected unconditionally and gated by occupancy, because a
- * region that mounts while empty still reserves an inset — and `@if` around the
- * projected content cannot be relied on to reach a named slot at all. These
- * tests pin both halves: unoccupied means unmounted and nothing reserved, and
- * occupied means the element really lands inside the region.
- */
+/** Pins both halves of the {@link ModelingAssessmentRegion} contract: unoccupied reserves nothing, occupied really mounts. */
 describe('ModelingAssessmentComponent chrome regions', () => {
     let fixture: ComponentFixture<ModelingAssessmentChromeHostComponent>;
     let editor: InstanceType<typeof MockApollonEditor>;
@@ -560,9 +553,8 @@ describe('ModelingAssessmentComponent chrome regions', () => {
     const noticeElement = () => fixture.debugElement.query(By.css('[data-testid="chrome-notice"]')).nativeElement as HTMLElement;
 
     it('should never mount an unoccupied region, even though the slot is filled', () => {
-        // The element is in the DOM the whole time; only occupancy is off. Mounting
-        // here would reserve an inset for a slot that renders nothing.
-        expect(noticeElement()).toBeTruthy();
+        // The slot is projected the whole time; only occupancy is off.
+        expect(fixture.debugElement.query(By.css('[data-testid="chrome-notice"]'))).not.toBeNull();
         expect(editor.getRegionElement).not.toHaveBeenCalledWith('top-left');
         expect(fixture.debugElement.query(By.css('.modeling-assessment__region--top-left')).nativeElement.classList).not.toContain('modeling-assessment__region--mounted');
     });
@@ -574,8 +566,7 @@ describe('ModelingAssessmentComponent chrome regions', () => {
 
         const region = editor._regionElements.get('top-left');
         expect(region).toBeDefined();
-        // The element must really be inside the region: a slot that resolves its
-        // directive but never attaches its nodes mounts an empty region instead.
+        // Containment, not just directive resolution: an unattached slot would mount an empty region.
         expect(region!.contains(noticeElement())).toBe(true);
         expect(noticeElement().closest('.modeling-assessment__region--top-left')?.classList).toContain('modeling-assessment__region--mounted');
 

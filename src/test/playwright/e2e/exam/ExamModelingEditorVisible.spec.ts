@@ -9,17 +9,12 @@ import { expectNoScrollPastApollonCanvas } from '../../support/utils';
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
 /**
- * The exam modeling canvas once rendered as a blank panel: the exercise wrapper
- * was content-sized, so a canvas that cannot derive a height from its own content
- * collapsed and painted outside its clipped box. Nothing caught it, because the
- * existing exam coverage drives the editor through the API-shaped page object
- * rather than asserting that the canvas is on screen and usable.
+ * A modeling canvas has no intrinsic height, so a content-sized ancestor collapses it to nothing.
+ * The rest of the exam suite drives the editor through its API-shaped page object and would not
+ * notice; this asserts the canvas is on screen, fills the space the exercise page gives it, and —
+ * the invariant every Apollon surface shares — cannot be scrolled past.
  *
- * This asserts the canvas is actually there, actually fills the space it is given,
- * and — the invariant every Apollon surface shares — cannot be scrolled past.
- *
- * Deliberately does NOT use `prepareExam`: that helper hands in early, after which
- * the student can no longer enter the exam.
+ * Builds the exam inline rather than through `prepareExam`, which hands in and locks the student out.
  */
 test.describe('Exam modeling editor', { tag: '@slow' }, () => {
     test('renders a usable canvas that fills the exercise page', async ({ login, page, examAPIRequests, examExerciseGroupCreation, examParticipation, examNavigation }) => {

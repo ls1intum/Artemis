@@ -3,8 +3,7 @@
     min-width: 0;
 }
 
-/* Only used when the panel is embedded in the Apollon editor chrome (`embeddedInEditorChrome` = false).
-   Standalone usages keep develop's framed block (`.border.p-2`) instead. */
+/* Chrome-embedded variant: the surrounding panel already frames the block, so it only needs a separating rule. */
 .assessment-instructions__grading {
     padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--apollon-chrome-border, var(--tumaet-ui-border-color));

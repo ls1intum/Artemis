@@ -1,7 +1,5 @@
 @use 'src/main/webapp/content/scss/artemis-variables' as artemis;
 
-$draggable-width: 15px;
-
 .modeling-editor {
     --modeling-editor-corner-radius: #{artemis.$border-radius-lg};
 
@@ -157,44 +155,6 @@ $draggable-width: 15px;
 .modeling-editor .spin {
     display: inline-block;
     animation: modeling-editor-spin 1s linear infinite;
-}
-
-.modeling-editor__canvas-shell.resizable {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: minmax(0, 1fr) auto;
-
-    .apollon-container {
-        width: 100%;
-        min-width: 0;
-        grid-column: 1;
-        grid-row: 1;
-    }
-
-    .draggable-right {
-        display: flex;
-        min-width: $draggable-width;
-        align-items: center;
-        justify-content: center;
-        grid-column: 2;
-        grid-row: 1;
-        cursor: col-resize;
-    }
-
-    .draggable-bottom {
-        display: flex;
-        width: 100%;
-        min-height: $draggable-width;
-        align-items: center;
-        justify-content: center;
-        grid-column: 1 / -1;
-        grid-row: 2;
-        cursor: row-resize;
-    }
-}
-
-.modeling-editor .apollon-container {
-    height: 600px;
 }
 
 .modeling-editor .modeling-editor__frame--tile .apollon-container {

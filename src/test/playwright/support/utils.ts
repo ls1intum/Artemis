@@ -874,20 +874,12 @@ export async function startAssessing(
 /**
  * Asserts that nothing on the page can be scrolled past the Apollon canvas.
  *
- * An Apollon canvas captures the wheel, so anything parked below it inside a
- * scrolling ancestor is unreachable: the reader scrolls, the diagram zooms, and
- * the content underneath never arrives. Every surface whose job is working with
- * a diagram — participating, assessing, reading an assessment — must therefore
- * make the canvas fill its frame and let anything else share that frame rather
- * than extend the page.
+ * The canvas captures the wheel, so anything parked below it inside a scrolling ancestor is
+ * unreachable: the reader scrolls, the diagram zooms, and the content underneath never arrives.
  *
- * Only ancestors are checked. A side panel that scrolls beside the canvas
- * (problem statement, assessment instructions, the feedback card itself) is
- * fine, because reaching it never requires scrolling past the diagram.
- *
- * The one legitimate exception is the exercise create/edit form, where the page
- * is a form and the editor runs with Apollon's scroll lock engaged so the wheel
- * passes through to the page. Do not call this there.
+ * Only ancestors are checked — a panel that scrolls beside the canvas is fine, since reaching it
+ * never means scrolling past the diagram. Do not call this on the exercise create/edit form, which
+ * is a form first and runs the editor with Apollon's scroll lock engaged so the wheel reaches the page.
  */
 export async function expectNoScrollPastApollonCanvas(page: Page) {
     const canvas = page.locator('.apollon-editor').first();

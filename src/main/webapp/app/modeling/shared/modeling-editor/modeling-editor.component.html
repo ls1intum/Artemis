@@ -89,31 +89,8 @@
                 <ng-content select="[modelingEditorBottomCenter]" />
             </div>
 
-            <div
-                #resizeContainer
-                [hidden]="readOnly()"
-                class="modeling-editor__canvas-shell"
-                [class.resizable]="resizeOptions()"
-                jhiResizable
-                [resizableEdges]="resizableEdges()"
-                [resizableConstraints]="{
-                    minWidth: MODELING_EDITOR_MIN_WIDTH,
-                    maxWidth: MODELING_EDITOR_MAX_WIDTH,
-                    minHeight: MODELING_EDITOR_MIN_HEIGHT,
-                    maxHeight: MODELING_EDITOR_MAX_HEIGHT,
-                }"
-            >
+            <div [hidden]="readOnly()" class="modeling-editor__canvas-shell">
                 <div #editorContainer class="apollon-container artemis-apollon-theme"></div>
-                @if (resizeOptions()?.horizontalResize) {
-                    <div class="draggable-right" [attr.aria-label]="'artemisApp.modelingSubmission.resizeEditor' | artemisTranslate">
-                        <fa-icon [icon]="faGripLinesVertical" />
-                    </div>
-                }
-                @if (resizeOptions()?.verticalResize) {
-                    <div class="draggable-bottom" [attr.aria-label]="'artemisApp.modelingSubmission.resizeEditor' | artemisTranslate">
-                        <fa-icon [icon]="faGripLines" />
-                    </div>
-                }
             </div>
         </div>
     }

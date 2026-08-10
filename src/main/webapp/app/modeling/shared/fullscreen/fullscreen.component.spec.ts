@@ -93,7 +93,8 @@ describe('FullscreenComponent', () => {
             expect(buttonDirective.severity()).toBe('secondary');
             expect(buttonDirective.variant()).toBe('text');
             expect(buttonDirective.size()).toBe('small');
-            expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
+            // Icon-only in this mode, so the accessible name is the button's only label.
+            expect(button.nativeElement.getAttribute('aria-label')).toBe('artemisApp.modelingEditor.fullscreen.enterButtonText');
         });
 
         it('should call toggleFullscreen when button is clicked', () => {

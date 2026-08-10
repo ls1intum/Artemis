@@ -13,13 +13,9 @@ import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
 
 /**
- * The exam summary renders the modeling submission inside a collapsible card, which
- * has no height of its own to hand down. The submission's layout assumed a sized
- * parent, so on this page the canvas resolved to zero and the student saw an empty
- * box where their diagram — and their feedback — should be.
- *
- * Nothing caught it: no existing exam coverage asserts that the summary's canvas is
- * on screen. This does, in the state that matters most, after an assessment exists.
+ * The exam summary renders the modeling submission inside a collapsible card, which hands down no
+ * height of its own — the one place the submission layout cannot assume a sized parent. Asserts the
+ * student sees their diagram and their feedback in the state that matters, once an assessment exists.
  */
 test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
     let exam: Exam;
@@ -71,9 +67,8 @@ test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
         await expect(panel.locator('.feedback-row').first()).toBeVisible();
         await expect(panel).toContainText('Good');
 
-        // The panel floats over the canvas, so the camera has to frame the diagram
-        // clear of it. Reserving room is not the same as using it: without a refit
-        // once the rail settles, the nodes keep their old framing and sit underneath.
+        // The panel floats over the canvas, so reserving rail width is not enough: the camera must
+        // also refit once the rail settles, or the nodes keep their old framing and sit underneath.
         const panelBox = (await panel.locator('.apollon-rail-disclosure__panel').boundingBox())!;
         const nodes = page.locator('jhi-modeling-exam-summary .react-flow__node');
         const nodeCount = await nodes.count();

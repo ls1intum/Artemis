@@ -143,11 +143,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     /**
      * Score and validity of the assessment currently on screen.
      *
-     * Derived, not pushed: the practice assessment (`?toComplete=true`) deliberately never loads a result — the
-     * tutor must not see the instructor's solution — so the load path had nothing to trigger an imperative
-     * recomputation with, and the flags kept their pessimistic initial values. That left "Submit assessment"
-     * permanently disabled for a tutor whose assessment consists only of unreferenced feedback. A `computed`
-     * cannot fall out of sync with {@link assessments} in the first place.
+     * Must stay derived rather than recomputed from the load path: the practice assessment
+     * (`?toComplete=true`) never loads a result — the tutor must not see the instructor's solution —
+     * so there is no load event to hang an imperative recomputation on.
      */
     private readonly scoreState = computed<{ valid: boolean; totalScore?: number; error?: string }>(() => {
         const feedbacks = this.assessments();
@@ -457,8 +455,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     markAllFeedbackToCorrect() {
         this.applyCorrectionStatus(() => 'CORRECT');
-        // Also refreshes the canvas (see applyCorrectionStatus) and clears highlights left over from an earlier,
-        // wrong attempt — without this a tutor who fixes their assessment keeps seeing the old "you missed this" tint.
+        // Clears the "you missed this" tint of a previous, wrong attempt, and repaints the canvas.
         this.highlightMissedFeedback();
     }
 
@@ -472,19 +469,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     /**
-     * Applies the server's verdict to the tutor's own feedback. Both signals are re-set with a fresh array, because
-     * setting a signal to the identical reference does not notify.
+     * Applies the server's verdict to the tutor's own feedback. Both signals get a fresh array, since setting a
+     * signal to the identical reference does not notify.
      *
-     * The two kinds of feedback need opposite treatment, dictated by who renders them:
-     * <ul>
-     *   <li>referenced feedback is drawn onto the canvas by {@link ModelingAssessmentComponent}, from the very
-     *       instances it received through `feedbackChanged` — so it is updated in place; handing out copies would
-     *       leave the canvas holding the pre-grading objects and no marker would ever appear;</li>
-     *   <li>unreferenced feedback is rendered by one `jhi-unreferenced-feedback-detail` per item, with the feedback as
-     *       that component's input — so it has to be replaced, otherwise the input binding never changes and the card
-     *       keeps showing no verdict.</li>
-     * </ul>
-     * The caller additionally refreshes {@link highlightedElements}, which is what makes the canvas repaint.
+     * The two kinds need opposite treatment, dictated by who renders them: referenced feedback is mutated in place
+     * because {@link ModelingAssessmentComponent} draws the canvas from the very instances it received through
+     * `feedbackChanged`, while unreferenced feedback is replaced because each item is the input of its own
+     * `jhi-unreferenced-feedback-detail`, whose binding only changes on a new reference.
      */
     private applyCorrectionStatus(statusFor: (feedback: Feedback) => FeedbackCorrectionStatus | undefined) {
         this.referencedFeedback.update((feedbacks) => {

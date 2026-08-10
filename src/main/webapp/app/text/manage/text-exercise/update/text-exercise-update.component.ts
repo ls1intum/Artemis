@@ -27,7 +27,6 @@ import { Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -65,7 +64,6 @@ import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/tex
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent,
         ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         ExerciseUpdatePlagiarismComponent,

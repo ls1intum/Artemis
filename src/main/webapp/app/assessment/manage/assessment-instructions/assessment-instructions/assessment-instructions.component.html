@@ -1,9 +1,6 @@
 @let gradingCriteriaValue = this.gradingCriteria();
 @let gradingInstructionsValue = this.gradingInstructions();
 @if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
-    <!-- Standalone (dashboard, tutor training, text/file-upload/programming assessment) keeps the framed block
-         from develop. Inside the Apollon editor chrome the panel already supplies the frame, so the block is
-         flush and only separated by a rule - see `embeddedInEditorChrome`. -->
     <div [class]="embeddedInEditorChrome() ? 'assessment-instructions__grading' : 'border p-2'">
         @if (gradingInstructionsValue) {
             <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">

@@ -18,7 +18,14 @@ function hasString(tree: Record<string, unknown>, key: string): boolean {
     return typeof tree[key] === 'string';
 }
 
-/** Builds Apollon overrides while retaining callbacks for labels with runtime values. */
+/**
+ * Builds Apollon overrides while retaining callbacks for labels with runtime values.
+ *
+ * Only locales that actually differ from Apollon carry keys: `DEFAULT_LABELS` is
+ * already English, so `i18n/en` deliberately defines none and every English string
+ * comes from the library. Mirroring them here would be 266 duplicates to keep in
+ * sync with every Apollon release.
+ */
 export function createApollonLabels(translator: ApollonLabelTranslator): Partial<ApollonLabels> {
     const translationTree = translator.instant(APOLLON_TRANSLATION_PREFIX);
     if (!isRecord(translationTree)) {

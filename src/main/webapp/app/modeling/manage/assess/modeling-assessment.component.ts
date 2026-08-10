@@ -62,17 +62,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     // must leave its region unmounted. See `ModelingAssessmentRegion`.
     private readonly projectedTopLeft = contentChild(ModelingAssessmentTopLeftDirective);
     private readonly projectedTopRight = contentChild(ModelingAssessmentTopRightDirective);
-    // Read as an element: the host node is what gets handed to the rail region.
     protected readonly panelRegion = viewChild('panelRegion', { read: ElementRef<HTMLElement> });
     private readonly projectedPanel = contentChild(ModelingAssessmentPanelDirective);
     private panelRegionMounted = false;
-    /** Mirrors how the other regions are hosted; see `synchronizeHostRegion`. */
 
     readonly enablePopups = input(true);
-    /** Heading shown on the side panel's card. */
     readonly panelLabel = input('');
     protected readonly hasPanel = computed(() => isOccupied(this.projectedPanel()));
-    /** Open by default: in the assessed view the feedback IS the point of the page. */
+    /** Open by default: the feedback is what the assessed view exists to show. */
     readonly panelVisible = signal(true);
     protected readonly panelMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
     protected readonly faPanel = faCommentDots;
@@ -257,17 +254,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             isOccupied(this.projectedTopRight()),
             this.topRightRegionMounted,
         );
-        // The side panel hangs off the right rail, so it sits inside the editor's
-        // own chrome — which is what carries it into fullscreen and means the
-        // reader never scrolls the page to reach their feedback.
+        // Hosting the panel in the rail keeps it inside Apollon's chrome, so it travels into
+        // fullscreen with the canvas and is reachable without scrolling the page.
         const panel = this.panelRegion()?.nativeElement;
         const panelWasMounted = this.panelRegionMounted;
         this.panelRegionMounted = this.synchronizeHostRegion('right-rail', panel, isOccupied(this.projectedPanel()), this.panelRegionMounted);
         if (this.panelRegionMounted && !panelWasMounted) {
-            // The rail scrolls its content by default, which clips a disclosure
-            // whose panel deliberately hangs past the trigger. Same opt-out the
-            // editor's problem statement makes — and it has to come after the
-            // first `getRegionElement`, since that is what creates the control.
+            // The rail clips its content, which would cut off a panel that hangs past its trigger.
+            // Must follow the first `getRegionElement`, which is what creates the control.
             this.apollonEditor.updateControl('apollon:host:right-rail', { style: { overflow: 'visible' } });
             this.observePanelWidth(panel);
         }
@@ -310,13 +304,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.scheduleChromePlacement();
     }
 
-    /**
-     * The rail reserves whatever width the panel takes, but reserving room is not
-     * the same as using it: the camera keeps its old framing until it is told to
-     * refit, which leaves the diagram sitting under the panel. The panel's width
-     * settles asynchronously — it grows once the feedback renders — so this
-     * watches it rather than refitting once at mount.
-     */
+    /** The panel's width settles asynchronously as its content renders, so the reservation is watched, not taken once. */
     private observePanelWidth(panel: HTMLElement): void {
         if (typeof ResizeObserver === 'undefined') {
             return;
@@ -328,11 +316,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     /**
-     * The panel floats over the canvas so it keeps the notch-and-glass look of the
-     * editor's other chrome, which means it contributes no inset of its own - only
-     * the trigger does. Left at that, the camera frames the diagram behind the open
-     * panel. Reserving the panel's measured width as an explicit inset keeps the
-     * float and still guarantees the diagram is laid out clear of it.
+     * The panel floats over the canvas, so the rail's own inset only covers the trigger and the
+     * camera would frame the diagram behind the open panel. Reserving the measured panel width as
+     * an explicit inset keeps the float while laying the diagram out clear of it.
      */
     private reserveRoomForPanel(panel: HTMLElement): void {
         if (!this.apollonEditor) {
@@ -352,10 +338,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.scheduleFitView();
     }
 
-    /**
-     * Two frames out: the overlay engine measures a region on the frame AFTER it
-     * changes size, so refitting any sooner frames against the previous inset.
-     */
+    /** Two frames out: the overlay engine measures a region on the frame after it resizes, so refitting sooner uses the previous inset. */
     private scheduleFitView(): void {
         if (this.fitViewFrame !== undefined) {
             window.cancelAnimationFrame(this.fitViewFrame);
@@ -368,11 +351,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         });
     }
 
-    /** Re-reserves the rail when the panel is collapsed or reopened. */
     protected onPanelVisibilityChanged(): void {
         const panel = this.panelRegion()?.nativeElement;
         if (panel) {
-            // Measured after the panel has been shown/hidden, not before.
+            // A frame out, so the rail is re-reserved against the panel's new visibility rather than its old one.
             window.requestAnimationFrame(() => this.reserveRoomForPanel(panel));
         }
     }

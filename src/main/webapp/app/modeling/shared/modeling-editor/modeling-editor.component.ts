@@ -82,7 +82,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
     private readonly editorTopLeftRegion = viewChild<ElementRef<HTMLElement>>('editorTopLeftRegion');
     private readonly editorBottomCenter = viewChild<ElementRef<HTMLElement>>('editorBottomCenter');
-    // Read as an element: the host node is what gets handed to the rail region.
     private readonly editorProblemStatement = viewChild('editorProblemStatement', { read: ElementRef<HTMLElement> });
     private readonly projectedTopLeft = contentChild(ModelingEditorTopLeftDirective, { read: ElementRef });
     private readonly projectedBottomCenter = contentChild(ModelingEditorBottomCenterDirective, { read: ElementRef });

@@ -53,11 +53,7 @@ import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/
 import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-/**
- * Ring colour for the element a hovered feedback entry refers to. Amber is the
- * editor's own "this element is marked" accent (`--apollon-interactive-selection`),
- * so the preview reads as part of the diagram rather than a second language.
- */
+/** Reuses Apollon's own "this element is marked" accent, so the preview reads as part of the diagram. */
 const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 
 @Component({
@@ -97,13 +93,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     protected readonly faEnterFullscreen = faUpRightAndDownLeftFromCenter;
     protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
 
-    /**
-     * Feedback is shown in the editor's own language. Apollon marks an assessed
-     * element with a tone-coloured badge — check, cross, or alert — over the
-     * `--apollon-assessment-*` ramp, and the same element is listed here; two
-     * different vocabularies for one assessment made the list read as a foreign
-     * object bolted to the diagram.
-     */
+    /** Matches the tone Apollon badges the same element with on the canvas, so the list speaks the diagram's language. */
     protected feedbackTone(feedback: Feedback): 'positive' | 'negative' | 'zero' {
         const credits = feedback.credits ?? 0;
         if (credits > 0) {
@@ -126,14 +116,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return credits > 0 ? `+${credits}` : `${credits}`;
     }
 
-    /** The element the feedback is about, named the way the diagram names it. */
     protected feedbackElementName(feedback: Feedback): string | undefined {
         const names = this.assessmentsNames();
         const referenceId = feedback.referenceId;
         const assessment = names && referenceId ? names[referenceId] : undefined;
-        // Apollon names a member `Owner::+ field: Type`. Prefixing the raw element
-        // type on top of that reads like a debug dump; the name already says what
-        // the element is, so only the separator needs softening.
+        // Apollon qualifies a member as `Owner::+ field: Type`; the name already identifies the element,
+        // so only the separator is softened for reading.
         return assessment?.name ? assessment.name.replace('::', ' › ') : undefined;
     }
 
@@ -165,7 +153,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     protected readonly selectedElementIdsSignal = signal<string[]>([]);
     /** Element referenced by the feedback entry currently hovered or focused. */
     protected readonly previewedFeedbackReferenceId = signal<string | undefined>(undefined);
-    /** Handed to the editor, which paints a ring around the previewed element. */
     protected readonly highlightedFeedbackElements = computed(() => {
         const referenceId = this.previewedFeedbackReferenceId();
         return referenceId ? new Map([[referenceId, FEEDBACK_PREVIEW_HIGHLIGHT]]) : undefined;
@@ -210,20 +197,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     readonly isFeedbackView = signal(false);
 
-    /**
-     * Complaining is an action on a result, so it belongs beside the result — in
-     * the assessment card, not as a strip under the editor. Rendered below the
-     * canvas only in the live-editor branch, which has no card to hold it.
-     */
-    /**
-     * Whether the side panel has anything worth a rail. Feedback, the rating and
-     * the complaint actions all hang off a result, so with none of them the card
-     * would be an empty box announcing its own emptiness.
-     */
+    /** Everything the side panel can hold hangs off a result, so without one the rail would open an empty card. */
     protected hasAssessmentToShow(): boolean {
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
     }
 
+    /** Complaining is an action on a result, so it is rendered beside the result rather than as a strip under the canvas. */
     protected showComplaintSection(): boolean {
         return !!this.result() && !this.examMode() && !this.isFeedbackView();
     }
@@ -798,20 +777,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * Whether a feedback entry is about one of the elements currently selected on
-     * the diagram. Selecting an element used to HIDE every other entry, which left
-     * a student staring at a shortened list with nothing to say why; now it only
-     * marks the matching ones, so the rest of the assessment stays readable.
+     * Whether a feedback entry is about one of the elements currently selected on the diagram.
+     * Selecting an element marks the matching entries; it must never filter the list, or the reader
+     * is left with a silently shortened assessment.
      */
     isFeedbackForSelection(feedback: Feedback): boolean {
         const selected = this.selectedElementIdsSignal();
         return selected.length > 0 && !!feedback.referenceId && selected.includes(feedback.referenceId);
     }
 
-    /**
-     * Rings the element a feedback entry refers to while the reader is merely
-     * passing over that entry — a cheap preview, no canvas movement.
-     */
+    /** Rings the referenced element while the reader passes over the entry: a preview, deliberately without canvas movement. */
     previewFeedbackTarget(feedback: Feedback): void {
         this.previewedFeedbackReferenceId.set(feedback.referenceId);
     }
@@ -820,12 +795,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.previewedFeedbackReferenceId.set(undefined);
     }
 
-    /**
-     * Commits to an entry: the canvas selects that element, opens its feedback
-     * popover and pans to it. This is what makes the list navigable rather than
-     * merely readable — an entry is otherwise just text about a box the reader
-     * has to find by eye.
-     */
+    /** Commits to an entry: selects its element on the canvas, opens the element's popover and pans to it. */
     showFeedbackOnDiagram(feedback: Feedback): void {
         if (!feedback.referenceId) {
             return;

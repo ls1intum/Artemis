@@ -16,12 +16,10 @@ const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
  * The tutor training ("practice assessment") flow of an example submission: a tutor grades an example submission from
  * scratch and the server tells them how their assessment differs from the instructor's.
  *
- * Regressions this guards against:
- *  - "Submit assessment" was disabled on arrival, because the validity flag was only recomputed by a code path that
- *    never runs in this mode (no result is loaded here - the instructor's assessment is the solution).
- *  - The unreferenced ("additional") feedback editor was hidden entirely, because it was gated on a persisted result id.
- *  - A wrong assessment produced no verdict at all: the server put the multi-line correction-error JSON into an HTTP
- *    response header, which the container rejects, so the client received a body without the correction errors.
+ * This mode loads no result at all — the instructor's assessment is the solution the tutor is graded against — which
+ * is what makes it worth an e2e. It pins three invariants that all depend on that: submitting is enabled on arrival,
+ * the unreferenced feedback editor is available without a persisted result id, and a wrong assessment comes back with
+ * the server's correction errors in the response body.
  */
 test.describe('Modeling example submission practice assessment', { tag: '@slow' }, () => {
     let modelingExercise: ModelingExercise;

@@ -129,10 +129,8 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            // The persisted Apollon JSON has had three shapes over time: v3 keyed records under `elements`/`relationships`,
-            // v4 arrays under the same keys, and v5 arrays under `nodes`/`edges`. Reading `.length` off whichever key
-            // happened to be expected yielded `undefined + undefined === NaN` for every other shape, so delegate to the
-            // shared normalizer that understands all three.
+            // Persisted models carry any of the Apollon schema versions, which disagree on both the collection
+            // keys and their shape; only the shared normalizer can count all of them.
             const model = (submission as ModelingSubmission).model;
             return model ? countModelElements(parseJson<ApollonModelData>(model)) : 0;
         }

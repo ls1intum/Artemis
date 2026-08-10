@@ -10,14 +10,12 @@ import { expectNoScrollPastApollonCanvas } from '../../../support/utils';
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
 /**
- * A page that scrolls past an Apollon canvas is broken: the canvas eats the
- * wheel, so whatever sits below it cannot be reached. These tests pin the
- * boundary — the working surfaces must never scroll, and the one page that may
- * (the exercise form) must hand the wheel back via Apollon's scroll lock.
+ * A page that scrolls past an Apollon canvas is broken: the canvas eats the wheel, so whatever sits
+ * below it cannot be reached. These tests pin the boundary — the working surfaces must never scroll,
+ * and the one page that may (the exercise form) must hand the wheel back via Apollon's scroll lock.
  *
- * Regressions here have always come from content ABOVE or BELOW the editor
- * growing — a complaint strip, a hint banner, a `min-height: 100vh` — so the
- * assertions deliberately measure the ancestors rather than the editor.
+ * The assertions measure the editor's ancestors, since it is content above or below the editor that
+ * pushes a page over the edge.
  */
 test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
     let modelingExercise: ModelingExercise;
@@ -51,10 +49,9 @@ test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
         const containerScrolls = await page.locator('#course-body-container').evaluate((element) => element.scrollHeight > element.clientHeight + 1);
         expect(pageScrolls || containerScrolls).toBe(true);
 
-        // Which is exactly why the wheel must reach the page: with scroll lock
-        // engaged, a wheel over the canvas scrolls past it instead of zooming.
-        // The editor starts below the fold on this page, so bring it into view
-        // first — otherwise the pointer never lands on the canvas at all.
+        // Which is why the wheel must reach the page: with scroll lock engaged, a wheel over the
+        // canvas scrolls past it instead of zooming. The editor starts below the fold here, so it
+        // has to be brought into view before the pointer can land on it.
         const canvas = page.locator('.apollon-editor');
         await canvas.scrollIntoViewIfNeeded();
         const box = await canvas.boundingBox();
@@ -73,10 +70,8 @@ test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
 });
 
 /**
- * The Athena notice used to sit in a band above the assessment workspace, where
- * it took its height out of the canvas. It is chrome now — an island floating in
- * Apollon's top-left corner — so showing it must change neither the canvas' size
- * nor the page's scroll height.
+ * The Athena notice is chrome, not a band: an island floating in Apollon's top-left corner. Showing
+ * it must therefore change neither the canvas' size nor the page's scroll height.
  */
 test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, () => {
     const assessmentCourseId = SEED_COURSES.exerciseManagement.id;
@@ -107,8 +102,19 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
     async function canvasBox(page: Page) {
         const canvas = page.locator('jhi-modeling-assessment .apollon-editor');
         await expect(canvas).toBeVisible();
-        // The chrome mounts a frame after Apollon settles; wait it out before measuring.
-        await page.waitForTimeout(1500);
+        // The chrome mounts a frame after Apollon settles, so measure only once the box has stopped moving.
+        let previous: string | undefined;
+        await expect
+            .poll(
+                async () => {
+                    const current = JSON.stringify(await canvas.boundingBox());
+                    const settled = current === previous;
+                    previous = current;
+                    return settled;
+                },
+                { intervals: Array(12).fill(250) },
+            )
+            .toBe(true);
         return (await canvas.boundingBox())!;
     }
 

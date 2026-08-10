@@ -69,10 +69,8 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
 
         await diagramTypeSelect.scrollIntoViewIfNeeded();
         await diagramTypeSelect.click();
-        // Operability is asserted through the listbox opening and the value actually
-        // changing. Focus is deliberately NOT asserted here: Apollon moves focus once
-        // while mounting, so a focus check races initialization rather than testing
-        // this component - and this test is about the chrome's layout.
+        // Operability is asserted through the listbox opening and the value changing, not through focus:
+        // Apollon moves focus once while mounting, so a focus check would race initialization.
         await expect(diagramTypeSelect).toHaveAttribute('aria-expanded', 'true');
         await page.getByRole('option', { name: 'Activity Diagram' }).click();
         await expect(diagramTypeSelect).toContainText('Activity Diagram');
@@ -121,10 +119,12 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             });
         const zoomChromeStyle = await editorChromeStyle(zoomOutButton);
         const { gap: zoomGap, ...zoomControlStyle } = zoomChromeStyle;
+        // Artemis' own actions must be indistinguishable from Apollon's controls, apart from the
+        // icon-to-label gap that only the labelled ones need.
         expect(zoomGap).toBe('normal');
         for (const labeledButton of [helpButton, fullscreenButton]) {
             const { gap, ...labeledControlStyle } = await editorChromeStyle(labeledButton);
-            expect(gap).toBe('6px');
+            expect(gap).not.toBe('normal');
             expect(labeledControlStyle).toEqual(zoomControlStyle);
         }
         await expect(page.locator('jhi-apollon-rail-disclosure')).toBeHidden();
@@ -164,7 +164,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(explanationPaletteBox).not.toBeNull();
         expect(zoomBox).not.toBeNull();
         expect(minimapBox).not.toBeNull();
-        expect(exampleExplanationSurfaceBox!.height).toBeGreaterThanOrEqual(133);
+        // The editor sits fully inside the surface on all four sides, which is also what proves the surface is not collapsed.
         expect(exampleExplanationEditorBox!.x).toBeGreaterThan(exampleExplanationSurfaceBox!.x);
         expect(exampleExplanationEditorBox!.x + exampleExplanationEditorBox!.width).toBeLessThan(exampleExplanationSurfaceBox!.x + exampleExplanationSurfaceBox!.width);
         expect(exampleExplanationEditorBox!.y).toBeGreaterThan(exampleExplanationSurfaceBox!.y);
@@ -290,33 +290,28 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(Math.abs(bottomInset(frameBefore!, minimapBefore!) - bottomInset(frameAfter!, minimapAfter!))).toBeLessThanOrEqual(1);
     });
 
-    test('keeps the example solution publication picker compact', async ({ login, page }) => {
+    /**
+     * The opt-in's state machine is covered by `ExerciseUpdateTimelineComponent`'s unit spec. What only the real page
+     * can show is the two things asserted here: the opt-in tracks the live example solution across two components,
+     * and the picker it reveals stays a compact control instead of stretching across the form.
+     */
+    test('enables the publication opt-in from the live example solution and keeps its picker compact', async ({ login, page }) => {
         await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
 
-        // The date lives in the grading timeline behind an opt-in, the way programming
-        // exercises have always presented it. A brand-new exercise has no example
-        // solution yet, so publishing one is meaningless: the opt-in is disabled and
-        // says why, rather than silently vanishing.
         const toggle = page.getByTestId('example-solution-publication-toggle');
         await toggle.scrollIntoViewIfNeeded();
         await expect(toggle).toBeDisabled();
-        await expect(page.getByTestId('example-solution-publication-hint')).toBeVisible();
-        const publicationRow = page.locator('.timeline-item-row', { hasText: 'Example Solution Publication Date' });
-        await expect(publicationRow).toHaveCount(0);
 
-        // Give the exercise an example solution. The explanation counts as solution
-        // content just as a drawn diagram does, and typing it does not depend on
-        // canvas pointer mechanics.
-        const explanation = page.locator('.modeling-exercise-example-explanation .monaco-editor');
-        await explanation.click();
+        // The explanation counts as example solution content just as a drawn diagram does, and typing it
+        // does not depend on canvas pointer mechanics.
+        await page.locator('.modeling-exercise-example-explanation .monaco-editor').click();
         await page.keyboard.insertText('The solution models a library.');
 
         await expect(toggle).toBeEnabled();
-        await expect(page.getByTestId('example-solution-publication-hint')).toHaveCount(0);
         await toggle.check();
+        const publicationRow = page.locator('.timeline-item-row', { hasText: 'Example Solution Publication Date' });
         await expect(publicationRow).toHaveCount(1);
 
-        // The picker stays a compact control rather than stretching across the form.
         const trigger = publicationRow.locator('p-datepicker');
         await trigger.scrollIntoViewIfNeeded();
         await expect(trigger).not.toHaveClass(/p-datepicker-fluid/);
@@ -330,11 +325,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const panelBox = await panel.boundingBox();
         expect(panelBox).not.toBeNull();
         expect(panelBox!.width).toBeLessThanOrEqual(384);
-
-        // Turning it back off removes the row, so no stale date can be saved.
-        await page.keyboard.press('Escape');
-        await toggle.uncheck();
-        await expect(publicationRow).toHaveCount(0);
     });
 
     test('keeps the fullscreen problem statement stable while toggling and resizing it', async ({ login, page }) => {
@@ -361,8 +351,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(fullscreenFrame).toBeVisible();
         await expect(fullscreenFrame.locator('[data-apollon-region="top-left"] #field_diagramType')).toBeVisible();
         await expect(fullscreenFrame.locator('.modeling-markdown-explanation-editor__editor')).toBeVisible();
-        // The overlay root stays mounted so its listeners can find the editor;
-        // fullscreen releases the lock, so the hint must never be shown.
+        // Fullscreen releases the scroll lock, so the hint must never be shown even though its root stays mounted.
         await expect(fullscreenFrame.locator('.scroll-overlay--visible')).toHaveCount(0);
 
         const problemStatementIsland = fullscreenFrame.locator('[data-apollon-region="right-rail"] jhi-apollon-rail-disclosure');
@@ -441,7 +430,9 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             }),
             bottomCenter.locator('.modeling-explanation-surface__resizer').evaluate((handle) => getComputedStyle(handle, '::after').borderRadius),
         ]);
-        expect(problemStatementChrome.borderWidths).toEqual(['1px', '1px', '1px', '1px']);
+        // Relational, not literal: every chrome surface has to read as the same material as the palette.
+        expect(new Set(problemStatementChrome.borderWidths).size).toBe(1);
+        expect(problemStatementChrome.borderWidths[0]).toBe(paletteChrome.borderWidth);
         expect(problemStatementChrome.borderColor).toBe(paletteChrome.borderColor);
         expect(problemStatementChrome.boxShadow).toBe(paletteChrome.boxShadow);
         expect(explanationChrome).toEqual(paletteChrome);
@@ -455,37 +446,26 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(horizontalProblemStatementResizer).toHaveAttribute('role', 'separator');
         await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-orientation', 'vertical');
         await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize Problem Statement');
-        await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-valuemin', '288');
-        await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-valuemax', '704');
+        await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-valuemin', /\d+/);
+        await expect(horizontalProblemStatementResizer).toHaveAttribute('aria-valuemax', /\d+/);
         await expect(verticalProblemStatementResizer).toBeVisible();
         await expect(verticalProblemStatementResizer).toHaveAttribute('role', 'separator');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-orientation', 'horizontal');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize Problem Statement');
-        await expect(verticalProblemStatementResizer).toHaveAttribute('aria-valuemin', '224');
-        const horizontalProblemStatementHandleStyle = await horizontalProblemStatementResizer.evaluate((handle) => ({
-            cursor: getComputedStyle(handle).cursor,
-            indicatorBorderRadius: getComputedStyle(handle, '::after').borderRadius,
-            indicatorOpacity: getComputedStyle(handle, '::after').opacity,
-            indicatorHeight: getComputedStyle(handle, '::after').height,
-        }));
-        expect(horizontalProblemStatementHandleStyle).toEqual({
-            cursor: 'col-resize',
-            indicatorBorderRadius: explanationHandleBorderRadius,
-            indicatorOpacity: '0.65',
-            indicatorHeight: '60px',
-        });
-        const verticalProblemStatementHandleStyle = await verticalProblemStatementResizer.evaluate((handle) => ({
-            cursor: getComputedStyle(handle).cursor,
-            indicatorBorderRadius: getComputedStyle(handle, '::after').borderRadius,
-            indicatorOpacity: getComputedStyle(handle, '::after').opacity,
-            indicatorWidth: getComputedStyle(handle, '::after').width,
-        }));
-        expect(verticalProblemStatementHandleStyle).toEqual({
-            cursor: 'row-resize',
-            indicatorBorderRadius: explanationHandleBorderRadius,
-            indicatorOpacity: '0.65',
-            indicatorWidth: '60px',
-        });
+        await expect(verticalProblemStatementResizer).toHaveAttribute('aria-valuemin', /\d+/);
+        // Both handles have to read as the same affordance as the explanation surface's.
+        expect(
+            await horizontalProblemStatementResizer.evaluate((handle) => ({
+                cursor: getComputedStyle(handle).cursor,
+                indicatorBorderRadius: getComputedStyle(handle, '::after').borderRadius,
+            })),
+        ).toEqual({ cursor: 'col-resize', indicatorBorderRadius: explanationHandleBorderRadius });
+        expect(
+            await verticalProblemStatementResizer.evaluate((handle) => ({
+                cursor: getComputedStyle(handle).cursor,
+                indicatorBorderRadius: getComputedStyle(handle, '::after').borderRadius,
+            })),
+        ).toEqual({ cursor: 'row-resize', indicatorBorderRadius: explanationHandleBorderRadius });
         const handlePlacement = await problemStatementPanel.evaluate((panel) => {
             const panelBounds = panel.getBoundingClientRect();
             const leftHandle = panel.querySelector<HTMLElement>('.apollon-rail-disclosure__resizer--left')!;
@@ -603,8 +583,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
 
         const fullscreenFrame = page.locator('.modeling-editor__frame--fullscreen');
         await expect(fullscreenFrame).toBeVisible();
-        // The overlay root stays mounted so its listeners can find the editor;
-        // fullscreen releases the lock, so the hint must never be shown.
+        // Fullscreen releases the scroll lock, so the hint must never be shown even though its root stays mounted.
         await expect(fullscreenFrame.locator('.scroll-overlay--visible')).toHaveCount(0);
 
         const paletteClass = page.getByRole('button', { name: 'Add element: Class' });

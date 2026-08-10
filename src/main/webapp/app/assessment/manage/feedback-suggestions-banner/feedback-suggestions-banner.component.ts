@@ -19,11 +19,9 @@ export interface FeedbackSuggestionsNoticeState {
 }
 
 /**
- * The banner's visibility rule, lifted out of the template so a host can ask
- * "is there anything to show?" *before* it makes room for the answer.
- *
- * Chrome hosts need that: an editor that only mounts the banner when it says
- * something never reserves — and never releases — an empty overlay region.
+ * The banner's visibility rule, exported so a host can ask "is there anything to show?" before it
+ * makes room for the answer — a chrome host that reserves an overlay region for a silent banner
+ * never releases it again.
  */
 export function feedbackSuggestionsNotice(state: FeedbackSuggestionsNoticeState): FeedbackSuggestionsNotice | undefined {
     if (state.isLoading) {
@@ -36,11 +34,9 @@ export function feedbackSuggestionsNotice(state: FeedbackSuggestionsNoticeState)
 }
 
 /**
- * `banner` renders the message inline, as a band the host lays out (text and
- * programming assessment). `chrome` renders a compact glass island meant to be
- * mounted into an Apollon overlay region, where it floats over the canvas
- * instead of taking a slice of it — the long copy moves into the info tooltip
- * so the island stays one line wide.
+ * `banner` renders the message inline, as a band the host lays out. `chrome` renders a compact
+ * island for mounting into an Apollon overlay region, where it floats over the canvas rather than
+ * taking a slice of it, so the long copy moves into the info tooltip to keep the island one line wide.
  */
 export type FeedbackSuggestionsBannerAppearance = 'banner' | 'chrome';
 

@@ -268,6 +268,14 @@ Generic styles
     display: block;
 }
 
+// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
+// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
+// `jhi-date-time-picker` no longer needs this (it sizes via `[fluid]` rather than a `w-full` styleClass),
+// but the tutorial period range picker still opts in through `panelStyleClass`.
+.jhi-date-time-picker-panel {
+    min-width: auto !important;
+}
+
 // PrimeNG date picker (jhi-date-time-picker and the tutorial period range picker):
 // Render the invalid border from a wrapper class instead of relying solely on the inner
 // `<p-datepicker [invalid]>` input. Under zoneless change detection the OnPush picker view can stay

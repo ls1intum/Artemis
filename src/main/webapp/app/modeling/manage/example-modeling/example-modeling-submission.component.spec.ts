@@ -548,7 +548,7 @@ describe('Example Modeling Submission Component', () => {
             // The instructor's assessment is the solution and must not leak into the tutor's own assessment.
             expect(comp.result()).toBeUndefined();
             expect(comp.assessments()).toHaveLength(0);
-            // Regression: assessmentsAreValid used to stay false until an imperative recomputation that never ran here.
+            // Valid without any result having been loaded, which is the only state this mode ever reaches.
             expect(comp.assessmentsAreValid()).toBe(true);
 
             const submitButton = fixture.nativeElement.querySelector('#submit-example-assessment') as HTMLButtonElement;

@@ -6,16 +6,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 
 /**
- * Grading timeline shared by the update forms of the manually assessed exercise types
- * (modeling, text, file upload).
+ * Grading timeline shared by the update forms of the manually assessed exercise types (modeling, text, file upload).
  *
- * It mirrors {@link ProgrammingExerciseUpdateTimelineComponent}: the example solution publication date is not a
- * standalone field next to the example solution, it is an opt-in step of the timeline, so that all dates of an
- * exercise are configured (and ordered against each other) in one place, for every exercise type.
- *
- * Publishing an example solution that does not exist is meaningless, so the opt-in is disabled - not hidden -
- * while {@link hasExampleSolution} is false, with a hint that says why. Whenever the opt-in is off the date is
- * cleared, so an exercise without an example solution can never be saved with a leftover publication date.
+ * Mirrors {@link ProgrammingExerciseUpdateTimelineComponent}: the example solution publication date is an opt-in step
+ * of the timeline rather than a standalone field, so every exercise type configures and orders all of its dates in one
+ * place. The opt-in is disabled rather than hidden while {@link hasExampleSolution} is false, with a hint that says
+ * why, and turning it off clears the date so no exercise can be saved with a leftover publication date.
  */
 @Component({
     selector: 'jhi-exercise-update-timeline',
@@ -24,13 +20,11 @@ import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 
     imports: [FormsModule, NgStyle, TranslateDirective, ExerciseTimelineComponent],
 })
 export class ExerciseUpdateTimelineComponent implements OnInit {
-    /** Whether the exercise currently carries an example solution that could be published. */
     readonly hasExampleSolution = input(false);
     /** The server resets the publication date on import, so the opt-in is inert there (as for programming exercises). */
     readonly isImport = input(false);
     /** Dates are governed by the exercise's variant group; see {@link ExerciseTimelineComponent}. */
     readonly lockedToGroup = input(false);
-    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
     readonly lockedClick = output<void>();
 
     readonly releaseDate = model<Dayjs | undefined>();

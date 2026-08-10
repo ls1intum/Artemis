@@ -94,7 +94,6 @@ class StubModelingEditorComponent {
     diagramType = input<unknown>();
     readOnly = input<boolean>(false);
     scrollLock = input<boolean>(false);
-    resizeOptions = input<unknown>();
     withExplanation = input<boolean>(false);
     problemStatement = input<string>();
     showProjectedBottomCenter = input<boolean>(true);

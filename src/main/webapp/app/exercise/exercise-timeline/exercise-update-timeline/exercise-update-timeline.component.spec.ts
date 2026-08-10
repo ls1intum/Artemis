@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { describe, expect, it, vi } from 'vitest';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/modeling/exercise-timeline-stub.component';
+import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/exercise/exercise-timeline-stub.component';
 import { ExerciseUpdateTimelineComponent } from './exercise-update-timeline.component';
 
 describe('ExerciseUpdateTimelineComponent', () => {

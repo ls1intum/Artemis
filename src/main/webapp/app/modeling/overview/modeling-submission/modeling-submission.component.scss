@@ -86,9 +86,8 @@ jhi-fullscreen {
     overscroll-behavior: contain;
 }
 
-/* The assessed view is the diagram: one child, filling the frame. The feedback
-   used to sit beside it in a second grid track, which is what left a dead band
-   under the canvas once it moved into the editor's own chrome. */
+/* One child, filling the frame: the feedback lives in the editor's own chrome, so a second track
+   beside the canvas would only leave a dead band. */
 .modeling-submission-assessment-layout {
     display: flex;
     width: 100%;
@@ -100,13 +99,9 @@ jhi-fullscreen {
         display: flex;
         min-width: 0;
 
-        /* The floor is what makes a content-sized host viable at all - the exam
-           summary renders this inside a collapsible card that has no height to
-           give, and a diagram surface has no intrinsic height to fall back on.
-           There it is also the ACTUAL height, so it has to be enough to review a
-           diagram and its feedback side by side, not merely enough to prove the
-           canvas exists. Capped against the viewport so a summary card can never
-           grow taller than the screen it is read on. */
+        /* Under a content-sized host (the exam summary's collapsible card) this floor is the actual
+           height, so it has to be enough to review a diagram and its feedback together — and capped
+           against the viewport so such a card can never outgrow the screen. */
         min-height: min(34rem, 70dvh);
         flex: 1 1 auto;
         overflow: hidden;
@@ -114,7 +109,6 @@ jhi-fullscreen {
 }
 
 @media print {
-    /* Ensure the parent container adjusts its height during printing */
     .submission-container {
         min-height: auto !important;
         height: auto !important;
@@ -122,12 +116,9 @@ jhi-fullscreen {
     }
 }
 
-/* Feedback panel — the editor's own assessment language, not a second one.
-   A row carries the same tone badge Apollon paints on the element (check /
-   cross / alert over the `--apollon-assessment-*` ramp), the element's name as
-   the diagram names it, then the comment. Nothing else: the badge already says
-   whether it was right, so no word repeats it and no bespoke icon competes with
-   the canvas. */
+/* Feedback panel, in the editor's own assessment language: a row carries the tone badge Apollon paints
+   on the element, the element's name as the diagram names it, then the comment — and nothing else,
+   since the badge already says whether it was right. */
 .modeling-submission-feedback {
     display: flex;
     min-height: 0;
@@ -253,8 +244,7 @@ jhi-fullscreen {
     padding-top: 0.625rem;
     border-top: 1px solid var(--apollon-border, var(--bs-border-color));
 
-    /* Two equal actions across the card rather than two shrink-wrapped buttons
-       stranded on the left. */
+    /* Two equal actions across the card, rather than shrink-wrapped buttons stranded on the left. */
     ::ng-deep .btn {
         width: 100%;
         margin: 0;
@@ -268,10 +258,9 @@ jhi-fullscreen {
         grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     }
 
-    /* Every column in here is a Bootstrap `col-md-*`, and those answer to the
-       VIEWPORT rather than to the box they sit in — so on a wide screen the
-       complaint form splits its title, its body and its submit button into
-       half-width columns inside a 26rem panel. In this card a row is one column. */
+    /* Override, not a design: `complaints-form` and `complaints-student-view` lay themselves out with
+       `col-12 col-md-6`, which answers to the viewport rather than to this 26rem panel and would split
+       the form into half-width columns. Remove this once those two use container queries. */
     ::ng-deep .row > * {
         width: 100%;
         max-width: 100%;

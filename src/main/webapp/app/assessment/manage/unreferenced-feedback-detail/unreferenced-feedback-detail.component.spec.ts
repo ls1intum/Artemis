@@ -36,9 +36,7 @@ describe('Unreferenced Feedback Detail Component', () => {
     });
 
     it('should render without a resultId', () => {
-        // Regression guard: `resultId` used to be an `input.required<number>()` that neither the template nor the
-        // code ever read. Being required, it forced every host to supply one — and hosts without a result had to
-        // fabricate it with a non-null assertion (`[resultId]="result()?.id!"`). It must not come back.
+        // Nothing here reads a result id, so no host may be forced to fabricate one.
         expect('resultId' in comp).toBe(false);
 
         fixture.componentRef.setInput('feedback', { id: 1, detailText: 'some feedback' } as Feedback);

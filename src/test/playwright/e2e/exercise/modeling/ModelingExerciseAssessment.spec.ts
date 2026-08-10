@@ -41,8 +41,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(exerciseAssessment.getLockedMessage()).toBeVisible();
-            // The tutor's canvas must fill its frame; the instructions live beside
-            // it, never below it.
+            // The instructions live beside the canvas, never below it.
             await expectNoScrollPastApollonCanvas(page);
             await modelingExerciseAssessment.addNewFeedback(1, 'Thanks, good job.');
             await modelingExerciseAssessment.openAssessmentForComponent(1);
@@ -73,8 +72,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await modelingExerciseFeedback.shouldShowScore(20);
             await modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             await modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');
-            // The feedback and the complaint actions both live inside the editor's
-            // chrome, so neither the list nor the form may push the page.
+            // Feedback and complaint actions both live inside the editor's chrome, so neither may push the page.
             await expectNoScrollPastApollonCanvas(page);
             await modelingExerciseFeedback.complain('I am not happy with your assessment.');
             await expectNoScrollPastApollonCanvas(page);
