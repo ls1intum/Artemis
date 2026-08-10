@@ -212,6 +212,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         String studentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);
         LocalRepository studentRepository = RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey1, studentRepositorySlug,
                 baseRepositories.solutionRepository());
+        if (projectType == ProjectType.GCC) {
+            makeSubmissionExerciseKillShadow(studentRepository);
+        }
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Retry the build once before failing — a real configuration regression fails twice.
@@ -359,6 +362,56 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
                 testCasesAfterRepoSetup.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().toList());
 
         return baseRepositories;
+    }
+
+    /**
+     * Replaces the student submission with one that exercises the {@code kill} shadow of {@code shadow_exec.c}, which
+     * is linked into every C submission to keep student code from controlling processes.
+     * <p>
+     * The template solution never calls {@code kill}, so the build alone could not tell a working shadow from a broken
+     * one. This submission both requires a targeted signal to reach the kernel and requires every signal that addresses
+     * more than one process to be refused, so a regression in either direction stops the program before it prints and
+     * shows up as a failing {@code TestOutput} rather than as a silent pass:
+     * <ul>
+     * <li>the shadow used to call {@code kill} recursively, so the targeted probe signal overflowed the stack — under
+     * AddressSanitizer that surfaced only as repeated {@code AddressSanitizer:DEADLYSIGNAL} until the tester timed out</li>
+     * <li>the shadow used to refuse only pid 0 and -1, so any other process group was signalled for real, which here
+     * would terminate the program via SIGTERM</li>
+     * </ul>
+     * The tester reads stdout until it sees {@code Hello world!}, so the refusal messages the shadow prints on the way
+     * are tolerated.
+     */
+    private void makeSubmissionExerciseKillShadow(LocalRepository studentRepository) throws Exception {
+        String submission = """
+                // Feature macro before any include so <signal.h> declares kill(2) under -std=c11.
+                #define _POSIX_C_SOURCE 200809L
+
+                #include <signal.h> // For kill(...)
+                #include <stdio.h>  // For printf(...)
+                #include <stdlib.h> // For EXIT_SUCCESS
+                #include <sys/types.h>
+                #include <unistd.h> // For getpid(...)
+
+                int main(void) {
+                    // Every signal that addresses more than one process has to be refused: 0 is this process group,
+                    // -1 is every process this user may signal, and any other negative pid is the process group -pid.
+                    if (kill(0, SIGTERM) != -1 || kill(-1, SIGTERM) != -1 || kill(-getpid(), SIGTERM) != -1) {
+                        return EXIT_FAILURE;
+                    }
+                    // A targeted signal has to reach the kernel. The shadow used to recurse here until the stack
+                    // overflowed, so this call never returned.
+                    if (kill(getpid(), 0) != 0) {
+                        return EXIT_FAILURE;
+                    }
+                    printf("Hello world!\\n");
+                    return EXIT_SUCCESS;
+                }
+                """;
+        Files.writeString(studentRepository.workingCopyGitRepoFile.toPath().resolve("helloWorld.c"), submission);
+        studentRepository.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(studentRepository.workingCopyGitRepo).setMessage("Exercise the kill shadow from the submission").call();
+        studentRepository.workingCopyGitRepo.push().call();
+        RepositoryExportTestUtil.waitForBareRepositoryReady(studentRepository);
     }
 
     private void seedRepositoryFromTemplate(LocalRepository repository, Path resourcePath, String commitSuffix) throws Exception {
