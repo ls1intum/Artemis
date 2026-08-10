@@ -287,6 +287,33 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
+        it('should not submit a typed password after toggling back to keeping the existing one', async () => {
+            // Regression test: shouldRandomizePassword() used to reset only user().password, while save()
+            // submits editForm.getRawValue(). A password typed before toggling back was therefore still
+            // sent, silently changing it while revokeCredentials was forced to false — a real credential
+            // change that left the user's other credentials intact.
+            const existingUser = new User(123);
+            const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
+            component.user.set(existingUser);
+            component.user().login = 'test_user';
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+
+            // The admin opts to set a password, types one, then changes their mind and keeps the old one.
+            component.shouldRandomizePassword(false);
+            component.editForm.patchValue({ password: 'typed-Password-123' });
+            component.revokeCredentials.set(true);
+            component.shouldRandomizePassword(true);
+
+            component.save();
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            const submitted = updateSpy.mock.calls[0][0];
+            expect(submitted.password).toBeFalsy();
+            expect(submitted.revokeCredentials).toBe(false);
+            expect(component.editForm.get('password')?.value).toBe('');
+        });
+
         it('should never request credential revocation without a replacement password', async () => {
             const existingUser = new User(123);
             const updateSpy = vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));

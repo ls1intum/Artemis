@@ -220,6 +220,11 @@ export class UserManagementUpdateComponent implements OnInit {
     shouldRandomizePassword(useRandomPassword: boolean) {
         this.useRandomPassword.set(useRandomPassword);
         this.user().password = useRandomPassword ? undefined : '';
+        // Clear the reactive control too, not just the model: save() submits editForm.getRawValue(), so a
+        // password typed before toggling back to "keep password" would otherwise still be sent — silently
+        // changing the password while revokeCredentials is reset to false, i.e. a real credential change
+        // that leaves the user's other credentials intact.
+        this.editForm?.get('password')?.reset('');
         if (useRandomPassword) {
             this.revokeCredentials.set(false);
         }
