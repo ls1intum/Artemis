@@ -33,6 +33,15 @@ html.modeling-exercise-editor-scroll-snap {
     scroll-snap-type: block proximity;
 }
 
+/* The modeling editor's fullscreen frame sits at $modeling-editor-fullscreen-z-index,
+   so anything portaled out of the editor would paint behind it. There are two such
+   portals and they attach to different roots:
+
+   - Apollon's popovers use a Base UI portal under <body>. It is unpositioned, so it
+     needs the position/inset as well as the z-index; pointer events are handed back
+     to its children so the transparent full-screen layer never swallows a click.
+   - TUM UI dialogs use Angular CDK, whose overlay container is appended to <html>
+     and already positions itself - only the z-index is missing there. */
 html:fullscreen body:has(> .modeling-editor__frame--fullscreen) > [data-base-ui-portal] {
     position: fixed;
     z-index: $modeling-editor-fullscreen-z-index + 1;
@@ -42,6 +51,10 @@ html:fullscreen body:has(> .modeling-editor__frame--fullscreen) > [data-base-ui-
     > * {
         pointer-events: auto;
     }
+}
+
+html:fullscreen:has(> body > .modeling-editor__frame--fullscreen) > .cdk-overlay-container {
+    z-index: $modeling-editor-fullscreen-z-index + 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
