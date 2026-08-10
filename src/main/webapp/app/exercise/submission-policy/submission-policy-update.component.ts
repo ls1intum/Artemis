@@ -181,6 +181,7 @@ export class SubmissionPolicyUpdateComponent {
         // different exercise would go undetected and keep this exercise's values on screen.
         this.initializedExerciseId = programmingExercise.id ?? this.initializedExerciseId;
         if (!switchedExercise && (this.policyFormInitialized || this.form?.dirty || this.form?.touched)) {
+            this.syncFormIntoExercise(programmingExercise);
             return;
         }
         if (switchedExercise) {
@@ -215,6 +216,31 @@ export class SubmissionPolicyUpdateComponent {
         if (submissionPolicy && submissionPolicy.type !== SubmissionPolicyType.NONE) {
             this.policyFormInitialized = true;
         }
+    }
+
+    /**
+     * A rejected emission still swaps the object behind programmingExercise(), and the parent saves that
+     * object. The controls only write into the model on (input) events, so the preserved on-screen state
+     * has to be copied into the incoming exercise here or saving would silently persist the stale values.
+     */
+    private syncFormIntoExercise(programmingExercise: ProgrammingExercise): void {
+        if (!this.form) {
+            return;
+        }
+        const selectedType = this.selectedSubmissionPolicyType();
+        if (selectedType === SubmissionPolicyType.NONE) {
+            // Same semantics as applySubmissionPolicyType: an existing policy is switched off for
+            // deletion on save, a policy that never existed stays absent.
+            if (programmingExercise.submissionPolicy && programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
+                programmingExercise.submissionPolicy.type = SubmissionPolicyType.NONE;
+            }
+            return;
+        }
+        const policy = programmingExercise.submissionPolicy ?? (selectedType === SubmissionPolicyType.LOCK_REPOSITORY ? new LockRepositoryPolicy() : new SubmissionPenaltyPolicy());
+        policy.type = selectedType;
+        policy.submissionLimit = this.submissionLimitControl.value ?? undefined;
+        policy.exceedingPenalty = selectedType === SubmissionPolicyType.SUBMISSION_PENALTY ? (this.exceedingPenaltyControl.value ?? undefined) : undefined;
+        programmingExercise.submissionPolicy = policy;
     }
 
     private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {

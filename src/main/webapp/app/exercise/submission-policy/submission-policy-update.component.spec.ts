@@ -193,6 +193,68 @@ describe('Submission Policy Update Form Component', () => {
         expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
         expect(submissionLimitInputField.value).toBe('10');
         expect(component.submissionLimitControl.value).toBe(10);
+        // The parent saves the re-emitted object, so the preserved edit must exist there too.
+        expect(reEmittedExercise.submissionPolicy!.submissionLimit).toBe(10);
+    });
+
+    it('should mark the re-emitted policy as none when the user switched the policy off', async () => {
+        programmingExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 } as LockRepositoryPolicy;
+        await detectChanges();
+
+        const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+        submissionPolicyTypeField.value = SubmissionPolicyType.NONE;
+        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        await detectChanges();
+
+        const reEmittedExercise = new ProgrammingExercise(undefined, undefined);
+        reEmittedExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 3 } as LockRepositoryPolicy;
+        fixture.componentRef.setInput('programmingExercise', reEmittedExercise);
+        await detectChanges();
+
+        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.NONE);
+        expect(reEmittedExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.NONE);
+    });
+
+    it('should copy a preserved penalty edit into the re-emitted exercise', async () => {
+        programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 50.4 } as SubmissionPenaltyPolicy;
+        await detectChanges();
+
+        component.exceedingPenaltyControl.setValue(73.5);
+        component.exceedingPenaltyControl.markAsDirty();
+        await detectChanges();
+
+        const reEmittedExercise = new ProgrammingExercise(undefined, undefined);
+        reEmittedExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 50.4 } as SubmissionPenaltyPolicy;
+        fixture.componentRef.setInput('programmingExercise', reEmittedExercise);
+        await detectChanges();
+
+        expect(reEmittedExercise.submissionPolicy!.exceedingPenalty).toBe(73.5);
+        expect(reEmittedExercise.submissionPolicy!.submissionLimit).toBe(5);
+    });
+
+    it('should carry a policy picked on a placeholder into the asynchronously fetched exercise (import)', async () => {
+        // Import-from-sharing renders an empty placeholder exercise first; the fetched exercise
+        // replaces it with the id cleared, so it counts as the same unsaved exercise.
+        programmingExercise.submissionPolicy = undefined;
+        await detectChanges();
+
+        const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
+        submissionPolicyTypeField.value = SubmissionPolicyType.LOCK_REPOSITORY;
+        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        await detectChanges();
+        component.submissionLimitControl.setValue(10);
+        component.submissionLimitControl.markAsDirty();
+        await detectChanges();
+
+        const fetchedExercise = new ProgrammingExercise(undefined, undefined);
+        fetchedExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 50.4 } as SubmissionPenaltyPolicy;
+        fixture.componentRef.setInput('programmingExercise', fetchedExercise);
+        await detectChanges();
+
+        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(fetchedExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(fetchedExercise.submissionPolicy!.submissionLimit).toBe(10);
+        expect(fetchedExercise.submissionPolicy!.exceedingPenalty).toBeUndefined();
     });
 
     it('should report invalid without throwing when read before the exercise input is set (#13447)', async () => {
