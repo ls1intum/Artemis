@@ -18,9 +18,35 @@ export class CourseManagementExercisesPage {
         return this.page.locator(`#exercise-card-${exerciseID}`);
     }
 
+    /**
+     * Clicks a row action, resolving it whether it is inline or collapsed into the row's ellipsis overflow menu.
+     * @param exerciseID the exercise whose row to act on
+     * @param actionId the action id from `exercise-actions.component.ts` (e.g. `delete`, `edit`, `participations`)
+     */
+    private async clickRowAction(exerciseID: number, actionId: string) {
+        const row = this.getExercise(exerciseID);
+        await row.waitFor({ state: 'attached' });
+        const inlineAction = row.locator(`[data-testid="exercise-action-${actionId}"]`);
+        if (await inlineAction.isVisible()) {
+            await inlineAction.click();
+            return;
+        }
+        // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
+        await row.locator('.action-more').click();
+        await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
+    }
+
+    /**
+     * Opens the exercise create/import modal via the toolbar button and selects the exercise-type card for the given
+     * type. Mode is `create` or `import`; the type is the {@link ExerciseType} enum value (e.g. `file-upload`, `text`).
+     */
+    private async selectExerciseTypeCard(mode: 'create' | 'import', type: string) {
+        await this.page.getByTestId(`${mode}-exercise-button`).click();
+        await this.page.getByTestId(`${mode}-${type}-exercise`).click();
+    }
+
     async clickDeleteExercise(exerciseID: number) {
-        const exerciseElement = this.getExercise(exerciseID);
-        await exerciseElement.locator('#delete-exercise').click();
+        await this.clickRowAction(exerciseID, 'delete');
     }
 
     async clickExampleSubmissionsButton() {
@@ -32,8 +58,7 @@ export class CourseManagementExercisesPage {
     }
 
     async deleteTextExercise(exercise: Exercise) {
-        const exerciseElement = this.getExercise(exercise.id!);
-        await exerciseElement.locator('#delete-exercise').click();
+        await this.clickRowAction(exercise.id!, 'delete');
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(TEXT_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -41,8 +66,7 @@ export class CourseManagementExercisesPage {
     }
 
     async deleteModelingExercise(exercise: Exercise) {
-        const exerciseElement = this.getExercise(exercise.id!);
-        await exerciseElement.locator('#delete-exercise').click();
+        await this.clickRowAction(exercise.id!, 'delete');
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(MODELING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -50,8 +74,7 @@ export class CourseManagementExercisesPage {
     }
 
     async deleteQuizExercise(exercise: Exercise) {
-        const exerciseElement = this.getExercise(exercise.id!);
-        await exerciseElement.locator(`#delete-quiz-${exercise.id}`).click();
+        await this.clickRowAction(exercise.id!, 'delete');
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(QUIZ_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -59,8 +82,7 @@ export class CourseManagementExercisesPage {
     }
 
     async deleteProgrammingExercise(exercise: Exercise) {
-        const exerciseElement = this.getExercise(exercise.id!);
-        await exerciseElement.locator('#delete-exercise').click();
+        await this.clickRowAction(exercise.id!, 'delete');
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(PROGRAMMING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -83,8 +105,7 @@ export class CourseManagementExercisesPage {
     }
 
     async deleteFileUploadExercise(exercise: Exercise) {
-        const exerciseElement = this.getExercise(exercise.id!);
-        await exerciseElement.locator('#delete-exercise').click();
+        await this.clickRowAction(exercise.id!, 'delete');
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(UPLOAD_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
@@ -92,39 +113,39 @@ export class CourseManagementExercisesPage {
     }
 
     async createProgrammingExercise() {
-        await this.page.locator('#create-programming-exercise').click();
+        await this.selectExerciseTypeCard('create', 'programming');
     }
 
     async createModelingExercise() {
-        await this.page.locator('#create-modeling-exercise').click();
+        await this.selectExerciseTypeCard('create', 'modeling');
     }
 
     async createTextExercise() {
-        await this.page.locator('#create-text-exercise').click();
+        await this.selectExerciseTypeCard('create', 'text');
     }
 
     async createQuizExercise() {
-        await this.page.locator('#create-quiz-exercise').click();
+        await this.selectExerciseTypeCard('create', 'quiz');
     }
 
     async createFileUploadExercise() {
-        await this.page.locator('#create-file-upload-exercise').click();
+        await this.selectExerciseTypeCard('create', 'file-upload');
     }
 
     async importProgrammingExercise() {
-        await this.page.locator('#import-programming-exercise').click();
+        await this.selectExerciseTypeCard('import', 'programming');
     }
 
     async importModelingExercise() {
-        await this.page.locator('#import-modeling-exercise').click();
+        await this.selectExerciseTypeCard('import', 'modeling');
     }
 
     async importTextExercise() {
-        await this.page.locator('#import-text-exercise').click();
+        await this.selectExerciseTypeCard('import', 'text');
     }
 
     async importQuizExercise() {
-        await this.page.locator('#import-quiz-exercise').click();
+        await this.selectExerciseTypeCard('import', 'quiz');
     }
 
     async clickImportExercise(exerciseID: number) {
@@ -165,7 +186,7 @@ export class CourseManagementExercisesPage {
 
     async openExerciseParticipations(exerciseId: number) {
         await this.waitForExerciseCardAttached(exerciseId);
-        await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
+        await this.clickRowAction(exerciseId, 'participations');
     }
 
     /**
@@ -179,11 +200,10 @@ export class CourseManagementExercisesPage {
      * @param exerciseId - The ID of the exercise to edit.
      */
     async openExerciseEditForm(exerciseId: number): Promise<void> {
-        const editLink = this.getExercise(exerciseId).getByRole('link', { name: 'Edit' });
         for (let attempt = 0; attempt < 3; attempt++) {
             try {
-                await editLink.waitFor({ state: 'visible', timeout: 10_000 });
-                await editLink.click();
+                await this.getExercise(exerciseId).waitFor({ state: 'visible', timeout: 10_000 });
+                await this.clickRowAction(exerciseId, 'edit');
                 return;
             } catch (error) {
                 if (attempt === 2) {
@@ -196,21 +216,20 @@ export class CourseManagementExercisesPage {
     }
 
     async openQuizExerciseDetailsPage(exerciseId: number) {
-        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.page.locator(`#exercise-id-${exerciseId} a`).click()]);
+        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.getExercise(exerciseId).locator('.col-title a').click()]);
     }
 
     getModelingExerciseTitle(exerciseID: number) {
-        return this.page.locator(`#exercise-card-${exerciseID}`).locator(`#modeling-exercise-${exerciseID}-title`);
+        return this.getExercise(exerciseID).locator('.col-title');
     }
 
     getModelingExerciseMaxPoints(exerciseID: number) {
-        return this.page.locator(`#exercise-card-${exerciseID}`).locator(`#modeling-exercise-${exerciseID}-maxPoints`);
+        return this.getExercise(exerciseID).locator('.col-points');
     }
 
     async openExerciseTeams(exerciseId: number) {
         await this.waitForExerciseCardAttached(exerciseId);
-        const teamsButton = this.getExercise(exerciseId).locator('.btn', { hasText: 'Teams' });
-        await teamsButton.click();
+        await this.clickRowAction(exerciseId, 'teams');
     }
 
     /**

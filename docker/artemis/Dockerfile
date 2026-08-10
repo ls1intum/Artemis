@@ -39,6 +39,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # be present at install time (pnpm applies patches during resolution, not via a
 # postinstall hook like patch-package did).
 COPY patches patches/
+# pnpm resolves the `workspace:*` dependencies while installing, so every workspace member's
+# manifest has to exist by then. Manifests only: copying sources here would invalidate the cached
+# install layer on every package edit. A new member without its own COPY aborts the install.
+COPY packages/tum-ui/package.json packages/tum-ui/
 
 # One Gradle invocation does both the cache config and the pnpm install. The
 # BuildKit pnpm-store cache mount below is reused on warm builds; pnpm's
@@ -58,7 +62,7 @@ COPY . .
 #
 # `-Psbom` includes the server + client Software Bill of Materials inside the WAR.
 # This Dockerfile is the production image build path (used by the `docker-release`
-# job in .github/workflows/build.yml, which only fires on push to develop / main /
+# job in .github/workflows/ci-build.yml, which only fires on push to develop / main /
 # release/* / version tags and on release events). Always emitting the SBOM here
 # guarantees that deployed images expose the dependency inventory via
 # AdminSbomResource and the weekly vulnerability scan finds something to scan.
@@ -73,7 +77,7 @@ RUN \
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/alpine:3.23.4 AS external_builder
+FROM docker.io/library/alpine:3.23.5 AS external_builder
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
@@ -89,6 +93,22 @@ COPY ./build/libs/*.war Artemis.war
 # external image, so there is no version tag to pin (DL3006 is a false positive here).
 # hadolint ignore=DL3006
 FROM ${WAR_FILE_STAGE} AS war_file
+
+#-----------------------------------------------------------------------------------------------------------------------
+# extract stage (explode the WAR so the runtime image runs from a flat classpath -> faster startup)
+#-----------------------------------------------------------------------------------------------------------------------
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:25.0.3_9-jdk AS extractor
+
+#default path of the built .war files
+ARG WAR_FILE_PATH="/opt/artemis/build/libs"
+
+WORKDIR /extract
+COPY --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
+# `jarmode=tools extract` produces app/Artemis.war (thin) + app/lib/ with a flat Class-Path. Running
+# from this exploded layout avoids Spring Boot's nested-jar classloader, which dominates cold start
+# (~38s -> ~25s measured). The extraction cost is paid once here at image-build time, so every
+# container start is fast with no runtime extraction.
+RUN java -Djarmode=tools -jar Artemis.war extract --destination /extract/app
 
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
@@ -128,19 +148,48 @@ RUN \
   && chown -R artemis:artemis /opt/artemis
 USER artemis:artemis
 
-# Copy Artemis.war to execution location
+# Copy the exploded Artemis layout (app/Artemis.war + app/lib/) to the execution location.
+# WORKDIR stays /opt/artemis so Spring still discovers config from /opt/artemis and /opt/artemis/config.
 WORKDIR /opt/artemis
 
-COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
+COPY --chown=artemis:artemis --from=extractor /extract/app /opt/artemis/app
 
+# Verify the exploded runtime artifact actually contains a fully built Angular client.
+# `jarmode=tools extract` flattens the WAR: the former WEB-INF/classes/** content (including static/)
+# is hoisted to the root of the thin app/Artemis.war, so the client lives at static/** here — every
+# entry name below is relative to that flattened root, not to WEB-INF/classes/.
+# The Tailwind directive list is a denylist: revisit it whenever Tailwind gains one. The same
+# invariant is asserted for the package stylesheet in packages/tum-ui/check-styles.mjs.
+# `jar` prefix-matches entry names, so every stylesheet arrives together with its .css.map, and that
+# map embeds the original source, directives and all. Only the .css files are scanned.
 RUN set -eu; \
-  war_entries="$(jar tf Artemis.war)"; \
-  if ! printf '%s\n' "$war_entries" | grep -qx 'WEB-INF/classes/static/index.html'; then \
-    echo "Artemis.war does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."; \
+  war_entries="$(jar tf app/Artemis.war)"; \
+  if ! printf '%s\n' "$war_entries" | grep -qx 'static/index.html'; then \
+    echo "app/Artemis.war does not contain static/index.html. The Angular client is missing from the deployable WAR."; \
     exit 1; \
   fi; \
-  if ! printf '%s\n' "$war_entries" | grep -Eq '^WEB-INF/classes/static/main-.*\.js$'; then \
-    echo "Artemis.war does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."; \
+  if ! printf '%s\n' "$war_entries" | grep -Eq '^static/main-.*\.js$'; then \
+    echo "app/Artemis.war does not contain a static/main-*.js bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi; \
+  stylesheets="$(printf '%s\n' "$war_entries" | grep -E '^static/[^/]+\.css$' || true)"; \
+  if [ -z "$stylesheets" ]; then \
+    echo "app/Artemis.war contains no static/*.css bundle. The Angular client build is incomplete."; \
+    exit 1; \
+  fi; \
+  extracted="$(mktemp -d)"; \
+  printf '%s\n' "$stylesheets" | while read -r stylesheet; do jar xf app/Artemis.war -C "$extracted" "$stylesheet"; done; \
+  if [ "$(find "$extracted" -name '*.css' | wc -l)" -ne "$(printf '%s\n' "$stylesheets" | wc -l)" ]; then \
+    echo "Could not extract the stylesheet bundles from app/Artemis.war; the Tailwind check did not run."; \
+    rm -rf "$extracted"; \
+    exit 1; \
+  fi; \
+  uncompiled="$(find "$extracted" -name '*.css' -exec grep -hoE '@(tailwind|source|theme|plugin|custom-variant|utility|variant|apply|reference|config)[[:space:]("{]' {} + | sed 's/.$//' | sort -u | paste -sd' ' - || true)"; \
+  rm -rf "$extracted"; \
+  if [ -n "$uncompiled" ]; then \
+    echo "app/Artemis.war ships a client stylesheet that still contains Tailwind source directives: ${uncompiled}."; \
+    echo "The Tailwind PostCSS plugin did not transform it, so no utility class in the templates resolves to a rule and the application renders unstyled."; \
+    echo "Check that a PostCSS config at the repository root names the plugin and that the build which produced this WAR could read it; for an in-Docker build that means .dockerignore."; \
     exit 1; \
   fi
 
@@ -173,4 +222,4 @@ CMD [ "java", \
 "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED", \
 "--add-opens", "java.management/sun.management=ALL-UNNAMED", \
 "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED", \
-"-jar", "/opt/artemis/Artemis.war" ]
+"-jar", "/opt/artemis/app/Artemis.war" ]

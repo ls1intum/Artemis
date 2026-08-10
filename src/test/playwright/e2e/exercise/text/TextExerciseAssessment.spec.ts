@@ -42,6 +42,49 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
         }
     });
 
+    /**
+     * Cancelling releases the lock on the assessment the tutor has open. Kept self contained with its own exercise and
+     * submission so it cannot race the serial Feedback block over the single shared submission.
+     *
+     * Issue #13396: cancelling resolved the result on the server instead of using the one the caller named, so it
+     * released the newest correction round rather than the one the button belonged to.
+     */
+    test.describe('Cancelling an assessment', () => {
+        let cancelExercise: TextExercise;
+
+        test.beforeAll('Create a second exercise and submission', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            const exerciseAPIRequests = new ExerciseAPIRequests(page);
+            await Commands.login(page, admin);
+            const cancelDueDate = dayjs().add(10, 'seconds');
+            cancelExercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), cancelDueDate, cancelDueDate.add(2, 'hours'));
+            await Commands.login(page, studentOne);
+            await exerciseAPIRequests.startExerciseParticipation(cancelExercise.id!);
+            const submission = await Fixtures.get('loremIpsum-short.txt');
+            await exerciseAPIRequests.makeTextExerciseSubmission(cancelExercise.id!, submission!);
+            const now = dayjs();
+            if (now.isBefore(cancelDueDate)) {
+                await page.waitForTimeout(cancelDueDate.diff(now, 'ms') + 2000);
+            }
+            await page.close();
+        });
+
+        test('releases the lock so the submission can be assessed again', async ({ login, exerciseAssessment, textExerciseAssessment }) => {
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${cancelExercise.id!}`);
+            await exerciseAssessment.clickHaveReadInstructionsButton();
+            await exerciseAssessment.clickStartNewAssessment();
+            await expect(textExerciseAssessment.getInstructionsRootElement().filter({ hasText: cancelExercise.title })).toBeVisible();
+
+            const cancelResponse = await textExerciseAssessment.cancelAssessment();
+            expect(cancelResponse.status()).toBe(200);
+
+            // The lock is gone only if the very same submission can be picked up for assessment again.
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${cancelExercise.id!}`);
+            await exerciseAssessment.clickStartNewAssessment();
+            await expect(textExerciseAssessment.getInstructionsRootElement().filter({ hasText: cancelExercise.title })).toBeVisible();
+        });
+    });
+
     test.describe.serial('Feedback', () => {
         test('Assesses the text exercise submission', async ({ login, page, exerciseAssessment, textExerciseAssessment }) => {
             await login(tutor, `/course-management/${course.id}/assessment-dashboard/${exercise.id!}`);
