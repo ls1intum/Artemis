@@ -5,6 +5,8 @@
 }
 
 .modeling-explanation-surface__surface {
+    --modeling-explanation-surface-seam-height: 2px;
+
     box-sizing: border-box;
     position: relative;
     display: flex;
@@ -18,13 +20,16 @@
     background-color: var(--apollon-chrome-glass-solid);
 
     &:has(.modeling-explanation-surface__content :focus-visible) {
-        .modeling-explanation-surface__backdrop {
-            filter: drop-shadow(0 0 1px var(--apollon-primary)) drop-shadow(0 0 1px var(--apollon-primary));
-        }
-
         .modeling-explanation-surface__shape,
         .modeling-explanation-surface__focus-shape {
             stroke: var(--apollon-primary);
+
+            /* The glow belongs to the outline, not to the backdrop. Filtering the
+               whole SVG made every child its own silhouette, so the two helper
+               rects that fill the notch seam and square off the corner - both
+               invisible by design - each grew a halo: a blue line under the label
+               and a bright square where the notch meets the body. */
+            filter: drop-shadow(0 0 1px var(--apollon-primary)) drop-shadow(0 0 1px var(--apollon-primary));
         }
     }
 
@@ -60,6 +65,21 @@
     stroke: transparent;
     stroke-width: var(--artemis-apollon-chrome-border-width);
     vector-effect: non-scaling-stroke;
+
+    /* The body outline runs the whole way round, including the stretch the notch
+       sits on. `__seam-fill` hides that stretch, but the glass it is filled with is
+       92% opaque, so on focus the primary stroke bled through underneath the label
+       as a faint line. Clipping the top-left corner out means the stroke is never
+       painted there in the first place - nothing to hide, nothing to bleed. The
+       left edge above the cut is drawn by `__corner-edge`, which is unaffected. */
+    clip-path: polygon(
+        var(--modeling-explanation-surface-notch-width, 0) 0,
+        100% 0,
+        100% 100%,
+        0 100%,
+        0 var(--modeling-explanation-surface-seam-height),
+        var(--modeling-explanation-surface-notch-width, 0) var(--modeling-explanation-surface-seam-height)
+    );
 }
 
 .modeling-explanation-surface__body-shape {
@@ -80,7 +100,7 @@
 .modeling-explanation-surface__seam-fill {
     x: 0;
     y: 0;
-    height: 2px;
+    height: var(--modeling-explanation-surface-seam-height);
 }
 
 .modeling-explanation-surface__corner-edge,
