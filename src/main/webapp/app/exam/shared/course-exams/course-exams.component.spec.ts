@@ -129,6 +129,7 @@ describe('CourseExamsComponent', () => {
                         parent: {
                             params: of({ courseId: '1' }),
                         },
+                        pathFromRoot: [{ snapshot: { url: [{ path: 'courses' }, { path: '1' }] } }, { snapshot: { url: [{ path: 'exams' }] } }],
                         params: of({ examId: visibleRealExam1.id }),
                     },
                 },

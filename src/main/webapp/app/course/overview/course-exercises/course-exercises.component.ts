@@ -107,7 +107,7 @@ export class CourseExercisesComponent {
     constructor() {
         // Selecting the exercises tab while already on it acts as a refresh
         this.courseTabRefreshService
-            .reselections()
+            .reselections(this.route)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.loadExercises());
 

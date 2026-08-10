@@ -186,8 +186,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     /**
      * Loads which tabs are available for the current course and updates the sidebar from the result.
      *
-     * The value the guard already fetched for this course visit is reused, so a course visit costs exactly one
-     * `available-tabs` request.
+     * The value the guard already fetched for this navigation is reused, so entering a guarded tab costs one
+     * `available-tabs` request rather than two.
      *
      * A failure here is deliberately not alerted: the parallel course load reports the same network problem. The old
      * course's flags are cleared before starting so an in-place course switch can never retain links that are not
@@ -387,7 +387,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     override ngOnDestroy() {
         super.ngOnDestroy();
         this.availableTabsSubscription?.unsubscribe();
-        // Drop the per-visit state so re-entering the course asks the server again
+        // Drop what is held for the current navigation so nothing outlives the course being left
         this.courseAvailableTabsService.clear();
         this.courseOverviewExercisesService.clear();
         this.courseOverviewTabDataService.clear();

@@ -362,7 +362,10 @@ describe('CourseStatisticsComponent', () => {
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: { parent: { parent: { params: of({ courseId: '1' }) } } },
+                    useValue: {
+                        parent: { parent: { params: of({ courseId: '1' }) } },
+                        pathFromRoot: [{ snapshot: { url: [{ path: 'courses' }, { path: '1' }] } }, { snapshot: { url: [{ path: 'statistics' }] } }],
+                    },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),

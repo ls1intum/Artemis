@@ -330,7 +330,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             .subscribe((courseId) => this.activateCourse(courseId));
 
         // Selecting the statistics tab while already on it acts as a refresh
-        this.tabReselectionSubscription = this.courseTabRefreshService.reselections().subscribe(() => this.loadExercises(this.courseId));
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadExercises(this.courseId));
     }
 
     private activateCourse(courseId: number): void {
@@ -348,9 +348,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.onCourseLoad();
         });
 
-        // The exercises and their scores are not part of the course itself; this tab and the exercises tab share one
-        // load, so whichever is opened first pays for it. The result arrives through the course update subscription
-        // above and through the ScoresStorageService.
+        // The exercises and their scores are not part of the course itself, so this tab loads them. The result arrives
+        // through the course update subscription above and through the ScoresStorageService.
         this.loadExercises(courseId);
     }
 

@@ -122,7 +122,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.course.set(course);
         });
         this.loadLectures();
-        this.tabReselectionSubscription = this.courseTabRefreshService.reselections().subscribe(() => this.loadLectures());
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadLectures());
     }
 
     /**

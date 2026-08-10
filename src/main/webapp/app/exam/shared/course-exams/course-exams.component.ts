@@ -129,7 +129,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             .subscribe((courseId) => this.activateCourse(courseId));
 
         // Selecting the exams tab while already on it acts as a refresh
-        this.tabReselectionSubscription = this.courseTabRefreshService.reselections().subscribe(() => this.loadExams(this.courseId()));
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadExams(this.courseId()));
     }
 
     /** Cancels all course-scoped work, clears rendered state, and loads the newly active course. */

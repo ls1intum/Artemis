@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -31,8 +30,6 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
-import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.dto.ChannelSubTypeReferenceDatesDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
@@ -229,30 +226,8 @@ public class ConversationService {
                 .map(conversation -> new ConversationSummary(conversation, userConversationInfos.get(conversation.getId()), generalConversationInfos.get(conversation.getId())));
 
         List<ConversationDTO> conversationDTOs = conversationSummaries.map(summary -> conversationDTOService.convertToDTO(summary, requestingUser)).toList();
-        applySubTypeReferenceDates(conversationDTOs);
+        conversationDTOService.fillSubTypeReferenceDates(conversationDTOs);
         return conversationDTOs;
-    }
-
-    /**
-     * Fills in the dates of the exercise, lecture or exam each channel references, so the sidebar can mark a channel as
-     * current without the client needing the course's exercises, lectures and exams.
-     * <p>
-     * One query for all channels: taking the dates off the referenced entity would resolve a lazy proxy per channel.
-     *
-     * @param conversations the conversations to fill the reference dates in on
-     */
-    private void applySubTypeReferenceDates(List<ConversationDTO> conversations) {
-        Map<Long, ChannelDTO> channelsById = conversations.stream().filter(ChannelDTO.class::isInstance).map(ChannelDTO.class::cast)
-                .collect(Collectors.toMap(ChannelDTO::getId, Function.identity(), (first, ignored) -> first));
-        if (channelsById.isEmpty()) {
-            return;
-        }
-        for (ChannelSubTypeReferenceDatesDTO referenceDates : channelRepository.findSubTypeReferenceDates(channelsById.keySet())) {
-            ChannelDTO channel = channelsById.get(referenceDates.channelId());
-            if (channel != null) {
-                channel.setSubTypeReferenceDates(referenceDates);
-            }
-        }
     }
 
     /**
@@ -420,6 +395,8 @@ public class ConversationService {
         }
         else {
             dto = conversationDTOService.convertToDTO(conversation, user);
+            // Without these the updated channel would replace the sidebar's copy and silently lose its current marker
+            conversationDTOService.fillSubTypeReferenceDates(List.of(dto));
         }
 
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);

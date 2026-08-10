@@ -16,10 +16,10 @@ export class CourseOverviewGuard implements CanActivate {
      * Check if the client can activate a course overview route.
      *
      * The guard decides from the course's available tabs BEFORE the route activates, so an unavailable tab never briefly
-     * mounts. The tabs come from {@link CourseAvailableTabsService}, which the course container shares, so entering a
-     * course costs one lightweight request and switching between tabs costs none. On a load error (e.g. 403 for an
-     * unregistered user) activation is allowed; the container's loadCourse then handles it (course registration redirect
-     * / alert).
+     * mounts. The tabs come from {@link CourseAvailableTabsService}, which scopes them to one navigation: the guard and
+     * the container that follows it share a single lightweight request, and the next tab selection asks again. On a load
+     * error (e.g. 403 for an unregistered user) activation is allowed; the container's loadCourse then handles it
+     * (course registration redirect / alert).
      *
      * @return true if the client is allowed to access the route, false otherwise
      */

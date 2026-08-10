@@ -66,6 +66,8 @@ describe('CourseExercisesComponent', () => {
     const route = {
         parent: parentRoute,
         queryParams: queryParamsSubject,
+        // Read by CourseTabRefreshService to work out the tab's own URL
+        pathFromRoot: [{ snapshot: { url: [{ path: 'courses' }, { path: '123' }] } }, { snapshot: { url: [{ path: 'exercises' }] } }],
     } as any as ActivatedRoute;
 
     beforeEach(async () => {

@@ -11,7 +11,7 @@ import { currentNavigationId } from 'app/course/overview/services/navigation-sco
  *
  * Both the {@link CourseOverviewGuard} (which decides before a tab route activates) and the course container (which
  * renders the sidebar from it) read the same value, so entering a course costs exactly one `available-tabs` request and
- * switching between tabs costs none.
+ * selecting a tab therefore costs one request no matter which of them asks first.
  *
  * What is held is scoped to a single router navigation, so the guard and the sidebar of one tab selection share one
  * response while the next selection asks again. A course whose content changed — a lecture published, an exam made
