@@ -24,9 +24,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
@@ -41,14 +43,20 @@ import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -148,6 +156,15 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository exerciseRepository;
 
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationTestRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionTestRepository;
+
+    @Autowired
+    private ResultTestRepository resultTestRepository;
+
     private Course course;
 
     private Statistics statistics;
@@ -184,6 +201,11 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
             if (exercise instanceof TextExercise) {
                 participationUtilService.createParticipationSubmissionAndResult(exercise.getId(), student, 10.0, 0.0, 80, true);
             }
+            else if (i == 0) {
+                // One programming exercise is worked on too, so the payload contract can be asserted against a result
+                // that actually carries the build outcome and the test counts the exercise card renders
+                seedProgrammingSubmission((ProgrammingExercise) exercise, student);
+            }
             Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
             lectureUtilService.createAttachmentVideoUnit(lecture, false);
             competencyUtilService.createCompetency(course);
@@ -205,6 +227,43 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
         statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.setStatisticsEnabled(true);
+    }
+
+    /**
+     * Gives the student a programming participation with one submission and one automatic result.
+     *
+     * Written out here rather than taken from a util service because the payload assertions depend on the exact build
+     * outcome and test counts, and because the shared helpers provision a local VC repository this profile does not
+     * otherwise need.
+     */
+    private void seedProgrammingSubmission(ProgrammingExercise exercise, User student) {
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setParticipant(student);
+        participation.setExercise(exercise);
+        participation.setInitializationState(InitializationState.INITIALIZED);
+        participation.setInitializationDate(ZonedDateTime.now().minusDays(1));
+        participation = studentParticipationTestRepository.save(participation);
+
+        var submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now().minusHours(2));
+        submission.setType(SubmissionType.MANUAL);
+        submission.setBuildFailed(false);
+        submission = submissionTestRepository.save(submission);
+
+        var result = new Result();
+        result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
+        result.setRated(true);
+        result.setScore(80.0);
+        result.setSuccessful(true);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        result.setCompletionDate(ZonedDateTime.now().minusHours(1));
+        result.setTestCaseCount(10);
+        result.setPassedTestCaseCount(8);
+        result.setCodeIssueCount(3);
+        resultTestRepository.save(result);
     }
 
     @Test
@@ -424,6 +483,10 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         assertThat(body).as("the exercise fields the overview renders").contains("\"title\":", "\"dueDate\":", "\"maxPoints\":", "\"difficulty\":", "\"categories\":",
                 "\"includedInOverallScore\":", "\"assessmentDueDate\":", "\"studentParticipations\":", "\"allowFeedbackRequests\":", "\"allowOnlineEditor\":",
                 "\"allowOfflineIde\":", "\"staticCodeAnalysisEnabled\":");
+        // The result string is built from these: without them every programming result reads as "build successful, no
+        // tests" and a failed build reads as a successful one
+        assertThat(body).as("the result fields the exercise card's result string is built from").contains("\"testCaseCount\":", "\"passedTestCaseCount\":", "\"codeIssueCount\":",
+                "\"buildFailed\":");
         // ...and the long tail it never reads must not be, especially the programming configuration
         assertThat(body).as("fields no overview consumer reads").doesNotContain("\"projectKey\":", "\"packageName\":", "\"programmingLanguage\":", "\"projectType\":",
                 "\"shortName\":", "\"buildAndTestStudentSubmissionsAfterDueDate\":", "\"allowOnlineIde\":", "\"showTestNamesToStudents\":", "\"testCasesChanged\":",

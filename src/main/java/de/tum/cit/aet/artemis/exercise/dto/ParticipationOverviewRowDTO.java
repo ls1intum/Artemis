@@ -28,8 +28,9 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 public record ParticipationOverviewRowDTO(long exerciseId, long participationId, String participationType, @Nullable InitializationState initializationState,
         @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
         @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted, @Nullable SubmissionType submissionType,
-        @Nullable String submissionExerciseType, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated,
-        @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount) {
+        @Nullable String submissionExerciseType, @Nullable Boolean submissionBuildFailed, @Nullable Long resultId, @Nullable ZonedDateTime resultCompletionDate,
+        @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful, @Nullable AssessmentType resultAssessmentType,
+        @Nullable Integer resultCodeIssueCount, @Nullable Integer resultTestCaseCount, @Nullable Integer resultPassedTestCaseCount) {
 
     /**
      * JPQL constructor accepting the entity classes produced by Hibernate's {@code TYPE(...)} function.
@@ -37,12 +38,13 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
     public ParticipationOverviewRowDTO(long exerciseId, long participationId, Class<? extends Participation> participationType, @Nullable InitializationState initializationState,
             @Nullable ZonedDateTime initializationDate, @Nullable Boolean testRun, @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore,
             @Nullable String repositoryUri, @Nullable Long submissionId, @Nullable ZonedDateTime submissionDate, @Nullable Boolean submitted,
-            @Nullable SubmissionType submissionType, @Nullable Class<? extends Submission> submissionExerciseType, @Nullable Long resultId,
+            @Nullable SubmissionType submissionType, @Nullable Class<? extends Submission> submissionExerciseType, @Nullable Boolean submissionBuildFailed, @Nullable Long resultId,
             @Nullable ZonedDateTime resultCompletionDate, @Nullable Double resultScore, @Nullable Boolean resultRated, @Nullable Boolean resultSuccessful,
-            @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount) {
+            @Nullable AssessmentType resultAssessmentType, @Nullable Integer resultCodeIssueCount, @Nullable Integer resultTestCaseCount,
+            @Nullable Integer resultPassedTestCaseCount) {
         this(exerciseId, participationId, participationTypeName(participationType), initializationState, initializationDate, testRun, individualDueDate, presentationScore,
-                repositoryUri, submissionId, submissionDate, submitted, submissionType, submissionTypeName(submissionExerciseType), resultId, resultCompletionDate, resultScore,
-                resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount);
+                repositoryUri, submissionId, submissionDate, submitted, submissionType, submissionTypeName(submissionExerciseType), submissionBuildFailed, resultId,
+                resultCompletionDate, resultScore, resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount, resultTestCaseCount, resultPassedTestCaseCount);
     }
 
     public boolean isTestRun() {
@@ -51,12 +53,13 @@ public record ParticipationOverviewRowDTO(long exerciseId, long participationId,
 
     public @Nullable ResultOverviewDTO toResultOverviewDTO() {
         return resultId == null ? null
-                : new ResultOverviewDTO(resultId, resultCompletionDate, resultScore, resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount);
+                : new ResultOverviewDTO(resultId, resultCompletionDate, resultScore, resultRated, resultSuccessful, resultAssessmentType, resultCodeIssueCount, resultTestCaseCount,
+                        resultPassedTestCaseCount);
     }
 
     public @Nullable SubmissionOverviewDTO toSubmissionOverviewDTO(List<ResultOverviewDTO> results) {
         return submissionId == null ? null
-                : new SubmissionOverviewDTO(submissionId, submissionDate, Boolean.TRUE.equals(submitted), submissionType, submissionExerciseType, results);
+                : new SubmissionOverviewDTO(submissionId, submissionDate, Boolean.TRUE.equals(submitted), submissionType, submissionExerciseType, submissionBuildFailed, results);
     }
 
     private static String participationTypeName(Class<? extends Participation> participationType) {

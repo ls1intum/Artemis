@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
  * A submission as the course overview renders it, carrying only its results.
@@ -21,7 +22,8 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
  * @param results                the results of this submission
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SubmissionOverviewDTO(Long id, ZonedDateTime submissionDate, Boolean submitted, SubmissionType type, String submissionExerciseType, List<ResultOverviewDTO> results) {
+public record SubmissionOverviewDTO(Long id, ZonedDateTime submissionDate, Boolean submitted, SubmissionType type, String submissionExerciseType, Boolean buildFailed,
+        List<ResultOverviewDTO> results) {
 
     /**
      * Projects a submission and its results for the course overview.
@@ -32,8 +34,9 @@ public record SubmissionOverviewDTO(Long id, ZonedDateTime submissionDate, Boole
     public static SubmissionOverviewDTO of(Submission submission) {
         List<ResultOverviewDTO> results = submission.getResults() == null ? List.of()
                 : submission.getResults().stream().filter(java.util.Objects::nonNull).map(ResultOverviewDTO::of).toList();
+        Boolean buildFailed = submission instanceof ProgrammingSubmission programmingSubmission ? programmingSubmission.isBuildFailed() : null;
         return new SubmissionOverviewDTO(submission.getId(), submission.getSubmissionDate(), submission.isSubmitted(), submission.getType(), submission.getSubmissionExerciseType(),
-                results);
+                buildFailed, results);
     }
 
     /**

@@ -13,17 +13,20 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
  * Feedbacks are deliberately absent. They are only read by the exercise scores export and the assessment views, which
  * load results of their own; carrying them here would dominate the payload for nothing.
  *
- * @param id             the id of the result
- * @param completionDate when the result was produced, used to pick the latest one
- * @param score          the achieved score in percent
- * @param rated          whether the result counts towards the score
- * @param successful     whether the result is considered successful
- * @param assessmentType how the result was produced, which decides the badge style
- * @param codeIssueCount how many static code analysis issues the result reported, shown on programming exercises with
- *                           static code analysis enabled
+ * @param id                  the id of the result
+ * @param completionDate      when the result was produced, used to pick the latest one
+ * @param score               the achieved score in percent
+ * @param rated               whether the result counts towards the score
+ * @param successful          whether the result is considered successful
+ * @param assessmentType      how the result was produced, which decides the badge style
+ * @param codeIssueCount      how many static code analysis issues the result reported, shown on programming exercises with
+ *                                static code analysis enabled
+ * @param testCaseCount       how many test cases ran, which decides whether the result string names tests at all
+ * @param passedTestCaseCount how many of them passed, rendered as "x of y passed"
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ResultOverviewDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, Boolean successful, AssessmentType assessmentType, Integer codeIssueCount) {
+public record ResultOverviewDTO(Long id, ZonedDateTime completionDate, Double score, Boolean rated, Boolean successful, AssessmentType assessmentType, Integer codeIssueCount,
+        Integer testCaseCount, Integer passedTestCaseCount) {
 
     /**
      * Projects a result for the course overview.
@@ -33,6 +36,6 @@ public record ResultOverviewDTO(Long id, ZonedDateTime completionDate, Double sc
      */
     public static ResultOverviewDTO of(Result result) {
         return new ResultOverviewDTO(result.getId(), result.getCompletionDate(), result.getScore(), result.isRated(), result.isSuccessful(), result.getAssessmentType(),
-                result.getCodeIssueCount());
+                result.getCodeIssueCount(), result.getTestCaseCount(), result.getPassedTestCaseCount());
     }
 }

@@ -59,8 +59,23 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 COALESCE(gradingScale.presentationsWeight, 0.0))
             FROM GradingScale gradingScale
             WHERE gradingScale.course.id = :courseId
+            ORDER BY gradingScale.id ASC
             """)
-    Optional<GradedPresentationConfigDTO> findPresentationConfigByCourseId(@Param("courseId") long courseId);
+    List<GradedPresentationConfigDTO> findPresentationConfigsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * The graded-presentation settings of the course's grading scale.
+     * <p>
+     * A course is meant to have at most one grading scale, but a concurrent creation can briefly leave two behind — see
+     * {@link #findByCourseIdOrElseThrow}, which repairs that. A read on the course overview must not fail on it and must
+     * not repair data either, so it takes the oldest scale, which is the one that repair keeps.
+     *
+     * @param courseId the course whose grading scale is queried
+     * @return the presentation configuration, or empty if the course has no grading scale
+     */
+    default Optional<GradedPresentationConfigDTO> findPresentationConfigByCourseId(long courseId) {
+        return findPresentationConfigsByCourseId(courseId).stream().findFirst();
+    }
 
     /**
      * Find a grading scale for exam by id

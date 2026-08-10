@@ -204,7 +204,10 @@ public final class CourseScoreCalculator {
 
     private static Map<Long, CourseGradeScoreDTO> ratedGradeScoresPerExercise(Collection<CourseGradeScoreDTO> gradeScores) {
         return gradeScores.stream().filter(gradeScore -> Boolean.TRUE.equals(gradeScore.rated()))
-                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, gradeScore -> gradeScore));
+                // A student can hold more than one graded participation in one exercise, for instance after moving between
+                // individual and team mode. Keeping the higher score matches what the participation-based path credits,
+                // and is in any case preferable to Collectors.toMap's default of throwing.
+                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, gradeScore -> gradeScore, (first, second) -> first.score() >= second.score() ? first : second));
     }
 
     private static Map<Long, PlagiarismCaseScoreDTO> plagiarismCasesForStudent(StudentCourseScoreInputDTO studentInput) {

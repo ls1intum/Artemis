@@ -69,6 +69,18 @@ export class CourseStorageService implements OnDestroy {
         }
     }
 
+    /**
+     * Drops the stored course, so a response that carried no course does not leave the previous one readable.
+     *
+     * Separate from {@link updateCourse}, which cannot express this: it takes the course to store, so it has no id to
+     * remove by when there is nothing to store.
+     *
+     * @param courseId the course to drop
+     */
+    removeCourse(courseId: number): void {
+        this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== courseId);
+    }
+
     subscribeToCourseUpdates(courseId: number): Observable<Course> {
         if (!this.courseUpdateSubscriptions.has(courseId)) {
             this.courseUpdateSubscriptions.set(courseId, new SubjectObservablePair());

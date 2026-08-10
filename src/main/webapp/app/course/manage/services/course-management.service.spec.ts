@@ -575,15 +575,15 @@ describe('Course Management Service', () => {
         expect(courseStorageService.getCourse(7)?.title).toBe('Course');
     });
 
-    it('should keep an empty lean-course response empty without updating notifications', () => {
+    it('should drop a stored course when the lean-course response is empty', () => {
         const notificationSpy = vi.spyOn(courseNotificationService, 'updateNotificationCountMap');
-        const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse');
+        // Seeded so the removal is observable: an empty response must not leave the previous course readable
+        courseStorageService.updateCourse({ id: 7, title: 'Course' } as Course);
 
         courseManagementService.findCourseForOverview(7).subscribe((response) => expect(response.body).toBeNull());
         httpMock.expectOne({ method: 'GET', url: 'api/course/courses/7/for-overview' }).flush(null);
 
         expect(notificationSpy).not.toHaveBeenCalled();
-        expect(updateCourseSpy).toHaveBeenCalledExactlyOnceWith(undefined);
         expect(courseStorageService.getCourse(7)).toBeUndefined();
     });
 

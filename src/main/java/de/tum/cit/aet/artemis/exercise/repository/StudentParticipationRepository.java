@@ -992,15 +992,19 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 submission.submitted,
                 submission.type,
                 TYPE(submission),
+                programmingSubmission.buildFailed,
                 result.id,
                 result.completionDate,
                 result.score,
                 result.rated,
                 result.successful,
                 result.assessmentType,
-                result.codeIssueCount)
+                result.codeIssueCount,
+                result.testCaseCount,
+                result.passedTestCaseCount)
             FROM StudentParticipation participation
                 LEFT JOIN participation.submissions submission
+                LEFT JOIN ProgrammingSubmission programmingSubmission ON programmingSubmission.id = submission.id
                 LEFT JOIN submission.results result
             WHERE participation.student.id = :studentId
                 AND participation.exercise.id IN :exerciseIds
@@ -1170,16 +1174,20 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 submission.submitted,
                 submission.type,
                 TYPE(submission),
+                programmingSubmission.buildFailed,
                 result.id,
                 result.completionDate,
                 result.score,
                 result.rated,
                 result.successful,
                 result.assessmentType,
-                result.codeIssueCount)
+                result.codeIssueCount,
+                result.testCaseCount,
+                result.passedTestCaseCount)
             FROM StudentParticipation participation
                 JOIN participation.team.students student
                 LEFT JOIN participation.submissions submission
+                LEFT JOIN ProgrammingSubmission programmingSubmission ON programmingSubmission.id = submission.id
                 LEFT JOIN submission.results result
             WHERE student.id = :studentId
                 AND participation.exercise.id IN :exerciseIds

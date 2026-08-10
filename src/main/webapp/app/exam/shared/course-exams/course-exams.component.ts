@@ -170,12 +170,17 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     private loadExams(courseId: number): void {
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
-        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId)
-            .subscribe((response: StudentExam[]) => {
+        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId).subscribe({
+            next: (response: StudentExam[]) => {
                 this.studentExams = response;
                 this.prepareSidebarData();
-            });
+            },
+            error: () => {
+                // Render the exams without their test-exam attempts rather than letting the failure escape
+                this.studentExams = undefined;
+                this.prepareSidebarData();
+            },
+        });
 
         this.examsSubscription?.unsubscribe();
         this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(courseId).subscribe({
@@ -224,16 +229,23 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(requestedCourseId)).then((studentExams) => {
-                if (this.courseId() !== requestedCourseId) {
-                    return;
-                }
-                studentExams.forEach((exam) => {
-                    const studentExam = cloneDeep(exam) as StudentExam;
-                    this.studentExamsForRealExams.set(studentExam.id!, studentExam);
+            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(requestedCourseId))
+                .then((studentExams) => {
+                    if (this.courseId() !== requestedCourseId) {
+                        return;
+                    }
+                    studentExams.forEach((exam) => {
+                        const studentExam = cloneDeep(exam) as StudentExam;
+                        this.studentExamsForRealExams.set(studentExam.id!, studentExam);
+                    });
+                    this.prepareSidebarData();
+                })
+                .catch(() => {
+                    // The exam list is already rendered; without their student exams the cards simply show no attempt state
+                    if (this.courseId() === requestedCourseId) {
+                        this.prepareSidebarData();
+                    }
                 });
-                this.prepareSidebarData();
-            });
         }
     }
 

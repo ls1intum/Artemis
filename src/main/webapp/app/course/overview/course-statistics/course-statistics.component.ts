@@ -431,7 +431,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     private calculateCourseGrade(): void {
         this.gradeSubscription?.unsubscribe();
-        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore(), this.courseId).subscribe((gradeDTO) => {
+        const relativeScore = this.totalRelativeScore();
+        // NaN when no total scores are stored for the course yet; asking the server to match it is meaningless
+        if (!Number.isFinite(relativeScore)) {
+            return;
+        }
+        this.gradeSubscription = this.gradingService.matchPercentageToGradeStep(relativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists.set(true);
                 this.gradeDTO.set(gradeDTO);

@@ -398,6 +398,17 @@ describe('CourseStatisticsComponent', () => {
         expect(callbacks.label({ parsed: 400 })).toBe('400');
     });
 
+    it('should not ask the server to match a grade when no scores are stored for the course', () => {
+        // getScoreByScoreType returns NaN for a missing CourseScores, and match-grade-step?gradePercentage=NaN is
+        // a request the server can only reject
+        const gradeSpy = vi.spyOn(TestBed.inject(GradingService), 'matchPercentageToGradeStep');
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ id: 1, title: 'Course 1' } as Course);
+
+        comp.ngOnInit();
+
+        expect(gradeSpy).not.toHaveBeenCalled();
+    });
+
     it('should cancel, reset, and reload when Angular reuses the statistics tab for another course', () => {
         const params = new BehaviorSubject({ courseId: '1' });
         const firstLoad = new Subject<CourseExercisesForOverviewDTO>();
@@ -413,6 +424,19 @@ describe('CourseStatisticsComponent', () => {
             .mockImplementation((courseId) => (courseId === 1 ? firstCourseUpdates : secondCourseUpdates));
         vi.spyOn(courseStorageService, 'getCourse').mockImplementation((courseId) => ({ id: courseId, title: `Course ${courseId}` }) as Course);
         const gradeSpy = vi.spyOn(TestBed.inject(GradingService), 'matchPercentageToGradeStep').mockReturnValueOnce(firstGrade).mockReturnValueOnce(secondGrade);
+
+        // The mocked loader bypasses the storage the real one writes to; without scores the relative score is NaN and
+        // the grade lookup is correctly skipped, which is not what this test is about
+        const totalScores = (relativeScore: number) =>
+            new CourseScores(10, 10, 0, {
+                absoluteScore: relativeScore / 10,
+                absoluteScoreTotal: relativeScore / 10,
+                relativeScore,
+                currentRelativeScore: relativeScore,
+                presentationScore: 0,
+            });
+        scoresStorageService.setStoredTotalScores(1, totalScores(80));
+        scoresStorageService.setStoredTotalScores(2, totalScores(0));
 
         comp.ngOnInit();
         firstCourseUpdates.next({ ...course, id: 1, exercises: [modelingExercises[0]] });
@@ -452,7 +476,7 @@ describe('CourseStatisticsComponent', () => {
         expect(comp.course()?.id).toBe(2);
         expect(comp.course()?.title).not.toBe('Stale course');
         expect(gradeSpy).toHaveBeenNthCalledWith(1, expect.any(Number), 1);
-        expect(gradeSpy).toHaveBeenNthCalledWith(2, NaN, 2);
+        expect(gradeSpy).toHaveBeenNthCalledWith(2, 0, 2);
         expect(secondGrade.observed).toBe(true);
         expect(loadSpy).toHaveBeenCalledTimes(2);
         expect(courseUpdatesSpy).toHaveBeenCalledTimes(2);

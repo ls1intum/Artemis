@@ -73,7 +73,8 @@ export class LectureService {
     }
 
     /**
-     * Fetches the lectures of a course for the student course overview, with the attachments the user may see.
+     * Fetches the lectures of a course for the student course overview: the sidebar fields only, without attachments
+     * or lecture units, which are loaded when a single lecture is opened.
      * These used to arrive as part of the course itself, which made every course visit pay for them.
      * @param courseId the course to fetch the lectures for
      */

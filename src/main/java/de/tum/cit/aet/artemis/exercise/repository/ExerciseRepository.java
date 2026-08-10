@@ -100,7 +100,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
                 LEFT JOIN exercise.exerciseVariantGroup variantGroup
             WHERE exercise.course.id = :courseId
-                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate < :calculationTime)
+                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
                 AND (:requireLtiLaunch = FALSE OR EXISTS (
                     SELECT launch
                     FROM LtiResourceLaunch launch
@@ -143,7 +143,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 TYPE(exercise))
             FROM Exercise exercise
             WHERE exercise.course.id = :courseId
-                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate < :calculationTime)
+                AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
                 AND (:includeUnreleased = TRUE OR COALESCE(exercise.course.onlineCourse, FALSE) = FALSE OR EXISTS (
                     SELECT launch
                     FROM LtiResourceLaunch launch

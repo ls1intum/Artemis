@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.dto.GradedPresentationConfigDTO;
 import de.tum.cit.aet.artemis.assessment.dto.StudentCourseScoreInputDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculator;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
@@ -268,7 +269,10 @@ public class CourseOverviewExerciseService {
         if (exercise.type() == ExerciseType.PROGRAMMING) {
             if (latestResultRow == null) {
                 ZonedDateTime dueDate = submissionRow.individualDueDate() != null ? submissionRow.individualDueDate() : exercise.dueDate();
-                boolean submittedInTime = dueDate == null || submissionRow.submissionDate() != null && submissionRow.submissionDate().isBefore(dueDate);
+                // The same grace period the grade projections allow, so a submission that counts towards the score is
+                // never hidden from the card that is supposed to show it
+                ZonedDateTime latestAccepted = dueDate == null ? null : dueDate.plusSeconds(Constants.PROGRAMMING_GRACE_PERIOD_SECONDS);
+                boolean submittedInTime = latestAccepted == null || submissionRow.submissionDate() != null && !submissionRow.submissionDate().isAfter(latestAccepted);
                 return submittedInTime ? Optional.ofNullable(submissionRow.toSubmissionOverviewDTO(List.of())) : Optional.empty();
             }
             if (!Boolean.TRUE.equals(latestResultRow.resultRated())) {

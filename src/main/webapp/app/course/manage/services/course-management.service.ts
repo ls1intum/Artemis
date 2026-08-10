@@ -316,7 +316,7 @@ export class CourseManagementService implements OnDestroy {
                 return res.clone({ body: dto?.course ?? null });
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.storeCoursePreservingLoadedContent(res.body ?? undefined)),
+            tap((res: EntityResponseType) => this.storeCoursePreservingLoadedContent(courseId, res.body ?? undefined)),
         );
     }
 
@@ -327,11 +327,12 @@ export class CourseManagementService implements OnDestroy {
      * plain store would mean that whenever the (fast) course response lands after the (slow) exercise response, the
      * exercises are silently dropped from the stored course and the exercises tab renders empty.
      *
-     * @param course the freshly loaded lean course
+     * @param courseId the course that was requested
+     * @param course   the freshly loaded lean course
      */
-    private storeCoursePreservingLoadedContent(course?: Course): void {
+    private storeCoursePreservingLoadedContent(courseId: number, course?: Course): void {
         if (!course) {
-            this.courseStorageService.updateCourse(undefined);
+            this.courseStorageService.removeCourse(courseId);
             return;
         }
         const alreadyLoadedExercises = course.id !== undefined ? this.courseStorageService.getCourse(course.id)?.exercises : undefined;

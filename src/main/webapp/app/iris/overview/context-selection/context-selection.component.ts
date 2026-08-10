@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faComments, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -44,6 +44,10 @@ function iconForMode(mode: ChatServiceMode): IconDefinition {
         return faChalkboardUser;
     }
     const exerciseType = Object.keys(EXERCISE_TYPE_TO_CHAT_MODE).find((type) => EXERCISE_TYPE_TO_CHAT_MODE[type] === mode);
+    // Modes that are not an exercise type, such as a tutor suggestion, would otherwise reach getIcon(undefined)
+    if (!exerciseType) {
+        return faComments;
+    }
     return getIcon(exerciseType as ExerciseType) as IconDefinition;
 }
 
