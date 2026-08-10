@@ -35,7 +35,13 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
             <div class="chart bg-light">
-                <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" (onDataSelect)="onSelect($event)" />
+                <p-chart
+                    type="bar"
+                    [data]="chartData()"
+                    [options]="chartOptions()"
+                    (onDataSelect)="onSelect($event)"
+                    [ariaLabel]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title' | artemisTranslate"
+                />
             </div>
         </div>
     `,

@@ -46,6 +46,7 @@ import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -71,6 +72,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExerciseGroupTimelineLockComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

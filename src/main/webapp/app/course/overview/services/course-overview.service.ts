@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLayerGroup, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -9,8 +9,10 @@ import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/g
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Course } from 'app/course/shared/entities/course.model';
+import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -32,6 +34,9 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 
 type StartDateGroup = 'none' | 'past' | 'future';
 type EndDateGroup = StartDateGroup | 'soon';
+
+/** The subset of {@link Exercise} fields that determine an exercise's time-group category. */
+type ExerciseDateInfo = Pick<Exercise, 'type' | 'releaseDate' | 'startDate' | 'dueDate'>;
 
 /**
  * Decides which time category group an exercise should be put into based on its start and end dates.
@@ -122,7 +127,7 @@ export class CourseOverviewService {
         return undefined;
     }
 
-    getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
+    getCorrespondingExerciseGroupByDate(exercise: ExerciseDateInfo): TimeGroupCategory {
         const now = dayjs();
 
         if (exercise.type === ExerciseType.QUIZ) {
@@ -146,7 +151,7 @@ export class CourseOverviewService {
         return GROUP_DECISION_MATRIX[startGroup][endGroup];
     }
 
-    private getStartDateGroup(exercise: Exercise, now: Dayjs): StartDateGroup {
+    private getStartDateGroup(exercise: ExerciseDateInfo, now: Dayjs): StartDateGroup {
         const start = exercise.startDate ?? exercise.releaseDate;
 
         if (start === undefined) {
@@ -160,7 +165,7 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    private getEndDateGroup(exercise: Exercise, now: Dayjs): EndDateGroup {
+    private getEndDateGroup(exercise: ExerciseDateInfo, now: Dayjs): EndDateGroup {
         const dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
 
         if (dueDate === undefined) {
@@ -244,6 +249,71 @@ export class CourseOverviewService {
         }
 
         return groupedExerciseGroups;
+    }
+
+    buildGroupedExerciseData(exercises: Exercise[], courseId: number): { groupedData: AccordionGroups; ungroupedData: SidebarCardElement[] } {
+        const groupByExerciseId = new Map<number, CourseExerciseGroup>();
+        for (const group of buildGroupsFromExercises(exercises)) {
+            for (const member of group.exercises ?? []) {
+                if (member.id !== undefined) {
+                    groupByExerciseId.set(member.id, group);
+                }
+            }
+        }
+
+        const groupedData = deepClone(DEFAULT_UNIT_GROUPS);
+        const ungroupedData: SidebarCardElement[] = [];
+        const emittedGroups = new Set<number>();
+
+        for (const exercise of exercises) {
+            const group = exercise.id !== undefined ? groupByExerciseId.get(exercise.id) : undefined;
+            if (group) {
+                if (group.id !== undefined && !emittedGroups.has(group.id)) {
+                    emittedGroups.add(group.id);
+                    const members = exercises.filter((e) => e.id !== undefined && groupByExerciseId.get(e.id) === group);
+                    const card = this.groupCard(group, members, courseId);
+                    groupedData[this.categorizeGroup(group, members)].entityData.push(card);
+                    ungroupedData.push(card);
+                }
+            } else {
+                const card = this.mapExerciseToSidebarCardElement(exercise);
+                groupedData[this.getCorrespondingExerciseGroupByDate(exercise)].entityData.push(card);
+                ungroupedData.push(card);
+            }
+        }
+
+        return { groupedData, ungroupedData };
+    }
+
+    private groupCard(group: CourseExerciseGroup, members: Exercise[], courseId: number): SidebarCardElement {
+        const dueDate = group.dueDate ?? members[0]?.dueDate;
+        return {
+            title: group.title ?? '',
+            id: group.id ?? '',
+            // Group and exercise ids come from independent sequences, so prefix the `@for` key to keep it unique.
+            trackId: 'group-' + group.id,
+            targetComponentSubRoute: 'group',
+            icon: faLayerGroup,
+            subtitleLeft: dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
+            startDate: dueDate,
+            size: 'M',
+            groupHeaderStyle: 'card',
+            groupConnected: true,
+            groupClickable: 'group',
+            routerLink: `/courses/${courseId}/exercises/group/${group.id}`,
+            groupedItems: members.map((member) => this.mapExerciseToSidebarCardElement(member)),
+        };
+    }
+
+    private categorizeGroup(group: CourseExerciseGroup, members: Exercise[]): TimeGroupCategory {
+        const first = members[0];
+        const representative: ExerciseDateInfo = {
+            type: first?.type,
+            releaseDate: group.releaseDate ?? first?.releaseDate,
+            startDate: group.startDate ?? first?.startDate,
+            dueDate: group.dueDate ?? first?.dueDate,
+        };
+        return this.getCorrespondingExerciseGroupByDate(representative);
     }
 
     groupLecturesByStartDate(sortedLectures: Lecture[]): AccordionGroups {
@@ -399,7 +469,7 @@ export class CourseOverviewService {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(course, conversation));
     }
 
-    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[], indices?: number[]) {
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExamOrDTO[], indices?: number[]) {
         if (attempts && indices) {
             return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
         }
@@ -515,7 +585,7 @@ export class CourseOverviewService {
         };
     }
 
-    mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
+    mapAttemptToSidebarCardElement(attempt: StudentExamOrDTO, index: number): SidebarCardElement {
         return {
             title: attempt.exam!.title ?? '',
             id: attempt.exam!.id + '/test-exam/' + attempt.id,
@@ -627,7 +697,7 @@ export class CourseOverviewService {
         this.localStorageService.store<boolean>('sidebar.collapseState.' + storageId, isCollapsed);
     }
 
-    calculateUsedWorkingTime(studentExam: StudentExam): number {
+    calculateUsedWorkingTime(studentExam: StudentExamOrDTO): number {
         let usedWorkingTime = 0;
         if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
             const regularExamDuration = studentExam.workingTime;

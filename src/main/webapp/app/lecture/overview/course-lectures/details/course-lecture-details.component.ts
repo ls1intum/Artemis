@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,13 +13,15 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { onError } from 'app/foundation/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -30,11 +32,14 @@ import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
@@ -63,7 +68,10 @@ export interface LectureUnitCompletionEvent {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         MarkdownDirective,
-        IrisExerciseChatbotButtonComponent,
+        IrisBaseChatbotComponent,
+        IrisLogoComponent,
+        ResizablePanelsComponent,
+        PanelDirective,
         InformationBoxComponent,
     ],
 })
@@ -77,17 +85,55 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly chatService = inject(IrisChatService);
+    private readonly accountService = inject(AccountService);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
     protected readonly isMessagingEnabled = isMessagingEnabled;
-    protected readonly ChatServiceMode = ChatServiceMode;
 
     protected readonly faSpinner = faSpinner;
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
+    protected readonly faComment = faComment;
+    protected readonly IrisLogoSize = IrisLogoSize;
 
     lectureId?: number;
+    private readonly courseStorageService = inject(CourseStorageService);
+
     readonly courseId = signal<number | undefined>(undefined);
+
+    /**
+     * Whether to show the communication section beside the lecture, mirroring the exercise detail page.
+     *
+     * The course must come from the shell's store rather than `lecture.course`: the lecture details payload nests only
+     * a stub of the course, without `courseInformationSharingConfiguration`, so reading the flag from there always
+     * reported communication as disabled and the section never rendered.
+     */
+    readonly showDiscussion = computed(() => {
+        const lecture = this.lecture();
+        if (!lecture || lecture.isTutorialLecture) {
+            return false;
+        }
+        const courseId = this.courseId();
+        const course = (courseId !== undefined ? this.courseStorageService.getCourse(courseId) : undefined) ?? lecture.course;
+        return !!course && (isCommunicationEnabled(course) || isMessagingEnabled(course));
+    });
+    /**
+     * Whether to offer Iris beside the lecture, the same way the exercise page does. A tutorial lecture has no Iris
+     * session of its own, so it keeps the content panel alone.
+     */
+    readonly showIris = computed(() => {
+        const lecture = this.lecture();
+        return !!lecture && !lecture.isTutorialLecture && !!this.irisSettings()?.settings?.enabled;
+    });
+
+    /**
+     * Whether the Iris panel opens collapsed. A user who declined AI gets a chat that says only that, so leaving the
+     * panel open would cost them lecture width on every visit. The exercise page makes the same call; it additionally
+     * exempts pages that show an editor, of which a lecture has none.
+     */
+    readonly irisPanelStartsCollapsed = computed(() => this.showIris() && this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI);
+
     readonly isLoading = signal(false);
     readonly lecture = signal<Lecture | undefined>(undefined);
     readonly isDownloadingLink = signal<string | undefined>(undefined);
@@ -115,8 +161,24 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         getVisibleContexts: () => this.collectVisibleContexts(),
     };
 
-    /** Context provider function for the chatbot button */
+    /** Context provider function passed to the chat panel, so a question can be answered against the visible units */
     readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => () => this.collectVisibleContexts());
+
+    constructor() {
+        /*
+         * The Iris panel renders whichever session the chat service currently holds, so the lecture's own session has
+         * to be opened for it — the floating button this replaced did the same from the route parameters. It reuses an
+         * existing session tagged with this lecture if there is one, and otherwise opens the course chat with the
+         * lecture pre-selected as context.
+         */
+        effect(() => {
+            const lectureId = this.lecture()?.id;
+            if (this.showIris() && lectureId) {
+                // untracked: the chat service's own state must not re-trigger this.
+                untracked(() => this.chatService.openChat(ChatServiceMode.LECTURE, lectureId));
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);

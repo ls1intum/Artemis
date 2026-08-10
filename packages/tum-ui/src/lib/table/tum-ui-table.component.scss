@@ -1,0 +1,20 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.cdk-table {
+    width: 100%;
+
+    th,
+    td {
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+    }
+
+    tr:last-child td {
+        border-bottom-width: 0;
+    }
+}

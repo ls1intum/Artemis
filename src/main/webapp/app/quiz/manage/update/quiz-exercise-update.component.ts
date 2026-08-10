@@ -68,6 +68,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -106,6 +107,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         InputTextModule,
         InputNumberModule,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         QuizAiGenerationModalComponent,
         JsonPipe,
         Select,

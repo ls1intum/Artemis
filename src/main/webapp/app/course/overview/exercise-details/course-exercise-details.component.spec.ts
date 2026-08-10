@@ -65,20 +65,8 @@ import { ProblemStatementComponent } from 'app/course/overview/exercise-details/
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { Component, input } from '@angular/core';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { ScienceService } from 'app/foundation/science/science.service';
 
-// Simple mock to avoid ng-mocks issues with signal-based viewChild
-@Component({
-    selector: 'jhi-exercise-chatbot-button',
-    template: '',
-    standalone: true,
-})
-class MockIrisExerciseChatbotButtonComponent {
-    readonly mode = input<ChatServiceMode>();
-}
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -209,9 +197,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(DialogService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
-        }).overrideComponent(CourseExerciseDetailsComponent, {
-            remove: { imports: [IrisExerciseChatbotButtonComponent] },
-            add: { imports: [MockIrisExerciseChatbotButtonComponent] },
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CourseExerciseDetailsComponent);

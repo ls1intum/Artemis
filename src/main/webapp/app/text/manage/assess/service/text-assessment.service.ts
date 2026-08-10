@@ -124,8 +124,9 @@ export class TextAssessmentService {
      * @param participationId the assessed submission was made to of type {number}
      * @param submissionId of corresponding submission of type {number}
      */
-    public cancelAssessment(participationId: number, submissionId: number): Observable<void> {
-        return this.http.post<void>(`${this.RESOURCE_URL}/participations/${participationId}/submissions/${submissionId}/cancel-assessment`, undefined);
+    public cancelAssessment(participationId: number, submissionId: number, resultId?: number): Observable<void> {
+        const params = resultId ? new HttpParams().set('resultId', resultId) : undefined;
+        return this.http.post<void>(`${this.RESOURCE_URL}/participations/${participationId}/submissions/${submissionId}/cancel-assessment`, undefined, { params });
     }
 
     /**

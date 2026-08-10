@@ -23,6 +23,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -61,6 +62,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         FaIconComponent,
         NgbTooltip,

@@ -25,16 +25,19 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiButtonDirective } from 'app/shared-ui/tum-ui/button/tum-ui-button.directive';
-import { TumUiButtonGroupComponent } from 'app/shared-ui/tum-ui/button-group/tum-ui-button-group.component';
-import { TumUiTableDirective, TumUiTableSortEvent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table.directive';
-import { TumUiTableSortableColumnComponent } from 'app/shared-ui/tum-ui/table-directive/tum-ui-table-sortable-column.component';
-import { TumUiTagComponent, TumUiTagSeverity } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
-import { TumUiInputDirective } from 'app/shared-ui/tum-ui/input/tum-ui-input.directive';
-import { TumUiIconFieldComponent } from 'app/shared-ui/tum-ui/icon-field/tum-ui-icon-field.component';
-
+import {
+    TumUiButtonComponent,
+    TumUiButtonDirective,
+    TumUiButtonGroupComponent,
+    TumUiIconFieldComponent,
+    TumUiInputDirective,
+    TumUiMessageComponent,
+    TumUiTableDirective,
+    TumUiTableSortEvent,
+    TumUiTableSortableColumnComponent,
+    TumUiTagComponent,
+    TumUiTagSeverity,
+} from '@tumaet/ui-angular';
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';

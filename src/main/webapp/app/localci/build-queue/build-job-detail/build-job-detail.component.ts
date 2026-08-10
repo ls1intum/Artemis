@@ -19,9 +19,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { downloadFile } from 'app/foundation/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumUiButtonComponent } from 'app/shared-ui/tum-ui/button/tum-ui-button.component';
-import { TumUiTagComponent } from 'app/shared-ui/tum-ui/tag/tum-ui-tag.component';
-import { TumUiMessageComponent } from 'app/shared-ui/tum-ui/message/tum-ui-message.component';
+import { TumUiButtonComponent, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
