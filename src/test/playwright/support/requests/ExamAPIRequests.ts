@@ -4,7 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { UserCredentials } from '../users';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -134,23 +133,6 @@ export class ExamAPIRequests {
      */
     async registerAllCourseStudentsForExam(exam: Exam) {
         await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/register-course-students`);
-    }
-
-    /**
-     * Creates an exam test run with the provided settings.
-     * @param exam the exam object
-     * @param exerciseArray an array of exercises
-     * @param workingTime the working time in seconds
-     */
-    async createExamTestRun(exam: Exam, exerciseArray: Array<Exercise>, workingTime = 1080) {
-        const courseId = exam.course!.id;
-        const examId = exam.id!;
-        const data = {
-            exam,
-            exerciseArray,
-            workingTime,
-        };
-        await this.page.request.post(`api/exam/courses/${courseId}/exams/${examId}/test-run`, { data });
     }
 
     /**
