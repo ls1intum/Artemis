@@ -42,18 +42,22 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -158,6 +162,12 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationTestRepository;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
     private SubmissionTestRepository submissionTestRepository;
@@ -593,4 +603,45 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
 
         void run() throws Exception;
     }
+
+    /**
+     * Both scoring paths must apply a plagiarism deduction attached to the student's team.
+     *
+     * They did not: the query behind for-dashboard matched only {@code plagiarismCase.student}, while its own sibling
+     * used for exam bonus scoring already joined the team members. A student therefore saw a different total on the web
+     * than on a native client for the same exercise in the same second.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void bothScoringPathsShouldApplyATeamPlagiarismDeduction() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        TextExercise teamExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().minusHours(1));
+        teamExercise.setMode(ExerciseMode.TEAM);
+        teamExercise.setMaxPoints(10.0);
+        teamExercise = exerciseRepository.save(teamExercise);
+        Team team = teamUtilService.createTeam(Set.of(student), tutor, teamExercise, TEST_PREFIX + "plagteam");
+
+        var teamParticipation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
+        participationUtilService.createSubmissionAndResult(teamParticipation, 80, true);
+
+        PlagiarismCase teamCase = new PlagiarismCase();
+        teamCase.setExercise(teamExercise);
+        teamCase.setTeam(team);
+        teamCase.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
+        teamCase.setVerdictPointDeduction(50);
+        plagiarismCaseRepository.save(teamCase);
+
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+
+        var fromDashboard = request.get("/api/course/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        var fromOverview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        assertThat(fromOverview.textScores().studentScores().absoluteScore()).as("the deduction must apply on the overview")
+                .isEqualTo(fromDashboard.textScores().studentScores().absoluteScore());
+        assertThat(fromOverview.totalScores().studentScores().absoluteScore()).as("and the totals must agree")
+                .isEqualTo(fromDashboard.totalScores().studentScores().absoluteScore());
+    }
+
 }

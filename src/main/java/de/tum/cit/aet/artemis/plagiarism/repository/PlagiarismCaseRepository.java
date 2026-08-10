@@ -255,11 +255,26 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
             """)
     List<PlagiarismCase> findByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
+    /**
+     * The plagiarism cases affecting one student in the given exercises, including those attached to their team.
+     * <p>
+     * The team and its members are fetched, not merely joined: consumers resolve a team case to its members through
+     * {@code PlagiarismCase#getStudents()}, which walks {@code team.students} and would otherwise fail outside a
+     * session. The filtering join is kept separate from the fetch joins so that restricting to the requesting user
+     * cannot truncate the fetched membership.
+     *
+     * @param userId      the student whose cases are wanted
+     * @param exerciseIds the exercises to look in
+     * @return the student's plagiarism cases, individual and team
+     */
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
+                LEFT JOIN plagiarismCase.team.students filterStudent
+                LEFT JOIN FETCH plagiarismCase.team fetchedTeam
+                LEFT JOIN FETCH fetchedTeam.students
             WHERE plagiarismCase.exercise.id IN :exerciseIds
-                AND plagiarismCase.student.id = :userId
+                AND (plagiarismCase.student.id = :userId OR filterStudent.id = :userId)
             """)
     List<PlagiarismCase> findByStudentIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
