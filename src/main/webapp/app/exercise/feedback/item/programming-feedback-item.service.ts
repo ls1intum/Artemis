@@ -2,6 +2,7 @@ import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-se
 import { Injectable, inject } from '@angular/core';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
@@ -112,7 +113,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         // A feedback suggestion should look like a manual feedback
         let titleWithoutIdentifier = feedback.text ?? '';
         // Remove prefix if it exists
-        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
             if (titleWithoutIdentifier.startsWith(prefix)) {
                 titleWithoutIdentifier = titleWithoutIdentifier.substring(prefix.length);
                 break;
