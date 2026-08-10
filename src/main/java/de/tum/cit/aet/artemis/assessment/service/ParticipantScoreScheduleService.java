@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -244,7 +245,14 @@ public class ParticipantScoreScheduleService {
             if (existingTask != null) {
                 existingTask.cancel(true);
             }
-            return scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
+            // Capture this task's own future so executeTask() can remove exactly this map entry when it finishes
+            // (see the compare-and-remove in executeTask's finally block). The reference is populated synchronously
+            // right after scheduling, well before DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS elapses.
+            AtomicReference<ScheduledFuture<?>> ownFuture = new AtomicReference<>();
+            ScheduledFuture<?> future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted, ownFuture.get()),
+                    schedulingTime.toInstant());
+            ownFuture.set(future);
+            return future;
         });
         log.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
@@ -256,8 +264,9 @@ public class ParticipantScoreScheduleService {
      * @param participantId       the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified  the last modified date of the result that triggered the update
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
+     * @param thisTask            this invocation's own scheduled future, used to remove exactly this map entry when done
      */
-    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
+    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted, ScheduledFuture<?> thisTask) {
         final var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
         // Synchronize per exercise+participant to prevent concurrent tasks from creating duplicate participant scores.
         // This can happen when a task is already running and cancel(true) fails to stop it before a new task is scheduled.
@@ -359,7 +368,12 @@ public class ParticipantScoreScheduleService {
                 log.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
             }
             finally {
-                scheduledTasks.remove(participantScoreId);
+                // Compare-and-remove: if scheduleTask() replaced this entry with a newer task while this one was
+                // running (cancel(true) cannot interrupt a task already past its interruptible point), only that
+                // newer task's own invocation may remove the entry. Removing unconditionally here would let a
+                // superseded task evict a newer, not-yet-run task from the map, making isIdle() report true while
+                // the corresponding participant score is still stale.
+                scheduledTasks.remove(participantScoreId, thisTask);
             }
             long end = System.currentTimeMillis();
             log.debug("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
