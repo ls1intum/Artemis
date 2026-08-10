@@ -215,6 +215,32 @@ describe('Submission Policy Update Form Component', () => {
         expect(freshComponent.invalid).toBe(false);
     });
 
+    it('should still initialize from the exercise when the user picked a type before it arrived (#13447)', async () => {
+        // The select is interactable while the exercise is still loading; a pick in that window must not
+        // latch the (nonexistent) form state, or the arriving exercise could never initialize the form.
+        const freshFixture = TestBed.createComponent(SubmissionPolicyUpdateComponent);
+        freshFixture.componentRef.setInput('editable', true);
+        freshFixture.detectChanges();
+        await freshFixture.whenStable();
+
+        const submissionPolicyTypeField = freshFixture.nativeElement.querySelector('#field_submissionPolicy');
+        submissionPolicyTypeField.value = SubmissionPolicyType.LOCK_REPOSITORY;
+        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        freshFixture.detectChanges();
+        await freshFixture.whenStable();
+
+        const loadedExercise = new ProgrammingExercise(undefined, undefined);
+        loadedExercise.submissionPolicy = submissionPenaltyPolicy;
+        freshFixture.componentRef.setInput('programmingExercise', loadedExercise);
+        freshFixture.detectChanges();
+        await freshFixture.whenStable();
+        freshFixture.detectChanges();
+
+        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+        expect(freshFixture.nativeElement.querySelector('#field_submissionLimit').value).toBe('5');
+        expect(freshFixture.componentInstance.invalid).toBe(false);
+    });
+
     it('should initialize the form exactly once when the exercise is present at mount (#13447)', async () => {
         // The exercise edit page resolves the exercise before mounting this component.
         const typeChangeSpy = vi.fn();
@@ -278,6 +304,48 @@ describe('Submission Policy Update Form Component', () => {
 
             expect(fixture.nativeElement.querySelector('#field_submissionPolicy').value).toBe(SubmissionPolicyType.NONE);
             expect(component.invalid).toBe(false);
+        });
+
+        it('should detect a switch after an unsaved exercise gained its id', async () => {
+            // The id arriving on a latched form is ignored value-wise, but it must still update the
+            // form's identity so the NEXT exercise is recognized as a switch.
+            const newExercise = new ProgrammingExercise(undefined, undefined);
+            newExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 3 } as LockRepositoryPolicy;
+            fixture.componentRef.setInput('programmingExercise', newExercise);
+            await detectChanges();
+
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(2, 7));
+            await detectChanges();
+
+            expect(component.submissionLimitControl.value).toBe(7);
+        });
+
+        it('should re-apply the disabled state when the switched exercise changes editability', async () => {
+            fixture.componentRef.setInput('editable', false);
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+            expect(component.submissionLimitControl.disabled).toBe(true);
+
+            fixture.componentRef.setInput('editable', true);
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(2, 7));
+            await detectChanges();
+
+            expect(component.submissionLimitControl.enabled).toBe(true);
+            expect(component.submissionLimitControl.value).toBe(7);
+        });
+
+        it('should disable the existing form when editable turns off', async () => {
+            fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(1, 3));
+            await detectChanges();
+            expect(component.submissionLimitControl.enabled).toBe(true);
+
+            fixture.componentRef.setInput('editable', false);
+            await detectChanges();
+
+            expect(component.submissionLimitControl.disabled).toBe(true);
         });
 
         it('should keep edits when an unsaved exercise gains an id, which is the same exercise', async () => {

@@ -144,6 +144,23 @@ export class SubmissionPolicyUpdateComponent {
                 untracked(() => this.initializeFormFromExercise(programmingExercise));
             }
         });
+        // The editable input can change while the form exists (the reused grading route derives it from
+        // each exercise's permissions); control disabled state does not follow the input on its own.
+        effect(() => {
+            const editable = this.editable();
+            untracked(() => {
+                if (!this.form) {
+                    return;
+                }
+                for (const control of [this.submissionLimitControl, this.exceedingPenaltyControl]) {
+                    if (editable) {
+                        control.enable({ emitEvent: false });
+                    } else {
+                        control.disable({ emitEvent: false });
+                    }
+                }
+            });
+        });
     }
 
     /**
@@ -159,6 +176,10 @@ export class SubmissionPolicyUpdateComponent {
 
     private initializeFormFromExercise(programmingExercise: ProgrammingExercise): void {
         const switchedExercise = this.hasSwitchedExercise(programmingExercise);
+        // Record the id even when the emission is otherwise ignored below: an unsaved exercise that gains
+        // its id while the latch is set must still update the form's identity, or a later switch to a
+        // different exercise would go undetected and keep this exercise's values on screen.
+        this.initializedExerciseId = programmingExercise.id ?? this.initializedExerciseId;
         if (!switchedExercise && (this.policyFormInitialized || this.form?.dirty || this.form?.touched)) {
             return;
         }
@@ -167,7 +188,6 @@ export class SubmissionPolicyUpdateComponent {
             // to drop as well or the new exercise's persisted policy would be rejected right after.
             this.policyFormInitialized = false;
         }
-        this.initializedExerciseId = programmingExercise.id ?? this.initializedExerciseId;
         const submissionPolicy = programmingExercise.submissionPolicy;
         this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.form) {
@@ -184,7 +204,13 @@ export class SubmissionPolicyUpdateComponent {
             this.submissionLimitControl = this.form.get('submissionLimit')! as FormControl;
             this.exceedingPenaltyControl = this.form.get('exceedingPenalty')! as FormControl;
         } else {
-            this.form.reset({ submissionLimit: submissionPolicy?.submissionLimit, exceedingPenalty: submissionPolicy?.exceedingPenalty });
+            // Boxed reset values also re-apply the disabled state: on an exercise switch the editable input
+            // can differ from the exercise the form was created for, and a control that stays disabled
+            // reports valid, letting an incomplete policy through.
+            this.form.reset({
+                submissionLimit: { value: submissionPolicy?.submissionLimit, disabled: !this.editable() },
+                exceedingPenalty: { value: submissionPolicy?.exceedingPenalty, disabled: !this.editable() },
+            });
         }
         if (submissionPolicy && submissionPolicy.type !== SubmissionPolicyType.NONE) {
             this.policyFormInitialized = true;
@@ -209,8 +235,12 @@ export class SubmissionPolicyUpdateComponent {
     }
 
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
-        // A policy type the user picked must survive later programmingExercise emissions.
-        this.policyFormInitialized = true;
+        // A policy type the user picked must survive later programmingExercise emissions. Without an
+        // exercise the pick applies to nothing, so it must not set the latch either: a latch without a
+        // form would block the form from ever initializing once the exercise arrives.
+        if (this.programmingExercise()) {
+            this.policyFormInitialized = true;
+        }
         return this.applySubmissionPolicyType(submissionPolicyType);
     }
 
