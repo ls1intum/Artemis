@@ -18,6 +18,7 @@ import { CourseOverviewService } from 'app/course/overview/services/course-overv
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -52,6 +53,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
     private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
@@ -124,6 +127,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 distinctUntilChanged(),
             )
             .subscribe((courseId) => this.activateCourse(courseId));
+
+        // Selecting the exams tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections().subscribe(() => this.loadExams(this.courseId()));
     }
 
     /** Cancels all course-scoped work, clears rendered state, and loads the newly active course. */
@@ -150,6 +156,20 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         this.pageTitle.set('');
         this.withinWorkingTime = false;
 
+        this.loadExams(courseId);
+    }
+
+    /**
+     * Fetches the exams of the course without touching what is currently rendered.
+     *
+     * Separate from {@link activateCourse}, which clears the rendered state because it is switching to a different
+     * course. Re-selecting the exams tab is a refresh of the same course: the exam list stays on screen until the new
+     * one arrives, so the sidebar does not flash empty.
+     *
+     * @param courseId the course to load the exams of
+     */
+    private loadExams(courseId: number): void {
+        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId)
             .subscribe((response: StudentExam[]) => {
@@ -157,6 +177,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.prepareSidebarData();
             });
 
+        this.examsSubscription?.unsubscribe();
         this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(courseId).subscribe({
             next: (exams) => {
                 this.exams.set(exams);
@@ -220,6 +241,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * unsubscribe from all subscriptions
      */
     ngOnDestroy(): void {
+        this.tabReselectionSubscription?.unsubscribe();
         this.examsSubscription?.unsubscribe();
         if (this.parentParamSubscription) {
             this.parentParamSubscription.unsubscribe();

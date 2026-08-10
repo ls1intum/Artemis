@@ -213,9 +213,9 @@ export class CourseExerciseGroupDetailComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((course) => this.course.set(course));
 
-        // The exercises come from the same response the exercises tab uses, so arriving here from a group card costs no
-        // request at all and a deep link costs exactly one. It also populates the achieved variant group points that
-        // {@link achievedGroupPoints} reads out of the ScoresStorageService.
+        // The exercises come from the same endpoint the exercises tab uses, freshly for this navigation, and the same
+        // response populates the achieved variant group points that {@link achievedGroupPoints} reads out of the
+        // ScoresStorageService.
         this.courseOverviewExercisesService
             .loadIfNeeded(this.courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))

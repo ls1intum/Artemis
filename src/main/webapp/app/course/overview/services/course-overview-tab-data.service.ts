@@ -1,25 +1,27 @@
 import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, finalize, of, shareReplay, tap } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureForOverview } from 'app/lecture/shared/entities/lecture-for-overview.model';
+import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 
-type StoredTabData<T> = { courseId: number; data: T };
+type StoredTabData<T> = { courseId: number; navigationId: number; data: T };
 type InFlightTabRequest<T> = { courseId: number; observable: Observable<T> };
 
 /**
  * Holds the independently loaded lecture and exam overview responses for one course visit.
  *
- * Routed tab components are destroyed whenever the user opens a sibling tab. Keeping these responses in the
- * components would therefore repeat the same REST request when the user returns. This service retains only the
- * lightweight overview DTOs, shares concurrent requests, and is cleared by the course container on a course switch
- * or when the visit ends.
+ * The route guard and the tab component both run for one tab selection, so this service shares the response between
+ * them. It is scoped to that single navigation: selecting the tab again — which is how a student refreshes — asks the
+ * server, so a lecture that was published or an exam that became visible appears without a page reload.
  */
 @Injectable({ providedIn: 'root' })
 export class CourseOverviewTabDataService {
     private readonly lectureService = inject(LectureService);
     private readonly examParticipationService = inject(ExamParticipationService);
+    private readonly router = inject(Router);
 
     private activeCourseId?: number;
     private lectures?: StoredTabData<LectureForOverview[]>;
@@ -29,7 +31,7 @@ export class CourseOverviewTabDataService {
 
     loadLecturesIfNeeded(courseId: number): Observable<LectureForOverview[]> {
         this.activateCourse(courseId);
-        if (this.lectures?.courseId === courseId) {
+        if (this.lectures?.courseId === courseId && this.lectures.navigationId === currentNavigationId(this.router)) {
             return of(this.lectures.data);
         }
         if (this.lecturesRequest?.courseId === courseId) {
@@ -39,7 +41,7 @@ export class CourseOverviewTabDataService {
         const observable = this.lectureService.findAllByCourseIdForOverview(courseId).pipe(
             tap((lectures) => {
                 if (this.activeCourseId === courseId) {
-                    this.lectures = { courseId, data: lectures };
+                    this.lectures = { courseId, navigationId: currentNavigationId(this.router), data: lectures };
                 }
             }),
             finalize(() => {
@@ -55,7 +57,7 @@ export class CourseOverviewTabDataService {
 
     loadExamsIfNeeded(courseId: number): Observable<ExamForOverview[]> {
         this.activateCourse(courseId);
-        if (this.exams?.courseId === courseId) {
+        if (this.exams?.courseId === courseId && this.exams.navigationId === currentNavigationId(this.router)) {
             return of(this.exams.data);
         }
         if (this.examsRequest?.courseId === courseId) {
@@ -65,7 +67,7 @@ export class CourseOverviewTabDataService {
         const observable = this.examParticipationService.getExamsForOverview(courseId).pipe(
             tap((exams) => {
                 if (this.activeCourseId === courseId) {
-                    this.exams = { courseId, data: exams };
+                    this.exams = { courseId, navigationId: currentNavigationId(this.router), data: exams };
                 }
             }),
             finalize(() => {

@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { EMPTY, Observable, Subscription, catchError, finalize, of, shareReplay, tap } from 'rxjs';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -17,24 +19,25 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
  * Loads the exercise data of the course overview on demand and publishes it through the {@link CourseStorageService}.
  *
  * Exercises, participations and scores used to come with the course itself on every course entry. They are only needed
- * by the exercises tab and the statistics tab, so both go through this service instead: whichever is opened first pays
- * for the load, the other reuses it, and a course visit that never opens either pays nothing at all.
+ * by the exercises tab and the statistics tab, so both go through this service instead, and a course visit that never
+ * opens either pays nothing at all.
  *
- * Like {@link CourseAvailableTabsService} this is per-visit state, not a cache: one course at a time, keyed by course id
- * so switching courses refetches, dropped by {@link clear} when the course container is destroyed and on logout / user
- * change.
+ * Nothing is cached. What is held is scoped to a single router navigation, so that one tab selection needing the data
+ * twice costs one request while the next selection — including re-selecting the tab you are on, which is how a student
+ * refreshes — always asks the server again.
  */
 @Injectable({ providedIn: 'root' })
 export class CourseOverviewExercisesService implements OnDestroy {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly courseStorageService = inject(CourseStorageService);
+    private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
     private readonly alertService = inject(AlertService);
     private readonly websocketService = inject(WebsocketService);
     private readonly teamService = inject(TeamService);
     private readonly courseExerciseService = inject(CourseExerciseService);
 
-    private readonly state = signal<{ courseId: number; data: CourseExercisesForOverviewDTO } | undefined>(undefined);
+    private readonly state = signal<{ courseId: number; navigationId: number; data: CourseExercisesForOverviewDTO } | undefined>(undefined);
     private inFlightRequest?: { courseId: number; observable: Observable<CourseExercisesForOverviewDTO> };
     private activeCourseId?: number;
     private pendingStoredCourseSubscription?: Subscription;
@@ -63,14 +66,19 @@ export class CourseOverviewExercisesService implements OnDestroy {
     }
 
     /**
-     * The exercise data held for the given course, or undefined when it has not been loaded for it.
+     * The exercise data held for the given course during the current navigation, or undefined when there is none.
+     *
+     * Scoped to the navigation on purpose: the exercises tab and the statistics tab must share one response when a
+     * single tab selection needs it twice, but selecting a tab again has to reach the server, so that a result which
+     * arrived meanwhile or a due date an instructor moved shows up without a page reload.
+     *
      * @param courseId the course to read the exercise data for
      */
     dataFor(courseId: number): CourseExercisesForOverviewDTO | undefined {
         const current = this.state();
         // Guard on `current` itself: with optional chaining alone, an undefined courseId would compare equal to the
         // undefined of an empty state and wrongly report a hit
-        return current && current.courseId === courseId ? current.data : undefined;
+        return current && current.courseId === courseId && current.navigationId === currentNavigationId(this.router) ? current.data : undefined;
     }
 
     /**
@@ -90,7 +98,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
                 if (this.activeCourseId !== courseId) {
                     return;
                 }
-                this.state.set({ courseId, data });
+                this.state.set({ courseId, navigationId: currentNavigationId(this.router), data });
                 this.publishExercisesToStoredCourse(courseId, data);
                 this.startLiveUpdates(courseId);
             }),
@@ -264,7 +272,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
             return;
         }
         const data = { ...current.data, exercises };
-        this.state.set({ courseId, data });
+        this.state.set({ courseId, navigationId: currentNavigationId(this.router), data });
         this.publishExercisesToStoredCourse(courseId, data);
     }
 

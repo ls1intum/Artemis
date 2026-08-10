@@ -7,6 +7,7 @@ import { ChartModule } from 'primeng/chart';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -125,6 +126,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     controlsRendered = new EventEmitter<void>();
     private courseStorageService = inject(CourseStorageService);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
@@ -325,6 +328,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 distinctUntilChanged(),
             )
             .subscribe((courseId) => this.activateCourse(courseId));
+
+        // Selecting the statistics tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections().subscribe(() => this.loadExercises(this.courseId));
     }
 
     private activateCourse(courseId: number): void {
@@ -345,6 +351,19 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         // The exercises and their scores are not part of the course itself; this tab and the exercises tab share one
         // load, so whichever is opened first pays for it. The result arrives through the course update subscription
         // above and through the ScoresStorageService.
+        this.loadExercises(courseId);
+    }
+
+    /**
+     * Fetches the exercises and their scores without clearing the rendered charts.
+     *
+     * Also the refresh path: selecting the statistics tab while already on it re-runs this, so newly graded work is
+     * reflected without a page reload, and the charts keep showing the previous figures until the new ones arrive.
+     *
+     * @param courseId the course to load the exercises and scores of
+     */
+    private loadExercises(courseId: number): void {
+        this.exercisesLoadSubscription?.unsubscribe();
         this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(courseId).subscribe(() => {
             this.calculateCourseGrade();
         });
@@ -403,6 +422,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngOnDestroy() {
+        this.tabReselectionSubscription?.unsubscribe();
         this.translateSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.paramSubscription?.unsubscribe();

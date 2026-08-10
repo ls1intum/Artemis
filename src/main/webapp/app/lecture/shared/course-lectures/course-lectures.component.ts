@@ -13,6 +13,7 @@ import { LtiService } from 'app/foundation/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -53,6 +54,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private lectureService = inject(LectureService);
     private sessionStorageService = inject(SessionStorageService);
     private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
 
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
@@ -119,12 +122,18 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.course.set(course);
         });
         this.loadLectures();
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections().subscribe(() => this.loadLectures());
     }
 
     /**
      * Loads the lectures of this course. They used to arrive as part of the (expensive) course load, which made every
      * course visit pay for them even when the lectures tab was never opened. The redirect to the last selected or
      * upcoming lecture has to wait for them, so it runs once they arrive.
+     */
+    /**
+     * Selecting the tab that is already open acts as a refresh: the router reports it as a fresh navigation, the
+     * navigation-scoped hold in the data service therefore misses, and the request reaches the server. The displayed
+     * data is left untouched until the response arrives, so a refresh does not flash an empty tab.
      */
     private loadLectures(): void {
         this.lecturesSubscription?.unsubscribe();
@@ -222,6 +231,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.tabReselectionSubscription?.unsubscribe();
         this.courseUpdatesSubscription?.unsubscribe();
         this.lecturesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();

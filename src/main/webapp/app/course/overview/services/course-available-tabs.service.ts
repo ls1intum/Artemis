@@ -1,8 +1,10 @@
 import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable, Subscription, of, tap } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 
 /**
  * Holds which course overview tabs are available for the course the user is currently in.
@@ -11,16 +13,17 @@ import { AccountService } from 'app/core/auth/account.service';
  * renders the sidebar from it) read the same value, so entering a course costs exactly one `available-tabs` request and
  * switching between tabs costs none.
  *
- * This is per-visit state, not a cache: exactly one course is held at a time, it is keyed by course id so switching
- * courses always refetches, {@link clear} drops it when the container is destroyed, and it is dropped on logout / user
- * change. Re-entering a course therefore always asks the server again.
+ * What is held is scoped to a single router navigation, so the guard and the sidebar of one tab selection share one
+ * response while the next selection asks again. A course whose content changed — a lecture published, an exam made
+ * visible — therefore shows the new tab on the next click rather than only after a page reload.
  */
 @Injectable({ providedIn: 'root' })
 export class CourseAvailableTabsService implements OnDestroy {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly accountService = inject(AccountService);
+    private readonly router = inject(Router);
 
-    private readonly state = signal<{ courseId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
+    private readonly state = signal<{ courseId: number; navigationId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
 
     private currentUserId?: number;
     private readonly authenticationStateSubscription: Subscription;
@@ -47,7 +50,7 @@ export class CourseAvailableTabsService implements OnDestroy {
         const current = this.state();
         // Guard on `current` itself: with optional chaining alone, an undefined courseId would compare equal to the
         // undefined of an empty state and wrongly report a hit
-        return current && current.courseId === courseId ? current.tabs : undefined;
+        return current && current.courseId === courseId && current.navigationId === currentNavigationId(this.router) ? current.tabs : undefined;
     }
 
     /**
@@ -56,7 +59,9 @@ export class CourseAvailableTabsService implements OnDestroy {
      * @param courseId the course to fetch the tabs for
      */
     load(courseId: number): Observable<CourseAvailableTabs> {
-        return this.courseManagementService.getCourseAvailableTabs(courseId).pipe(tap((tabs) => this.state.set({ courseId, tabs })));
+        return this.courseManagementService
+            .getCourseAvailableTabs(courseId)
+            .pipe(tap((tabs) => this.state.set({ courseId, navigationId: currentNavigationId(this.router), tabs })));
     }
 
     /**

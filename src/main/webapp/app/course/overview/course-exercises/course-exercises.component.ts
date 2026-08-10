@@ -21,6 +21,7 @@ import { InitializationState, Participation, ParticipationType } from 'app/exerc
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 
 function isStudentParticipationChange(participation: Participation | undefined): participation is StudentParticipation {
     return !!participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION;
@@ -69,6 +70,7 @@ export class CourseExercisesComponent {
     private destroyRef = inject(DestroyRef);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -103,6 +105,12 @@ export class CourseExercisesComponent {
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor() {
+        // Selecting the exercises tab while already on it acts as a refresh
+        this.courseTabRefreshService
+            .reselections()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.loadExercises());
+
         this._isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise'));
 
         this.route.parent!.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -164,6 +172,17 @@ export class CourseExercisesComponent {
         // this tab, so they are fetched here. Install the course-update subscription first: the overview service
         // publishes the exercises there before emitting its response. Only then can last-selected/upcoming navigation
         // reliably choose an exercise on a cold course entry. The statistics tab shares the same load.
+        this.loadExercises();
+    }
+
+    /**
+     * Fetches the exercises of the course without clearing what is on screen.
+     *
+     * Also the refresh path: selecting the exercises tab while already on it re-runs this, so a result that arrived or
+     * a due date that moved shows up without a page reload. The rendered list is replaced only once the response is
+     * in, so refreshing does not flash an empty tab.
+     */
+    private loadExercises(): void {
         this.exercisesLoadSubscription?.unsubscribe();
         this.exercisesLoadSubscription = this.courseOverviewExercisesService.loadIfNeeded(this._courseId()).subscribe(() => this.navigateToExercise());
     }
