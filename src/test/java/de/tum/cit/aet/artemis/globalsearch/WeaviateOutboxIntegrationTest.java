@@ -18,6 +18,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -233,6 +235,29 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         assertLectureUnitNotInWeaviate(weaviateService, unitId);
         assertLectureUnitExistsInWeaviate(weaviateService, otherUnitId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testBulkDelete_removesOlderRowsButSparesRowsWrittenAfterTheDelete() throws Exception {
+        long courseId = 990600, channelId = 990601, stalePostId = 990602, newerPostId = 990603;
+        // A stale row (no source_seq) stands in for a write that predates the delete; the fence must remove it.
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, stalePostId,
+                new PostSearchableEntityDTO(stalePostId, courseId, channelId, "stale", "content").toPropertyMap());
+        // A row written by an upsert enqueued after the delete carries a source_seq larger than the delete's own
+        // outbox id; the fence must spare it. 9_000_000_000 is far larger than any outbox id assigned in this test.
+        Map<String, Object> newerProperties = new HashMap<>(new PostSearchableEntityDTO(newerPostId, courseId, channelId, "newer", "content").toPropertyMap());
+        newerProperties.put(SearchableEntitySchema.Properties.SOURCE_SEQ, 9_000_000_000L);
+        seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, newerPostId, newerProperties);
+        assertPostExistsInWeaviate(weaviateService, stalePostId);
+        assertPostExistsInWeaviate(weaviateService, newerPostId);
+
+        searchableEntityWeaviateService.deleteAllPostsForCourseAsync(courseId);
+
+        // The delete drains the stale row; asserting it is gone first guarantees the delete has run.
+        assertPostNotInWeaviate(weaviateService, stalePostId);
+        // The newer row was written after the delete was enqueued, so the fence must have left it untouched.
+        assertPostExistsInWeaviate(weaviateService, newerPostId);
     }
 
     private boolean hasOutboxRowFor(String type, long entityId) {

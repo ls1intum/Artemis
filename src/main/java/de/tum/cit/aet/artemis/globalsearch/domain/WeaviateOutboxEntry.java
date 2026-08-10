@@ -20,10 +20,10 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * success deletes the row. On failure it increments {@link #attempts} and pushes {@link #nextAttemptAt} out
  * with exponential backoff, keeping the row for a later retry.
  * <p>
- * {@link WeaviateOutboxOperation#UPSERT} and {@link WeaviateOutboxOperation#DELETE_ENTITY} rows carry
- * {@link #entityType} and {@link #entityId}; UPSERT additionally carries a {@link #payload} snapshot (the
- * property map the call site already built, serialized as canonical JSON). The bulk {@code DELETE_*} variants
- * carry their parameters as JSON in {@link #params}.
+ * {@link WeaviateOutboxOperation#UPSERT} and {@link WeaviateOutboxOperation#DELETE_ENTITY} rows carry only
+ * {@link #entityType} and {@link #entityId}; an UPSERT re-derives the entity's current property map from the
+ * database at dispatch time (see {@code SearchableEntityResolver}) instead of replaying a stored snapshot. The
+ * bulk {@code DELETE_*} variants carry their parameters as JSON in {@link #params}.
  */
 @Entity
 @Table(name = "weaviate_outbox")
@@ -46,12 +46,6 @@ public class WeaviateOutboxEntry extends DomainObject {
     private Long entityId;
 
     /**
-     * The serialized Weaviate property map for an UPSERT (canonical JSON), {@code null} for delete operations.
-     */
-    @Column(name = "payload")
-    private String payload;
-
-    /**
      * The serialized parameters for a bulk delete operation (JSON, e.g. {@code {"courseId":42}}),
      * {@code null} for UPSERT and DELETE_ENTITY.
      */
@@ -72,19 +66,18 @@ public class WeaviateOutboxEntry extends DomainObject {
     }
 
     /**
-     * Builds an UPSERT entry for a single entity, immediately eligible for dispatch.
+     * Builds an UPSERT entry for a single entity, immediately eligible for dispatch. The entry stores only the
+     * entity's identity; the dispatcher re-derives its current property map from the database when it applies it.
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
      * @param entityId   the database id of the entity
-     * @param payload    the serialized property map (canonical JSON)
      * @return the outbox entry, ready to save
      */
-    public static WeaviateOutboxEntry forUpsert(String entityType, Long entityId, String payload) {
+    public static WeaviateOutboxEntry forUpsert(String entityType, Long entityId) {
         WeaviateOutboxEntry entry = new WeaviateOutboxEntry();
         entry.operation = WeaviateOutboxOperation.UPSERT;
         entry.entityType = entityType;
         entry.entityId = entityId;
-        entry.payload = payload;
         entry.initTimestamps();
         return entry;
     }
@@ -148,14 +141,6 @@ public class WeaviateOutboxEntry extends DomainObject {
 
     public void setEntityId(Long entityId) {
         this.entityId = entityId;
-    }
-
-    public String getPayload() {
-        return payload;
-    }
-
-    public void setPayload(String payload) {
-        this.payload = payload;
     }
 
     public String getParams() {

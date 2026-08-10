@@ -11,7 +11,7 @@ package de.tum.cit.aet.artemis.globalsearch.domain;
 public enum WeaviateOutboxOperation {
 
     /**
-     * Upsert a single row from a stored payload snapshot ({@code entity_type}, {@code entity_id}, {@code payload}).
+     * Upsert a single row, re-derived from the database at dispatch time ({@code entity_type}, {@code entity_id}).
      */
     UPSERT,
 

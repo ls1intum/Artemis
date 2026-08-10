@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * collection, keyed uniquely by {@code (entity_type, entity_id)}.
  * <p>
  * The dispatcher refreshes the row on every successful upsert, storing the {@link #contentHash} of the
- * payload it wrote and the {@link #syncedAt} time. A later reconcile pass reads this ledger to decide which
+ * property map it wrote and the {@link #syncedAt} time. A later reconcile pass reads this ledger to decide which
  * entities are missing (no row = never indexed, including pre-feature courses) or drifted (hash mismatch)
  * and need to be re-enqueued.
  */

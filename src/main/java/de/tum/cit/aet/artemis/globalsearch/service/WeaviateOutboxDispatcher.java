@@ -41,9 +41,12 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * <p>
  * A confirmed per-entity write drops all older outbox rows for that entity ({@link #collapseSupersededRows}),
  * so a failed older row deferred by backoff cannot wake up after a newer row for the same entity succeeded and
- * overwrite it. This preserves latest-wins only for single-entity races (same type and id) under the single
- * writer. Bulk deletes are not collapsed, so a per-entity row deferred across a bulk delete can still resurrect
- * or wrongly erase rows; a later reconcile pass is the backstop and must garbage-collect such orphans.
+ * overwrite it. This preserves latest-wins for single-entity races (same type and id) under the single writer.
+ * Bulk deletes have no single entity key and so are not collapsed; instead they are fenced by {@code source_seq}:
+ * every upserted row is stamped with the outbox id of the write that produced it, and a bulk delete removes only
+ * rows written before its own outbox id. A bulk delete deferred by backoff therefore cannot erase a newer
+ * in-scope upsert that already succeeded (see {@code SearchableEntityWeaviateService#writtenBefore}). A later
+ * reconcile pass remains the backstop for writes lost before they reached the outbox and for content drift.
  * <p>
  * A drain is triggered two ways: a periodic {@link #scheduledDrain()} tick (the cross-node path and safety
  * net) and an after-commit {@link #onOutboxEnqueued(WeaviateOutboxEnqueuedEvent)} nudge for the freshness of
